@@ -133,6 +133,8 @@ class mixture(np.ndarray):
 		a = np.ma.masked_less(np.array(probabilities, dtype=float), 0)
 		a = np.ma.fix_invalid(a)
 		a = np.ma.filled(a, 0)
+		if all(np.ndarray.__eq__(a, 0)):
+			a = np.array([1]*len(strategies), dtype=float)
 		a = np.ndarray.__new__(cls, shape=a.shape, buffer=np.round(a/sum(a),10))
 		a.strategies = dict(zip(strategies, a))
 		return a
@@ -152,12 +154,32 @@ class mixture(np.ndarray):
 	def __str__(self):
 		return repr(self)
 
+	def __hash__(self):
+		try:
+			return self._hash
+		except AttributeError:
+			self._hash = hash(tuple(self))
+			return self._hash
+
 	def __eq__(self, other):
-		return self.strategies == other.strategies and \
-				list(self) == list(other)
+		try:
+			return self.strategies == other.strategies and \
+					list(self) == list(other)
+		except AttributeError as ae:
+			if isinstance(other, str):
+				return False
+			else:
+				raise ae
 
 	def __lt__(self, other):
-		return self.strategies < other.strategies or list(self) < list(other)
+		try:
+			return self.strategies < other.strategies or list(self) < \
+					list(other)
+		except AttributeError as ae:
+			if isinstance(other, str):
+				return True
+			else:
+				raise ae
 
 
 class Game(dict):
@@ -243,10 +265,14 @@ class Game(dict):
 								else 0 for strat in self.strategies[r]]))
 				rsp[r] = SymmetricProfile(sp)
 			profile = Profile(rsp)
-		#EVs = self.expectedValues(profile, role, strategy)
-		raise NotImplementedError("getPayoff does not yet accomodate mixed" + \
-				" strategies")
-
+		payoff = 0
+		opponent_profile = profile.remove(role, strategy)
+		for op in self.roleSymmetricProfiles(opponent_profile):
+			for s in self.strategies[role]:
+				p = op.add(role, s)
+				payoff += self[p][role][s]*opponent_profile.probability(op) \
+						* strategy[s]
+		return payoff
 
 	def pureNash(self, epsilon):
 		"""
@@ -356,8 +382,7 @@ class Game(dict):
 					self.counts[r]) for r in self.roles})
 			if old_mix == mixedProfile:
 				break
-		print i
-		return mixedProfile
+		return mixedProfile, self.regret(mixedProfile)
 
 	def uniformMixedProfile(self):
 		return Profile({r : SymmetricProfile([mixture(self.strategies[r], \
@@ -420,11 +445,6 @@ class Game(dict):
 		return [Profile(zip(self.roles, p)) for p in product(*[ \
 				self.symmetricProfiles(r, rsmsp[r]) for r \
 				in self.roles])]
-
-#	def mixtureRegret(self, mixture):
-#		EVs = self.expectedValues(mixture)
-#		return max(EVs) - np.dot(EVs, mixture).sum()
-
 
 
 from json import load
@@ -516,7 +536,6 @@ if __name__ == "__main__":
 	else:
 		raise IOError("unsupported file type: " + ext)
 	print "input game =", input_game, "\n"
-
 	rational_game = input_game.IE_NWBR()
 	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
 			rational_game.strategies[r])) for r in filter(lambda role: \
@@ -525,37 +544,25 @@ if __name__ == "__main__":
 	print "strategies removed by IE_NWBR:"
 	print (eliminated if eliminated else "none"), "\n"
 
-	NE, eNE, mrp, mr = input_game.pureNash(args.e)
-	if NE:
-		print len(NE), "exact pure strategy Nash equilibria:\n", \
-				list_repr(NE, sep="\n"), "\n"
-	if eNE:
-		print len(eNE), "approximate pure strategy Nash equilibria", \
+	PNE, ePNE, mrp, mr = input_game.pureNash(args.e)
+	if PNE:
+		print len(PNE), "exact pure strategy Nash equilibria:\n", \
+				list_repr(PNE, sep="\n"), "\n"
+	if ePNE:
+		print len(ePNE), "approximate pure strategy Nash equilibria", \
 				"(0 < epsilon <= " + str(args.e) + "):\n", \
-				list_repr(eNE, sep="\n"), "\n"
+				list_repr(ePNE, sep="\n"), "\n"
 	if mr != 0:
 		print "minimum regret profile:", mrp, "\nregret =", mr, "\n"
-
-#	mixed_prof = input_game.uniformMixedProfile()
-#	print mixed_prof
-#	s = 0
-#	for pure_prof in input_game.roleSymmetricProfiles(mixed_prof):
-#		prob = mixed_prof.probability(pure_prof)
-#		print pure_prof, prob
-#		s += prob
-#	print s
-	"""
-	print "equilibria ... pr" + str(game.strategies) + ":"
-	eq = game.RD(game.uniformMixture())
-	print eq
-	equilibria = set([eq])
-	for i in range(game.numStrategies):
-		probabilities = [0.01] * game.numStrategies
-		probabilities[i] += 1.0-sum(probabilities)
-		mixed_strategy = SG.mixture(probabilities)
-		equilibrium = game.RD(mixed_strategy)
-		if eq not in equilibria:
-			equilibria.add(eq)
-			print eq
-	"""
-
+	print "running replicator dynamics..."
+	MNE_candidates = dict([input_game.RD()])
+	for r in input_game.roles:
+		for s in input_game.strategies[r]:
+			eq, r = input_game.RD(input_game.biasedMixedProfile(r,s))
+			MNE_candidates[eq] = r
+	eMNE = filter(lambda eq: MNE_candidates[eq] < args.e, MNE_candidates)
+	if eMNE:
+		print len(eMNE), "approximate symmetric mixed strategy Nash" \
+				"equilibria, (0 < epsilon <= " + str(args.e) + "):\n", \
+				list_repr(map(lambda eq: str(eq) + ", regret=" + \
+				str(MNE_candidates[eq]), eMNE), sep="\n"), "\n"
