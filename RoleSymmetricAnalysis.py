@@ -135,7 +135,7 @@ class mixture(np.ndarray):
 		a = np.ma.filled(a, 0)
 		if all(np.ndarray.__eq__(a, 0)):
 			a = np.array([1]*len(strategies), dtype=float)
-		a = np.ndarray.__new__(cls, shape=a.shape, buffer=np.round(a/sum(a),10))
+		a = np.ndarray.__new__(cls, shape=a.shape, buffer=np.round(a/sum(a),9))
 		a.strategies = dict(zip(strategies, a))
 		return a
 
@@ -162,14 +162,7 @@ class mixture(np.ndarray):
 			return self._hash
 
 	def __eq__(self, other):
-		try:
-			return self.strategies == other.strategies and \
-					list(self) == list(other)
-		except AttributeError as ae:
-			if isinstance(other, str):
-				return False
-			else:
-				raise ae
+		return float(np.absolute(self - other).sum()) < 0.000001
 
 	def __lt__(self, other):
 		try:
@@ -366,7 +359,7 @@ class Game(dict):
 				best_responses.append(strategy)
 		return best_responses
 
-	def RD(self, mixedProfile=None, iterations=1000):
+	def RD(self, mixedProfile=None, iterations=200):
 		"""
 		Replicator dynamics.
 		"""
@@ -382,7 +375,7 @@ class Game(dict):
 					self.counts[r]) for r in self.roles})
 			if old_mix == mixedProfile:
 				break
-		return mixedProfile, self.regret(mixedProfile)
+		return mixedProfile
 
 	def uniformMixedProfile(self):
 		return Profile({r : SymmetricProfile([mixture(self.strategies[r], \
@@ -417,15 +410,15 @@ class Game(dict):
 		"""
 		values = {r:{s:0.0 for s in self.strategies[r]} for r in self.roles}
 		total_prob = {r:{s:0.0 for s in self.strategies[r]} for r in self.roles}
-		deviations = {r:rsmsp.remove(r, rsmsp[r][0]) for r in self.roles}
 		for profile in self:
+			prob = rsmsp.probability(profile)
+			if prob == 0:
+				continue
 			for role in self.roles:
 				for strategy in profile[role].getStrategies():
-					without = profile.remove(role, strategy)
-					prob = deviations[role].probability(without)
-					values[role][strategy] += prob * self.getPayoff(profile, \
-							role, strategy)
-					total_prob[role][strategy] += prob*rsmsp[role][0][strategy]
+					values[role][strategy] += self[profile][role][strategy] \
+							* prob / rsmsp[role][0][strategy] * \
+							profile[role].count(strategy) / self.counts[role]
 		return values
 
 	def symmetricProfiles(self, role, smsp):
@@ -449,7 +442,7 @@ class Game(dict):
 
 from json import load
 from xml.dom.minidom import parse
-from os.path import exists, splitext
+from os.path import exists, splitext, abspath
 from argparse import ArgumentParser
 
 
@@ -535,7 +528,7 @@ if __name__ == "__main__":
 		input_game = readJSON(args.file)
 	else:
 		raise IOError("unsupported file type: " + ext)
-	print "input game =", input_game, "\n"
+	print "input game =", abspath(args.file), "\n", input_game, "\n"
 	rational_game = input_game.IE_NWBR()
 	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
 			rational_game.strategies[r])) for r in filter(lambda role: \
@@ -555,14 +548,19 @@ if __name__ == "__main__":
 	if mr != 0:
 		print "minimum regret profile:", mrp, "\nregret =", mr, "\n"
 	print "running replicator dynamics..."
-	MNE_candidates = dict([input_game.RD()])
+	MNE_candidates = [input_game.RD()]
 	for r in input_game.roles:
 		for s in input_game.strategies[r]:
-			eq, r = input_game.RD(input_game.biasedMixedProfile(r,s))
-			MNE_candidates[eq] = r
-	eMNE = filter(lambda eq: MNE_candidates[eq] < args.e, MNE_candidates)
+			eq = input_game.RD(input_game.biasedMixedProfile(r,s))
+			if all(map(lambda e: e!=eq, MNE_candidates)):
+				MNE_candidates.append(eq)
+	regrets = {eq:input_game.regret(eq) for eq in MNE_candidates}
+	eMNE = filter(lambda eq: regrets[eq] < args.e, MNE_candidates)
 	if eMNE:
-		print len(eMNE), "approximate symmetric mixed strategy Nash" \
-				"equilibria, (0 < epsilon <= " + str(args.e) + "):\n", \
-				list_repr(map(lambda eq: str(eq) + ", regret=" + \
-				str(MNE_candidates[eq]), eMNE), sep="\n"), "\n"
+		print "RD found", len(eMNE), "approximate symmetric mixed strategy " \
+				+ "Nash equilibria:\n", list_repr(map(lambda eq: str(eq) + \
+				", regret=" + str(regrets[eq]), eMNE), sep="\n"), "\n"
+	else:
+		min_reg = sorted(MNE_candidates, key=lambda eq: regrets[eq])[0]
+		print "lowest regret symmetric mixed profile found by RD:"
+		print str(min_reg) + "regret=" + str(regrets[min_reg])
