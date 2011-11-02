@@ -267,7 +267,7 @@ class Game(dict):
 						* strategy[s]
 		return payoff
 
-	def pureNash(self, epsilon):
+	def pureNash(self, epsilon=0):
 		"""
 		Finds all pure-strategy epsilon-Nash equilibria.
 
@@ -358,6 +358,19 @@ class Game(dict):
 			elif payoff == best_payoff:
 				best_responses.append(strategy)
 		return best_responses
+
+	def mixedNash(self, epsilon=0):
+		MNE_candidates = [self.RD()]
+		for r in self.roles:
+			for s in self.strategies[r]:
+				eq = self.RD(self.biasedMixedProfile(r,s))
+				if all(map(lambda e: e!=eq, MNE_candidates)):
+					MNE_candidates.append(eq)
+		regrets = {eq:self.regret(eq) for eq in MNE_candidates}
+		mrp = min(regrets, key=regrets.get)
+		mr = regrets[mrp]
+		eMNE = filter(lambda eq: regrets[eq] <= epsilon, MNE_candidates)
+		return eMNE, mrp, mr
 
 	def RD(self, mixedProfile=None, iterations=200):
 		"""
@@ -529,6 +542,7 @@ if __name__ == "__main__":
 	else:
 		raise IOError("unsupported file type: " + ext)
 	print "input game =", abspath(args.file), "\n", input_game, "\n"
+
 	rational_game = input_game.IE_NWBR()
 	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
 			rational_game.strategies[r])) for r in filter(lambda role: \
@@ -544,23 +558,16 @@ if __name__ == "__main__":
 	if ePNE:
 		print len(ePNE), "approximate pure strategy Nash equilibria", \
 				"(0 < epsilon <= " + str(args.e) + "):\n", \
-				list_repr(ePNE, sep="\n"), "\n"
+				list_repr(map(lambda eq: str(eq) + ", regret=" + \
+				str(input_game.regret(eq)), ePNE), sep="\n"), "\n"
 	if mr != 0:
 		print "minimum regret profile:", mrp, "\nregret =", mr, "\n"
-	print "running replicator dynamics..."
-	MNE_candidates = [input_game.RD()]
-	for r in input_game.roles:
-		for s in input_game.strategies[r]:
-			eq = input_game.RD(input_game.biasedMixedProfile(r,s))
-			if all(map(lambda e: e!=eq, MNE_candidates)):
-				MNE_candidates.append(eq)
-	regrets = {eq:input_game.regret(eq) for eq in MNE_candidates}
-	eMNE = filter(lambda eq: regrets[eq] < args.e, MNE_candidates)
+
+	eMNE, mrmp, mmr = input_game.mixedNash(epsilon=args.e)
 	if eMNE:
 		print "RD found", len(eMNE), "approximate symmetric mixed strategy " \
 				+ "Nash equilibria:\n", list_repr(map(lambda eq: str(eq) + \
-				", regret=" + str(regrets[eq]), eMNE), sep="\n"), "\n"
+				", regret=" + str(input_game.regret(eq)), eMNE), sep="\n"),"\n"
 	else:
-		min_reg = sorted(MNE_candidates, key=lambda eq: regrets[eq])[0]
 		print "lowest regret symmetric mixed profile found by RD:"
-		print str(min_reg) + "regret=" + str(regrets[min_reg])
+		print str(mrmp) + "regret=" + str(mmr)
