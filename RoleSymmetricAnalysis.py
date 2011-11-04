@@ -54,6 +54,9 @@ class SymmetricProfile(tuple):
 		except TypeError:
 			return 1
 
+	def dist(self, other):
+		return sum([s.dist(o) for s,o in zip(self, other)])
+
 	def isMixed(self):
 		return any([isinstance(s, mixture) for s in self])
 
@@ -101,6 +104,9 @@ class Profile(dict):
 		"""only makes sense for mixed strategy profiles"""
 		return reduce(mul, [sp.probability(profile[r]) for r, sp \
 				in self.items()])
+
+	def dist(self, other):
+		return sum([self[r].dist(other[r]) for r in self.keys()])
 
 	def isMixed(self):
 		return any([p.isMixed() for p in self.values()])
@@ -161,8 +167,15 @@ class mixture(np.ndarray):
 			self._hash = hash(tuple(self))
 			return self._hash
 
+	def norm(self, p=2):
+		"""L^p norm"""
+		return float(np.absolute(np.array(self)**p).sum()**(1.0/p))
+
+	def dist(self, other):
+		return (self - other).norm(2)
+
 	def __eq__(self, other):
-		return float(np.absolute(self - other).sum()) < 0.000001
+		return self.dist(other) == 0
 
 	def __lt__(self, other):
 		try:
@@ -359,12 +372,12 @@ class Game(dict):
 				best_responses.append(strategy)
 		return best_responses
 
-	def mixedNash(self, epsilon=0):
+	def mixedNash(self, epsilon=0, dist_thresh=0.01):
 		MNE_candidates = [self.RD()]
 		for r in self.roles:
 			for s in self.strategies[r]:
 				eq = self.RD(self.biasedMixedProfile(r,s))
-				if all(map(lambda e: e!=eq, MNE_candidates)):
+				if all(map(lambda e: e.dist(eq) > dist_thresh, MNE_candidates)):
 					MNE_candidates.append(eq)
 		regrets = {eq:self.regret(eq) for eq in MNE_candidates}
 		mrp = min(regrets, key=regrets.get)
@@ -372,7 +385,7 @@ class Game(dict):
 		eMNE = filter(lambda eq: regrets[eq] <= epsilon, MNE_candidates)
 		return eMNE, mrp, mr
 
-	def RD(self, mixedProfile=None, iterations=200):
+	def RD(self, mixedProfile=None, iterations=1000, threshold=1e-8):
 		"""
 		Replicator dynamics.
 		"""
@@ -386,7 +399,7 @@ class Game(dict):
 					self.strategies[r], [(EVs[r][s] - minPayoffs[r]) * \
 					mixedProfile[r][0][s] for s in self.strategies[r]])] * \
 					self.counts[r]) for r in self.roles})
-			if old_mix == mixedProfile:
+			if old_mix.dist(mixedProfile) <= threshold:
 				break
 		return mixedProfile
 
