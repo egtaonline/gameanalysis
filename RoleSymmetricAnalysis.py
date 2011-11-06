@@ -155,7 +155,8 @@ class mixture(np.ndarray):
 		return list(self.strategies.keys())
 
 	def __repr__(self):
-		return repr(self.strategies)
+		return "{" + list_repr((str(s) + ":" + str(int(round(100*p))) + "%" \
+				for s,p in self.strategies.items())) + "}"
 
 	def __str__(self):
 		return repr(self)
