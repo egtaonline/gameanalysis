@@ -155,8 +155,11 @@ class mixture(np.ndarray):
 		return list(self.strategies.keys())
 
 	def __repr__(self):
-		return "{" + list_repr((str(s) + ":" + str(int(round(100*p))) + "%" \
-				for s,p in self.strategies.items())) + "}"
+		try:
+			return "{" + list_repr((str(s) + ":" + str(int(round(100*p))) + \
+					"%" for s,p in self.strategies.items())) + "}"
+		except AttributeError:
+			return np.ndarray.__repr__(self)[8:-1]
 
 	def __str__(self):
 		return repr(self)
@@ -168,12 +171,8 @@ class mixture(np.ndarray):
 			self._hash = hash(tuple(self))
 			return self._hash
 
-	def norm(self, p=2):
-		"""L^p norm"""
-		return float(np.absolute(np.array(self)**p).sum()**(1.0/p))
-
 	def dist(self, other):
-		return (self - other).norm(2)
+		return np.linalg.norm(self - other)
 
 	def __eq__(self, other):
 		return self.dist(other) == 0
