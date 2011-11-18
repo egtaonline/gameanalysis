@@ -136,12 +136,10 @@ class mixture(np.ndarray):
 	Probabilities are rounded to the nearest 10^-10 so they can be compared.
 	"""
 	def __new__(cls, strategies, probabilities):
-		a = np.ma.masked_less(np.array(probabilities, dtype=float), 0)
-		a = np.ma.fix_invalid(a)
-		a = np.ma.filled(a, 0)
-		if all(np.ndarray.__eq__(a, 0)):
-			a = np.array([1]*len(strategies), dtype=float)
-		a = np.ndarray.__new__(cls, shape=a.shape, buffer=np.round(a/sum(a),9))
+		a = np.array(probabilities, dtype=float).clip(0)
+		if a.max() == 0:
+			a.fill(1)
+		a = np.ndarray.__new__(cls, shape=a.shape, buffer=a/a.sum())
 		a.strategies = dict(zip(strategies, a))
 		return a
 
@@ -157,7 +155,7 @@ class mixture(np.ndarray):
 	def __repr__(self):
 		try:
 			return "{" + list_repr((str(s) + ":" + str(int(round(100*p))) + \
-					"%" for s,p in self.strategies.items())) + "}"
+					"%" for s,p in sorted(self.strategies.items()))) + "}"
 		except AttributeError:
 			return np.ndarray.__repr__(self)[8:-1]
 
