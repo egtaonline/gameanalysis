@@ -214,7 +214,7 @@ class Game(dict):
 		d = {}
 		d.update(*args, **kwargs)
 		for profile in d.keys():
-			assert self.isVlaidProfile(profile)
+			assert self.isValidProfile(profile)
 		dict.update(self, d)
 
 	def isValidProfile(self, profile):
@@ -232,6 +232,23 @@ class Game(dict):
 			if not all((s in self.strategies[r] for s in sp.getStrategies())):
 				return False
 		return True
+
+	def allProfiles(self):
+		return [Profile(zip(self.roles, p)) for p in product(*[[ \
+				SymmetricProfile(s) for s in CwR(self.strategies[r], \
+				self.counts[r])] for r in self.roles])]
+
+	def knownProfiles(self):
+		return self.keys()
+
+	def subgame(self, strategies):
+		"""
+		Creates a game with a subset each role's strategies.
+		Raises a KeyError if required profiles are missing.
+		"""
+		g = Game(self.roles, self.counts, strategies)
+		g.update({p:self[p] for p in g.allProfiles()})
+		return g
 
 	def __eq__(self, other):
 		return self.roles==other.roles and self.counts==other.counts and \
