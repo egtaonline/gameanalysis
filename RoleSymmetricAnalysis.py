@@ -217,6 +217,15 @@ class Game(dict):
 			assert self.isValidProfile(profile)
 		dict.update(self, d)
 
+	def __hash__(self):
+		"""Payoff data doesn't contribute to the hash."""
+		try:
+			return self._hash
+		except AttributeError:
+			self._hash = hash(str(self.roles) + str(self.counts) + \
+					str(self.strategies))
+			return self._hash
+
 	def isValidProfile(self, profile):
 		if profile in self:
 			return True
@@ -250,9 +259,54 @@ class Game(dict):
 		g.update({p:self[p] for p in g.allProfiles()})
 		return g
 
+	def isSubgame(self, big_game):
+		if any([r not in big_game.roles for r in self.roles]):
+			return False
+		if any([self.counts[r] != big_game.counts[r] for r in self.roles]):
+			return False
+		for r in self.roles:
+			if any([s not in big_game.strategies[r] for s in \
+					self.strategies[r]]):
+				return False
+		return True
+
+	def cliques(self, subgames=set()):
+		"""
+		Finds maximal subgames for which all profiles are known.
+
+		input:
+		subgames = known complete subgames to be expanded (any payoff data in
+		the known subgames is ignored, so for faster loading, give only the
+		header information).
+		"""
+		if not subgames:
+			subgames = {Game(self.roles, self.counts, {r:[] for r in \
+					self.roles})}
+		maximal_subgames = set()
+		while(subgames):
+			game = subgames.pop()
+			maximal = True
+			for role in self.roles:
+				for s in set(self.strategies[role])-set(game.strategies[role]):
+					try:
+						new_game = self.subgame({r:list(game.strategies[r]) + \
+								([s] if r == role else []) for r in self.roles})
+						maximal=False
+					except KeyError:
+						continue
+					if new_game in subgames or new_game in maximal_subgames:
+						continue
+					if any([new_game.isSubgame(g) for g in \
+								subgames.union(maximal_subgames)]):
+						continue
+					subgames.add(new_game)
+			if maximal:
+				maximal_subgames.add(game)
+		return maximal_subgames
+
 	def __eq__(self, other):
 		return self.roles==other.roles and self.counts==other.counts and \
-				self.strategeis==other.strategies and dict.__eq__(self,other)
+				self.strategies==other.strategies and dict.__eq__(self,other)
 
 	def __repr__(self):
 		return "RoleSymmetricGame:\nroles: " + list_repr(self.roles) + \
