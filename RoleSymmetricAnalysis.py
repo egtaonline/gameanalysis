@@ -250,12 +250,18 @@ class Game(dict):
 	def knownProfiles(self):
 		return self.keys()
 
-	def subgame(self, strategies):
+	def subgame(self, roles=[], strategies={}):
 		"""
 		Creates a game with a subset each role's strategies.
 		Raises a KeyError if required profiles are missing.
+
+		default settings result in a subgame with all roles and no strategies
 		"""
-		g = Game(self.roles, self.counts, strategies)
+		if not roles:
+			roles = self.roles
+		if not strategies:
+			strategies = {r:[] for r in self.roles}
+		g = Game(roles, self.counts, strategies)
 		g.update({p:self[p] for p in g.allProfiles()})
 		return g
 
@@ -279,9 +285,8 @@ class Game(dict):
 		the known subgames is ignored, so for faster loading, give only the
 		header information).
 		"""
-		if not subgames:
-			subgames = {Game(self.roles, self.counts, {r:[] for r in \
-					self.roles})}
+		subgames = {self.subgame(strategies=g.strategies) for g in \
+				subgames}.union({self.subgame()})
 		maximal_subgames = set()
 		while(subgames):
 			game = subgames.pop()
@@ -289,8 +294,9 @@ class Game(dict):
 			for role in self.roles:
 				for s in set(self.strategies[role])-set(game.strategies[role]):
 					try:
-						new_game = self.subgame({r:list(game.strategies[r]) + \
-								([s] if r == role else []) for r in self.roles})
+						new_game = self.subgame(strategies={r:list(\
+								game.strategies[r]) + ([s] if r == role \
+								else []) for r in self.roles})
 						maximal=False
 					except KeyError:
 						continue
@@ -540,6 +546,43 @@ from xml.dom.minidom import parse
 from os.path import exists, splitext, abspath
 from argparse import ArgumentParser
 
+def readGame(filename):
+	assert exists(filename)
+	ext = splitext(filename)[-1]
+	if ext == '.xml':
+		return readXML(filename)
+	elif ext == '.json':
+		return readJSON(filename)
+	else:
+		raise IOError("unsupported file type: " + ext)
+
+def readHeader(filename):
+	assert exists(filename)
+	ext = splitext(filename)[-1]
+	if ext == '.xml':
+		gameNode = parse(filename).getElementsByTagName("nfg")[0]
+		if len(gameNode.getElementsByTagName("player")[0]. \
+				getElementsByTagName("action")) > 0:
+			strategies = {p.getAttribute('id') : map(lambda s: \
+					s.getAttribute('id'), p.getElementsByTagName('action')) \
+					for p in gameNode.getElementsByTagName('player')}
+			roles = list(strategies.keys())
+			counts = {r:1 for r in roles}
+		else:
+			roles = ["All"]
+			counts= {"All" : len(gameNode.getElementsByTagName("player"))}
+			strategies = {"All" : [e.getAttribute("id") for e in \
+				gameNode.getElementsByTagName("action")]}
+	elif ext == '.json':
+		f = open(filename)
+		data = load(f)
+		f.close()
+		counts = {r["name"] : int(r["count"]) for r in data["roles"]}
+		strategies = {r["name"] : r["strategy_array"] for r in data["roles"]}
+		roles = list(counts.keys())
+	else:
+		raise IOError("unsupported file type: " + ext)
+	return Game(roles, counts, strategies)
 
 def readJSON(filename):
 	f = open(filename)
@@ -614,17 +657,14 @@ if __name__ == "__main__":
 			"testbed role-symmetric JSON.")
 	parser.add_argument("-e", metavar="EPSILON", type=float, default=0, \
 			help="Max allowed epsilon for approximate Nash equilibria")
+	parser.add_argument("--subgames", type=str, help="optinal files " +\
+			"containing known full subgames; useful for speeding up " +\
+			"clique-finding", default = "", nargs="*")
 	args = parser.parse_args()
-	assert exists(args.file)
-	ext = splitext(args.file)[-1]
-	if ext == '.xml':
-		input_game = readXML(args.file)
-	elif ext == '.json':
-		input_game = readJSON(args.file)
-	else:
-		raise IOError("unsupported file type: " + ext)
+	input_game = readGame(args.file)
 	print "input game =", abspath(args.file), "\n", input_game, "\n"
 
+	#iterated elimination of never best response strategies
 	rational_game = input_game.IE_NWBR()
 	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
 			rational_game.strategies[r])) for r in filter(lambda role: \
@@ -633,6 +673,7 @@ if __name__ == "__main__":
 	print "strategies removed by IE_NWBR:"
 	print (eliminated if eliminated else "none"), "\n"
 
+	#pure strategy Nash equilibrium search
 	PNE, ePNE, mrp, mr = input_game.pureNash(args.e)
 	if PNE:
 		print len(PNE), "exact pure strategy Nash equilibria:\n", \
@@ -645,11 +686,16 @@ if __name__ == "__main__":
 	if mr != 0:
 		print "minimum regret profile:", mrp, "\nregret =", mr, "\n"
 
-	eMNE, mrmp, mmr = input_game.mixedNash(epsilon=args.e)
-	if eMNE:
-		print "RD found", len(eMNE), "approximate symmetric mixed strategy " \
-				+ "Nash equilibria:\n", list_repr(map(lambda eq: str(eq) + \
-				", regret=" + str(input_game.regret(eq)), eMNE), sep="\n"),"\n"
-	else:
-		print "lowest regret symmetric mixed profile found by RD:"
-		print str(mrmp) + "regret=" + str(mmr)
+	#mixed strategy Nash equilibrium search over maximal complete subgames
+	maximal_subgames = input_game.cliques(map(readHeader, args.subgames))
+	print len(maximal_subgames), "maximal subgames:"
+	for subgame in maximal_subgames:
+		print subgame
+		eMNE, mrmp, mmr = subgame.mixedNash(epsilon=args.e)
+		if eMNE:
+			print "RD found", len(eMNE), "approximate symmetric mixed strategy"\
+					+ " Nash equilibria:\n", list_repr(map(lambda eq: str(eq) +\
+					", regret=" + str(subgame.regret(eq)), eMNE), sep="\n"),"\n"
+		else:
+			print "lowest regret symmetric mixed profile found by RD:"
+			print str(mrmp) + "regret=" + str(mmr)
