@@ -540,9 +540,12 @@ class Game(dict):
 				self.symmetricProfiles(r, rsmsp[r]) for r \
 				in self.roles])]
 
+	def writeJSON(self):
+		raise NotImplementedError
+
 
 from json import load
-from xml.dom.minidom import parse
+from xml.dom.minidom import parse, Document
 from os.path import exists, splitext, abspath
 from argparse import ArgumentParser
 
@@ -649,6 +652,65 @@ def parseSymmetricXML(gameNode):
 		payoffs[Profile({"All":SymmetricProfile(sym_prof)})] = payoff
 	return Game(roles, counts, strategies, payoffs)
 
+def writeXML(game, filename):
+	if len(game.roles) == 1:
+		writeSymmetricXML(game, filename)
+	elif all(map(lambda c: c==1, game.counts.values())):
+		writeStrategicXML(game, filename)
+	else:
+		raise NotImplementedError("No EGAT XML spec for role-symmetric games")
+
+def writeJSON(game, filename):
+	"""
+	Writes game to JSON according to the Testbed role-symmetric game spec.
+	"""
+	raise NotImplementedError("TODO")
+
+
+def writeSymmetricXML(game, filename):
+	"""
+	Writes game to XML according to the EGAT symmetric game spec.
+	Assumes (but doesn't check) that game is symmetric.
+	"""
+	role = game.roles[0]
+	doc = Document()
+	gameNode = doc.createElement("nfg")
+	doc.appendChild(gameNode)
+	playerSetNode = doc.createElement("players")
+	gameNode.appendChild(playerSetNode)
+	for i in range(game.counts[role]):
+		playerNode = doc.createElement("player")
+		playerNode.setAttribute("id", "p" + str(i))
+		playerSetNode.appendChild(playerNode)
+	actionSetNode = doc.createElement("actions")
+	gameNode.appendChild(actionSetNode)
+	for strategy in game.strategies[role]:
+		actionNode = doc.createElement("action")
+		actionNode.setAttribute("id", str(strategy))
+		actionSetNode.appendChild(actionNode)
+	payoffSetNode = doc.createElement("payoffs")
+	gameNode.appendChild(payoffSetNode)
+	for profile in game:
+		payoffNode = doc.createElement("payoff")
+		payoffSetNode.appendChild(payoffNode)
+		for strategy in profile[role].getStrategies():
+			outcomeNode = doc.createElement("outcome")
+			outcomeNode.setAttribute("action", str(strategy))
+			outcomeNode.setAttribute("count", \
+					str(profile[role].count(strategy)))
+			outcomeNode.setAttribute("value", str(game.getPayoff( \
+					profile, role, strategy)))
+			payoffNode.appendChild(outcomeNode)
+	file = open(filename, 'w')
+	file.write(doc.toprettyxml())
+	file.close()
+
+def writeStrategicXML(game, filename):
+	"""
+	Writes game to XML according to the EGAT strategic game spec.
+	Assumes (but doesn't check) that game is not role-symmetric.
+	"""
+	raise NotImplementedError("TODO")
 
 if __name__ == "__main__":
 	parser = ArgumentParser()
