@@ -15,35 +15,6 @@ def readGame(filename):
 		raise IOError("unsupported file type: " + ext)
 
 
-def readHeader(filename):
-	assert exists(filename)
-	ext = splitext(filename)[-1]
-	if ext == '.xml':
-		gameNode = parse(filename).getElementsByTagName("nfg")[0]
-		if len(gameNode.getElementsByTagName("player")[0]. \
-				getElementsByTagName("action")) > 0:
-			strategies = {p.getAttribute('id') : map(lambda s: \
-					s.getAttribute('id'), p.getElementsByTagName('action')) \
-					for p in gameNode.getElementsByTagName('player')}
-			roles = list(strategies.keys())
-			counts = {r:1 for r in roles}
-		else:
-			roles = ["All"]
-			counts= {"All" : len(gameNode.getElementsByTagName("player"))}
-			strategies = {"All" : [e.getAttribute("id") for e in \
-				gameNode.getElementsByTagName("action")]}
-	elif ext == '.json':
-		f = open(filename)
-		data = load(f)
-		f.close()
-		counts = {r["name"] : int(r["count"]) for r in data["roles"]}
-		strategies = {r["name"] : r["strategy_array"] for r in data["roles"]}
-		roles = list(counts.keys())
-	else:
-		raise IOError("unsupported file type: " + ext)
-	return Game(roles, counts, strategies)
-
-
 def readJSON(filename):
 	f = open(filename)
 	data = load(f)
@@ -110,19 +81,95 @@ def parseSymmetricXML(gameNode):
 	return Game(roles, counts, strategies, payoffs)
 
 
+def writeJSON(game, filename):
+	"""
+	Writes game to JSON according to the Testbed role-symmetric game spec.
+	"""
+	raise NotImplementedError("waiting for final Testbed JSON spec")
+
+
 def writeXML(game, filename):
 	if len(game.roles) == 1:
 		writeSymmetricXML(game, filename)
 	elif all(map(lambda c: c==1, game.counts.values())):
 		writeStrategicXML(game, filename)
 	else:
-		raise NotImplementedError("No EGAT XML spec for role-symmetric games")
+		raise NotImplementedError("no EGAT XML spec for role-symmetric games")
 
 
-def writeJSON(game, filename):
+def writeSymmetricXML(game, filename):
 	"""
-	Writes game to JSON according to the Testbed role-symmetric game spec.
+	Writes game to XML according to the EGAT symmetric game spec.
+	Assumes (but doesn't check) that game is symmetric.
+	"""
+	role = game.roles[0]
+	doc = Document()
+	gameNode = doc.createElement("nfg")
+	doc.appendChild(gameNode)
+	playerSetNode = doc.createElement("players")
+	gameNode.appendChild(playerSetNode)
+	for i in range(game.counts[role]):
+		playerNode = doc.createElement("player")
+		playerNode.setAttribute("id", "p" + str(i))
+		playerSetNode.appendChild(playerNode)
+	actionSetNode = doc.createElement("actions")
+	gameNode.appendChild(actionSetNode)
+	for strategy in game.strategies[role]:
+		actionNode = doc.createElement("action")
+		actionNode.setAttribute("id", str(strategy))
+		actionSetNode.appendChild(actionNode)
+	payoffSetNode = doc.createElement("payoffs")
+	gameNode.appendChild(payoffSetNode)
+	for profile in game:
+		payoffNode = doc.createElement("payoff")
+		payoffSetNode.appendChild(payoffNode)
+		for strategy in profile[role].getStrategies():
+			outcomeNode = doc.createElement("outcome")
+			outcomeNode.setAttribute("action", str(strategy))
+			outcomeNode.setAttribute("count", \
+					str(profile[role].count(strategy)))
+			outcomeNode.setAttribute("value", str(game.getPayoff( \
+					profile, role, strategy)))
+			payoffNode.appendChild(outcomeNode)
+	file = open(filename, 'w')
+	file.write(doc.toprettyxml())
+	file.close()
+
+
+def writeStrategicXML(game, filename):
+	"""
+	Writes game to XML according to the EGAT strategic game spec.
+	Assumes (but doesn't check) that game is not role-symmetric.
 	"""
 	raise NotImplementedError("TODO")
+
+
+def readHeader(filename):
+	assert exists(filename)
+	ext = splitext(filename)[-1]
+	if ext == '.xml':
+		gameNode = parse(filename).getElementsByTagName("nfg")[0]
+		if len(gameNode.getElementsByTagName("player")[0]. \
+				getElementsByTagName("action")) > 0:
+			strategies = {p.getAttribute('id') : map(lambda s: \
+					s.getAttribute('id'), p.getElementsByTagName('action')) \
+					for p in gameNode.getElementsByTagName('player')}
+			roles = list(strategies.keys())
+			counts = {r:1 for r in roles}
+		else:
+			roles = ["All"]
+			counts= {"All" : len(gameNode.getElementsByTagName("player"))}
+			strategies = {"All" : [e.getAttribute("id") for e in \
+				gameNode.getElementsByTagName("action")]}
+	elif ext == '.json':
+		f = open(filename)
+		data = load(f)
+		f.close()
+		counts = {r["name"] : int(r["count"]) for r in data["roles"]}
+		strategies = {r["name"] : r["strategy_array"] for r in data["roles"]}
+		roles = list(counts.keys())
+	else:
+		raise IOError("unsupported file type: " + ext)
+	return Game(roles, counts, strategies)
 
 
