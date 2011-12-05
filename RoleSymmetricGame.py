@@ -103,37 +103,6 @@ class Profile(dict):
 		return reduce(mul, [sp.probability(profile[r]) for r, sp \
 				in self.items()])
 
-	def countArray(self, game):
-		"""for replicator dynamics arithmetic"""
-		counts = np.zeros([max([len(s) for s in game.strategies.values()]), \
-				len(game.roles)], dtype=float)
-		for i,r in enumerate(self.keys()):
-			for s in self[r].getStrategies():
-				counts[game.strategies[r].index(s), i] = self[r].count(s)
-		return counts
-
-	def valueArray(self, game):
-		"""for replicator dynamics arithmetic"""
-		values = np.zeros([max([len(s) for s in game.strategies.values()]), \
-				len(game.roles)], dtype=float)
-		for i,r in enumerate(self.keys()):
-			for s in self[r].getStrategies():
-				values[game.strategies[r].index(s), i] = game[self][r][s]
-		return values
-
-	def probArray(self, game):
-		"""
-		for replicator dynamics arithmetic
-		only valid for mixed strategy profiles where each role has a single
-		mixed strategy
-		"""
-		probs= np.zeros([max([len(s) for s in game.strategies.values()]), \
-				len(game.roles)], dtype=float)
-		for i,r in enumerate(self.keys()):
-			for s in self[r][0].getStrategies():
-				probs[game.strategies[r].index(s), i] = self[r][0][s]
-		return probs
-
 	def dist(self, other):
 		return sum([self[r].dist(other[r]) for r in self.keys()])
 
@@ -351,13 +320,15 @@ class Game(dict):
 		return payoff
 
 	def regret(self, profile):
-		regret = -float('inf')
+		regret = 0
 		for role, symProf in profile.items():
 			for strategy in symProf.getStrategies():
 				payoff = self.getPayoff(profile, role, strategy)
-				for ds, dp in self.deviations(profile, role, strategy):
-					r = self.getPayoff(dp, role, ds) - payoff
-					regret = max(r, regret)
+				deviations = self.deviations(profile, role, strategy)
+				for dev_strat, dev_prof in deviations:
+					r = self.getPayoff(dev_prof, role, dev_strat) - payoff
+					if r > regret:
+						regret = r
 		return regret
 
 	def deviations(self, profile, role, strategy):
@@ -408,6 +379,32 @@ class Game(dict):
 		Useful for determining the minimum achievable payoff.
 		"""
 		return reduce(add, map(lambda d: list(d[role].values()), self.values()))
+
+	def expectedValues(self, rsmsp):
+		"""
+		Gives the EV of each pure strategy when played against %rsmsp.
+
+		expectedValues() is preferable to getPayoff() for replicator dynamics,
+		because it requires only one loop over the game's payoffs.
+
+		input:
+		rsmsp: a role-symmetric (one-per-role) mixed strategy profile
+
+		output:
+		EVs: mapping from roles to pure strategies to payoffs
+		"""
+		values = {r:{s:0.0 for s in self.strategies[r]} for r in self.roles}
+		total_prob = {r:{s:0.0 for s in self.strategies[r]} for r in self.roles}
+		for profile in self:
+			prob = rsmsp.probability(profile)
+			if prob == 0:
+				continue
+			for role in self.roles:
+				for strategy in profile[role].getStrategies():
+					values[role][strategy] += self[profile][role][strategy] \
+							* prob / rsmsp[role][0][strategy] * \
+							profile[role].count(strategy) / self.counts[role]
+		return values
 
 	def symmetricProfiles(self, role, smsp):
 		"""
