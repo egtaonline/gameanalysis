@@ -85,7 +85,7 @@ def pureNash(game, epsilon=0):
 		if r < mr:
 			mr = r
 			mrp = profile
-		if r == 0:
+		if r <= 0:
 			NE.add(profile)
 		elif r <= epsilon:
 			eNE.add(profile)
@@ -113,26 +113,28 @@ def RD(game, mixedProfile=None, iters=10000, thresh=1e-8, verbose=False):
 	if not mixedProfile:
 		mixedProfile = game.uniformMixedProfile()
 	mix = mixedProfile.probArray(game)
-	payoffs = [(prof.countArray(game), prof.valueArray(game)) for prof in game]
+	payoffs = [(prof.countArray(game), prof.valueArray(game), \
+			prof.repetitionsArray(game)) for prof in game]
 	minPayoffs = np.zeros(mix.shape, dtype=float)
 	for i,r in enumerate(game.roles):
 		minPayoffs[:,i].fill(min(game.payoffList(r)))
 
 	e = np.finfo(np.float64).tiny
 	for i in range(iters):
-		EVs = np.zeros(mix.shape, dtype=float)
-		for count_arr, payoff_arr in payoffs:
-			EVs += payoff_arr * (mix**count_arr).prod() / (mix + e)
 		old_mix = mix
+		EVs = np.zeros(mix.shape, dtype=float)
+		for count_arr, payoff_arr, reps_arr in payoffs:
+			EVs += payoff_arr * (mix**count_arr).prod() * reps_arr / (mix + e)
 		mix = (EVs - minPayoffs) * mix
 		mix /= sum(mix)
 		if max(abs(mix - old_mix).flat) <= thresh:
 			break
-	if verbose:
-		print "iterations =",i
-	return RSG.Profile({r:RSG.SymmetricProfile([RSG.mixture(game.strategies[r],\
+	eq = RSG.Profile({r:RSG.SymmetricProfile([RSG.mixture(game.strategies[r],\
 			mix[:len(game.strategies[r]), i])]*game.counts[r]) for i,r in \
 			enumerate(game.roles)})
+	if verbose:
+		print "iterations =", i, "...", eq, "... regret =", game.regret(eq)
+	return eq
 
 
 from os.path import abspath
@@ -150,16 +152,16 @@ if __name__ == "__main__":
 			"clique-finding", default = "", nargs="*")
 	args = parser.parse_args()
 	input_game = GameIO.readGame(args.file)
-	print "input game =", abspath(args.file), "\n", input_game, "\n"
+	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
 
 	#iterated elimination of never best response strategies
-	rational_game = IE_NWBR(input_game)
-	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
-			rational_game.strategies[r])) for r in filter(lambda role: \
-			input_game.strategies[role] != rational_game.strategies[role], \
-			input_game.roles)}
-	print "strategies removed by IE_NWBR:"
-	print (eliminated if eliminated else "none"), "\n"
+#	rational_game = IE_NWBR(input_game)
+#	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
+#			rational_game.strategies[r])) for r in filter(lambda role: \
+#			input_game.strategies[role] != rational_game.strategies[role], \
+#			input_game.roles)}
+#	print "strategies removed by IE_NWBR:"
+#	print (eliminated if eliminated else "none"), "\n\n"
 
 	#pure strategy Nash equilibrium search
 	PNE, ePNE, mrp, mr = pureNash(input_game, args.e)
@@ -171,17 +173,17 @@ if __name__ == "__main__":
 				"(0 < epsilon <= " + str(args.e) + "):\n", \
 				RSG.list_repr(map(lambda eq: str(eq) + ", regret=" + \
 				str(input_game.regret(eq)), ePNE), sep="\n"), "\n"
-	print "minimum regret profile:", mrp, "\nregret =", mr, "\n"
+	print "minimum regret profile:", mrp, "\nregret =", mr, "\n\n"
 
 	#mixed strategy Nash equilibrium search over maximal complete subgames
 	if len(input_game) == input_game.size:
 		maximal_subgames = {input_game}
-		print "input game is maximal"
+		print "input game is maximal\n"
 	else:
 		maximal_subgames = cliques(input_game)#, map(readHeader, args.subgames))
 		print len(maximal_subgames), "maximal subgames:"
 	for i, subgame in enumerate(maximal_subgames):
-		print "replicator dynamics on clique", i, ":", subgame
+		print "replicator dynamics on clique", i, ":", subgame, "\n"
 		eMNE, mrmp, mmr = mixedNash(subgame, epsilon=args.e, verbose=True)
 		if eMNE:
 			print "RD found", len(eMNE), "approximate symmetric mixed strategy"\
@@ -190,4 +192,4 @@ if __name__ == "__main__":
 					sep="\n"),"\n"
 		else:
 			print "lowest regret symmetric mixed profile found by RD:"
-			print str(mrmp) + "regret=" + str(mmr)
+			print str(mrmp) + " ... regret=" + str(mmr)

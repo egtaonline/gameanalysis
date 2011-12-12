@@ -71,7 +71,7 @@ class SymmetricProfile(tuple):
 			return self._reps
 		except:
 			self._reps = factorial(len(self)) / reduce(mul, (factorial( \
-					self.count(s)) for s in sorted(set(self))))
+					self.count(s)) for s in sorted(set(self))), 1)
 			return self._reps
 
 
@@ -121,6 +121,17 @@ class Profile(dict):
 				values[game.strategies[r].index(s), i] = game[self][r][s]
 		return values
 
+	def repetitionsArray(self, game):
+		"""for replicator dynamics arithmetic"""
+		reps = np.zeros([max([len(s) for s in game.strategies.values()]), \
+				len(game.roles)], dtype=float)
+		for i,r in enumerate(self.keys()):
+			for s in self[r].getStrategies():
+				reps[game.strategies[r].index(s), i] = \
+						self.remove(r,s).repetitions()
+		return reps
+
+
 	def probArray(self, game):
 		"""
 		for replicator dynamics arithmetic
@@ -152,7 +163,7 @@ class Profile(dict):
 
 	def repetitions(self):
 		"""Combinations of orderings of role profiles that could occur."""
-		return reduce(mul, [p.repetitions() for p in self.values()])
+		return reduce(mul, [p.repetitions() for p in self.values()], 1)
 
 
 class mixture(np.ndarray):
@@ -184,7 +195,8 @@ class mixture(np.ndarray):
 	def __repr__(self):
 		try:
 			return "{" + list_repr((str(s) + ":" + str(int(round(100*p))) + \
-					"%" for s,p in sorted(self.strategies.items()))) + "}"
+					"%" for s,p in filter(lambda x: x[1]>1e-3, \
+					sorted(self.strategies.items())))) + "}"
 		except AttributeError:
 			return np.ndarray.__repr__(self)[8:-1]
 
