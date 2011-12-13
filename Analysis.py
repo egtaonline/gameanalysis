@@ -178,15 +178,18 @@ if __name__ == "__main__":
 				str(input_game.regret(eq)), ePNE), sep="\n"), "\n"
 	print "minimum regret profile:", mrp, "\nregret =", mr, "\n\n"
 
-	#mixed strategy Nash equilibrium search over maximal complete subgames
+	#clique finding
+	print "cliques:"
 	if len(input_game) == input_game.size:
 		maximal_subgames = {input_game}
-		print "input game is maximal\n"
+		print "input game is maximal\n\n"
 	else:
 		maximal_subgames = cliques(input_game)#, map(readHeader, args.subgames))
-		print len(maximal_subgames), "maximal subgames:"
+		print "found", len(maximal_subgames), "maximal subgames\n\n"
+
+	#mixed strategy Nash equilibrium search over maximal complete subgames
 	for i, subgame in enumerate(maximal_subgames):
-		print "replicator dynamics on clique", i, ":", subgame.strategies, "\n"
+		print "clique", i, ":", subgame.strategies, "\n"
 		eMNE, mrmp, mmr = mixedNash(subgame, epsilon=args.e, verbose=False)
 		if eMNE:
 			print "RD found", len(eMNE), "approximate symmetric mixed strategy"\
