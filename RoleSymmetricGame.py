@@ -46,14 +46,14 @@ class SymmetricProfile(tuple):
 
 	def probability(self, profile):
 		"""only makes sense for mixed strategy profiles"""
-		try:
-			return reduce(add, [reduce(mul, [self[i][s] for i,s in \
-					enumerate(p)]) for p in set(permutations(profile))])
-		except TypeError:
-			return 1
+		return sum([reduce(mul, [self[i][s] for i,s in enumerate(p)], 1) \
+				for p in set(permutations(profile))])
 
 	def dist(self, other):
 		return sum([s.dist(o) for s,o in zip(self, other)])
+
+	def isSymmetric(self):
+		return len(set(self)) == 1
 
 	def isMixed(self):
 		return any([isinstance(s, mixture) for s in self])
@@ -62,6 +62,8 @@ class SymmetricProfile(tuple):
 		return all([isinstance(s, mixture) for s in self])
 
 	def __repr__(self):
+		if self.isMixed() and self.isSymmetric():
+			return repr(self[0])
 		return "(" + list_repr((repr(self.count(s)) + "x" + \
 				repr(s) for s in sorted(set(self)))) + ")"
 
@@ -147,6 +149,9 @@ class Profile(dict):
 
 	def dist(self, other):
 		return sum([self[r].dist(other[r]) for r in self.keys()])
+
+	def isSymmetric(self):
+		return all([p.isSymmetric() for p in self.values()])
 
 	def isMixed(self):
 		return any([p.isMixed() for p in self.values()])

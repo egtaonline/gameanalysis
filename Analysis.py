@@ -113,8 +113,9 @@ def RD(game, mixedProfile=None, iters=10000, thresh=1e-8, verbose=False):
 	if not mixedProfile:
 		mixedProfile = game.uniformMixedProfile()
 	mix = mixedProfile.probArray(game)
-	payoffs = [(prof.countArray(game), prof.valueArray(game), \
-			prof.repetitionsArray(game)) for prof in game]
+	if not hasattr(game, 'payoffs'):
+		game.payoffs = [(prof.countArray(game), prof.valueArray(game), \
+				prof.repetitionsArray(game)) for prof in game]
 	minPayoffs = np.zeros(mix.shape, dtype=float)
 	for i,r in enumerate(game.roles):
 		minPayoffs[:,i].fill(min(game.payoffList(r)))
@@ -122,9 +123,8 @@ def RD(game, mixedProfile=None, iters=10000, thresh=1e-8, verbose=False):
 	e = np.finfo(np.float64).tiny
 	for i in range(iters):
 		old_mix = mix
-		EVs = np.zeros(mix.shape, dtype=float)
-		for count_arr, payoff_arr, reps_arr in payoffs:
-			EVs += payoff_arr * (mix**count_arr).prod() * reps_arr / (mix + e)
+		EVs = sum([payoff_arr * (mix**count_arr).prod() * reps_arr / (mix+e) \
+				for count_arr, payoff_arr, reps_arr in game.payoffs])
 		mix = (EVs - minPayoffs) * mix
 		mix /= sum(mix)
 		if max(abs(mix - old_mix).flat) <= thresh:
@@ -155,13 +155,13 @@ if __name__ == "__main__":
 	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
 
 	#iterated elimination of never best response strategies
-#	rational_game = IE_NWBR(input_game)
-#	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
-#			rational_game.strategies[r])) for r in filter(lambda role: \
-#			input_game.strategies[role] != rational_game.strategies[role], \
-#			input_game.roles)}
-#	print "strategies removed by IE_NWBR:"
-#	print (eliminated if eliminated else "none"), "\n\n"
+	rational_game = IE_NWBR(input_game)
+	eliminated = {r:sorted(set(input_game.strategies[r]).difference( \
+			rational_game.strategies[r])) for r in filter(lambda role: \
+			input_game.strategies[role] != rational_game.strategies[role], \
+			input_game.roles)}
+	print "strategies removed by IE_NWBR:"
+	print (eliminated if eliminated else "none"), "\n\n"
 
 	#pure strategy Nash equilibrium search
 	PNE, ePNE, mrp, mr = pureNash(input_game, args.e)
