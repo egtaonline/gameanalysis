@@ -92,8 +92,10 @@ def pureNash(game, epsilon=0):
 	return NE, eNE, mrp, mr
 
 
-def mixedNash(game, epsilon=0, dist_thresh=0.01, verbose=False):
-	MNE_candidates = [RD(game, verbose=verbose)]
+def mixedNash(game, epsilon=0, dist_thresh=1e-2, verbose=False):
+	arrays = [(prof.countArray(game), prof.valueArray(game), \
+			prof.repetitionsArray(game)) for prof in game]
+	MNE_candidates = [RD(game, array_data=arrays, verbose=verbose)]
 	for r in game.roles:
 		for s in game.strategies[r]:
 			eq = RD(game, game.biasedMixedProfile(r,s), verbose=verbose)
@@ -106,16 +108,17 @@ def mixedNash(game, epsilon=0, dist_thresh=0.01, verbose=False):
 	return eMNE, mrp, mr
 
 
-def RD(game, mixedProfile=None, iters=10000, thresh=1e-8, verbose=False):
+def RD(game, mixedProfile=None, array_data=None, iters=10000, thresh=1e-8, \
+		verbose=False):
 	"""
 	Replicator dynamics.
 	"""
 	if not mixedProfile:
 		mixedProfile = game.uniformMixedProfile()
-	mix = mixedProfile.probArray(game)
-	if not hasattr(game, 'payoffs'):
-		game.payoffs = [(prof.countArray(game), prof.valueArray(game), \
+	if not array_data:
+		array_data = [(prof.countArray(game), prof.valueArray(game), \
 				prof.repetitionsArray(game)) for prof in game]
+	mix = mixedProfile.probArray(game)
 	minPayoffs = np.zeros(mix.shape, dtype=float)
 	for i,r in enumerate(game.roles):
 		minPayoffs[:,i].fill(min(game.payoffList(r)))
@@ -124,7 +127,7 @@ def RD(game, mixedProfile=None, iters=10000, thresh=1e-8, verbose=False):
 	for i in range(iters):
 		old_mix = mix
 		EVs = sum([payoff_arr * (mix**count_arr).prod() * reps_arr / (mix+e) \
-				for count_arr, payoff_arr, reps_arr in game.payoffs])
+				for count_arr, payoff_arr, reps_arr in array_data])
 		mix = (EVs - minPayoffs) * mix
 		mix /= sum(mix)
 		if max(abs(mix - old_mix).flat) <= thresh:
@@ -183,8 +186,8 @@ if __name__ == "__main__":
 		maximal_subgames = cliques(input_game)#, map(readHeader, args.subgames))
 		print len(maximal_subgames), "maximal subgames:"
 	for i, subgame in enumerate(maximal_subgames):
-		print "replicator dynamics on clique", i, ":", subgame, "\n"
-		eMNE, mrmp, mmr = mixedNash(subgame, epsilon=args.e, verbose=True)
+		print "replicator dynamics on clique", i, ":", subgame.strategies, "\n"
+		eMNE, mrmp, mmr = mixedNash(subgame, epsilon=args.e, verbose=False)
 		if eMNE:
 			print "RD found", len(eMNE), "approximate symmetric mixed strategy"\
 					+ " Nash equilibria:\n", RSG.list_repr(map(lambda eq: \

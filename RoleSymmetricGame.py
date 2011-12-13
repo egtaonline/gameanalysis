@@ -109,7 +109,7 @@ class Profile(dict):
 		"""for replicator dynamics arithmetic"""
 		counts = np.zeros([max([len(s) for s in game.strategies.values()]), \
 				len(game.roles)], dtype=float)
-		for i,r in enumerate(self.keys()):
+		for i,r in enumerate(game.roles):
 			for s in self[r].getStrategies():
 				counts[game.strategies[r].index(s), i] = self[r].count(s)
 		return counts
@@ -118,7 +118,7 @@ class Profile(dict):
 		"""for replicator dynamics arithmetic"""
 		values = np.zeros([max([len(s) for s in game.strategies.values()]), \
 				len(game.roles)], dtype=float)
-		for i,r in enumerate(self.keys()):
+		for i,r in enumerate(game.roles):
 			for s in self[r].getStrategies():
 				values[game.strategies[r].index(s), i] = game[self][r][s]
 		return values
@@ -127,7 +127,7 @@ class Profile(dict):
 		"""for replicator dynamics arithmetic"""
 		reps = np.zeros([max([len(s) for s in game.strategies.values()]), \
 				len(game.roles)], dtype=float)
-		for i,r in enumerate(self.keys()):
+		for i,r in enumerate(game.roles):
 			for s in self[r].getStrategies():
 				reps[game.strategies[r].index(s), i] = \
 						self.remove(r,s).repetitions()
@@ -142,7 +142,7 @@ class Profile(dict):
 		"""
 		probs= np.zeros([max([len(s) for s in game.strategies.values()]), \
 				len(game.roles)], dtype=float)
-		for i,r in enumerate(self.keys()):
+		for i,r in enumerate(game.roles):
 			for s in self[r][0].getStrategies():
 				probs[game.strategies[r].index(s), i] = self[r][0][s]
 		return probs
@@ -199,7 +199,7 @@ class mixture(np.ndarray):
 
 	def __repr__(self):
 		try:
-			return "{" + list_repr((str(s) + ":" + str(int(round(100*p))) + \
+			return "{" + list_repr((str(s) + ":" + str(int(round(100*p,1))) + \
 					"%" for s,p in filter(lambda x: x[1]>1e-3, \
 					sorted(self.strategies.items())))) + "}"
 		except AttributeError:
@@ -432,8 +432,8 @@ class Game(dict):
 		probability under symmetric mixed strategy profile smsp.
 		"""
 		return map(SymmetricProfile, set(map(lambda p: tuple(sorted(p)), \
-				product(*[filter(lambda s: mixture[s], self.strategies[role]) \
-				for mixture in smsp]))))
+				product(*[filter(lambda s: mix[s], self.strategies[role]) \
+				for mix in smsp]))))
 
 	def roleSymmetricProfiles(self, rsmsp):
 		"""
