@@ -199,7 +199,7 @@ class mixture(np.ndarray):
 
 	def __repr__(self):
 		try:
-			return "{" + list_repr((str(s) + ":" + str(int(round(100*p,1))) + \
+			return "{" + list_repr((str(s) + ":" + str(round(100*p,2)) + \
 					"%" for s,p in filter(lambda x: x[1]>1e-3, \
 					sorted(self.strategies.items())))) + "}"
 		except AttributeError:
@@ -367,7 +367,7 @@ class Game(dict):
 						* strategy[s]
 		return payoff
 
-	def regret(self, profile):
+	def exactRegret(self, profile):
 		regret = -float('inf')
 		for role, symProf in profile.items():
 			for strategy in symProf.getStrategies():
@@ -376,6 +376,22 @@ class Game(dict):
 					r = self.getPayoff(dp, role, ds) - payoff
 					regret = max(r, regret)
 		return regret
+
+#	def confirmedRegret(self, profile):
+#		regret = -float('inf')
+#		best = None
+#		for role, symProf in profile.items():
+#			for strategy in symProf.getStrategies():
+#				payoff = self.getPayoff(profile, role, strategy)
+#				for ds, dp in self.deviations(profile, role, strategy):
+#					try:
+#						r = self.getPayoff(dp, role, ds) - payoff
+#						if r > regret:
+#							regret = r
+#							best = ds
+#					except KeyError:
+#						continue
+#		return regret, best
 
 	def deviations(self, profile, role, strategy):
 		"""

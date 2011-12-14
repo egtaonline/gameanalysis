@@ -79,7 +79,7 @@ def pureNash(game, epsilon=0):
 	mr = float("inf")
 	for profile in game:
 		try:
-			r = game.regret(profile)
+			r = game.exactRegret(profile)
 		except KeyError:
 			continue
 		if r < mr:
@@ -92,7 +92,7 @@ def pureNash(game, epsilon=0):
 	return NE, eNE, mrp, mr
 
 
-def mixedNash(game, epsilon=0, dist_thresh=1e-2, verbose=False):
+def mixedNash(game, regret_thresh=0, dist_thresh=1e-2, verbose=False):
 	arrays = [(prof.countArray(game), prof.valueArray(game), \
 			prof.repetitionsArray(game)) for prof in game]
 	MNE_candidates = [RD(game, array_data=arrays, verbose=verbose)]
@@ -101,10 +101,10 @@ def mixedNash(game, epsilon=0, dist_thresh=1e-2, verbose=False):
 			eq = RD(game, game.biasedMixedProfile(r,s), verbose=verbose)
 			if all(map(lambda e: e.dist(eq) > dist_thresh, MNE_candidates)):
 				MNE_candidates.append(eq)
-	regrets = {eq:game.regret(eq) for eq in MNE_candidates}
+	regrets = {eq:game.exactRegret(eq) for eq in MNE_candidates}
 	mrp = min(regrets, key=regrets.get)
 	mr = regrets[mrp]
-	eMNE = filter(lambda eq: regrets[eq] <= epsilon, MNE_candidates)
+	eMNE = filter(lambda eq: regrets[eq] <= regret_thresh, MNE_candidates)
 	return eMNE, mrp, mr
 
 
@@ -136,7 +136,7 @@ def RD(game, mixedProfile=None, array_data=None, iters=10000, thresh=1e-8, \
 			mix[:len(game.strategies[r]), i])]*game.counts[r]) for i,r in \
 			enumerate(game.roles)})
 	if verbose:
-		print "iterations =", i, "...", eq, "... regret =", game.regret(eq)
+		print "iterations =", i, "...", eq, "... regret =", game.exactRegret(eq)
 	return eq
 
 
@@ -148,11 +148,13 @@ if __name__ == "__main__":
 	parser.add_argument("file", type=str, help="Game file to be analyzed. " +\
 			"Suported file types: EGAT symmetric XML, EGAT strategic XML, " +\
 			"testbed role-symmetric JSON.")
-	parser.add_argument("-e", metavar="EPSILON", type=float, default=0, \
-			help="Max allowed epsilon for approximate Nash equilibria")
-	parser.add_argument("--subgames", type=str, help="optinal files " +\
-			"containing known full subgames; useful for speeding up " +\
-			"clique-finding", default = "", nargs="*")
+	parser.add_argument("-r", metavar="REGRET", type=float, default=0, \
+			help="Max allowed regret for approximate Nash equilibria")
+	parser.add_argument("-d", metavar="DISTANCE", type=float, default=1e-2, \
+			help="L2-distance threshold to consider equilibria distinct")
+#	parser.add_argument("--subgames", type=str, help="optinal files " +\
+#			"containing known full subgames; useful for speeding up " +\
+#			"clique-finding", default = "", nargs="*")
 	args = parser.parse_args()
 	input_game = GameIO.readGame(args.file)
 	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
@@ -167,15 +169,15 @@ if __name__ == "__main__":
 	print (eliminated if eliminated else "none"), "\n\n"
 
 	#pure strategy Nash equilibrium search
-	PNE, ePNE, mrp, mr = pureNash(input_game, args.e)
+	PNE, ePNE, mrp, mr = pureNash(input_game, args.d)
 	if PNE:
 		print len(PNE), "exact pure strategy Nash equilibria:\n", \
 				RSG.list_repr(PNE, sep="\n"), "\n"
 	if ePNE:
 		print len(ePNE), "approximate pure strategy Nash equilibria", \
-				"(0 < epsilon <= " + str(args.e) + "):\n", \
+				"(0 < epsilon <= " + str(args.d) + "):\n", \
 				RSG.list_repr(map(lambda eq: str(eq) + ", regret=" + \
-				str(input_game.regret(eq)), ePNE), sep="\n"), "\n"
+				str(input_game.exactRegret(eq)), ePNE), sep="\n"), "\n"
 	print "minimum regret profile:", mrp, "\nregret =", mr, "\n\n"
 
 	#clique finding
@@ -184,18 +186,18 @@ if __name__ == "__main__":
 		maximal_subgames = {input_game}
 		print "input game is maximal\n\n"
 	else:
-		maximal_subgames = cliques(input_game)#, map(readHeader, args.subgames))
+		maximal_subgames = cliques(input_game)
 		print "found", len(maximal_subgames), "maximal subgames\n\n"
 
 	#mixed strategy Nash equilibrium search over maximal complete subgames
 	for i, subgame in enumerate(maximal_subgames):
 		print "clique", i, ":", subgame.strategies, "\n"
-		eMNE, mrmp, mmr = mixedNash(subgame, epsilon=args.e, verbose=False)
+		eMNE, mrmp, mmr = mixedNash(subgame, args.r, args.d)
 		if eMNE:
 			print "RD found", len(eMNE), "approximate symmetric mixed strategy"\
 					+ " Nash equilibria:\n", RSG.list_repr(map(lambda eq: \
-					str(eq) + ", regret=" + str(subgame.regret(eq)), eMNE), \
-					sep="\n"),"\n"
+					str(eq) + "\nregret=" + str(subgame.exactRegret(eq)), \
+					eMNE), sep="\n"),"\n"
 		else:
 			print "lowest regret symmetric mixed profile found by RD:"
 			print str(mrmp) + " ... regret=" + str(mmr)
