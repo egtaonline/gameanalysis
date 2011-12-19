@@ -192,7 +192,9 @@ class mixture(np.ndarray):
 		try:
 			return np.ndarray.__getitem__(self, item)
 		except ValueError:
-			return self.strategies[item]
+			if item in self.strategies:
+				return self.strategies[item]
+			return 0
 
 	def getStrategies(self):
 		return list(self.strategies.keys())
@@ -308,7 +310,8 @@ class Game(dict):
 		if not strategies:
 			strategies = {r:[] for r in self.roles}
 		g = Game(roles, self.counts, strategies)
-		g.update({p:self[p] for p in g.allProfiles()})
+		g.update({p:self[p] for p in filter(lambda p: p in self, \
+				g.allProfiles())})
 		return g
 
 	def isSubgame(self, big_game):
@@ -361,7 +364,8 @@ class Game(dict):
 		payoff = 0
 		opponent_profile = profile.remove(role, strategy)
 		for op in self.roleSymmetricProfiles(opponent_profile):
-			for s in self.strategies[role]:
+			for s in filter(lambda s: any(m[s] for m in profile[role]), \
+					self.strategies[role]):
 				p = op.add(role, s)
 				payoff += self[p][role][s]*opponent_profile.probability(op) \
 						* strategy[s]
@@ -377,21 +381,21 @@ class Game(dict):
 					regret = max(r, regret)
 		return regret
 
-#	def confirmedRegret(self, profile):
-#		regret = -float('inf')
-#		best = None
-#		for role, symProf in profile.items():
-#			for strategy in symProf.getStrategies():
-#				payoff = self.getPayoff(profile, role, strategy)
-#				for ds, dp in self.deviations(profile, role, strategy):
-#					try:
-#						r = self.getPayoff(dp, role, ds) - payoff
-#						if r > regret:
-#							regret = r
-#							best = ds
-#					except KeyError:
-#						continue
-#		return regret, best
+	def confirmedRegret(self, profile):
+		regret = -float('inf')
+		best = None
+		for role, symProf in profile.items():
+			for strategy in symProf.getStrategies():
+				payoff = self.getPayoff(profile, role, strategy)
+				for ds, dp in self.deviations(profile, role, strategy):
+					try:
+						r = self.getPayoff(dp, role, ds) - payoff
+						if r > regret:
+							regret = r
+							best = ds
+					except (KeyError, ValueError):
+						continue
+		return regret, best
 
 	def deviations(self, profile, role, strategy):
 		"""
