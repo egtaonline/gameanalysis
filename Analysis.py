@@ -208,7 +208,7 @@ from os.path import abspath
 from argparse import ArgumentParser
 
 if __name__ == "__main__":
-	print "command: " + RSG.list_repr(argv) + "\n"
+	print "command: " + RSG.list_repr(argv, sep=" ") + "\n"
 	parser = ArgumentParser()
 	parser.add_argument("file", type=str, help="Game file to be analyzed. " +\
 			"Suported file types: EGAT symmetric XML, EGAT strategic XML, " +\
@@ -245,7 +245,7 @@ if __name__ == "__main__":
 				str(rational_game.exactRegret(eq)), ePNE), sep="\n"), "\n"
 	print "minimum regret pure profile:", mrp, "\nregret =", mr, "\n\n"
 
-	#clique finding
+	#clique (maximal complete subgame) finding
 	print "cliques:"
 	if len(rational_game) == rational_game.size:
 		maximal_subgames = {rational_game}

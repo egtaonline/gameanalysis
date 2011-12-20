@@ -201,7 +201,7 @@ class mixture(np.ndarray):
 
 	def __repr__(self):
 		try:
-			return "{" + list_repr((str(s) + ":" + str(round(100*p,2)) + \
+			return "{" + list_repr((str(s) + ":" + str(round(100*p,1)) + \
 					"%" for s,p in filter(lambda x: x[1]>1e-3, \
 					sorted(self.strategies.items())))) + "}"
 		except AttributeError:
