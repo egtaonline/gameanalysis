@@ -325,6 +325,17 @@ class Game(dict):
 				return False
 		return True
 
+	def __cmp__(self, other):
+		return cmp(len(self.roles), len(other.roles)) or \
+				cmp(self.roles, other.roles) or \
+				cmp(sum(self.counts.values()), sum(other.counts.values())) or \
+				cmp(self.counts, other.counts) or \
+				cmp(sum(map(len, self.strategies.values())), \
+					sum(map(len, other.strategies.values()))) or \
+				cmp(self.strategies, other.strategies) or \
+				cmp(len(self), len(other)) or \
+				dict.__cmp__(self, other)
+
 	def __eq__(self, other):
 		return self.roles==other.roles and self.counts==other.counts and \
 				self.strategies==other.strategies and dict.__eq__(self,other)

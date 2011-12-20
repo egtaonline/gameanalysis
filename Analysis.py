@@ -243,7 +243,6 @@ if __name__ == "__main__":
 				str(rational_game.exactRegret(eq)), ePNE), sep="\n"), "\n"
 	print "minimum regret pure profile:", mrp, "\nregret =", mr, "\n\n"
 
-	print "deleting", rational_game.popitem()
 	#clique finding
 	print "cliques:"
 	if len(rational_game) == rational_game.size:
@@ -254,8 +253,8 @@ if __name__ == "__main__":
 		print "found", len(maximal_subgames), "maximal subgames\n\n"
 
 	#mixed strategy Nash equilibrium search over maximal complete subgames
-	for i, subgame in enumerate(maximal_subgames):
-		print "clique", i+1, ":", subgame.strategies, "\n"
+	for i, subgame in enumerate(sorted(maximal_subgames)):
+		print "\nclique", i+1, ":", subgame.strategies, "\n"
 		eMNE, mrmp = mixedNash(subgame, args.r, args.d)
 		if eMNE:
 			print "RD found", len(eMNE), "approximate symmetric mixed strategy"\
@@ -263,9 +262,8 @@ if __name__ == "__main__":
 			print RSG.list_repr(map(lambda eq: str(eq) + \
 					"\n\tclique regret:\t\t" + str(subgame.exactRegret(eq)) + \
 					"\n\tfull game regret:\t" + str(rational_game.\
-					confirmedRegret(eq)[0]) + "\n\tbest " + "deviation:\t\t" + \
-					str(rational_game.confirmedRegret(eq)[1]), eMNE), \
-					sep="\n"),"\n"
+					confirmedRegret(eq)[0]) + "\n\tbest deviation:\t\t" + str( \
+					rational_game.confirmedRegret(eq)[1]), eMNE), sep="\n"),"\n"
 		else:
 			print "no approximate equilibria with regret at most", args.r
 			print "lowest regret symmetric mixed profile found by RD:"
