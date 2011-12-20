@@ -73,7 +73,7 @@ def CNWBR(game):
 
 def CPSD(game):
 	"""
-	conditional pure-strategy dominance criterion for IEDS
+	conditional strict pure-strategy dominance criterion for IEDS
 
 	The criterion is 'conditional' in that it will eliminate strategies that
 	are dominated given all available data in a partial game.
@@ -81,15 +81,20 @@ def CPSD(game):
 	dominated = {r:set() for r in game.roles}
 	for r in game.roles:
 		for s1, s2 in RSG.product(game.strategies[r], repeat=2):
+			if s1 == s2:
+				continue
 			for profile in game:
 				v1 = v2 = float('-inf')
 				try:
 					v1 = game.getPayoff(profile, r, s1)
-					v2 = game.getPayoff(profile.remove(r,s1).add(r,s2), r, s2)
-					if v1 >= v2:
-						break
 				except KeyError:
 					continue
+				try:
+					v2 = game.getPayoff(profile.remove(r,s1).add(r,s2), r, s2)
+				except KeyError:
+					break
+				if v1 >= v2:
+					break
 			if v1 < v2:
 				dominated[r].add(s1)
 	return game.subgame(strategies={r:set(game.strategies[r]) - dominated[r] \
@@ -98,7 +103,7 @@ def CPSD(game):
 
 def PSD(game):
 	"""
-	confirmed pure-strategy dominance criterion for IEDS
+	confirmed strict pure-strategy dominance criterion for IEDS
 
 	This criterion differs from CPSD in that it will only declare a strategy
 	dominated if all profiles in which both it and the dominating strategy
@@ -107,6 +112,8 @@ def PSD(game):
 	dominated = {r:set() for r in game.roles}
 	for r in game.roles:
 		for s1, s2 in RSG.product(game.strategies[r], repeat=2):
+			if s1 == s2:
+				continue
 			data_missing = False
 			for profile in game:
 				v1 = v2 = float('-inf')

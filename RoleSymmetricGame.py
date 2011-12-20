@@ -341,10 +341,14 @@ class Game(dict):
 				self.strategies==other.strategies and dict.__eq__(self,other)
 
 	def __repr__(self):
-		return "RoleSymmetricGame:\nroles: " + list_repr(self.roles) + \
-				"\ncounts: " + str(self.counts) + "\nstrategies: " + \
-				str(self.strategies) + "\npayoff data for " + \
-				str(len(self)) + " out of " + str(self.size) + " profiles"
+		return ("RoleSymmetricGame:\n\troles: " + list_repr(self.roles) + \
+				"\n\tcounts:\n\t\t" + list_repr(map(lambda x: str(x[1]) +"x "+ \
+				str(x[0]), self.counts.items()), sep="\n\t\t") + \
+				"\n\tstrategies:\n\t\t" + list_repr(map(lambda x: x[0] + \
+				":\n\t\t\t" + list_repr(x[1], sep="\n\t\t\t"), \
+				self.strategies.items()), sep="\n\t\t") + \
+				"\npayoff data for " + str(len(self)) + " out of " + \
+				str(self.size) + " profiles").expandtabs(4)
 
 	def getPayoff(self, profile, role, strategy):
 		#try to look up payoff for pure strategy & profile
@@ -463,8 +467,8 @@ class Game(dict):
 		probability under symmetric mixed strategy profile smsp.
 		"""
 		return map(SymmetricProfile, set(map(lambda p: tuple(sorted(p)), \
-				product(*[filter(lambda s: mix[s], self.strategies[role]) \
-				for mix in smsp]))))
+				product(*[filter(lambda s: mix[s] > 1e-4, \
+				self.strategies[role]) for mix in smsp]))))
 
 	def roleSymmetricProfiles(self, rsmsp):
 		"""
