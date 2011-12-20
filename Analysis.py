@@ -203,10 +203,12 @@ def RD(game, mixedProfile=None, array_data=None, iters=10000, thresh=1e-8, \
 	return eq
 
 
+from sys import argv
 from os.path import abspath
 from argparse import ArgumentParser
 
 if __name__ == "__main__":
+	print "command: " + RSG.list_repr(argv) + "\n"
 	parser = ArgumentParser()
 	parser.add_argument("file", type=str, help="Game file to be analyzed. " +\
 			"Suported file types: EGAT symmetric XML, EGAT strategic XML, " +\
@@ -259,11 +261,16 @@ if __name__ == "__main__":
 		if eMNE:
 			print "RD found", len(eMNE), "approximate symmetric mixed strategy"\
 					+ " Nash equilibria:"
-			print RSG.list_repr(map(lambda eq: str(eq) + \
-					"\n\tclique regret:\t\t" + str(subgame.exactRegret(eq)) + \
-					"\n\tfull game regret:\t" + str(rational_game.\
-					confirmedRegret(eq)[0]) + "\n\tbest deviation:\t\t" + str( \
-					rational_game.confirmedRegret(eq)[1]), eMNE), sep="\n"),"\n"
+			for eq in eMNE:
+				print eq
+				print "\tclique regret:\t\t" + str(subgame.exactRegret(eq))
+				fg_regret, best_dev = rational_game.confirmedRegret(eq)
+				print "\tfull game regret:\t" + str(fg_regret)
+				if any(map(lambda s: best_dev in s, \
+						subgame.strategies.values())):
+					print "\tbest deviation in clique"
+				else:
+					print "\tbest deviation:\t\t" + str(best_dev) + "\n"
 		else:
 			print "no approximate equilibria with regret at most", args.r
 			print "lowest regret symmetric mixed profile found by RD:"
