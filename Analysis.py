@@ -271,18 +271,18 @@ if __name__ == "__main__":
 			for eq in eMNE:
 				print eq
 				print "\tclique regret:\t\t" + str(subgame.exactRegret(eq))
-				fg_regret, best_dev = rational_game.confirmedRegret(eq)
-				print "\tfull game regret:\t" + str(fg_regret)
-				if any(map(lambda s: best_dev in s, \
-						subgame.strategies.values())):
-					print "\tbest deviation in clique"
-				else:
-					print "\tbest deviation:\t\t" + str(best_dev) + "\n"
+#				fg_regret, best_dev = rational_game.confirmedRegret(eq)
+#				print "\tfull game regret:\t" + str(fg_regret)
+#				if any(map(lambda s: best_dev in s, \
+#						subgame.strategies.values())):
+#					print "\tbest deviation in clique"
+#				else:
+#					print "\tbest deviation:\t\t" + str(best_dev) + "\n"
 		else:
 			print "no approximate equilibria with regret at most", args.r
 			print "lowest regret symmetric mixed profile found by RD:"
 			print mrmp
 			print "\tclique regret:\t\t" + str(subgame.exactRegret(mrmp))
-			fg_regret, best_dev = rational_game.confirmedRegret(mrmp)
-			print "\tfull game regret:\t" + str(fg_regret)
-			print "\tbest deviation:\t" + str(best_dev) + "\n"
+#			fg_regret, best_dev = rational_game.confirmedRegret(mrmp)
+#			print "\tfull game regret:\t" + str(fg_regret)
+#			print "\tbest deviation:\t" + str(best_dev) + "\n"
