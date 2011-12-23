@@ -197,7 +197,7 @@ class mixture(np.ndarray):
 			return 0
 
 	def getStrategies(self):
-		return list(self.strategies.keys())
+		return filter(lambda s: self.strategies[s], self.strategies.keys())
 
 	def __repr__(self):
 		try:
@@ -359,8 +359,7 @@ class Game(dict):
 				raise ke
 		#try to compute expected payoff for mixed strategy & profile
 		if not isinstance(strategy, mixture):
-			strategy = mixture(self.strategies[role], [1 if s==strategy \
-					else 0 for s in self.strategies[role]])
+			strategy = mixture([strategy], [1.0])
 		if not profile.isFullyMixed():
 			rsp = {}
 			for r in self.roles:
@@ -372,15 +371,13 @@ class Game(dict):
 					if isinstance(s, mixture):
 						sp.append(s)
 					else:
-						sp.append(mixture(self.strategies[r], [1 if strat==s \
-								else 0 for strat in self.strategies[r]]))
+						sp.append(mixture([s], [1.0]))
 				rsp[r] = SymmetricProfile(sp)
 			profile = Profile(rsp)
 		payoff = 0
 		opponent_profile = profile.remove(role, strategy)
 		for op in self.roleSymmetricProfiles(opponent_profile):
-			for s in filter(lambda s: any(m[s] for m in profile[role]), \
-					self.strategies[role]):
+			for s in strategy.getStrategies():
 				p = op.add(role, s)
 				payoff += self[p][role][s]*opponent_profile.probability(op) \
 						* strategy[s]
