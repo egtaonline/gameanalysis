@@ -6,7 +6,7 @@ from random import choice
 from itertools import combinations_with_replacement as CwR, permutations, \
 		product
 
-def nCr(n, k):
+def nCr(n,k):
 	"""
 	Number of combinations: n choose k.
 	"""
@@ -44,10 +44,10 @@ class SymmetricProfile(tuple):
 		"""n+1 player profile including strategy"""
 		return SymmetricProfile(list(self) + [strategy])
 
-	def probability(self, profile):
+	def probability(self, pureProfile):
 		"""only makes sense for mixed strategy profiles"""
 		return sum([reduce(mul, [self[i][s] for i,s in enumerate(p)], 1) \
-				for p in set(permutations(profile))])
+				for p in set(permutations(pureProfile))])
 
 	def dist(self, other):
 		return sum([s.dist(o) for s,o in zip(self, other)])
