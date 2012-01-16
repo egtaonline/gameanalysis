@@ -2,7 +2,7 @@ import numpy as np
 
 from math import factorial
 from operator import mul, eq
-
+from itertools import product, combinations_with_replacement as CwR
 
 def prod(collection):
 	"""
@@ -43,9 +43,9 @@ def list_repr(l, sep=", "):
 		return ""
 
 
-class hash_array(np.ndarray):
+class Array(np.ndarray):
 	"""
-	An immutable and therefore hashable subclass of ndarray.
+	An immutable (and therefore hashable and sortable) subclass of ndarray.
 
 	Useful for profile, payoff, and mixed strategy data.
 	"""
@@ -75,15 +75,39 @@ class hash_array(np.ndarray):
 	def __eq__(self, other):
 		return np.array_equal(self, other)
 
+	def __cmp__(self, other):
+		assert self.shape == other.shape
+		try:
+			i = self != other
+			return self[i][0] - other[i][0]
+		except IndexError:
+			return False
 
-class profile(hash_array):
+	def __lt__(self, other):
+		return min(self.__cmp__(other), 0)
+
+	def __gt__(self, other):
+		return max(self.__cmp__(other), 0)
+
+	def __le__(self, other):
+		if self == other:
+			return True
+		return self < other
+
+	def __ge__(self, other):
+		if self == other:
+			return True
+		return self > other
+
+
+class Profile(Array):
 	def __new__(cls, *args, **kwargs):
 		kwargs['dtype'] = int
 		game = kwargs.pop('game')
-		p = hash_array.__new__(cls, *args, **kwargs)
+		p = Array.__new__(cls, *args, **kwargs)
 		p.game = game
 		p.reps = profile_repetitions(p)
-		p.dev_reps = game.zeros()
+		p.dev_reps = game.zeros(dtype=int)
 		for i, r in enumerate(game.roles):
 			for j, s in enumerate(game.strategies[r]):
 				if p[i,j] > 0:
@@ -95,13 +119,12 @@ class profile(hash_array):
 
 	def neighbors(self, role=None, strategy=None):
 		if role == None:
-			return sum([self.neighbors(self.game, r) for r \
-					in self.game.roles], [])
+			return sum([self.neighbors(r) for r in self.game.roles], [])
 		if strategy == None:
-			return sum([self.neighbors(self.game, role, s) for s \
-					in self.game.strategies[role]], [])
+			return sum([self.neighbors(role, s) for s in \
+					self.game.strategies[role]], [])
 		role_index = self.game.index(role)
-		strategy_index = self.game.index(strategy)
+		strategy_index = self.game.index(role, strategy)
 		neighbors = []
 		for i in range(len(self.game.strategies[role])):
 			if i == strategy_index:
@@ -118,14 +141,21 @@ class profile(hash_array):
 		"""
 		return np.linalg.norm(self - other, 1) / 2
 
+	def __str__(self):
+		return repr(self)
+
+	def __repr__(self):
+		return "{" + list_repr([r +": ("+ list_repr([str(c) +"x "+s for c,s \
+				in filter(lambda x: x[0], zip(self[i], self.game.strategies[ \
+				r]))]) +")" for i,r in enumerate(self.game.roles)]) + "}"
 
 
-class mixture(hash_array):
+class Mixture(Array):
 	def __new__(cls, probabilities, game):
 		a = np.array(probabilities, dtype=float).clip(0)
 		a[a.max(1) == 0] = 1
 		a[game.mask] = 0
-		a = hash_array.__new__(cls, (a.T/a.sum(1)).T)
+		a = Array.__new__(cls, (a.T/a.sum(1)).T)
 		a.game = game
 		return a
 
@@ -187,7 +217,7 @@ class Game(dict):
 					strategy_index = self.index(role, strategy)
 					prof[role_index, strategy_index] = count
 					payoffs[role_index, strategy_index] = value
-			self[profile(prof, game=self)] = hash_array(payoffs, dtype=float)
+			self[Profile(prof, game=self)] = Array(payoffs, dtype=float)
 
 	def zeros(self, dtype=float, masked=True):
 		zeros = np.zeros([len(self.roles), self.maxStrategies], dtype=dtype)
@@ -218,26 +248,30 @@ class Game(dict):
 	def getPayoff(self, profile, role, strategy):
 		return self[profile][self.index(role)][self.index(role, strategy)]
 
-	def neighbors(self, profile, role=None, strategy=None):
-		if role == None:
-			return sum([self.neighbors(profile, r) for r in self.roles], [])
-		if strategy == None:
-			return sum([self.neighbors(profile, role, s) for s in \
-					self.strategies[role]], [])
-		role_index = self.index(role)
-		strategy_index = self.index(strategy)
-		neighbors = []
-		for i in range(len(self.strategies[role])):
-			if i == strategy_index:
-				continue
-			p = np.array(profile)
-			p[role_index, strategy_index] -= 1
-			p[role_index, i] += 1
-			neighbors.add(p)
-		return neighbors
+	def expectedValues(self, mix):
+		return sum([self[p] * (mix**p).prod() * p.dev_reps / (mix + \
+				np.finfo(np.float64).tiny) for p in self])
+
+	def allProfiles(self):
+		return [Profile([[list(p[i]).count(s) for s in self.strategies[r]] + \
+				[0]*(self.maxStrategies - self.numStrategies[i]) for i,r in \
+				enumerate(self.roles)], game=self) for p in product(*[CwR( \
+				self.strategies[r], self.counts[r]) for r in self.roles])]
+
+	def knownProfiles(self):
+		return self.keys()
 
 	def uniformMixture(self):
-		return mixture(self.zeros(), self)
+		return Mixture(self.zeros(), self)
+
+	def biasedMixture(self):
+		raise NotImplementedError
+
+	def __cmp__(self, other):
+		return cmp(self.roles, other.roles) or \
+				cmp(self.counts, other.counts) or \
+				cmp(self.strategies, other.strategies) or \
+				dict.__cmp__(self, other)
 
 	def __repr__(self):
 		return ("RoleSymmetricGame:\n\troles: " + list_repr(self.roles) + \
@@ -248,3 +282,16 @@ class Game(dict):
 				sorted(self.strategies.items())), sep="\n\t\t") + \
 				"\npayoff data for " + str(len(self)) + " out of " + \
 				str(self.size) + " profiles").expandtabs(4)
+
+	def subgame(self, roles=[], strategies={}):
+		raise NotImplementedError
+
+	def isSubgame(self, big_game):
+		raise NotImplementedError
+
+	def regret(self, profile, strategy=None):
+		raise NotImplementedError
+
+	def mixtureRegret(self, mix, strategy=None):
+		raise NotImplementedError
+
