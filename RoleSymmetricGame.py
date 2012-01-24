@@ -1,478 +1,259 @@
 import numpy as np
 
-from math import factorial, isnan
-from operator import mul, add
-from random import choice
-from itertools import combinations_with_replacement as CwR, permutations, \
-		product
+from itertools import product, combinations_with_replacement as CwR
+from collections import namedtuple
 
-def nCr(n,k):
-	"""
-	Number of combinations: n choose k.
-	"""
-	return reduce(mul, range(n-k+1,n+1)) / factorial(k)
+from HashableClasses import *
+from BasicFunctions import *
 
-def game_size(n,s):
-	"""
-	Number of profiles in a symmetric game with n players and s strategies.
-	"""
-	return nCr(n+s-1,n)
 
-def list_repr(l, sep=", "):
-	try:
-		return reduce(lambda x,y: str(x) + sep + str(y), l)
-	except TypeError:
-		return ""
+payoff_data = namedtuple("payoff", "strategy count value")
+profile_data = namedtuple("profile_data", "counts reps dev_reps values")
 
-class SymmetricProfile(tuple):
-	"""
-	Profile object for symmetric games: a sorted tuple of strategies.
-	"""
-	def __new__(self, strategies):
-		return tuple.__new__(self, sorted(strategies))
 
-	def getStrategies(self):
-		"""without repetitions"""
-		return sorted(set(self))
+class Profile(h_dict):
+	def __init__(self, role_payoffs):
+		try:
+			d = {}
+			for role, payoffs in role_payoffs.items():
+				d[role] = h_dict({p.strategy:p.count for p in payoffs})
+			h_dict.__init__(self, d)
+		except AttributeError:
+			h_dict.__init__(self, {r:h_dict(p) for r,p in role_payoffs.items()})
 
 	def remove(self, strategy):
-		"""n-1 player profile excluding strategy"""
-		i = self.index(strategy)
-		return SymmetricProfile(self[:i] + self[i+1:])
+		raise NotImplementedError("TODO")
 
 	def add(self, strategy):
-		"""n+1 player profile including strategy"""
-		return SymmetricProfile(list(self) + [strategy])
+		raise NotImplementedError("TODO")
 
-	def probability(self, pureProfile):
-		"""only makes sense for mixed strategy profiles"""
-		return sum([reduce(mul, [self[i][s] for i,s in enumerate(p)], 1) \
-				for p in set(permutations(pureProfile))])
+	def deviation(self, strategy):
+		raise NotImplementedError("TODO")
 
-	def dist(self, other):
-		return sum([s.dist(o) for s,o in zip(self, other)])
-
-	def isSymmetric(self):
-		return len(set(self)) == 1
-
-	def isMixed(self):
-		return any([isinstance(s, mixture) for s in self])
-
-	def isFullyMixed(self):
-		return all([isinstance(s, mixture) for s in self])
+	def asDict(self):
+		return {r:{s:self[r][s] for s in self[r]} for r in self}
 
 	def __repr__(self):
-		if self.isMixed() and self.isSymmetric():
-			return repr(self[0])
-		return "(" + list_repr((repr(self.count(s)) + "x" + \
-				repr(s) for s in sorted(set(self)))) + ")"
-
-	def repetitions(self):
-		"""number of orderings of the profile that could occur"""
-		try:
-			return self._reps
-		except:
-			self._reps = factorial(len(self)) / reduce(mul, (factorial( \
-					self.count(s)) for s in sorted(set(self))), 1)
-			return self._reps
-
-
-class Profile(dict):
-	"""
-	Profile object for RoleSymmetricGames: maps roles to SymmetricProfiles.
-	"""
-	def _blocked_attribute(obj):
-		raise TypeError("profiles are immutable.")
-	_blocked_attribute = property(_blocked_attribute)
-
-	__delitem__ = clear = pop = popitem = setdefault = _blocked_attribute
-
-	def __new__(self, *args, **kwargs):
-		new = dict.__new__(self, *args, **kwargs)
-		self.__setitem__ = self.update = self._blocked_attribute
-		return new
-
-	def remove(self, role, strategy):
-		return Profile({r:self[r] if r != role else self[r].remove(strategy) \
-				for r in self})
-
-	def add(self, role, strategy):
-		return Profile({r:self[r] if r != role else self[r].add(strategy) \
-				for r in self})
-
-	def probability(self, profile):
-		"""only makes sense for mixed strategy profiles"""
-		return reduce(mul, [sp.probability(profile[r]) for r, sp \
-				in self.items()])
-
-	def countArray(self, game):
-		"""for replicator dynamics arithmetic"""
-		counts = np.zeros([max([len(s) for s in game.strategies.values()]), \
-				len(game.roles)], dtype=float)
-		for i,r in enumerate(game.roles):
-			for s in self[r].getStrategies():
-				counts[game.strategies[r].index(s), i] = self[r].count(s)
-		return counts
-
-	def valueArray(self, game):
-		"""for replicator dynamics arithmetic"""
-		values = np.zeros([max([len(s) for s in game.strategies.values()]), \
-				len(game.roles)], dtype=float)
-		for i,r in enumerate(game.roles):
-			for s in self[r].getStrategies():
-				values[game.strategies[r].index(s), i] = game[self][r][s]
-		return values
-
-	def repetitionsArray(self, game):
-		"""for replicator dynamics arithmetic"""
-		reps = np.zeros([max([len(s) for s in game.strategies.values()]), \
-				len(game.roles)], dtype=float)
-		for i,r in enumerate(game.roles):
-			for s in self[r].getStrategies():
-				reps[game.strategies[r].index(s), i] = \
-						self.remove(r,s).repetitions()
-		return reps
-
-
-	def probArray(self, game):
-		"""
-		for replicator dynamics arithmetic
-		only valid for mixed strategy profiles where each role has a single
-		mixed strategy
-		"""
-		probs= np.zeros([max([len(s) for s in game.strategies.values()]), \
-				len(game.roles)], dtype=float)
-		for i,r in enumerate(game.roles):
-			for s in self[r][0].getStrategies():
-				probs[game.strategies[r].index(s), i] = self[r][0][s]
-		return probs
-
-	def dist(self, other):
-		return sum([self[r].dist(other[r]) for r in self.keys()])
-
-	def isSymmetric(self):
-		return all([p.isSymmetric() for p in self.values()])
-
-	def isMixed(self):
-		return any([p.isMixed() for p in self.values()])
-
-	def isFullyMixed(self):
-		return all([p.isFullyMixed() for p in self.values()])
-
-	def __hash__(self):
-		try:
-			return self._hash
-		except AttributeError:
-			self._hash = hash(tuple(sorted(self.items())))
-			return self._hash
-
-	def repetitions(self):
-		"""Combinations of orderings of role profiles that could occur."""
-		return reduce(mul, [p.repetitions() for p in self.values()], 1)
-
-
-class mixture(np.ndarray):
-	"""
-	Symmetric mixed strategy.
-
-	mixture(data) sets negative values to 0, then normalizes the sum to 1. ex:
-	mixture( range(-2,5) ) --> mixture([ 0. , 0. , 0. , 0.1 , 0.2 , 0.3 , 0.4 ])
-
-	Probabilities are rounded to the nearest 10^-10 so they can be compared.
-	"""
-	def __new__(cls, strategies, probabilities):
-		a = np.array(probabilities, dtype=float).clip(0)
-		if a.max() == 0:
-			a.fill(1)
-		a = np.ndarray.__new__(cls, shape=a.shape, buffer=a/a.sum())
-		a.strategies = dict(zip(strategies, a))
-		return a
-
-	def __getitem__(self, item):
-		try:
-			return np.ndarray.__getitem__(self, item)
-		except ValueError:
-			if item in self.strategies:
-				return self.strategies[item]
-			return 0
-
-	def getStrategies(self):
-		return filter(lambda s: self.strategies[s], self.strategies.keys())
-
-	def __repr__(self):
-		try:
-			return "{" + list_repr((str(s) + ":" + str(round(100*p,1)) + \
-					"%" for s,p in filter(lambda x: x[1]>1e-3, \
-					sorted(self.strategies.items())))) + "}"
-		except AttributeError:
-			return np.ndarray.__repr__(self)[8:-1]
-
-	def __str__(self):
-		return repr(self)
-
-	def __hash__(self):
-		try:
-			return self._hash
-		except AttributeError:
-			self._hash = hash(tuple(self))
-			return self._hash
-
-	def dist(self, other):
-		return np.linalg.norm(self - other)
-
-	def __eq__(self, other):
-		return self.dist(other) == 0
-
-	def __lt__(self, other):
-		try:
-			return self.strategies < other.strategies or list(self) < \
-					list(other)
-		except AttributeError as ae:
-			if isinstance(other, str):
-				return True
-			else:
-				raise ae
+		return '{' + OrderedDict.__repr__(self)[9:-2] + '}'
 
 
 class Game(dict):
-	def __init__(self, roles=[], counts={}, strategies={}, payoffs={}):
+	def __init__(self, roles=[], counts={}, strategies={}, role_payoff_data=[]):
 		"""
 		Role-symmetric game representation.
 
 		__init__ parameters:
-		roles: list of role-name strings
+		roles: collection of role-name strings
 		counts: mapping from roles to number of players per role
 		strategies: mapping from roles to per-role strategy sets
-		payoffs: mapping from Profile objects to payoff dicts, which map
-				roles to strategies to numbers
+		payoff_data: collection of data objects mapping roles to collections
+				of (strategy, count, value) tuples
 		"""
-		self.roles = tuple(sorted(set(map(str, roles))))
+		self.roles = sorted(set(map(str, roles)))
 		self.counts = {r : int(counts[r]) for r in self.roles}
-		self.strategies = {r : tuple(sorted(set(map(str, strategies[r])))) \
+		self.strategies = {r : sorted(set(map(str, strategies[r]))) \
 				for r in self.roles}
-		self.size = reduce(mul, map(lambda r: game_size(self.counts[r], \
-				len(self.strategies[r])), self.roles))
-		dict.update(self, payoffs)
 
-	def __setitem__(self, profile, payoffs):
-		assert self.isValidProfile(profile)
-		dict.__setitem__(self, profile, payoffs)
+		self.numStrategies = [len(self.strategies[r]) for r in self.roles]
+		self.maxStrategies = max(self.numStrategies)
+		self.mask = h_array([[False]*s + [True]*(self.maxStrategies - s) for \
+				s in self.numStrategies])
+		self.size = prod([game_size(self.counts[r], self.numStrategies[i]) \
+				for i,r in enumerate(self.roles)])
+		self.role_index = {r:i for i,r in enumerate(self.roles)}
+		self.strategy_index = {r : {s:i for i,s in enumerate( \
+				self.strategies[r]) } for r in self.roles}
 
-	def update(self, *args, **kwargs):
-		d = {}
-		d.update(*args, **kwargs)
-		for profile in d.keys():
-			assert self.isValidProfile(profile)
-		dict.update(self, d)
+		for profile_data_set in role_payoff_data:
+			self.addProfile(profile_data_set)
 
-	def __hash__(self):
-		"""Payoff data doesn't contribute to the hash."""
-		try:
-			return self._hash
-		except AttributeError:
-			self._hash = hash(str(self.roles) + str(self.counts) + \
-					str(self.strategies))
-			return self._hash
+	def addProfile(self, role_payoffs):
+		counts = self.zeros(dtype=int)
+		values = self.zeros(dtype=float)
+		for role_index, role in enumerate(self.roles):
+			for strategy, count, value in role_payoffs[role]:
+				strategy_index = self.index(role, strategy)
+				counts[role_index, strategy_index] = count
+				values[role_index, strategy_index] = value
+		reps = profile_repetitions(counts)
+		devs = self.zeros(dtype=int)
+		for i, r in enumerate(self.roles):
+			for j, s in enumerate(self.strategies[r]):
+				if counts[i,j] > 0:
+					opp_prof = counts - self.array_index(r,s)
+					devs[i,j] = profile_repetitions(opp_prof)
+				else:
+					devs[i,j] = 0
+		self[Profile(role_payoffs)] = profile_data(h_array(counts), reps, \
+				h_array(devs), h_array(values))
 
-	def isValidProfile(self, profile):
-		if profile in self:
-			return True
-		if not isinstance(profile, Profile):
-			return False
-		for r, sp in profile.items():
-			if r not in self.roles:
-				return False
-			if not isinstance(sp, SymmetricProfile):
-				return False
-			if len(sp) != self.counts[r]:
-				return False
-			if not all((s in self.strategies[r] for s in sp.getStrategies())):
-				return False
-		return True
+	def index(self, role, strategy=None):
+		"""
+		index(r) returns the role-index of r
+		index(r,s) returns the strategy index of s (for role r)
+		"""
+		if strategy != None:
+			return self.strategy_index[role][strategy]
+		return self.role_index[role]
+
+	def zeros(self, dtype=float, masked=False):
+		z = np.zeros([len(self.roles), self.maxStrategies], dtype=dtype)
+		return np.ma.array(z, mask=self.mask) if masked else z
+
+	def array_index(self, role, strategy=None, dtype=bool):
+		"""
+		array_index(r,s) returns a boolean ndarray version of index(r,s)
+		"""
+		a = self.zeros(dtype=dtype)
+		if strategy == None:
+			a[self.index(role)] += 1
+		else:
+			a[self.index(role), self.index(role, strategy)] += 1
+		return a
+
+	def getPayoff(self, profile, role, strategy):
+		return self[profile].values[self.index(role), self.index(role,strategy)]
+
+	def getExpectedPayoff(self, mix, role=None):
+		if role == None:
+			return (mix * self.expectedValues(mix)).sum(1)
+		return (mix * self.expectedValues(mix)).sum(1)[self.index(role)]
+
+	def expectedValues(self, mix):
+		"""
+		Computes the expected value of each pure strategy played against
+		all opponents playing mix.
+		"""
+		return sum([pd.values * (mix**pd.counts).prod() * pd.dev_reps / (mix + \
+				np.finfo(np.float64).tiny) for pd in self.values()])
 
 	def allProfiles(self):
-		return [Profile(zip(self.roles, p)) for p in product(*[[ \
-				SymmetricProfile(s) for s in CwR(self.strategies[r], \
-				self.counts[r])] for r in self.roles])]
+		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \
+				self.index(r)])} for r in self.roles}) for p in product(*[ \
+				CwR(self.strategies[r], self.counts[r]) for r in self.roles])]
 
 	def knownProfiles(self):
 		return self.keys()
 
-	def subgame(self, roles=[], strategies={}):
-		"""
-		Creates a game with a subset each role's strategies.
-		Raises a KeyError if required profiles are missing.
+	def uniformMixture(self):
+		return (h_array(1-self.mask, dtype=float).T / (1-self.mask).sum(1)).T
 
-		default settings result in a subgame with all roles and no strategies
+	def biasedMixtures(self, role=None, strategy=None):
 		"""
-		if not roles:
-			roles = self.roles
-		if not strategies:
-			strategies = {r:[] for r in self.roles}
-		g = Game(roles, self.counts, strategies)
-		g.update({p:self[p] for p in filter(lambda p: p in self, \
-				g.allProfiles())})
-		return g
+		Gives mixtures where the input strategy has 90% weight for its role.
 
-	def isSubgame(self, big_game):
-		if any([r not in big_game.roles for r in self.roles]):
-			return False
-		if any([self.counts[r] != big_game.counts[r] for r in self.roles]):
-			return False
-		for r in self.roles:
-			if any([s not in big_game.strategies[r] for s in \
-					self.strategies[r]]):
-				return False
-		return True
+		Probability for that role's remaining strategies is distributed
+		uniformly, as is probability for all strategies of other roles.
+
+		Returns a list even when a single role & strategy are specified, since
+		the main use case is starting replicator dynamics from several mixtures.
+		"""
+		if role == None:
+			return sum([self.biasedMixtures(r) for r in self.roles], [])
+		if strategy == None:
+			return sum([self.biasedMixtures(role, s) for s in \
+					self.strategies[role]], [])
+		m = (1 - self.mask) + (self.array_index(role, strategy, dtype=float).T \
+				* (h_array(self.numStrategies) * 9 - 10)).T
+		return [(m.T / m.sum(1)).T]
 
 	def __cmp__(self, other):
-		return cmp(len(self.roles), len(other.roles)) or \
-				cmp(self.roles, other.roles) or \
-				cmp(sum(self.counts.values()), sum(other.counts.values())) or \
+		return cmp(self.roles, other.roles) or \
 				cmp(self.counts, other.counts) or \
-				cmp(sum(map(len, self.strategies.values())), \
-					sum(map(len, other.strategies.values()))) or \
 				cmp(self.strategies, other.strategies) or \
-				cmp(len(self), len(other)) or \
 				dict.__cmp__(self, other)
 
 	def __eq__(self, other):
-		return self.roles==other.roles and self.counts==other.counts and \
-				self.strategies==other.strategies and dict.__eq__(self,other)
+		return not cmp(self, other)
+
+	def __lt__(self, other):
+		return min(self.__cmp__(other), 0)
+
+	def __gt__(self, other):
+		return max(self.__cmp__(other), 0)
+
+	def __le__(self, other):
+		return self == other or self < other
+
+	def __ge__(self, other):
+		return self == other or self > other
 
 	def __repr__(self):
 		return ("RoleSymmetricGame:\n\troles: " + list_repr(self.roles) + \
 				"\n\tcounts:\n\t\t" + list_repr(map(lambda x: str(x[1]) +"x "+ \
-				str(x[0]), self.counts.items()), sep="\n\t\t") + \
+				str(x[0]), sorted(self.counts.items())), sep="\n\t\t") + \
 				"\n\tstrategies:\n\t\t" + list_repr(map(lambda x: x[0] + \
 				":\n\t\t\t" + list_repr(x[1], sep="\n\t\t\t"), \
-				self.strategies.items()), sep="\n\t\t") + \
+				sorted(self.strategies.items())), sep="\n\t\t") + \
 				"\npayoff data for " + str(len(self)) + " out of " + \
 				str(self.size) + " profiles").expandtabs(4)
 
-	def getPayoff(self, profile, role, strategy):
-		#try to look up payoff for pure strategy & profile
+	def isComplete(self):
+		return len(self) == self.size
+
+	def regret(self, p, *args, **kwargs):
+		if isinstance(p, Profile):
+			return self.profileRegret(p, *args, **kwargs)
+		elif isinstance(p, h_ndarray):
+			return self.mixtureRegret(p, *args, **kwargs)
+		raise TypeError("unrecognized argument type: " + type(p).__name__)
+
+	def profileRegret(self, profile, role=None, strategy=None, deviation=None):
+		if role == None:
+			return max([self.profileRegret(profile, r) for r in self.roles])
+		if strategy == None:
+			return max([self.profileRegret(profile, role, s) for s in \
+					profile[role]])
+		if deviation == None:
+			return max([self.profileRegret(profile, role, strategy, d) for d \
+					in set(self.strategies[role]) - {strategy}])
 		try:
-			return self[profile][role][strategy]
-		except KeyError as ke:
-			if not (isinstance(strategy, mixture) or profile.isMixed()):
-				raise ke
-		#try to compute expected payoff for mixed strategy & profile
-		if not isinstance(strategy, mixture):
-			strategy = mixture([strategy], [1.0])
-		if not profile.isFullyMixed():
-			rsp = {}
-			for r in self.roles:
-				if profile[r].isFullyMixed():
-					rsp[r] = profile[r]
-					continue
-				sp = []
-				for s in profile[r]:
-					if isinstance(s, mixture):
-						sp.append(s)
-					else:
-						sp.append(mixture([s], [1.0]))
-				rsp[r] = SymmetricProfile(sp)
-			profile = Profile(rsp)
-		payoff = 0
-		opponent_profile = profile.remove(role, strategy)
-		for op in self.roleSymmetricProfiles(opponent_profile):
-			for s in strategy.getStrategies():
-				p = op.add(role, s)
-				payoff += self[p][role][s]*opponent_profile.probability(op) \
-						* strategy[s]
-		return payoff
+			return self.getPayoff(self.neighbors(profile, role, strategy, \
+					deviation)[0], role, deviation) - self.getPayoff(profile, \
+					role, strategy)
+		except KeyError:
+			return float("-inf")
 
-	def exactRegret(self, profile):
-		regret = -float('inf')
-		for role, symProf in profile.items():
-			for strategy in symProf.getStrategies():
-				payoff = self.getPayoff(profile, role, strategy)
-				for ds, dp in self.deviations(profile, role, strategy):
-					r = self.getPayoff(dp, role, ds) - payoff
-					regret = max(r, regret)
-		return regret
+	def mixtureRegret(self, mix, role=None, deviation=None):
+		if role == None:
+			return float((self.expectedValues(mix).T - \
+					self.getExpectedPayoff(mix)).max())
+		if deviation == None:
+			return float((self.expectedValues(mix)[self.index(role)] - \
+					self.getExpectedPayoff(mix, role)).max())
+		return self.expectedValues(mix)[self.index(role), self.index(role, \
+				deviation)] - self.getExpectedPayoff(mix, role)
 
-	def confirmedRegret(self, profile):
-		regret = -float('inf')
-		best = None
-		for role, symProf in profile.items():
-			for strategy in symProf.getStrategies():
-				payoff = self.getPayoff(profile, role, strategy)
-				for ds, dp in self.deviations(profile, role, strategy):
-					try:
-						r = self.getPayoff(dp, role, ds) - payoff
-						if r > regret:
-							regret = r
-							best = ds
-					except (KeyError, ValueError):
-						continue
-		return regret, best
+	def neighbors(self, profile, role=None, strategy=None, deviation=None):
+		if role == None:
+			return sum([self.neighbors(profile, r) for r in self.roles], [])
+		if strategy == None:
+			return sum([self.neighbors(profile, role, s) for s in \
+					profile[role]], [])
+		if deviation == None:
+			return sum([self.neighbors(profile, role, strategy, d) for d in \
+					set(self.strategies[role]) - {strategy}], [])
+		p = profile.asDict()
+		p[role][strategy] -= 1
+		if p[role][strategy] == 0:
+			del p[role][strategy]
+		p[role][deviation] = p[role].get(deviation, 0) + 1
+		return [Profile({r:{s:p[r][s] for s in p[r]} for r \
+				in self.roles})]
 
-	def deviations(self, profile, role, strategy):
-		"""
-		Returns a list of pairs (s,p), where s is a strategy for %role and p is
-		the profile that results from deviating from %strategy to s in %profile.
-		"""
-		neighbors = []
-		for s in set(self.strategies[role]) - {strategy}:
-			strategy_list = list(profile[role])
-			strategy_list.remove(strategy)
-			strategy_list.append(s)
-			p = Profile(profile)
-			dict.__setitem__(p, role, SymmetricProfile(strategy_list))
-			neighbors.append((s,p))
-		return neighbors
-
-	def BR(self, role, opponent_profile):
-		best_responses = []
-		best_payoff = float("-inf")
-		for strategy in self.strategies[role]:
-			try:
-				payoff = self.getPayoff(opponent_profile.add(role, strategy), \
-						role, strategy)
-			except KeyError:
-				continue
-			if payoff > best_payoff:
-				best_responses = [strategy]
-				best_payoff = payoff
-			elif payoff == best_payoff:
-				best_responses.append(strategy)
-		return best_responses
-
-	def uniformMixedProfile(self):
-		return Profile({r : SymmetricProfile([mixture(self.strategies[r], \
-				[1]*len(self.strategies[r]))]*self.counts[r]) for \
-				r in self.roles})
-
-	def biasedMixedProfile(self, role, strategy):
-		return Profile({r : SymmetricProfile([mixture(self.strategies[r], \
-				[100 if r==role and s==strategy else 1 for s in \
-				self.strategies[r]])] * self.counts[r]) for r in self.roles})
-
-	def payoffList(self, role):
-		"""
-		Returns all payoff floats associated with a role.
-
-		Useful for determining the minimum achievable payoff.
-		"""
-		return reduce(add, map(lambda d: list(d[role].values()), self.values()))
-
-	def symmetricProfiles(self, role, smsp):
-		"""
-		Return pure strategy symmetric profiles for role that have positive
-		probability under symmetric mixed strategy profile smsp.
-		"""
-		return map(SymmetricProfile, set(map(lambda p: tuple(sorted(p)), \
-				product(*[filter(lambda s: mix[s] > 1e-4, \
-				self.strategies[role]) for mix in smsp]))))
-
-	def roleSymmetricProfiles(self, rsmsp):
-		"""
-		Return pure strategy role-symmetric profiles that have positive
-		probability under role-symmetric mixed strategy profile rsmsp
-		"""
-		return [Profile(zip(self.roles, p)) for p in product(*[ \
-				self.symmetricProfiles(r, rsmsp[r]) for r \
-				in self.roles])]
-
+	def bestResponses(self, profile, role=None, strategy=None):
+		if role == None:
+			return {r: self.bestResponses(profile, r) for r in self.roles}
+		if strategy == None:
+			return {s: self.bestResponses(profile, role, s) for s in \
+					profile[role]}
+		best_deviations = set()
+		biggest_gain = float('-inf')
+		for dev in set(self.strategies[role]) - {strategy}:
+			r = self.profileRegret(profile, role, strategy, dev)
+			if r > biggest_gain:
+				best_deviations = {dev}
+				biggest_gain = r
+			if r == biggest_gain:
+				best_deviations.add(dev)
+		return best_deviations
