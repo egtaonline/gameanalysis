@@ -1,5 +1,7 @@
-from RoleSymmetricGame import *
+from itertools import product
+from math import isnan
 
+from RoleSymmetricGame import *
 
 def subgame(game, strategies={}):
 	"""
@@ -64,7 +66,7 @@ def cliques(full_game, subgames=set()):
 	return maximal_subgames
 
 
-def IEDS(game, criterion):
+def IteratedElimination(game, criterion, *args, **kwargs):
 	"""
 	iterated elimination of dominated strategies
 
@@ -74,10 +76,10 @@ def IEDS(game, criterion):
 	sg = criterion(game)
 	if game == sg:
 		return game
-	return IEDS(sg, criterion)
+	return IteratedElimination(sg, criterion, *args, **kwargs)
 
 
-def NeverBestResponse(game):
+def NeverBestResponse(game, conditional=True):
 	"""
 	conditional never-a-weak-best-response criterion for IEDS
 
@@ -85,17 +87,39 @@ def NeverBestResponse(game):
 	"""
 	best_responses = {r:set() for r in game.roles}
 	for profile in game:
-		for role in profile:
-			best_responses[role].update(reduce(lambda s1,s2: s1.union(s2), \
-					game.bestResponses(profile, role).values()))
+		for r in game.roles:
+			for s in profile[r]:
+				br, unknown = game.bestResponses(profile, r, s)
+				best_responses[r].update(br)
+				if conditional:
+					best_responses[r].update(unknown)
 	return subgame(game, best_responses)
 
 
-def PureStrategyDominance(game):
+def PureStrategyDominance(game, conditional=True):
 	"""
 	conditional strict pure-strategy dominance criterion for IEDS
 	"""
-	raise NotImplementedError("TODO")
+	undominated = {r:set(game.strategies[r]) for r in game.roles}
+	for r in game.roles:
+		for dominant, dominated in product(game.strategies[r], repeat=2):
+			if dominant == dominated or dominated not in undominated[r]:
+				continue
+			regret = float("nan")
+			for profile in game:
+				if dominated not in profile[r]:
+					continue
+				try:
+					regret = game.regret(profile, r, dominated, dominant)
+				except KeyError:
+					if conditional:
+						regret = float("nan")
+						break
+				if regret <= 0:
+					break
+			if regret > 0:
+				undominated[r].remove(dominated)
+	return subgame(game, undominated)
 
 
 def MixedStrategyDominance(game):
@@ -118,6 +142,17 @@ def pureNash(game, epsilon=0):
 	mrp = minimum regret profile (of interest if there is no exact NE)
 	mr = regret of mrp
 	"""
+	equilibria = []
+	for profile in game:
+		try:
+			if game.regret(profile) <= epsilon:
+				equilibria.append(profile)
+		except KeyError:
+			continue
+	return equilibria
+
+
+def minRegretProfile(game):
 	raise NotImplementedError("TODO")
 
 

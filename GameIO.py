@@ -36,7 +36,7 @@ def readJSON(filename):
 			role = roleDict["name"]
 			for strategyDict in roleDict["strategies"]:
 				s = strategyDict["name"]
-				profile[role].append(payoff(str(s), int(prof_strat[role] \
+				profile[role].append(payoff_data(str(s), int(prof_strat[role] \
 						.count(s)), float(strategyDict["payoff"])))
 		payoffs.append(profile)
 	return Game(roles, counts, strategies, payoffs)
@@ -63,7 +63,7 @@ def parseStrategicXML(gameNode):
 			role = outcomeNode.getAttribute('player')
 			strategy = outcomeNode.getAttribute('action')
 			value = float(outcomeNode.getAttribute('value'))
-			data[role].append(payoff(strategy, 1, value))
+			data[role].append(payoff_data(strategy, 1, value))
 		payoffs.append(data)
 	return Game(roles, counts, strategies, payoffs)
 
@@ -80,7 +80,7 @@ def parseSymmetricXML(gameNode):
 			strategy = outcomeNode.getAttribute("action")
 			count = int(outcomeNode.getAttribute("count"))
 			value = float(outcomeNode.getAttribute("value"))
-			data.append(payoff(strategy, count, value))
+			data.append(payoff_data(strategy, count, value))
 		payoffs.append({"All":data})
 	return Game(roles, counts, strategies, payoffs)
 

@@ -2,6 +2,7 @@ import numpy as np
 
 from itertools import product, combinations_with_replacement as CwR
 from collections import namedtuple
+from math import isnan
 
 from HashableClasses import *
 from BasicFunctions import *
@@ -21,14 +22,20 @@ class Profile(h_dict):
 		except AttributeError:
 			h_dict.__init__(self, {r:h_dict(p) for r,p in role_payoffs.items()})
 
-	def remove(self, strategy):
-		raise NotImplementedError("TODO")
+	def remove(self, role, strategy):
+		p = self.asDict()
+		p[role][strategy] -= 1
+		if p[role][strategy] == 0:
+			del p[role][strategy]
+		return Profile(p)
 
-	def add(self, strategy):
-		raise NotImplementedError("TODO")
+	def add(self, role, strategy):
+		p = self.asDict()
+		p[role][strategy] = p[role].get(strategy, 0) + 1
+		return Profile(p)
 
-	def deviation(self, strategy):
-		raise NotImplementedError("TODO")
+	def deviate(self, role, strategy, deviation):
+		return self.remove(role, strategy).add(role, deviation)
 
 	def asDict(self):
 		return {r:{s:self[r][s] for s in self[r]} for r in self}
@@ -194,7 +201,7 @@ class Game(dict):
 	def regret(self, p, *args, **kwargs):
 		if isinstance(p, Profile):
 			return self.profileRegret(p, *args, **kwargs)
-		elif isinstance(p, h_ndarray):
+		elif isinstance(p, h_array):
 			return self.mixtureRegret(p, *args, **kwargs)
 		raise TypeError("unrecognized argument type: " + type(p).__name__)
 
@@ -207,12 +214,8 @@ class Game(dict):
 		if deviation == None:
 			return max([self.profileRegret(profile, role, strategy, d) for d \
 					in set(self.strategies[role]) - {strategy}])
-		try:
-			return self.getPayoff(self.neighbors(profile, role, strategy, \
-					deviation)[0], role, deviation) - self.getPayoff(profile, \
-					role, strategy)
-		except KeyError:
-			return float("-inf")
+		return self.getPayoff(profile.deviate(role, strategy, deviation), \
+				role, deviation) - self.getPayoff(profile, role, strategy)
 
 	def mixtureRegret(self, mix, role=None, deviation=None):
 		if role == None:
@@ -224,24 +227,26 @@ class Game(dict):
 		return self.expectedValues(mix)[self.index(role), self.index(role, \
 				deviation)] - self.getExpectedPayoff(mix, role)
 
-	def neighbors(self, profile, role=None, strategy=None, deviation=None):
+	def neighbors(self, profile, role=None, strategy=None):
 		if role == None:
 			return sum([self.neighbors(profile, r) for r in self.roles], [])
 		if strategy == None:
 			return sum([self.neighbors(profile, role, s) for s in \
 					profile[role]], [])
-		if deviation == None:
-			return sum([self.neighbors(profile, role, strategy, d) for d in \
-					set(self.strategies[role]) - {strategy}], [])
-		p = profile.asDict()
-		p[role][strategy] -= 1
-		if p[role][strategy] == 0:
-			del p[role][strategy]
-		p[role][deviation] = p[role].get(deviation, 0) + 1
-		return [Profile({r:{s:p[r][s] for s in p[r]} for r \
-				in self.roles})]
+		return [profile.deviate(role, strategy, dev) for dev in \
+				set(self.strategies[role]) - {strategy}]
 
 	def bestResponses(self, profile, role=None, strategy=None):
+		"""
+		If role is unspecified, bestResponses returns a dict mapping each role
+		all of its strategy-level results. If strategy is unspecified,
+		bestResponses returns a dict mapping strategies to the set of best
+		responses to the opponent-profile without that strategy.
+
+		If conditional=True, bestResponses returns two sets: the known best
+		responses, and the deviations whose value is unkown; otherwise it
+		returns only the known best response set.
+		"""
 		if role == None:
 			return {r: self.bestResponses(profile, r) for r in self.roles}
 		if strategy == None:
@@ -249,11 +254,15 @@ class Game(dict):
 					profile[role]}
 		best_deviations = set()
 		biggest_gain = float('-inf')
-		for dev in set(self.strategies[role]) - {strategy}:
-			r = self.profileRegret(profile, role, strategy, dev)
-			if r > biggest_gain:
-				best_deviations = {dev}
-				biggest_gain = r
-			if r == biggest_gain:
-				best_deviations.add(dev)
-		return best_deviations
+		unknown = set()
+		for dev in self.strategies[role]:
+			try:
+				r = self.profileRegret(profile, role, strategy, dev)
+				if r > biggest_gain:
+					best_deviations = {dev}
+					biggest_gain = r
+				if r == biggest_gain:
+					best_deviations.add(dev)
+			except KeyError:
+				unknown.add(dev)
+		return best_deviations, unknown
