@@ -24,5 +24,6 @@ from os import listdir
 
 g = readGame(argv[1])
 print len(g), "profiles"
-print g.regret(ReplicatorDynamics(g, g.uniformMixture(), verbose=True))
+equilibria = MixedNash(g, regret_thresh=100, verbose=True)
+print map(lambda eq: g.regret(eq), equilibria)
 

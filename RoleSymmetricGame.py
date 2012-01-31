@@ -10,7 +10,7 @@ from BasicFunctions import *
 
 payoff_data = namedtuple("payoff", "strategy count value")
 profile_data = namedtuple("profile_data", "counts reps dev_reps values")
-
+tiny = np.finfo(np.float64).tiny
 
 class Profile(h_dict):
 	def __init__(self, role_payoffs):
@@ -136,8 +136,8 @@ class Game(dict):
 		Computes the expected value of each pure strategy played against
 		all opponents playing mix.
 		"""
-		return sum([pd.values * (mix**pd.counts).prod() * pd.dev_reps / (mix + \
-				np.finfo(np.float64).tiny) for pd in self.values()])
+		return sum([pd.values * (mix**pd.counts).prod() * pd.dev_reps / \
+				(mix + tiny) for pd in self.values()])
 
 	def allProfiles(self):
 		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \

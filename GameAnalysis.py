@@ -124,42 +124,49 @@ def MixedStrategyDominance(game):
 	raise NotImplementedError("TODO")
 
 
-def pureNash(game, epsilon=0):
+def PureNash(game, epsilon=0):
 	"""
 	Finds all pure-strategy epsilon-Nash equilibria.
 	"""
 	return filter(lambda profile: game.regret(profile) <= epsilon, game)
 
 
-def minRegretProfile(game):
+def MinRegretProfile(game):
 	"""
 	Finds the profile with the confirmed lowest regret.
 	"""
 	return min([(game.regret(profile), profile) for profile in game])[1]
 
 
-def mixedNash(game, regret_thresh=1e-5, dist_thresh=1e-2, *RD_args, **RD_kwds):
+def MixedNash(game, regret_thresh=1e-5, dist_thresh=1e-2, *RD_args, **RD_kwds):
 	"""
 	Runs replicator dynamics from multiple starting mixtures.
 	"""
+	v = np.array([pd.values for pd in game.values()])
+	c = np.array([pd.counts for pd in game.values()])
+	d = np.array([pd.dev_reps for pd in game.values()])
 	equilibria = []
 	for m in game.biasedMixtures() + [game.uniformMixture()]:
-		eq = ReplicatorDynamics(game, m, *RD_args, **RD_kwds)
-		if game.regret(eq) <= regret_thresh and all(map(lambda e: \
-				norm(eq - e, 2) >= dist_thresh, equilibria)):
+		eq = ReplicatorDynamics(m,v,c,d, game.minPayoffs, *RD_args, **RD_kwds)
+		distances = map(lambda e: norm(e-eq,2), equilibria)
+		if game.regret(eq) <= regret_thresh and all([d >= dist_thresh \
+				for d in distances]):
 			equilibria.append(eq)
 	return equilibria
 
 
-def ReplicatorDynamics(game, mix, iters=10000, thresh=1e-8, verbose=False):
+def ReplicatorDynamics(mix, values, counts, dev_reps, minPayoffs, \
+			iters=10000, converge_thresh=1e-8, verbose=False):
 	"""
 	Replicator dynamics.
 	"""
 	for i in range(iters):
 		old_mix = mix
-		mix = (game.expectedValues(mix) - game.minPayoffs) * mix
-		mix = mix / mix.sum(1).reshape(len(game.roles),1)
-		if np.allclose(mix, old_mix, thresh):
+		EVs = (values * (mix**counts).prod(1).prod(1).reshape(values.shape[0], \
+				1, 1) * dev_reps / (mix + tiny)).sum(0)
+		mix = (EVs - minPayoffs) * mix
+		mix = mix / mix.sum(1).reshape(mix.shape[0],1)
+		if np.allclose(mix, old_mix, converge_thresh):
 			break
 	if verbose:
 		print i+1, "iterations"
