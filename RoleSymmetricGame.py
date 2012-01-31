@@ -2,7 +2,7 @@ import numpy as np
 
 from itertools import product, combinations_with_replacement as CwR
 from collections import namedtuple
-from math import isnan
+from math import isinf
 
 from HashableClasses import *
 from BasicFunctions import *
@@ -63,6 +63,9 @@ class Game(dict):
 
 		self.numStrategies = [len(self.strategies[r]) for r in self.roles]
 		self.maxStrategies = max(self.numStrategies)
+		self.minPayoffs = self.zeros(dtype=float, masked=False)
+		self.minPayoffs.fill(float('inf'))
+
 		self.mask = h_array([[False]*s + [True]*(self.maxStrategies - s) for \
 				s in self.numStrategies])
 		self.size = prod([game_size(self.counts[r], self.numStrategies[i]) \
@@ -79,6 +82,8 @@ class Game(dict):
 		values = self.zeros(dtype=float)
 		for role_index, role in enumerate(self.roles):
 			for strategy, count, value in role_payoffs[role]:
+				if value < self.minPayoffs[role_index][0]:
+					self.minPayoffs[role_index] = value
 				strategy_index = self.index(role, strategy)
 				counts[role_index, strategy_index] = count
 				values[role_index, strategy_index] = value
@@ -143,7 +148,8 @@ class Game(dict):
 		return self.keys()
 
 	def uniformMixture(self):
-		return (h_array(1-self.mask, dtype=float).T / (1-self.mask).sum(1)).T
+		return h_array(1-self.mask, dtype=float) / \
+				(1-self.mask).sum(1).reshape(len(self.roles),1)
 
 	def biasedMixtures(self, role=None, strategy=None):
 		"""
@@ -160,8 +166,9 @@ class Game(dict):
 		if strategy == None:
 			return sum([self.biasedMixtures(role, s) for s in \
 					self.strategies[role]], [])
-		m = (1 - self.mask) + (self.array_index(role, strategy, dtype=float).T \
-				* (h_array(self.numStrategies) * 9 - 10)).T
+		m = (1 - self.mask) + self.array_index(role, strategy, dtype=float) \
+				* (h_array(self.numStrategies) * 9 - 10).reshape( \
+				len(self.roles),1)
 		return [(m.T / m.sum(1)).T]
 
 	def __cmp__(self, other):
@@ -214,8 +221,11 @@ class Game(dict):
 		if deviation == None:
 			return max([self.profileRegret(profile, role, strategy, d) for d \
 					in set(self.strategies[role]) - {strategy}])
-		return self.getPayoff(profile.deviate(role, strategy, deviation), \
-				role, deviation) - self.getPayoff(profile, role, strategy)
+		try:
+			return self.getPayoff(profile.deviate(role, strategy, deviation), \
+					role, deviation) - self.getPayoff(profile, role, strategy)
+		except KeyError:
+			return float("inf")
 
 	def mixtureRegret(self, mix, role=None, deviation=None):
 		if role == None:
@@ -256,13 +266,12 @@ class Game(dict):
 		biggest_gain = float('-inf')
 		unknown = set()
 		for dev in self.strategies[role]:
-			try:
-				r = self.profileRegret(profile, role, strategy, dev)
-				if r > biggest_gain:
-					best_deviations = {dev}
-					biggest_gain = r
-				if r == biggest_gain:
-					best_deviations.add(dev)
-			except KeyError:
+			r = self.profileRegret(profile, role, strategy, dev)
+			if isinf(r):
 				unknown.add(dev)
+			elif r > biggest_gain:
+				best_deviations = {dev}
+				biggest_gain = r
+			elif r == biggest_gain:
+				best_deviations.add(dev)
 		return best_deviations, unknown

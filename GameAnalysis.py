@@ -1,5 +1,6 @@
+from numpy.linalg import norm
 from itertools import product
-from math import isnan
+from math import isinf
 
 from RoleSymmetricGame import *
 
@@ -105,19 +106,13 @@ def PureStrategyDominance(game, conditional=True):
 		for dominant, dominated in product(game.strategies[r], repeat=2):
 			if dominant == dominated or dominated not in undominated[r]:
 				continue
-			regret = float("nan")
 			for profile in game:
 				if dominated not in profile[r]:
 					continue
-				try:
-					regret = game.regret(profile, r, dominated, dominant)
-				except KeyError:
-					if conditional:
-						regret = float("nan")
-						break
-				if regret <= 0:
+				regret = game.regret(profile, r, dominated, dominant)
+				if regret <=0 or (isinf(regret) and conditional):
 					break
-			if regret > 0:
+			if regret > 0 and not (conditional and isinf(regret)):
 				undominated[r].remove(dominated)
 	return subgame(game, undominated)
 
@@ -132,38 +127,41 @@ def MixedStrategyDominance(game):
 def pureNash(game, epsilon=0):
 	"""
 	Finds all pure-strategy epsilon-Nash equilibria.
-
-	input:
-	epsilon = largest allowable regret for approximate equilibria
-
-	output:
-	NE = exact Nash equilibria
-	eNE = e-Nash equilibria for 0 < e <= epsilon
-	mrp = minimum regret profile (of interest if there is no exact NE)
-	mr = regret of mrp
 	"""
-	equilibria = []
-	for profile in game:
-		try:
-			if game.regret(profile) <= epsilon:
-				equilibria.append(profile)
-		except KeyError:
-			continue
-	return equilibria
+	return filter(lambda profile: game.regret(profile) <= epsilon, game)
 
 
 def minRegretProfile(game):
-	raise NotImplementedError("TODO")
+	"""
+	Finds the profile with the confirmed lowest regret.
+	"""
+	return min([(game.regret(profile), profile) for profile in game])[1]
 
 
-def mixedNash(game, regret_thresh=0, dist_thresh=1e-2, verbose=False):
-	raise NotImplementedError("TODO")
+def mixedNash(game, regret_thresh=1e-5, dist_thresh=1e-2, *RD_args, **RD_kwds):
+	"""
+	Runs replicator dynamics from multiple starting mixtures.
+	"""
+	equilibria = []
+	for m in game.biasedMixtures() + [game.uniformMixture()]:
+		eq = ReplicatorDynamics(game, m, *RD_args, **RD_kwds)
+		if game.regret(eq) <= regret_thresh and all(map(lambda e: \
+				norm(eq - e, 2) >= dist_thresh, equilibria)):
+			equilibria.append(eq)
+	return equilibria
 
 
-def RD(game, mixedProfile=None, array_data=None, iters=10000, thresh=1e-8, \
-		verbose=False):
+def ReplicatorDynamics(game, mix, iters=10000, thresh=1e-8, verbose=False):
 	"""
 	Replicator dynamics.
 	"""
-	raise NotImplementedError("TODO")
+	for i in range(iters):
+		old_mix = mix
+		mix = (game.expectedValues(mix) - game.minPayoffs) * mix
+		mix = mix / mix.sum(1).reshape(len(game.roles),1)
+		if np.allclose(mix, old_mix, thresh):
+			break
+	if verbose:
+		print i+1, "iterations"
+	return mix
 
