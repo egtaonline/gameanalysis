@@ -4,6 +4,57 @@ from math import isinf
 
 from RoleSymmetricGame import *
 
+def HierarchicalReduction(game, players={}):
+	if not players:
+		players = {r : game.players[r] / 2 for r in game.roles}
+	HR_game = Game(game.roles, players, game.strategies)
+	for reduced_profile in HR_game.allProfiles():
+		full_profile = Profile({r:FullGameProfile(reduced_profile[r], \
+				game.players[r]) for r in game.roles})
+		HR_game.addProfile({r:[payoff_data(s, n, game.getPayoff(full_profile,r,\
+				s)) for s,n in full_profile[r].items()] for r in full_profile})
+	return HR_game
+
+
+def FullGameProfile(HR_profile, N):
+	"""
+	Returns the symmetric full game profile corresponding to the given
+	symmetric reduced game profile.
+	"""
+	n = sum(HR_profile.values())
+	full_profile = {s : c * N / n  for s,c in HR_profile.items()}
+	while sum(full_profile.values()) < N:
+		full_profile[max([(float(N) / n * HR_profile[s] \
+				- full_profile[s], s) for s in full_profile])[1]] += 1
+	return full_profile
+
+
+def DeviationPreservingReduction(game, players={}):
+	if not players:
+		players = {r:2 for r in game.roles}
+	DPR_game = Game(game.roles, players, game.strategies)
+	for reduced_profile in DPR_game.allProfiles():
+		role_payoffs = {}
+		for role in game.roles:
+			role_payoffs[role] = []
+			for s in reduced_profile[role]:
+				full_profile = {}
+				for r in game.roles:
+					if r == role:
+						opp_prof = reduced_profile.asDict()[r]
+						opp_prof[s] -= 1
+						full_profile[r] = FullGameProfile(opp_prof, \
+								game.players[r] - 1)
+						full_profile[r][s] += 1
+					else:
+						full_profile[r] = FullGameProfile(reduced_profile[r], \
+								game.players[r])
+				role_payoffs[r].append(payoff_data(s, reduced_profile[r][s], \
+						game.getPayoff(Profile(full_profile), r, s)))
+		DPR_game.addProfile(role_payoffs)
+	return DPR_game
+
+
 def subgame(game, strategies={}):
 	"""
 	Creates a game with a subset each role's strategies.
@@ -12,7 +63,7 @@ def subgame(game, strategies={}):
 	"""
 	if not strategies:
 		strategies = {r:[] for r in game.roles}
-	sg = Game(game.roles, game.counts, strategies)
+	sg = Game(game.roles, game.players, strategies)
 	for p in sg.allProfiles():
 		if p in game:
 			sg.addProfile({r:[payoff_data(s, p[r][s], game.getPayoff(p,r,s)) \
@@ -23,7 +74,7 @@ def subgame(game, strategies={}):
 def isSubgame(small_game, big_game):
 	if any((r not in big_game.roles for r in small_game.roles)):
 		return False
-	if any((small_game.counts[r] != big_game.counts[r] for r \
+	if any((small_game.players[r] != big_game.players[r] for r \
 			in small_game.roles)):
 		return False
 	for r in small_game.roles:
@@ -74,10 +125,10 @@ def IteratedElimination(game, criterion, *args, **kwargs):
 	input:
 	criterion = function to find dominated strategies
 	"""
-	sg = criterion(game)
-	if game == sg:
+	g = criterion(game, *args, **kwargs)
+	if game == g:
 		return game
-	return IteratedElimination(sg, criterion, *args, **kwargs)
+	return IteratedElimination(g, criterion, *args, **kwargs)
 
 
 def NeverBestResponse(game, conditional=True):
@@ -97,7 +148,7 @@ def NeverBestResponse(game, conditional=True):
 	return subgame(game, best_responses)
 
 
-def PureStrategyDominance(game, conditional=True):
+def PureStrategyDominance(game, conditional=True, weak=False):
 	"""
 	conditional strict pure-strategy dominance criterion for IEDS
 	"""
@@ -110,9 +161,11 @@ def PureStrategyDominance(game, conditional=True):
 				if dominated not in profile[r]:
 					continue
 				regret = game.regret(profile, r, dominated, dominant)
-				if regret <=0 or (isinf(regret) and conditional):
+				if (regret <=0 and not weak) or (regret < 0) or \
+						(isinf(regret) and conditional):
 					break
-			if regret > 0 and not (conditional and isinf(regret)):
+			if (regret > 0 and not (conditional and isinf(regret))) or \
+					(regret == 0 and weak):
 				undominated[r].remove(dominated)
 	return subgame(game, undominated)
 
@@ -138,16 +191,13 @@ def MinRegretProfile(game):
 	return min([(game.regret(profile), profile) for profile in game])[1]
 
 
-def MixedNash(game, regret_thresh=1e-5, dist_thresh=1e-2, *RD_args, **RD_kwds):
+def MixedNash(game, regret_thresh=1e-4, dist_thresh=1e-2, *RD_args, **RD_kwds):
 	"""
 	Runs replicator dynamics from multiple starting mixtures.
 	"""
-	v = np.array([pd.values for pd in game.values()])
-	c = np.array([pd.counts for pd in game.values()])
-	d = np.array([pd.dev_reps for pd in game.values()])
 	equilibria = []
 	for m in game.biasedMixtures() + [game.uniformMixture()]:
-		eq = ReplicatorDynamics(m,v,c,d, game.minPayoffs, *RD_args, **RD_kwds)
+		eq = ReplicatorDynamics(game, m, *RD_args, **RD_kwds)
 		distances = map(lambda e: norm(e-eq,2), equilibria)
 		if game.regret(eq) <= regret_thresh and all([d >= dist_thresh \
 				for d in distances]):
@@ -155,16 +205,14 @@ def MixedNash(game, regret_thresh=1e-5, dist_thresh=1e-2, *RD_args, **RD_kwds):
 	return equilibria
 
 
-def ReplicatorDynamics(mix, values, counts, dev_reps, minPayoffs, \
-			iters=10000, converge_thresh=1e-8, verbose=False):
+def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
+		verbose=False):
 	"""
 	Replicator dynamics.
 	"""
 	for i in range(iters):
 		old_mix = mix
-		EVs = (values * (mix**counts).prod(1).prod(1).reshape(values.shape[0], \
-				1, 1) * dev_reps / (mix + tiny)).sum(0)
-		mix = (EVs - minPayoffs) * mix
+		mix = (game.expectedValues(mix) - game.minPayoffs) * mix
 		mix = mix / mix.sum(1).reshape(mix.shape[0],1)
 		if np.allclose(mix, old_mix, converge_thresh):
 			break

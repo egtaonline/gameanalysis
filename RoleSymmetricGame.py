@@ -7,9 +7,8 @@ from math import isinf
 from HashableClasses import *
 from BasicFunctions import *
 
-
 payoff_data = namedtuple("payoff", "strategy count value")
-profile_data = namedtuple("profile_data", "counts reps dev_reps values")
+
 tiny = np.finfo(np.float64).tiny
 
 class Profile(h_dict):
@@ -45,19 +44,19 @@ class Profile(h_dict):
 
 
 class Game(dict):
-	def __init__(self, roles=[], counts={}, strategies={}, role_payoff_data=[]):
+	def __init__(self, roles=[], players={}, strategies={}, payoff_data=[]):
 		"""
 		Role-symmetric game representation.
 
 		__init__ parameters:
 		roles: collection of role-name strings
-		counts: mapping from roles to number of players per role
+		players: mapping from roles to number of players per role
 		strategies: mapping from roles to per-role strategy sets
 		payoff_data: collection of data objects mapping roles to collections
 				of (strategy, count, value) tuples
 		"""
 		self.roles = sorted(set(map(str, roles)))
-		self.counts = {r : int(counts[r]) for r in self.roles}
+		self.players = {r : int(players[r]) for r in self.roles}
 		self.strategies = {r : sorted(set(map(str, strategies[r]))) \
 				for r in self.roles}
 
@@ -68,16 +67,23 @@ class Game(dict):
 
 		self.mask = h_array([[False]*s + [True]*(self.maxStrategies - s) for \
 				s in self.numStrategies])
-		self.size = prod([game_size(self.counts[r], self.numStrategies[i]) \
-				for i,r in enumerate(self.roles)])
+		self.size = prod([game_size(self.players[r], self.numStrategies[ \
+				i]) for i,r in enumerate(self.roles)])
 		self.role_index = {r:i for i,r in enumerate(self.roles)}
 		self.strategy_index = {r : {s:i for i,s in enumerate( \
 				self.strategies[r]) } for r in self.roles}
+		self.values = []
+		self.counts = []
+		self.dev_reps = []
 
-		for profile_data_set in role_payoff_data:
+		for profile_data_set in payoff_data:
 			self.addProfile(profile_data_set)
 
 	def addProfile(self, role_payoffs):
+		if isinstance(self.values, np.ndarray):
+			self.values = list(self.values)
+			self.counts = list(self.counts)
+			self.dev_reps = list(self.dev_reps)
 		counts = self.zeros(dtype=int)
 		values = self.zeros(dtype=float)
 		for role_index, role in enumerate(self.roles):
@@ -87,17 +93,22 @@ class Game(dict):
 				strategy_index = self.index(role, strategy)
 				counts[role_index, strategy_index] = count
 				values[role_index, strategy_index] = value
-		reps = profile_repetitions(counts)
 		devs = self.zeros(dtype=int)
 		for i, r in enumerate(self.roles):
 			for j, s in enumerate(self.strategies[r]):
 				if counts[i,j] > 0:
 					opp_prof = counts - self.array_index(r,s)
-					devs[i,j] = profile_repetitions(opp_prof)
+					try:
+						devs[i,j] = profile_repetitions(opp_prof)
+					except OverflowError:
+						devs = np.array(devs, dtype=object)
+						devs[i,j] = profile_repetitions(opp_prof)
 				else:
 					devs[i,j] = 0
-		self[Profile(role_payoffs)] = profile_data(h_array(counts), reps, \
-				h_array(devs), h_array(values))
+		self[Profile(role_payoffs)] = len(self.values)
+		self.values.append(values)
+		self.counts.append(counts)
+		self.dev_reps.append(devs)
 
 	def index(self, role, strategy=None):
 		"""
@@ -124,7 +135,8 @@ class Game(dict):
 		return a
 
 	def getPayoff(self, profile, role, strategy):
-		return self[profile].values[self.index(role), self.index(role,strategy)]
+		v = self.values[self[profile]]
+		return v[self.index(role), self.index(role,strategy)]
 
 	def getExpectedPayoff(self, mix, role=None):
 		if role == None:
@@ -136,13 +148,18 @@ class Game(dict):
 		Computes the expected value of each pure strategy played against
 		all opponents playing mix.
 		"""
-		return sum([pd.values * (mix**pd.counts).prod() * pd.dev_reps / \
-				(mix + tiny) for pd in self.values()])
+		if isinstance(self.values, list):
+			self.values = np.array(self.values)
+			self.counts = np.array(self.counts)
+			self.dev_reps = np.array(self.dev_reps)
+		weights = (mix**self.counts).prod(1).prod(1).reshape( \
+				self.values.shape [0], 1, 1) * self.dev_reps / (mix+tiny)
+		return (self.values * weights).sum(0)# / (weights.sum(0) + tiny)
 
 	def allProfiles(self):
 		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \
 				self.index(r)])} for r in self.roles}) for p in product(*[ \
-				CwR(self.strategies[r], self.counts[r]) for r in self.roles])]
+				CwR(self.strategies[r], self.players[r]) for r in self.roles])]
 
 	def knownProfiles(self):
 		return self.keys()
@@ -162,7 +179,8 @@ class Game(dict):
 		the main use case is starting replicator dynamics from several mixtures.
 		"""
 		if role == None:
-			return sum([self.biasedMixtures(r) for r in self.roles], [])
+			return sum([self.biasedMixtures(r) for r in filter(lambda r: \
+					self.numStrategies[self.index(r)] > 1, self.roles)], [])
 		if strategy == None:
 			return sum([self.biasedMixtures(role, s) for s in \
 					self.strategies[role]], [])
@@ -173,7 +191,7 @@ class Game(dict):
 
 	def __cmp__(self, other):
 		return cmp(self.roles, other.roles) or \
-				cmp(self.counts, other.counts) or \
+				cmp(self.players, other.players) or \
 				cmp(self.strategies, other.strategies) or \
 				dict.__cmp__(self, other)
 
@@ -194,8 +212,8 @@ class Game(dict):
 
 	def __repr__(self):
 		return ("RoleSymmetricGame:\n\troles: " + list_repr(self.roles) + \
-				"\n\tcounts:\n\t\t" + list_repr(map(lambda x: str(x[1]) +"x "+ \
-				str(x[0]), sorted(self.counts.items())), sep="\n\t\t") + \
+				"\n\tplayers:\n\t\t" + list_repr(map(lambda x: str(x[1]) +"x "+\
+				str(x[0]), sorted(self.players.items())), sep="\n\t\t") + \
 				"\n\tstrategies:\n\t\t" + list_repr(map(lambda x: x[0] + \
 				":\n\t\t\t" + list_repr(x[1], sep="\n\t\t\t"), \
 				sorted(self.strategies.items())), sep="\n\t\t") + \
