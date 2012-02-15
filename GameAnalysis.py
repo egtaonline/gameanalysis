@@ -55,7 +55,7 @@ def DeviationPreservingReduction(game, players={}):
 	return DPR_game
 
 
-def subgame(game, strategies={}):
+def Subgame(game, strategies={}):
 	"""
 	Creates a game with a subset each role's strategies.
 
@@ -71,7 +71,7 @@ def subgame(game, strategies={}):
 	return sg
 
 
-def isSubgame(small_game, big_game):
+def IsSubgame(small_game, big_game):
 	if any((r not in big_game.roles for r in small_game.roles)):
 		return False
 	if any((small_game.players[r] != big_game.players[r] for r \
@@ -84,7 +84,7 @@ def isSubgame(small_game, big_game):
 	return True
 
 
-def cliques(full_game, subgames=set()):
+def Cliques(full_game, subgames=set()):
 	"""
 	Finds maximal subgames for which all profiles are known.
 
@@ -93,8 +93,8 @@ def cliques(full_game, subgames=set()):
 	the known subgames is ignored, so for faster loading, give only the
 	header information).
 	"""
-	subgames = {full_game.subgame(g.strategies) for g in subgames}.union(\
-			{subgame(full_game)})
+	subgames = {full_game.Subgame(g.strategies) for g in subgames}.union(\
+			{Subgame(full_game)})
 	maximal_subgames = set()
 	while(subgames):
 		sg = subgames.pop()
@@ -102,14 +102,14 @@ def cliques(full_game, subgames=set()):
 		for role in full_game.roles:
 			for s in set(full_game.strategies[role]) - \
 					set(sg.strategies[role]):
-				new_sg = subgame(full_game, {r:list(sg.strategies[r])\
+				new_sg = Subgame(full_game, {r:list(sg.strategies[r])\
 						+ ([s] if r == role else []) for r in full_game.roles})
 				if not new_sg.isComplete():
 					continue
 				maximal=False
 				if new_sg in subgames or new_sg in maximal_subgames:
 					continue
-				if any([isSubgame(new_sg, g) for g in \
+				if any([IsSubgame(new_sg, g) for g in \
 							subgames.union(maximal_subgames)]):
 					continue
 				subgames.add(new_sg)
@@ -145,7 +145,7 @@ def NeverBestResponse(game, conditional=True):
 				best_responses[r].update(br)
 				if conditional:
 					best_responses[r].update(unknown)
-	return subgame(game, best_responses)
+	return Subgame(game, best_responses)
 
 
 def PureStrategyDominance(game, conditional=True, weak=False):
@@ -167,7 +167,7 @@ def PureStrategyDominance(game, conditional=True, weak=False):
 			if (regret > 0 and not (conditional and isinf(regret))) or \
 					(regret == 0 and weak):
 				undominated[r].remove(dominated)
-	return subgame(game, undominated)
+	return Subgame(game, undominated)
 
 
 def MixedStrategyDominance(game):
@@ -214,9 +214,10 @@ def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 		old_mix = mix
 		mix = (game.expectedValues(mix) - game.minPayoffs) * mix
 		mix = mix / mix.sum(1).reshape(mix.shape[0],1)
-		if np.allclose(mix, old_mix, converge_thresh):
+#		if np.allclose(mix, old_mix, converge_thresh):
+		if np.linalg.norm(mix - old_mix) <= converge_thresh:
 			break
 	if verbose:
-		print i+1, "iterations"
+		print i+1, "iterations ; mix =", mix, "; regret =", game.regret(mix)
 	return mix
 

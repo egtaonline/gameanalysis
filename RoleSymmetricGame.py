@@ -9,7 +9,7 @@ from BasicFunctions import *
 
 payoff_data = namedtuple("payoff", "strategy count value")
 
-tiny = np.finfo(np.float64).tiny
+tiny = float(np.finfo(np.float64).tiny)
 
 class Profile(h_dict):
 	def __init__(self, role_payoffs):
@@ -56,16 +56,16 @@ class Game(dict):
 				of (strategy, count, value) tuples
 		"""
 		self.roles = sorted(set(map(str, roles)))
-		self.players = {r : int(players[r]) for r in self.roles}
-		self.strategies = {r : sorted(set(map(str, strategies[r]))) \
-				for r in self.roles}
+		self.players = h_dict({r : int(players[r]) for r in self.roles})
+		self.strategies = h_dict({r : tuple(sorted(set(map(str, \
+				strategies[r])))) for r in self.roles})
 
 		self.numStrategies = [len(self.strategies[r]) for r in self.roles]
 		self.maxStrategies = max(self.numStrategies)
 		self.minPayoffs = self.zeros(dtype=float, masked=False)
 		self.minPayoffs.fill(float('inf'))
 
-		self.mask = h_array([[False]*s + [True]*(self.maxStrategies - s) for \
+		self.mask = np.array([[False]*s + [True]*(self.maxStrategies - s) for \
 				s in self.numStrategies])
 		self.size = prod([game_size(self.players[r], self.numStrategies[ \
 				i]) for i,r in enumerate(self.roles)])
@@ -109,6 +109,9 @@ class Game(dict):
 		self.values.append(values)
 		self.counts.append(counts)
 		self.dev_reps.append(devs)
+
+	def __hash__(self):
+		return hash((self.players, self.strategies))
 
 	def index(self, role, strategy=None):
 		"""
@@ -165,7 +168,7 @@ class Game(dict):
 		return self.keys()
 
 	def uniformMixture(self):
-		return h_array(1-self.mask, dtype=float) / \
+		return np.array(1-self.mask, dtype=float) / \
 				(1-self.mask).sum(1).reshape(len(self.roles),1)
 
 	def biasedMixtures(self, role=None, strategy=None):
@@ -185,7 +188,7 @@ class Game(dict):
 			return sum([self.biasedMixtures(role, s) for s in \
 					self.strategies[role]], [])
 		m = (1 - self.mask) + self.array_index(role, strategy, dtype=float) \
-				* (h_array(self.numStrategies) * 9 - 10).reshape( \
+				* (np.array(self.numStrategies) * 9 - 10).reshape( \
 				len(self.roles),1)
 		return [(m.T / m.sum(1)).T]
 
@@ -226,7 +229,7 @@ class Game(dict):
 	def regret(self, p, *args, **kwargs):
 		if isinstance(p, Profile):
 			return self.profileRegret(p, *args, **kwargs)
-		elif isinstance(p, h_array):
+		elif isinstance(p, np.ndarray):
 			return self.mixtureRegret(p, *args, **kwargs)
 		raise TypeError("unrecognized argument type: " + type(p).__name__)
 
@@ -293,3 +296,17 @@ class Game(dict):
 			elif r == biggest_gain:
 				best_deviations.add(dev)
 		return best_deviations, unknown
+
+	def translate(self, other, array):
+		"""
+		Translates a mixture, profile, count, or payoff array from a related
+		game based on role/strategy indices.
+
+		Useful for testing full-game regret of subgame equilibria.
+		"""
+		a = self.zeros()
+		for role in self.roles:
+			for strategy in other.strategies[role]:
+				a[self.index(role), self.index(role, strategy)] = array[ \
+						other.index(role), other.index(role, strategy)]
+		return a
