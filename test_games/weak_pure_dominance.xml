@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<nfg name="Rock Paper Scissors" description="TEST">
+	<players>
+		<player id="Row">
+			<actions>
+				<action id="Top"/>
+				<action id="Middle"/>
+				<action id="Bottom"/>
+			</actions>
+		</player>
+		<player id="Column">
+			<actions>
+				<action id="Left"/>
+				<action id="Center"/>
+				<action id="Right"/>
+			</actions>
+		</player>
+	</players>
+	<payoffs>
+		<payoff>
+			<outcome player="Row" action="Top" value="2"/>
+			<outcome player="Column" action="Left" value="2"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Top" value="3"/>
+			<outcome player="Column" action="Center" value="2"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Top" value="3"/>
+			<outcome player="Column" action="Right" value="2.5"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Middle" value="2"/>
+			<outcome player="Column" action="Left" value="3"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Middle" value="4"/>
+			<outcome player="Column" action="Center" value="4"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Middle" value="6"/>
+			<outcome player="Column" action="Right" value="2.5"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Bottom" value="2.5"/>
+			<outcome player="Column" action="Left" value="3"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Bottom" value="2.5"/>
+			<outcome player="Column" action="Center" value="6"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Bottom" value="5"/>
+			<outcome player="Column" action="Right" value="5"/>
+		</payoff>
+	</payoffs>
+</nfg>

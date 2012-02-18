@@ -11,8 +11,9 @@ def HierarchicalReduction(game, players={}):
 	for reduced_profile in HR_game.allProfiles():
 		full_profile = Profile({r:FullGameProfile(reduced_profile[r], \
 				game.players[r]) for r in game.roles})
-		HR_game.addProfile({r:[payoff_data(s, n, game.getPayoff(full_profile,r,\
-				s)) for s,n in full_profile[r].items()] for r in full_profile})
+		HR_game.addProfile({r:[payoff_data(s, reduced_profile[r][s], \
+				game.getPayoff(full_profile, r, s)) for s in full_profile[r]] \
+				for r in full_profile})
 	return HR_game
 
 
