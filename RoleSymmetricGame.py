@@ -156,7 +156,7 @@ class Game(dict):
 			self.counts = np.array(self.counts)
 			self.dev_reps = np.array(self.dev_reps)
 		weights = (mix**self.counts).prod(1).prod(1).reshape( \
-				self.values.shape [0], 1, 1) * self.dev_reps / (mix+tiny)
+				self.values.shape[0], 1, 1) * self.dev_reps / (mix+tiny)
 		return (self.values * weights).sum(0)# / (weights.sum(0) + tiny)
 
 	def allProfiles(self):

@@ -114,7 +114,7 @@ def Cliques(full_game, subgames=set()):
 							subgames.union(maximal_subgames)]):
 					continue
 				subgames.add(new_sg)
-		if maximal:
+		if maximal and len(sg) > 0:
 			maximal_subgames.add(sg)
 	return maximal_subgames
 
@@ -134,7 +134,7 @@ def IteratedElimination(game, criterion, *args, **kwargs):
 
 def NeverBestResponse(game, conditional=True):
 	"""
-	conditional never-a-weak-best-response criterion for IEDS
+	never-a-weak-best-response criterion for IEDS
 
 	This criterion is very strong: it can eliminate strict Nash equilibria.
 	"""
@@ -151,29 +151,35 @@ def NeverBestResponse(game, conditional=True):
 
 def PureStrategyDominance(game, conditional=True, weak=False):
 	"""
-	conditional strict pure-strategy dominance criterion for IEDS
+	pure-strategy dominance criterion for IEDS
 	"""
 	undominated = {r:set(game.strategies[r]) for r in game.roles}
 	for r in game.roles:
 		for dominant, dominated in product(game.strategies[r], repeat=2):
 			if dominant == dominated or dominated not in undominated[r]:
 				continue
+			dominance_proved = False
 			for profile in game:
-				if dominated not in profile[r]:
-					continue
-				regret = game.regret(profile, r, dominated, dominant)
-				if (regret <=0 and not weak) or (regret < 0) or \
-						(isinf(regret) and conditional):
-					break
-			if (regret > 0 and not (conditional and isinf(regret))) or \
-					(regret == 0 and weak):
+				if dominated in profile[r]:
+					regret = game.regret(profile, r, dominated, dominant)
+					if regret > 0 and not isinf(regret):
+						dominance_proved = True
+					elif (regret < 0) or (regret == 0 and not weak) or \
+							(isinf(regret) and conditional):
+						dominance_proved = False
+						break
+				elif dominant in profile[r] and conditional:
+					if profile.deviate(r, dominant, dominated) not in game:
+						dominance_proved = False
+						break
+			if dominance_proved:
 				undominated[r].remove(dominated)
 	return Subgame(game, undominated)
 
 
-def MixedStrategyDominance(game):
+def MixedStrategyDominance(game, conditional=True, weak=False):
 	"""
-	conditional strict mixed-strategy dominance criterion for IEDS
+	mixed-strategy dominance criterion for IEDS
 	"""
 	raise NotImplementedError("TODO")
 
