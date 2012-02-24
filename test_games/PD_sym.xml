@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<nfg name="Prisoner's Dilemma">
+	<players>
+		<player id="Alice"/>
+		<player id="Bob"/>
+	</players>
+	<actions>
+		<action id="c"/>
+		<action id="d"/>
+	</actions>
+	<payoffs>
+		<payoff>
+			<outcome action="c" count="2" value="2.0"/>
+		</payoff>
+		<payoff>
+			<outcome action="d" count="2" value="1.0"/>
+		</payoff>
+		<payoff>
+			<outcome action="c" count="1" value="0.0"/>
+			<outcome action="d" count="1" value="3.0"/>
+		</payoff>
+	</payoffs>
+</nfg>

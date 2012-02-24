@@ -39,42 +39,6 @@ HashableClasses.pyc
 
 research.py
 
-Test.py
+.time_RD.py.swp
 
-test_games/PD_str.xml
-
-test_games/weak_pure_dominance.xml
-
-test_games/weak_pure_dominance.xml
-
-test_games/strict_pure_dominance.xml
-
-test_games/conditional_dominance_BC.xml
-
-test_games/PD_sym.xml
-
-test_games/RPS_str.xml
-
-test_games/RPS_sym.xml
-
-test_games/cliques_HLRR.json
-
-test_games/cliques_HLRR_HLAA.json
-
-test_games/cliques_all_sym.json
-
-test_games/cliques_full.json
-
-test_games/conditional_dominance_BCR.xml
-
-test_games/conditional_dominance_BL.xml
-
-test_games/conditional_dominance_BR.xml
-
-test_games/never_best_response.xml
-
-test_games/test_games.txt
-
-test_games/strict_pure_dominance.xml
-
-test_games/weak_pure_dominance.xml
+time_RD.py

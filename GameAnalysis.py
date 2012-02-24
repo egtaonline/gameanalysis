@@ -72,6 +72,14 @@ def Subgame(game, strategies={}):
 	return sg
 
 
+def SubgameAvailable(game, strategies = {}):
+	sg = Game(game.roles, game.players, strategies)
+	for p in sg.allProfiles():
+		if p not in game:
+			return False
+	return True
+
+
 def IsSubgame(small_game, big_game):
 	if any((r not in big_game.roles for r in small_game.roles)):
 		return False
@@ -94,8 +102,8 @@ def Cliques(full_game, subgames=set()):
 	the known subgames is ignored, so for faster loading, give only the
 	header information).
 	"""
-	subgames = {full_game.Subgame(g.strategies) for g in subgames}.union(\
-			{Subgame(full_game)})
+	subgames = {Game(full_game.roles, full_game.players, g.strategies) for g \
+			in subgames}.union({Subgame(full_game)})
 	maximal_subgames = set()
 	while(subgames):
 		sg = subgames.pop()
@@ -103,10 +111,11 @@ def Cliques(full_game, subgames=set()):
 		for role in full_game.roles:
 			for s in set(full_game.strategies[role]) - \
 					set(sg.strategies[role]):
-				new_sg = Subgame(full_game, {r:list(sg.strategies[r])\
-						+ ([s] if r == role else []) for r in full_game.roles})
-				if not new_sg.isComplete():
+				strategies = {r:list(sg.strategies[r]) + ([s] if r == role \
+						else []) for r in full_game.roles}
+				if not SubgameAvailable(full_game, strategies):
 					continue
+				new_sg = Game(sg.roles, sg.players, strategies)
 				maximal=False
 				if new_sg in subgames or new_sg in maximal_subgames:
 					continue
@@ -114,9 +123,11 @@ def Cliques(full_game, subgames=set()):
 							subgames.union(maximal_subgames)]):
 					continue
 				subgames.add(new_sg)
-		if maximal and len(sg) > 0:
-			maximal_subgames.add(sg)
-	return maximal_subgames
+		if maximal:
+			sg = Subgame(full_game, sg.strategies)
+			if len(sg) > 0:
+				maximal_subgames.add(sg)
+	return list(maximal_subgames)
 
 
 def IteratedElimination(game, criterion, *args, **kwargs):
@@ -152,6 +163,10 @@ def NeverBestResponse(game, conditional=True):
 def PureStrategyDominance(game, conditional=True, weak=False):
 	"""
 	pure-strategy dominance criterion for IEDS
+
+	conditional==0==False --> unconditional
+	conditional==1==True ---> conditional dominance
+	conditional==2 ---------> extra-conservative conditional dominance
 	"""
 	undominated = {r:set(game.strategies[r]) for r in game.roles}
 	for r in game.roles:
@@ -168,7 +183,7 @@ def PureStrategyDominance(game, conditional=True, weak=False):
 							(isinf(regret) and conditional):
 						dominance_proved = False
 						break
-				elif dominant in profile[r] and conditional:
+				elif dominant in profile[r] and conditional > 1:
 					if profile.deviate(r, dominant, dominated) not in game:
 						dominance_proved = False
 						break

@@ -1,0 +1,35 @@
+<?xml version="1.0" ?>
+<nfg name="Prisoner's Dilemma">
+	<players>
+		<player id="Bob">
+			<actions>
+				<action id="c"/>
+				<action id="d"/>
+			</actions>
+		</player>
+		<player id="Alice">
+			<actions>
+				<action id="c"/>
+				<action id="d"/>
+			</actions>
+		</player>
+	</players>
+    <payoffs>
+        <payoff>
+            <outcome player="Alice" action="c" value="2.0"/>
+            <outcome player="Bob" action="c" value="2.0"/>
+        </payoff>
+        <payoff>
+            <outcome player="Alice" action="d" value="1.0"/>
+            <outcome player="Bob" action="d" value="1.0"/>
+        </payoff>
+        <payoff>
+            <outcome player="Alice" action="c" value="0.0"/>
+            <outcome player="Bob" action="d" value="3.0"/>
+        </payoff>
+        <payoff>
+            <outcome player="Alice" action="d" value="3.0"/>
+            <outcome player="Bob" action="c" value="0.0"/>
+        </payoff>
+    </payoffs>
+</nfg>

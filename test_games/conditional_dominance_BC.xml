@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<nfg name="conditional_dominance_BC">
+	<players>
+		<player id="Row">
+			<actions>
+				<action id="Top"/>
+				<action id="Middle"/>
+				<action id="Bottom"/>
+			</actions>
+		</player>
+		<player id="Column">
+			<actions>
+				<action id="Left"/>
+				<action id="Center"/>
+				<action id="Right"/>
+			</actions>
+		</player>
+	</players>
+	<payoffs>
+		<payoff>
+			<outcome player="Row" action="Top" value="13"/>
+			<outcome player="Column" action="Left" value="3"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Top" value="1"/>
+			<outcome player="Column" action="Center" value="4"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Top" value="7"/>
+			<outcome player="Column" action="Right" value="3"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Middle" value="4"/>
+			<outcome player="Column" action="Left" value="1"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Middle" value="3"/>
+			<outcome player="Column" action="Center" value="3"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Middle" value="6"/>
+			<outcome player="Column" action="Right" value="2"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Bottom" value="-1"/>
+			<outcome player="Column" action="Left" value="9"/>
+		</payoff>
+		<payoff>
+			<outcome player="Row" action="Bottom" value="8"/>
+			<outcome player="Column" action="Right" value="-1"/>
+		</payoff>
+	</payoffs>
+</nfg>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<nfg name="Rock Paper Scissors">
+	<players>
+		<player id="Alice">
+			<actions>
+				<action id="R"/>
+				<action id="P"/>
+				<action id="S"/>
+			</actions>
+		</player>
+		<player id="Bob">
+			<actions>
+				<action id="R"/>
+				<action id="P"/>
+				<action id="S"/>
+			</actions>
+		</player>
+	</players>
+	<payoffs>
+		<payoff>
+			<outcome player="Alice" action="R" value="0.0"/>
+			<outcome player="Bob" action="R" value="0.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="R" value="-1.0"/>
+			<outcome player="Bob" action="P" value="1.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="R" value="1.0"/>
+			<outcome player="Bob" action="S" value="-1.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="P" value="1.0"/>
+			<outcome player="Bob" action="R" value="-1.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="P" value="0.0"/>
+			<outcome player="Bob" action="P" value="0.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="P" value="-1.0"/>
+			<outcome player="Bob" action="S" value="1.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="S" value="-1.0"/>
+			<outcome player="Bob" action="R" value="1.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="S" value="1.0"/>
+			<outcome player="Bob" action="P" value="-1.0"/>
+		</payoff>
+		<payoff>
+			<outcome player="Alice" action="S" value="0.0"/>
+			<outcome player="Bob" action="S" value="0.0"/>
+		</payoff>
+	</payoffs>
+</nfg>

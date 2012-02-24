@@ -155,7 +155,7 @@ class Game(dict):
 			self.values = np.array(self.values)
 			self.counts = np.array(self.counts)
 			self.dev_reps = np.array(self.dev_reps)
-		weights = (mix**self.counts).prod(1).prod(1).reshape( \
+		weights = ((mix+tiny)**self.counts).prod(1).prod(1).reshape( \
 				self.values.shape[0], 1, 1) * self.dev_reps / (mix+tiny)
 		return (self.values * weights).sum(0)# / (weights.sum(0) + tiny)
 
@@ -249,9 +249,12 @@ class Game(dict):
 			return float("inf")
 
 	def mixtureRegret(self, mix, role=None, deviation=None):
-		if role == None:
+		if role == None and deviation == None:
 			return float((self.expectedValues(mix).T - \
 					self.getExpectedPayoff(mix)).max())
+		if role == None:
+			return max([self.mixtureRegret(mix, r, deviation) for r \
+					in self.roles])
 		if deviation == None:
 			return float((self.expectedValues(mix)[self.index(role)] - \
 					self.getExpectedPayoff(mix, role)).max())
