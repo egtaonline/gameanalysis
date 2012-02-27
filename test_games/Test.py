@@ -2,10 +2,10 @@
 
 import unittest
 
-from os.path import join
+from os.path import dirname, join
 from sys import path
 
-path.append(join(path[0], ".."))
+path.append(dirname(path[0]))
 
 import GameIO as IO
 import GameAnalysis as GA
@@ -207,15 +207,39 @@ class TestDegenerateGame(unittest.TestCase):
 	def setUp(self):
 		self.one_player = IO.readGame(join(path[0], "one_player.xml"))
 		self.one_strategy = IO.readGame(join(path[0], "one_strategy.xml"))
+		self.one_profile = IO.readGame(join(path[0], "one_profile.xml"))
 
-	def test_ScriptFunctions(self):
+	def test_IEDS(self):
 		self.assertEqual(len(GA.IteratedElimination(self.one_player, \
-				GA.PureStrategyDominance, weak=False)), 1)
+				GA.PureStrategyDominance)), 1)
 		self.assertEqual(len(GA.IteratedElimination(self.one_strategy, \
-				GA.PureStrategyDominance, weak=False)), 1)
+				GA.PureStrategyDominance)), 1)
+		self.assertEqual(len(GA.IteratedElimination(self.one_profile, \
+				GA.PureStrategyDominance)), 1)
 
+	def test_Cliques(self):
 		self.assertEqual(map(len, GA.Cliques(self.one_player)), [2])
 		self.assertEqual(map(len, GA.Cliques(self.one_strategy)), [1])
+		self.assertEqual(map(len, GA.Cliques(self.one_profile)), [1])
+
+	def test_PureNash(self):
+		self.assertEqual(GA.PureNash(self.one_player)[0], {"All":{"s2":1}})
+		self.assertEqual(GA.PureNash(self.one_strategy)[0], {"All":{"s1":2}})
+		self.assertEqual(len(GA.PureNash(self.one_profile)), 0)
+
+	def test_MixedNash(self):
+		expected_eq = GA.np.array([[0.,1.]])
+		found_eq = GA.MixedNash(self.one_player)
+		self.assertEqual(len(found_eq), 1)
+		self.assertTrue(GA.np.allclose(expected_eq, found_eq[0]))
+
+		expected_eq = GA.np.array([[1.]])
+		found_eq = GA.MixedNash(self.one_strategy)
+		self.assertEqual(len(found_eq), 1)
+		self.assertTrue(GA.np.allclose(expected_eq, found_eq[0]))
+
+		found_eq = GA.MixedNash(self.one_profile)
+		self.assertEqual(len(found_eq), 0)
 
 
 if __name__ == '__main__':

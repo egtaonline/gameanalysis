@@ -34,7 +34,12 @@ class Profile(h_dict):
 		return Profile(p)
 
 	def deviate(self, role, strategy, deviation):
-		return self.remove(role, strategy).add(role, deviation)
+		p = self.asDict()
+		p[role][strategy] -= 1
+		if p[role][strategy] == 0:
+			del p[role][strategy]
+		p[role][deviation] = p[role].get(deviation, 0) + 1
+		return Profile(p)
 
 	def asDict(self):
 		return {r:{s:self[r][s] for s in self[r]} for r in self}
@@ -155,8 +160,12 @@ class Game(dict):
 			self.values = np.array(self.values)
 			self.counts = np.array(self.counts)
 			self.dev_reps = np.array(self.dev_reps)
-		weights = ((mix+tiny)**self.counts).prod(1).prod(1).reshape( \
-				self.values.shape[0], 1, 1) * self.dev_reps / (mix+tiny)
+		try:
+			weights = ((mix+tiny)**self.counts).prod(1).prod(1).reshape( \
+					self.values.shape[0], 1, 1) * self.dev_reps / (mix+tiny)
+		except ValueError: #this happens if there's only one strategy
+			weights = ((mix+tiny)**self.counts).prod(1).reshape( \
+					self.values.shape[0], 1) * self.dev_reps / (mix+tiny)
 		return (self.values * weights).sum(0)# / (weights.sum(0) + tiny)
 
 	def allProfiles(self):
@@ -171,9 +180,9 @@ class Game(dict):
 		return np.array(1-self.mask, dtype=float) / \
 				(1-self.mask).sum(1).reshape(len(self.roles),1)
 
-	def biasedMixtures(self, role=None, strategy=None):
+	def biasedMixtures(self, role=None, strategy=None, bias=.9):
 		"""
-		Gives mixtures where the input strategy has 90% weight for its role.
+		Gives mixtures where the input strategy has %bias weight for its role.
 
 		Probability for that role's remaining strategies is distributed
 		uniformly, as is probability for all strategies of other roles.
@@ -181,16 +190,22 @@ class Game(dict):
 		Returns a list even when a single role & strategy are specified, since
 		the main use case is starting replicator dynamics from several mixtures.
 		"""
+		assert 0 <= bias <= 1, "probabilities must be between zero and one"
+		if self.maxStrategies == 1:
+			return [self.uniformMixture()]
 		if role == None:
-			return sum([self.biasedMixtures(r) for r in filter(lambda r: \
-					self.numStrategies[self.index(r)] > 1, self.roles)], [])
+			return sum([self.biasedMixtures(r, strategy, bias) for r in \
+					filter(lambda r: self.numStrategies[self.index(r)] > 1, \
+					self.roles)], [])
 		if strategy == None:
-			return sum([self.biasedMixtures(role, s) for s in \
+			return sum([self.biasedMixtures(role, s, bias) for s in \
 					self.strategies[role]], [])
-		m = (1 - self.mask) + self.array_index(role, strategy, dtype=float) \
-				* (np.array(self.numStrategies) * 9 - 10).reshape( \
-				len(self.roles),1)
-		return [(m.T / m.sum(1)).T]
+		i = self.array_index(role, strategy, dtype=float)
+		m = 1. - self.mask - i
+		m /= m.sum(1).reshape(m.shape[0], 1)
+		m[self.index(role)] *= (1. - bias)
+		m += i*bias
+		return [m]
 
 	def __cmp__(self, other):
 		return cmp(self.roles, other.roles) or \
@@ -233,22 +248,31 @@ class Game(dict):
 			return self.mixtureRegret(p, *args, **kwargs)
 		raise TypeError("unrecognized argument type: " + type(p).__name__)
 
-	def profileRegret(self, profile, role=None, strategy=None, deviation=None):
+	def profileRegret(self, profile, role=None, strategy=None, deviation=None, \
+			bound=False):
 		if role == None:
-			return max([self.profileRegret(profile, r) for r in self.roles])
+			return max([self.profileRegret(profile, r, strategy, deviation) \
+					for r in self.roles])
 		if strategy == None:
-			return max([self.profileRegret(profile, role, s) for s in \
-					profile[role]])
+			return max([self.profileRegret(profile, role, s, deviation) for s \
+					in profile[role]])
 		if deviation == None:
 			return max([self.profileRegret(profile, role, strategy, d) for d \
-					in set(self.strategies[role]) - {strategy}])
+					in set(self.strategies[role]) - {strategy}] + \
+					[-float("inf")])
 		try:
 			return self.getPayoff(profile.deviate(role, strategy, deviation), \
 					role, deviation) - self.getPayoff(profile, role, strategy)
 		except KeyError:
-			return float("inf")
+			if bound:
+				return float("-inf")
+			else:
+				return float("inf")
 
-	def mixtureRegret(self, mix, role=None, deviation=None):
+	def mixtureRegret(self, mix, role=None, deviation=None, bound=False):
+		if any(map(lambda p: p not in self, self.mixtureNeighbors(mix, role, \
+				deviation))) and not bound:
+			return float("inf")
 		if role == None and deviation == None:
 			return float((self.expectedValues(mix).T - \
 					self.getExpectedPayoff(mix)).max())
@@ -261,14 +285,38 @@ class Game(dict):
 		return self.expectedValues(mix)[self.index(role), self.index(role, \
 				deviation)] - self.getExpectedPayoff(mix, role)
 
-	def neighbors(self, profile, role=None, strategy=None):
+	def neighbors(self, p, *args, **kwargs):
+		if isinstance(p, Profile):
+			return self.profileNeighbors(p, *args, **kwargs)
+		elif isinstance(p, np.ndarray):
+			return self.mixtureNeighbors(p, *args, **kwargs)
+		raise TypeError("unrecognized argument type: " + type(p).__name__)
+
+	def profileNeighbors(self, profile, role=None, strategy=None, \
+			deviation=None):
 		if role == None:
-			return sum([self.neighbors(profile, r) for r in self.roles], [])
+			return sum([self.profileNeighbors(profile, r, strategy, deviation) \
+					for r in self.roles], [])
 		if strategy == None:
-			return sum([self.neighbors(profile, role, s) for s in \
-					profile[role]], [])
-		return [profile.deviate(role, strategy, dev) for dev in \
-				set(self.strategies[role]) - {strategy}]
+			return sum([self.profileNeighbors(profile, role, s, deviation) \
+					for s in profile[role]], [])
+		if deviation == None:
+			return sum([self.profileNeighbors(profile, role, strategy, d) for \
+					d in set(self.strategies[role]) - {strategy}], [])
+		return [profile.deviate(role, strategy, deviation)]
+
+	def mixtureNeighbors(self, mix, role=None, deviation=None):
+		n= set()
+		for profile in self.feasibleProfiles(mix):
+			n.update(self.profileNeighbors(profile, role, deviation=deviation))
+		return n
+
+	def feasibleProfiles(self, mix, thresh=1e-3):
+		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \
+				self.index(r)])} for r in self.roles}) for p in product(*[ \
+				CwR(filter(lambda s: mix[self.index(r), self.index(r,s)] >= \
+				thresh, self.strategies[r]), self.players[r]) for r \
+				in self.roles])]
 
 	def bestResponses(self, profile, role=None, strategy=None):
 		"""
@@ -282,7 +330,8 @@ class Game(dict):
 		returns only the known best response set.
 		"""
 		if role == None:
-			return {r: self.bestResponses(profile, r) for r in self.roles}
+			return {r: self.bestResponses(profile, r, strategy) for r \
+					in self.roles}
 		if strategy == None:
 			return {s: self.bestResponses(profile, role, s) for s in \
 					profile[role]}

@@ -234,9 +234,8 @@ def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 	"""
 	for i in range(iters):
 		old_mix = mix
-		mix = (game.expectedValues(mix) - game.minPayoffs) * mix
+		mix = (game.expectedValues(mix) - game.minPayoffs + tiny) * mix
 		mix = mix / mix.sum(1).reshape(mix.shape[0],1)
-#		if np.allclose(mix, old_mix, converge_thresh):
 		if np.linalg.norm(mix - old_mix) <= converge_thresh:
 			break
 	if verbose:
