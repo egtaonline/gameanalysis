@@ -208,13 +208,17 @@ class Game(dict):
 		return [m]
 
 	def __cmp__(self, other):
+		"""does not compare payoffs"""
 		return cmp(self.roles, other.roles) or \
 				cmp(self.players, other.players) or \
 				cmp(self.strategies, other.strategies) or \
-				dict.__cmp__(self, other)
+				cmp(sorted(self.keys()), sorted(other.keys()))
 
 	def __eq__(self, other):
 		return not cmp(self, other)
+
+	def __ne__(self, other):
+		return cmp(self, other)
 
 	def __lt__(self, other):
 		return min(self.__cmp__(other), 0)
@@ -241,49 +245,52 @@ class Game(dict):
 	def isComplete(self):
 		return len(self) == self.size
 
-	def regret(self, p, *args, **kwargs):
+	def regret(self, p, role=None, strategy=None, deviation=None, bound=False):
+		if role == None:
+			return max([self.regret(p, r, strategy, deviation, bound) for r \
+					in self.roles])
+		if strategy == None and isinstance(p, Profile):
+			return max([self.regret(p, role, s, deviation, bound) for s \
+					in p[role]])
+		if deviation == None:
+			return max([self.regret(p, role, strategy, d, bound) for d \
+					in self.strategies[role]])
 		if isinstance(p, Profile):
-			return self.profileRegret(p, *args, **kwargs)
+			dp = p.deviate(role, strategy, deviation)
+			if dp in self:
+				return self.getPayoff(dp, role, deviation) - \
+						self.getPayoff(p, role, strategy)
+			else:
+				return -float("inf") if bound else float("inf")
 		elif isinstance(p, np.ndarray):
-			return self.mixtureRegret(p, *args, **kwargs)
+			if any(map(lambda prof: prof not in self, self.mixtureNeighbors( \
+					p, role, deviation))):
+				return -float("inf") if bound else float("inf")
+			return self.expectedValues(p)[self.index(role), self.index( \
+					role, deviation)] - self.getExpectedPayoff(p, role)
 		raise TypeError("unrecognized argument type: " + type(p).__name__)
 
-	def profileRegret(self, profile, role=None, strategy=None, deviation=None, \
-			bound=False):
+	def bestRegretAndResponse(self, p, role=None, strategy=None, dev_set=[], \
+			support_thresh=1e-3):
 		if role == None:
-			return max([self.profileRegret(profile, r, strategy, deviation) \
-					for r in self.roles])
-		if strategy == None:
-			return max([self.profileRegret(profile, role, s, deviation) for s \
-					in profile[role]])
-		if deviation == None:
-			return max([self.profileRegret(profile, role, strategy, d) for d \
-					in set(self.strategies[role]) - {strategy}] + \
-					[-float("inf")])
-		try:
-			return self.getPayoff(profile.deviate(role, strategy, deviation), \
-					role, deviation) - self.getPayoff(profile, role, strategy)
-		except KeyError:
-			if bound:
-				return float("-inf")
-			else:
-				return float("inf")
-
-	def mixtureRegret(self, mix, role=None, deviation=None, bound=False):
-		if any(map(lambda p: p not in self, self.mixtureNeighbors(mix, role, \
-				deviation))) and not bound:
-			return float("inf")
-		if role == None and deviation == None:
-			return float((self.expectedValues(mix).T - \
-					self.getExpectedPayoff(mix)).max())
-		if role == None:
-			return max([self.mixtureRegret(mix, r, deviation) for r \
+			return max([self.bestRegretAndResponse(p, r, strategy) for r \
 					in self.roles])
-		if deviation == None:
-			return float((self.expectedValues(mix)[self.index(role)] - \
-					self.getExpectedPayoff(mix, role)).max())
-		return self.expectedValues(mix)[self.index(role), self.index(role, \
-				deviation)] - self.getExpectedPayoff(mix, role)
+		if strategy == None and isinstance(p, Profile):
+			return max([self.bestRegretAndResponse(p, role, s) for s \
+					in p[role]])
+		if dev_set == []:
+			if isinstance(p, Profile):
+				dev_set = set(self.strategies[role]) - {strategy}
+			elif isinstance(p, np.ndarray):
+				dev_set = filter(lambda s: p[self.index(role), self.index( \
+						role,s)] >= support_thresh, self.strategies[role])
+		if isinstance(p, Profile):
+			return max([(self.regret(p, role, strategy, dev, True), \
+					dev) for dev in set(self.strategies[role]) - {strategy}])
+		elif isinstance(p, np.ndarray):
+			return max([(self.regret(p, role, deviation=dev, bound=True), dev) \
+					for dev in self.strategies[role]])
+		raise TypeError("unrecognized argument type: " + type(p).__name__)
 
 	def neighbors(self, p, *args, **kwargs):
 		if isinstance(p, Profile):
@@ -339,7 +346,7 @@ class Game(dict):
 		biggest_gain = float('-inf')
 		unknown = set()
 		for dev in self.strategies[role]:
-			r = self.profileRegret(profile, role, strategy, dev)
+			r = self.regret(profile, role, strategy, dev)
 			if isinf(r):
 				unknown.add(dev)
 			elif r > biggest_gain:

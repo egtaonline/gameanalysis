@@ -65,10 +65,16 @@ def Subgame(game, strategies={}):
 	if not strategies:
 		strategies = {r:[] for r in game.roles}
 	sg = Game(game.roles, game.players, strategies)
-	for p in sg.allProfiles():
-		if p in game:
-			sg.addProfile({r:[payoff_data(s, p[r][s], game.getPayoff(p,r,s)) \
-					for s in p[r]] for r in p})
+	if sg.size <= len(game):
+		for p in sg.allProfiles():
+			if p in game:
+				sg.addProfile({r:[payoff_data(s, p[r][s], \
+						game.getPayoff(p,r,s)) for s in p[r]] for r in p})
+	else:
+		for p in game:
+			if all([all([s in sg.strategies[r] for s in p[r]]) for r in p]):
+				sg.addProfile({r:[payoff_data(s, p[r][s], \
+						game.getPayoff(p,r,s)) for s in p[r]] for r in p})
 	return sg
 
 
@@ -137,10 +143,11 @@ def IteratedElimination(game, criterion, *args, **kwargs):
 	input:
 	criterion = function to find dominated strategies
 	"""
-	g = criterion(game, *args, **kwargs)
-	if game == g:
-		return game
-	return IteratedElimination(g, criterion, *args, **kwargs)
+	reduced_game = criterion(game, *args, **kwargs)
+	while game != reduced_game:
+		game = reduced_game
+		reduced_game = criterion(game, *args, **kwargs)
+	return game
 
 
 def NeverBestResponse(game, conditional=True):
@@ -164,7 +171,7 @@ def PureStrategyDominance(game, conditional=True, weak=False):
 	"""
 	pure-strategy dominance criterion for IEDS
 
-	conditional==0==False --> unconditional
+	conditional==0==False --> unconditional dominance
 	conditional==1==True ---> conditional dominance
 	conditional==2 ---------> extra-conservative conditional dominance
 	"""
