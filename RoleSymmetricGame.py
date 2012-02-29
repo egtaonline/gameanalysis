@@ -270,28 +270,6 @@ class Game(dict):
 					role, deviation)] - self.getExpectedPayoff(p, role)
 		raise TypeError("unrecognized argument type: " + type(p).__name__)
 
-	def bestRegretAndResponse(self, p, role=None, strategy=None, dev_set=[], \
-			support_thresh=1e-3):
-		if role == None:
-			return max([self.bestRegretAndResponse(p, r, strategy) for r \
-					in self.roles])
-		if strategy == None and isinstance(p, Profile):
-			return max([self.bestRegretAndResponse(p, role, s) for s \
-					in p[role]])
-		if dev_set == []:
-			if isinstance(p, Profile):
-				dev_set = set(self.strategies[role]) - {strategy}
-			elif isinstance(p, np.ndarray):
-				dev_set = filter(lambda s: p[self.index(role), self.index( \
-						role,s)] >= support_thresh, self.strategies[role])
-		if isinstance(p, Profile):
-			return max([(self.regret(p, role, strategy, dev, True), \
-					dev) for dev in set(self.strategies[role]) - {strategy}])
-		elif isinstance(p, np.ndarray):
-			return max([(self.regret(p, role, deviation=dev, bound=True), dev) \
-					for dev in self.strategies[role]])
-		raise TypeError("unrecognized argument type: " + type(p).__name__)
-
 	def neighbors(self, p, *args, **kwargs):
 		if isinstance(p, Profile):
 			return self.profileNeighbors(p, *args, **kwargs)
@@ -325,7 +303,7 @@ class Game(dict):
 				thresh, self.strategies[r]), self.players[r]) for r \
 				in self.roles])]
 
-	def bestResponses(self, profile, role=None, strategy=None):
+	def bestResponses(self, p, role=None, strategy=None):
 		"""
 		If role is unspecified, bestResponses returns a dict mapping each role
 		all of its strategy-level results. If strategy is unspecified,
@@ -337,16 +315,16 @@ class Game(dict):
 		returns only the known best response set.
 		"""
 		if role == None:
-			return {r: self.bestResponses(profile, r, strategy) for r \
+			return {r: self.bestResponses(p, r, strategy) for r \
 					in self.roles}
-		if strategy == None:
-			return {s: self.bestResponses(profile, role, s) for s in \
-					profile[role]}
+		if strategy == None and isinstance(p, Profile):
+			return {s: self.bestResponses(p, role, s) for s in \
+					p[role]}
 		best_deviations = set()
 		biggest_gain = float('-inf')
 		unknown = set()
 		for dev in self.strategies[role]:
-			r = self.regret(profile, role, strategy, dev)
+			r = self.regret(p, role, strategy, dev)
 			if isinf(r):
 				unknown.add(dev)
 			elif r > biggest_gain:
@@ -354,7 +332,7 @@ class Game(dict):
 				biggest_gain = r
 			elif r == biggest_gain:
 				best_deviations.add(dev)
-		return best_deviations, unknown
+		return list(best_deviations), list(unknown)
 
 	def translate(self, other, array):
 		"""

@@ -85,8 +85,6 @@ if __name__ == "__main__":
 				("um:" if l == 1 else "a:")
 		for j, eq in enumerate(mixed_equilibria):
 			full_eq = input_game.translate(subgame, eq)
-			reg, dev = input_game.bestRegretAndResponse(full_eq, \
-					support_thresh=args.s)
 			if all(map(lambda p: p in input_game, input_game.neighbors(\
 					full_eq))):
 				print str(j+1) + ". regret =", input_game.regret(full_eq)
@@ -99,5 +97,7 @@ if __name__ == "__main__":
 					if full_eq[k][l] >= args.s:
 						print "    " + strategy + ":" + str(round(100 * \
 								full_eq[k][l], 1)) + "%"
-			print "\tbest deviation:", dev
+			print "best responses:"
+			print "\t" + list_repr(sorted([str(r)+":"+str(br[0]) for r,br in \
+					input_game.bestResponses(full_eq).items()]), "\n\t")
 
