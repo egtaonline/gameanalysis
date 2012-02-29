@@ -133,7 +133,7 @@ def Cliques(full_game, subgames=set()):
 			sg = Subgame(full_game, sg.strategies)
 			if len(sg) > 0:
 				maximal_subgames.add(sg)
-	return list(maximal_subgames)
+	return sorted(maximal_subgames, key=len)
 
 
 def IteratedElimination(game, criterion, *args, **kwargs):
