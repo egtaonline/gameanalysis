@@ -59,7 +59,7 @@ if __name__ == "__main__":
 		mrp = MinRegretProfile(rational_game)
 		print "regret =", input_game.regret(mrp)
 		print "minimum regret pure strategy profile (regret = " + \
-				str(round(input_game.regret(mrp), 4)) +":"
+				str(round(input_game.regret(mrp), 4)) + "):"
 		for role in input_game.roles:
 			print "    " + role + ":", list_repr(map(lambda pair: \
 					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
@@ -102,6 +102,7 @@ if __name__ == "__main__":
 						print "    " + strategy + ":" + str(round(100 * \
 								full_eq[k][l], 1)) + "%"
 			print "best responses:"
-			print "\t" + list_repr(sorted([str(r)+":"+str(br[0]) for r,br in \
-					input_game.bestResponses(full_eq).items()]), "\n\t")
+			print "\t" + list_repr(sorted([str(r)+": "+list_repr(br[0]) for \
+					r,br in input_game.bestResponses(full_eq).items()]), \
+					"\n\t")
 
