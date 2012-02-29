@@ -50,16 +50,19 @@ if __name__ == "__main__":
 		print "\n" + str(len(pure_equilibria)), "pure strategy Nash equilibri" \
 				+ ("um:" if l == 1 else "a:")
 		for i, eq in enumerate(pure_equilibria):
-			print str(i+1) + ". regret =", input_game.regret(eq)
+			print str(i+1) + ". regret =", round(input_game.regret(eq), 4)
 			for role in input_game.roles:
 				print "    " + role + ":", list_repr(map(lambda pair: \
 						str(pair[1]) + "x " + str(pair[0]), eq[role].items()))
 	else:
 		print "\nno pure strategy Nash equilibria found."
-		print "minimum regret pure strategy profile:"
 		mrp = MinRegretProfile(rational_game)
-		print mrp
-		print "\tregret =", input_game.regret(mrp)
+		print "regret =", input_game.regret(mrp)
+		print "minimum regret pure strategy profile (regret = " + \
+				str(round(input_game.regret(mrp), 4)) +":"
+		for role in input_game.roles:
+			print "    " + role + ":", list_repr(map(lambda pair: \
+					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
 
 	#find maximal subgames
 	maximal_subgames = Cliques(rational_game)
@@ -87,10 +90,11 @@ if __name__ == "__main__":
 			full_eq = input_game.translate(subgame, eq)
 			if all(map(lambda p: p in input_game, input_game.neighbors(\
 					full_eq))):
-				print str(j+1) + ". regret =", input_game.regret(full_eq)
+				print str(j+1) + ". regret =", round(input_game.regret(\
+						full_eq), 4)
 			else:
-				print str(j+1) + ". regret >=", input_game.regret(full_eq, \
-						bound=True)
+				print str(j+1) + ". regret >=", round(input_game.regret( \
+						full_eq, bound=True), 4)
 			for k,role in enumerate(input_game.roles):
 				print role + ":"
 				for l,strategy in enumerate(input_game.strategies[role]):
