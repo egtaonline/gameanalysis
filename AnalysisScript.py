@@ -18,7 +18,7 @@ def parse_args():
 	parser.add_argument("-d", metavar="DIST", type=float, default=1e-3, \
 			help="L2-distance threshold to consider equilibria distinct.")
 	parser.add_argument("-s", metavar="SUPPORT", type=float, default=1e-3, \
-			help="Min probability for a strategy of a strategy in support.")
+			help="Min probability for a strategy to be considered in support.")
 	parser.add_argument("-c", metavar="CONVERGE", type=float, default=1e-8, \
 			help="Replicator dynamics convergence thrshold.")
 	parser.add_argument("-i", metavar="ITERS", type=int, default=10000, \

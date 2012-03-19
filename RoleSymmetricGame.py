@@ -155,6 +155,9 @@ class Game(dict):
 		"""
 		Computes the expected value of each pure strategy played against
 		all opponents playing mix.
+
+		The result is normalized by the sum of all profile weights to cope
+		with missing profiles.
 		"""
 		if isinstance(self.values, list):
 			self.values = np.array(self.values)
@@ -166,7 +169,7 @@ class Game(dict):
 		except ValueError: #this happens if there's only one strategy
 			weights = ((mix+tiny)**self.counts).prod(1).reshape( \
 					self.values.shape[0], 1) * self.dev_reps / (mix+tiny)
-		return (self.values * weights).sum(0)# / (weights.sum(0) + tiny)
+		return (self.values * weights).sum(0) #/ (weights.sum(0) + tiny)
 
 	def allProfiles(self):
 		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \
@@ -179,6 +182,10 @@ class Game(dict):
 	def uniformMixture(self):
 		return np.array(1-self.mask, dtype=float) / \
 				(1-self.mask).sum(1).reshape(len(self.roles),1)
+
+	def randomMixture(self):
+		m = np.random.uniform(0, 1, size=self.mask.shape)
+		return m / m.sum(1).reshape(m.shape[0], 1)
 
 	def biasedMixtures(self, role=None, strategy=None, bias=.9):
 		"""
@@ -291,7 +298,7 @@ class Game(dict):
 		return [profile.deviate(role, strategy, deviation)]
 
 	def mixtureNeighbors(self, mix, role=None, deviation=None):
-		n= set()
+		n = set()
 		for profile in self.feasibleProfiles(mix):
 			n.update(self.profileNeighbors(profile, role, deviation=deviation))
 		return n

@@ -1,6 +1,8 @@
 from math import factorial
 from operator import mul
 
+import numpy as np
+
 def prod(collection):
 	"""
 	Product of all elements in the collection.
@@ -39,3 +41,21 @@ def list_repr(l, sep=", "):
 	except TypeError:
 		return ""
 
+def average(l):
+	return sum(l, 0.0) / len(l)
+
+tiny = 1e-10
+
+def weighted_least_squares(x, y, weights):
+	"appends the ones for you; puts 1D weights into a diagonal matrix"
+	try:
+		A = np.append(x, np.ones([x.shape[0],1]), axis=1)
+		W = np.zeros([x.shape[0]]*2)
+		np.fill_diagonal(W, weights)
+		return y.T.dot(W).dot(A).dot(np.linalg.inv(A.T.dot(W).dot(A)))
+	except np.linalg.linalg.LinAlgError as e:
+		z = A.T.dot(W).dot(A)
+		for i in range(z.shape[0]):
+			for j in range(z.shape[1]):
+				z[i,j] += np.random.uniform(-tiny,tiny)
+		return y.T.dot(W).dot(A).dot(np.linalg.inv(z))
