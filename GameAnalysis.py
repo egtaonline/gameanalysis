@@ -249,3 +249,19 @@ def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 		print i+1, "iterations ; mix =", mix, "; regret =", game.regret(mix)
 	return mix
 
+
+def SymmetricProfileRegrets(game):
+	assert len(game.roles) == 1, "game must be symmetric"
+	role = game.roles[0]
+	return {s: game.regret(Profile({role:{s:game.players[role]}})) for s \
+			in game.strategies[role]}
+
+
+def EquilibriumRegrets(game, eq):
+	regrets = {}
+	for role in game.roles:
+		regrets[role] = {}
+		for strategy in game.strategies[role]:
+			regrets[role][strategy] = -game.regret(eq, deviation=strategy)
+	return regrets
+
