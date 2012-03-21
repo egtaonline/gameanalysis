@@ -28,9 +28,7 @@ def parse_args():
 	return game, args
 
 
-if __name__ == "__main__":
-	print "command: " + list_repr(argv, sep=" ") + "\n"
-	input_game, args = parse_args()
+def main(input_game, args):
 	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
 
 	#iterated elimination of dominated strategies
@@ -66,26 +64,26 @@ if __name__ == "__main__":
 
 	#find maximal subgames
 	maximal_subgames = Cliques(rational_game)
-	l = len(maximal_subgames)
-	if l == 1 and maximal_subgames[0] == input_game:
-		l = 0
+	num_subgames = len(maximal_subgames)
+	if num_subgames == 1 and maximal_subgames[0] == input_game:
+		num_subgames = 0
 		print "\ninput game is maximal"
 	else:
-		print "\n" + str(l), "maximal subgame" + ("" if l == 1 else "s") + \
-				(" among non-dominated strategies" if any(map(len, \
-				eliminated.values())) else "")
+		print "\n" + str(l), "maximal subgame" + ("" if num_subgames == 1 \
+				else "s") + (" among non-dominated strategies" if any(map( \
+				len, eliminated.values())) else "")
 
 	#mixed strategy Nash equilibrium search
 	for i, subgame in enumerate(maximal_subgames):
-		if l != 0:
+		if num_subgames != 0:
 			print "\nsubgame "+str(i+1)+":\n", list_repr(map(lambda x: x[0] + \
 					":\n\t\t" + list_repr(x[1], sep="\n\t\t"), sorted( \
 					subgame.strategies.items())), "\n").expandtabs(4)
 		mixed_equilibria = MixedNash(subgame, args.r, args.d, iters=args.i, \
 			converge_thresh=args.c)
-		l = len(mixed_equilibria)
-		print "\n" + str(l), "approximate mixed strategy Nash equilibri" + \
-				("um:" if l == 1 else "a:")
+		print "\n" + str(len(mixed_equilibria)), "approximate mixed strategy"+ \
+				" Nash equilibri" + ("um:" if len(mixed_equilibria) == 1 \
+				else "a:")
 		for j, eq in enumerate(mixed_equilibria):
 			full_eq = input_game.translate(subgame, eq)
 			if all(map(lambda p: p in input_game, input_game.neighbors(\
@@ -106,3 +104,8 @@ if __name__ == "__main__":
 					r,br in input_game.bestResponses(full_eq).items()]), \
 					"\n\t")
 
+
+if __name__ == "__main__":
+	print "command: " + list_repr(argv, sep=" ") + "\n"
+	game, args = parse_args()
+	main(game, args)
