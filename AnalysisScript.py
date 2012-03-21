@@ -69,8 +69,8 @@ def main(input_game, args):
 		num_subgames = 0
 		print "\ninput game is maximal"
 	else:
-		print "\n" + str(l), "maximal subgame" + ("" if num_subgames == 1 \
-				else "s") + (" among non-dominated strategies" if any(map( \
+		print "\n" + str(num_subgames), "maximal subgame" + ("" if num_subgames\
+				== 1 else "s") + (" among non-dominated strategies" if any(map(\
 				len, eliminated.values())) else "")
 
 	#mixed strategy Nash equilibrium search
