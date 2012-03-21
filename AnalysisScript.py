@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#! /usr/bin/env python
 
 from GameIO import *
 from GameAnalysis import *
@@ -93,16 +93,20 @@ def main(input_game, args):
 			else:
 				print str(j+1) + ". regret >=", round(input_game.regret( \
 						full_eq, bound=True), 4)
+
 			for k,role in enumerate(input_game.roles):
 				print role + ":"
 				for l,strategy in enumerate(input_game.strategies[role]):
 					if full_eq[k][l] >= args.s:
 						print "    " + strategy + ":" + str(round(100 * \
 								full_eq[k][l], 1)) + "%"
+
+			BR = input_game.bestResponses(full_eq)
 			print "best responses:"
-			print "\t" + list_repr(sorted([str(r)+": "+list_repr(br[0]) for \
-					r,br in input_game.bestResponses(full_eq).items()]), \
-					"\n\t")
+			for role in input_game.roles:
+				print "\t" + str(role) + ": " + list_repr(BR[role][0]) + \
+						";\tregret =", round(input_game.regret(full_eq, role, \
+						BR[role][0][0]), 4)
 
 
 if __name__ == "__main__":
