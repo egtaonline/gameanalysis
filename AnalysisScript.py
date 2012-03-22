@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python2.7
 
 from GameIO import *
 from GameAnalysis import *
@@ -104,9 +104,9 @@ def main(input_game, args):
 			BR = input_game.bestResponses(full_eq)
 			print "best responses:"
 			for role in input_game.roles:
+				r = input_game.regret(full_eq, role, deviation=BR[role][0][0])
 				print "\t" + str(role) + ": " + list_repr(BR[role][0]) + \
-						";\tregret =", round(input_game.regret(full_eq, role, \
-						BR[role][0][0]), 4)
+						";\tregret =", (round(r, 4) if not isinf(r) else "?")
 
 
 if __name__ == "__main__":
