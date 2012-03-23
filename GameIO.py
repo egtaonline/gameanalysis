@@ -1,32 +1,77 @@
-from json import load
-from xml.dom.minidom import parse, Document
+from urllib import urlopen
+from json import loads
+from xml.dom.minidom import parseString, Document
 from os.path import exists, splitext
-from collections import namedtuple
 
 from RoleSymmetricGame import *
 
 
-def readGame(filename):
-	assert exists(filename)
-	ext = splitext(filename)[-1]
-	if ext == '.xml':
-		return readXML(filename)
-	elif ext == '.json':
-		return readJSON(filename)
+def readGame(data=None, data_string=None, data_file=None, data_location=None):
+	if data_location != None:
+		try:
+			data_file = open(data_location)
+		except:
+			try:
+				data_file = urlopen(data_location)
+			except:
+				raise IOError("invalid data location")
+	if data_file != None:
+		try:
+			data_string = data_file.read()
+			data_file.close()
+		except:
+			raise IOError("invalid data file")
+	if data_string != None:
+		try:
+			data = loads(data_string)
+		except:
+			try:
+				data = parseString(data_string)
+			except:
+				raise IOError("invalid data string")
+	try:
+		return readJSON(data)
+	except:
+		try:
+			return readXML(data)
+		except:
+			raise IOError("invalid data")
+
+
+def readJSON(json_data):
+	if "strategy_array" in json_data["roles"][0]:
+		return readJSON_old(json_data)
+	elif "strategies" in json_data["roles"][0]:
+		return readJSON_v2(json_data)
 	else:
-		raise IOError("unsupported file type: " + ext)
+		print "invalid JSON"
+		raise IOError("invalid JSON data: " + str(json_data))
 
 
-def readJSON(filename):
-	f = open(filename)
-	data = load(f)
-	f.close()
-	counts = {r["name"] : int(r["count"]) for r in data["roles"]}
-	strategies = {r["name"] : r["strategy_array"] for r in data["roles"]}
+def readJSON_v2(json_data):
+	counts = {r["name"] : int(r["count"]) for r in json_data["roles"]}
+	strategies = {r["name"] : r["strategies"] for r in json_data["roles"]}
 	roles = list(counts.keys())
-
 	payoffs = []
-	for profileDict in data["profiles"]:
+	for profileDict in json_data["profiles"]:
+		profile = {r:[] for r in roles}
+		prof_strat = {}
+		for roleDict in profileDict["roles"]:
+			role = roleDict["name"]
+			for strategyDict in roleDict["strategies"]:
+				profile[role].append(payoff_data(str(strategyDict["name"]), \
+						int(strategyDict["count"]), \
+						float(strategyDict["payoff"])))
+		payoffs.append(profile)
+	return Game(roles, counts, strategies, payoffs)
+
+
+def readJSON_old(json_data):
+	counts = {r["name"] : int(r["count"]) for r in json_data["roles"]}
+	strategies = {r["name"] : r["strategy_array"] for r in json_data["roles"]}
+	roles = list(counts.keys())
+	payoffs = []
+	for profileDict in json_data["profiles"]:
 		profile = {r:[] for r in roles}
 		prof_strat = {}
 		for role_str in profileDict["proto_string"].split("; "):
@@ -42,8 +87,8 @@ def readJSON(filename):
 	return Game(roles, counts, strategies, payoffs)
 
 
-def readXML(filename):
-	gameNode = parse(filename).getElementsByTagName("nfg")[0]
+def readXML(xml_data):
+	gameNode = xml_data.getElementsByTagName("nfg")[0]
 	if len(gameNode.getElementsByTagName("player")[0]. \
 			getElementsByTagName("action")) > 0:
 		return parseStrategicXML(gameNode)
