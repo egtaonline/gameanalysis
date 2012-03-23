@@ -98,15 +98,15 @@ def main(input_game, args):
 				print role + ":"
 				for l,strategy in enumerate(input_game.strategies[role]):
 					if full_eq[k][l] >= args.s:
-						print "    " + strategy + ":" + str(round(100 * \
-								full_eq[k][l], 1)) + "%"
+						print "    " + strategy + ": " + str(round(100 * \
+								full_eq[k][l], 2)) + "%"
 
 			BR = input_game.bestResponses(full_eq)
 			print "best responses:"
 			for role in input_game.roles:
 				r = input_game.regret(full_eq, role, deviation=BR[role][0][0])
 				print "\t" + str(role) + ": " + list_repr(BR[role][0]) + \
-						";\tregret =", (round(r, 4) if not isinf(r) else "?")
+						";\tgain =", (round(r, 4) if not isinf(r) else "?")
 
 
 if __name__ == "__main__":
