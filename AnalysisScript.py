@@ -66,7 +66,6 @@ def main(input_game, args):
 	maximal_subgames = Cliques(rational_game)
 	num_subgames = len(maximal_subgames)
 	if num_subgames == 1 and maximal_subgames[0] == input_game:
-		num_subgames = 0
 		print "\ninput game is maximal"
 	else:
 		print "\n" + str(num_subgames), "maximal subgame" + ("" if num_subgames\
@@ -75,10 +74,9 @@ def main(input_game, args):
 
 	#mixed strategy Nash equilibrium search
 	for i, subgame in enumerate(maximal_subgames):
-		if num_subgames != 0:
-			print "\nsubgame "+str(i+1)+":\n", list_repr(map(lambda x: x[0] + \
-					":\n\t\t" + list_repr(x[1], sep="\n\t\t"), sorted( \
-					subgame.strategies.items())), "\n").expandtabs(4)
+		print "\nsubgame "+str(i+1)+":\n", list_repr(map(lambda x: x[0] + \
+				":\n\t\t" + list_repr(x[1], sep="\n\t\t"), sorted( \
+				subgame.strategies.items())), "\n").expandtabs(4)
 		mixed_equilibria = MixedNash(subgame, args.r, args.d, iters=args.i, \
 			converge_thresh=args.c)
 		print "\n" + str(len(mixed_equilibria)), "approximate mixed strategy"+ \
