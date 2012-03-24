@@ -1,5 +1,5 @@
 from urllib import urlopen
-from json import loads
+from json import loads, dumps
 from xml.dom.minidom import parseString, Document
 from os.path import exists, splitext
 
@@ -47,10 +47,10 @@ def readJSON(data):
 
 
 def readJSON_v2(json_data):
-	counts = {r["name"] : int(r["count"]) for r in json_data["roles"]}
+	players = {r["name"] : int(r["count"]) for r in json_data["roles"]}
 	strategies = {r["name"] : r["strategies"] for r in json_data["roles"]}
-	roles = list(counts.keys())
-	payoffs = []
+	roles = list(players.keys())
+	profiles = []
 	if "profiles" in json_data:
 		for profileDict in json_data["profiles"]:
 			profile = {r:[] for r in roles}
@@ -61,15 +61,15 @@ def readJSON_v2(json_data):
 					profile[role].append(payoff_data(str(strategyDict[ \
 							"name"]), int(strategyDict["count"]), \
 							float(strategyDict["payoff"])))
-			payoffs.append(profile)
-	return Game(roles, counts, strategies, payoffs)
+			profiles.append(profile)
+	return Game(roles, players, strategies, profiles)
 
 
 def readJSON_old(json_data):
-	counts = {r["name"] : int(r["count"]) for r in json_data["roles"]}
+	players = {r["name"] : int(r["count"]) for r in json_data["roles"]}
 	strategies = {r["name"] : r["strategy_array"] for r in json_data["roles"]}
-	roles = list(counts.keys())
-	payoffs = []
+	roles = list(players.keys())
+	profiles = []
 	for profileDict in json_data["profiles"]:
 		profile = {r:[] for r in roles}
 		prof_strat = {}
@@ -82,8 +82,8 @@ def readJSON_old(json_data):
 				s = strategyDict["name"]
 				profile[role].append(payoff_data(str(s), int(prof_strat[role] \
 						.count(s)), float(strategyDict["payoff"])))
-		payoffs.append(profile)
-	return Game(roles, counts, strategies, payoffs)
+		profiles.append(profile)
+	return Game(roles, players, strategies, profiles)
 
 
 def readXML(data):
@@ -138,13 +138,27 @@ def toJSON(game, **other_data):
 	Writes game to JSON according to the Testbed role-symmetric game spec.
 	"""
 	game_dict = {}
+	game_dict.update(other_data)
 	game_dict["roles"] = [{"name":role, "count":game.players[role], \
-				"strategies": game.strategies[role]} for role in game.roles]
-	game_dict["profiles"] = [{"roles":[{"name":role, "strategies":["TODO"]} for role in game.roles]} for profile in game]
-	raise NotImplementedError("TODO")
+				"strategies": list(game.strategies[role])} for role \
+				in game.roles]
+	game_dict["profiles"] = []
+	for profile in game:
+		i = game[profile]
+		p = []
+		for r, role in enumerate(game.roles):
+			p.append({"name":role, "strategies":[]})
+			for strategy in filter(lambda strat: game.counts[i][r, \
+					game.index(role, strat)] > 0, game.strategies[role]):
+				s = game.index(role, strategy)
+				p[-1]["strategies"].append({"name":strategy, "count": \
+						int(game.counts[i][r,s]), "payoff": \
+						float(game.values[i][r,s])})
+		game_dict["profiles"].append({"roles":p})
+	return dumps(game_dict)
 
 
-def writeXML(game, filename):
+def toXML(game, filename):
 	if len(game.roles) == 1:
 		writeSymmetricXML(game, filename)
 	elif all(map(lambda c: c==1, game.counts.values())):
@@ -153,14 +167,14 @@ def writeXML(game, filename):
 		raise NotImplementedError("no EGAT XML spec for role-symmetric games")
 
 
-def writeSymmetricXML(game, filename):
+def toSymmetricXML(game, filename):
 	"""
 	Writes game to XML according to the EGAT symmetric game spec.
 	Assumes (but doesn't check) that game is symmetric.
 	"""
 	raise NotImplementedError("TODO")
 
-def writeStrategicXML(game, filename):
+def toStrategicXML(game, filename):
 	"""
 	Writes game to XML according to the EGAT strategic game spec.
 	Assumes (but doesn't check) that game is not role-symmetric.
