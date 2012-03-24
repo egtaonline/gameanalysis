@@ -222,10 +222,10 @@ class Game(dict):
 				cmp(sorted(self.keys()), sorted(other.keys()))
 
 	def __eq__(self, other):
-		return not cmp(self, other)
+		return not self.__cmp__(other)
 
 	def __ne__(self, other):
-		return cmp(self, other)
+		return self.__cmp__(other)
 
 	def __lt__(self, other):
 		return min(self.__cmp__(other), 0)

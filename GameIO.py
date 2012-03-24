@@ -135,7 +135,7 @@ def parseSymmetricXML(gameNode):
 
 def toJSON(game, **other_data):
 	"""
-	Writes game to JSON according to the Testbed role-symmetric game spec.
+	Convert game to JSON according to the testbed role-symmetric game spec (v2).
 	"""
 	game_dict = {}
 	game_dict.update(other_data)
@@ -148,9 +148,9 @@ def toJSON(game, **other_data):
 		p = []
 		for r, role in enumerate(game.roles):
 			p.append({"name":role, "strategies":[]})
-			for strategy in filter(lambda strat: game.counts[i][r, \
-					game.index(role, strat)] > 0, game.strategies[role]):
-				s = game.index(role, strategy)
+			for s, strategy in enumerate(game.strategies[role]):
+				if game.counts[i][r,s] == 0:
+					continue
 				p[-1]["strategies"].append({"name":strategy, "count": \
 						int(game.counts[i][r,s]), "payoff": \
 						float(game.values[i][r,s])})
