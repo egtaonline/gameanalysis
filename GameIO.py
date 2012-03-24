@@ -6,45 +6,43 @@ from os.path import exists, splitext
 from RoleSymmetricGame import *
 
 
-def readGame(data=None, data_string=None, data_file=None, data_location=None):
-	if data_location != None:
-		try:
-			data_file = open(data_location)
-		except:
-			try:
-				data_file = urlopen(data_location)
-			except:
-				raise IOError("invalid data location")
-	if data_file != None:
-		try:
-			data_string = data_file.read()
-			data_file.close()
-		except:
-			raise IOError("invalid data file")
-	if data_string != None:
-		try:
-			data = loads(data_string)
-		except:
-			try:
-				data = parseString(data_string)
-			except:
-				raise IOError("invalid data string")
+def readGame(source):
+	if isinstance(source, str) and exists(source):
+		#source is a filename
+		f = open(source)
+		data = f.read()
+		f.close()
+	elif isinstance(source, str) and source.startswith("http://"):
+		#source is a url
+		u = urlopen(source)
+		data = u.read()
+		u.close()
+	elif hasattr(source, 'read'):
+		#source is file-like
+		data = source.read()
+		source.close()
+	else:
+		#assume source is already xml or json data
+		data = source
 	try:
 		return readJSON(data)
 	except:
 		try:
 			return readXML(data)
 		except:
-			raise IOError("invalid data")
+			raise IOError("invalid game source")
 
 
-def readJSON(json_data):
+def readJSON(data):
+	if not (isinstance(data, dict) or isinstance(data, list)):
+		json_data = loads(data)
+	else:
+		json_data = data
 	if "strategy_array" in json_data["roles"][0]:
 		return readJSON_old(json_data)
 	elif "strategies" in json_data["roles"][0]:
 		return readJSON_v2(json_data)
 	else:
-		print "invalid JSON"
 		raise IOError("invalid JSON data: " + str(json_data))
 
 
@@ -87,7 +85,11 @@ def readJSON_old(json_data):
 	return Game(roles, counts, strategies, payoffs)
 
 
-def readXML(xml_data):
+def readXML(data):
+	if not isinstance(data, Document):
+		xml_data = parseString(data)
+	else:
+		xml_data = data
 	gameNode = xml_data.getElementsByTagName("nfg")[0]
 	if len(gameNode.getElementsByTagName("player")[0]. \
 			getElementsByTagName("action")) > 0:
