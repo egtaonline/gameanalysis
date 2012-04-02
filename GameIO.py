@@ -1,6 +1,7 @@
 from urllib import urlopen
 from json import loads, dumps
 from xml.dom.minidom import parseString, Document
+from xml.parsers.expat import ExpatError
 from os.path import exists, splitext
 
 from RoleSymmetricGame import *
@@ -25,25 +26,21 @@ def readGame(source):
 		#assume source is already xml or json data
 		data = source
 	try:
-		return readJSON(data)
-	except:
+		return readJSON(loads(data))
+	except ValueError:
 		try:
-			return readXML(data)
-		except:
+			return readXML(parseString(data))
+		except ExpatError:
 			raise IOError("invalid game source")
 
 
 def readJSON(data):
-	if isinstance(data, str):
-		json_data = loads(data)
+	if "strategy_array" in data["roles"][0]:
+		return readJSON_old(data)
+	elif "strategies" in data["roles"][0]:
+		return readJSON_v2(data)
 	else:
-		json_data = data
-	if "strategy_array" in json_data["roles"][0]:
-		return readJSON_old(json_data)
-	elif "strategies" in json_data["roles"][0]:
-		return readJSON_v2(json_data)
-	else:
-		raise IOError("invalid JSON data: " + str(json_data))
+		raise IOError("invalid JSON data: " + str(data))
 
 
 def readJSON_v2(json_data):
@@ -87,11 +84,7 @@ def readJSON_old(json_data):
 
 
 def readXML(data):
-	if isinstance(data, str):
-		xml_data = parseString(data)
-	else:
-		xml_data = data
-	gameNode = xml_data.getElementsByTagName("nfg")[0]
+	gameNode = data.getElementsByTagName("nfg")[0]
 	if len(gameNode.getElementsByTagName("player")[0]. \
 			getElementsByTagName("action")) > 0:
 		return parseStrategicXML(gameNode)
