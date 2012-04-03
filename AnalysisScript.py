@@ -29,6 +29,7 @@ def parse_args():
 
 
 def main(input_game, args):
+	input_game = HierarchicalReduction(input_game, {"All":4})
 	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
 
 	#iterated elimination of dominated strategies
@@ -102,6 +103,8 @@ def main(input_game, args):
 			BR = input_game.bestResponses(full_eq)
 			print "best responses:"
 			for role in input_game.roles:
+				if len(BR[role][0]) == 0:
+					continue
 				r = input_game.regret(full_eq, role, deviation=BR[role][0][0])
 				print "\t" + str(role) + ": " + list_repr(BR[role][0]) + \
 						";\tgain =", (round(r, 4) if not isinf(r) else "?")

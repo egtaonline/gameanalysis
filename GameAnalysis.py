@@ -4,16 +4,19 @@ from math import isinf
 
 from RoleSymmetricGame import *
 
-def HierarchicalReduction(game, players={}):
+def HierarchicalReduction(game, players={} ):
 	if not players:
 		players = {r : game.players[r] / 2 for r in game.roles}
 	HR_game = Game(game.roles, players, game.strategies)
 	for reduced_profile in HR_game.allProfiles():
-		full_profile = Profile({r:FullGameProfile(reduced_profile[r], \
-				game.players[r]) for r in game.roles})
-		HR_game.addProfile({r:[payoff_data(s, reduced_profile[r][s], \
-				game.getPayoff(full_profile, r, s)) for s in full_profile[r]] \
-				for r in full_profile})
+		try:
+			full_profile = Profile({r:FullGameProfile(reduced_profile[r], \
+					game.players[r]) for r in game.roles})
+			HR_game.addProfile({r:[payoff_data(s, reduced_profile[r][s], \
+					game.getPayoff(full_profile, r, s)) for s in \
+					full_profile[r]] for r in full_profile})
+		except KeyError:
+			continue
 	return HR_game
 
 
@@ -35,24 +38,27 @@ def DeviationPreservingReduction(game, players={}):
 		players = {r:2 for r in game.roles}
 	DPR_game = Game(game.roles, players, game.strategies)
 	for reduced_profile in DPR_game.allProfiles():
-		role_payoffs = {}
-		for role in game.roles:
-			role_payoffs[role] = []
-			for s in reduced_profile[role]:
-				full_profile = {}
-				for r in game.roles:
-					if r == role:
-						opp_prof = reduced_profile.asDict()[r]
-						opp_prof[s] -= 1
-						full_profile[r] = FullGameProfile(opp_prof, \
-								game.players[r] - 1)
-						full_profile[r][s] += 1
-					else:
-						full_profile[r] = FullGameProfile(reduced_profile[r], \
-								game.players[r])
-				role_payoffs[r].append(payoff_data(s, reduced_profile[r][s], \
-						game.getPayoff(Profile(full_profile), r, s)))
-		DPR_game.addProfile(role_payoffs)
+		try:
+			role_payoffs = {}
+			for role in game.roles:
+				role_payoffs[role] = []
+				for s in reduced_profile[role]:
+					full_profile = {}
+					for r in game.roles:
+						if r == role:
+							opp_prof = reduced_profile.asDict()[r]
+							opp_prof[s] -= 1
+							full_profile[r] = FullGameProfile(opp_prof, \
+									game.players[r] - 1)
+							full_profile[r][s] += 1
+						else:
+							full_profile[r] = FullGameProfile(reduced_profile[\
+									r], game.players[r])
+					role_payoffs[r].append(payoff_data(s, reduced_profile[r\
+							][s], game.getPayoff(Profile(full_profile), r, s)))
+			DPR_game.addProfile(role_payoffs)
+		except KeyError:
+			continue
 	return DPR_game
 
 
