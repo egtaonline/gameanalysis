@@ -29,7 +29,6 @@ def parse_args():
 
 
 def main(input_game, args):
-	input_game = HierarchicalReduction(input_game, {"All":4})
 	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
 
 	#iterated elimination of dominated strategies
