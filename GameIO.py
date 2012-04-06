@@ -31,7 +31,7 @@ def readGame(source):
 		try:
 			return readXML(parseString(data))
 		except ExpatError:
-			raise IOError("invalid game source")
+			raise IOError("invalid game source: " + str(source)[:100])
 
 
 def readJSON(data):
