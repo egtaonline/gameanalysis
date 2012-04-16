@@ -1,6 +1,6 @@
 import numpy as np
 
-from itertools import product, combinations_with_replacement as CwR
+from itertools import product, chain, combinations_with_replacement as CwR
 from collections import namedtuple
 from math import isinf
 
@@ -201,12 +201,12 @@ class Game(dict):
 		if self.maxStrategies == 1:
 			return [self.uniformMixture()]
 		if role == None:
-			return sum([self.biasedMixtures(r, strategy, bias) for r in \
-					filter(lambda r: self.numStrategies[self.index(r)] > 1, \
-					self.roles)], [])
+			return list(chain(*[self.biasedMixtures(r, strategy, bias) for r \
+					in filter(lambda r: self.numStrategies[self.index(r)] \
+					> 1, self.roles)]))
 		if strategy == None:
-			return sum([self.biasedMixtures(role, s, bias) for s in \
-					self.strategies[role]], [])
+			return list(chain(*[self.biasedMixtures(role, s, bias) for s in \
+					self.strategies[role]]))
 		i = self.array_index(role, strategy, dtype=float)
 		m = 1. - self.mask - i
 		m /= m.sum(1).reshape(m.shape[0], 1)
@@ -287,14 +287,14 @@ class Game(dict):
 	def profileNeighbors(self, profile, role=None, strategy=None, \
 			deviation=None):
 		if role == None:
-			return sum([self.profileNeighbors(profile, r, strategy, deviation) \
-					for r in self.roles], [])
+			return list(chain(*[self.profileNeighbors(profile, r, strategy, \
+					deviation) for r in self.roles]))
 		if strategy == None:
-			return sum([self.profileNeighbors(profile, role, s, deviation) \
-					for s in profile[role]], [])
+			return list(chain(*[self.profileNeighbors(profile, role, s, \
+					deviation) for s in profile[role]]))
 		if deviation == None:
-			return sum([self.profileNeighbors(profile, role, strategy, d) for \
-					d in set(self.strategies[role]) - {strategy}], [])
+			return list(chain(*[self.profileNeighbors(profile, role, strategy, \
+					d) for d in set(self.strategies[role]) - {strategy}]))
 		return [profile.deviate(role, strategy, deviation)]
 
 	def mixtureNeighbors(self, mix, role=None, deviation=None):
