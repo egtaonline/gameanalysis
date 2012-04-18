@@ -3,6 +3,7 @@ import numpy as np
 from itertools import product, chain, combinations_with_replacement as CwR
 from collections import namedtuple
 from math import isinf
+from string import join
 
 from HashableClasses import *
 from BasicFunctions import *
@@ -45,7 +46,8 @@ class Profile(h_dict):
 		return {r:{s:self[r][s] for s in self[r]} for r in self}
 
 	def __repr__(self):
-		return '{' + OrderedDict.__repr__(self)[9:-2] + '}'
+		return join([role +": "+ join([str(count) +" "+ strategy for strategy, \
+			count in self[role].items()], ", ") for role in self], "; ")
 
 
 class Game(dict):
@@ -240,12 +242,12 @@ class Game(dict):
 		return self == other or self > other
 
 	def __repr__(self):
-		return ("RoleSymmetricGame:\n\troles: " + list_repr(self.roles) + \
-				"\n\tplayers:\n\t\t" + list_repr(map(lambda x: str(x[1]) +"x "+\
-				str(x[0]), sorted(self.players.items())), sep="\n\t\t") + \
-				"\n\tstrategies:\n\t\t" + list_repr(map(lambda x: x[0] + \
-				":\n\t\t\t" + list_repr(x[1], sep="\n\t\t\t"), \
-				sorted(self.strategies.items())), sep="\n\t\t") + \
+		return ("RoleSymmetricGame:\n\troles: " + join(self.roles, ",") + \
+				"\n\tplayers:\n\t\t" + join(map(lambda x: str(x[1]) +"x "+\
+				str(x[0]), sorted(self.players.items())), "\n\t\t") + \
+				"\n\tstrategies:\n\t\t" + join(map(lambda x: x[0] + \
+				":\n\t\t\t" + join(x[1], "\n\t\t\t"), \
+				sorted(self.strategies.items())), "\n\t\t") + \
 				"\npayoff data for " + str(len(self)) + " out of " + \
 				str(self.size) + " profiles").expandtabs(4)
 

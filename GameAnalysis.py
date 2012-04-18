@@ -62,6 +62,22 @@ def DeviationPreservingReduction(game, players={}):
 	return DPR_game
 
 
+def translate(arr, source_game, target_game):
+	"""
+	Translates a mixture, profile, count, or payoff array between related
+	games based on role/strategy indices.
+
+	Useful for testing full-game regret of subgame equilibria.
+	"""
+	a = target_game.zeros()
+	for role in target_game.roles:
+		for strategy in source_game.strategies[role]:
+			a[target_game.index(role), target_game.index(role, strategy)] = \
+					arr[source_game.index(role), source_game.index(role, \
+					strategy)]
+	return a
+
+
 def Subgame(game, strategies={}):
 	"""
 	Creates a game with a subset each role's strategies.
@@ -140,6 +156,101 @@ def Cliques(full_game, subgames=set()):
 			if len(sg) > 0:
 				maximal_subgames.add(sg)
 	return sorted(maximal_subgames, key=len)
+
+
+def regret(game, p, role=None, strategy=None, deviation=None, bound=False):
+	if role == None:
+		return max([game.regret(p, r, strategy, deviation, bound) for r \
+				in game.roles])
+	if strategy == None and isinstance(p, Profile):
+		return max([game.regret(p, role, s, deviation, bound) for s \
+				in p[role]])
+	if deviation == None:
+		return max([game.regret(p, role, strategy, d, bound) for d \
+				in game.strategies[role]])
+	if isinstance(p, Profile):
+		dp = p.deviate(role, strategy, deviation)
+		if dp in game:
+			return game.getPayoff(dp, role, deviation) - \
+					game.getPayoff(p, role, strategy)
+		else:
+			return -float("inf") if bound else float("inf")
+	elif isinstance(p, np.ndarray):
+		if any(map(lambda prof: prof not in game, game.mixtureNeighbors( \
+				p, role, deviation))):
+			return -float("inf") if bound else float("inf")
+		return game.expectedValues(p)[game.index(role), game.index( \
+				role, deviation)] - game.getExpectedPayoff(p, role)
+	raise TypeError("unrecognized argument type: " + type(p).__name__)
+
+
+def neighbors(game, p, *args, **kwargs):
+	if isinstance(p, Profile):
+		return game.profileNeighbors(p, *args, **kwargs)
+	elif isinstance(p, np.ndarray):
+		return game.mixtureNeighbors(p, *args, **kwargs)
+	raise TypeError("unrecognized argument type: " + type(p).__name__)
+
+
+def profileNeighbors(game, profile, role=None, strategy=None, \
+		deviation=None):
+	if role == None:
+		return list(chain(*[game.profileNeighbors(profile, r, strategy, \
+				deviation) for r in game.roles]))
+	if strategy == None:
+		return list(chain(*[game.profileNeighbors(profile, role, s, \
+				deviation) for s in profile[role]]))
+	if deviation == None:
+		return list(chain(*[game.profileNeighbors(profile, role, strategy, \
+				d) for d in set(game.strategies[role]) - {strategy}]))
+	return [profile.deviate(role, strategy, deviation)]
+
+
+def mixtureNeighbors(game, mix, role=None, deviation=None):
+	n = set()
+	for profile in game.feasibleProfiles(mix):
+		n.update(game.profileNeighbors(profile, role, deviation=deviation))
+	return n
+
+
+def feasibleProfiles(game, mix, thresh=1e-3):
+	return [Profile({r:{s:p[game.index(r)].count(s) for s in set(p[ \
+			game.index(r)])} for r in game.roles}) for p in product(*[ \
+			CwR(filter(lambda s: mix[game.index(r), game.index(r,s)] >= \
+			thresh, game.strategies[r]), game.players[r]) for r \
+			in game.roles])]
+
+
+def bestResponses(game, p, role=None, strategy=None):
+	"""
+	If role is unspecified, bestResponses returns a dict mapping each role
+	all of its strategy-level results. If strategy is unspecified,
+	bestResponses returns a dict mapping strategies to the set of best
+	responses to the opponent-profile without that strategy.
+
+	If conditional=True, bestResponses returns two sets: the known best
+	responses, and the deviations whose value is unkown; otherwise it
+	returns only the known best response set.
+	"""
+	if role == None:
+		return {r: game.bestResponses(p, r, strategy) for r \
+				in game.roles}
+	if strategy == None and isinstance(p, Profile):
+		return {s: game.bestResponses(p, role, s) for s in \
+				p[role]}
+	best_deviations = set()
+	biggest_gain = float('-inf')
+	unknown = set()
+	for dev in game.strategies[role]:
+		r = game.regret(p, role, strategy, dev)
+		if isinf(r):
+			unknown.add(dev)
+		elif r > biggest_gain:
+			best_deviations = {dev}
+			biggest_gain = r
+		elif r == biggest_gain:
+			best_deviations.add(dev)
+	return list(best_deviations), list(unknown)
 
 
 def IteratedElimination(game, criterion, *args, **kwargs):

@@ -48,16 +48,16 @@ def main(input_game, args):
 		print "\n" + str(len(pure_equilibria)), "pure strategy Nash equilibri" \
 				+ ("um:" if l == 1 else "a:")
 		for i, eq in enumerate(pure_equilibria):
-			print str(i+1) + ". regret =", round(input_game.regret(eq), 4)
+			print str(i+1) + ". regret =", round(regret(input_game, eq), 4)
 			for role in input_game.roles:
 				print "    " + role + ":", list_repr(map(lambda pair: \
 						str(pair[1]) + "x " + str(pair[0]), eq[role].items()))
 	else:
 		print "\nno pure strategy Nash equilibria found."
 		mrp = MinRegretProfile(rational_game)
-		print "regret =", input_game.regret(mrp)
+		print "regret =", regret(input_game, mrp)
 		print "minimum regret pure strategy profile (regret = " + \
-				str(round(input_game.regret(mrp), 4)) + "):"
+				str(round(regret(input_game, mrp), 4)) + "):"
 		for role in input_game.roles:
 			print "    " + role + ":", list_repr(map(lambda pair: \
 					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
@@ -83,13 +83,13 @@ def main(input_game, args):
 				" Nash equilibri" + ("um:" if len(mixed_equilibria) == 1 \
 				else "a:")
 		for j, eq in enumerate(mixed_equilibria):
-			full_eq = input_game.translate(subgame, eq)
+			full_eq = translate(eq, subgame, input_game)
 			if all(map(lambda p: p in input_game, input_game.neighbors(\
 					full_eq))):
-				print str(j+1) + ". regret =", round(input_game.regret(\
+				print str(j+1) + ". regret =", round(regret(input_game, \
 						full_eq), 4)
 			else:
-				print str(j+1) + ". regret >=", round(input_game.regret( \
+				print str(j+1) + ". regret >=", round(regret(input_game,  \
 						full_eq, bound=True), 4)
 
 			for k,role in enumerate(input_game.roles):
@@ -104,7 +104,7 @@ def main(input_game, args):
 			for role in input_game.roles:
 				if len(BR[role][0]) == 0:
 					continue
-				r = input_game.regret(full_eq, role, deviation=BR[role][0][0])
+				r = regret(input_game, full_eq, role, deviation=BR[role][0][0])
 				print "\t" + str(role) + ": " + list_repr(BR[role][0]) + \
 						";\tgain =", (round(r, 4) if not isinf(r) else "?")
 
