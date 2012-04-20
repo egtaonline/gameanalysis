@@ -84,7 +84,7 @@ def main(input_game, args):
 				else "a:")
 		for j, eq in enumerate(mixed_equilibria):
 			full_eq = translate(eq, subgame, input_game)
-			if all(map(lambda p: p in input_game, input_game.neighbors(\
+			if all(map(lambda p: p in input_game, neighbors(input_game, \
 					full_eq))):
 				print str(j+1) + ". regret =", round(regret(input_game, \
 						full_eq), 4)
@@ -99,7 +99,7 @@ def main(input_game, args):
 						print "    " + strategy + ": " + str(round(100 * \
 								full_eq[k][l], 2)) + "%"
 
-			BR = input_game.bestResponses(full_eq)
+			BR = bestResponses(input_game, full_eq)
 			print "best responses:"
 			for role in input_game.roles:
 				if len(BR[role][0]) == 0:

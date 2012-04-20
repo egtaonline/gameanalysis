@@ -62,6 +62,29 @@ def DeviationPreservingReduction(game, players={}):
 	return DPR_game
 
 
+def DPR_profiles(game, players={}):
+	if not players:
+		players = {r:2 for r in game.roles}
+	DPR_game = Game(game.roles, players, game.strategies)
+	profiles = []
+	for reduced_profile in DPR_game.allProfiles():
+		for role in game.roles:
+			for s in reduced_profile[role]:
+				full_profile = {}
+				for r in game.roles:
+					if r == role:
+						opp_prof = reduced_profile.asDict()[r]
+						opp_prof[s] -= 1
+						full_profile[r] = FullGameProfile(opp_prof, \
+								game.players[r] - 1)
+						full_profile[r][s] += 1
+					else:
+						full_profile[r] = FullGameProfile(reduced_profile[\
+								r], game.players[r])
+				profiles.append(Profile(full_profile))
+	return profiles
+
+
 def translate(arr, source_game, target_game):
 	"""
 	Translates a mixture, profile, count, or payoff array between related
@@ -160,13 +183,13 @@ def Cliques(full_game, subgames=set()):
 
 def regret(game, p, role=None, strategy=None, deviation=None, bound=False):
 	if role == None:
-		return max([game.regret(p, r, strategy, deviation, bound) for r \
+		return max([regret(game, p, r, strategy, deviation, bound) for r \
 				in game.roles])
 	if strategy == None and isinstance(p, Profile):
-		return max([game.regret(p, role, s, deviation, bound) for s \
+		return max([regret(game, p, role, s, deviation, bound) for s \
 				in p[role]])
 	if deviation == None:
-		return max([game.regret(p, role, strategy, d, bound) for d \
+		return max([regret(game, p, role, strategy, d, bound) for d \
 				in game.strategies[role]])
 	if isinstance(p, Profile):
 		dp = p.deviate(role, strategy, deviation)
@@ -176,7 +199,7 @@ def regret(game, p, role=None, strategy=None, deviation=None, bound=False):
 		else:
 			return -float("inf") if bound else float("inf")
 	elif isinstance(p, np.ndarray):
-		if any(map(lambda prof: prof not in game, game.mixtureNeighbors( \
+		if any(map(lambda prof: prof not in game, mixtureNeighbors(game, \
 				p, role, deviation))):
 			return -float("inf") if bound else float("inf")
 		return game.expectedValues(p)[game.index(role), game.index( \
@@ -186,30 +209,30 @@ def regret(game, p, role=None, strategy=None, deviation=None, bound=False):
 
 def neighbors(game, p, *args, **kwargs):
 	if isinstance(p, Profile):
-		return game.profileNeighbors(p, *args, **kwargs)
+		return profileNeighbors(game, p, *args, **kwargs)
 	elif isinstance(p, np.ndarray):
-		return game.mixtureNeighbors(p, *args, **kwargs)
+		return mixtureNeighbors(game, p, *args, **kwargs)
 	raise TypeError("unrecognized argument type: " + type(p).__name__)
 
 
 def profileNeighbors(game, profile, role=None, strategy=None, \
 		deviation=None):
 	if role == None:
-		return list(chain(*[game.profileNeighbors(profile, r, strategy, \
+		return list(chain(*[profileNeighbors(game, profile, r, strategy, \
 				deviation) for r in game.roles]))
 	if strategy == None:
-		return list(chain(*[game.profileNeighbors(profile, role, s, \
+		return list(chain(*[profileNeighbors(game, profile, role, s, \
 				deviation) for s in profile[role]]))
 	if deviation == None:
-		return list(chain(*[game.profileNeighbors(profile, role, strategy, \
+		return list(chain(*[profileNeighbors(game, profile, role, strategy, \
 				d) for d in set(game.strategies[role]) - {strategy}]))
 	return [profile.deviate(role, strategy, deviation)]
 
 
 def mixtureNeighbors(game, mix, role=None, deviation=None):
 	n = set()
-	for profile in game.feasibleProfiles(mix):
-		n.update(game.profileNeighbors(profile, role, deviation=deviation))
+	for profile in feasibleProfiles(game, mix):
+		n.update(profileNeighbors(game, profile, role, deviation=deviation))
 	return n
 
 
@@ -233,16 +256,16 @@ def bestResponses(game, p, role=None, strategy=None):
 	returns only the known best response set.
 	"""
 	if role == None:
-		return {r: game.bestResponses(p, r, strategy) for r \
+		return {r: bestResponses(game, p, r, strategy) for r \
 				in game.roles}
 	if strategy == None and isinstance(p, Profile):
-		return {s: game.bestResponses(p, role, s) for s in \
+		return {s: bestResponses(game, p, role, s) for s in \
 				p[role]}
 	best_deviations = set()
 	biggest_gain = float('-inf')
 	unknown = set()
 	for dev in game.strategies[role]:
-		r = game.regret(p, role, strategy, dev)
+		r = regret(game, p, role, strategy, dev)
 		if isinf(r):
 			unknown.add(dev)
 		elif r > biggest_gain:
@@ -277,7 +300,7 @@ def NeverBestResponse(game, conditional=True):
 	for profile in game:
 		for r in game.roles:
 			for s in profile[r]:
-				br, unknown = game.bestResponses(profile, r, s)
+				br, unknown = bestResponses(game, profile, r, s)
 				best_responses[r].update(br)
 				if conditional:
 					best_responses[r].update(unknown)
@@ -300,11 +323,11 @@ def PureStrategyDominance(game, conditional=True, weak=False):
 			dominance_proved = False
 			for profile in game:
 				if dominated in profile[r]:
-					regret = game.regret(profile, r, dominated, dominant)
-					if regret > 0 and not isinf(regret):
+					reg = regret(game, profile, r, dominated, dominant)
+					if reg > 0 and not isinf(reg):
 						dominance_proved = True
-					elif (regret < 0) or (regret == 0 and not weak) or \
-							(isinf(regret) and conditional):
+					elif (reg < 0) or (reg == 0 and not weak) or \
+							(isinf(reg) and conditional):
 						dominance_proved = False
 						break
 				elif dominant in profile[r] and conditional > 1:
@@ -327,14 +350,14 @@ def PureNash(game, epsilon=0):
 	"""
 	Finds all pure-strategy epsilon-Nash equilibria.
 	"""
-	return filter(lambda profile: game.regret(profile) <= epsilon, game)
+	return filter(lambda profile: regret(game, profile) <= epsilon, game)
 
 
 def MinRegretProfile(game):
 	"""
 	Finds the profile with the confirmed lowest regret.
 	"""
-	return min([(game.regret(profile), profile) for profile in game])[1]
+	return min([(regret(game, profile), profile) for profile in game])[1]
 
 
 def MixedNash(game, regret_thresh=1e-4, dist_thresh=1e-2, *RD_args, **RD_kwds):
@@ -345,7 +368,7 @@ def MixedNash(game, regret_thresh=1e-4, dist_thresh=1e-2, *RD_args, **RD_kwds):
 	for m in game.biasedMixtures() + [game.uniformMixture()]:
 		eq = ReplicatorDynamics(game, m, *RD_args, **RD_kwds)
 		distances = map(lambda e: norm(e-eq,2), equilibria)
-		if game.regret(eq) <= regret_thresh and all([d >= dist_thresh \
+		if regret(game, eq) <= regret_thresh and all([d >= dist_thresh \
 				for d in distances]):
 			equilibria.append(eq)
 	return equilibria
@@ -363,14 +386,14 @@ def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 		if np.linalg.norm(mix - old_mix) <= converge_thresh:
 			break
 	if verbose:
-		print i+1, "iterations ; mix =", mix, "; regret =", game.regret(mix)
+		print i+1, "iterations ; mix =", mix, "; regret =", regret(game, mix)
 	return mix
 
 
 def SymmetricProfileRegrets(game):
 	assert len(game.roles) == 1, "game must be symmetric"
 	role = game.roles[0]
-	return {s: game.regret(Profile({role:{s:game.players[role]}})) for s \
+	return {s: regret(game, Profile({role:{s:game.players[role]}})) for s \
 			in game.strategies[role]}
 
 
@@ -379,6 +402,6 @@ def EquilibriumRegrets(game, eq):
 	for role in game.roles:
 		regrets[role] = {}
 		for strategy in game.strategies[role]:
-			regrets[role][strategy] = -game.regret(eq, deviation=strategy)
+			regrets[role][strategy] = -regret(game, eq, deviation=strategy)
 	return regrets
 

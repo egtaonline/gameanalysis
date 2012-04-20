@@ -26,10 +26,14 @@ def readGame(source):
 		#assume source is already xml or json data
 		data = source
 	try:
-		return readJSON(loads(data))
+		if isinstance(data, str):
+			data = loads(data)
+		return readJSON(data)
 	except ValueError:
 		try:
-			return readXML(parseString(data))
+			if isinstance(data, str):
+				data = parseString(data)
+			return readXML(data)
 		except ExpatError:
 			raise IOError("invalid game source: " + str(source)[:100])
 

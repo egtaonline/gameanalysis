@@ -181,6 +181,9 @@ class Game(dict):
 	def knownProfiles(self):
 		return self.keys()
 
+	def isComplete(self):
+		return len(self) == self.size
+
 	def uniformMixture(self):
 		return np.array(1-self.mask, dtype=float) / \
 				(1-self.mask).sum(1).reshape(len(self.roles),1)
@@ -251,108 +254,4 @@ class Game(dict):
 				"\npayoff data for " + str(len(self)) + " out of " + \
 				str(self.size) + " profiles").expandtabs(4)
 
-	def isComplete(self):
-		return len(self) == self.size
 
-	def regret(self, p, role=None, strategy=None, deviation=None, bound=False):
-		if role == None:
-			return max([self.regret(p, r, strategy, deviation, bound) for r \
-					in self.roles])
-		if strategy == None and isinstance(p, Profile):
-			return max([self.regret(p, role, s, deviation, bound) for s \
-					in p[role]])
-		if deviation == None:
-			return max([self.regret(p, role, strategy, d, bound) for d \
-					in self.strategies[role]])
-		if isinstance(p, Profile):
-			dp = p.deviate(role, strategy, deviation)
-			if dp in self:
-				return self.getPayoff(dp, role, deviation) - \
-						self.getPayoff(p, role, strategy)
-			else:
-				return -float("inf") if bound else float("inf")
-		elif isinstance(p, np.ndarray):
-			if any(map(lambda prof: prof not in self, self.mixtureNeighbors( \
-					p, role, deviation))):
-				return -float("inf") if bound else float("inf")
-			return self.expectedValues(p)[self.index(role), self.index( \
-					role, deviation)] - self.getExpectedPayoff(p, role)
-		raise TypeError("unrecognized argument type: " + type(p).__name__)
-
-	def neighbors(self, p, *args, **kwargs):
-		if isinstance(p, Profile):
-			return self.profileNeighbors(p, *args, **kwargs)
-		elif isinstance(p, np.ndarray):
-			return self.mixtureNeighbors(p, *args, **kwargs)
-		raise TypeError("unrecognized argument type: " + type(p).__name__)
-
-	def profileNeighbors(self, profile, role=None, strategy=None, \
-			deviation=None):
-		if role == None:
-			return list(chain(*[self.profileNeighbors(profile, r, strategy, \
-					deviation) for r in self.roles]))
-		if strategy == None:
-			return list(chain(*[self.profileNeighbors(profile, role, s, \
-					deviation) for s in profile[role]]))
-		if deviation == None:
-			return list(chain(*[self.profileNeighbors(profile, role, strategy, \
-					d) for d in set(self.strategies[role]) - {strategy}]))
-		return [profile.deviate(role, strategy, deviation)]
-
-	def mixtureNeighbors(self, mix, role=None, deviation=None):
-		n = set()
-		for profile in self.feasibleProfiles(mix):
-			n.update(self.profileNeighbors(profile, role, deviation=deviation))
-		return n
-
-	def feasibleProfiles(self, mix, thresh=1e-3):
-		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \
-				self.index(r)])} for r in self.roles}) for p in product(*[ \
-				CwR(filter(lambda s: mix[self.index(r), self.index(r,s)] >= \
-				thresh, self.strategies[r]), self.players[r]) for r \
-				in self.roles])]
-
-	def bestResponses(self, p, role=None, strategy=None):
-		"""
-		If role is unspecified, bestResponses returns a dict mapping each role
-		all of its strategy-level results. If strategy is unspecified,
-		bestResponses returns a dict mapping strategies to the set of best
-		responses to the opponent-profile without that strategy.
-
-		If conditional=True, bestResponses returns two sets: the known best
-		responses, and the deviations whose value is unkown; otherwise it
-		returns only the known best response set.
-		"""
-		if role == None:
-			return {r: self.bestResponses(p, r, strategy) for r \
-					in self.roles}
-		if strategy == None and isinstance(p, Profile):
-			return {s: self.bestResponses(p, role, s) for s in \
-					p[role]}
-		best_deviations = set()
-		biggest_gain = float('-inf')
-		unknown = set()
-		for dev in self.strategies[role]:
-			r = self.regret(p, role, strategy, dev)
-			if isinf(r):
-				unknown.add(dev)
-			elif r > biggest_gain:
-				best_deviations = {dev}
-				biggest_gain = r
-			elif r == biggest_gain:
-				best_deviations.add(dev)
-		return list(best_deviations), list(unknown)
-
-	def translate(self, other, array):
-		"""
-		Translates a mixture, profile, count, or payoff array from a related
-		game based on role/strategy indices.
-
-		Useful for testing full-game regret of subgame equilibria.
-		"""
-		a = self.zeros()
-		for role in self.roles:
-			for strategy in other.strategies[role]:
-				a[self.index(role), self.index(role, strategy)] = array[ \
-						other.index(role), other.index(role, strategy)]
-		return a

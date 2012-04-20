@@ -195,12 +195,12 @@ class TestSparseGame(unittest.TestCase):
 	def test_SparseRegret(self):
 		clique = GA.Cliques(self.ss)[0]
 		clique_eq = GA.MixedNash(clique)[0]
-		full_candidate = self.ss.translate(clique, clique_eq)
-		self.assertEqual(self.ss.regret(full_candidate, deviation="A"), 0)
-		self.assertEqual(self.ss.regret(full_candidate, deviation="B"), 0)
-		self.assertEqual(self.ss.regret(full_candidate, deviation="C"), 1)
-		self.assertEqual(self.ss.regret(full_candidate, deviation="D"), -1)
-		self.assertEqual(self.ss.regret(full_candidate), 1)
+		full_candidate = GA.translate(clique_eq, clique, self.ss)
+		self.assertEqual(GA.regret(self.ss, full_candidate, deviation="A"), 0)
+		self.assertEqual(GA.regret(self.ss, full_candidate, deviation="B"), 0)
+		self.assertEqual(GA.regret(self.ss, full_candidate, deviation="C"), 1)
+		self.assertEqual(GA.regret(self.ss, full_candidate, deviation="D"), -1)
+		self.assertEqual(GA.regret(self.ss, full_candidate), 1)
 
 
 class TestDegenerateGame(unittest.TestCase):
