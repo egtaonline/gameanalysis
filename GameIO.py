@@ -3,17 +3,18 @@ from json import loads, dumps
 from xml.dom.minidom import parseString, Document
 from xml.parsers.expat import ExpatError
 from os.path import exists, splitext
+from functools import partial
 
 from RoleSymmetricGame import *
 
 
 def readGame(source):
-	if isinstance(source, str) and exists(source):
+	if isinstance(source, basestring) and exists(source):
 		#source is a filename
 		f = open(source)
 		data = f.read()
 		f.close()
-	elif isinstance(source, str) and source.startswith("http://"):
+	elif isinstance(source, basestring) and source.startswith("http://"):
 		#source is a url
 		u = urlopen(source)
 		data = u.read()
@@ -25,48 +26,65 @@ def readGame(source):
 	else:
 		#assume source is already xml or json data
 		data = source
-	try:
-		if isinstance(data, str):
-			data = loads(data)
-		return readJSON(data)
-	except ValueError:
+
+	if isinstance(data, basestring):
 		try:
-			if isinstance(data, str):
-				data = parseString(data)
-			return readXML(data)
-		except ExpatError:
-			raise IOError("invalid game source: " + str(source)[:100])
+			data = loads(data)
+		except ValueError:
+			data = parseString(data)
+	if isinstance(data, list):
+		return map(readGameJSON, data)
+	elif isinstance(data, dict):
+		return readGameJSON(data)
+	elif isinstance(data, list):
+		return map(readJSON, data)
+	elif isinstance(data, Document):
+		return readXML(data)
+	else:
+		s = str(source)
+		raise IOError("can't read " + s[:60] + ("..." if len(s) > 60 else ""))
 
 
-def readJSON(data):
-	if "strategy_array" in data["roles"][0]:
-		return readJSON_old(data)
-	elif "strategies" in data["roles"][0]:
-		return readJSON_v2(data)
+def readGameJSON(gameJSON):
+	if isinstance(gameJSON, basestring):
+		gameJSON = loads(gameJSON)
+	if "strategy_array" in gameJSON["roles"][0]:
+		return readGameJSON_old(gameJSON)
+	elif "strategies" in gameJSON["roles"][0]:
+		return readGameJSON_v2(gameJSON)
 	else:
 		raise IOError("invalid JSON data: " + str(data))
 
 
-def readJSON_v2(json_data):
-	players = {r["name"] : int(r["count"]) for r in json_data["roles"]}
-	strategies = {r["name"] : r["strategies"] for r in json_data["roles"]}
+def readGameJSON_v2(gameJSON):
+	if isinstance(gameJSON, basestring):
+		gameJSON = loads(gameJSON)
+	players = {r["name"] : int(r["count"]) for r in gameJSON["roles"]}
+	strategies = {r["name"] : r["strategies"] for r in gameJSON["roles"]}
 	roles = list(players.keys())
 	profiles = []
-	if "profiles" in json_data:
-		for profileDict in json_data["profiles"]:
-			profile = {r:[] for r in roles}
-			prof_strat = {}
-			for roleDict in profileDict["roles"]:
-				role = roleDict["name"]
-				for strategyDict in roleDict["strategies"]:
-					profile[role].append(payoff_data(str(strategyDict[ \
-							"name"]), int(strategyDict["count"]), \
-							float(strategyDict["payoff"])))
-			profiles.append(profile)
+	if "profiles" in gameJSON:
+		for profileJSON in gameJSON["profiles"]:
+			profiles.append(readProfileJSON(profileJSON, asTuple=True))
 	return Game(roles, players, strategies, profiles)
 
 
-def readJSON_old(json_data):
+def readProfileJSON(profileJSON, asTuple=False):
+	if isinstance(profileJSON, basestring):
+		profileJSON = loads(profileJSON)
+	profile = {r["name"]:[] for r in profileJSON["roles"]}
+	for roleDict in profileJSON["roles"]:
+		role = roleDict["name"]
+		for strategyDict in roleDict["strategies"]:
+			profile[role].append(payoff_data(str(strategyDict[ \
+					"name"]), int(strategyDict["count"]), \
+					float(strategyDict["payoff"])))
+	return profile
+
+
+def readGameJSON_old(json_data):
+	if isinstance(json_data, basestring):
+		json_data = loads(json_data)
 	players = {r["name"] : int(r["count"]) for r in json_data["roles"]}
 	strategies = {r["name"] : r["strategy_array"] for r in json_data["roles"]}
 	roles = list(players.keys())
@@ -88,6 +106,8 @@ def readJSON_old(json_data):
 
 
 def readXML(data):
+	if isinstance(data, basestring):
+		data = parseString(data)
 	gameNode = data.getElementsByTagName("nfg")[0]
 	if len(gameNode.getElementsByTagName("player")[0]. \
 			getElementsByTagName("action")) > 0:
@@ -130,7 +150,7 @@ def parseSymmetricXML(gameNode):
 	return Game(roles, counts, strategies, payoffs)
 
 
-def toJSON(game, **other_data):
+def toJSON(game, dump=True, **other_data):
 	"""
 	Convert game to JSON according to the testbed role-symmetric game spec (v2).
 	"""
@@ -152,7 +172,13 @@ def toJSON(game, **other_data):
 						int(game.counts[i][r,s]), "payoff": \
 						float(game.values[i][r,s])})
 		game_dict["profiles"].append({"roles":p})
-	return dumps(game_dict)
+	return dumps(game_dict) if dump else game_dict
+
+
+def writeGames(games, filename):
+	f = open(filename, "w")
+	f.write(dumps(map(partial(toJSON, dump=False), games), f))
+	f.close()
 
 
 def toXML(game, filename):

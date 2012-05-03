@@ -59,3 +59,6 @@ def weighted_least_squares(x, y, weights):
 			for j in range(z.shape[1]):
 				z[i,j] += np.random.uniform(-tiny,tiny)
 		return y.T.dot(W).dot(A).dot(np.linalg.inv(z))
+
+
+

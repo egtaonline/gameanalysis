@@ -3,11 +3,14 @@ from string import join
 
 import requests
 
-from GameIO import readGame
+from GameIO import readGame, readProfileJSON
+from RoleSymmetricGame import Profile
+from GameAnalysis import DPR_profiles
 
 
 class TestbedObject:
-	def __init__(self, name, obj_type, name_field, options={}):
+	def __init__(self, name, obj_type, name_field="", options={}, \
+			skip_name=False):
 		self.auth = {'auth_token':"g2LHz1mEtbysFngwLMCz"}
 		self.url = "http://d-108-249.eecs.umich.edu/api/v2/" + obj_type
 
@@ -17,9 +20,13 @@ class TestbedObject:
 		ID = name #try treating name as an id
 		r = requests.get(self.url +"/"+ ID + ".json", data=data)
 
-		if r.status_code != 200: #treat name as a name_field
+		if r.status_code != 200 and not skip_name: #treat name as a name_field
 			r = requests.get(self.url + ".json", data=data)
-			ID = filter(lambda s: s[name_field] == name, loads(r.text))[0]["id"]
+			try:
+				ID = filter(lambda s: s[name_field] == name, \
+						loads(r.text))[0]["id"]
+			except IndexError:
+				raise Exception("no such "+obj_type[:-1]+": "+name)
 			r = requests.get(self.url +"/"+ ID + ".json", data=self.auth)
 
 		self.url += "/" + ID
@@ -28,12 +35,12 @@ class TestbedObject:
 
 	def update(self):
 		r = requests.get(self.url + ".json", data=self.auth)
-		sel.json = r.text
+		self.json = r.text
 		self.__dict__.update(r.text)
 		return r.status_code
 
 	def __repr__(self):
-		return join(map(lambda p: str(p[0]) + ": " + str(p[1]), \
+		return join(map(lambda p: (repr(p[0]) + ": " + repr(p[1]))[:80], \
 				self.__dict__.items()), "\n")
 
 
@@ -111,7 +118,35 @@ class TestbedGame(TestbedObject):
 
 	def update(self):
 		TestbedObject.update(self)
-		self.game = readJSON(self.json)
+		self.game = readGameJSON(loads(self.json))
+
+
+class TestbedProfile(TestbedObject):
+	def __init__(self, ID):
+		TestbedObject.__init__(self, ID, "profiles", skip_name=True)
+		self.payoffs = readProfileJSON(loads(self.json))
+
+	def update(self):
+		TestbedObject.update(self)
+		self.payoffs = readProfileJSON(loads(self.json))
+
+
+
+class DPR_scheduler:
+	def __init__(self, scheduler_name, game_name, players, samples):
+		self.TB_scheduler = TestbedScheduler(scheduler_name)
+		self.TB_game = TestbedGame(game_name)
+		self.players = players
+		self.samples = samples
+		for profile in DPR_profiles(self.TB_game.game, self.players):
+			self.TB_scheduler.addProfile(profile, self.samples)
+
+	def addSamples(self, additional_samples):
+		self.samples += additional_samples
+		for profile in DPR_profiles(self.TB_game.game, self.players):
+			self.TB_scheduler.addProfile(profile, self.samples)
+
+
 
 
 modifiable_attributes = ["process_memory", "name", "parameter_hash", "active", \
