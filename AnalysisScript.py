@@ -1,7 +1,11 @@
 #! /usr/bin/env python2.7
 
 from GameIO import *
-from GameAnalysis import *
+from Reductions import *
+from Subgames import *
+from Dominance import *
+from Regret import *
+from Nash import *
 
 from sys import argv
 from os.path import abspath

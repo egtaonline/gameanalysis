@@ -60,3 +60,15 @@ TestbedInterface.pyc
 test_games/.TestGameAnalysis.py.swp
 
 cliques_h53v68
+
+__init__.pyc
+
+Dominance.pyc
+
+Reductions.pyc
+
+Subgames.pyc
+
+Regret.pyc
+
+Nash.pyc

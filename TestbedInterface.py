@@ -5,7 +5,7 @@ import requests
 
 from GameIO import readGame, readProfileJSON
 from RoleSymmetricGame import Profile
-from GameAnalysis import DPR_profiles
+from Reductions import DPR_profiles
 
 
 class TestbedObject:
