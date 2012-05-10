@@ -1,3 +1,5 @@
+#! /usr/bin/env python2.7
+
 from RoleSymmetricGame import Game, payoff_data
 
 def translate(arr, source_game, target_game):
@@ -59,7 +61,7 @@ def IsSubgame(small_game, big_game):
 	return True
 
 
-def Cliques(full_game, subgames=set()):
+def Cliques(full_game, known_subgames=set()):
 	"""
 	Finds maximal subgames for which all profiles are known.
 
@@ -68,8 +70,11 @@ def Cliques(full_game, subgames=set()):
 	the known subgames is ignored, so for faster loading, give only the
 	header information).
 	"""
-	subgames = {Game(full_game.roles, full_game.players, g.strategies) for g \
-			in subgames}.union({Subgame(full_game)})
+	subgames = {Subgame(full_game)}
+	for g in known_subgames:
+		sg = Subgame(full_game, g.strategies)
+		if sg.isComplete():
+			subgames.add(sg)
 	maximal_subgames = set()
 	while(subgames):
 		sg = subgames.pop()
@@ -94,4 +99,31 @@ def Cliques(full_game, subgames=set()):
 			if len(sg) > 0:
 				maximal_subgames.add(sg)
 	return sorted(maximal_subgames, key=len)
+
+
+from GameIO import readGame, writeGames
+from argparse import ArgumentParser
+from sys import stdin
+
+def parse_args():
+	parser = ArgumentParser()
+	parser.add_argument("-g", metavar="GAME", type=str, default="", help= \
+			"Game file to be analyzed. Suported file types: EGAT symmetric " + \
+			"XML, EGAT strategic XML, testbed role-symmetric JSON. Defaults" + \
+			" to stdin.")
+	parser.add_argument("-o", metavar="OUTPUT", type=str, default="", \
+			help="File for writing output subgames. Defaults to stdout.")
+	parser.add_argument("-s", metavar="SUBGAMES", type=str, default="[]", \
+			help="File with known complete subgames. Improves runtime.")
+	args = parser.parse_args()
+	if args.g == "":
+		args.g = stdin
+	return args
+
+
+if __name__ == "__main__":
+	args = parse_args()
+	game = readGame(args.g)
+	subgames = readGame(args.s)
+	writeGames(Cliques(game, subgames), args.o)
 

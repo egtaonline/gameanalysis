@@ -175,10 +175,14 @@ def toJSON(game, dump=True, **other_data):
 	return dumps(game_dict) if dump else game_dict
 
 
-def writeGames(games, filename):
-	f = open(filename, "w")
-	f.write(dumps(map(partial(toJSON, dump=False), games), f))
-	f.close()
+def writeGames(games, filename=""):
+	s = dumps(map(partial(toJSON, dump=False), games))
+	if filename == "":
+		print s
+	else:
+		f = open(filename, "w")
+		f.write(s)
+		f.close()
 
 
 def toXML(game, filename):
