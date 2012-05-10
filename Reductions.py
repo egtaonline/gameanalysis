@@ -1,4 +1,4 @@
-from RoleSymmetricGame import Game, Profile
+from RoleSymmetricGame import Game, Profile, payoff_data
 
 def HierarchicalReduction(game, players={} ):
 	if not players:

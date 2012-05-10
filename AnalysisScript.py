@@ -10,6 +10,7 @@ from Nash import *
 from sys import argv
 from os.path import abspath
 from argparse import ArgumentParser
+from copy import deepcopy
 
 
 def parse_args():
@@ -34,6 +35,7 @@ def parse_args():
 
 def main(input_game, args):
 	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
+
 
 	#iterated elimination of dominated strategies
 	rational_game = IteratedElimination(input_game, PureStrategyDominance)
@@ -96,24 +98,32 @@ def main(input_game, args):
 				print str(j+1) + ". regret >=", round(regret(input_game,  \
 						full_eq, bound=True), 4)
 
+			support = {r:[] for r in input_game.roles}
 			for k,role in enumerate(input_game.roles):
 				print role + ":"
 				for l,strategy in enumerate(input_game.strategies[role]):
 					if full_eq[k][l] >= args.s:
+						support[role].append(strategy)
 						print "    " + strategy + ": " + str(round(100 * \
 								full_eq[k][l], 2)) + "%"
 
 			BR = bestResponses(input_game, full_eq)
 			print "best responses:"
 			for role in input_game.roles:
+				deviation_support = deepcopy(support)
+				deviation_support[role].extend(BR[role][0])
 				if len(BR[role][0]) == 0:
 					continue
 				r = regret(input_game, full_eq, role, deviation=BR[role][0][0])
 				print "\t" + str(role) + ": " + list_repr(BR[role][0]) + \
 						";\tgain =", (round(r, 4) if not isinf(r) else "?")
+				print "Deviation subgame explored.\n" if Subgame(input_game, \
+						deviation_support).isComplete() else \
+						"Deviation subgame UNEXPLORED!\n"
 
 
 if __name__ == "__main__":
 	print "command: " + list_repr(argv, sep=" ") + "\n"
 	game, args = parse_args()
+#	game = HierarchicalReduction(game, {"All":4})
 	main(game, args)
