@@ -101,29 +101,19 @@ def Cliques(full_game, known_subgames=set()):
 	return sorted(maximal_subgames, key=len)
 
 
-from GameIO import readGame, writeGames
-from argparse import ArgumentParser
-from sys import stdin
+from GameIO import readGame, toJSON, io_parser
+from json import dumps
 
 def parse_args():
-	parser = ArgumentParser()
-	parser.add_argument("-g", metavar="GAME", type=str, default="", help= \
-			"Game file to be analyzed. Suported file types: EGAT symmetric " + \
-			"XML, EGAT strategic XML, testbed role-symmetric JSON. Defaults" + \
-			" to stdin.")
-	parser.add_argument("-o", metavar="OUTPUT", type=str, default="", \
-			help="File for writing output subgames. Defaults to stdout.")
-	parser.add_argument("-s", metavar="SUBGAMES", type=str, default="[]", \
-			help="File with known complete subgames. Improves runtime.")
-	args = parser.parse_args()
-	if args.g == "":
-		args.g = stdin
-	return args
+	parser = io_parser()
+	parser.add_argument("-known", type=str, default="[]", help= \
+			"File with known complete subgames. Improves runtime.")
+	return parser.parse_args()
 
 
 if __name__ == "__main__":
 	args = parse_args()
-	game = readGame(args.g)
-	subgames = readGame(args.s)
-	writeGames(Cliques(game, subgames), args.o)
+	game = readGame(args.input)
+	subgames = readGame(args.known)
+	print dumps(toJSON(*Cliques(game, subgames)))
 

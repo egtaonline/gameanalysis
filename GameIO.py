@@ -1,5 +1,5 @@
 from urllib import urlopen
-from json import loads, dumps
+from json import loads
 from xml.dom.minidom import parseString, Document
 from xml.parsers.expat import ExpatError
 from os.path import exists, splitext
@@ -150,12 +150,14 @@ def parseSymmetricXML(gameNode):
 	return Game(roles, counts, strategies, payoffs)
 
 
-def toJSON(game, dump=True, **other_data):
+def toJSON(*games):
 	"""
 	Convert game to JSON according to the testbed role-symmetric game spec (v2).
 	"""
+	if len(games) > 1:
+		return map(toJSON, games)
+	game = games[0]
 	game_dict = {}
-	game_dict.update(other_data)
 	game_dict["roles"] = [{"name":role, "count":game.players[role], \
 				"strategies": list(game.strategies[role])} for role \
 				in game.roles]
@@ -172,24 +174,14 @@ def toJSON(game, dump=True, **other_data):
 						int(game.counts[i][r,s]), "payoff": \
 						float(game.values[i][r,s])})
 		game_dict["profiles"].append({"roles":p})
-	return dumps(game_dict) if dump else game_dict
-
-
-def writeGames(games, filename=""):
-	s = dumps(map(partial(toJSON, dump=False), games))
-	if filename == "":
-		print s
-	else:
-		f = open(filename, "w")
-		f.write(s)
-		f.close()
+	return game_dict
 
 
 def toXML(game, filename):
 	if len(game.roles) == 1:
-		writeSymmetricXML(game, filename)
+		toSymmetricXML(game, filename)
 	elif all(map(lambda c: c==1, game.counts.values())):
-		writeStrategicXML(game, filename)
+		toStrategicXML(game, filename)
 	else:
 		raise NotImplementedError("no EGAT XML spec for role-symmetric games")
 
@@ -201,10 +193,28 @@ def toSymmetricXML(game, filename):
 	"""
 	raise NotImplementedError("TODO")
 
+
 def toStrategicXML(game, filename):
 	"""
 	Writes game to XML according to the EGAT strategic game spec.
 	Assumes (but doesn't check) that game is not role-symmetric.
 	"""
 	raise NotImplementedError("TODO")
+
+
+class io_parser(ArgumentParser):
+	def __init__(self, *args, **kwargs):
+		ArgumentParser.__init__(self, *args, **kwargs)
+		self.add_argument("-input", type=str, default="", help= \
+				"Input file. Defaults to stdin.")
+		self.add_argument("-output", type=str, default="", help= \
+				"Output file. Defaults to stdout.")
+
+	def parse_args(self, *args, **kwargs):
+		args = ArgumentParser.parse_args(self, *args, **kwargs)
+		if args.input == "":
+			args.input = sys.stdin
+		if args.output != "":
+			sys.stdout = open(args.output, "w")
+		return args
 

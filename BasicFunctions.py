@@ -1,6 +1,7 @@
 from math import factorial
 from operator import mul
-
+from argparse import ArgumentParser
+import sys
 import numpy as np
 
 def prod(collection):
@@ -32,19 +33,12 @@ def profile_repetitions(p):
 	return prod([factorial(sum(row)) / prod(map(factorial, row)) for row in p])
 
 
-def list_repr(l, sep=", "):
-	"""
-	Creates a string representation of the elements of a collection.
-	"""
-	try:
-		return reduce(lambda x,y: str(x) + sep + str(y), l)
-	except TypeError:
-		return ""
-
 def average(l):
 	return sum(l, 0.0) / len(l)
 
+
 tiny = 1e-10
+
 
 def weighted_least_squares(x, y, weights):
 	"appends the ones for you; puts 1D weights into a diagonal matrix"

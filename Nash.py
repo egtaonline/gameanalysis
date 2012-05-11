@@ -65,19 +65,16 @@ def EquilibriumRegrets(game, eq):
 	return regrets
 
 
-from GameIO import readGame, writeGames
-from Regret import regret
-from argparse import ArgumentParser
-from sys import stdin, stdout
+from GameIO import readGame, io_parser
+from Regret import regret, neighbors
+from Subgames import Subgame, translate
+from Dominance import bestResponses
+
+from copy import deepcopy
+from math import isinf
 
 def parse_args():
-	parser = ArgumentParser()
-	parser.add_argument("-g", metavar="GAMES", type=str, default="", help= \
-			"File with game or games to be analyzed. Suported file types: " + \
-			"EGAT symmetric XML, EGAT strategic XML, testbed role-symmetric" + \
-			"JSON. Defaults to stdin.")
-	parser.add_argument("-o", metavar="OUTPUT", type=str, default="", \
-			help="File for writing output. Defaults to stdout.")
+	parser = io_parser()
 	parser.add_argument("-b", metavar="BASEGAME", type=str, default="", \
 			help="Base game to be used for regret calculations. " + \
 			"If unspecified, in-game regrets are calculated.")
@@ -96,67 +93,98 @@ def parse_args():
 	parser.add_argument("--mixed", action="store_true", help="compute " + \
 			"mixed-strategy Nash equilibria")
 	args = parser.parse_args()
-	if args.g == "":
-		args.g = stdin
-	games = readGame(args.g)
+	games = readGame(args.input)
 	if not isinstance(games, list):
 		games = [games]
-	try:
-		out_file = open(args.o, "w")
-	except IOError:
-		out_file = stdout
 	try:
 		base_game = readGame(args.b)
 	except:
 		base_game = None
-	return games, out_file, base_game, args
+	return games, base_game, args
 
 
-def write_pure_eq(game, out_file, base_game, regr_thresh):
+def write_pure_eq(game, base_game, args):
 	if base_game == None:
 		base_game = game
-	pure_equilibria = PureNash(game, regr_thresh)
+	pure_equilibria = PureNash(game, args.r)
 	l = len(pure_equilibria)
 	if l > 0:
-		out_file.write(str(len(pure_equilibria)) + " pure strategy Nash " + \
-				"equilibri" + ("um:" if l == 1 else "a:") + "\n")
+		print "\n" + str(len(pure_equilibria)), "pure strategy Nash equilibri" \
+				+ ("um:" if l == 1 else "a:")
 		for i, eq in enumerate(pure_equilibria):
-			out_file.write(str(i+1) + ". regret = " + str(round(regret( \
-					base_game, eq), 4)) + "\n")
+			print str(i+1) + ". regret =", round(regret(base_game, eq), 4)
 			for role in base_game.roles:
-				out_file.write("    "+ role +": "+ ", ".join(map(lambda pair: \
-						str(pair[1]) + "x " + str(pair[0]), eq[role].items())) \
-						+ "\n")
-		out_file.write("\n")
+				print "    " + role + ":", ", ".join(map(lambda pair: \
+						str(pair[1]) + "x " + str(pair[0]), eq[role].items()))
 	else:
-		out_file.write("no pure strategy Nash equilibria found.\n")
+		print "\nno pure strategy Nash equilibria found."
 		mrp = MinRegretProfile(game)
-		out_file.write("regret =" + str(regret(base_game, mrp)) + "\n")
-		out_file.write("minimum regret pure strategy profile (regret = " + \
-				str(round(regret(base_game, mrp), 4)) + "):\n")
+		print "regret =", regret(base_game, mrp)
+		print "minimum regret pure strategy profile (regret = " + \
+				str(round(regret(base_game, mrp), 4)) + "):"
 		for role in base_game.roles:
-			out_file.write("    " + role + ":" + ", ".join(map(lambda pair: \
-					str(pair[1]) + "x " + str(pair[0]), mrp[role].items())))
-		out_file.write("\n")
+			print "    " + role + ":", ", ".join(map(lambda pair: \
+					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
 
 
 
-def write_mixed_eq(game, out_file, base_game, regr_thresh, dist_thresh, \
-		iters, conv_thresh, supp_thresh):
+def write_mixed_eq(game, base_game, args):
 	if base_game == None:
 		base_game = game
-	raise NotImplementedError("TODO")
+	print "\game "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
+			":\n\t\t" + "\n\t\t".join(x[1]), sorted( \
+			game.strategies.items()))).expandtabs(4)
+	mixed_equilibria = MixedNash(game, args.r, args.d, iters=args.i, \
+		converge_thresh=args.c)
+	print "\n" + str(len(mixed_equilibria)), "approximate mixed strategy"+ \
+			" Nash equilibri" + ("um:" if len(mixed_equilibria) == 1 \
+			else "a:")
+	for j, eq in enumerate(mixed_equilibria):
+		full_eq = translate(eq, game, base_game)
+		if all(map(lambda p: p in base_game, neighbors(base_game, \
+				full_eq))):
+			print str(j+1) + ". regret =", round(regret(base_game, \
+					full_eq), 4)
+		else:
+			print str(j+1) + ". regret >=", round(regret(base_game,  \
+					full_eq, bound=True), 4)
+
+		support = {r:[] for r in base_game.roles}
+		for k,role in enumerate(base_game.roles):
+			print role + ":"
+			for l,strategy in enumerate(base_game.strategies[role]):
+				if full_eq[k][l] >= args.s:
+					support[role].append(strategy)
+					print "    " + strategy + ": " + str(round(100 * \
+							full_eq[k][l], 2)) + "%"
+
+		BR = bestResponses(base_game, full_eq)
+		print "best responses:"
+		for role in base_game.roles:
+			deviation_support = deepcopy(support)
+			deviation_support[role].extend(BR[role][0])
+			if len(BR[role][0]) == 0:
+				continue
+			r = regret(base_game, full_eq, role, deviation=BR[role][0][0])
+			print "\t" + str(role) + ": " + ", ".join(BR[role][0]) + \
+					";\tgain =", (round(r, 4) if not isinf(r) else "?")
+			if base_game != game:
+				print "Deviation game " + ("explored." if Subgame( \
+						base_game, deviation_support).isComplete() else \
+						"UNEXPLORED!") + "\n"
 
 
 if __name__ == "__main__":
-	games, out_file, base_game, args = parse_args()
+	games, base_game, args = parse_args()
 	for i, game in enumerate(games):
-		print "game", i+1, "=", game
+		if len(games) > 1:
+			print "game", i+1, "=", game
+		else:
+			print game
 		if args.pure:
-			write_pure_eq(game, out_file, base_game, args.r)
+			write_pure_eq(game, base_game, args)
 		if args.mixed:
-			write_mixed_eq(game, out_file, base_game, args.r, args.d, args.i, \
-					args.c, args.s)
+			write_mixed_eq(game, base_game, args)
 
 
 

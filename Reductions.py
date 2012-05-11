@@ -1,3 +1,5 @@
+#! /usr/bin/env python2.7
+
 from RoleSymmetricGame import Game, Profile, payoff_data
 
 def HierarchicalReduction(game, players={} ):
@@ -31,7 +33,7 @@ def FullGameProfile(HR_profile, N):
 
 def DeviationPreservingReduction(game, players={}):
 	if not players:
-		players = {r:2 for r in game.roles}
+		return TwinsReduction(game)
 	DPR_game = Game(game.roles, players, game.strategies)
 	for reduced_profile in DPR_game.allProfiles():
 		try:
@@ -58,6 +60,10 @@ def DeviationPreservingReduction(game, players={}):
 	return DPR_game
 
 
+def TwinsReduction(game):
+	return DeviationPreservingReduction(game, {r:2 for r in game.roles})
+
+
 def DPR_profiles(game, players={}):
 	if not players:
 		players = {r:2 for r in game.roles}
@@ -80,3 +86,25 @@ def DPR_profiles(game, players={}):
 				profiles.append(Profile(full_profile))
 	return profiles
 
+
+from GameIO import readGame, toJSON, io_parser
+
+def parse_args():
+	parser = io_parser()
+	parser.add_argument("type", choices=["DPR", "HR", "TR"], help="Type " + \
+			"of reduction to perform.")
+	parser.add_argument("players", type=int, default=[], nargs="*", help= \
+			"Number of players in each reduced-game role.")
+	return parser.parse_args()
+
+
+if __name__ == "__main__":
+	args = parse_args()
+	game = readGame(args.input)
+	players = dict(zip(game.roles, args.players))
+	if args.type == "DPR":
+		print toJSON(DeviationPreservingReduction(game, players))
+	elif args.type == "HR":
+		print toJSON(HierarchicalReduction(game, players))
+	elif args.type == "TR":
+		print toJSON(TwinsReduction(game))
