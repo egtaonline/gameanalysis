@@ -75,16 +75,16 @@ from math import isinf
 
 def parse_args():
 	parser = io_parser()
-	parser.add_argument("-b", metavar="BASEGAME", type=str, default="", \
-			help="Base game to be used for regret calculations. " + \
-			"If unspecified, in-game regrets are calculated.")
+	parser.add_argument("-base", type=str, default="", help="Base game to " + \
+			"be used for regret calculations. If unspecified, in-game " + \
+			"regrets are calculated.")
 	parser.add_argument("-r", metavar="REGRET", type=float, default=1e-3, \
 			help="Max allowed regret for approximate Nash equilibria.")
-	parser.add_argument("-d", metavar="DIST", type=float, default=1e-3, \
+	parser.add_argument("-d", metavar="DISTANCE", type=float, default=1e-3, \
 			help="L2-distance threshold to consider equilibria distinct.")
-	parser.add_argument("-c", metavar="CONVERGE", type=float, default=1e-8, \
+	parser.add_argument("-c", metavar="CONVERGENCE", type=float, default=1e-8, \
 			help="Replicator dynamics convergence thrshold.")
-	parser.add_argument("-i", metavar="ITERS", type=int, default=10000, \
+	parser.add_argument("-i", metavar="ITERATIONS", type=int, default=10000, \
 			help="Max replicator dynamics iterations.")
 	parser.add_argument("-s", metavar="SUPPORT", type=float, default=1e-3, \
 			help="Min probability for a strategy to be considered in support.")
