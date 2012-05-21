@@ -219,6 +219,17 @@ class Game(dict):
 		m += i*bias
 		return [m]
 
+	def mixedProfile(self, mixture, supp_thresh=5e-3, sig_figs=2):
+		p = {}
+		for r in self.roles:
+			i = self.index(r)
+			p[r] = {}
+			for s in self.strategies[r]:
+				j = self.index(r, s)
+				if mixture[i,j] >= supp_thresh:
+					p[r][s] = round(mixture[i,j], sig_figs)
+		return Profile(p)
+
 	def __cmp__(self, other):
 		"""does not compare payoffs"""
 		return cmp(self.roles, other.roles) or \

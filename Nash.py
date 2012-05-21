@@ -131,7 +131,7 @@ def write_pure_eq(game, base_game, args):
 def write_mixed_eq(game, base_game, args):
 	if base_game == None:
 		base_game = game
-	print "\game "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
+	print "game "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
 			":\n\t\t" + "\n\t\t".join(x[1]), sorted( \
 			game.strategies.items()))).expandtabs(4)
 	mixed_equilibria = MixedNash(game, args.r, args.d, iters=args.i, \
@@ -178,9 +178,9 @@ if __name__ == "__main__":
 	games, base_game, args = parse_args()
 	for i, game in enumerate(games):
 		if len(games) > 1:
-			print "game", i+1, "=", game
+			print "game", i+1, "=", game, "\n"
 		else:
-			print game
+			print game, "\n"
 		if args.pure:
 			write_pure_eq(game, base_game, args)
 		if args.mixed:

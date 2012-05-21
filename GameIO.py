@@ -1,3 +1,5 @@
+#! /usr/bin/env python2.7
+
 from urllib import urlopen
 from json import loads
 from xml.dom.minidom import parseString, Document
@@ -31,7 +33,10 @@ def readGame(source):
 		try:
 			data = loads(data)
 		except ValueError:
-			data = parseString(data)
+			try:#TODO: test for valid XML
+				data = parseString(data)
+			except ExpatError:
+				raise IOError("invalid game input")
 	if isinstance(data, list):
 		return map(readGameJSON, data)
 	elif isinstance(data, dict):
@@ -218,3 +223,18 @@ class io_parser(ArgumentParser):
 			sys.stdout = open(args.output, "w")
 		return args
 
+
+def parse_args():
+	parser = io_parser()
+	parser.add_argument("-format", choices=["json", "xml"], default="json", \
+			help="Output format.")
+	return parser.parse_args()
+
+
+if __name__ == "__main__":
+	args = parse_args()
+	game = readGame(args.input)
+	if args.format == "json":
+		print toJSON(game)
+	elif args.format == "xml":
+		print toXML(game)
