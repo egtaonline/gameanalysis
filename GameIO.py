@@ -1,7 +1,7 @@
 #! /usr/bin/env python2.7
 
 from urllib import urlopen
-from json import loads
+from json import loads, dumps
 from xml.dom.minidom import parseString, Document
 from xml.parsers.expat import ExpatError
 from os.path import exists, splitext
@@ -155,31 +155,13 @@ def parseSymmetricXML(gameNode):
 	return Game(roles, counts, strategies, payoffs)
 
 
-def toJSON(*games):
-	"""
-	Convert game to JSON according to the testbed role-symmetric game spec (v2).
-	"""
-	if len(games) > 1:
-		return map(toJSON, games)
-	game = games[0]
-	game_dict = {}
-	game_dict["roles"] = [{"name":role, "count":game.players[role], \
-				"strategies": list(game.strategies[role])} for role \
-				in game.roles]
-	game_dict["profiles"] = []
-	for profile in game:
-		i = game[profile]
-		p = []
-		for r, role in enumerate(game.roles):
-			p.append({"name":role, "strategies":[]})
-			for s, strategy in enumerate(game.strategies[role]):
-				if game.counts[i][r,s] == 0:
-					continue
-				p[-1]["strategies"].append({"name":strategy, "count": \
-						int(game.counts[i][r,s]), "payoff": \
-						float(game.values[i][r,s])})
-		game_dict["profiles"].append({"roles":p})
-	return game_dict
+def toJSON(*objects):
+	if len(objects) > 1:
+		return map(toJSON, objects)
+	o = objects[0]
+	if hasattr(o, 'toJSON'):
+		return dumps(o.toJSON(), sort_keys=True, indent=2)
+	return dumps(o, sort_keys=True, indent=2)
 
 
 def toXML(game, filename):
@@ -231,10 +213,14 @@ def parse_args():
 	return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
 	args = parse_args()
 	game = readGame(args.input)
 	if args.format == "json":
-		print toJSON(game)
+		print dumps(toJSON(game), indent=2, sort_keys=True)
 	elif args.format == "xml":
 		print toXML(game)
+
+
+if __name__ == "__main__":
+	main()

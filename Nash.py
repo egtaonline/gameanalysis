@@ -174,7 +174,7 @@ def write_mixed_eq(game, base_game, args):
 						"UNEXPLORED!") + "\n"
 
 
-if __name__ == "__main__":
+def main():
 	games, base_game, args = parse_args()
 	for i, game in enumerate(games):
 		if len(games) > 1:
@@ -187,5 +187,7 @@ if __name__ == "__main__":
 			write_mixed_eq(game, base_game, args)
 
 
+if __name__ == "__main__":
+	main()
 
 

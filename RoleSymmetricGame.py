@@ -265,4 +265,28 @@ class Game(dict):
 				"\npayoff data for " + str(len(self)) + " out of " + \
 				str(self.size) + " profiles").expandtabs(4)
 
+	def toJSON(self):
+		"""
+		Convert to JSON according to the v2 testbed role-symmetric game spec.
+		"""
+		game_dict = {}
+		game_dict["roles"] = [{"name":role, "count":self.players[role], \
+					"strategies": list(self.strategies[role])} for role \
+					in self.roles]
+		game_dict["profiles"] = []
+		for profile in self:
+			i = self[profile]
+			p = []
+			for r, role in enumerate(self.roles):
+				p.append({"name":role, "strategies":[]})
+				for s, strategy in enumerate(self.strategies[role]):
+					if self.counts[i][r,s] == 0:
+						continue
+					p[-1]["strategies"].append({"name":strategy, "count": \
+							int(self.counts[i][r,s]), "payoff": \
+							float(self.values[i][r,s])})
+			game_dict["profiles"].append({"roles":p})
+		return game_dict
+
+
 

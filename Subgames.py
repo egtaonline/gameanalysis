@@ -111,9 +111,12 @@ def parse_args():
 	return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main():
 	args = parse_args()
 	game = readGame(args.input)
 	subgames = readGame(args.known)
-	print dumps(toJSON(*Cliques(game, subgames)))
+	print dumps(toJSON(*Cliques(game, subgames)), indent=2, sort_keys=True)
 
+
+if __name__ == "__main__":
+	main()

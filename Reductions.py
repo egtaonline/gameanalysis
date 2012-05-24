@@ -99,7 +99,7 @@ def parse_args():
 	return parser.parse_args()
 
 
-if __name__ == "__main__":
+def main()
 	args = parse_args()
 	game = readGame(args.input)
 	players = dict(zip(game.roles, args.players))
@@ -109,3 +109,7 @@ if __name__ == "__main__":
 		print dumps(toJSON(HierarchicalReduction(game, players)))
 	elif args.type == "TR":
 		print dumps(toJSON(TwinsReduction(game)))
+
+
+if __name__ == "__main__":
+	main()
