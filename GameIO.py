@@ -217,7 +217,7 @@ def main():
 	args = parse_args()
 	game = readGame(args.input)
 	if args.format == "json":
-		print dumps(toJSON(game), indent=2, sort_keys=True)
+		print toJSON(game)
 	elif args.format == "xml":
 		print toXML(game)
 

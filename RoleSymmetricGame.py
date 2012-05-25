@@ -219,7 +219,7 @@ class Game(dict):
 		m += i*bias
 		return [m]
 
-	def mixedProfile(self, mixture, supp_thresh=5e-3, sig_figs=2):
+	def mixedProfile(self, mixture, supp_thresh=5e-3):
 		p = {}
 		for r in self.roles:
 			i = self.index(r)
@@ -227,7 +227,7 @@ class Game(dict):
 			for s in self.strategies[r]:
 				j = self.index(r, s)
 				if mixture[i,j] >= supp_thresh:
-					p[r][s] = round(mixture[i,j], sig_figs)
+					p[r][s] = mixture[i,j]
 		return Profile(p)
 
 	def __cmp__(self, other):

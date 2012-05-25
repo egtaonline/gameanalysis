@@ -102,7 +102,6 @@ def Cliques(full_game, known_subgames=set()):
 
 
 from GameIO import readGame, toJSON, io_parser
-from json import dumps
 
 def parse_args():
 	parser = io_parser()
@@ -115,7 +114,7 @@ def main():
 	args = parse_args()
 	game = readGame(args.input)
 	subgames = readGame(args.known)
-	print dumps(toJSON(*Cliques(game, subgames)), indent=2, sort_keys=True)
+	print toJSON(*Cliques(game, subgames))
 
 
 if __name__ == "__main__":

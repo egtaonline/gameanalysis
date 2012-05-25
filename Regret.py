@@ -67,3 +67,19 @@ def feasibleProfiles(game, mix, thresh=1e-3):
 			thresh, game.strategies[r]), game.players[r]) for r \
 			in game.roles])]
 
+
+def SymmetricProfileRegrets(game):
+	assert len(game.roles) == 1, "game must be symmetric"
+	role = game.roles[0]
+	return {s: regret(game, Profile({role:{s:game.players[role]}})) for s \
+			in game.strategies[role]}
+
+
+def EquilibriumRegrets(game, eq):
+	regrets = {}
+	for role in game.roles:
+		regrets[role] = {}
+		for strategy in game.strategies[role]:
+			regrets[role][strategy] = -regret(game, eq, deviation=strategy)
+	return regrets
+

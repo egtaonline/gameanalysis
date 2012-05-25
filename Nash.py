@@ -49,142 +49,41 @@ def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 	return mix
 
 
-def SymmetricProfileRegrets(game):
-	assert len(game.roles) == 1, "game must be symmetric"
-	role = game.roles[0]
-	return {s: regret(game, Profile({role:{s:game.players[role]}})) for s \
-			in game.strategies[role]}
-
-
-def EquilibriumRegrets(game, eq):
-	regrets = {}
-	for role in game.roles:
-		regrets[role] = {}
-		for strategy in game.strategies[role]:
-			regrets[role][strategy] = -regret(game, eq, deviation=strategy)
-	return regrets
-
-
-from GameIO import readGame, io_parser
-from Regret import regret, neighbors
-from Subgames import Subgame, translate
-from Dominance import bestResponses
-
-from copy import deepcopy
-from math import isinf
+from GameIO import readGame, io_parser, toJSON
 
 def parse_args():
 	parser = io_parser()
-	parser.add_argument("-base", type=str, default="", help="Base game to " + \
-			"be used for regret calculations. If unspecified, in-game " + \
-			"regrets are calculated.")
 	parser.add_argument("-r", metavar="REGRET", type=float, default=1e-3, \
-			help="Max allowed regret for approximate Nash equilibria.")
+			help="Max allowed regret for approximate Nash equilibria. " + \
+			"default=1e-3")
 	parser.add_argument("-d", metavar="DISTANCE", type=float, default=1e-3, \
-			help="L2-distance threshold to consider equilibria distinct.")
+			help="L2-distance threshold to consider equilibria distinct. " + \
+			"default=1e-3")
 	parser.add_argument("-c", metavar="CONVERGENCE", type=float, default=1e-8, \
-			help="Replicator dynamics convergence thrshold.")
+			help="Replicator dynamics convergence thrshold. default=1e-8")
 	parser.add_argument("-i", metavar="ITERATIONS", type=int, default=10000, \
-			help="Max replicator dynamics iterations.")
+			help="Max replicator dynamics iterations. default=1e4")
 	parser.add_argument("-s", metavar="SUPPORT", type=float, default=1e-3, \
-			help="Min probability for a strategy to be considered in support.")
+			help="Min probability for a strategy to be considered in " + \
+			"support. default=1e-3")
 	parser.add_argument("--pure", action="store_true", help="compute " + \
-			"pure-strategy Nash equilibria")
-	parser.add_argument("--mixed", action="store_true", help="compute " + \
-			"mixed-strategy Nash equilibria")
+			"pure-strategy Nash equilibria rather than mixed")
 	args = parser.parse_args()
 	games = readGame(args.input)
 	if not isinstance(games, list):
 		games = [games]
-	try:
-		base_game = readGame(args.b)
-	except:
-		base_game = None
-	return games, base_game, args
-
-
-def write_pure_eq(game, base_game, args):
-	if base_game == None:
-		base_game = game
-	pure_equilibria = PureNash(game, args.r)
-	l = len(pure_equilibria)
-	if l > 0:
-		print "\n" + str(len(pure_equilibria)), "pure strategy Nash equilibri" \
-				+ ("um:" if l == 1 else "a:")
-		for i, eq in enumerate(pure_equilibria):
-			print str(i+1) + ". regret =", round(regret(base_game, eq), 4)
-			for role in base_game.roles:
-				print "    " + role + ":", ", ".join(map(lambda pair: \
-						str(pair[1]) + "x " + str(pair[0]), eq[role].items()))
-	else:
-		print "\nno pure strategy Nash equilibria found."
-		mrp = MinRegretProfile(game)
-		print "regret =", regret(base_game, mrp)
-		print "minimum regret pure strategy profile (regret = " + \
-				str(round(regret(base_game, mrp), 4)) + "):"
-		for role in base_game.roles:
-			print "    " + role + ":", ", ".join(map(lambda pair: \
-					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
-
-
-
-def write_mixed_eq(game, base_game, args):
-	if base_game == None:
-		base_game = game
-	print "game "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
-			":\n\t\t" + "\n\t\t".join(x[1]), sorted( \
-			game.strategies.items()))).expandtabs(4)
-	mixed_equilibria = MixedNash(game, args.r, args.d, iters=args.i, \
-		converge_thresh=args.c)
-	print "\n" + str(len(mixed_equilibria)), "approximate mixed strategy"+ \
-			" Nash equilibri" + ("um:" if len(mixed_equilibria) == 1 \
-			else "a:")
-	for j, eq in enumerate(mixed_equilibria):
-		full_eq = translate(eq, game, base_game)
-		if all(map(lambda p: p in base_game, neighbors(base_game, \
-				full_eq))):
-			print str(j+1) + ". regret =", round(regret(base_game, \
-					full_eq), 4)
-		else:
-			print str(j+1) + ". regret >=", round(regret(base_game,  \
-					full_eq, bound=True), 4)
-
-		support = {r:[] for r in base_game.roles}
-		for k,role in enumerate(base_game.roles):
-			print role + ":"
-			for l,strategy in enumerate(base_game.strategies[role]):
-				if full_eq[k][l] >= args.s:
-					support[role].append(strategy)
-					print "    " + strategy + ": " + str(round(100 * \
-							full_eq[k][l], 2)) + "%"
-
-		BR = bestResponses(base_game, full_eq)
-		print "best responses:"
-		for role in base_game.roles:
-			deviation_support = deepcopy(support)
-			deviation_support[role].extend(BR[role][0])
-			if len(BR[role][0]) == 0:
-				continue
-			r = regret(base_game, full_eq, role, deviation=BR[role][0][0])
-			print "\t" + str(role) + ": " + ", ".join(BR[role][0]) + \
-					";\tgain =", (round(r, 4) if not isinf(r) else "?")
-			if base_game != game:
-				print "Deviation game " + ("explored." if Subgame( \
-						base_game, deviation_support).isComplete() else \
-						"UNEXPLORED!") + "\n"
+	return games, args
 
 
 def main():
-	games, base_game, args = parse_args()
-	for i, game in enumerate(games):
-		if len(games) > 1:
-			print "game", i+1, "=", game, "\n"
-		else:
-			print game, "\n"
-		if args.pure:
-			write_pure_eq(game, base_game, args)
-		if args.mixed:
-			write_mixed_eq(game, base_game, args)
+	games, args = parse_args()
+	if args.pure:
+		equilibria = [PureNash(g, args.r) for g in games]
+	else:
+		equilibria = [[g.mixedProfile(eq, args.s) for eq in MixedNash(g, \
+				args.r, args.d, iters=args.i, converge_thresh=args.c)] \
+				for g in games]
+	print toJSON(equilibria)
 
 
 if __name__ == "__main__":
