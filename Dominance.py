@@ -1,3 +1,5 @@
+#! /usr/bin/env python2.7
+
 from itertools import product
 from math import isinf
 
@@ -105,4 +107,35 @@ def MixedStrategyDominance(game, conditional=True, weak=False):
 	mixed-strategy dominance criterion for IEDS
 	"""
 	raise NotImplementedError("TODO")
+
+
+from GameIO import readGame, toJSON, io_parser
+
+def parse_args():
+	parser = io_parser()
+	parser.add_argument("-type", choices=["PSD", "MSD", "NBR"], default = \
+			"PSD", help="Dominance criterion: PSD = pure-strategy dominance;"+\
+			" MSD = mixed-strategy dominance; NBR = never-best-response.")
+	parser.add_argument("--conditional", action="store_true")
+	parser.add_argument("--weak", action="store_true")
+	return parser.parse_args()
+
+
+def main():
+	args = parse_args()
+	game = readGame(args.input)
+	if args.type == "PSD":
+		rgame = IteratedElimination(game, PureStrategyDominance, \
+				conditional=args.conditional)
+	elif args.type == "MSD":
+		rgame = IteratedElimination(game, MixedStrategyDominance, \
+				conditional=args.conditional, weak=args.weak)
+	elif args.type == "NBR":
+		rgame = IteratedElimination(game, NeverBestResponse, \
+				conditional=args.conditional, weak=args.weak)
+	print toJSON(rgame)
+
+
+if __name__ == "__main__":
+	main()
 

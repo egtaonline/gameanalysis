@@ -83,7 +83,7 @@ def main():
 		equilibria = [[g.mixedProfile(eq, args.s) for eq in MixedNash(g, \
 				args.r, args.d, iters=args.i, converge_thresh=args.c)] \
 				for g in games]
-	print toJSON(equilibria)
+	print (toJSON(equilibria) if len(equilibria) > 1 else toJSON(equilibria[0]))
 
 
 if __name__ == "__main__":

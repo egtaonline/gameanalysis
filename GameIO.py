@@ -70,11 +70,11 @@ def readGameJSON_v2(gameJSON):
 	profiles = []
 	if "profiles" in gameJSON:
 		for profileJSON in gameJSON["profiles"]:
-			profiles.append(readProfileJSON(profileJSON, asTuple=True))
+			profiles.append(readTestbedProfile(profileJSON))
 	return Game(roles, players, strategies, profiles)
 
 
-def readProfileJSON(profileJSON, asTuple=False):
+def readTestbedProfile(profileJSON):
 	if isinstance(profileJSON, basestring):
 		profileJSON = loads(profileJSON)
 	profile = {r["name"]:[] for r in profileJSON["roles"]}
@@ -85,6 +85,15 @@ def readProfileJSON(profileJSON, asTuple=False):
 					"name"]), int(strategyDict["count"]), \
 					float(strategyDict["payoff"])))
 	return profile
+
+
+def readProfile(profileJSON, game=None):
+	if isinstance(profileJSON, basestring):
+		profileJSON = loads(profileJSON)
+	if all([isinstance(p, int) for p in r.values() for r in \
+			profileJSON.values()]):
+		return Profile(profileJSON)
+	return game.mixtureArray(profileJSON)
 
 
 def readGameJSON_old(json_data):

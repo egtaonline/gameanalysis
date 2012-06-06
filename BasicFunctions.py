@@ -1,8 +1,10 @@
 from math import factorial
 from operator import mul
+from itertools import chain
 from argparse import ArgumentParser
 import sys
 import numpy as np
+
 
 def prod(collection):
 	"""
@@ -13,9 +15,7 @@ def prod(collection):
 
 
 def nCr(n,k):
-	"""
-	Number of combinations: n choose k.
-	"""
+	"""Number of combinations: n choose k."""
 	return prod(range(n-k+1,n+1)) / factorial(k)
 
 
@@ -34,14 +34,20 @@ def profile_repetitions(p):
 
 
 def average(l):
+	"""Arithmetic mean."""
 	return sum(l, 0.0) / len(l)
+
+
+def flatten(l):
+	"""Concatenate sublists into a single list."""
+	return list(chain(*l))
 
 
 tiny = 1e-10
 
 
 def weighted_least_squares(x, y, weights):
-	"appends the ones for you; puts 1D weights into a diagonal matrix"
+	"""appends the ones for you; puts 1D weights into a diagonal matrix"""
 	try:
 		A = np.append(x, np.ones([x.shape[0],1]), axis=1)
 		W = np.zeros([x.shape[0]]*2)

@@ -206,12 +206,12 @@ class Game(dict):
 		if self.maxStrategies == 1:
 			return [self.uniformMixture()]
 		if role == None:
-			return list(chain(*[self.biasedMixtures(r, strategy, bias) for r \
+			return flatten([self.biasedMixtures(r, strategy, bias) for r \
 					in filter(lambda r: self.numStrategies[self.index(r)] \
-					> 1, self.roles)]))
+					> 1, self.roles)])
 		if strategy == None:
-			return list(chain(*[self.biasedMixtures(role, s, bias) for s in \
-					self.strategies[role]]))
+			return flatten([self.biasedMixtures(role, s, bias) for s in \
+					self.strategies[role]])
 		i = self.array_index(role, strategy, dtype=float)
 		m = 1. - self.mask - i
 		m /= m.sum(1).reshape(m.shape[0], 1)
@@ -219,7 +219,7 @@ class Game(dict):
 		m += i*bias
 		return [m]
 
-	def mixedProfile(self, mixture, supp_thresh=5e-3):
+	def mixedProfile(self, mixture, supp_thresh=1e-3):
 		p = {}
 		for r in self.roles:
 			i = self.index(r)
@@ -229,6 +229,15 @@ class Game(dict):
 				if mixture[i,j] >= supp_thresh:
 					p[r][s] = mixture[i,j]
 		return Profile(p)
+
+	def mixtureArray(self, profile):
+		a = self.zeros()
+		for role in profile.keys():
+			i = self.index(role)
+			for strategy in profile[role].keys():
+				j = self.index(role, strategy)
+				a[i,j] = profile[role][strategy]
+		return a
 
 	def __cmp__(self, other):
 		"""does not compare payoffs"""
