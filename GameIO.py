@@ -165,12 +165,16 @@ def parseSymmetricXML(gameNode):
 
 
 def toJSON(*objects):
+	return dumps(toJSONinner(*objects), sort_keys=True, indent=2)
+
+
+def toJSONinner(*objects):
 	if len(objects) > 1:
-		return map(toJSON, objects)
+		return map(toJSONinner, objects)
 	o = objects[0]
 	if hasattr(o, 'toJSON'):
-		return dumps(o.toJSON(), sort_keys=True, indent=2)
-	return dumps(o, sort_keys=True, indent=2)
+		return o.toJSON()
+	return o
 
 
 def toXML(game, filename):
