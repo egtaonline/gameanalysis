@@ -29,7 +29,7 @@ def parse_args():
 	parser.add_argument("-i", metavar="ITERS", type=int, default=10000, \
 			help="Max replicator dynamics iterations.")
 	args = parser.parse_args()
-	game = readGame(args.file)
+	game = read(args.file)
 	return game, args
 
 

@@ -49,7 +49,7 @@ def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 	return mix
 
 
-from GameIO import readGame, io_parser, toJSON
+from GameIO import io_parser, toJSONstr
 
 def parse_args():
 	parser = io_parser()
@@ -69,7 +69,7 @@ def parse_args():
 	parser.add_argument("--pure", action="store_true", help="compute " + \
 			"pure-strategy Nash equilibria rather than mixed")
 	args = parser.parse_args()
-	games = readGame(args.input)
+	games = args.input
 	if not isinstance(games, list):
 		games = [games]
 	return games, args
@@ -83,7 +83,10 @@ def main():
 		equilibria = [[g.mixedProfile(eq, args.s) for eq in MixedNash(g, \
 				args.r, args.d, iters=args.i, converge_thresh=args.c)] \
 				for g in games]
-	print (toJSON(equilibria) if len(equilibria) > 1 else toJSON(equilibria[0]))
+	if len(equilibria) > 1:
+		print toJSONstr(equilibria)
+	else:
+		print toJSONstr(equilibria[0])
 
 
 if __name__ == "__main__":

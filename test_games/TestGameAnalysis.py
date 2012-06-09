@@ -17,9 +17,9 @@ import Regret as R
 
 class TestDominance(unittest.TestCase):
 	def setUp(self):
-		self.nbr = IO.readGame(join(path[0], "never_best_response.xml"))
-		self.wpd = IO.readGame(join(path[0], "weak_pure_dominance.xml"))
-		self.spd = IO.readGame(join(path[0], "strict_pure_dominance.xml"))
+		self.nbr = IO.read(join(path[0], "never_best_response.xml"))
+		self.wpd = IO.read(join(path[0], "weak_pure_dominance.xml"))
+		self.spd = IO.read(join(path[0], "strict_pure_dominance.xml"))
 
 	def test_StrictPureDominance(self):
 		"""
@@ -57,10 +57,10 @@ class TestDominance(unittest.TestCase):
 
 class TestConditionalDominance(unittest.TestCase):
 	def setUp(self):
-		self.cd_bl = IO.readGame(join(path[0], "conditional_dominance_BL.xml"))
-		self.cd_bc = IO.readGame(join(path[0], "conditional_dominance_BC.xml"))
-		self.cd_br = IO.readGame(join(path[0], "conditional_dominance_BR.xml"))
-		self.cd_bcr = IO.readGame(join(path[0],"conditional_dominance_BCR.xml"))
+		self.cd_bl = IO.read(join(path[0], "conditional_dominance_BL.xml"))
+		self.cd_bc = IO.read(join(path[0], "conditional_dominance_BC.xml"))
+		self.cd_br = IO.read(join(path[0], "conditional_dominance_BR.xml"))
+		self.cd_bcr = IO.read(join(path[0],"conditional_dominance_BCR.xml"))
 
 	def test_UnconditionalPureDominance(self):
 		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
@@ -124,10 +124,10 @@ class TestConditionalDominance(unittest.TestCase):
 
 class TestNash(unittest.TestCase):
 	def setUp(self):
-		self.pd_sym = IO.readGame(join(path[0], "PD_sym.xml"))
-		self.pd_str = IO.readGame(join(path[0], "PD_str.xml"))
-		self.rps_sym = IO.readGame(join(path[0], "RPS_sym.xml"))
-		self.rps_str = IO.readGame(join(path[0], "RPS_str.xml"))
+		self.pd_sym = IO.read(join(path[0], "PD_sym.xml"))
+		self.pd_str = IO.read(join(path[0], "PD_str.xml"))
+		self.rps_sym = IO.read(join(path[0], "RPS_sym.xml"))
+		self.rps_str = IO.read(join(path[0], "RPS_str.xml"))
 
 	def test_PureNash(self):
 		self.assertEqual(len(N.PureNash(self.pd_sym)), 1)
@@ -183,11 +183,11 @@ class TestNash(unittest.TestCase):
 
 class TestSparseGame(unittest.TestCase):
 	def setUp(self):
-		self.cliques_full = IO.readGame(join(path[0], "cliques_full.json"))
-		self.cliques_1 = IO.readGame(join(path[0], "cliques_HLRR.json"))
-		self.cliques_2 = IO.readGame(join(path[0], "cliques_HLRR_HLAA.json"))
-		self.cliques_4 = IO.readGame(join(path[0], "cliques_all_sym.json"))
-		self.ss = IO.readGame(join(path[0], "sparse_symmetric.xml"))
+		self.cliques_full = IO.read(join(path[0], "cliques_full.json"))
+		self.cliques_1 = IO.read(join(path[0], "cliques_HLRR.json"))
+		self.cliques_2 = IO.read(join(path[0], "cliques_HLRR_HLAA.json"))
+		self.cliques_4 = IO.read(join(path[0], "cliques_all_sym.json"))
+		self.ss = IO.read(join(path[0], "sparse_symmetric.xml"))
 
 	def test_Cliques(self):
 		self.assertEqual(map(len, S.Cliques(self.cliques_full)), [9])
@@ -209,9 +209,9 @@ class TestSparseGame(unittest.TestCase):
 
 class TestDegenerateGame(unittest.TestCase):
 	def setUp(self):
-		self.one_player = IO.readGame(join(path[0], "one_player.xml"))
-		self.one_strategy = IO.readGame(join(path[0], "one_strategy.xml"))
-		self.one_profile = IO.readGame(join(path[0], "one_profile.xml"))
+		self.one_player = IO.read(join(path[0], "one_player.xml"))
+		self.one_strategy = IO.read(join(path[0], "one_strategy.xml"))
+		self.one_profile = IO.read(join(path[0], "one_profile.xml"))
 
 	def test_IEDS(self):
 		self.assertEqual(len(D.IteratedElimination(self.one_player, \

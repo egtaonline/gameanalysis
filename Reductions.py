@@ -87,7 +87,7 @@ def DPR_profiles(game, players={}):
 	return profiles
 
 
-from GameIO import readGame, toJSON, io_parser
+from GameIO import toJSONstr, io_parser
 
 def parse_args():
 	parser = io_parser()
@@ -100,14 +100,14 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	game = readGame(args.input)
+	game = args.input
 	players = dict(zip(game.roles, args.players))
 	if args.type == "DPR":
-		print toJSON(DeviationPreservingReduction(game, players))
+		print toJSONstr(DeviationPreservingReduction(game, players))
 	elif args.type == "HR":
-		print toJSON(HierarchicalReduction(game, players))
+		print toJSONstr(HierarchicalReduction(game, players))
 	elif args.type == "TR":
-		print toJSON(TwinsReduction(game))
+		print toJSONstr(TwinsReduction(game))
 
 
 if __name__ == "__main__":

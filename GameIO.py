@@ -10,9 +10,8 @@ from functools import partial
 from RoleSymmetricGame import *
 
 
-def readGame(source):
+def read(source):
 	if isinstance(source, basestring) and exists(source):
-		#source is a filename
 		f = open(source)
 		data = f.read()
 		f.close()
@@ -26,44 +25,58 @@ def readGame(source):
 		data = source.read()
 		source.close()
 	else:
-		#assume source is already xml or json data
+		#assume source is already a data string or object
 		data = source
+	json_data = loadJSON(data)
+	if json_data != None:
+		return readJSON(json_data)
+	xml_data = loadXML(data)
+	if xml_data != None:
+		return readXML(xml_data)
+	raise IOError("unrecognized input format")
 
-	if isinstance(data, basestring):
-		try:
-			data = loads(data)
-		except ValueError:
-			try:#TODO: test for valid XML
-				data = parseString(data)
-			except ExpatError:
-				raise IOError("invalid game input")
+
+def loadJSON(data):
+	if isinstance(data, list) or isinstance(data, dict):
+		return data
+	try:
+		return loads(data)
+	except:
+		return None
+
+
+def loadXML(data):
+	if isinstance(data, Document):
+		return data
+	try:
+		return parseString(data)
+	except:
+		return None
+
+
+def readJSON(data):
+	"""
+	Convert loaded json data (list or dict) into GameAnalysis classes.
+	"""
 	if isinstance(data, list):
-		return map(readGameJSON, data)
-	elif isinstance(data, dict):
-		return readGameJSON(data)
-	elif isinstance(data, list):
 		return map(readJSON, data)
-	elif isinstance(data, Document):
-		return readXML(data)
-	else:
-		s = str(source)
-		raise IOError("can't read " + s[:60] + ("..." if len(s) > 60 else ""))
+	if "profiles" in data:
+		return readGameJSON(data)
+	if "sample_count" in data:
+		return readTestbedProfile(data)
+	return readProfile(data)
 
 
 def readGameJSON(gameJSON):
-	if isinstance(gameJSON, basestring):
-		gameJSON = loads(gameJSON)
 	if "strategy_array" in gameJSON["roles"][0]:
 		return readGameJSON_old(gameJSON)
 	elif "strategies" in gameJSON["roles"][0]:
 		return readGameJSON_v2(gameJSON)
 	else:
-		raise IOError("invalid JSON data: " + str(data))
+		raise IOError("invalid game JSON: " + str(data))
 
 
 def readGameJSON_v2(gameJSON):
-	if isinstance(gameJSON, basestring):
-		gameJSON = loads(gameJSON)
 	players = {r["name"] : int(r["count"]) for r in gameJSON["roles"]}
 	strategies = {r["name"] : r["strategies"] for r in gameJSON["roles"]}
 	roles = list(players.keys())
@@ -75,8 +88,6 @@ def readGameJSON_v2(gameJSON):
 
 
 def readTestbedProfile(profileJSON):
-	if isinstance(profileJSON, basestring):
-		profileJSON = loads(profileJSON)
 	profile = {r["name"]:[] for r in profileJSON["roles"]}
 	for roleDict in profileJSON["roles"]:
 		role = roleDict["name"]
@@ -88,8 +99,6 @@ def readTestbedProfile(profileJSON):
 
 
 def readProfile(profileJSON, game=None):
-	if isinstance(profileJSON, basestring):
-		profileJSON = loads(profileJSON)
 	if all([isinstance(p, int) for p in r.values() for r in \
 			profileJSON.values()]):
 		return Profile(profileJSON)
@@ -97,8 +106,6 @@ def readProfile(profileJSON, game=None):
 
 
 def readGameJSON_old(json_data):
-	if isinstance(json_data, basestring):
-		json_data = loads(json_data)
 	players = {r["name"] : int(r["count"]) for r in json_data["roles"]}
 	strategies = {r["name"] : r["strategy_array"] for r in json_data["roles"]}
 	roles = list(players.keys())
@@ -120,8 +127,9 @@ def readGameJSON_old(json_data):
 
 
 def readXML(data):
-	if isinstance(data, basestring):
-		data = parseString(data)
+	"""
+	Convert loaded xml data (Document) into GameAnalysis classes.
+	"""
 	gameNode = data.getElementsByTagName("nfg")[0]
 	if len(gameNode.getElementsByTagName("player")[0]. \
 			getElementsByTagName("action")) > 0:
@@ -164,13 +172,13 @@ def parseSymmetricXML(gameNode):
 	return Game(roles, counts, strategies, payoffs)
 
 
+def toJSONstr(*objects):
+	return dumps(toJSON(*objects), sort_keys=True, indent=2)
+
+
 def toJSON(*objects):
-	return dumps(toJSONinner(*objects), sort_keys=True, indent=2)
-
-
-def toJSONinner(*objects):
 	if len(objects) > 1:
-		return map(toJSONinner, objects)
+		return map(toJSON, objects)
 	o = objects[0]
 	if hasattr(o, 'toJSON'):
 		return o.toJSON()
@@ -213,7 +221,11 @@ class io_parser(ArgumentParser):
 	def parse_args(self, *args, **kwargs):
 		args = ArgumentParser.parse_args(self, *args, **kwargs)
 		if args.input == "":
-			args.input = sys.stdin
+			args.input = read(sys.stdin.read())
+		else:
+			i = open(args.input)
+			args.input = read(i.read())
+			i.close()
 		if args.output != "":
 			sys.stdout = open(args.output, "w")
 		return args
@@ -228,11 +240,10 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	game = readGame(args.input)
 	if args.format == "json":
-		print toJSON(game)
+		print toJSONstr(args.input)
 	elif args.format == "xml":
-		print toXML(game)
+		print toXML(args.input)
 
 
 if __name__ == "__main__":

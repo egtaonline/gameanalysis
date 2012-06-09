@@ -109,7 +109,7 @@ def MixedStrategyDominance(game, conditional=True, weak=False):
 	raise NotImplementedError("TODO")
 
 
-from GameIO import readGame, toJSON, io_parser
+from GameIO import toJSONstr, io_parser
 
 def parse_args():
 	parser = io_parser()
@@ -123,17 +123,16 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	game = readGame(args.input)
 	if args.type == "PSD":
-		rgame = IteratedElimination(game, PureStrategyDominance, \
+		rgame = IteratedElimination(args.input, PureStrategyDominance, \
 				conditional=args.conditional)
 	elif args.type == "MSD":
-		rgame = IteratedElimination(game, MixedStrategyDominance, \
+		rgame = IteratedElimination(args.input, MixedStrategyDominance, \
 				conditional=args.conditional, weak=args.weak)
 	elif args.type == "NBR":
-		rgame = IteratedElimination(game, NeverBestResponse, \
+		rgame = IteratedElimination(args.input , NeverBestResponse, \
 				conditional=args.conditional, weak=args.weak)
-	print toJSON(rgame)
+	print toJSONstr(rgame)
 
 
 if __name__ == "__main__":

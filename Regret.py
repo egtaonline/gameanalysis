@@ -1,3 +1,5 @@
+#! /usr/bin/env python2.7
+
 import numpy as np
 
 from itertools import product, chain, combinations_with_replacement as CwR
@@ -82,4 +84,45 @@ def EquilibriumRegrets(game, eq):
 		for strategy in game.strategies[role]:
 			regrets[role][strategy] = -regret(game, eq, deviation=strategy)
 	return regrets
+
+
+from GameIO import readProfile, toJSONstr, io_parser
+from Subgames import translate
+
+def parse_args():
+	parser = io_parser()
+	parser.add_argument("games", type=str, help="File with games from which " +\
+			"equilibria were computed.")
+	parser.add_argument("-base", type=str, default="", help= \
+			"Base game file against which to compute regrets. If unspecified" +\
+			" in-game regrets are computed instead.")
+	return parser.parse_args()
+
+
+def main():
+	args = parse_args()
+	games = read(args.games)
+	if not isinstance(games, list):
+		games = [games]
+		equilibria = [args.input]
+	else:
+		equilibria = args.input
+	if args.base != "":
+		base_game = readGame(args.base)
+	else:
+		base_game = None
+	regrets = []
+	for g, eq_list in zip(games, equilibria):
+		regrets.append([])
+		for eq in eq_list:
+			if base_game != None:
+				regrets[-1].append(regret(base_game, translate(eq, g, \
+						base_game)))
+			else:
+				regrets[-1].append(regret(g, eq))
+	print toJSONstr(regrets)
+
+
+if __name__ == "__main__":
+	main()
 

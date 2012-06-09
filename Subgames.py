@@ -101,7 +101,7 @@ def Cliques(full_game, known_subgames=set()):
 	return sorted(maximal_subgames, key=len)
 
 
-from GameIO import readGame, toJSON, io_parser
+from GameIO import read, toJSONstr, io_parser
 
 def parse_args():
 	parser = io_parser()
@@ -112,9 +112,8 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	game = readGame(args.input)
-	subgames = readGame(args.known)
-	print toJSON(*Cliques(game, subgames))
+	subgames = read(args.known)
+	print toJSONstr(*Cliques(args.input, subgames))
 
 
 if __name__ == "__main__":
