@@ -7,10 +7,11 @@ from xml.parsers.expat import ExpatError
 from os.path import exists, splitext
 from functools import partial
 
+from BasicFunctions import flatten
 from RoleSymmetricGame import *
 
 
-def read(source):
+def read(source, *args, **kwargs):
 	if isinstance(source, basestring) and exists(source):
 		f = open(source)
 		data = f.read()
@@ -29,7 +30,7 @@ def read(source):
 		data = source
 	json_data = loadJSON(data)
 	if json_data != None:
-		return readJSON(json_data)
+		return readJSON(json_data, *args, **kwargs)
 	xml_data = loadXML(data)
 	if xml_data != None:
 		return readXML(xml_data)
@@ -54,16 +55,25 @@ def loadXML(data):
 		return None
 
 
-def readJSON(data):
+def readJSON(data, *args, **kwargs):
 	"""
 	Convert loaded json data (list or dict) into GameAnalysis classes.
 	"""
+	type(data)
 	if isinstance(data, list):
+		if "game" in kwargs:
+			return map(lambda d: readJSON(*d), zip(data, kwargs["game"]))
+		if len(args) == len(data):
+			return map(lambda d: readJSON(*d), zip(data, args))
 		return map(readJSON, data)
 	if "profiles" in data:
 		return readGameJSON(data)
 	if "sample_count" in data:
 		return readTestbedProfile(data)
+	if "game" in kwargs:
+		return readProfile(data, game=kwargs["game"])
+	if len(args) == 1:
+		return readProfile(data, args[0])
 	return readProfile(data)
 
 
@@ -99,8 +109,8 @@ def readTestbedProfile(profileJSON):
 
 
 def readProfile(profileJSON, game=None):
-	if all([isinstance(p, int) for p in r.values() for r in \
-			profileJSON.values()]):
+	if all([isinstance(p, int) for p in flatten([r.values() for r in \
+			profileJSON.values()])]):
 		return Profile(profileJSON)
 	return game.mixtureArray(profileJSON)
 
