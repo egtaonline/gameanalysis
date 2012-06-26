@@ -49,6 +49,9 @@ class Profile(h_dict):
 		return join([role +": "+ join([str(count) +" "+ strategy for strategy, \
 			count in self[role].items()], ", ") for role in self], "; ")
 
+	def toJSON(self):
+		return {"type":"GA_Profile", "data":self}
+
 
 class Game(dict):
 	def __init__(self, roles=[], players={}, strategies={}, payoff_data=[]):
@@ -87,6 +90,9 @@ class Game(dict):
 			self.addProfile(profile_data_set)
 
 	def addProfile(self, role_payoffs):
+		prof = Profile(role_payoffs)
+		if prof in self:
+			raise IOError("duplicate profile:" + str(prof))
 		if isinstance(self.values, np.ndarray):
 			self.values = list(self.values)
 			self.counts = list(self.counts)
@@ -112,7 +118,7 @@ class Game(dict):
 						devs[i,j] = profile_repetitions(opp_prof)
 				else:
 					devs[i,j] = 0
-		self[Profile(role_payoffs)] = len(self.values)
+		self[prof] = len(self.values)
 		self.values.append(values)
 		self.counts.append(counts)
 		self.dev_reps.append(devs)
@@ -219,24 +225,30 @@ class Game(dict):
 		m += i*bias
 		return [m]
 
-	def mixedProfile(self, mixture, supp_thresh=1e-3):
+	def toProfile(self, arr, supp_thresh=1e-3):
 		p = {}
 		for r in self.roles:
 			i = self.index(r)
 			p[r] = {}
 			for s in self.strategies[r]:
 				j = self.index(r, s)
-				if mixture[i,j] >= supp_thresh:
-					p[r][s] = mixture[i,j]
+				if arr[i,j] >= supp_thresh:
+					p[r][s] = arr[i,j]
 		return Profile(p)
 
-	def mixtureArray(self, profile):
-		a = self.zeros()
-		for role in profile.keys():
+	def toArray(self, prof):
+		if isMixedProfile(prof):
+			a = self.zeros(dtype=float)
+		elif isPureProfile(prof):
+			a = self.zeros(dtype=int)
+		else:
+			raise TypeError(one_line("unrecognized profile type: " + \
+					str(prof), 71))
+		for role in prof.keys():
 			i = self.index(role)
-			for strategy in profile[role].keys():
+			for strategy in prof[role].keys():
 				j = self.index(role, strategy)
-				a[i,j] = profile[role][strategy]
+				a[i,j] = prof[role][strategy]
 		return a
 
 	def __cmp__(self, other):
@@ -298,4 +310,27 @@ class Game(dict):
 		return game_dict
 
 
+def isPureProfile(prof):
+	if not isinstance(prof, h_dict):
+		return False
+	flat = flatten([v.values() for v in prof.values()])
+	return all([isinstance(count, int) and count >= 0 for count in flat])
+
+
+def isMixedProfile(prof):
+	if not isinstance(prof, h_dict):
+		return False
+	flat = flatten([v.values() for v in prof.values()])
+	return all([prob >= 0 for prob in flat]) and \
+			np.allclose(sum(flat), len(prof))
+
+
+def isProfileArray(arr):
+	return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
+			arr.dtype == int
+
+
+def isMixtureArray(arr):
+	return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
+			np.allclose(arr.sum(1), 1)
 

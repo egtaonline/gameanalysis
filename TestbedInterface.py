@@ -3,7 +3,7 @@ from string import join
 
 import requests
 
-from GameIO import readGame, readTestbedProfile
+from GameIO import read, readTestbedProfile
 from RoleSymmetricGame import Profile
 from Reductions import DPR_profiles
 
@@ -114,11 +114,11 @@ class TestbedSimulator(TestbedObject):
 class TestbedGame(TestbedObject):
 	def __init__(self, name, full=False):
 		TestbedObject.__init__(self, name, "games", "name", {"full":full})
-		self.game = readGame(self.json)
+		self.game = read(self.json)
 
 	def update(self):
 		TestbedObject.update(self)
-		self.game = readGameJSON(loads(self.json))
+		self.game = read(loads(self.json))
 
 
 class TestbedProfile(TestbedObject):

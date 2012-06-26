@@ -4,6 +4,7 @@ import unittest
 
 from os.path import dirname, join
 from sys import path
+from math import isinf
 
 import numpy as np
 
@@ -14,14 +15,164 @@ import Dominance as D
 import Nash as N
 import Subgames as S
 import Regret as R
+import RoleSymmetricGame as RSG
 
-class TestDominance(unittest.TestCase):
+
+class TestProfileDetection(unittest.TestCase):
+	def setUp(self):
+		self.cliques = IO.read(join(path[0], "cliques_full.json"))
+
+	def test_profile_array_detection(self):
+		self.assertTrue(RSG.isProfileArray(self.cliques.counts[0]))
+		self.assertFalse(RSG.isMixtureArray(self.cliques.counts[0]))
+		self.assertFalse(RSG.isPureProfile(self.cliques.counts[0]))
+		self.assertFalse(RSG.isMixedProfile(self.cliques.counts[0]))
+
+	def test_pure_profile_detection(self):
+		self.assertFalse(RSG.isProfileArray(self.cliques.toProfile( \
+				self.cliques.counts[0])))
+		self.assertFalse(RSG.isMixtureArray(self.cliques.toProfile( \
+				self.cliques.counts[0])))
+		self.assertTrue(RSG.isPureProfile(self.cliques.toProfile( \
+				self.cliques.counts[0])))
+		self.assertFalse(RSG.isMixedProfile(self.cliques.toProfile( \
+				self.cliques.counts[0])))
+
+	def test_mixture_array_detection(self):
+		self.assertFalse(RSG.isProfileArray(self.cliques.uniformMixture()))
+		self.assertTrue(RSG.isMixtureArray(self.cliques.uniformMixture()))
+		self.assertFalse(RSG.isPureProfile(self.cliques.uniformMixture()))
+		self.assertFalse(RSG.isMixedProfile(self.cliques.uniformMixture()))
+
+	def test_mixed_profile_detection(self):
+		self.assertFalse(RSG.isProfileArray(self.cliques.toProfile( \
+				self.cliques.uniformMixture())))
+		self.assertFalse(RSG.isMixtureArray(self.cliques.toProfile( \
+				self.cliques.uniformMixture())))
+		self.assertFalse(RSG.isPureProfile(self.cliques.toProfile( \
+				self.cliques.uniformMixture())))
+		self.assertTrue(RSG.isMixedProfile(self.cliques.toProfile( \
+				self.cliques.uniformMixture())))
+
+
+class TestProfileRegret(unittest.TestCase):
+	def setUp(self):
+		self.cd_bl = IO.read(join(path[0], "conditional_dominance_BL.xml"))
+		self.spd = IO.read(join(path[0], "strict_pure_dominance.xml"))
+		self.cliques = IO.read(join(path[0], "cliques_full.json"))
+		self.BC = RSG.Profile({"Column":{"Center":1},"Row":{"Bottom":1}})
+		self.AAHL = RSG.Profile({"buyers":{"accept":2}, "sellers":{"high":1, \
+				"low":1}})
+
+	def test_dev_regret(self):
+		self.assertEqual(R.regret(self.spd, self.BC, "Row", "Bottom", \
+				"Middle"), 1)
+		self.assertEqual(R.regret(self.spd, self.BC, "Column", "Center", \
+				"Right"), -9)
+		self.assertEqual(R.regret(self.spd, self.BC, "Column", "Center", \
+				"Center"), 0)
+		self.assertEqual(R.regret(self.cliques, self.AAHL, "sellers", \
+				"low", "high"), 2)
+		self.assertEqual(R.regret(self.cliques, self.AAHL, "sellers", \
+				"high", "low"), 4)
+		self.assertEqual(R.regret(self.cliques, self.AAHL, "buyers", \
+				"accept", "reject"), -4)
+		self.assertRaises(KeyError, R.regret, self.cliques, self.AAHL, \
+				"buyers", "reject", "accept")
+
+	def test_strat_regret(self):
+		self.assertEqual(R.regret(self.spd, self.BC, "Row", "Bottom"), 1)
+		self.assertEqual(R.regret(self.cliques, self.AAHL, "buyers", \
+				"accept"), -4)
+
+	def test_role_regret(self):
+		self.assertEqual(R.regret(self.spd, self.BC, "Row"), 1)
+		self.assertEqual(R.regret(self.cliques, self.AAHL, "buyers"), -4)
+		self.assertEqual(R.regret(self.cliques, self.AAHL, "sellers"), 4)
+
+	def test_profile_regret(self):
+		self.assertEqual(R.regret(self.spd, self.BC), 1)
+		self.assertEqual(R.regret(self.cliques, self.AAHL), 4)
+
+	def test_missing_regret(self):
+		self.assertEqual(R.regret(self.cd_bl, self.BC, "Column", \
+				"Center", "Left"), float('inf'))
+		self.assertEqual(R.regret(self.cd_bl, self.BC, "Column", \
+				"Center"), float('inf'))
+		self.assertEqual(R.regret(self.cd_bl, self.BC, "Column"), float('inf'))
+		self.assertEqual(R.regret(self.cd_bl, self.BC), float('inf'))
+
+	def test_regret_bound(self):
+		self.assertEqual(R.regret(self.cd_bl, self.BC, "Column", \
+				"Center", "Left", True), float('-inf'))
+		self.assertEqual(R.regret(self.cd_bl, self.BC, "Column", \
+				"Center", bound=True), -9)
+		self.assertEqual(R.regret(self.cd_bl, self.BC, "Column", \
+				bound=True), -9)
+		self.assertEqual(R.regret(self.cd_bl, self.BC, bound=True), 1)
+
+
+class TestMixtureRegret(unittest.TestCase):
+	pass
+
+
+class TestDominates(unittest.TestCase):
+	def setUp(self):
+		self.spd = IO.read(join(path[0], "strict_pure_dominance.xml"))
+		self.cd_br = IO.read(join(path[0], "conditional_dominance_BR.xml"))
+		self.cd_bc = IO.read(join(path[0], "conditional_dominance_BC.xml"))
+		self.wpd = IO.read(join(path[0], "weak_pure_dominance.xml"))
+
+	def test_weak_dominance(self):
+		self.assertFalse(D.Dominates(self.wpd, "Column", "Center", "Left", \
+				weak=False))
+		self.assertTrue(D.Dominates(self.wpd, "Column", "Center", "Left", \
+				weak=True))
+
+	def test_unconditional_dominance(self):
+		self.assertTrue(D.Dominates(self.spd, "Column", "Center", "Right", 0))
+		self.assertFalse(D.Dominates(self.spd, "Row", "Middle", "Bottom", 0))
+		self.assertTrue(D.Dominates(self.cd_br, "Column", "Center", "Right", \
+				conditional=False))
+		self.assertTrue(D.Dominates(self.cd_br, "Row", "Middle", "Bottom", \
+				conditional=False))
+		self.assertTrue(D.Dominates(self.cd_bc, "Column", "Center", "Right", \
+				conditional=False))
+		self.assertFalse(D.Dominates(self.cd_bc, "Row", "Middle", "Bottom", \
+				conditional=False))
+
+	def test_conditional_dominance(self):
+		self.assertTrue(D.Dominates(self.spd, "Column", "Center", "Right", 1))
+		self.assertFalse(D.Dominates(self.spd, "Row", "Middle", "Bottom", 1))
+		self.assertTrue(D.Dominates(self.cd_br, "Column", "Center", "Right", \
+				conditional=True))
+		self.assertTrue(D.Dominates(self.cd_br, "Row", "Middle", "Bottom", \
+				conditional=True))
+		self.assertFalse(D.Dominates(self.cd_bc, "Column", "Center", "Right", \
+				conditional=True))
+		self.assertFalse(D.Dominates(self.cd_bc, "Row", "Middle", "Bottom", \
+				conditional=True))
+
+	def test_conservative_dominance(self):
+		self.assertTrue(D.Dominates(self.spd, "Column", "Center", "Right", 2))
+		self.assertFalse(D.Dominates(self.spd, "Row", "Middle", "Bottom", 2))
+		self.assertFalse(D.Dominates(self.cd_br, "Column", "Center", "Right", \
+				conditional=2))
+		self.assertFalse(D.Dominates(self.cd_br, "Row", "Middle", "Bottom", \
+				conditional=2))
+		self.assertFalse(D.Dominates(self.cd_bc, "Column", "Center", "Right", \
+				conditional=2))
+		self.assertFalse(D.Dominates(self.cd_bc, "Row", "Middle", "Bottom", \
+				conditional=2))
+
+
+class TestIteratedElimination(unittest.TestCase):
 	def setUp(self):
 		self.nbr = IO.read(join(path[0], "never_best_response.xml"))
 		self.wpd = IO.read(join(path[0], "weak_pure_dominance.xml"))
 		self.spd = IO.read(join(path[0], "strict_pure_dominance.xml"))
 
-	def test_StrictPureDominance(self):
+	def test_IE_SPD(self):
 		"""
 		iterated elimination of strictly pure-strategy dominated strategies
 		"""
@@ -32,7 +183,7 @@ class TestDominance(unittest.TestCase):
 		self.assertEqual(len(D.IteratedElimination(self.spd, \
 				D.PureStrategyDominance, weak=False)), 1)
 
-	def test_WeakPureDominance(self):
+	def test_IE_WPD(self):
 		"""
 		iterated elimination of weakly pure-strategy dominated strategies
 		"""
@@ -43,7 +194,7 @@ class TestDominance(unittest.TestCase):
 		self.assertEqual(len(D.IteratedElimination(self.spd, \
 				D.PureStrategyDominance, weak=True)), 1)
 
-	def test_NeverBestResponse(self):
+	def test_IE_NBR(self):
 		"""
 		iterated elimination of never weak best-response strategies
 		"""
@@ -55,14 +206,14 @@ class TestDominance(unittest.TestCase):
 				D.NeverBestResponse)), 1)
 
 
-class TestConditionalDominance(unittest.TestCase):
+class TestConditionalIteratedElimination(unittest.TestCase):
 	def setUp(self):
 		self.cd_bl = IO.read(join(path[0], "conditional_dominance_BL.xml"))
 		self.cd_bc = IO.read(join(path[0], "conditional_dominance_BC.xml"))
 		self.cd_br = IO.read(join(path[0], "conditional_dominance_BR.xml"))
 		self.cd_bcr = IO.read(join(path[0],"conditional_dominance_BCR.xml"))
 
-	def test_UnconditionalPureDominance(self):
+	def test_IE_unconditional_PD(self):
 		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
 				D.PureStrategyDominance, conditional=False)), 1)
 		self.assertEqual(len(D.IteratedElimination(self.cd_bc, \
@@ -72,7 +223,7 @@ class TestConditionalDominance(unittest.TestCase):
 		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
 				D.PureStrategyDominance, conditional=False)), 1)
 
-	def test_ConditionalPureDominance(self):
+	def test_IE_conditional_PD(self):
 		"""
 		iterated elimination of conditionally strictly pure-strategy dominated
 		strategies in games with partial data
@@ -86,7 +237,7 @@ class TestConditionalDominance(unittest.TestCase):
 		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
 				D.PureStrategyDominance, conditional=True)), 1)
 
-	def test_ConservativePureDominance(self):
+	def test_conservative_PD(self):
 		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
 				D.PureStrategyDominance, conditional=2)), 5)
 		self.assertEqual(len(D.IteratedElimination(self.cd_bc, \
@@ -96,7 +247,7 @@ class TestConditionalDominance(unittest.TestCase):
 		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
 				D.PureStrategyDominance, conditional=2)), 5)
 
-	def test_ConditionalNeverBestResponse(self):
+	def test_IE_CNBR(self):
 		"""
 		iterated elimination of conditionally never weak best-response
 		strategies in games with partial data

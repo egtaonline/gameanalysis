@@ -38,7 +38,8 @@ def main(input_game, args):
 
 
 	#iterated elimination of dominated strategies
-	rational_game = IteratedElimination(input_game, PureStrategyDominance)
+	rational_game = IteratedElimination(input_game, PureStrategyDominance, \
+			conditional=1)
 	eliminated = {r:sorted(set(input_game.strategies[r]) - set( \
 			rational_game.strategies[r])) for r in input_game.roles}
 	if any(map(len, eliminated.values())):
@@ -46,6 +47,8 @@ def main(input_game, args):
 		for r in rational_game.roles:
 			if eliminated[r]:
 				print r, ":", ", ".join(eliminated[r])
+	else:
+		print "no dominated strategies found"
 
 	#pure strategy Nash equilibrium search
 	pure_equilibria = PureNash(rational_game, args.r)
@@ -114,7 +117,8 @@ def main(input_game, args):
 				deviation_support[role].extend(BR[role][0])
 				if len(BR[role][0]) == 0:
 					continue
-				r = regret(input_game, full_eq, role, deviation=BR[role][0][0])
+				r = regret(input_game, full_eq, role, deviation= \
+						list(BR[role][0])[0])
 				print "\t" + str(role) + ": " + ", ".join(BR[role][0]) + \
 						";\tgain =", (round(r, 4) if not isinf(r) else "?")
 				print "Deviation subgame " + ("explored." if Subgame( \

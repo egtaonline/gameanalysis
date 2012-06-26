@@ -3,38 +3,35 @@
 from urllib import urlopen
 from json import loads, dumps
 from xml.dom.minidom import parseString, Document
-from xml.parsers.expat import ExpatError
-from os.path import exists, splitext
-from functools import partial
 
-from BasicFunctions import flatten
+from BasicFunctions import flatten, one_line
 from RoleSymmetricGame import *
 
 
-def read(source, *args, **kwargs):
-	if isinstance(source, basestring) and exists(source):
-		f = open(source)
-		data = f.read()
-		f.close()
-	elif isinstance(source, basestring) and source.startswith("http://"):
-		#source is a url
-		u = urlopen(source)
-		data = u.read()
-		u.close()
-	elif hasattr(source, 'read'):
-		#source is file-like
+def read(source):
+	if isinstance(source, basestring):
+		try: #assume source is a filename or url
+			u = urlopen(source)
+			data = u.read()
+			u.close()
+		except: #assume source is already a data string
+			data = source
+	elif hasattr(source, 'read'): #source is file-like
 		data = source.read()
 		source.close()
 	else:
-		#assume source is already a data string or object
-		data = source
+		raise IOError(one_line("could not read source: " + str(source), 71))
+	return detect_and_load(data)
+
+
+def detect_and_load(data):
 	json_data = loadJSON(data)
 	if json_data != None:
-		return readJSON(json_data, *args, **kwargs)
+		return readJSON(json_data)
 	xml_data = loadXML(data)
 	if xml_data != None:
 		return readXML(xml_data)
-	raise IOError("unrecognized input format")
+	raise IOError(one_line("could not detect format of data: " + str(data), 71))
 
 
 def loadJSON(data):
@@ -55,26 +52,21 @@ def loadXML(data):
 		return None
 
 
-def readJSON(data, *args, **kwargs):
+def readJSON(data):
 	"""
 	Convert loaded json data (list or dict) into GameAnalysis classes.
 	"""
 	type(data)
 	if isinstance(data, list):
-		if "game" in kwargs:
-			return map(lambda d: readJSON(*d), zip(data, kwargs["game"]))
-		if len(args) == len(data):
-			return map(lambda d: readJSON(*d), zip(data, args))
 		return map(readJSON, data)
 	if "profiles" in data:
 		return readGameJSON(data)
 	if "sample_count" in data:
 		return readTestbedProfile(data)
-	if "game" in kwargs:
-		return readProfile(data, game=kwargs["game"])
-	if len(args) == 1:
-		return readProfile(data, args[0])
-	return readProfile(data)
+	if "type" in data and data["type"] == "GA_Profile":
+		return readProfile(data)
+	raise IOError(one_line("no GameAnalysis class found in JSON: " + \
+			str(data), 71))
 
 
 def readGameJSON(gameJSON):
@@ -83,7 +75,7 @@ def readGameJSON(gameJSON):
 	elif "strategies" in gameJSON["roles"][0]:
 		return readGameJSON_v2(gameJSON)
 	else:
-		raise IOError("invalid game JSON: " + str(data))
+		raise IOError(one_line("invalid game JSON: " + str(data), 71))
 
 
 def readGameJSON_v2(gameJSON):
@@ -107,12 +99,12 @@ def readTestbedProfile(profileJSON):
 					float(strategyDict["payoff"])))
 	return profile
 
-
-def readProfile(profileJSON, game=None):
-	if all([isinstance(p, int) for p in flatten([r.values() for r in \
-			profileJSON.values()])]):
+#TODO: deal with symmetric mixed-strategy profiles
+def readProfile(profileJSON):
+	try:
+		return Profile(profileJSON["data"])
+	except KeyError:
 		return Profile(profileJSON)
-	return game.mixtureArray(profileJSON)
 
 
 def readGameJSON_old(json_data):
@@ -183,15 +175,17 @@ def parseSymmetricXML(gameNode):
 
 
 def toJSONstr(*objects):
-	return dumps(toJSON(*objects), sort_keys=True, indent=2)
+	return dumps(toJSONobj(*objects), sort_keys=True, indent=2)
 
 
-def toJSON(*objects):
+def toJSONobj(*objects):
 	if len(objects) > 1:
-		return map(toJSON, objects)
+		return map(toJSONobj, objects)
 	o = objects[0]
 	if hasattr(o, 'toJSON'):
 		return o.toJSON()
+	if isinstance(o, list):
+		return map(toJSONobj, o)
 	return o
 
 
@@ -229,16 +223,16 @@ class io_parser(ArgumentParser):
 				"Output file. Defaults to stdout.")
 
 	def parse_args(self, *args, **kwargs):
-		args = ArgumentParser.parse_args(self, *args, **kwargs)
-		if args.input == "":
-			args.input = read(sys.stdin.read())
+		a = ArgumentParser.parse_args(self, *args, **kwargs)
+		if a.input == "":
+			a.input = read(sys.stdin.read())
 		else:
-			i = open(args.input)
-			args.input = read(i.read())
+			i = open(a.input)
+			a.input = read(i.read())
 			i.close()
-		if args.output != "":
-			sys.stdout = open(args.output, "w")
-		return args
+		if a.output != "":
+			sys.stdout = open(a.output, "w")
+		return a
 
 
 def parse_args():

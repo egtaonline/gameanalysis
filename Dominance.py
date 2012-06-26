@@ -36,7 +36,7 @@ def bestResponses(game, p, role=None, strategy=None):
 			biggest_gain = r
 		elif r == biggest_gain:
 			best_deviations.add(dev)
-	return list(best_deviations), list(unknown)
+	return best_deviations, unknown
 
 
 def IteratedElimination(game, criterion, *args, **kwargs):
@@ -46,11 +46,17 @@ def IteratedElimination(game, criterion, *args, **kwargs):
 	input:
 	criterion = function to find dominated strategies
 	"""
-	reduced_game = criterion(game, *args, **kwargs)
-	while game != reduced_game:
+	reduced_game = EliminateStrategies(game, criterion, *args, **kwargs)
+	while reduced_game != game:
 		game = reduced_game
-		reduced_game = criterion(game, *args, **kwargs)
+		reduced_game = EliminateStrategies(game, criterion, *args, **kwargs)
 	return game
+
+
+def EliminateStrategies(game, criterion, *args, **kwargs):
+	eliminated = criterion(game, *args, **kwargs)
+	return Subgame(game, {r : set(game.strategies[r]) - eliminated[r] \
+			for r in game.roles})
 
 
 def NeverBestResponse(game, conditional=True):
@@ -59,15 +65,15 @@ def NeverBestResponse(game, conditional=True):
 
 	This criterion is very strong: it can eliminate strict Nash equilibria.
 	"""
-	best_responses = {r:set() for r in game.roles}
-	for profile in game:
+	non_best_responses = {r:set(game.strategies[r]) for r in game.roles}
+	for prof in game:
 		for r in game.roles:
-			for s in profile[r]:
-				br, unknown = bestResponses(game, profile, r, s)
-				best_responses[r].update(br)
+			for s in prof[r]:
+				br, unknown = bestResponses(game, prof, r, s)
+				non_best_responses[r] -= set(br)
 				if conditional:
-					best_responses[r].update(unknown)
-	return Subgame(game, best_responses)
+					non_best_responses[r] -= unknown
+	return non_best_responses
 
 
 def PureStrategyDominance(game, conditional=True, weak=False):
@@ -78,28 +84,33 @@ def PureStrategyDominance(game, conditional=True, weak=False):
 	conditional==1==True ---> conditional dominance
 	conditional==2 ---------> extra-conservative conditional dominance
 	"""
-	undominated = {r:set(game.strategies[r]) for r in game.roles}
-	for r in game.roles:
-		for dominant, dominated in product(game.strategies[r], repeat=2):
-			if dominant == dominated or dominated not in undominated[r]:
+	dominated_strategies = {r:set() for r in game.roles}
+	for role in game.roles:
+		for dominant, dominated in product(game.strategies[role], repeat=2):
+			if dominant == dominated or \
+					dominated in dominated_strategies[role] or \
+					dominant in dominated_strategies[role]:
 				continue
-			dominance_proved = False
-			for profile in game:
-				if dominated in profile[r]:
-					reg = regret(game, profile, r, dominated, dominant)
-					if reg > 0 and not isinf(reg):
-						dominance_proved = True
-					elif (reg < 0) or (reg == 0 and not weak) or \
-							(isinf(reg) and conditional):
-						dominance_proved = False
-						break
-				elif dominant in profile[r] and conditional > 1:
-					if profile.deviate(r, dominant, dominated) not in game:
-						dominance_proved = False
-						break
-			if dominance_proved:
-				undominated[r].remove(dominated)
-	return Subgame(game, undominated)
+			if Dominates(game, role, dominant, dominated, conditional, weak):
+				dominated_strategies[role].add(dominated)
+	return dominated_strategies
+
+
+def Dominates(game, role, dominant, dominated, conditional=True, weak=False):
+	dominance_observed = False
+	for prof in game:
+		if dominated in prof[role]:
+			reg = regret(game, prof, role, dominated, dominant)
+			if reg > 0 and not isinf(reg):
+				dominance_observed = True
+			elif (reg < 0) or (reg == 0 and not weak) or \
+					(isinf(reg) and conditional):
+				return False
+		elif conditional > 1 and dominant in prof[role] and \
+				(prof.deviate(role, dominant, dominated) not in game):
+				return False
+	return dominance_observed
+
 
 
 def MixedStrategyDominance(game, conditional=True, weak=False):

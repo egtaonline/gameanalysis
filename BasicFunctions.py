@@ -43,6 +43,12 @@ def flatten(l):
 	return list(chain(*l))
 
 
+def one_line(s, line_width=80):
+	if len(s) > line_width:
+		return s[:line_width-3] + "..."
+	return s
+
+
 tiny = 1e-10
 
 

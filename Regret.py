@@ -4,33 +4,55 @@ import numpy as np
 
 from itertools import product, chain, combinations_with_replacement as CwR
 
-from RoleSymmetricGame import Profile
+from RoleSymmetricGame import *
 
 
-def regret(game, p, role=None, strategy=None, deviation=None, bound=False):
+def regret(game, prof, role=None, strategy=None, deviation=None, bound=False):
+	if role == None and len(game.roles) == 1:
+		role = game.roles[0] #in symmetric games we can deduce the role
+	if isPureProfile(prof):
+		return profileRegret(game, prof, role, strategy, deviation, bound)
+	if isMixtureArray(prof):
+		return mixtureRegret(game, prof, role, deviation, bound)
+	raise TypeError(one_line("unrecognized profile type: " + str(prof), 71))
+
+
+def profileRegret(game, prof, role, strategy, deviation, bound):
 	if role == None:
-		return max([regret(game, p, r, strategy, deviation, bound) for r \
-				in game.roles])
-	if strategy == None and isinstance(p, Profile):
-		return max([regret(game, p, role, s, deviation, bound) for s \
-				in p[role]])
+		return max([profileRegret(game, prof, r, strategy, deviation, bound) \
+				for r in game.roles])
+	if strategy == None:
+		return max([profileRegret(game, prof, role, s, deviation, bound) for \
+				s in prof[role]])
 	if deviation == None:
-		return max([regret(game, p, role, strategy, d, bound) for d \
-				in game.strategies[role]])
-	if isinstance(p, Profile):
-		dp = p.deviate(role, strategy, deviation)
-		if dp in game:
-			return game.getPayoff(dp, role, deviation) - \
-					game.getPayoff(p, role, strategy)
-		else:
-			return -float("inf") if bound else float("inf")
-	elif isinstance(p, np.ndarray):
-		if any(map(lambda prof: prof not in game, mixtureNeighbors(game, \
-				p, role, deviation))):
-			return -float("inf") if bound else float("inf")
-		return game.expectedValues(p)[game.index(role), game.index( \
-				role, deviation)] - game.getExpectedPayoff(p, role)
-	raise TypeError("unrecognized argument type: " + type(p).__name__)
+		try:
+			return max([profileRegret(game, prof, role, strategy, d, bound) \
+					for d in set(game.strategies[role]) - {strategy}])
+		except ValueError: #triggered when there's only one strategy
+			return 0
+	dev_prof = prof.deviate(role, strategy, deviation)
+	if dev_prof in game:
+		return game.getPayoff(dev_prof, role, deviation) - \
+				game.getPayoff(prof, role, strategy)
+	else:
+		return -float("inf") if bound else float("inf")
+
+
+def mixtureRegret(game, mix, role, deviation, bound):
+	if any(map(lambda p: p not in game, mixtureNeighbors(game, \
+			mix, role, deviation))):
+		return -float("inf") if bound else float("inf")
+	strategy_EVs = game.expectedValues(mix)
+	role_EVs = (strategy_EVs * mix).sum(1)
+	if role == None:
+		return max([float(max(strategy_EVs[r][:game.numStrategies[r]]) - \
+			role_EVs[r]) for r in range(len(game.roles))])
+	r = game.index(role)
+	if deviation == None:
+		return float(max(strategy_EVs[r][:game.numStrategies[r]]) - \
+			role_EVs[r])
+	d = game.index(role, deviation)
+	return float(strategy_EVs[r,d] - role_EVs[r])
 
 
 def neighbors(game, p, *args, **kwargs):
@@ -90,9 +112,10 @@ from GameIO import read, toJSONstr, io_parser
 from Subgames import translate
 
 def parse_args():
-	parser = io_parser()
+	parser = io_parser(description="Compute regret in input game(s) of " +\
+			"specified profiles.")
 	parser.add_argument("profiles", type=str, help="File with profiles from" +\
-			"input games for which regrets should be calculated.")
+			" input games for which regrets should be calculated.")
 	parser.add_argument("-base", type=str, default="", help= \
 			"Base game file against which to compute regrets. If unspecified" +\
 			" in-game regrets are computed instead.")
@@ -102,7 +125,7 @@ def parse_args():
 def main():
 	args = parse_args()
 	games = args.input
-	profiles = read(args.profiles, games)
+	profiles = read(args.profiles)
 	if not isinstance(games, list):
 		games = [games]
 		profiles = [profiles]
