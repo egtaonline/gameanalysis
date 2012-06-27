@@ -126,8 +126,10 @@ def parse_args():
 	parser = io_parser()
 	parser.add_argument("-type", choices=["PSD", "MSD", "NBR"], default = \
 			"PSD", help="Dominance criterion: PSD = pure-strategy dominance;"+\
-			" MSD = mixed-strategy dominance; NBR = never-best-response.")
-	parser.add_argument("--conditional", action="store_true")
+			" MSD = mixed-strategy dominance; NBR = never-best-response. " +\
+			"Default = PSD.")
+	parser.add_argument("-cond", choices=[0,1,2], default=1, help= "0 = " +\
+			"unconditional, 1 = conditional, 2 = conservative. Default = 1.")
 	parser.add_argument("--weak", action="store_true")
 	return parser.parse_args()
 
@@ -136,13 +138,13 @@ def main():
 	args = parse_args()
 	if args.type == "PSD":
 		rgame = IteratedElimination(args.input, PureStrategyDominance, \
-				conditional=args.conditional)
+				conditional=args.cond)
 	elif args.type == "MSD":
 		rgame = IteratedElimination(args.input, MixedStrategyDominance, \
-				conditional=args.conditional, weak=args.weak)
+				conditional=args.cond, weak=args.weak)
 	elif args.type == "NBR":
 		rgame = IteratedElimination(args.input , NeverBestResponse, \
-				conditional=args.conditional, weak=args.weak)
+				conditional=args.cond, weak=args.weak)
 	print toJSONstr(rgame)
 
 

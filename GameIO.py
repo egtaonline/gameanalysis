@@ -70,10 +70,10 @@ def readJSON(data):
 
 
 def readGameJSON(gameJSON):
-	if "strategy_array" in gameJSON["roles"][0]:
-		return readGameJSON_old(gameJSON)
-	elif "strategies" in gameJSON["roles"][0]:
+	if "strategies" in gameJSON["roles"][0]:
 		return readGameJSON_v2(gameJSON)
+	elif "strategy_array" in gameJSON["roles"][0]:
+		return readGameJSON_old(gameJSON)
 	else:
 		raise IOError(one_line("invalid game JSON: " + str(data), 71))
 
@@ -87,24 +87,6 @@ def readGameJSON_v2(gameJSON):
 		for profileJSON in gameJSON["profiles"]:
 			profiles.append(readTestbedProfile(profileJSON))
 	return Game(roles, players, strategies, profiles)
-
-
-def readTestbedProfile(profileJSON):
-	profile = {r["name"]:[] for r in profileJSON["roles"]}
-	for roleDict in profileJSON["roles"]:
-		role = roleDict["name"]
-		for strategyDict in roleDict["strategies"]:
-			profile[role].append(payoff_data(str(strategyDict[ \
-					"name"]), int(strategyDict["count"]), \
-					float(strategyDict["payoff"])))
-	return profile
-
-#TODO: deal with symmetric mixed-strategy profiles
-def readProfile(profileJSON):
-	try:
-		return Profile(profileJSON["data"])
-	except KeyError:
-		return Profile(profileJSON)
 
 
 def readGameJSON_old(json_data):
@@ -126,6 +108,24 @@ def readGameJSON_old(json_data):
 						.count(s)), float(strategyDict["payoff"])))
 		profiles.append(profile)
 	return Game(roles, players, strategies, profiles)
+
+
+def readTestbedProfile(profileJSON):
+	profile = {r["name"]:[] for r in profileJSON["roles"]}
+	for roleDict in profileJSON["roles"]:
+		role = roleDict["name"]
+		for strategyDict in roleDict["strategies"]:
+			profile[role].append(payoff_data(str(strategyDict[ \
+					"name"]), int(strategyDict["count"]), \
+					float(strategyDict["payoff"])))
+	return profile
+
+
+def readProfile(profileJSON):
+	try:
+		return Profile(profileJSON["data"])
+	except KeyError:
+		return Profile(profileJSON)
 
 
 def readXML(data):
@@ -175,18 +175,17 @@ def parseSymmetricXML(gameNode):
 
 
 def toJSONstr(*objects):
-	return dumps(toJSONobj(*objects), sort_keys=True, indent=2)
+	return dumps(toJSONobj(objects), sort_keys=True, indent=2)
 
 
-def toJSONobj(*objects):
-	if len(objects) > 1:
-		return map(toJSONobj, objects)
-	o = objects[0]
-	if hasattr(o, 'toJSON'):
-		return o.toJSON()
-	if isinstance(o, list):
-		return map(toJSONobj, o)
-	return o
+def toJSONobj(obj):
+	if isinstance(obj, (list, tuple)):
+		return map(toJSONobj, obj)
+	if hasattr(obj, 'toJSON'):
+		return obj.toJSON()
+	if isinstance(obj, dict):
+		return {k:toJSONobj(v) for k,v in obj.items()}
+	return loads(dumps(obj))
 
 
 def toXML(game, filename):

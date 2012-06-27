@@ -80,13 +80,13 @@ def main():
 	if args.pure:
 		equilibria = [PureNash(g, args.r) for g in games]
 	else:
-		equilibria = [[g.mixedProfile(eq, args.s) for eq in MixedNash(g, \
+		equilibria = [[g.toProfile(eq, args.s) for eq in MixedNash(g, \
 				args.r, args.d, iters=args.i, converge_thresh=args.c)] \
 				for g in games]
 	if len(equilibria) > 1:
-		print toJSONstr(equilibria)
+		print toJSONstr(*equilibria)
 	else:
-		print toJSONstr(equilibria[0])
+		print toJSONstr(*equilibria[0])
 
 
 if __name__ == "__main__":

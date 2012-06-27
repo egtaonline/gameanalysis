@@ -92,7 +92,7 @@ class Game(dict):
 	def addProfile(self, role_payoffs):
 		prof = Profile(role_payoffs)
 		if prof in self:
-			raise IOError("duplicate profile:" + str(prof))
+			raise IOError("duplicate profile: " + str(prof))
 		if isinstance(self.values, np.ndarray):
 			self.values = list(self.values)
 			self.counts = list(self.counts)

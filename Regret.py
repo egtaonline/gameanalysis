@@ -14,7 +14,11 @@ def regret(game, prof, role=None, strategy=None, deviation=None, bound=False):
 		return profileRegret(game, prof, role, strategy, deviation, bound)
 	if isMixtureArray(prof):
 		return mixtureRegret(game, prof, role, deviation, bound)
-	raise TypeError(one_line("unrecognized profile type: " + str(prof), 71))
+	if isMixedProfile(prof):
+		return mixtureRegret(game, game.toArray(prof), role, deviation, bound)
+	if isProfileArray(prof):
+		return mixtureRegret(game, game.toProfile(prof), role, deviation, bound)
+	raise TypeError(one_line("unrecognized profile type: " + str(prof), 69))
 
 
 def profileRegret(game, prof, role, strategy, deviation, bound):
@@ -143,9 +147,9 @@ def main():
 			else:
 				regrets[-1].append(regret(g, prof))
 	if len(regrets) > 1:
-		print toJSONstr(regrets)
+		print toJSONstr(*regrets)
 	else:
-		print toJSONstr(regrets[0])
+		print toJSONstr(*regrets[0])
 
 
 if __name__ == "__main__":
