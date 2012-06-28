@@ -61,7 +61,7 @@ def IsSubgame(small_game, big_game):
 	return True
 
 
-def Cliques(full_game):
+def Cliques(full_game, known_subgames=set(), fast=False):
 	"""
 	Finds maximal subgames for which all profiles are known.
 
@@ -71,6 +71,10 @@ def Cliques(full_game):
 	header information).
 	"""
 	subgames = {Subgame(full_game)}
+	for g in known_subgames:
+		sg = Subgame(full_game, g.strategies)
+		if sg.isComplete():
+			subgames.add(sg)
 	maximal_subgames = set()
 	explored_subgames = set()
 	while(subgames):
@@ -88,6 +92,9 @@ def Cliques(full_game):
 				maximal=False
 				if new_sg in subgames or new_sg in explored_subgames:
 					continue
+				if fast and any([IsSubgame(new_sg, g) for g in \
+						subgames.union(maximal_subgames)]):
+					continue
 				subgames.add(new_sg)
 		if maximal:
 			sg = Subgame(full_game, sg.strategies)
@@ -96,13 +103,22 @@ def Cliques(full_game):
 	return sorted(maximal_subgames, key=len)
 
 
-from GameIO import toJSONstr, io_parser
+from GameIO import read, toJSONstr, io_parser
+
+def parse_args():
+	parser = io_parser()
+	parser.add_argument("-known", type=str, default="[]", help= \
+			"File with known complete subgames. Improves runtime.")
+	parser.add_argument("--fast", action="store_true", help="Speeds up " + \
+			"subgame finding, especially if using known subgames. Can miss " + \
+			"some complete subgames.")
+	return parser.parse_args()
 
 
 def main():
-	parser = io_parser()
-	args = parser.parse_args()
-	print toJSONstr(*Cliques(args.input))
+	args = parse_args()
+	subgames = read(args.known)
+	print toJSONstr(*Cliques(args.input, subgames, args.fast))
 
 
 if __name__ == "__main__":
