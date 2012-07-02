@@ -147,9 +147,9 @@ def main():
 			else:
 				regrets[-1].append(regret(g, prof))
 	if len(regrets) > 1:
-		print toJSONstr(*regrets)
+		print toJSONstr(regrets)
 	else:
-		print toJSONstr(*regrets[0])
+		print toJSONstr(regrets[0])
 
 
 if __name__ == "__main__":

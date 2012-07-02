@@ -3,6 +3,7 @@
 from urllib import urlopen
 from json import loads, dumps
 from xml.dom.minidom import parseString, Document
+from collections import Iterable, Mapping
 
 from BasicFunctions import flatten, one_line
 from RoleSymmetricGame import *
@@ -174,17 +175,17 @@ def parseSymmetricXML(gameNode):
 	return Game(roles, counts, strategies, payoffs)
 
 
-def toJSONstr(*objects):
-	return dumps(toJSONobj(objects), sort_keys=True, indent=2)
+def toJSONstr(obj):
+	return dumps(toJSONobj(obj), sort_keys=True, indent=2)
 
 
 def toJSONobj(obj):
-	if isinstance(obj, (list, tuple)):
-		return map(toJSONobj, obj)
-	if hasattr(obj, 'toJSON'):
+	if hasattr(obj, "toJSON"):
 		return obj.toJSON()
-	if isinstance(obj, dict):
+	if hasattr(obj, "items"):
 		return {k:toJSONobj(v) for k,v in obj.items()}
+	if hasattr(obj, "__iter__"):
+		return map(toJSONobj, obj)
 	return loads(dumps(obj))
 
 

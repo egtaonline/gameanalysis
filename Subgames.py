@@ -118,7 +118,7 @@ def parse_args():
 def main():
 	args = parse_args()
 	subgames = read(args.known)
-	print toJSONstr(*Cliques(args.input, subgames, args.fast))
+	print toJSONstr(Cliques(args.input, subgames, args.fast))
 
 
 if __name__ == "__main__":
