@@ -16,7 +16,7 @@ def MinRegretProfile(game):
 	"""
 	Finds the profile with the confirmed lowest regret.
 	"""
-	return min([(regret(game, profile), profile) for profile in game])[1]
+	return min(game.knownProfiles(), key=lambda p: regret(game, p))
 
 
 def MixedNash(game, regret_thresh=1e-4, dist_thresh=1e-2, *RD_args, **RD_kwds):
@@ -46,6 +46,7 @@ def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 			break
 	if verbose:
 		print i+1, "iterations ; mix =", mix, "; regret =", regret(game, mix)
+	mix[mix < 0] = 0 #occasionally one of the probabilities is barely negative
 	return mix
 
 
@@ -66,8 +67,10 @@ def parse_args():
 	parser.add_argument("-s", metavar="SUPPORT", type=float, default=1e-3, \
 			help="Min probability for a strategy to be considered in " + \
 			"support. default=1e-3")
-	parser.add_argument("--pure", action="store_true", help="compute " + \
-			"pure-strategy Nash equilibria rather than mixed")
+	parser.add_argument("-type", choices=["mixed", "pure", "mrp"], default= \
+			"mixed", help="Type of approximate equilibrium to compute: " + \
+			"role-symmetric mixed-strategy Nash, pure-strategy Nash, or " + \
+			"min-regret profile. default=mixed")
 	args = parser.parse_args()
 	games = args.input
 	if not isinstance(games, list):
@@ -77,12 +80,14 @@ def parse_args():
 
 def main():
 	games, args = parse_args()
-	if args.pure:
+	if args.type == "pure":
 		equilibria = [PureNash(g, args.r) for g in games]
-	else:
+	elif args.type == "mixed":
 		equilibria = [[g.toProfile(eq, args.s) for eq in MixedNash(g, \
 				args.r, args.d, iters=args.i, converge_thresh=args.c)] \
 				for g in games]
+	elif args.type == "mrp":
+		equilibria = map(MinRegretProfile, games)
 	if len(equilibria) > 1:
 		print toJSONstr(equilibria)
 	else:

@@ -25,14 +25,16 @@ def read(source):
 	return detect_and_load(data)
 
 
-def detect_and_load(data):
-	json_data = loadJSON(data)
+def detect_and_load(data_str):
+	json_data = loadJSON(data_str)
 	if json_data != None:
 		return readJSON(json_data)
-	xml_data = loadXML(data)
+	xml_data = loadXML(data_str)
 	if xml_data != None:
 		return readXML(xml_data)
-	raise IOError(one_line("could not detect format of data: " + str(data), 71))
+	if isNFG(data_str):
+		return readNFG(data_str)
+	raise IOError(one_line("could not detect format of data: " + data_str, 71))
 
 
 def loadJSON(data):
@@ -51,6 +53,10 @@ def loadXML(data):
 		return parseString(data)
 	except:
 		return None
+
+
+def isNFG(data):
+	return data.startswith("NFG")
 
 
 def readJSON(data):
@@ -175,6 +181,26 @@ def parseSymmetricXML(gameNode):
 	return Game(roles, counts, strategies, payoffs)
 
 
+def readNFG(data_str):
+	if data_str.split('"')[1].lower().startswith("symmetric"):
+		return readNFGsym(data_str)
+	if data_str.split('"')[1].lower().startswith("role symmetric"):
+		return readNFGrsym(data_str)
+	return readNFGasym(data_str)
+
+
+def readNFGsym(data):
+	raise NotImplementedError("TODO")
+
+
+def readNFGrsym(data):
+	raise NotImplementedError("TODO")
+
+
+def readNFGasym(data):
+	raise NotImplementedError("TODO")
+
+
 def toJSONstr(obj):
 	return dumps(toJSONobj(obj), sort_keys=True, indent=2)
 
@@ -189,16 +215,16 @@ def toJSONobj(obj):
 	return loads(dumps(obj))
 
 
-def toXML(game, filename):
+def toXML(game):
 	if len(game.roles) == 1:
-		toSymmetricXML(game, filename)
+		toSymmetricXML(game)
 	elif all(map(lambda c: c==1, game.counts.values())):
-		toStrategicXML(game, filename)
+		toStrategicXML(game)
 	else:
 		raise NotImplementedError("no EGAT XML spec for role-symmetric games")
 
 
-def toSymmetricXML(game, filename):
+def toSymmetricXML(game):
 	"""
 	Writes game to XML according to the EGAT symmetric game spec.
 	Assumes (but doesn't check) that game is symmetric.
@@ -206,11 +232,35 @@ def toSymmetricXML(game, filename):
 	raise NotImplementedError("TODO")
 
 
-def toStrategicXML(game, filename):
+def toStrategicXML(game):
 	"""
 	Writes game to XML according to the EGAT strategic game spec.
 	Assumes (but doesn't check) that game is not role-symmetric.
 	"""
+	raise NotImplementedError("TODO")
+
+
+def toNFG(game):
+	if isSymmetric(game):
+		return toNFGsym(game)
+	if isAsymmetric(game):
+		return toNFGasym(game)
+	return toNFGrsym(game)
+
+
+def toNFGsym(game):
+	output = 'NFG 1 R "symmetric"\n'
+	raise NotImplementedError("TODO")
+
+
+def toNFGasym(game):
+	output = 'NFG 1 R "asymmetric"\n'
+	raise NotImplementedError("TODO")
+
+
+def toNFGrsym(game):
+	output = 'NFG 1 R "role-symmetric: ' + ", ".join([str(game.players[r]) + \
+			" " + r for r in game.roles]) + '"\n'
 	raise NotImplementedError("TODO")
 
 

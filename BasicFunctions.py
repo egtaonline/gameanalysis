@@ -44,9 +44,15 @@ def flatten(l):
 
 
 def one_line(s, line_width=80):
+	"""If string s is longer than line width, cut it off and append '...'"""
 	if len(s) > line_width:
 		return s[:line_width-3] + "..."
 	return s
+
+
+def leading_zeros(i, m):
+	"""Pad the string of integer i with leading zeros to equal length of m."""
+	return str(i).zfill(len(str(m)))
 
 
 tiny = 1e-10

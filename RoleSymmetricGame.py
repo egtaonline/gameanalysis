@@ -7,6 +7,7 @@ from string import join
 
 from HashableClasses import *
 from BasicFunctions import *
+from Purification import threshold
 
 payoff_data = namedtuple("payoff", "strategy count value")
 
@@ -226,13 +227,14 @@ class Game(dict):
 		return [m]
 
 	def toProfile(self, arr, supp_thresh=1e-3):
+		arr = threshold(arr, supp_thresh)
 		p = {}
 		for r in self.roles:
 			i = self.index(r)
 			p[r] = {}
 			for s in self.strategies[r]:
 				j = self.index(r, s)
-				if arr[i,j] >= supp_thresh:
+				if arr[i,j] > 0:
 					p[r][s] = arr[i,j]
 		return Profile(p)
 
@@ -334,3 +336,10 @@ def isMixtureArray(arr):
 	return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
 			np.allclose(arr.sum(1), 1)
 
+
+def isSymmetric(game):
+	return len(game.roles) == 1
+
+
+def isAsymmetric(game):
+	return all([p == 1 for p in game.players.values()])
