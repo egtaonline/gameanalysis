@@ -11,26 +11,27 @@ def regret(game, prof, role=None, strategy=None, deviation=None, bound=False):
 	if role == None and len(game.roles) == 1:
 		role = game.roles[0] #in symmetric games we can deduce the role
 	if isPureProfile(prof):
-		return profileRegret(game, prof, role, strategy, deviation, bound)
+		return profile_regret(game, prof, role, strategy, deviation, bound)
 	if isMixtureArray(prof):
-		return mixtureRegret(game, prof, role, deviation, bound)
+		return mixture_regret(game, prof, role, deviation, bound)
 	if isMixedProfile(prof):
-		return mixtureRegret(game, game.toArray(prof), role, deviation, bound)
+		return mixture_regret(game, game.toArray(prof), role, deviation, bound)
 	if isProfileArray(prof):
-		return mixtureRegret(game, game.toProfile(prof), role, deviation, bound)
+		return profile_regret(game, game.toProfile(prof), role, strategy, \
+				deviation, bound)
 	raise TypeError(one_line("unrecognized profile type: " + str(prof), 69))
 
 
-def profileRegret(game, prof, role, strategy, deviation, bound):
+def profile_regret(game, prof, role, strategy, deviation, bound):
 	if role == None:
-		return max([profileRegret(game, prof, r, strategy, deviation, bound) \
+		return max([profile_regret(game, prof, r, strategy, deviation, bound) \
 				for r in game.roles])
 	if strategy == None:
-		return max([profileRegret(game, prof, role, s, deviation, bound) for \
+		return max([profile_regret(game, prof, role, s, deviation, bound) for \
 				s in prof[role]])
 	if deviation == None:
 		try:
-			return max([profileRegret(game, prof, role, strategy, d, bound) \
+			return max([profile_regret(game, prof, role, strategy, d, bound) \
 					for d in set(game.strategies[role]) - {strategy}])
 		except ValueError: #triggered when there's only one strategy
 			return 0
@@ -42,8 +43,8 @@ def profileRegret(game, prof, role, strategy, deviation, bound):
 		return -float("inf") if bound else float("inf")
 
 
-def mixtureRegret(game, mix, role, deviation, bound):
-	if any(map(lambda p: p not in game, mixtureNeighbors(game, \
+def mixture_regret(game, mix, role, deviation, bound):
+	if any(map(lambda p: p not in game, mixture_neighbors(game, \
 			mix, role, deviation))):
 		return -float("inf") if bound else float("inf")
 	strategy_EVs = game.expectedValues(mix)
@@ -61,34 +62,34 @@ def mixtureRegret(game, mix, role, deviation, bound):
 
 def neighbors(game, p, *args, **kwargs):
 	if isinstance(p, Profile):
-		return profileNeighbors(game, p, *args, **kwargs)
+		return profile_neighbors(game, p, *args, **kwargs)
 	elif isinstance(p, np.ndarray):
-		return mixtureNeighbors(game, p, *args, **kwargs)
+		return mixture_neighbors(game, p, *args, **kwargs)
 	raise TypeError("unrecognized argument type: " + type(p).__name__)
 
 
-def profileNeighbors(game, profile, role=None, strategy=None, \
+def profile_neighbors(game, profile, role=None, strategy=None, \
 		deviation=None):
 	if role == None:
-		return list(chain(*[profileNeighbors(game, profile, r, strategy, \
+		return list(chain(*[profile_neighbors(game, profile, r, strategy, \
 				deviation) for r in game.roles]))
 	if strategy == None:
-		return list(chain(*[profileNeighbors(game, profile, role, s, \
+		return list(chain(*[profile_neighbors(game, profile, role, s, \
 				deviation) for s in profile[role]]))
 	if deviation == None:
-		return list(chain(*[profileNeighbors(game, profile, role, strategy, \
+		return list(chain(*[profile_neighbors(game, profile, role, strategy, \
 				d) for d in set(game.strategies[role]) - {strategy}]))
 	return [profile.deviate(role, strategy, deviation)]
 
 
-def mixtureNeighbors(game, mix, role=None, deviation=None):
+def mixture_neighbors(game, mix, role=None, deviation=None):
 	n = set()
-	for profile in feasibleProfiles(game, mix):
-		n.update(profileNeighbors(game, profile, role, deviation=deviation))
+	for profile in feasible_profiles(game, mix):
+		n.update(profile_neighbors(game, profile, role, deviation=deviation))
 	return n
 
 
-def feasibleProfiles(game, mix, thresh=1e-3):
+def feasible_profiles(game, mix, thresh=1e-3):
 	return [Profile({r:{s:p[game.index(r)].count(s) for s in set(p[ \
 			game.index(r)])} for r in game.roles}) for p in product(*[ \
 			CwR(filter(lambda s: mix[game.index(r), game.index(r,s)] >= \
@@ -96,14 +97,14 @@ def feasibleProfiles(game, mix, thresh=1e-3):
 			in game.roles])]
 
 
-def SymmetricProfileRegrets(game):
+def symmetric_profile_regrets(game):
 	assert len(game.roles) == 1, "game must be symmetric"
 	role = game.roles[0]
 	return {s: regret(game, Profile({role:{s:game.players[role]}})) for s \
 			in game.strategies[role]}
 
 
-def EquilibriumRegrets(game, eq):
+def equilibrium_regrets(game, eq):
 	regrets = {}
 	for role in game.roles:
 		regrets[role] = {}

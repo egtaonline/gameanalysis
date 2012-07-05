@@ -5,9 +5,9 @@ from math import isinf
 
 from RoleSymmetricGame import Profile
 from Regret import regret
-from Subgames import Subgame
+from Subgames import subgame
 
-def bestResponses(game, p, role=None, strategy=None):
+def best_responses(game, p, role=None, strategy=None):
 	"""
 	If role is unspecified, bestResponses returns a dict mapping each role
 	all of its strategy-level results. If strategy is unspecified,
@@ -19,10 +19,10 @@ def bestResponses(game, p, role=None, strategy=None):
 	returns only the known best response set.
 	"""
 	if role == None:
-		return {r: bestResponses(game, p, r, strategy) for r \
+		return {r: best_responses(game, p, r, strategy) for r \
 				in game.roles}
 	if strategy == None and isinstance(p, Profile):
-		return {s: bestResponses(game, p, role, s) for s in \
+		return {s: best_responses(game, p, role, s) for s in \
 				p[role]}
 	best_deviations = set()
 	biggest_gain = float('-inf')
@@ -39,27 +39,27 @@ def bestResponses(game, p, role=None, strategy=None):
 	return best_deviations, unknown
 
 
-def IteratedElimination(game, criterion, *args, **kwargs):
+def iterated_elimination(game, criterion, *args, **kwargs):
 	"""
 	iterated elimination of dominated strategies
 
 	input:
 	criterion = function to find dominated strategies
 	"""
-	reduced_game = EliminateStrategies(game, criterion, *args, **kwargs)
+	reduced_game = eliminate_strategies(game, criterion, *args, **kwargs)
 	while reduced_game != game:
 		game = reduced_game
-		reduced_game = EliminateStrategies(game, criterion, *args, **kwargs)
+		reduced_game = eliminate_strategies(game, criterion, *args, **kwargs)
 	return game
 
 
-def EliminateStrategies(game, criterion, *args, **kwargs):
+def eliminate_strategies(game, criterion, *args, **kwargs):
 	eliminated = criterion(game, *args, **kwargs)
-	return Subgame(game, {r : set(game.strategies[r]) - eliminated[r] \
+	return subgame(game, {r : set(game.strategies[r]) - eliminated[r] \
 			for r in game.roles})
 
 
-def NeverBestResponse(game, conditional=True):
+def never_best_response(game, conditional=True):
 	"""
 	never-a-weak-best-response criterion for IEDS
 
@@ -69,14 +69,14 @@ def NeverBestResponse(game, conditional=True):
 	for prof in game:
 		for r in game.roles:
 			for s in prof[r]:
-				br, unknown = bestResponses(game, prof, r, s)
+				br, unknown = best_responses(game, prof, r, s)
 				non_best_responses[r] -= set(br)
 				if conditional:
 					non_best_responses[r] -= unknown
 	return non_best_responses
 
 
-def PureStrategyDominance(game, conditional=True, weak=False):
+def pure_strategy_dominance(game, conditional=True, weak=False):
 	"""
 	pure-strategy dominance criterion for IEDS
 
@@ -91,12 +91,12 @@ def PureStrategyDominance(game, conditional=True, weak=False):
 					dominated in dominated_strategies[role] or \
 					dominant in dominated_strategies[role]:
 				continue
-			if Dominates(game, role, dominant, dominated, conditional, weak):
+			if dominates(game, role, dominant, dominated, conditional, weak):
 				dominated_strategies[role].add(dominated)
 	return dominated_strategies
 
 
-def Dominates(game, role, dominant, dominated, conditional=True, weak=False):
+def dominates(game, role, dominant, dominated, conditional=True, weak=False):
 	dominance_observed = False
 	for prof in game:
 		if dominated in prof[role]:
@@ -113,7 +113,7 @@ def Dominates(game, role, dominant, dominated, conditional=True, weak=False):
 
 
 
-def MixedStrategyDominance(game, conditional=True, weak=False):
+def mixed_strategy_dominance(game, conditional=True, weak=False):
 	"""
 	mixed-strategy dominance criterion for IEDS
 	"""
@@ -137,13 +137,13 @@ def parse_args():
 def main():
 	args = parse_args()
 	if args.type == "PSD":
-		rgame = IteratedElimination(args.input, PureStrategyDominance, \
+		rgame = iterated_elimination(args.input, pure_strategy_dominance, \
 				conditional=args.cond)
 	elif args.type == "MSD":
-		rgame = IteratedElimination(args.input, MixedStrategyDominance, \
+		rgame = iterated_elimination(args.input, mixed_strategy_dominance, \
 				conditional=args.cond, weak=args.weak)
 	elif args.type == "NBR":
-		rgame = IteratedElimination(args.input , NeverBestResponse, \
+		rgame = iterated_elimination(args.input, never_best_response, \
 				conditional=args.cond, weak=args.weak)
 	print toJSONstr(rgame)
 

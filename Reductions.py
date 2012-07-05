@@ -2,13 +2,13 @@
 
 from RoleSymmetricGame import Game, Profile, payoff_data
 
-def HierarchicalReduction(game, players={} ):
+def hierarchical_reduction(game, players={} ):
 	if not players:
 		players = {r : game.players[r] / 2 for r in game.roles}
 	HR_game = Game(game.roles, players, game.strategies)
 	for reduced_profile in HR_game.allProfiles():
 		try:
-			full_profile = Profile({r:FullGameProfile(reduced_profile[r], \
+			full_profile = Profile({r:full_game_profile(reduced_profile[r], \
 					game.players[r]) for r in game.roles})
 			HR_game.addProfile({r:[payoff_data(s, reduced_profile[r][s], \
 					game.getPayoff(full_profile, r, s)) for s in \
@@ -18,7 +18,7 @@ def HierarchicalReduction(game, players={} ):
 	return HR_game
 
 
-def FullGameProfile(HR_profile, N):
+def full_game_profile(HR_profile, N):
 	"""
 	Returns the symmetric full game profile corresponding to the given
 	symmetric reduced game profile.
@@ -31,9 +31,9 @@ def FullGameProfile(HR_profile, N):
 	return full_profile
 
 
-def DeviationPreservingReduction(game, players={}):
+def deviation_preserving_reduction(game, players={}):
 	if not players:
-		return TwinsReduction(game)
+		return twins_reduction(game)
 	DPR_game = Game(game.roles, players, game.strategies)
 	for reduced_profile in DPR_game.allProfiles():
 		try:
@@ -46,12 +46,12 @@ def DeviationPreservingReduction(game, players={}):
 						if r == role:
 							opp_prof = reduced_profile.asDict()[r]
 							opp_prof[s] -= 1
-							full_profile[r] = FullGameProfile(opp_prof, \
+							full_profile[r] = full_game_profile(opp_prof, \
 									game.players[r] - 1)
 							full_profile[r][s] += 1
 						else:
-							full_profile[r] = FullGameProfile(reduced_profile[\
-									r], game.players[r])
+							full_profile[r] = full_game_profile( \
+									reduced_profile[r], game.players[r])
 					role_payoffs[r].append(payoff_data(s, reduced_profile[r\
 							][s], game.getPayoff(Profile(full_profile), r, s)))
 			DPR_game.addProfile(role_payoffs)
@@ -60,8 +60,8 @@ def DeviationPreservingReduction(game, players={}):
 	return DPR_game
 
 
-def TwinsReduction(game):
-	return DeviationPreservingReduction(game, {r:2 for r in game.roles})
+def twins_reduction(game):
+	return deviation_preserving_reduction(game, {r:2 for r in game.roles})
 
 
 def DPR_profiles(game, players={}):
@@ -77,11 +77,11 @@ def DPR_profiles(game, players={}):
 					if r == role:
 						opp_prof = reduced_profile.asDict()[r]
 						opp_prof[s] -= 1
-						full_profile[r] = FullGameProfile(opp_prof, \
+						full_profile[r] = full_game_profile(opp_prof, \
 								game.players[r] - 1)
 						full_profile[r][s] += 1
 					else:
-						full_profile[r] = FullGameProfile(reduced_profile[\
+						full_profile[r] = full_game_profile(reduced_profile[\
 								r], game.players[r])
 				profiles.append(Profile(full_profile))
 	return profiles
@@ -103,11 +103,11 @@ def main():
 	game = args.input
 	players = dict(zip(game.roles, args.players))
 	if args.type == "DPR":
-		print toJSONstr(DeviationPreservingReduction(game, players))
+		print toJSONstr(deviation_preserving_reduction(game, players))
 	elif args.type == "HR":
-		print toJSONstr(HierarchicalReduction(game, players))
+		print toJSONstr(hierarchical_reduction(game, players))
 	elif args.type == "TR":
-		print toJSONstr(TwinsReduction(game))
+		print toJSONstr(twins_reduction(game))
 
 
 if __name__ == "__main__":

@@ -5,27 +5,27 @@ from numpy.linalg import norm
 from RoleSymmetricGame import Profile, tiny
 from Regret import regret
 
-def PureNash(game, epsilon=0):
+def pure_nash(game, epsilon=0):
 	"""
 	Finds all pure-strategy epsilon-Nash equilibria.
 	"""
 	return filter(lambda profile: regret(game, profile) <= epsilon, game)
 
 
-def MinRegretProfile(game):
+def min_regret_profile(game):
 	"""
 	Finds the profile with the confirmed lowest regret.
 	"""
 	return min(game.knownProfiles(), key=lambda p: regret(game, p))
 
 
-def MixedNash(game, regret_thresh=1e-4, dist_thresh=1e-2, *RD_args, **RD_kwds):
+def mixed_nash(game, regret_thresh=1e-4, dist_thresh=1e-2, *RD_args, **RD_kwds):
 	"""
 	Runs replicator dynamics from multiple starting mixtures.
 	"""
 	equilibria = []
 	for m in game.biasedMixtures() + [game.uniformMixture()]:
-		eq = ReplicatorDynamics(game, m, *RD_args, **RD_kwds)
+		eq = replicator_dynamics(game, m, *RD_args, **RD_kwds)
 		distances = map(lambda e: norm(e-eq,2), equilibria)
 		if regret(game, eq) <= regret_thresh and all([d >= dist_thresh \
 				for d in distances]):
@@ -33,7 +33,7 @@ def MixedNash(game, regret_thresh=1e-4, dist_thresh=1e-2, *RD_args, **RD_kwds):
 	return equilibria
 
 
-def ReplicatorDynamics(game, mix, iters=10000, converge_thresh=1e-8, \
+def replicator_dynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 		verbose=False):
 	"""
 	Replicator dynamics.
@@ -81,13 +81,13 @@ def parse_args():
 def main():
 	games, args = parse_args()
 	if args.type == "pure":
-		equilibria = [PureNash(g, args.r) for g in games]
+		equilibria = [pure_nash(g, args.r) for g in games]
 	elif args.type == "mixed":
-		equilibria = [[g.toProfile(eq, args.s) for eq in MixedNash(g, \
+		equilibria = [[g.toProfile(eq, args.s) for eq in mixed_nash(g, \
 				args.r, args.d, iters=args.i, converge_thresh=args.c)] \
 				for g in games]
 	elif args.type == "mrp":
-		equilibria = map(MinRegretProfile, games)
+		equilibria = map(min_regret_profile, games)
 	if len(equilibria) > 1:
 		print toJSONstr(equilibria)
 	else:

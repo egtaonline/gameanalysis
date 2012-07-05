@@ -18,7 +18,7 @@ def translate(arr, source_game, target_game):
 	return a
 
 
-def Subgame(game, strategies={}):
+def subgame(game, strategies={}):
 	"""
 	Creates a game with a subset each role's strategies.
 
@@ -40,7 +40,7 @@ def Subgame(game, strategies={}):
 	return sg
 
 
-def SubgameAvailable(game, strategies = {}):
+def subgame_available(game, strategies = {}):
 	sg = Game(game.roles, game.players, strategies)
 	for p in sg.allProfiles():
 		if p not in game:
@@ -48,7 +48,7 @@ def SubgameAvailable(game, strategies = {}):
 	return True
 
 
-def IsSubgame(small_game, big_game):
+def is_subgame(small_game, big_game):
 	if any((r not in big_game.roles for r in small_game.roles)):
 		return False
 	if any((small_game.players[r] != big_game.players[r] for r \
@@ -61,7 +61,7 @@ def IsSubgame(small_game, big_game):
 	return True
 
 
-def Cliques(full_game, known_subgames=set(), fast=False):
+def cliques(full_game, known_subgames=set(), fast=False):
 	"""
 	Finds maximal subgames for which all profiles are known.
 
@@ -70,9 +70,9 @@ def Cliques(full_game, known_subgames=set(), fast=False):
 	the known subgames is ignored, so for faster loading, give only the
 	header information).
 	"""
-	subgames = {Subgame(full_game)}
+	subgames = {subgame(full_game)}
 	for g in known_subgames:
-		sg = Subgame(full_game, g.strategies)
+		sg = subgame(full_game, g.strategies)
 		if sg.isComplete():
 			subgames.add(sg)
 	maximal_subgames = set()
@@ -86,18 +86,18 @@ def Cliques(full_game, known_subgames=set(), fast=False):
 					set(sg.strategies[role]):
 				strategies = {r:list(sg.strategies[r]) + ([s] if r == role \
 						else []) for r in full_game.roles}
-				if not SubgameAvailable(full_game, strategies):
+				if not subgame_available(full_game, strategies):
 					continue
 				new_sg = Game(sg.roles, sg.players, strategies)
 				maximal=False
 				if new_sg in subgames or new_sg in explored_subgames:
 					continue
-				if fast and any([IsSubgame(new_sg, g) for g in \
+				if fast and any([is_subgame(new_sg, g) for g in \
 						subgames.union(maximal_subgames)]):
 					continue
 				subgames.add(new_sg)
 		if maximal:
-			sg = Subgame(full_game, sg.strategies)
+			sg = subgame(full_game, sg.strategies)
 			if len(sg) > 0:
 				maximal_subgames.add(sg)
 	return sorted(maximal_subgames, key=len)
@@ -118,7 +118,7 @@ def parse_args():
 def main():
 	args = parse_args()
 	subgames = read(args.known)
-	print toJSONstr(Cliques(args.input, subgames, args.fast))
+	print toJSONstr(cliques(args.input, subgames, args.fast))
 
 
 if __name__ == "__main__":

@@ -124,49 +124,49 @@ class TestDominates(unittest.TestCase):
 		self.wpd = IO.read(join(path[0], "weak_pure_dominance.xml"))
 
 	def test_weak_dominance(self):
-		self.assertFalse(D.Dominates(self.wpd, "Column", "Center", "Left", \
+		self.assertFalse(D.dominates(self.wpd, "Column", "Center", "Left", \
 				weak=False))
-		self.assertTrue(D.Dominates(self.wpd, "Column", "Center", "Left", \
+		self.assertTrue(D.dominates(self.wpd, "Column", "Center", "Left", \
 				weak=True))
 
 	def test_unconditional_dominance(self):
-		self.assertTrue(D.Dominates(self.spd, "Column", "Center", "Right", 0))
-		self.assertFalse(D.Dominates(self.spd, "Row", "Middle", "Bottom", 0))
-		self.assertTrue(D.Dominates(self.cd_br, "Column", "Center", "Right", \
+		self.assertTrue(D.dominates(self.spd, "Column", "Center", "Right", 0))
+		self.assertFalse(D.dominates(self.spd, "Row", "Middle", "Bottom", 0))
+		self.assertTrue(D.dominates(self.cd_br, "Column", "Center", "Right", \
 				conditional=False))
-		self.assertTrue(D.Dominates(self.cd_br, "Row", "Middle", "Bottom", \
+		self.assertTrue(D.dominates(self.cd_br, "Row", "Middle", "Bottom", \
 				conditional=False))
-		self.assertTrue(D.Dominates(self.cd_bc, "Column", "Center", "Right", \
+		self.assertTrue(D.dominates(self.cd_bc, "Column", "Center", "Right", \
 				conditional=False))
-		self.assertFalse(D.Dominates(self.cd_bc, "Row", "Middle", "Bottom", \
+		self.assertFalse(D.dominates(self.cd_bc, "Row", "Middle", "Bottom", \
 				conditional=False))
 
 	def test_conditional_dominance(self):
-		self.assertTrue(D.Dominates(self.spd, "Column", "Center", "Right", 1))
-		self.assertFalse(D.Dominates(self.spd, "Row", "Middle", "Bottom", 1))
-		self.assertTrue(D.Dominates(self.cd_br, "Column", "Center", "Right", \
+		self.assertTrue(D.dominates(self.spd, "Column", "Center", "Right", 1))
+		self.assertFalse(D.dominates(self.spd, "Row", "Middle", "Bottom", 1))
+		self.assertTrue(D.dominates(self.cd_br, "Column", "Center", "Right", \
 				conditional=True))
-		self.assertTrue(D.Dominates(self.cd_br, "Row", "Middle", "Bottom", \
+		self.assertTrue(D.dominates(self.cd_br, "Row", "Middle", "Bottom", \
 				conditional=True))
-		self.assertFalse(D.Dominates(self.cd_bc, "Column", "Center", "Right", \
+		self.assertFalse(D.dominates(self.cd_bc, "Column", "Center", "Right", \
 				conditional=True))
-		self.assertFalse(D.Dominates(self.cd_bc, "Row", "Middle", "Bottom", \
+		self.assertFalse(D.dominates(self.cd_bc, "Row", "Middle", "Bottom", \
 				conditional=True))
 
 	def test_conservative_dominance(self):
-		self.assertTrue(D.Dominates(self.spd, "Column", "Center", "Right", 2))
-		self.assertFalse(D.Dominates(self.spd, "Row", "Middle", "Bottom", 2))
-		self.assertFalse(D.Dominates(self.cd_br, "Column", "Center", "Right", \
+		self.assertTrue(D.dominates(self.spd, "Column", "Center", "Right", 2))
+		self.assertFalse(D.dominates(self.spd, "Row", "Middle", "Bottom", 2))
+		self.assertFalse(D.dominates(self.cd_br, "Column", "Center", "Right", \
 				conditional=2))
-		self.assertFalse(D.Dominates(self.cd_br, "Row", "Middle", "Bottom", \
+		self.assertFalse(D.dominates(self.cd_br, "Row", "Middle", "Bottom", \
 				conditional=2))
-		self.assertFalse(D.Dominates(self.cd_bc, "Column", "Center", "Right", \
+		self.assertFalse(D.dominates(self.cd_bc, "Column", "Center", "Right", \
 				conditional=2))
-		self.assertFalse(D.Dominates(self.cd_bc, "Row", "Middle", "Bottom", \
+		self.assertFalse(D.dominates(self.cd_bc, "Row", "Middle", "Bottom", \
 				conditional=2))
 
 
-class TestIteratedElimination(unittest.TestCase):
+class Testiterated_elimination(unittest.TestCase):
 	def setUp(self):
 		self.nbr = IO.read(join(path[0], "never_best_response.xml"))
 		self.wpd = IO.read(join(path[0], "weak_pure_dominance.xml"))
@@ -176,37 +176,37 @@ class TestIteratedElimination(unittest.TestCase):
 		"""
 		iterated elimination of strictly pure-strategy dominated strategies
 		"""
-		self.assertEqual(len(D.IteratedElimination(self.nbr, \
-				D.PureStrategyDominance, weak=False)), 6)
-		self.assertEqual(len(D.IteratedElimination(self.wpd, \
-				D.PureStrategyDominance, weak=False)), 9)
-		self.assertEqual(len(D.IteratedElimination(self.spd, \
-				D.PureStrategyDominance, weak=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.nbr, \
+				D.pure_strategy_dominance, weak=False)), 6)
+		self.assertEqual(len(D.iterated_elimination(self.wpd, \
+				D.pure_strategy_dominance, weak=False)), 9)
+		self.assertEqual(len(D.iterated_elimination(self.spd, \
+				D.pure_strategy_dominance, weak=False)), 1)
 
 	def test_IE_WPD(self):
 		"""
 		iterated elimination of weakly pure-strategy dominated strategies
 		"""
-		self.assertEqual(len(D.IteratedElimination(self.nbr, \
-				D.PureStrategyDominance, weak=True)), 6)
-		self.assertEqual(len(D.IteratedElimination(self.wpd, \
-				D.PureStrategyDominance, weak=True)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.spd, \
-				D.PureStrategyDominance, weak=True)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.nbr, \
+				D.pure_strategy_dominance, weak=True)), 6)
+		self.assertEqual(len(D.iterated_elimination(self.wpd, \
+				D.pure_strategy_dominance, weak=True)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.spd, \
+				D.pure_strategy_dominance, weak=True)), 1)
 
 	def test_IE_NBR(self):
 		"""
 		iterated elimination of never weak best-response strategies
 		"""
-		self.assertEqual(len(D.IteratedElimination(self.nbr, \
-				D.NeverBestResponse)), 4)
-		self.assertEqual(len(D.IteratedElimination(self.wpd, \
-				D.NeverBestResponse)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.spd, \
-				D.NeverBestResponse)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.nbr, \
+				D.never_best_response)), 4)
+		self.assertEqual(len(D.iterated_elimination(self.wpd, \
+				D.never_best_response)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.spd, \
+				D.never_best_response)), 1)
 
 
-class TestConditionalIteratedElimination(unittest.TestCase):
+class TestConditionaliterated_elimination(unittest.TestCase):
 	def setUp(self):
 		self.cd_bl = IO.read(join(path[0], "conditional_dominance_BL.xml"))
 		self.cd_bc = IO.read(join(path[0], "conditional_dominance_BC.xml"))
@@ -214,63 +214,63 @@ class TestConditionalIteratedElimination(unittest.TestCase):
 		self.cd_bcr = IO.read(join(path[0],"conditional_dominance_BCR.xml"))
 
 	def test_IE_unconditional_PD(self):
-		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
-				D.PureStrategyDominance, conditional=False)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bc, \
-				D.PureStrategyDominance, conditional=False)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.cd_br, \
-				D.PureStrategyDominance, conditional=False)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
-				D.PureStrategyDominance, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bl, \
+				D.pure_strategy_dominance, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bc, \
+				D.pure_strategy_dominance, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_br, \
+				D.pure_strategy_dominance, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bcr, \
+				D.pure_strategy_dominance, conditional=False)), 1)
 
 	def test_IE_conditional_PD(self):
 		"""
 		iterated elimination of conditionally strictly pure-strategy dominated
 		strategies in games with partial data
 		"""
-		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
-				D.PureStrategyDominance, conditional=True)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bc, \
-				D.PureStrategyDominance, conditional=True)), 8)
-		self.assertEqual(len(D.IteratedElimination(self.cd_br, \
-				D.PureStrategyDominance, conditional=True)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
-				D.PureStrategyDominance, conditional=True)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bl, \
+				D.pure_strategy_dominance, conditional=True)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bc, \
+				D.pure_strategy_dominance, conditional=True)), 8)
+		self.assertEqual(len(D.iterated_elimination(self.cd_br, \
+				D.pure_strategy_dominance, conditional=True)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bcr, \
+				D.pure_strategy_dominance, conditional=True)), 1)
 
 	def test_conservative_PD(self):
-		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
-				D.PureStrategyDominance, conditional=2)), 5)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bc, \
-				D.PureStrategyDominance, conditional=2)), 8)
-		self.assertEqual(len(D.IteratedElimination(self.cd_br, \
-				D.PureStrategyDominance, conditional=2)), 8)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
-				D.PureStrategyDominance, conditional=2)), 5)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bl, \
+				D.pure_strategy_dominance, conditional=2)), 5)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bc, \
+				D.pure_strategy_dominance, conditional=2)), 8)
+		self.assertEqual(len(D.iterated_elimination(self.cd_br, \
+				D.pure_strategy_dominance, conditional=2)), 8)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bcr, \
+				D.pure_strategy_dominance, conditional=2)), 5)
 
 	def test_IE_CNBR(self):
 		"""
 		iterated elimination of conditionally never weak best-response
 		strategies in games with partial data
 		"""
-		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
-				D.NeverBestResponse, conditional=True)), 5)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bl, \
-				D.NeverBestResponse, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bl, \
+				D.never_best_response, conditional=True)), 5)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bl, \
+				D.never_best_response, conditional=False)), 1)
 
-		self.assertEqual(len(D.IteratedElimination(self.cd_bc, \
-				D.NeverBestResponse, conditional=True)), 5)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bc, \
-				D.NeverBestResponse, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bc, \
+				D.never_best_response, conditional=True)), 5)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bc, \
+				D.never_best_response, conditional=False)), 1)
 
-		self.assertEqual(len(D.IteratedElimination(self.cd_br, \
-				D.NeverBestResponse, conditional=True)), 8)
-		self.assertEqual(len(D.IteratedElimination(self.cd_br, \
-				D.NeverBestResponse, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_br, \
+				D.never_best_response, conditional=True)), 8)
+		self.assertEqual(len(D.iterated_elimination(self.cd_br, \
+				D.never_best_response, conditional=False)), 1)
 
-		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
-				D.NeverBestResponse, conditional=True)), 7)
-		self.assertEqual(len(D.IteratedElimination(self.cd_bcr, \
-				D.NeverBestResponse, conditional=False)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bcr, \
+				D.never_best_response, conditional=True)), 7)
+		self.assertEqual(len(D.iterated_elimination(self.cd_bcr, \
+				D.never_best_response, conditional=False)), 1)
 
 
 class TestNash(unittest.TestCase):
@@ -280,14 +280,14 @@ class TestNash(unittest.TestCase):
 		self.rps_sym = IO.read(join(path[0], "RPS_sym.xml"))
 		self.rps_str = IO.read(join(path[0], "RPS_str.xml"))
 
-	def test_PureNash(self):
-		self.assertEqual(len(N.PureNash(self.pd_sym)), 1)
-		self.assertEqual(N.PureNash(self.pd_sym)[0], {"All":{"d":2}})
-		self.assertEqual(len(N.PureNash(self.pd_str)), 1)
-		self.assertEqual(N.PureNash(self.pd_str)[0], {"Alice":{"d":1}, \
+	def test_pure_nash(self):
+		self.assertEqual(len(N.pure_nash(self.pd_sym)), 1)
+		self.assertEqual(N.pure_nash(self.pd_sym)[0], {"All":{"d":2}})
+		self.assertEqual(len(N.pure_nash(self.pd_str)), 1)
+		self.assertEqual(N.pure_nash(self.pd_str)[0], {"Alice":{"d":1}, \
 				"Bob":{"d":1}})
-		self.assertEqual(len(N.PureNash(self.rps_sym)), 0)
-		self.assertEqual(len(N.PureNash(self.rps_str)), 0)
+		self.assertEqual(len(N.pure_nash(self.rps_sym)), 0)
+		self.assertEqual(len(N.pure_nash(self.rps_str)), 0)
 
 	def test_ExpectedValues(self):
 		pd_str_mix = np.array([[0.1,0.9],[0.2,0.8]])
@@ -310,24 +310,24 @@ class TestNash(unittest.TestCase):
 		self.assertTrue(np.allclose(self.rps_sym.expectedValues(\
 				rps_sym_mix), rps_sym_EVs))
 
-	def test_MixedNash(self):
+	def test_mixed_nash(self):
 		expected_eq = np.array([[0.,1.]]*2)
-		found_eq = N.MixedNash(self.pd_str)
+		found_eq = N.mixed_nash(self.pd_str)
 		self.assertEqual(len(found_eq), 1)
 		self.assertTrue(np.allclose(expected_eq, found_eq[0]))
 
 		expected_eq = np.array([[0.,1.]])
-		found_eq = N.MixedNash(self.pd_sym)
+		found_eq = N.mixed_nash(self.pd_sym)
 		self.assertEqual(len(found_eq), 1)
 		self.assertTrue(np.allclose(expected_eq, found_eq[0]))
 
 		expected_eq = np.array([[1./3]*3]*2)
-		found_eq = N.MixedNash(self.rps_str)
+		found_eq = N.mixed_nash(self.rps_str)
 		self.assertEqual(len(found_eq), 1)
 		self.assertTrue(np.allclose(expected_eq, found_eq[0]))
 
 		expected_eq = np.array([[1./3]*3])
-		found_eq = N.MixedNash(self.rps_sym)
+		found_eq = N.mixed_nash(self.rps_sym)
 		self.assertEqual(len(found_eq), 1)
 		self.assertTrue(np.allclose(expected_eq, found_eq[0]))
 
@@ -340,16 +340,16 @@ class TestSparseGame(unittest.TestCase):
 		self.cliques_4 = IO.read(join(path[0], "cliques_all_sym.json"))
 		self.ss = IO.read(join(path[0], "sparse_symmetric.xml"))
 
-	def test_Cliques(self):
-		self.assertEqual(map(len, S.Cliques(self.cliques_full)), [9])
-		self.assertEqual(map(len, S.Cliques(self.cliques_1)), [3,3,3])
-		self.assertEqual(map(len, S.Cliques(self.cliques_2)), [3,3])
-		self.assertEqual(map(len, S.Cliques(self.cliques_4)), [])
-		self.assertEqual(map(len, S.Cliques(self.ss)), [3])
+	def test_cliques(self):
+		self.assertEqual(map(len, S.cliques(self.cliques_full)), [9])
+		self.assertEqual(map(len, S.cliques(self.cliques_1)), [3,3,3])
+		self.assertEqual(map(len, S.cliques(self.cliques_2)), [3,3])
+		self.assertEqual(map(len, S.cliques(self.cliques_4)), [])
+		self.assertEqual(map(len, S.cliques(self.ss)), [3])
 
 	def test_SparseRegret(self):
-		clique = S.Cliques(self.ss)[0]
-		clique_eq = N.MixedNash(clique)[0]
+		clique = S.cliques(self.ss)[0]
+		clique_eq = N.mixed_nash(clique)[0]
 		full_candidate = S.translate(clique_eq, clique, self.ss)
 		self.assertEqual(R.regret(self.ss, full_candidate, deviation="A"), 0)
 		self.assertEqual(R.regret(self.ss, full_candidate, deviation="B"), 0)
@@ -365,35 +365,35 @@ class TestDegenerateGame(unittest.TestCase):
 		self.one_profile = IO.read(join(path[0], "one_profile.xml"))
 
 	def test_IEDS(self):
-		self.assertEqual(len(D.IteratedElimination(self.one_player, \
-				D.PureStrategyDominance)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.one_strategy, \
-				D.PureStrategyDominance)), 1)
-		self.assertEqual(len(D.IteratedElimination(self.one_profile, \
-				D.PureStrategyDominance)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.one_player, \
+				D.pure_strategy_dominance)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.one_strategy, \
+				D.pure_strategy_dominance)), 1)
+		self.assertEqual(len(D.iterated_elimination(self.one_profile, \
+				D.pure_strategy_dominance)), 1)
 
-	def test_Cliques(self):
-		self.assertEqual(map(len, S.Cliques(self.one_player)), [2])
-		self.assertEqual(map(len, S.Cliques(self.one_strategy)), [1])
-		self.assertEqual(map(len, S.Cliques(self.one_profile)), [1])
+	def test_cliques(self):
+		self.assertEqual(map(len, S.cliques(self.one_player)), [2])
+		self.assertEqual(map(len, S.cliques(self.one_strategy)), [1])
+		self.assertEqual(map(len, S.cliques(self.one_profile)), [1])
 
-	def test_PureNash(self):
-		self.assertEqual(N.PureNash(self.one_player)[0], {"All":{"s2":1}})
-		self.assertEqual(N.PureNash(self.one_strategy)[0], {"All":{"s1":2}})
-		self.assertEqual(len(N.PureNash(self.one_profile)), 0)
+	def test_pure_nash(self):
+		self.assertEqual(N.pure_nash(self.one_player)[0], {"All":{"s2":1}})
+		self.assertEqual(N.pure_nash(self.one_strategy)[0], {"All":{"s1":2}})
+		self.assertEqual(len(N.pure_nash(self.one_profile)), 0)
 
-	def test_MixedNash(self):
+	def test_mixed_nash(self):
 		expected_eq = np.array([[0.,1.]])
-		found_eq = N.MixedNash(self.one_player)
+		found_eq = N.mixed_nash(self.one_player)
 		self.assertEqual(len(found_eq), 1)
 		self.assertTrue(np.allclose(expected_eq, found_eq[0]))
 
 		expected_eq = np.array([[1.]])
-		found_eq = N.MixedNash(self.one_strategy)
+		found_eq = N.mixed_nash(self.one_strategy)
 		self.assertEqual(len(found_eq), 1)
 		self.assertTrue(np.allclose(expected_eq, found_eq[0]))
 
-		found_eq = N.MixedNash(self.one_profile)
+		found_eq = N.mixed_nash(self.one_profile)
 		self.assertEqual(len(found_eq), 0)
 
 

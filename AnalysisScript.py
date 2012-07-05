@@ -38,7 +38,7 @@ def main(input_game, args):
 
 
 	#iterated elimination of dominated strategies
-	rational_game = IteratedElimination(input_game, PureStrategyDominance, \
+	rational_game = iterated_elimination(input_game, pure_strategy_dominance, \
 			conditional=1)
 	eliminated = {r:sorted(set(input_game.strategies[r]) - set( \
 			rational_game.strategies[r])) for r in input_game.roles}
@@ -51,7 +51,7 @@ def main(input_game, args):
 		print "no dominated strategies found"
 
 	#pure strategy Nash equilibrium search
-	pure_equilibria = PureNash(rational_game, args.r)
+	pure_equilibria = pure_nash(rational_game, args.r)
 	l = len(pure_equilibria)
 	if l > 0:
 		print "\n" + str(len(pure_equilibria)), "pure strategy Nash equilibri" \
@@ -72,7 +72,7 @@ def main(input_game, args):
 					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
 
 	#find maximal subgames
-	maximal_subgames = Cliques(rational_game)
+	maximal_subgames = cliques(rational_game)
 	num_subgames = len(maximal_subgames)
 	if num_subgames == 1 and maximal_subgames[0] == input_game:
 		print "\ninput game is maximal"
@@ -86,7 +86,7 @@ def main(input_game, args):
 		print "\nsubgame "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
 				":\n\t\t" + "\n\t\t".join(x[1]), sorted( \
 				subgame.strategies.items()))).expandtabs(4)
-		mixed_equilibria = MixedNash(subgame, args.r, args.d, iters=args.i, \
+		mixed_equilibria = mixed_nash(subgame, args.r, args.d, iters=args.i, \
 			converge_thresh=args.c)
 		print "\n" + str(len(mixed_equilibria)), "approximate mixed strategy"+ \
 				" Nash equilibri" + ("um:" if len(mixed_equilibria) == 1 \
@@ -121,7 +121,7 @@ def main(input_game, args):
 						list(BR[role][0])[0])
 				print "\t" + str(role) + ": " + ", ".join(BR[role][0]) + \
 						";\tgain =", (round(r, 4) if not isinf(r) else "?")
-				print "Deviation subgame " + ("explored." if Subgame( \
+				print "Deviation subgame " + ("explored." if subgame( \
 						input_game, deviation_support).isComplete() else \
 						"UNEXPLORED!") + "\n"
 
