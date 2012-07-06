@@ -1,5 +1,7 @@
 #! /usr/bin/env python2.7
 
+from heapq import heappush, heappop
+
 from RoleSymmetricGame import Game, PayoffData
 
 def translate(arr, source_game, target_game):
@@ -61,7 +63,7 @@ def is_subgame(small_game, big_game):
 	return True
 
 
-def cliques(full_game, known_subgames=set(), fast=False):
+def cliques(full_game):
 	"""
 	Finds maximal subgames for which all profiles are known.
 
@@ -70,55 +72,37 @@ def cliques(full_game, known_subgames=set(), fast=False):
 	the known subgames is ignored, so for faster loading, give only the
 	header information).
 	"""
-	subgames = {subgame(full_game)}
-	for g in known_subgames:
-		sg = subgame(full_game, g.strategies)
-		if sg.isComplete():
-			subgames.add(sg)
+	subgames = [subgame(full_game)]
 	maximal_subgames = set()
-	explored_subgames = set()
 	while(subgames):
-		sg = subgames.pop()
-		explored_subgames.add(sg)
+		sg = heappop(subgames)
 		maximal = True
 		for role in full_game.roles:
-			for s in set(full_game.strategies[role]) - \
-					set(sg.strategies[role]):
+			if len(sg.strategies[role]) == 0:
+				last_strat = -1
+			else:
+				last_strat = full_game.index(role, sg.strategies[role][-1])
+			for s in full_game.strategies[role][last_strat + 1:]:
 				strategies = {r:list(sg.strategies[r]) + ([s] if r == role \
 						else []) for r in full_game.roles}
-				if not subgame_available(full_game, strategies):
-					continue
-				new_sg = Game(sg.roles, sg.players, strategies)
-				maximal=False
-				if new_sg in subgames or new_sg in explored_subgames:
-					continue
-				if fast and any([is_subgame(new_sg, g) for g in \
-						subgames.union(maximal_subgames)]):
-					continue
-				subgames.add(new_sg)
+				new_sg = subgame(full_game, strategies)
+				if new_sg.isComplete():
+					maximal=False
+					heappush(subgames, new_sg)
 		if maximal:
-			sg = subgame(full_game, sg.strategies)
-			if len(sg) > 0:
+			if len(sg) > 0 and not any((is_subgame(sg, g) for g \
+					in maximal_subgames)):
 				maximal_subgames.add(sg)
 	return sorted(maximal_subgames, key=len)
 
 
-from GameIO import read, to_JSON_str, io_parser
-
-def parse_args():
-	parser = io_parser()
-	parser.add_argument("-known", type=str, default="[]", help= \
-			"File with known complete subgames. Improves runtime.")
-	parser.add_argument("--fast", action="store_true", help="Speeds up " + \
-			"subgame finding, especially if using known subgames. Can miss " + \
-			"some complete subgames.")
-	return parser.parse_args()
+from GameIO import to_JSON_str, io_parser
 
 
 def main():
-	args = parse_args()
-	subgames = read(args.known)
-	print to_JSON_str(cliques(args.input, subgames, args.fast))
+	parser = io_parser()
+	args = parser.parse_args()
+	print to_JSON_str(cliques(args.input))
 
 
 if __name__ == "__main__":
