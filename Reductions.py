@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 
-from RoleSymmetricGame import Game, Profile, payoff_data
+from RoleSymmetricGame import Game, Profile, PayoffData
 
 def hierarchical_reduction(game, players={} ):
 	if not players:
@@ -10,7 +10,7 @@ def hierarchical_reduction(game, players={} ):
 		try:
 			full_profile = Profile({r:full_game_profile(reduced_profile[r], \
 					game.players[r]) for r in game.roles})
-			HR_game.addProfile({r:[payoff_data(s, reduced_profile[r][s], \
+			HR_game.addProfile({r:[PayoffData(s, reduced_profile[r][s], \
 					game.getPayoff(full_profile, r, s)) for s in \
 					full_profile[r]] for r in full_profile})
 		except KeyError:
@@ -52,7 +52,7 @@ def deviation_preserving_reduction(game, players={}):
 						else:
 							full_profile[r] = full_game_profile( \
 									reduced_profile[r], game.players[r])
-					role_payoffs[r].append(payoff_data(s, reduced_profile[r\
+					role_payoffs[r].append(PayoffData(s, reduced_profile[r\
 							][s], game.getPayoff(Profile(full_profile), r, s)))
 			DPR_game.addProfile(role_payoffs)
 		except KeyError:
@@ -87,7 +87,7 @@ def DPR_profiles(game, players={}):
 	return profiles
 
 
-from GameIO import toJSONstr, io_parser
+from GameIO import to_JSON_str, io_parser
 
 def parse_args():
 	parser = io_parser()
@@ -103,11 +103,11 @@ def main():
 	game = args.input
 	players = dict(zip(game.roles, args.players))
 	if args.type == "DPR":
-		print toJSONstr(deviation_preserving_reduction(game, players))
+		print to_JSON_str(deviation_preserving_reduction(game, players))
 	elif args.type == "HR":
-		print toJSONstr(hierarchical_reduction(game, players))
+		print to_JSON_str(hierarchical_reduction(game, players))
 	elif args.type == "TR":
-		print toJSONstr(twins_reduction(game))
+		print to_JSON_str(twins_reduction(game))
 
 
 if __name__ == "__main__":

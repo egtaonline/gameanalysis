@@ -26,18 +26,18 @@ def read(source):
 
 
 def detect_and_load(data_str):
-	json_data = loadJSON(data_str)
+	json_data = load_JSON(data_str)
 	if json_data != None:
-		return readJSON(json_data)
-	xml_data = loadXML(data_str)
+		return read_JSON(json_data)
+	xml_data = load_XML(data_str)
 	if xml_data != None:
-		return readXML(xml_data)
-	if isNFG(data_str):
-		return readNFG(data_str)
+		return read_XML(xml_data)
+	if is_NFG(data_str):
+		return read_NFG(data_str)
 	raise IOError(one_line("could not detect format of data: " + data_str, 71))
 
 
-def loadJSON(data):
+def load_JSON(data):
 	if isinstance(data, list) or isinstance(data, dict):
 		return data
 	try:
@@ -46,7 +46,7 @@ def loadJSON(data):
 		return None
 
 
-def loadXML(data):
+def load_XML(data):
 	if isinstance(data, Document):
 		return data
 	try:
@@ -55,48 +55,48 @@ def loadXML(data):
 		return None
 
 
-def isNFG(data):
+def is_NFG(data):
 	return data.startswith("NFG")
 
 
-def readJSON(data):
+def read_JSON(data):
 	"""
 	Convert loaded json data (list or dict) into GameAnalysis classes.
 	"""
 	type(data)
 	if isinstance(data, list):
-		return map(readJSON, data)
+		return map(read_JSON, data)
 	if "profiles" in data:
-		return readGameJSON(data)
+		return read_game_JSON(data)
 	if "sample_count" in data:
-		return readTestbedProfile(data)
+		return read_testbed_profile(data)
 	if "type" in data and data["type"] == "GA_Profile":
-		return readProfile(data)
+		return read_profile(data)
 	raise IOError(one_line("no GameAnalysis class found in JSON: " + \
 			str(data), 71))
 
 
-def readGameJSON(gameJSON):
+def read_game_JSON(gameJSON):
 	if "strategies" in gameJSON["roles"][0]:
-		return readGameJSON_v2(gameJSON)
+		return read_game_JSON_v2(gameJSON)
 	elif "strategy_array" in gameJSON["roles"][0]:
-		return readGameJSON_old(gameJSON)
+		return read_game_JSON_old(gameJSON)
 	else:
 		raise IOError(one_line("invalid game JSON: " + str(data), 71))
 
 
-def readGameJSON_v2(gameJSON):
+def read_game_JSON_v2(gameJSON):
 	players = {r["name"] : int(r["count"]) for r in gameJSON["roles"]}
 	strategies = {r["name"] : r["strategies"] for r in gameJSON["roles"]}
 	roles = list(players.keys())
 	profiles = []
 	if "profiles" in gameJSON:
 		for profileJSON in gameJSON["profiles"]:
-			profiles.append(readTestbedProfile(profileJSON))
+			profiles.append(read_testbed_profile(profileJSON))
 	return Game(roles, players, strategies, profiles)
 
 
-def readGameJSON_old(json_data):
+def read_game_JSON_old(json_data):
 	players = {r["name"] : int(r["count"]) for r in json_data["roles"]}
 	strategies = {r["name"] : r["strategy_array"] for r in json_data["roles"]}
 	roles = list(players.keys())
@@ -111,42 +111,42 @@ def readGameJSON_old(json_data):
 			role = roleDict["name"]
 			for strategyDict in roleDict["strategies"]:
 				s = strategyDict["name"]
-				profile[role].append(payoff_data(str(s), int(prof_strat[role] \
+				profile[role].append(PayoffData(str(s), int(prof_strat[role] \
 						.count(s)), float(strategyDict["payoff"])))
 		profiles.append(profile)
 	return Game(roles, players, strategies, profiles)
 
 
-def readTestbedProfile(profileJSON):
+def read_testbed_profile(profileJSON):
 	profile = {r["name"]:[] for r in profileJSON["roles"]}
 	for roleDict in profileJSON["roles"]:
 		role = roleDict["name"]
 		for strategyDict in roleDict["strategies"]:
-			profile[role].append(payoff_data(str(strategyDict[ \
+			profile[role].append(PayoffData(str(strategyDict[ \
 					"name"]), int(strategyDict["count"]), \
 					float(strategyDict["payoff"])))
 	return profile
 
 
-def readProfile(profileJSON):
+def read_profile(profileJSON):
 	try:
 		return Profile(profileJSON["data"])
 	except KeyError:
 		return Profile(profileJSON)
 
 
-def readXML(data):
+def read_XML(data):
 	"""
 	Convert loaded xml data (Document) into GameAnalysis classes.
 	"""
 	gameNode = data.getElementsByTagName("nfg")[0]
 	if len(gameNode.getElementsByTagName("player")[0]. \
 			getElementsByTagName("action")) > 0:
-		return parseStrategicXML(gameNode)
-	return parseSymmetricXML(gameNode)
+		return parse_strategic_XML(gameNode)
+	return parse_symmetric_XML(gameNode)
 
 
-def parseStrategicXML(gameNode):
+def parse_strategic_XML(gameNode):
 	strategies = {p.getAttribute('id') : map(lambda s: s.getAttribute('id'), \
 			p.getElementsByTagName('action')) for p in \
 			gameNode.getElementsByTagName('player')}
@@ -159,12 +159,12 @@ def parseStrategicXML(gameNode):
 			role = outcomeNode.getAttribute('player')
 			strategy = outcomeNode.getAttribute('action')
 			value = float(outcomeNode.getAttribute('value'))
-			data[role].append(payoff_data(strategy, 1, value))
+			data[role].append(PayoffData(strategy, 1, value))
 		payoffs.append(data)
 	return Game(roles, counts, strategies, payoffs)
 
 
-def parseSymmetricXML(gameNode):
+def parse_symmetric_XML(gameNode):
 	roles = ["All"]
 	counts= {"All" : len(gameNode.getElementsByTagName("player"))}
 	strategies = {"All" : [e.getAttribute("id") for e in \
@@ -176,55 +176,55 @@ def parseSymmetricXML(gameNode):
 			strategy = outcomeNode.getAttribute("action")
 			count = int(outcomeNode.getAttribute("count"))
 			value = float(outcomeNode.getAttribute("value"))
-			data.append(payoff_data(strategy, count, value))
+			data.append(PayoffData(strategy, count, value))
 		payoffs.append({"All":data})
 	return Game(roles, counts, strategies, payoffs)
 
 
-def readNFG(data_str):
+def read_NFG(data_str):
 	if data_str.split('"')[1].lower().startswith("symmetric"):
-		return readNFGsym(data_str)
+		return read_NFG_sym(data_str)
 	if data_str.split('"')[1].lower().startswith("role symmetric"):
-		return readNFGrsym(data_str)
-	return readNFGasym(data_str)
+		return read_NFG_rsym(data_str)
+	return read_NFG_asym(data_str)
 
 
-def readNFGsym(data):
+def read_NFG_sym(data):
 	raise NotImplementedError("TODO")
 
 
-def readNFGrsym(data):
+def read_NFG_rsym(data):
 	raise NotImplementedError("TODO")
 
 
-def readNFGasym(data):
+def read_NFG_asym(data):
 	raise NotImplementedError("TODO")
 
 
-def toJSONstr(obj):
-	return dumps(toJSONobj(obj), sort_keys=True, indent=2)
+def to_JSON_str(obj):
+	return dumps(to_JSON_obj(obj), sort_keys=True, indent=2)
 
 
-def toJSONobj(obj):
+def to_JSON_obj(obj):
 	if hasattr(obj, "toJSON"):
 		return obj.toJSON()
 	if hasattr(obj, "items"):
-		return {k:toJSONobj(v) for k,v in obj.items()}
+		return {k:to_JSON_obj(v) for k,v in obj.items()}
 	if hasattr(obj, "__iter__"):
-		return map(toJSONobj, obj)
+		return map(to_JSON_obj, obj)
 	return loads(dumps(obj))
 
 
-def toXML(game):
+def to_XML(game):
 	if len(game.roles) == 1:
-		toSymmetricXML(game)
+		to_symmetric_XML(game)
 	elif all(map(lambda c: c==1, game.counts.values())):
-		toStrategicXML(game)
+		to_strategic_XML(game)
 	else:
 		raise NotImplementedError("no EGAT XML spec for role-symmetric games")
 
 
-def toSymmetricXML(game):
+def to_symmetric_XML(game):
 	"""
 	Writes game to XML according to the EGAT symmetric game spec.
 	Assumes (but doesn't check) that game is symmetric.
@@ -232,7 +232,7 @@ def toSymmetricXML(game):
 	raise NotImplementedError("TODO")
 
 
-def toStrategicXML(game):
+def to_strategic_XML(game):
 	"""
 	Writes game to XML according to the EGAT strategic game spec.
 	Assumes (but doesn't check) that game is not role-symmetric.
@@ -240,25 +240,25 @@ def toStrategicXML(game):
 	raise NotImplementedError("TODO")
 
 
-def toNFG(game):
-	if isSymmetric(game):
-		return toNFGsym(game)
-	if isAsymmetric(game):
-		return toNFGasym(game)
-	return toNFGrsym(game)
+def to_NFG(game):
+	if is_symmetric(game):
+		return to_NFG_sym(game)
+	if is_asymmetric(game):
+		return to_NFG_asym(game)
+	return to_NFG_rsym(game)
 
 
-def toNFGsym(game):
+def to_NFG_sym(game):
 	output = 'NFG 1 R "symmetric"\n'
 	raise NotImplementedError("TODO")
 
 
-def toNFGasym(game):
+def to_NFG_asym(game):
 	output = 'NFG 1 R "asymmetric"\n'
 	raise NotImplementedError("TODO")
 
 
-def toNFGrsym(game):
+def to_NFG_rsym(game):
 	output = 'NFG 1 R "role-symmetric: ' + ", ".join([str(game.players[r]) + \
 			" " + r for r in game.roles]) + '"\n'
 	raise NotImplementedError("TODO")
@@ -295,9 +295,9 @@ def parse_args():
 def main():
 	args = parse_args()
 	if args.format == "json":
-		print toJSONstr(args.input)
+		print to_JSON_str(args.input)
 	elif args.format == "xml":
-		print toXML(args.input)
+		print to_XML(args.input)
 
 
 if __name__ == "__main__":

@@ -10,13 +10,13 @@ from RoleSymmetricGame import *
 def regret(game, prof, role=None, strategy=None, deviation=None, bound=False):
 	if role == None and len(game.roles) == 1:
 		role = game.roles[0] #in symmetric games we can deduce the role
-	if isPureProfile(prof):
+	if is_pure_profile(prof):
 		return profile_regret(game, prof, role, strategy, deviation, bound)
-	if isMixtureArray(prof):
+	if is_mixture_array(prof):
 		return mixture_regret(game, prof, role, deviation, bound)
-	if isMixedProfile(prof):
+	if is_mixed_profile(prof):
 		return mixture_regret(game, game.toArray(prof), role, deviation, bound)
-	if isProfileArray(prof):
+	if is_profile_array(prof):
 		return profile_regret(game, game.toProfile(prof), role, strategy, \
 				deviation, bound)
 	raise TypeError(one_line("unrecognized profile type: " + str(prof), 69))
@@ -113,7 +113,7 @@ def equilibrium_regrets(game, eq):
 	return regrets
 
 
-from GameIO import read, toJSONstr, io_parser
+from GameIO import read, to_JSON_str, io_parser
 from Subgames import translate
 
 def parse_args():
@@ -138,9 +138,9 @@ def main():
 		for prof in prof_list:
 			regrets[-1].append(regret(g, prof))
 	if len(regrets) > 1:
-		print toJSONstr(regrets)
+		print to_JSON_str(regrets)
 	else:
-		print toJSONstr(regrets[0])
+		print to_JSON_str(regrets[0])
 
 
 if __name__ == "__main__":

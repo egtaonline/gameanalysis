@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 
-from RoleSymmetricGame import Game, payoff_data
+from RoleSymmetricGame import Game, PayoffData
 
 def translate(arr, source_game, target_game):
 	"""
@@ -30,12 +30,12 @@ def subgame(game, strategies={}):
 	if sg.size <= len(game):
 		for p in sg.allProfiles():
 			if p in game:
-				sg.addProfile({r:[payoff_data(s, p[r][s], \
+				sg.addProfile({r:[PayoffData(s, p[r][s], \
 						game.getPayoff(p,r,s)) for s in p[r]] for r in p})
 	else:
 		for p in game:
 			if all([all([s in sg.strategies[r] for s in p[r]]) for r in p]):
-				sg.addProfile({r:[payoff_data(s, p[r][s], \
+				sg.addProfile({r:[PayoffData(s, p[r][s], \
 						game.getPayoff(p,r,s)) for s in p[r]] for r in p})
 	return sg
 
@@ -103,7 +103,7 @@ def cliques(full_game, known_subgames=set(), fast=False):
 	return sorted(maximal_subgames, key=len)
 
 
-from GameIO import read, toJSONstr, io_parser
+from GameIO import read, to_JSON_str, io_parser
 
 def parse_args():
 	parser = io_parser()
@@ -118,7 +118,7 @@ def parse_args():
 def main():
 	args = parse_args()
 	subgames = read(args.known)
-	print toJSONstr(cliques(args.input, subgames, args.fast))
+	print to_JSON_str(cliques(args.input, subgames, args.fast))
 
 
 if __name__ == "__main__":

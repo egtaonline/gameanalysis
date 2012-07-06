@@ -4,7 +4,6 @@ import unittest
 
 from os.path import dirname, join
 from sys import path
-from math import isinf
 
 import numpy as np
 
@@ -23,35 +22,35 @@ class TestProfileDetection(unittest.TestCase):
 		self.cliques = IO.read(join(path[0], "cliques_full.json"))
 
 	def test_profile_array_detection(self):
-		self.assertTrue(RSG.isProfileArray(self.cliques.counts[0]))
-		self.assertFalse(RSG.isMixtureArray(self.cliques.counts[0]))
-		self.assertFalse(RSG.isPureProfile(self.cliques.counts[0]))
-		self.assertFalse(RSG.isMixedProfile(self.cliques.counts[0]))
+		self.assertTrue(RSG.is_profile_array(self.cliques.counts[0]))
+		self.assertFalse(RSG.is_mixture_array(self.cliques.counts[0]))
+		self.assertFalse(RSG.is_pure_profile(self.cliques.counts[0]))
+		self.assertFalse(RSG.is_mixed_profile(self.cliques.counts[0]))
 
 	def test_pure_profile_detection(self):
-		self.assertFalse(RSG.isProfileArray(self.cliques.toProfile( \
+		self.assertFalse(RSG.is_profile_array(self.cliques.toProfile( \
 				self.cliques.counts[0])))
-		self.assertFalse(RSG.isMixtureArray(self.cliques.toProfile( \
+		self.assertFalse(RSG.is_mixture_array(self.cliques.toProfile( \
 				self.cliques.counts[0])))
-		self.assertTrue(RSG.isPureProfile(self.cliques.toProfile( \
+		self.assertTrue(RSG.is_pure_profile(self.cliques.toProfile( \
 				self.cliques.counts[0])))
-		self.assertFalse(RSG.isMixedProfile(self.cliques.toProfile( \
+		self.assertFalse(RSG.is_mixed_profile(self.cliques.toProfile( \
 				self.cliques.counts[0])))
 
 	def test_mixture_array_detection(self):
-		self.assertFalse(RSG.isProfileArray(self.cliques.uniformMixture()))
-		self.assertTrue(RSG.isMixtureArray(self.cliques.uniformMixture()))
-		self.assertFalse(RSG.isPureProfile(self.cliques.uniformMixture()))
-		self.assertFalse(RSG.isMixedProfile(self.cliques.uniformMixture()))
+		self.assertFalse(RSG.is_profile_array(self.cliques.uniformMixture()))
+		self.assertTrue(RSG.is_mixture_array(self.cliques.uniformMixture()))
+		self.assertFalse(RSG.is_pure_profile(self.cliques.uniformMixture()))
+		self.assertFalse(RSG.is_mixed_profile(self.cliques.uniformMixture()))
 
 	def test_mixed_profile_detection(self):
-		self.assertFalse(RSG.isProfileArray(self.cliques.toProfile( \
+		self.assertFalse(RSG.is_profile_array(self.cliques.toProfile( \
 				self.cliques.uniformMixture())))
-		self.assertFalse(RSG.isMixtureArray(self.cliques.toProfile( \
+		self.assertFalse(RSG.is_mixture_array(self.cliques.toProfile( \
 				self.cliques.uniformMixture())))
-		self.assertFalse(RSG.isPureProfile(self.cliques.toProfile( \
+		self.assertFalse(RSG.is_pure_profile(self.cliques.toProfile( \
 				self.cliques.uniformMixture())))
-		self.assertTrue(RSG.isMixedProfile(self.cliques.toProfile( \
+		self.assertTrue(RSG.is_mixed_profile(self.cliques.toProfile( \
 				self.cliques.uniformMixture())))
 
 

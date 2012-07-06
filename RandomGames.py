@@ -1,7 +1,7 @@
 #! /usr/bin/env python2.7
 
 from BasicFunctions import leading_zeros
-from RoleSymmetricGame import Game, payoff_data
+from RoleSymmetricGame import Game, PayoffData
 
 import numpy.random as rnd
 
@@ -15,8 +15,8 @@ def uniform_zero_sum(S):
 		row_strat = prof["row"].keys()[0]
 		row_val = rnd.uniform(-1,1)
 		col_strat = prof["column"].keys()[0]
-		p = {"row":[payoff_data(row_strat, 1, row_val)], \
-				"column":[payoff_data(col_strat, 1, -row_val)]}
+		p = {"row":[PayoffData(row_strat, 1, row_val)], \
+				"column":[PayoffData(col_strat, 1, -row_val)]}
 		g.addProfile(p)
 	return g
 
@@ -29,12 +29,12 @@ def uniform_symmetric(N, S):
 	for prof in g.allProfiles():
 		payoffs = []
 		for strat, count in prof["All"].items():
-			payoffs.append(payoff_data(strat, count, rnd.uniform(-1,1)))
+			payoffs.append(PayoffData(strat, count, rnd.uniform(-1,1)))
 		g.addProfile({"All":payoffs})
 	return g
 
 
-from GameIO import toJSONstr
+from GameIO import to_JSON_str
 from argparse import ArgumentParser
 import sys
 
@@ -60,9 +60,9 @@ def main():
 		game_args = map(int, args.game_args[:2])
 	games = [game_func(*game_args) for i in range(args.count)]
 	if len(games) == 1:
-		print toJSONstr(games[0])
+		print to_JSON_str(games[0])
 	else:
-		print toJSONstr(games)
+		print to_JSON_str(games)
 
 
 if __name__ == "__main__":

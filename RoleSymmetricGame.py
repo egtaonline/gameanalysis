@@ -8,7 +8,7 @@ from string import join
 from HashableClasses import *
 from BasicFunctions import *
 
-payoff_data = namedtuple("payoff", "strategy count value")
+PayoffData = namedtuple("payoff", "strategy count value")
 
 tiny = float(np.finfo(np.float64).tiny)
 
@@ -227,7 +227,7 @@ class Game(dict):
 
 	def toProfile(self, arr, supp_thresh=1e-3):
 		arr = np.array(arr)
-		if isMixtureArray(arr):
+		if is_mixture_array(arr):
 			arr[arr < supp_thresh] = 0
 			sums = arr.sum(1).reshape(arr.shape[0], 1)
 			if np.any(sums == 0):
@@ -244,9 +244,9 @@ class Game(dict):
 		return Profile(p)
 
 	def toArray(self, prof):
-		if isMixedProfile(prof):
+		if is_mixed_profile(prof):
 			a = self.zeros(dtype=float)
-		elif isPureProfile(prof):
+		elif is_pure_profile(prof):
 			a = self.zeros(dtype=int)
 		else:
 			raise TypeError(one_line("unrecognized profile type: " + \
@@ -317,14 +317,14 @@ class Game(dict):
 		return game_dict
 
 
-def isPureProfile(prof):
+def is_pure_profile(prof):
 	if not isinstance(prof, h_dict):
 		return False
 	flat = flatten([v.values() for v in prof.values()])
 	return all([isinstance(count, int) and count >= 0 for count in flat])
 
 
-def isMixedProfile(prof):
+def is_mixed_profile(prof):
 	if not isinstance(prof, h_dict):
 		return False
 	flat = flatten([v.values() for v in prof.values()])
@@ -332,19 +332,19 @@ def isMixedProfile(prof):
 			np.allclose(sum(flat), len(prof))
 
 
-def isProfileArray(arr):
+def is_profile_array(arr):
 	return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
 			arr.dtype == int
 
 
-def isMixtureArray(arr):
+def is_mixture_array(arr):
 	return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
 			np.allclose(arr.sum(1), 1)
 
 
-def isSymmetric(game):
+def is_symmetric(game):
 	return len(game.roles) == 1
 
 
-def isAsymmetric(game):
+def is_asymmetric(game):
 	return all([p == 1 for p in game.players.values()])

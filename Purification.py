@@ -2,19 +2,19 @@
 
 import numpy as np
 
-from RoleSymmetricGame import isMixedProfile, isMixtureArray, Profile, tiny
+from RoleSymmetricGame import is_mixed_profile, is_mixture_array, Profile, tiny
 from BasicFunctions import one_line
 
 
 def threshold(prof, supp_thresh=0.1):
-	if isMixtureArray(prof):
+	if is_mixture_array(prof):
 		arr = np.array(prof)
 		arr[arr < supp_thresh] = 0
 		sums = arr.sum(1).reshape(arr.shape[0], 1)
 		if np.any(sums == 0):
 			raise ValueError("no probability greater than threshold.")
 		return arr / sums
-	if isMixedProfile(prof):
+	if is_mixed_profile(prof):
 		dct = prof.asDict()
 		for role in dct:
 			for strat in prof[role]:
@@ -31,11 +31,11 @@ def threshold(prof, supp_thresh=0.1):
 
 
 def purify(prof):
-	if isMixtureArray(prof):
+	if is_mixture_array(prof):
 		arr = np.array(prof)
 		arr[arr < arr.max(1).reshape(arr.shape[0],1)] = 0
 		return arr / arr.sum(1).reshape(arr.shape[0], 1)
-	if isMixedProfile(prof):
+	if is_mixed_profile(prof):
 		dct = prof.asDict()
 		maxima = {r:max(prof[r].values()) for r in prof}
 		for role in prof:

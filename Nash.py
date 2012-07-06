@@ -50,7 +50,7 @@ def replicator_dynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 	return mix
 
 
-from GameIO import io_parser, toJSONstr
+from GameIO import io_parser, to_JSON_str
 
 def parse_args():
 	parser = io_parser()
@@ -89,9 +89,9 @@ def main():
 	elif args.type == "mrp":
 		equilibria = map(min_regret_profile, games)
 	if len(equilibria) > 1:
-		print toJSONstr(equilibria)
+		print to_JSON_str(equilibria)
 	else:
-		print toJSONstr(equilibria[0])
+		print to_JSON_str(equilibria[0])
 
 
 if __name__ == "__main__":
