@@ -63,7 +63,7 @@ def main(input_game, args):
 						str(pair[1]) + "x " + str(pair[0]), eq[role].items()))
 	else:
 		print "\nno pure strategy Nash equilibria found."
-		mrp = MinRegretProfile(rational_game)
+		mrp = min_regret_profile(rational_game)
 		print "regret =", regret(input_game, mrp)
 		print "minimum regret pure strategy profile (regret = " + \
 				str(round(regret(input_game, mrp), 4)) + "):"
