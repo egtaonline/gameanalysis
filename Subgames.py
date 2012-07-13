@@ -63,7 +63,7 @@ def is_subgame(small_game, big_game):
 	return True
 
 
-def cliques(full_game):
+def cliques(full_game, known_subgames=[]):
 	"""
 	Finds maximal subgames for which all profiles are known.
 
@@ -72,26 +72,37 @@ def cliques(full_game):
 	the known subgames is ignored, so for faster loading, give only the
 	header information).
 	"""
-	subgames = [subgame(full_game)]
+	new_profiles = set(full_game.knownProfiles()) - set().union(( \
+			g.allProfiles() for g in known_subgames))
+	new_strategies = {r:set() for r in full_game.roles}
+	for prof in new_profiles:
+		for role in full_game.roles:
+			new_strategies[role] |= set(prof[role].keys())
+	subgames = {subgame(full_game)}
+	for g in known_subgames:
+		sg = subgame(full_game, g.strategies)
+		if sg.isComplete():
+			subgames.add(sg)
 	maximal_subgames = set()
+	explored_subgames = set()
 	while(subgames):
-		sg = heappop(subgames)
+		sg = subgames.pop()
+		explored_subgames.add(sg)
 		maximal = True
 		for role in full_game.roles:
-			if len(sg.strategies[role]) == 0:
-				last_strat = -1
-			else:
-				last_strat = full_game.index(role, sg.strategies[role][-1])
-			for s in full_game.strategies[role][last_strat + 1:]:
+			for s in new_strategies[role] - set(sg.strategies[role]):
 				strategies = {r:list(sg.strategies[r]) + ([s] if r == role \
 						else []) for r in full_game.roles}
 				new_sg = subgame(full_game, strategies)
-				if new_sg.isComplete():
-					maximal=False
-					heappush(subgames, new_sg)
+				if not new_sg.isComplete():
+					continue
+				maximal=False
+				if new_sg in subgames or new_sg in explored_subgames:
+					continue
+				subgames.add(new_sg)
 		if maximal:
-			if len(sg) > 0 and not any((is_subgame(sg, g) for g \
-					in maximal_subgames)):
+			sg = subgame(full_game, sg.strategies)
+			if len(sg) > 0:
 				maximal_subgames.add(sg)
 	return sorted(maximal_subgames, key=len)
 
