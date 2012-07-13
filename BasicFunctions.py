@@ -2,6 +2,7 @@ from math import factorial
 from operator import mul
 from itertools import chain
 from argparse import ArgumentParser
+from subprocess import PIPE, Popen
 import sys
 import numpy as np
 
@@ -53,6 +54,11 @@ def one_line(s, line_width=80):
 def leading_zeros(i, m):
 	"""Pad the string of integer i with leading zeros to equal length of m."""
 	return str(i).zfill(len(str(m)))
+
+
+def call(proc_name, in_pipe):
+	p = Popen(proc_name, shell=True, stdin=PIPE, stdout=PIPE)
+	return p.communicate(in_pipe)[0]
 
 
 tiny = 1e-10

@@ -5,6 +5,7 @@ from json import loads, dumps
 from xml.dom.minidom import parseString, Document
 from collections import Iterable, Mapping
 
+from HashableClasses import h_array
 from BasicFunctions import flatten, one_line
 from RoleSymmetricGame import *
 
@@ -34,6 +35,8 @@ def detect_and_load(data_str):
 		return read_XML(xml_data)
 	if is_NFG(data_str):
 		return read_NFG(data_str)
+	if is_NE(data_str):
+		return read_NE(data_str)
 	raise IOError(one_line("could not detect format of data: " + data_str, 71))
 
 
@@ -59,11 +62,14 @@ def is_NFG(data):
 	return data.startswith("NFG")
 
 
+def is_NE(data):
+	return data.startswith("NE")
+
+
 def read_JSON(data):
 	"""
 	Convert loaded json data (list or dict) into GameAnalysis classes.
 	"""
-	type(data)
 	if isinstance(data, list):
 		return map(read_JSON, data)
 	if "profiles" in data:
@@ -201,6 +207,18 @@ def read_NFG_asym(data):
 	raise NotImplementedError("TODO")
 
 
+def read_NE(data):
+	prob_strs = data.split(",")[1:]
+	probs = []
+	for s in prob_strs:
+		try:
+			num, denom = s.split("/")
+			probs.append(float(num) / float(denom))
+		except ValueError:
+			probs.append(float(s))
+	return h_array(probs)
+
+
 def to_JSON_str(obj):
 	return dumps(to_JSON_obj(obj), sort_keys=True, indent=2)
 
@@ -241,6 +259,8 @@ def to_strategic_XML(game):
 
 
 def to_NFG(game):
+	if isinstance(game, list):
+		return map(to_NFG, game)
 	if is_symmetric(game):
 		return to_NFG_sym(game)
 	if is_asymmetric(game):
@@ -254,8 +274,30 @@ def to_NFG_sym(game):
 
 
 def to_NFG_asym(game):
-	output = 'NFG 1 R "asymmetric"\n'
-	raise NotImplementedError("TODO")
+	output = 'NFG 1 R "asymmetric"\n{ '
+	output += " ".join(('"' + str(r) + '"' for r in game.roles)) + " } { "
+	output += " ".join(map(str, game.numStrategies)) + " }\n\n"
+	prof = Profile({r:{game.strategies[r][0]:1} for r in game.roles})
+	last_prof = Profile({r:{game.strategies[r][-1]:1} for r in game.roles})
+	while prof != last_prof:
+		prof_strat = {r:prof[r].keys()[0] for r in game.roles}
+		output += NFG_payoffs(game, prof) + " "
+		prof = increment_profile(game, prof)
+	output += NFG_payoffs(game, last_prof) + "\n"
+	return output
+
+def NFG_payoffs(game, prof):
+	return  " ".join((str(game.getPayoff(prof, r, prof[r].keys()[0])) \
+			for r in game.roles))
+
+def increment_profile(game, prof):
+	for role in game.roles:
+		strat = prof[role].keys()[0]
+		i = game.index(role, strat)
+		if i < game.numStrategies[game.index(role)] - 1:
+			return prof.deviate(role, strat, game.strategies[role][i+1])
+		prof = prof.deviate(role, strat, game.strategies[role][0])
+	return prof
 
 
 def to_NFG_rsym(game):
@@ -287,8 +329,8 @@ class io_parser(ArgumentParser):
 
 def parse_args():
 	parser = io_parser()
-	parser.add_argument("-format", choices=["json", "xml"], default="json", \
-			help="Output format.")
+	parser.add_argument("-format", choices=["json", "xml", "nfg"], \
+			default="json", help="Output format.")
 	return parser.parse_args()
 
 
@@ -298,6 +340,8 @@ def main():
 		print to_JSON_str(args.input)
 	elif args.format == "xml":
 		print to_XML(args.input)
+	elif args.format == "nfg":
+		print to_NFG(args.input)
 
 
 if __name__ == "__main__":

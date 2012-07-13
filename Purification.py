@@ -42,7 +42,7 @@ def purify(prof):
 			for strat in prof[role]:
 				if prof[role][strat] < maxima[role]:
 					del dct[role][strat]
-		sums = {r:sum(prof[r].values()) for r in prof}
+		sums = {r:sum(dct[r].values()) for r in prof}
 		for role in dct:
 			for strat in dct[role]:
 				dct[role][strat] /= sums[role]

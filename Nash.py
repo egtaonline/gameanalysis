@@ -2,6 +2,8 @@
 
 from numpy.linalg import norm
 
+from BasicFunctions import call
+from GameIO import to_NFG_asym, read_NE
 from RoleSymmetricGame import Profile, tiny
 from Regret import regret
 
@@ -48,6 +50,11 @@ def replicator_dynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 		print i+1, "iterations ; mix =", mix, "; regret =", regret(game, mix)
 	mix[mix < 0] = 0 #occasionally one of the probabilities is barely negative
 	return mix
+
+
+def gambit_lp(game):
+	eq = read_NE(call("gambit-lp -q", to_NFG_asym(game)))
+	return game.toProfile(eq.reshape(len(game.roles), game.maxStrategies))
 
 
 from GameIO import io_parser, to_JSON_str

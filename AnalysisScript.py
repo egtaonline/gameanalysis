@@ -110,7 +110,7 @@ def main(input_game, args):
 						print "    " + strategy + ": " + str(round(100 * \
 								full_eq[k][l], 2)) + "%"
 
-			BR = bestResponses(input_game, full_eq)
+			BR = best_responses(input_game, full_eq)
 			print "best responses:"
 			for role in input_game.roles:
 				deviation_support = deepcopy(support)
