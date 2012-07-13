@@ -82,17 +82,17 @@ def main(input_game, args):
 				len, eliminated.values())) else "")
 
 	#mixed strategy Nash equilibrium search
-	for i, subgame in enumerate(maximal_subgames):
+	for i, sg in enumerate(maximal_subgames):
 		print "\nsubgame "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
 				":\n\t\t" + "\n\t\t".join(x[1]), sorted( \
-				subgame.strategies.items()))).expandtabs(4)
-		mixed_equilibria = mixed_nash(subgame, args.r, args.d, iters=args.i, \
+				sg.strategies.items()))).expandtabs(4)
+		mixed_equilibria = mixed_nash(sg, args.r, args.d, iters=args.i, \
 			converge_thresh=args.c)
 		print "\n" + str(len(mixed_equilibria)), "approximate mixed strategy"+ \
 				" Nash equilibri" + ("um:" if len(mixed_equilibria) == 1 \
 				else "a:")
 		for j, eq in enumerate(mixed_equilibria):
-			full_eq = translate(eq, subgame, input_game)
+			full_eq = translate(eq, sg, input_game)
 			if all(map(lambda p: p in input_game, neighbors(input_game, \
 					full_eq))):
 				print str(j+1) + ". regret =", round(regret(input_game, \
