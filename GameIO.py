@@ -72,6 +72,8 @@ def read_JSON(data):
 	"""
 	if isinstance(data, list):
 		return map(read_JSON, data)
+	if 'object' in data: # game downloaded from EGATS
+		return read_JSON(loads(data['object']))
 	if "profiles" in data:
 		return read_game_JSON(data)
 	if "sample_count" in data:

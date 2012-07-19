@@ -20,7 +20,7 @@ def translate(arr, source_game, target_game):
 	return a
 
 
-def subgame(game, strategies={}):
+def subgame(game, strategies={}, require_all=False):
 	"""
 	Creates a game with a subset each role's strategies.
 
@@ -32,22 +32,24 @@ def subgame(game, strategies={}):
 	if sg.size <= len(game):
 		for p in sg.allProfiles():
 			if p in game:
-				sg.addProfile({r:[PayoffData(s, p[r][s], \
-						game.getPayoff(p,r,s)) for s in p[r]] for r in p})
+				add_subgame_profile(game, sg, p)
+			elif require_all:
+				raise KeyError("Profile missing")
+	elif require_all:
+		raise KeyError("Profile missing")
 	else:
 		for p in game:
-			if all([all([s in sg.strategies[r] for s in p[r]]) for r in p]):
-				sg.addProfile({r:[PayoffData(s, p[r][s], \
-						game.getPayoff(p,r,s)) for s in p[r]] for r in p})
+			try:
+				add_subgame_profile(game, sg, p)
+			except KeyError:
+				continue
 	return sg
 
 
-def subgame_available(game, strategies = {}):
-	sg = Game(game.roles, game.players, strategies)
-	for p in sg.allProfiles():
-		if p not in game:
-			return False
-	return True
+def add_subgame_profile(game, subgame, prof):
+	subgame.addProfile({role:[PayoffData(strat, prof[role][strat], \
+			game.getPayoff(prof, role, strat)) for strat in prof[role]] \
+			for role in prof})
 
 
 def is_subgame(small_game, big_game):
@@ -93,11 +95,12 @@ def cliques(full_game, known_subgames=[]):
 			for s in new_strategies[role] - set(sg.strategies[role]):
 				strategies = {r:list(sg.strategies[r]) + ([s] if r == role \
 						else []) for r in full_game.roles}
-				new_sg = subgame(full_game, strategies)
-				if not new_sg.isComplete():
+				try:
+					new_sg = subgame(full_game, strategies, True)
+				except KeyError:
 					continue
 				maximal=False
-				if new_sg in subgames or new_sg in explored_subgames:
+				if new_sg in explored_subgames:
 					continue
 				subgames.add(new_sg)
 		if maximal:
