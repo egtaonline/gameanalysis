@@ -105,12 +105,34 @@ def symmetric_profile_regrets(game):
 
 
 def equilibrium_regrets(game, eq):
+	if is_mixed_profile(eq):
+		eq = game.toArray(eq)
+	if is_mixture_array(eq):
+		return game.getExpectedPayoff(eq).reshape(eq.shape[0],1) - \
+				game.expectedValues(eq)
 	regrets = {}
 	for role in game.roles:
 		regrets[role] = {}
 		for strategy in game.strategies[role]:
 			regrets[role][strategy] = -regret(game, eq, deviation=strategy)
 	return regrets
+
+
+def equilibrium_regret(game, eq, role, mix):
+	regrets = equilibrium_regrets(game, eq)[game.index(role)]
+	reg_arr = [regrets[game.index(role, s)] for s in game.strategies[role]]
+	if isinstance(mix, dict):
+		mix = np.array([mix[s] if s in mix else 0 for s in \
+				game.strategies[role]])
+	return (mix * reg_arr).sum()
+
+
+def safety_value(game, role, strategy):
+	sv = float('inf')
+	for prof in game.knownProfiles():
+		if strategy in prof[role]:
+			sv = min(sv, game.getPayoff(prof, role, strategy))
+	return sv
 
 
 from GameIO import read, to_JSON_str, io_parser

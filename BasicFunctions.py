@@ -3,9 +3,10 @@ from operator import mul
 from itertools import chain
 from argparse import ArgumentParser
 from subprocess import PIPE, Popen
+from functools import partial
 import sys
 import numpy as np
-
+from scipy.misc import comb
 
 def prod(collection):
 	"""
@@ -15,9 +16,7 @@ def prod(collection):
 	return reduce(mul, collection)
 
 
-def nCr(n,k):
-	"""Number of combinations: n choose k."""
-	return prod(range(n-k+1,n+1)) / factorial(k)
+nCr = partial(comb, exact=True)
 
 
 def game_size(n,s):
@@ -47,8 +46,8 @@ def flatten(l):
 def one_line(s, line_width=80):
 	"""If string s is longer than line width, cut it off and append '...'"""
 	if len(s) > line_width:
-		return s[:line_width-3] + "..."
-	return s
+		s = s[:3*line_width/4] + "..." + s[-line_width/4+3:]
+	return s.replace("\n", "")
 
 
 def leading_zeros(i, m):

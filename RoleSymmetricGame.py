@@ -85,7 +85,6 @@ class Game(dict):
 		self.values = []
 		self.counts = []
 		self.dev_reps = []
-
 		for profile_data_set in payoff_data:
 			self.addProfile(profile_data_set)
 
@@ -93,20 +92,28 @@ class Game(dict):
 		prof = Profile(role_payoffs)
 		if prof in self:
 			raise IOError("duplicate profile: " + str(prof))
-		if isinstance(self.values, np.ndarray):
-			self.values = list(self.values)
-			self.counts = list(self.counts)
-			self.dev_reps = list(self.dev_reps)
+		self.makeLists()
+		self[prof] = len(self.values)
+		self.addProfileArrays(role_payoffs)
+		self.addDevReps(role_payoffs)
+
+	def addProfileArrays(self, role_payoffs):
 		counts = self.zeros(dtype=int)
 		values = self.zeros(dtype=float)
-		for role_index, role in enumerate(self.roles):
+		for r, role in enumerate(self.roles):
 			for strategy, count, value in role_payoffs[role]:
-				if value < self.minPayoffs[role_index][0]:
-					self.minPayoffs[role_index] = value
-				strategy_index = self.index(role, strategy)
-				counts[role_index, strategy_index] = count
-				values[role_index, strategy_index] = value
+				s = self.index(role, strategy)
+				min_value = np.min(value)
+				if min_value < self.minPayoffs[r][0]:
+					self.minPayoffs[r] = min_value
+				values[r,s] = np.average(value)
+				counts[r,s] = count
+		self.values.append(values)
+		self.counts.append(counts)
+
+	def addDefReps(self, role_payoffs):
 		devs = self.zeros(dtype=int)
+		counts = self.counts[-1]
 		for i, r in enumerate(self.roles):
 			for j, s in enumerate(self.strategies[r]):
 				if counts[i,j] > 0:
@@ -118,10 +125,19 @@ class Game(dict):
 						devs[i,j] = profile_repetitions(opp_prof)
 				else:
 					devs[i,j] = 0
-		self[prof] = len(self.values)
-		self.values.append(values)
-		self.counts.append(counts)
 		self.dev_reps.append(devs)
+
+	def makeLists(self):
+		if isinstance(self.values, np.ndarray):
+			self.values = list(self.values)
+			self.counts = list(self.counts)
+			self.dev_reps = list(self.dev_reps)
+
+	def makeArrays(self):
+		if isinstance(self.values, list):
+			self.values = np.array(self.values)
+			self.counts = np.array(self.counts)
+			self.dev_reps = np.array(self.dev_reps)
 
 	def __hash__(self):
 		return hash((self.players, self.strategies))
@@ -167,10 +183,7 @@ class Game(dict):
 		The result is normalized by the sum of all profile weights to cope
 		with missing profiles.
 		"""
-		if isinstance(self.values, list):
-			self.values = np.array(self.values)
-			self.counts = np.array(self.counts)
-			self.dev_reps = np.array(self.dev_reps)
+		self.makeArrays()
 		try:
 			weights = ((mix+tiny)**self.counts).prod(1).prod(1).reshape( \
 					self.values.shape[0], 1, 1) * self.dev_reps / (mix+tiny)
@@ -348,3 +361,40 @@ def is_symmetric(game):
 
 def is_asymmetric(game):
 	return all([p == 1 for p in game.players.values()])
+
+
+def is_zero_sum(game):
+	game.makeArrays()
+	return np.allclose(game.values.sum(1).sum(1), 0)
+
+
+def is_constant_sum(game):
+	game.makeArrays()
+	s = game.values[0].sum()
+	return np.allclose(game.values.sum(1).sum(1), s)
+
+
+class SampleGame(Game):
+	def addProfile(self, role_payoffs):
+		Game.addProfile(self, role_payoffs)
+		self.addSamples(role_payoffs)
+
+	def addSamples(self, role_payoffs):
+		sample_values = self.zeros(dtype=object)
+		for r, role in enumerate(self.roles):
+			for strategy, count, value in role_payoffs[role]:
+				sample_values[r,s] = np.array(value)
+		self.sample_values.append(sample_values)
+
+	def makeLists(self):
+		Game.makeLists(self)
+		if isinstance(self.sample_values, np.ndarray):
+			self.sample_values = list(self.values)
+
+	def makeArrays(self):
+		Game.makeArrays(self)
+		if isinstance(self.dev_reps, list):
+			self.dev_reps = np.array(self.dev_reps)
+
+	def resample(self):
+		raise NotImplementedError("TODO")

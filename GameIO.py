@@ -22,7 +22,7 @@ def read(source):
 		data = source.read()
 		source.close()
 	else:
-		raise IOError(one_line("could not read source: " + str(source), 71))
+		raise IOError(one_line("could not read: " + str(source), 71))
 	return detect_and_load(data)
 
 
@@ -37,7 +37,7 @@ def detect_and_load(data_str):
 		return read_NFG(data_str)
 	if is_NE(data_str):
 		return read_NE(data_str)
-	raise IOError(one_line("could not detect format of data: " + data_str, 71))
+	raise IOError(one_line("could not detect format: " + data_str, 71))
 
 
 def load_JSON(data):
@@ -72,16 +72,17 @@ def read_JSON(data):
 	"""
 	if isinstance(data, list):
 		return map(read_JSON, data)
-	if 'object' in data: # game downloaded from EGATS
-		return read_JSON(loads(data['object']))
-	if "profiles" in data:
-		return read_game_JSON(data)
-	if "sample_count" in data:
-		return read_testbed_profile(data)
-	if "type" in data and data["type"] == "GA_Profile":
-		return read_profile(data)
-	raise IOError(one_line("no GameAnalysis class found in JSON: " + \
-			str(data), 71))
+	if isinstance(data, dict):
+		if 'object' in data: # game downloaded from EGATS
+			return read_JSON(loads(data['object']))
+		if "profiles" in data:
+			return read_game_JSON(data)
+		if "sample_count" in data:
+			return read_testbed_profile(data)
+		if "type" in data and data["type"] == "GA_Profile":
+			return read_profile(data)
+		return {k:read_JSON(v) for k,v in data.items()}
+	return data
 
 
 def read_game_JSON(gameJSON):

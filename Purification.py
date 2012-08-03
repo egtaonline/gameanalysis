@@ -4,6 +4,7 @@ import numpy as np
 
 from RoleSymmetricGame import is_mixed_profile, is_mixture_array, Profile, tiny
 from BasicFunctions import one_line
+from Regret import safety_value
 
 
 def threshold(prof, supp_thresh=0.1):
@@ -49,4 +50,15 @@ def purify(prof):
 		return Profile(dct)
 	raise TypeError(one_line("unrecognized profile type: " + str(prof), 69))
 
+
+def safest_support_strategy(game, prof):
+	if is_mixture_array(prof):
+		support = {r : filter(lambda s: prof[game.index(r), game.index(r,s)], \
+				game.strategies[r]) for r in game.roles}
+	elif is_mixed_profile(prof):
+		support = {r : prof[r].keys() for r in game.roles}
+	else:
+		raise TypeError(one_line("unrecognized profile type: " + str(prof), 69))
+	return {r:max(support[r], key=lambda s: safety_value(game, r, s)) for r \
+			in game.roles}
 
