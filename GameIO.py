@@ -4,6 +4,7 @@ from urllib import urlopen
 from json import loads, dumps
 from xml.dom.minidom import parseString, Document
 from collections import Iterable, Mapping
+from functools import partial
 
 from HashableClasses import h_array
 from BasicFunctions import flatten, one_line
@@ -77,32 +78,52 @@ def read_JSON(data):
 			return read_JSON(loads(data['object']))
 		if "profiles" in data:
 			return read_game_JSON(data)
+		if "symmetry_groups" in data:
+			return read_v3_profile(data)
+		if "observations" in data:
+			if "players" in data["observations"]["symmetry_groups"]:
+				return read_v3_player_profile(data)
+			else:
+				return read_v3_sample_profile(data)
 		if "sample_count" in data:
-			return read_testbed_profile(data)
+			return read_v2_profile(data)
 		if "type" in data and data["type"] == "GA_Profile":
-			return read_profile(data)
+			return read_GA_profile(data)
 		return {k:read_JSON(v) for k,v in data.items()}
 	return data
 
 
 def read_game_JSON(gameJSON):
-	if "strategies" in gameJSON["roles"][0]:
-		return read_game_JSON_v2(gameJSON)
+	if "symmetry_groups" in gameJSON["profiles"][0]:
+		return read_game_JSON_v3(gameJSON)
+	elif "observations" in gameJSON["profiles"][0]:
+		if "players" in gameJSON["profiles"][0]["observations"][0][ \
+				"symmetry_groups"][0]:
+			return read_game_JSON_v3_players(gameJSON)
+		else:
+			return read_game_JSON_v3_samples(gameJSON)
 	elif "strategy_array" in gameJSON["roles"][0]:
 		return read_game_JSON_old(gameJSON)
+	elif "strategies" in gameJSON["roles"][0]:
+		return read_game_JSON_v2(gameJSON)
 	else:
 		raise IOError(one_line("invalid game JSON: " + str(data), 71))
 
 
-def read_game_JSON_v2(gameJSON):
-	players = {r["name"] : int(r["count"]) for r in gameJSON["roles"]}
-	strategies = {r["name"] : r["strategies"] for r in gameJSON["roles"]}
-	roles = list(players.keys())
+def read_game_JSON_new(gameJSON, game_type, profile_reader):
+	roles, players, strategies = parse_roles(gameJSON["roles"])
 	profiles = []
 	if "profiles" in gameJSON:
 		for profileJSON in gameJSON["profiles"]:
-			profiles.append(read_testbed_profile(profileJSON))
-	return Game(roles, players, strategies, profiles)
+			profiles.append(profile_reader(profileJSON))
+	return game_type(roles, players, strategies, profiles)
+
+
+def parse_roles(rolesJSON):
+	players = {r["name"] : int(r["count"]) for r in rolesJSON}
+	strategies = {r["name"] : r["strategies"] for r in rolesJSON}
+	roles = list(players.keys())
+	return roles, players, strategies
 
 
 def read_game_JSON_old(json_data):
@@ -126,7 +147,7 @@ def read_game_JSON_old(json_data):
 	return Game(roles, players, strategies, profiles)
 
 
-def read_testbed_profile(profileJSON):
+def read_v2_profile(profileJSON):
 	profile = {r["name"]:[] for r in profileJSON["roles"]}
 	for roleDict in profileJSON["roles"]:
 		role = roleDict["name"]
@@ -137,11 +158,67 @@ def read_testbed_profile(profileJSON):
 	return profile
 
 
-def read_profile(profileJSON):
+def read_v3_profile(profileJSON):
+	prof = {}
+	for sym_grp in profileJSON["symmetry_groups"]:
+		if sym_grp["role"] not in prof:
+			prof[sym_grp["role"]] = []
+		prof[sym_grp["role"]].append(PayoffData(sym_grp["strategy"], \
+				sym_grp["count"], sym_grp["payoff"]))
+	return prof
+
+
+def read_v3_samples_profile(profileJSON):
+	prof = {}
+	for obs in profileJSON["observations"]:
+		for sym_grp in obs["symmetry_groups"]:
+			role = sym_grp["role"]
+			if role not in prof:
+				prof[role] = {}
+			strat = sym_grp["strategy"]
+			count = sym_grp["count"]
+			value = sym_grp["payoff"]
+			if (strat, count) not in prof[role]:
+				prof[role][(strat, count)] = []
+			prof[role][(strat, count)].append(value)
+	return {r:[PayoffData(sc[0], sc[1], v) for sc,v in prof[r].items()] for \
+			r in prof}
+
+
+def read_v3_players_profile(profileJSON):
+	prof = {}
+	for obs in profileJSON["observations"]:
+		for sym_grp in obs["symmetry_groups"]:
+			role = sym_grp["role"]
+			if role not in prof:
+				prof[role] = {}
+			strat = sym_grp["strategy"]
+			count = len(sym_grp["players"])
+			value = []
+			for player in sym_grp["players"]:
+				value.append(player["payoff"])
+			if (strat, count) not in prof[role]:
+				prof[role][(strat, count)] = []
+			prof[role][(strat, count)].append(value)
+	return {r:[PayoffData(sc[0], sc[1], v) for sc,v in prof[r].items()] for \
+			r in prof}
+
+
+def read_GA_profile(profileJSON):
 	try:
 		return Profile(profileJSON["data"])
 	except KeyError:
 		return Profile(profileJSON)
+
+
+read_game_JSON_v3 = partial(read_game_JSON_new, game_type=Game, \
+		profile_reader=read_v3_profile)
+read_game_JSON_v3_samples = partial(read_game_JSON_new, game_type=SampleGame, \
+		profile_reader=read_v3_samples_profile)
+read_game_JSON_v3_players = partial(read_game_JSON_new, game_type=SampleGame, \
+		profile_reader=read_v3_players_profile)
+read_game_JSON_v2 = partial(read_game_JSON_new, game_type=Game, \
+		profile_reader=read_v2_profile)
 
 
 def read_XML(data):

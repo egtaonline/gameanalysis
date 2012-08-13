@@ -111,7 +111,7 @@ class Game(dict):
 		self.values.append(values)
 		self.counts.append(counts)
 
-	def addDefReps(self, role_payoffs):
+	def addDevReps(self, role_payoffs):
 		devs = self.zeros(dtype=int)
 		counts = self.counts[-1]
 		for i, r in enumerate(self.roles):
@@ -233,7 +233,7 @@ class Game(dict):
 					self.strategies[role]])
 		i = self.array_index(role, strategy, dtype=float)
 		m = 1. - self.mask - i
-		m /= m.sum(1).reshape(m.shape[0], 1)
+		m /=sum(1).reshape(m.shape[0], 1)
 		m[self.index(role)] *= (1. - bias)
 		m += i*bias
 		return [m]
@@ -308,25 +308,23 @@ class Game(dict):
 
 	def toJSON(self):
 		"""
-		Convert to JSON according to the v2 testbed role-symmetric game spec.
+		Convert to JSON according to the EGTA-online v3 default game spec.
 		"""
 		game_dict = {}
 		game_dict["roles"] = [{"name":role, "count":self.players[role], \
 					"strategies": list(self.strategies[role])} for role \
 					in self.roles]
 		game_dict["profiles"] = []
-		for profile in self:
-			i = self[profile]
-			p = []
+		for prof in self:
+			p = self[prof]
+			sym_groups = []
 			for r, role in enumerate(self.roles):
-				p.append({"name":role, "strategies":[]})
-				for s, strategy in enumerate(self.strategies[role]):
-					if self.counts[i][r,s] == 0:
-						continue
-					p[-1]["strategies"].append({"name":strategy, "count": \
-							int(self.counts[i][r,s]), "payoff": \
-							float(self.values[i][r,s])})
-			game_dict["profiles"].append({"roles":p})
+				for strat in prof[role]:
+					s = self.index(role, strat)
+					sym_groups.append({"role":role, "strategy":strat, \
+							"count":self.counts[p][r,s], \
+							"payoff":float(self.values[p][r,s])})
+			game_dict["profiles"].append({"symmetry_groups":sym_groups})
 		return game_dict
 
 
@@ -375,6 +373,10 @@ def is_constant_sum(game):
 
 
 class SampleGame(Game):
+	def __init__(self, *args, **kwargs):
+		self.sample_values = []
+		Game.__init__(self, *args, **kwargs)
+
 	def addProfile(self, role_payoffs):
 		Game.addProfile(self, role_payoffs)
 		self.addSamples(role_payoffs)
@@ -382,8 +384,9 @@ class SampleGame(Game):
 	def addSamples(self, role_payoffs):
 		sample_values = self.zeros(dtype=object)
 		for r, role in enumerate(self.roles):
-			for strategy, count, value in role_payoffs[role]:
-				sample_values[r,s] = np.array(value)
+			for strategy, count, values in role_payoffs[role]:
+				s = self.index(role, strategy)
+				sample_values[r,s] = np.array(values)
 		self.sample_values.append(sample_values)
 
 	def makeLists(self):
@@ -393,8 +396,9 @@ class SampleGame(Game):
 
 	def makeArrays(self):
 		Game.makeArrays(self)
-		if isinstance(self.dev_reps, list):
-			self.dev_reps = np.array(self.dev_reps)
+		if isinstance(self.sample_values, list):
+			self.sample_values = np.array(self.sample_values)
 
 	def resample(self):
+		self.makeArrays()
 		raise NotImplementedError("TODO")
