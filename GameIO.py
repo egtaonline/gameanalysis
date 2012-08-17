@@ -186,22 +186,7 @@ def read_v3_samples_profile(profileJSON):
 
 
 def read_v3_players_profile(profileJSON):
-	prof = {}
-	for obs in profileJSON["observations"]:
-		for sym_grp in obs["symmetry_groups"]:
-			role = sym_grp["role"]
-			if role not in prof:
-				prof[role] = {}
-			strat = sym_grp["strategy"]
-			count = len(sym_grp["players"])
-			value = []
-			for player in sym_grp["players"]:
-				value.append(player["payoff"])
-			if (strat, count) not in prof[role]:
-				prof[role][(strat, count)] = []
-			prof[role][(strat, count)].append(value)
-	return {r:[PayoffData(sc[0], sc[1], v) for sc,v in prof[r].items()] for \
-			r in prof}
+	raise NotImplementedError
 
 
 def read_GA_profile(profileJSON):
@@ -399,9 +384,12 @@ class io_parser(ArgumentParser):
 		if a.input == "":
 			a.input = read(sys.stdin.read())
 		else:
-			i = open(a.input)
-			a.input = read(i.read())
-			i.close()
+			try:
+				i = open(a.input)
+				a.input = read(i.read())
+				i.close()
+			except TypeError:#programs not requiring input can set it to None
+				a.input == None
 		if a.output != "":
 			sys.stdout = open(a.output, "w")
 		return a

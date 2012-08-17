@@ -233,7 +233,7 @@ class Game(dict):
 					self.strategies[role]])
 		i = self.array_index(role, strategy, dtype=float)
 		m = 1. - self.mask - i
-		m /=sum(1).reshape(m.shape[0], 1)
+		m /= m.sum(1).reshape(m.shape[0], 1)
 		m[self.index(role)] *= (1. - bias)
 		m += i*bias
 		return [m]
@@ -382,23 +382,23 @@ class SampleGame(Game):
 		self.addSamples(role_payoffs)
 
 	def addSamples(self, role_payoffs):
-		sample_values = self.zeros(dtype=object)
+		samples = map(list, self.zeros())
 		for r, role in enumerate(self.roles):
-			for strategy, count, values in role_payoffs[role]:
-				s = self.index(role, strategy)
-				sample_values[r,s] = np.array(values)
-		self.sample_values.append(sample_values)
-
-	def makeLists(self):
-		Game.makeLists(self)
-		if isinstance(self.sample_values, np.ndarray):
-			self.sample_values = list(self.values)
-
-	def makeArrays(self):
-		Game.makeArrays(self)
-		if isinstance(self.sample_values, list):
-			self.sample_values = np.array(self.sample_values)
+			played = []
+			for strat, count, values in role_payoffs[role]:
+				s = self.index(role, strat)
+				samples[r][s] = values
+				played.append(strat)
+			for strat in set(self.strategies[role]) - set(played):
+				s = self.index(role, strat)
+				p = self.index(role, played[0])
+				samples[r][s] = [0]*len(samples[r][p])
+			for s in range(self.numStrategies[r], self.maxStrategies):
+				p = self.index(role, played[0])
+				samples[r][s] = [0]*len(samples[r][p])
+		self.sample_values.append(np.array(samples))
 
 	def resample(self):
-		self.makeArrays()
-		raise NotImplementedError("TODO")
+		self.values = map(lambda p: np.average(p, 2, weights= \
+				np.random.multinomial(p.shape[2], np.ones( \
+				p.shape[2])/p.shape[2])))

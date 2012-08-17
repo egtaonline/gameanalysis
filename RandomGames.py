@@ -34,30 +34,49 @@ def uniform_symmetric(N, S):
 	return g
 
 
+def congestion(N, f, r):
+	roles = ["All"]
+	players = {"All":N}
+	strategies = 
+
+
 from GameIO import to_JSON_str
 from argparse import ArgumentParser
 import sys
 
-def main():
-	parser = ArgumentParser()
-	parser.add_argument("type", choices=["uZS", "uSym"], help="Type of " +\
-			"random game to generate. uZS = uniform zero sum. uSym = " +\
-			"uniform symmetric.")
+def parse_args():
+	parser = io_parser(description="Generate random games.")
+	parser.add_argument("type", choices=["uZS", "uSym", "CG"], help= \
+			"Type of random game to generate. uZS = uniform zero sum. " +\
+			"uSym = uniform symmetric. CG = congestion game.")
 	parser.add_argument("count", type=int, help="Number of random games " +\
 			"to create.")
 	parser.add_argument("-output", type=str, default="", help=\
 			"Output file. Defaults to stdout.")
 	parser.add_argument("game_args", nargs="*", help="Additional arguments " +\
 			"for game generator function.")
-	args = parser.parse_args()
-	if args.output != "":
-		sys.stdout = open(a.output, "w")
+	if "-input" in sys.argv:
+		sys.argv[sys.argv.index("-input")+1] = None
+	else:
+		sys.arg = sys.argv[:3] + ["-input", None] + sys.argv[3:]
+	return parser.parse_args()
+
+
+def main():
+	args = parse_args()
+	game_args = map(int, args.game_args)
 	if args.type == "uZS":
 		game_func = uniform_zero_sum
-		game_args = [int(args.game_args[0])]
+		assert len(game_args == 1), "one game_arg specifies strategy count"
 	elif args.type == "uSym":
 		game_func = uniform_symmetric
+		assert len(game_args == 2), "game_args specify player and strategy "+\
+				"counts"
 		game_args = map(int, args.game_args[:2])
+	elif args.type == "CG":
+		game_func = congestion
+		assert len(game_args == 2), "game_args specify player, facility, and"+\
+				" required facility counts"
 	games = [game_func(*game_args) for i in range(args.count)]
 	if len(games) == 1:
 		print to_JSON_str(games[0])
