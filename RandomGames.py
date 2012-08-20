@@ -83,10 +83,16 @@ def parse_args():
 			"uSym = uniform symmetric. CG = congestion game.")
 	parser.add_argument("count", type=int, help="Number of random games " +\
 			"to create.")
+	parser.add_argument("-samples", type=int, default=1, help="Number of " +\
+			"noisy samples to give for each profile. -stdev must also be " +\
+			"specified.")
+	parser.add_argument("-stdev", type=float, default=0, help="Standard " +\
+			"deviation of normal noise added to each sample. -samples must " +\
+			"also be specified.")
 	parser.add_argument("game_args", nargs="*", help="Additional arguments " +\
 			"for game generator function.")
 	assert "-input" not in sys.argv, "no input JSON required"
-	sys.argv = sys.argv[:2] + ["-input", None] + sys.argv[2:]
+	sys.argv = sys.argv[:3] + ["-input", None] + sys.argv[3:]
 	return parser.parse_args()
 
 
@@ -106,6 +112,9 @@ def main():
 		assert len(game_args) == 3, "game_args specify player, facility, and"+\
 				" required facility counts"
 	games = [game_func(*game_args) for i in range(args.count)]
+	if args.samples > 1 and args.stdev > 0:
+		noisy = map(lambda g: normal_noise(g, args.stdev, args.samples), games)
+		games = zip(games, noisy)
 	if len(games) == 1:
 		print to_JSON_str(games[0])
 	else:
