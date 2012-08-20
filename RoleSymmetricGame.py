@@ -401,4 +401,32 @@ class SampleGame(Game):
 	def resample(self):
 		self.values = map(lambda p: np.average(p, 2, weights= \
 				np.random.multinomial(p.shape[2], np.ones( \
-				p.shape[2])/p.shape[2])))
+				p.shape[2])/p.shape[2])), self.sample_values)
+
+	def reset(self):
+		self.values = map(lambda p: np.average(p,2), self.sample_values)
+
+
+	def toJSON(self):
+		"""
+		Convert to JSON according to the EGTA-online v3 sample-game spec.
+		"""
+		game_dict = {}
+		game_dict["roles"] = [{"name":role, "count":self.players[role], \
+					"strategies": list(self.strategies[role])} for role \
+					in self.roles]
+		game_dict["profiles"] = []
+		for prof in self:
+			p = self[prof]
+			obs = {"observations":[]}
+			for i in range(self.sample_values[self[prof]].shape[2]):
+				sym_groups = []
+				for r, role in enumerate(self.roles):
+					for strat in prof[role]:
+						s = self.index(role, strat)
+						sym_groups.append({"role":role, "strategy":strat, \
+								"count":self.counts[p][r,s], \
+								"payoff":float(self.sample_values[p][r,s,i])})
+				obs["observations"].append({"symmetry_groups":sym_groups})
+			game_dict["profiles"].append(obs)
+		return game_dict

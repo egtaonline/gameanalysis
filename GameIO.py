@@ -383,13 +383,10 @@ class io_parser(ArgumentParser):
 		a = ArgumentParser.parse_args(self, *args, **kwargs)
 		if a.input == "":
 			a.input = read(sys.stdin.read())
-		else:
-			try:
-				i = open(a.input)
-				a.input = read(i.read())
-				i.close()
-			except TypeError:#programs not requiring input can set it to None
-				a.input == None
+		elif a.input != "None":#programs not requiring input can set it to None
+			i = open(a.input)
+			a.input = read(i.read())
+			i.close()
 		if a.output != "":
 			sys.stdout = open(a.output, "w")
 		return a

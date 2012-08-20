@@ -101,3 +101,5 @@ ExampleWorkflow.pyc
 tmp.json
 
 s.json
+
+*.swp
