@@ -47,7 +47,7 @@ def iterated_elimination(game, criterion, *args, **kwargs):
 	criterion = function to find dominated strategies
 	"""
 	reduced_game = eliminate_strategies(game, criterion, *args, **kwargs)
-	while reduced_game != game:
+	while len(reduced_game) < len(game):
 		game = reduced_game
 		reduced_game = eliminate_strategies(game, criterion, *args, **kwargs)
 	return game

@@ -39,10 +39,8 @@ def subgame(game, strategies={}, require_all=False):
 		raise KeyError("Profile missing")
 	else:
 		for p in game:
-			try:
+			if is_valid_profile(sg, p):
 				add_subgame_profile(game, sg, p)
-			except KeyError:
-				continue
 	return sg
 
 
@@ -50,6 +48,16 @@ def add_subgame_profile(game, subgame, prof):
 	subgame.addProfile({role:[PayoffData(strat, prof[role][strat], \
 			game.getPayoff(prof, role, strat)) for strat in prof[role]] \
 			for role in prof})
+
+
+def is_valid_profile(game, prof):
+	if set(prof.keys()) != set(game.roles):
+		return False
+	for role in prof:
+		for strat in prof[role]:
+			if strat not in game.strategies[role]:
+				return False
+	return True
 
 
 def is_subgame(small_game, big_game):

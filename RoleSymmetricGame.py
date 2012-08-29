@@ -93,9 +93,9 @@ class Game(dict):
 		if prof in self:
 			raise IOError("duplicate profile: " + str(prof))
 		self.makeLists()
-		self[prof] = len(self.values)
 		self.addProfileArrays(role_payoffs)
 		self.addDevReps(role_payoffs)
+		self[prof] = len(self.values) - 1
 
 	def addProfileArrays(self, role_payoffs):
 		counts = self.zeros(dtype=int)
