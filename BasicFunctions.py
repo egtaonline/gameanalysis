@@ -6,7 +6,6 @@ from subprocess import PIPE, Popen
 from functools import partial
 import sys
 import numpy as np
-from scipy import comb
 
 
 def prod(collection):
@@ -17,7 +16,12 @@ def prod(collection):
 	return reduce(mul, collection)
 
 
-nCr = partial(comb, exact=True)
+try:
+	from scipy import comb
+	nCr = partial(comb, exact=True)
+except ImportError:
+	def nCr(n,r):
+		return prod(range(n-k+1,n+1)) / factorial(k)
 
 
 def game_size(n,s):
