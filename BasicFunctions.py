@@ -21,7 +21,7 @@ try:
 	nCr = partial(comb, exact=True)
 except ImportError:
 	def nCr(n,r):
-		return prod(range(n-k+1,n+1)) / factorial(k)
+		return prod(range(n-r+1,n+1)) / factorial(r)
 
 
 def game_size(n,s):

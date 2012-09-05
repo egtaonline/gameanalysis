@@ -297,9 +297,10 @@ class Game(dict):
 		return self == other or self > other
 
 	def __repr__(self):
-		return ("RoleSymmetricGame:\n\troles: " + join(self.roles, ",") + \
-				"\n\tplayers:\n\t\t" + join(map(lambda x: str(x[1]) +"x "+\
-				str(x[0]), sorted(self.players.items())), "\n\t\t") + \
+		return (str(self.__class__.__name__) + ":\n\troles: " + \
+				join(self.roles, ",") + "\n\tplayers:\n\t\t" + \
+				join(map(lambda x: str(x[1]) + "x " + str(x[0]), \
+				sorted(self.players.items())), "\n\t\t") + \
 				"\n\tstrategies:\n\t\t" + join(map(lambda x: x[0] + \
 				":\n\t\t\t" + join(x[1], "\n\t\t\t"), \
 				sorted(self.strategies.items())), "\n\t\t") + \
@@ -375,6 +376,8 @@ def is_constant_sum(game):
 class SampleGame(Game):
 	def __init__(self, *args, **kwargs):
 		self.sample_values = []
+		self.min_samples = float("inf")
+		self.max_samples = 0
 		Game.__init__(self, *args, **kwargs)
 
 	def addProfile(self, role_payoffs):
@@ -388,6 +391,8 @@ class SampleGame(Game):
 			for strat, count, values in role_payoffs[role]:
 				s = self.index(role, strat)
 				samples[r][s] = values
+				self.min_samples = min(self.min_samples, len(values))
+				self.max_samples = max(self.max_samples, len(values))
 				played.append(strat)
 			for strat in set(self.strategies[role]) - set(played):
 				s = self.index(role, strat)
@@ -430,3 +435,10 @@ class SampleGame(Game):
 				obs["observations"].append({"symmetry_groups":sym_groups})
 			game_dict["profiles"].append(obs)
 		return game_dict
+
+	def __repr__(self):
+		if self.min_samples < self.max_samples:
+			return Game.__repr__(self) + "\n" + str(self.min_samples) + \
+				"-" + str(self.max_samples) + " samples per profile"
+		return Game.__repr__(self) + "\n" + str(self.max_samples) + \
+			" samples per profile"
