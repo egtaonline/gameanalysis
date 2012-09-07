@@ -74,7 +74,7 @@ def read_JSON(data):
 	if isinstance(data, list):
 		return map(read_JSON, data)
 	if isinstance(data, dict):
-		if 'object' in data: # game downloaded from EGATS
+		if "object" in data: # game downloaded from EGATS
 			return read_JSON(loads(data['object']))
 		if "profiles" in data:
 			return read_game_JSON(data)
@@ -94,7 +94,9 @@ def read_JSON(data):
 
 
 def read_game_JSON(gameJSON):
-	if "symmetry_groups" in gameJSON["profiles"][0]:
+	if "players" in gameJSON and "strategies" in gameJSON:
+		return read_GA_game(gameJSON)
+	elif "symmetry_groups" in gameJSON["profiles"][0]:
 		return read_game_JSON_v3(gameJSON)
 	elif "observations" in gameJSON["profiles"][0]:
 		if "players" in gameJSON["profiles"][0]["observations"][0][ \
@@ -108,6 +110,17 @@ def read_game_JSON(gameJSON):
 		return read_game_JSON_v2(gameJSON)
 	else:
 		raise IOError(one_line("invalid game JSON: " + str(data), 71))
+
+
+def read_GA_game(gameJSON):
+	if len(gameJSON["profiles"]) > 0 and isinstance(gameJSON[ \
+			"profiles"][0].values()[0][0][2], list):
+		game_type = SampleGame
+	else:
+		game_type = Game
+	return game_type(gameJSON["players"].keys(), gameJSON["players"], \
+			gameJSON["strategies"], map(lambda p: {r:[PayoffData(*scv) for \
+			scv in p[r]]for r in p}, gameJSON["profiles"]))
 
 
 def read_game_JSON_new(gameJSON, game_type, profile_reader):
@@ -284,8 +297,8 @@ def read_NE(data):
 	return h_array(probs)
 
 
-def to_JSON_str(obj):
-	return dumps(to_JSON_obj(obj), sort_keys=True, indent=2)
+def to_JSON_str(obj, indent=2):
+	return dumps(to_JSON_obj(obj), sort_keys=True, indent=indent)
 
 
 def to_JSON_obj(obj):
