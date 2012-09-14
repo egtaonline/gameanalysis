@@ -2,7 +2,7 @@
 
 from heapq import heappush, heappop
 
-from RoleSymmetricGame import Game, PayoffData
+from RoleSymmetricGame import SampleGame, PayoffData
 
 def translate(arr, source_game, target_game):
 	"""
@@ -28,7 +28,7 @@ def subgame(game, strategies={}, require_all=False):
 	"""
 	if not strategies:
 		strategies = {r:[] for r in game.roles}
-	sg = Game(game.roles, game.players, strategies)
+	sg = type(game)(game.roles, game.players, strategies)
 	if sg.size <= len(game):
 		for p in sg.allProfiles():
 			if p in game:
@@ -45,9 +45,14 @@ def subgame(game, strategies={}, require_all=False):
 
 
 def add_subgame_profile(game, subgame, prof):
-	subgame.addProfile({role:[PayoffData(strat, prof[role][strat], \
-			game.getPayoff(prof, role, strat)) for strat in prof[role]] \
-			for role in prof})
+	if isinstance(game, SampleGame):
+		subgame.addProfile({role:[PayoffData(strat, prof[role][strat], \
+				game.sample_values[game[prof]][game.index(role), game.index( \
+				role, strat)]) for strat in prof[role]] for role in prof})
+	else:
+		subgame.addProfile({role:[PayoffData(strat, prof[role][strat], \
+				game.getPayoff(prof, role, strat)) for strat in prof[role]] \
+				for role in prof})
 
 
 def is_valid_profile(game, prof):
