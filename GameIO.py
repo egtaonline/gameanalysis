@@ -96,6 +96,8 @@ def read_JSON(data):
 def read_game_JSON(gameJSON):
 	if "players" in gameJSON and "strategies" in gameJSON:
 		return read_GA_game(gameJSON)
+	elif len(gameJSON["profiles"]) == 0:
+		return Game(*parse_roles(gameJSON["roles"]))
 	elif "symmetry_groups" in gameJSON["profiles"][0]:
 		return read_game_JSON_v3(gameJSON)
 	elif "observations" in gameJSON["profiles"][0]:
