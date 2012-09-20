@@ -67,8 +67,9 @@ def congestion_payoff(useage, facility_values, facility_set):
 def normal_noise(game, stdev, samples):
 	sg = SampleGame(game.roles, game.players, game.strategies)
 	for prof in game.knownProfiles():
-		sg.addProfile({r:[PayoffData(s, prof[r][s], normal(0, stdev, samples)) \
-				for s in prof[r]] for r in game.roles})
+		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
+				normal(0, stdev, samples)) for s in prof[r]] for r \
+				in game.roles})
 	return sg
 
 

@@ -297,34 +297,49 @@ class Game(dict):
 		return self == other or self > other
 
 	def __repr__(self):
-		return ("RoleSymmetricGame:\n\troles: " + join(self.roles, ",") + \
-				"\n\tplayers:\n\t\t" + join(map(lambda x: str(x[1]) +"x "+\
-				str(x[0]), sorted(self.players.items())), "\n\t\t") + \
+		return (str(self.__class__.__name__) + ":\n\troles: " + \
+				join(self.roles, ",") + "\n\tplayers:\n\t\t" + \
+				join(map(lambda x: str(x[1]) + "x " + str(x[0]), \
+				sorted(self.players.items())), "\n\t\t") + \
 				"\n\tstrategies:\n\t\t" + join(map(lambda x: x[0] + \
 				":\n\t\t\t" + join(x[1], "\n\t\t\t"), \
 				sorted(self.strategies.items())), "\n\t\t") + \
 				"\npayoff data for " + str(len(self)) + " out of " + \
 				str(self.size) + " profiles").expandtabs(4)
 
+#	def toJSON(self):
+#		"""
+#		Convert to JSON according to the EGTA-online v3 default game spec.
+#		"""
+#		game_dict = {}
+#		game_dict["roles"] = [{"name":role, "count":self.players[role], \
+#					"strategies": list(self.strategies[role])} for role \
+#					in self.roles]
+#		game_dict["profiles"] = []
+#		for prof in self:
+#			p = self[prof]
+#			sym_groups = []
+#			for r, role in enumerate(self.roles):
+#				for strat in prof[role]:
+#					s = self.index(role, strat)
+#					sym_groups.append({"role":role, "strategy":strat, \
+#							"count":self.counts[p][r,s], \
+#							"payoff":float(self.values[p][r,s])})
+#			game_dict["profiles"].append({"symmetry_groups":sym_groups})
+#		return game_dict
+
 	def toJSON(self):
 		"""
 		Convert to JSON according to the EGTA-online v3 default game spec.
 		"""
 		game_dict = {}
-		game_dict["roles"] = [{"name":role, "count":self.players[role], \
-					"strategies": list(self.strategies[role])} for role \
-					in self.roles]
+		game_dict["players"] = self.players
+		game_dict["strategies"] = self.strategies
 		game_dict["profiles"] = []
 		for prof in self:
-			p = self[prof]
-			sym_groups = []
-			for r, role in enumerate(self.roles):
-				for strat in prof[role]:
-					s = self.index(role, strat)
-					sym_groups.append({"role":role, "strategy":strat, \
-							"count":self.counts[p][r,s], \
-							"payoff":float(self.values[p][r,s])})
-			game_dict["profiles"].append({"symmetry_groups":sym_groups})
+			game_dict["profiles"].append({role:[(strat, prof[role][strat], \
+					self.getPayoff(prof, role, strat)) for strat in \
+					prof[role]] for role in prof})
 		return game_dict
 
 
@@ -375,6 +390,8 @@ def is_constant_sum(game):
 class SampleGame(Game):
 	def __init__(self, *args, **kwargs):
 		self.sample_values = []
+		self.min_samples = float("inf")
+		self.max_samples = 0
 		Game.__init__(self, *args, **kwargs)
 
 	def addProfile(self, role_payoffs):
@@ -388,6 +405,8 @@ class SampleGame(Game):
 			for strat, count, values in role_payoffs[role]:
 				s = self.index(role, strat)
 				samples[r][s] = values
+				self.min_samples = min(self.min_samples, len(values))
+				self.max_samples = max(self.max_samples, len(values))
 				played.append(strat)
 			for strat in set(self.strategies[role]) - set(played):
 				s = self.index(role, strat)
@@ -406,27 +425,48 @@ class SampleGame(Game):
 	def reset(self):
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
 
-
 	def toJSON(self):
 		"""
-		Convert to JSON according to the EGTA-online v3 sample-game spec.
+		Convert to JSON according to the EGTA-online v3 default game spec.
 		"""
 		game_dict = {}
-		game_dict["roles"] = [{"name":role, "count":self.players[role], \
-					"strategies": list(self.strategies[role])} for role \
-					in self.roles]
+		game_dict["players"] = self.players
+		game_dict["strategies"] = self.strategies
 		game_dict["profiles"] = []
 		for prof in self:
-			p = self[prof]
-			obs = {"observations":[]}
-			for i in range(self.sample_values[self[prof]].shape[2]):
-				sym_groups = []
-				for r, role in enumerate(self.roles):
-					for strat in prof[role]:
-						s = self.index(role, strat)
-						sym_groups.append({"role":role, "strategy":strat, \
-								"count":self.counts[p][r,s], \
-								"payoff":float(self.sample_values[p][r,s,i])})
-				obs["observations"].append({"symmetry_groups":sym_groups})
-			game_dict["profiles"].append(obs)
+			game_dict["profiles"].append({role:[(strat, prof[role][strat], \
+					list(self.sample_values[self[prof]][self.index(role), \
+					self.index(role, strat)])) for strat in prof[role]] for \
+					role in prof})
 		return game_dict
+
+#	def toJSON(self):
+#		"""
+#		Convert to JSON according to the EGTA-online v3 sample-game spec.
+#		"""
+#		game_dict = {}
+#		game_dict["roles"] = [{"name":role, "count":self.players[role], \
+#					"strategies": list(self.strategies[role])} for role \
+#					in self.roles]
+#		game_dict["profiles"] = []
+#		for prof in self:
+#			p = self[prof]
+#			obs = {"observations":[]}
+#			for i in range(self.sample_values[self[prof]].shape[2]):
+#				sym_groups = []
+#				for r, role in enumerate(self.roles):
+#					for strat in prof[role]:
+#						s = self.index(role, strat)
+#						sym_groups.append({"role":role, "strategy":strat, \
+#								"count":self.counts[p][r,s], \
+#								"payoff":float(self.sample_values[p][r,s,i])})
+#				obs["observations"].append({"symmetry_groups":sym_groups})
+#			game_dict["profiles"].append(obs)
+#		return game_dict
+
+	def __repr__(self):
+		if self.min_samples < self.max_samples:
+			return Game.__repr__(self) + "\n" + str(self.min_samples) + \
+				"-" + str(self.max_samples) + " samples per profile"
+		return Game.__repr__(self) + "\n" + str(self.max_samples) + \
+			" samples per profile"
