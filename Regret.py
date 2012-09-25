@@ -135,6 +135,29 @@ def safety_value(game, role, strategy):
 	return sv
 
 
+def social_welfare(game, profile):
+	if is_pure_profile(profile):
+		return game.values[game[profile]].sum()
+	if is_mixture_array(profile):
+		players = np.array([game.players[r] for r in game.roles])
+		return (game.getExpectedPayoff(profile) * players).sum()
+	if is_profile_array(profile):
+		return social_welfare(game, game.toProfile(profile))
+	if is_mixed_profile(profile):
+		return social_welfare(game, game.toArray(profile))
+
+
+def max_social_welfare(game):
+	best_prof = None
+	max_sw = -float('inf')
+	for prof in game.knownProfiles():
+		sw = social_welfare(game, prof)
+		if sw > max_sw:
+			best_prof = prof
+			max_sw = sw
+	return best_prof, max_sw
+
+
 from GameIO import read, to_JSON_str, io_parser
 from Subgames import translate
 

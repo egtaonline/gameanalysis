@@ -50,6 +50,10 @@ def main(input_game, args):
 	else:
 		print "no dominated strategies found"
 
+	soc_opt_prof, soc_opt_welf = max_social_welfare(rational_game)
+	print "\n\nmax social welfare =", round(soc_opt_welf, 4)
+	print "achieved by profile =", soc_opt_prof, "\n"
+
 	#pure strategy Nash equilibrium search
 	pure_equilibria = pure_nash(rational_game, args.r)
 	l = len(pure_equilibria)
@@ -57,7 +61,8 @@ def main(input_game, args):
 		print "\n" + str(len(pure_equilibria)), "pure strategy Nash equilibri" \
 				+ ("um:" if l == 1 else "a:")
 		for i, eq in enumerate(pure_equilibria):
-			print str(i+1) + ". regret =", round(regret(input_game, eq), 4)
+			print str(i+1) + ". regret =", round(regret(input_game, eq), 4), \
+					"; social welfare =", round(social_welfare(input_game, eq), 4)
 			for role in input_game.roles:
 				print "    " + role + ":", ", ".join(map(lambda pair: \
 						str(pair[1]) + "x " + str(pair[0]), eq[role].items()))
@@ -66,7 +71,8 @@ def main(input_game, args):
 		mrp = min_regret_profile(rational_game)
 		print "regret =", regret(input_game, mrp)
 		print "minimum regret pure strategy profile (regret = " + \
-				str(round(regret(input_game, mrp), 4)) + "):"
+				str(round(regret(input_game, mrp), 4)) + "; social welfare = " + \
+				str(round(social_welfare(input_game, mrp), 4)) + "):"
 		for role in input_game.roles:
 			print "    " + role + ":", ", ".join(map(lambda pair: \
 					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
@@ -95,11 +101,12 @@ def main(input_game, args):
 			full_eq = translate(eq, sg, input_game)
 			if all(map(lambda p: p in input_game, neighbors(input_game, \
 					full_eq))):
-				print str(j+1) + ". regret =", round(regret(input_game, \
-						full_eq), 4)
+				print str(j+1) + ". regret =", round(regret(input_game, full_eq), \
+						4), "; social welfare =", round(social_welfare(sg, eq), 4)
 			else:
 				print str(j+1) + ". regret >=", round(regret(input_game,  \
-						full_eq, bound=True), 4)
+						full_eq, bound=True), 4), "; social welfare =", \
+						round(social_welfare(sg, eq), 4)
 
 			support = {r:[] for r in input_game.roles}
 			for k,role in enumerate(input_game.roles):

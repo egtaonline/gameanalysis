@@ -80,7 +80,6 @@ class TestbedSimulator(TestbedObject):
 		return any([r["name"] == role for r in self.roles])
 
 	def hasStrategy(self, role, strategy):
-#! /usr/bin/env python2.7
 		return self.hasRole(role) and strategy in filter(lambda r: \
 				r["name"] == role, self.roles)[0]["strategies"]
 

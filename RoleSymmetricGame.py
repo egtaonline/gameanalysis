@@ -175,6 +175,17 @@ class Game(dict):
 			return (mix * self.expectedValues(mix)).sum(1)
 		return (mix * self.expectedValues(mix)).sum(1)[self.index(role)]
 
+	def getSocialWelfare(self, profile):
+		if is_pure_profile(profile):
+			return self.values[self[profile]].sum()
+		if is_mixture_array(profile):
+			players = np.array([self.players[r] for r in self.roles])
+			return (self.getExpectedPayoff(profile) * players).sum()
+		if is_profile_array(profile):
+			return self.getSocialWelfare(self.toProfile(profile))
+		if is_mixed_profile(profile):
+			return self.getSocialWelfare(self.toArray(profile))
+
 	def expectedValues(self, mix):
 		"""
 		Computes the expected value of each pure strategy played against
@@ -307,26 +318,26 @@ class Game(dict):
 				"\npayoff data for " + str(len(self)) + " out of " + \
 				str(self.size) + " profiles").expandtabs(4)
 
-#	def toJSON(self):
-#		"""
-#		Convert to JSON according to the EGTA-online v3 default game spec.
-#		"""
-#		game_dict = {}
-#		game_dict["roles"] = [{"name":role, "count":self.players[role], \
-#					"strategies": list(self.strategies[role])} for role \
-#					in self.roles]
-#		game_dict["profiles"] = []
-#		for prof in self:
-#			p = self[prof]
-#			sym_groups = []
-#			for r, role in enumerate(self.roles):
-#				for strat in prof[role]:
-#					s = self.index(role, strat)
-#					sym_groups.append({"role":role, "strategy":strat, \
-#							"count":self.counts[p][r,s], \
-#							"payoff":float(self.values[p][r,s])})
-#			game_dict["profiles"].append({"symmetry_groups":sym_groups})
-#		return game_dict
+	def to_TB_JSON(self):
+		"""
+		Convert to JSON according to the EGTA-online v3 default game spec.
+		"""
+		game_dict = {}
+		game_dict["roles"] = [{"name":role, "count":self.players[role], \
+					"strategies": list(self.strategies[role])} for role \
+					in self.roles]
+		game_dict["profiles"] = []
+		for prof in self:
+			p = self[prof]
+			sym_groups = []
+			for r, role in enumerate(self.roles):
+				for strat in prof[role]:
+					s = self.index(role, strat)
+					sym_groups.append({"role":role, "strategy":strat, \
+							"count":self.counts[p][r,s], \
+							"payoff":float(self.values[p][r,s])})
+			game_dict["profiles"].append({"symmetry_groups":sym_groups})
+		return game_dict
 
 	def toJSON(self):
 		"""
@@ -417,10 +428,13 @@ class SampleGame(Game):
 				samples[r][s] = [0]*len(samples[r][p])
 		self.sample_values.append(np.array(samples))
 
-	def resample(self):
-		self.values = map(lambda p: np.average(p, 2, weights= \
-				np.random.multinomial(p.shape[2], np.ones( \
-				p.shape[2])/p.shape[2])), self.sample_values)
+	def resample(self, num_samples=None):
+		if num_samples == None:
+			self.values = map(lambda p: np.average(p, 2, weights= \
+					np.random.multinomial(p.shape[2], np.ones( \
+					p.shape[2])/p.shape[2])), self.sample_values)
+		else:
+			raise NotImplementedError("TODO")
 
 	def reset(self):
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
@@ -440,29 +454,29 @@ class SampleGame(Game):
 					role in prof})
 		return game_dict
 
-#	def toJSON(self):
-#		"""
-#		Convert to JSON according to the EGTA-online v3 sample-game spec.
-#		"""
-#		game_dict = {}
-#		game_dict["roles"] = [{"name":role, "count":self.players[role], \
-#					"strategies": list(self.strategies[role])} for role \
-#					in self.roles]
-#		game_dict["profiles"] = []
-#		for prof in self:
-#			p = self[prof]
-#			obs = {"observations":[]}
-#			for i in range(self.sample_values[self[prof]].shape[2]):
-#				sym_groups = []
-#				for r, role in enumerate(self.roles):
-#					for strat in prof[role]:
-#						s = self.index(role, strat)
-#						sym_groups.append({"role":role, "strategy":strat, \
-#								"count":self.counts[p][r,s], \
-#								"payoff":float(self.sample_values[p][r,s,i])})
-#				obs["observations"].append({"symmetry_groups":sym_groups})
-#			game_dict["profiles"].append(obs)
-#		return game_dict
+	def to_TB_JSON(self):
+		"""
+		Convert to JSON according to the EGTA-online v3 sample-game spec.
+		"""
+		game_dict = {}
+		game_dict["roles"] = [{"name":role, "count":self.players[role], \
+					"strategies": list(self.strategies[role])} for role \
+					in self.roles]
+		game_dict["profiles"] = []
+		for prof in self:
+			p = self[prof]
+			obs = {"observations":[]}
+			for i in range(self.sample_values[self[prof]].shape[2]):
+				sym_groups = []
+				for r, role in enumerate(self.roles):
+					for strat in prof[role]:
+						s = self.index(role, strat)
+						sym_groups.append({"role":role, "strategy":strat, \
+								"count":self.counts[p][r,s], \
+								"payoff":float(self.sample_values[p][r,s,i])})
+				obs["observations"].append({"symmetry_groups":sym_groups})
+			game_dict["profiles"].append(obs)
+		return game_dict
 
 	def __repr__(self):
 		if self.min_samples < self.max_samples:
