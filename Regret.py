@@ -137,7 +137,7 @@ def safety_value(game, role, strategy):
 
 def social_welfare(game, profile):
 	if is_pure_profile(profile):
-		return game.values[game[profile]].sum()
+		return (game.values[game[profile]] * game.counts[game[profile]]).sum()
 	if is_mixture_array(profile):
 		players = np.array([game.players[r] for r in game.roles])
 		return (game.getExpectedPayoff(profile) * players).sum()
