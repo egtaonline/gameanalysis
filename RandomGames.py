@@ -4,9 +4,21 @@ from BasicFunctions import leading_zeros
 from RoleSymmetricGame import Game, SampleGame, PayoffData
 from GameIO import io_parser
 
+from functools import partial
 from itertools import combinations
 from numpy.random import uniform as U, normal
 from numpy import array, arange
+
+
+def independent(N, S, dist=partial(U,-1,1)):
+	roles = map(str, range(N))
+	players = {r:1 for r in roles}
+	strategies = {r:map(str, range(S)) for r in roles}
+	g = Game(roles, players, strategies)
+	for prof in g.allProfiles():
+		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, U(-1,1))] for r in prof})
+	return g
+		
 
 def uniform_zero_sum(S):
 	roles = ["row", "column"]
