@@ -36,6 +36,10 @@ def parse_args():
 def main(input_game, args):
 	print "input game =", abspath(args.file), "\n", input_game, "\n\n"
 
+	#max social welfare
+	soc_opt_prof, soc_opt_welf = max_social_welfare(input_game)
+	print "max social welfare =", round(soc_opt_welf, 4)
+	print "achieved by profile =", soc_opt_prof, "\n\n"
 
 	#iterated elimination of dominated strategies
 	rational_game = iterated_elimination(input_game, pure_strategy_dominance, \
@@ -49,10 +53,6 @@ def main(input_game, args):
 				print r, ":", ", ".join(eliminated[r])
 	else:
 		print "no dominated strategies found"
-
-	soc_opt_prof, soc_opt_welf = max_social_welfare(rational_game)
-	print "\n\nmax social welfare =", round(soc_opt_welf, 4)
-	print "achieved by profile =", soc_opt_prof, "\n"
 
 	#pure strategy Nash equilibrium search
 	pure_equilibria = pure_nash(rational_game, args.r)
