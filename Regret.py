@@ -138,13 +138,15 @@ def safety_value(game, role, strategy):
 def social_welfare(game, profile):
 	if is_pure_profile(profile):
 		return (game.values[game[profile]] * game.counts[game[profile]]).sum()
-	if is_mixture_array(profile):
+	elif is_mixture_array(profile):
 		players = np.array([game.players[r] for r in game.roles])
 		return (game.getExpectedPayoff(profile) * players).sum()
-	if is_profile_array(profile):
+	elif is_profile_array(profile):
 		return social_welfare(game, game.toProfile(profile))
-	if is_mixed_profile(profile):
+	elif is_mixed_profile(profile):
 		return social_welfare(game, game.toArray(profile))
+	else:
+		raise TypeError("unrecognized profile type: " + str(profile))
 
 
 def max_social_welfare(game):
@@ -166,6 +168,8 @@ def parse_args():
 			"specified profiles.")
 	parser.add_argument("profiles", type=str, help="File with profiles from" +\
 			" input games for which regrets should be calculated.")
+	parser.add_argument("--sw", action="store_true", help="Calculate social " +\
+			"welfare instead of regret.)")
 	return parser.parse_args()
 
 
@@ -179,9 +183,14 @@ def main():
 		games = [games] * len(profiles)
 	regrets = []
 	for g, prof_list in zip(games, profiles):
+		if not isinstance(prof_list, list):
+			prof_list = [prof_list]
 		regrets.append([])
 		for prof in prof_list:
-			regrets[-1].append(regret(g, prof))
+			if args.sw:
+				regrets[-1].append(social_welfare(g, prof))
+			else:
+				regrets[-1].append(regret(g, prof))
 	if len(regrets) > 1:
 		print to_JSON_str(regrets)
 	else:
