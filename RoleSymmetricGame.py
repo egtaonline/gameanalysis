@@ -428,13 +428,10 @@ class SampleGame(Game):
 				samples[r][s] = [0]*len(samples[r][p])
 		self.sample_values.append(np.array(samples))
 
-	def resample(self, num_samples=None):
-		if num_samples == None:
-			self.values = map(lambda p: np.average(p, 2, weights= \
-					np.random.multinomial(p.shape[2], np.ones( \
-					p.shape[2])/p.shape[2])), self.sample_values)
-		else:
-			raise NotImplementedError("TODO")
+	def resample(self):
+		self.values = map(lambda p: np.average(p, 2, weights= \
+				np.random.multinomial(p.shape[2], np.ones( \
+				p.shape[2])/p.shape[2])), self.sample_values)
 
 	def reset(self):
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
