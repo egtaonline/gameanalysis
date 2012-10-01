@@ -201,7 +201,7 @@ class Game(dict):
 		except ValueError: #this happens if there's only one strategy
 			weights = ((mix+tiny)**self.counts).prod(1).reshape( \
 					self.values.shape[0], 1) * self.dev_reps / (mix+tiny)
-		return (self.values * weights).sum(0) #/ (weights.sum(0) + tiny)
+		return (self.values * weights).sum(0) / (weights.sum(0) + tiny)
 
 	def allProfiles(self):
 		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \
