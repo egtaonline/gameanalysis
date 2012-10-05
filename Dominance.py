@@ -7,34 +7,30 @@ from RoleSymmetricGame import Profile
 from Regret import regret
 from Subgames import subgame
 
-def best_responses(game, p, role=None, strategy=None):
+def best_responses(game, prof, role=None, strategy=None):
 	"""
 	If role is unspecified, bestResponses returns a dict mapping each role
 	all of its strategy-level results. If strategy is unspecified,
 	bestResponses returns a dict mapping strategies to the set of best
 	responses to the opponent-profile without that strategy.
-
-	If conditional=True, bestResponses returns two sets: the known best
-	responses, and the deviations whose value is unkown; otherwise it
-	returns only the known best response set.
 	"""
 	if role == None:
-		return {r: best_responses(game, p, r, strategy) for r \
+		return {r: best_responses(game, prof, r, strategy) for r \
 				in game.roles}
-	if strategy == None and isinstance(p, Profile):
-		return {s: best_responses(game, p, role, s) for s in \
-				p[role]}
+	if strategy == None and isinstance(prof, Profile):
+		return {s: best_responses(game, prof, role, s) for s in \
+				prof[role]}
 	best_deviations = set()
 	biggest_gain = float('-inf')
 	unknown = set()
 	for dev in game.strategies[role]:
-		r = regret(game, p, role, strategy, dev)
-		if isinf(r):
+		reg = regret(game, prof, role, strategy, dev)
+		if isinf(reg):
 			unknown.add(dev)
-		elif r > biggest_gain:
+		elif reg > biggest_gain:
 			best_deviations = {dev}
-			biggest_gain = r
-		elif r == biggest_gain:
+			biggest_gain = reg
+		elif reg == biggest_gain:
 			best_deviations.add(dev)
 	return best_deviations, unknown
 

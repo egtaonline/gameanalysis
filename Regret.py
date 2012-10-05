@@ -46,15 +46,15 @@ def profile_regret(game, prof, role, strategy, deviation, bound):
 def mixture_regret(game, mix, role, deviation, bound):
 	strategy_EVs = game.expectedValues(mix)
 	role_EVs = (strategy_EVs * mix).sum(1)
-	if role == None:
+	if role == None:#doesn't check profiles
 		return max([float(max(strategy_EVs[r][:game.numStrategies[r]]) - \
 			role_EVs[r]) for r in range(len(game.roles))])
 	r = game.index(role)
-	if deviation == None:
+	if deviation == None:#doesn't check profiles
 		return float(max(strategy_EVs[r][:game.numStrategies[r]]) - \
 			role_EVs[r])
 	if any(map(lambda p: p not in game, mixture_neighbors(game, \
-			mix, role, deviation))):
+			mix, role, deviation))):#the profile check happens here
 		return -float("inf") if bound else float("inf")
 	d = game.index(role, deviation)
 	return float(strategy_EVs[r,d] - role_EVs[r])

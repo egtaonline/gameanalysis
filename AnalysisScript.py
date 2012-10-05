@@ -99,14 +99,14 @@ def main(input_game, args):
 				else "a:")
 		for j, eq in enumerate(mixed_equilibria):
 			full_eq = translate(eq, sg, input_game)
-			if all(map(lambda p: p in input_game, neighbors(input_game, \
-					full_eq))):
-				print str(j+1) + ". regret =", round(regret(input_game, full_eq), \
-						4), "; social welfare =", round(social_welfare(sg, eq), 4)
-			else:
-				print str(j+1) + ". regret >=", round(regret(input_game,  \
-						full_eq, bound=True), 4), "; social welfare =", \
-						round(social_welfare(sg, eq), 4)
+			all_data = all(map(lambda p: p in input_game, neighbors(input_game, \
+					full_eq)))
+			BR = {r:(list(t[0])[0] if len(t[0]) > 0 else None) for r,t in \
+					best_responses(input_game, full_eq).items()}
+			reg = max(map(lambda r: regret(input_game, full_eq, deviation=BR[r]), \
+					input_game.roles))
+			print str(j+1) + ". regret ", ("=" if all_data else ">=") , round(reg, \
+					4), "; social welfare =", round(social_welfare(sg, eq), 4)
 
 			support = {r:[] for r in input_game.roles}
 			for k,role in enumerate(input_game.roles):
@@ -117,17 +117,13 @@ def main(input_game, args):
 						print "    " + strategy + ": " + str(round(100 * \
 								full_eq[k][l], 2)) + "%"
 
-			BR = best_responses(input_game, full_eq)
 			print "best responses:"
 			for role in input_game.roles:
 				deviation_support = deepcopy(support)
-				deviation_support[role].extend(BR[role][0])
-				if len(BR[role][0]) == 0:
-					continue
-				r = regret(input_game, full_eq, role, deviation= \
-						list(BR[role][0])[0])
-				print "\t" + str(role) + ": " + ", ".join(BR[role][0]) + \
-						";\tgain =", (round(r, 4) if not isinf(r) else "?")
+				deviation_support[role].append(BR[role])
+				r = regret(input_game, full_eq, role, deviation=BR[role])
+				print "\t" + str(role) + ": " + BR[role] + ";\tgain =", (round(r, 4) \
+						if not isinf(r) else "?")
 				print "Deviation subgame " + ("explored." if subgame( \
 						input_game, deviation_support).isComplete() else \
 						"UNEXPLORED!") + "\n"
