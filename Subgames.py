@@ -114,7 +114,6 @@ def cliques(full_game, known_subgames=[]):
 					continue
 				maximal=False
 				if new_sg.strategies in explored_subgames:
-					print len(maximal_subgames), len(explored_subgames), len(subgames)
 					continue
 				subgames.add(new_sg.strategies)
 		if maximal:
