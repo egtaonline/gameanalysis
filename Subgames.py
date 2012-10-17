@@ -94,8 +94,11 @@ def cliques(full_game, known_subgames=[]):
 		for role in full_game.roles:
 			new_strategies[role] |= set(prof[role].keys())
 	subgames = {subgame(full_game).strategies}
-	for sg_strat in known_subgames:
-		sg = subgame(full_game, sg_strat)
+	for sg in known_subgames:
+		try:
+			sg = subgame(full_game, sg.strategies)
+		except AttributeError:
+			sg =  subgame(full_game, sg)
 		if sg.isComplete():
 			subgames.add(sg.strategies)
 	maximal_subgames = set()
