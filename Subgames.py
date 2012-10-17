@@ -93,33 +93,33 @@ def cliques(full_game, known_subgames=[]):
 	for prof in new_profiles:
 		for role in full_game.roles:
 			new_strategies[role] |= set(prof[role].keys())
-	subgames = {subgame(full_game)}
-	for g in known_subgames:
-		sg = subgame(full_game, g.strategies)
+	subgames = {subgame(full_game).strategies}
+	for sg_strat in known_subgames:
+		sg = subgame(full_game, sg_strat)
 		if sg.isComplete():
-			subgames.add(sg)
+			subgames.add(sg.strategies)
 	maximal_subgames = set()
 	explored_subgames = set()
 	while(subgames):
-		sg = subgames.pop()
-		explored_subgames.add(sg)
+		sg_strat = subgames.pop()
+		explored_subgames.add(sg_strat)
 		maximal = True
 		for role in full_game.roles:
-			for s in new_strategies[role] - set(sg.strategies[role]):
-				strategies = {r:list(sg.strategies[r]) + ([s] if r == role \
+			for s in new_strategies[role] - set(sg_strat[role]):
+				strategies = {r:list(sg_strat[r]) + ([s] if r == role \
 						else []) for r in full_game.roles}
 				try:
 					new_sg = subgame(full_game, strategies, True)
 				except KeyError:
 					continue
 				maximal=False
-				if new_sg in explored_subgames:
+				if new_sg.strategies in explored_subgames:
 					continue
-				subgames.add(new_sg)
+				subgames.add(new_sg.strategies)
 		if maximal:
-			sg = subgame(full_game, sg.strategies)
+			sg = subgame(full_game, sg_strat)
 			if len(sg) > 0:
-				maximal_subgames.add(sg)
+				maximal_subgames.add(sg.strategies)
 	return sorted(maximal_subgames, key=len)
 
 
