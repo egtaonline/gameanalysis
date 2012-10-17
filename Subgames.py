@@ -114,6 +114,7 @@ def cliques(full_game, known_subgames=[]):
 					continue
 				maximal=False
 				if new_sg.strategies in explored_subgames:
+					print len(maximal_subgames), len(explored_subgames), len(subgames)
 					continue
 				subgames.add(new_sg.strategies)
 		if maximal:
@@ -129,7 +130,7 @@ from GameIO import to_JSON_str, io_parser
 def main():
 	parser = io_parser()
 	args = parser.parse_args()
-	print to_JSON_str(cliques(args.input))
+	print to_JSON_str(map(lambda s: subgame(args.input, s), cliques(args.input)))
 
 
 if __name__ == "__main__":

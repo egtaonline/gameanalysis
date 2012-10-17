@@ -88,7 +88,8 @@ def main(input_game, args):
 				len, eliminated.values())) else "")
 
 	#mixed strategy Nash equilibrium search
-	for i, sg in enumerate(maximal_subgames):
+	for i, sg_strat in enumerate(maximal_subgames):
+		sg = subgame(rational_game, sg_strat)
 		print "\nsubgame "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
 				":\n\t\t" + "\n\t\t".join(x[1]), sorted( \
 				sg.strategies.items()))).expandtabs(4)
