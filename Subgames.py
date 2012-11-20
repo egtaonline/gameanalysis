@@ -87,8 +87,8 @@ def cliques(full_game, known_subgames=[]):
 	the known subgames is ignored, so for faster loading, give only the
 	header information).
 	"""
-	new_profiles = set(full_game.knownProfiles()) - set().union(( \
-			g.allProfiles() for g in known_subgames))
+	new_profiles = set(full_game.knownProfiles()) - set().union(*( \
+			subgame(full_game, s).allProfiles() for s in known_subgames))
 	new_strategies = {r:set() for r in full_game.roles}
 	for prof in new_profiles:
 		for role in full_game.roles:

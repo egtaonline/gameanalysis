@@ -8,7 +8,7 @@ from Regret import *
 from Nash import *
 
 from sys import argv
-from os.path import abspath
+from os.path import abspath, exists
 from argparse import ArgumentParser
 from copy import deepcopy
 
@@ -28,6 +28,9 @@ def parse_args():
 			help="Replicator dynamics convergence thrshold.")
 	parser.add_argument("-i", metavar="ITERS", type=int, default=10000, \
 			help="Max replicator dynamics iterations.")
+	parser.add_argument("-k", metavar="KNOWN", type=str, default="", \
+			help="Name of file containing known subgames. " +\
+			"Will be overwritten with new subgames.")
 	args = parser.parse_args()
 	game = read(args.file)
 	return game, args
@@ -78,7 +81,14 @@ def main(input_game, args):
 					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
 
 	#find maximal subgames
-	maximal_subgames = cliques(rational_game)
+	if exists(args.k):
+		known_subgames = read(args.k)
+	else:
+		known_subgames = []
+	maximal_subgames = cliques(rational_game, known_subgames)
+	if args.k != "": 
+		with open(args.k, "w") as f:
+			f.write(to_JSON_str(maximal_subgames))
 	num_subgames = len(maximal_subgames)
 	if num_subgames == 1 and maximal_subgames[0] == input_game:
 		print "\ninput game is maximal"
