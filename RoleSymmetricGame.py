@@ -428,10 +428,24 @@ class SampleGame(Game):
 				samples[r][s] = [0]*len(samples[r][p])
 		self.sample_values.append(np.array(samples))
 
-	def resample(self):
-		self.values = map(lambda p: np.average(p, 2, weights= \
-				np.random.multinomial(p.shape[2], np.ones( \
-				p.shape[2])/p.shape[2])), self.sample_values)
+	def resample(self, pair=1):
+		"""
+		pair = 0: resample payoff observations independently (recommended after DPR)
+		pair = 1: resample paired profile observations (default, best-justified)
+		pair = 2: resample paired game observations (fastest, requires equal samples)
+		"""
+		if pair == 0:
+			raise NotImplementedError
+		elif pair == 1:
+			self.values = map(lambda p: np.average(p, 2, weights= \
+					np.random.multinomial(p.shape[2], np.ones( \
+					p.shape[2])/p.shape[2])), self.sample_values)
+		elif pair == 2:
+			if isinstance(self.sample_values, list):
+				self.sample_values = np.array(self.sample_values, dtype=float)
+			s = self.sample_values.shape[3]
+			self.values = np.average(self.sample_values, 3, weights= \
+					np.random.multinomial(s, np.ones(s)/s))
 
 	def reset(self):
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
