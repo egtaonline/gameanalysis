@@ -50,6 +50,18 @@ def uniform_symmetric(N, S):
 
 
 def congestion(N, facilities, required):
+	"""
+	Generates random congestion games with N players and (f choose r) strategies.
+
+	Congestion games are symmetric, so all players belong to role All. Each strategy
+	is a subset of size #required among the size #facilities set of available
+	facilities. Payoffs for each strategy are summed over facilities. Each facility's
+	payoff consists of three components:
+
+	-constant ~ U[0,#facilities]
+	-linear congestion cost ~ U[-#required,0]
+	-quadratic congestion cost ~ U[-1,0]
+	"""
 	roles = ["All"]
 	players = {"All":N}
 	strategies = {'+'.join(["f"+str(f) for f in strat]):strat for strat in \
@@ -69,11 +81,32 @@ def congestion(N, facilities, required):
 		g.addProfile({"All":payoffs})
 	return g
 
+
 def congestion_payoff(useage, facility_values, facility_set):
 	value = 0
 	for f in facility_set:
 		value += sum(useage[f]**arange(3) * facility_values[f])
 	return value
+
+
+def local_effect_game(N, S):
+	"""
+	Generates random congestion games with N players and S strategies.
+
+	Local effect games are symmetric, so all players belong to role All. Each strategy
+	corresponds to a node in the G(N,0.5) local effect graph. Payoffs for each
+	strategy consist of constant terms for each strategy, and interaction terms
+	for the number of players choosing that strategy and each neighboring strategy.
+
+	The one-strategy terms are drawn as follows:
+	-constant ~ U[-N*S,N*S]
+	-linear ~ U[-N,N]
+
+	The neighbor strategy terms are drawn as follows:
+	-linear ~ U[-S,S]
+	-quadratic ~ U[-1,1]
+	"""
+	raise NotImplementedError("TODO")
 
 
 def normal_noise(game, stdev, samples):

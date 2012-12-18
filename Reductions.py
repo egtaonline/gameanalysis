@@ -2,7 +2,7 @@
 
 from RoleSymmetricGame import Game, Profile, PayoffData
 
-def hierarchical_reduction(game, players={} ):
+def hierarchical_reduction(game, players={}):
 	if not players:
 		players = {r : game.players[r] / 2 for r in game.roles}
 	HR_game = Game(game.roles, players, game.strategies)

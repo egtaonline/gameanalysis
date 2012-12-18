@@ -5,14 +5,14 @@ from string import join
 
 import requests
 
-from GameIO import read, read_v3_profile
+from GameIO import read, read_v3_profile, read_v3_samples_profile
 from RoleSymmetricGame import Profile
 from Reductions import DPR_profiles
 from BasicFunctions import one_line
 
 
 class TestbedObject:
-	def __init__(self, name, obj_type, name_field="", options={}, \
+	def __init__(self, name, obj_type, name_field="", options={}, url_options={}, \
 			skip_name=False):
 		self.auth = {'auth_token':"g2LHz1mEtbysFngwLMCz"}
 		self.url = "http://d-108-249.eecs.umich.edu/api/v3/" + obj_type
@@ -21,25 +21,34 @@ class TestbedObject:
 		data.update(self.auth)
 
 		ID = name #try treating name as an id
-		r = requests.get(self.url +"/"+ ID + ".json", data=data)
+		r = requests.get(self.url +"/"+ ID + ".json?" + "&".join([str(k) +"="+ \
+				str(v) for k,v in url_options.items()]), data=data)
 
 		if r.status_code != 200 and not skip_name: #treat name as a name_field
 			r = requests.get(self.url + ".json", data=data)
 			try:
 				ID = filter(lambda s: s[name_field] == name, \
 						loads(r.text)[obj_type])[0]['_id']
+				print ID
 			except IndexError:
 				raise Exception("no such "+obj_type[:-1]+": "+name)
-			r = requests.get(self.url +"/"+ ID + ".json", data=self.auth)
 
 		self.url += "/" + ID
+		self.processResponse(r)
+
+	def processResponse(self, r):
 		self.json = r.text
-		self.__dict__.update(loads(r.text))
+		j = loads(r.text)
+		if isinstance(j, dict):
+			self.__dict__.update()
+		elif isinstance(j, list):
+			map(lambda d: self.__dict__.update(d), j)
+		else:
+			raise ValueError(one_line(r.text))
 
 	def update(self):
 		r = requests.get(self.url + ".json", data=self.auth)
-		self.json = r.text
-		self.__dict__.update(r.text)
+		self.processResponse(r)
 		return r.status_code
 
 	def __repr__(self):
@@ -48,8 +57,8 @@ class TestbedObject:
 
 
 class TestbedScheduler(TestbedObject):
-	def __init__(self, name):
-		TestbedObject.__init__(self, name, "generic_schedulers", "name")
+	def __init__(self, name, scheduler_type="generic_"):
+		TestbedObject.__init__(self, name, scheduler_type+"schedulers", "name")
 
 	def addProfile(self, profile, samples):
 		data = {'sample_count':samples, 'assignment':str(profile)}
@@ -122,17 +131,29 @@ class TestbedGame(TestbedObject):
 
 	def update(self):
 		TestbedObject.update(self)
-		self.game = read(loads(self.json))
+		self.game = read(self.json)
 
 
 class TestbedProfile(TestbedObject):
-	def __init__(self, ID):
-		TestbedObject.__init__(self, ID, "profiles", skip_name=True)
-		self.payoffs = read_v3_profile(loads(self.json))
+	def __init__(self, ID, granularity="summary"):
+		TestbedObject.__init__(self, ID, "profiles", url_options= \
+				{"granularity":granularity}, skip_name=True)
+		self.granularity = granularity
+		if self.granularity == "summary":
+			self.payoffs = read_v3_profile(loads(self.json)[0])
+		elif self.granularity == "observations":
+			self.payoffs = read_v3_samples_profile(loads(self.json)[0])
+		elif self.granularity == "full":
+			self.payoffs = read_v3_players_profile(loads(self.json)[0])
 
 	def update(self):
 		TestbedObject.update(self)
-		self.payoffs = read_v3_profile(loads(self.json))
+		if self.granularity == "summary":
+			self.payoffs = read_v3_profile(loads(self.json)[0])
+		elif self.granularity == "observations":
+			self.payoffs = read_v3_samples_profile(loads(self.json)[0])
+		elif self.granularity == "full":
+			self.payoffs = read_v3_players_profile(loads(self.json)[0])
 
 
 
