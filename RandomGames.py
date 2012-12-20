@@ -18,7 +18,8 @@ def independent(N, S, dist=partial(U,-1,1)):
 	strategies = {r:map(str, range(S)) for r in roles}
 	g = Game(roles, players, strategies)
 	for prof in g.allProfiles():
-		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, U(-1,1))] for r in prof})
+		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, U(-1,1))] \
+				for r in prof})
 	return g
 		
 
@@ -53,12 +54,12 @@ def uniform_symmetric(N, S):
 
 def congestion(N, facilities, required):
 	"""
-	Generates random congestion games with N players and (f choose r) strategies.
+	Generates random congestion games with N players and nCr(f,r) strategies.
 
-	Congestion games are symmetric, so all players belong to role All. Each strategy
-	is a subset of size #required among the size #facilities set of available
-	facilities. Payoffs for each strategy are summed over facilities. Each facility's
-	payoff consists of three components:
+	Congestion games are symmetric, so all players belong to role All. Each 
+	strategy is a subset of size #required among the size #facilities set of 
+	available facilities. Payoffs for each strategy are summed over facilities.
+	Each facility's payoff consists of three components:
 
 	-constant ~ U[0,#facilities]
 	-linear congestion cost ~ U[-#required,0]
@@ -95,10 +96,11 @@ def local_effect(N, S):
 	"""
 	Generates random congestion games with N players and S strategies.
 
-	Local effect games are symmetric, so all players belong to role All. Each strategy
-	corresponds to a node in the G(N,2/S) local effect graph. Payoffs for each
-	strategy consist of constant terms for each strategy, and interaction terms
-	for the number of players choosing that strategy and each neighboring strategy.
+	Local effect games are symmetric, so all players belong to role All. Each
+	strategy corresponds to a node in the G(N,2/S) local effect graph. Payoffs
+	for each strategy consist of constant terms for each strategy, and
+	interaction terms for the number of players choosing that strategy and each
+	neighboring strategy.
 
 	The one-strategy terms are drawn as follows:
 	-constant ~ U[-N-S,N+S]
@@ -169,9 +171,10 @@ def parse_args():
 	parser.add_argument("-stdev", type=float, default=0, help="Standard " +\
 			"deviation of normal noise added to each sample. -samples must " +\
 			"also be specified.")
-	parser.add_argument("-modes", type=int, default=1, help="Number of Gaussians " +\
-			"to mix when generating the noise distribution. Default=1. Note that " +\
-			"setting modex>1 calls a different noise function.")
+	parser.add_argument("-modes", type=int, default=1, help="Number of " +\
+			"Gaussians to mix when generating the noise distribution. " +\
+			"Default=1. Note that setting modex>1 calls a different noise " +\
+			"function.")
 	parser.add_argument("game_args", nargs="*", help="Additional arguments " +\
 			"for game generator function.")
 	assert "-input" not in sys.argv, "no input JSON required"
@@ -187,20 +190,20 @@ def main():
 		assert len(game_args) == 1, "one game_arg specifies strategy count"
 	elif args.type == "uSym":
 		game_func = uniform_symmetric
-		assert len(game_args) == 2, "game_args specify player and strategy "+\
-				"counts"
+		assert len(game_args) == 2, "game_args specify player & strategy counts"
 		game_args = map(int, args.game_args[:2])
 	elif args.type == "CG":
 		game_func = congestion
-		assert len(game_args) == 3, "game_args specify player, facility, and"+\
+		assert len(game_args) == 3, "game_args specify player, facility, &"+\
 				" required facility counts"
 	elif args.type == "LEG":
 		game_func = local_effect
-		assert len(game_args) == 2, "game_args specify player and strategy counts"
+		assert len(game_args) == 2, "game_args specify player & strategy counts"
 	games = [game_func(*game_args) for i in range(args.count)]
 	if args.samples > 1 and args.stdev > 0:
 		if args.modes <= 1:
-			noisy = map(lambda g: normal_noise(g, args.stdev, args.samples), games)
+			noisy = map(lambda g: normal_noise(g, args.stdev, args.samples), \
+					games)
 			games = zip(games, noisy)
 		else:
 			out_fname = "/home/egat/Bootstrap/local_effect_games/LEG_6p4s_"

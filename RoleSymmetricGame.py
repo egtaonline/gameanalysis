@@ -430,9 +430,9 @@ class SampleGame(Game):
 
 	def resample(self, pair=1):
 		"""
-		pair = 0: resample payoff observations independently (recommended after DPR)
+		pair = 0: resample payoff observations independently (use after DPR)
 		pair = 1: resample paired profile observations (default, best-justified)
-		pair = 2: resample paired game observations (fastest, requires equal samples)
+		pair = 2: resample paired game observations (fast, needs equal samples)
 		"""
 		if pair == 0:
 			raise NotImplementedError

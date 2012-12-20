@@ -61,11 +61,11 @@ def main(input_game, args):
 	pure_equilibria = pure_nash(rational_game, args.r)
 	l = len(pure_equilibria)
 	if l > 0:
-		print "\n" + str(len(pure_equilibria)), "pure strategy Nash equilibri" \
-				+ ("um:" if l == 1 else "a:")
+		print "\n" + str(len(pure_equilibria)), "pure strategy Nash " +\
+				"equilibri" + ("um:" if l == 1 else "a:")
 		for i, eq in enumerate(pure_equilibria):
 			print str(i+1) + ". regret =", round(regret(input_game, eq), 4), \
-					"; social welfare =", round(social_welfare(input_game, eq), 4)
+					"; social welfare =", round(social_welfare(input_game,eq),4)
 			for role in input_game.roles:
 				print "    " + role + ":", ", ".join(map(lambda pair: \
 						str(pair[1]) + "x " + str(pair[0]), eq[role].items()))
@@ -74,7 +74,7 @@ def main(input_game, args):
 		mrp = min_regret_profile(rational_game)
 		print "regret =", regret(input_game, mrp)
 		print "minimum regret pure strategy profile (regret = " + \
-				str(round(regret(input_game, mrp), 4)) + "; social welfare = " + \
+				str(round(regret(input_game, mrp), 4)) + "; social welfare = "+\
 				str(round(social_welfare(input_game, mrp), 4)) + "):"
 		for role in input_game.roles:
 			print "    " + role + ":", ", ".join(map(lambda pair: \
@@ -110,14 +110,14 @@ def main(input_game, args):
 				else "a:")
 		for j, eq in enumerate(mixed_equilibria):
 			full_eq = translate(eq, sg, input_game)
-			all_data = all(map(lambda p: p in input_game, neighbors(input_game, \
-					full_eq)))
+			all_data = all(map(lambda p: p in input_game, neighbors(\
+					input_game, full_eq)))
 			BR = {r:(list(t[0])[0] if len(t[0]) > 0 else None) for r,t in \
 					best_responses(input_game, full_eq).items()}
-			reg = max(map(lambda r: regret(input_game, full_eq, deviation=BR[r]), \
-					input_game.roles))
-			print str(j+1) + ". regret ", ("=" if all_data else ">=") , round(reg, \
-					4), "; social welfare =", round(social_welfare(sg, eq), 4)
+			reg = max(map(lambda r: regret(input_game, full_eq, \
+					deviation=BR[r]), input_game.roles))
+			print str(j+1) + ". regret ", ("=" if all_data else ">=") , round(\
+					reg,4), "; social welfare =", round(social_welfare(sg,eq),4)
 
 			support = {r:[] for r in input_game.roles}
 			for k,role in enumerate(input_game.roles):
@@ -133,8 +133,8 @@ def main(input_game, args):
 				deviation_support = deepcopy(support)
 				deviation_support[role].append(BR[role])
 				r = regret(input_game, full_eq, role, deviation=BR[role])
-				print "\t" + str(role) + ": " + BR[role] + ";\tgain =", (round(r, 4) \
-						if not isinf(r) else "?")
+				print "\t" + str(role) + ": " + BR[role] + ";\tgain =", \
+						(round(r, 4) if not isinf(r) else "?")
 				print "Deviation subgame " + ("explored." if subgame( \
 						input_game, deviation_support).isComplete() else \
 						"UNEXPLORED!") + "\n"

@@ -12,8 +12,8 @@ from BasicFunctions import one_line
 
 
 class TestbedObject:
-	def __init__(self, name, obj_type, name_field="", options={}, url_options={}, \
-			skip_name=False):
+	def __init__(self, name, obj_type, name_field="", options={}, \
+			url_options={}, skip_name=False):
 		self.auth = {'auth_token':"g2LHz1mEtbysFngwLMCz"}
 		self.url = "http://d-108-249.eecs.umich.edu/api/v3/" + obj_type
 
