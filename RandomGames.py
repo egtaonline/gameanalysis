@@ -6,7 +6,8 @@ from GameIO import io_parser
 
 from functools import partial
 from itertools import combinations
-from numpy.random import uniform as U, normal
+from numpy.random import uniform as U, normal, beta
+from random import choice
 from numpy import array, arange
 
 
@@ -139,6 +140,18 @@ def normal_noise(game, stdev, samples):
 		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
 				normal(0, stdev, samples)) for s in prof[r]] for r \
 				in game.roles})
+	return sg
+
+
+def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
+	multipliers = range((-modes+1)/2,0) + [0]*(modes%2) + range(1,modes/2+1)
+	sg = SampleGame(game.roles, game.players, game.strategies)
+	for prof in game.knownProfiles():
+		offset = normal(0, max_stdev)
+		stdev = beta(2,1) * max_stdev
+		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) + \
+				normal(choice(multipliers)*offset, stdev, samples)) for s in \
+				prof[r]] for r in game.roles})
 	return sg
 
 
