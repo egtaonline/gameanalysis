@@ -2,13 +2,14 @@
 
 from BasicFunctions import leading_zeros
 from RoleSymmetricGame import Game, SampleGame, PayoffData
-from GameIO import io_parser
+from GameIO import io_parser, to_JSON_str
 
 from functools import partial
 from itertools import combinations
 from numpy.random import uniform as U, normal, beta
 from random import choice
 from numpy import array, arange
+import sys
 
 
 def independent(N, S, dist=partial(U,-1,1)):
@@ -155,13 +156,9 @@ def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
 	return sg
 
 
-from GameIO import to_JSON_str
-from argparse import ArgumentParser
-import sys
-
 def parse_args():
 	parser = io_parser(description="Generate random games.")
-	parser.add_argument("type", choices=["uZS", "uSym", "CG"], help= \
+	parser.add_argument("type", choices=["uZS", "uSym", "CG", "LEG"], help= \
 			"Type of random game to generate. uZS = uniform zero sum. " +\
 			"uSym = uniform symmetric. CG = congestion game.")
 	parser.add_argument("count", type=int, help="Number of random games " +\
@@ -172,6 +169,9 @@ def parse_args():
 	parser.add_argument("-stdev", type=float, default=0, help="Standard " +\
 			"deviation of normal noise added to each sample. -samples must " +\
 			"also be specified.")
+	parser.add_argument("-modes", type=int, default=1, help="Number of Gaussians " +\
+			"to mix when generating the noise distribution. Default=1. Note that " +\
+			"setting modex>1 calls a different noise function.")
 	parser.add_argument("game_args", nargs="*", help="Additional arguments " +\
 			"for game generator function.")
 	assert "-input" not in sys.argv, "no input JSON required"
@@ -194,10 +194,20 @@ def main():
 		game_func = congestion
 		assert len(game_args) == 3, "game_args specify player, facility, and"+\
 				" required facility counts"
+	elif args.type == "LEG":
+		game_func = local_effect
+		assert len(game_args) == 2, "game_args specify player and strategy counts"
 	games = [game_func(*game_args) for i in range(args.count)]
 	if args.samples > 1 and args.stdev > 0:
-		noisy = map(lambda g: normal_noise(g, args.stdev, args.samples), games)
-		games = zip(games, noisy)
+		if args.modes <= 1:
+			noisy = map(lambda g: normal_noise(g, args.stdev, args.samples), games)
+			games = zip(games, noisy)
+		else:
+			out_fname = "/home/egat/Bootstrap/local_effect_games/LEG_6p4s_"
+			noisy = map(lambda g: gaussian_mixture_noise(g, args.stdev, \
+					args.samples, args.modes), games)
+			games = zip(games, noisy)
+
 	if len(games) == 1:
 		print to_JSON_str(games[0])
 	else:
