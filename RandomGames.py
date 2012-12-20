@@ -89,24 +89,48 @@ def congestion_payoff(useage, facility_values, facility_set):
 	return value
 
 
-def local_effect_game(N, S):
+def local_effect(N, S):
 	"""
 	Generates random congestion games with N players and S strategies.
 
 	Local effect games are symmetric, so all players belong to role All. Each strategy
-	corresponds to a node in the G(N,0.5) local effect graph. Payoffs for each
+	corresponds to a node in the G(N,2/S) local effect graph. Payoffs for each
 	strategy consist of constant terms for each strategy, and interaction terms
 	for the number of players choosing that strategy and each neighboring strategy.
 
 	The one-strategy terms are drawn as follows:
-	-constant ~ U[-N*S,N*S]
+	-constant ~ U[-N-S,N+S]
 	-linear ~ U[-N,N]
 
 	The neighbor strategy terms are drawn as follows:
 	-linear ~ U[-S,S]
 	-quadratic ~ U[-1,1]
 	"""
-	raise NotImplementedError("TODO")
+	roles = ["All"]
+	players = {"All":N}
+	strategies = ["s"+str(i) for i in range(S)]
+	local_effects = {s:{} for s in strategies}
+	for s in strategies:
+		for d in strategies:
+			if s == d:
+				local_effects[s][d] = [U(-N-S,N+S),U(-N,N)]
+			elif U(0,S) > 2:
+				local_effects[s][d] = [U(-S,S),U(-1,1)]
+	g = Game(roles, players, {"All":strategies})
+	for prof in g.allProfiles():
+		payoffs = []
+		for strat, count in prof["All"].items():
+			value = local_effects[strat][strat][0] + \
+					local_effects[strat][strat][1] * count
+			for neighbor in local_effects[strat]:
+				if neighbor not in prof["All"]:
+					continue
+				nc = prof["All"][neighbor]
+				value += local_effects[strat][neighbor][0] * count
+				value += local_effects[strat][neighbor][1] * count**2
+			payoffs.append(PayoffData(strat, count, value))
+		g.addProfile({"All":payoffs})
+	return g
 
 
 def normal_noise(game, stdev, samples):

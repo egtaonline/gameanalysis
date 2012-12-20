@@ -103,3 +103,7 @@ tmp.json
 s.json
 
 *.swp
+
+*.pyc
+
+disp_cn_res.py
