@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 
-from RoleSymmetricGame import Game, Profile, PayoffData
+from RoleSymmetricGame import Game, Profile, PayoffData, is_symmetric
 
 def hierarchical_reduction(game, players={}):
 	if not players:
@@ -35,6 +35,34 @@ def deviation_preserving_reduction(game, players={}):
 	if not players:
 		return twins_reduction(game)
 	DPR_game = Game(game.roles, players, game.strategies)
+
+	#it's often faster to go through all of the full-game profiles
+	if len(game) <= DPR_game.size and is_symmetric(game):
+		reduced_profile_data = {}
+		divisible = True
+		for full_prof in game.knownProfiles():
+			try:
+				rp, role, strat = dpr_profile(full_prof, players, game.players)
+			except NotImplementedError as NIE:
+				divisible = False
+				break
+			if rp not in reduced_profile_data:
+				reduced_profile_data[rp] = {r:[] for r in game.roles}
+			count = rp[role][strat]
+			value = game.getPayoff(full_prof, role, strat)
+			reduced_profile_data[rp][role].append(PayoffData(strat,count,value))
+		if divisible:
+			for prof_data in reduced_profile_data.values():
+				valid_profile = True
+				for r,l in prof_data.items():
+					if sum([d.count for d in l]) != players[r]:
+						valid_profile = False
+						break
+				if valid_profile:
+					DPR_game.addProfile(prof_data)
+			return DPR_game
+	
+	#it's conceptually simpler to go through all of the reduced-game profiles
 	for reduced_profile in DPR_game.allProfiles():
 		try:
 			role_payoffs = {}
@@ -58,6 +86,41 @@ def deviation_preserving_reduction(game, players={}):
 		except KeyError:
 			continue
 	return DPR_game
+
+
+def dpr_profile(full_profile, reduced_players, full_players=None):
+	"""
+	Gives the DPR profile, role, and strategy that f_p's payoffs determine
+
+	Providing full_players is optional, but saves some work.
+	"""
+	role = None
+	strat = None
+	if full_players == None:
+		full_players = {r:sum(v.values()) for r,v in full_profile.items()}
+	reduction_factors = {}
+	for r in full_profile:
+		if full_players[r] % reduced_players[r] == 0:
+			reduction_factors[r] = full_players[r] / reduced_players[r]
+		else:
+			role = r
+			reduction_factors[r] = (full_players[r]-1) / (reduced_players[r]-1)
+	for s,c in full_profile[role].items():
+		if c % reduction_factors[r] != 0:
+			if strat != None:
+				raise NotImplementedError("This function doesn't handle "+\
+										"non-divisible player counts yet.")
+			strat = s
+	reduced_profile = {r:{} for r in reduced_players}
+	for r in full_profile:
+		for s,c in full_profile[role].items():
+			if r == role and s == strat:
+				reduced_profile[r][s] = (c-1) / reduction_factors[r] + 1
+			else:
+				reduced_profile[r][s] = c / reduction_factors[r]
+	return Profile(reduced_profile), role, strat
+
+
 
 
 def twins_reduction(game):
