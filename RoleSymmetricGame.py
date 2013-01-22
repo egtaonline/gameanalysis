@@ -4,6 +4,7 @@ from itertools import product, chain, combinations_with_replacement as CwR
 from collections import namedtuple
 from math import isinf
 from string import join
+from random import choice
 
 from HashableClasses import *
 from BasicFunctions import *
@@ -435,7 +436,7 @@ class SampleGame(Game):
 		pair = 2: resample paired game observations (fast, needs equal samples)
 		"""
 		if pair == 0:
-			raise NotImplementedError
+			raise NotImplementedError("TODO")
 		elif pair == 1:
 			self.values = map(lambda p: np.average(p, 2, weights= \
 					np.random.multinomial(p.shape[2], np.ones( \
@@ -447,8 +448,24 @@ class SampleGame(Game):
 			self.values = np.average(self.sample_values, 3, weights= \
 					np.random.multinomial(s, np.ones(s)/s))
 
+	def singleSample(self):
+		"""Makes self.values be a single sample from each sample set."""
+		if self.max_samples == self.min_samples:
+			self.makeArrays()
+			vals = self.sample_values.reshape([prod(self.values.shape), \
+												self.max_samples])
+			self.values = np.array(map(choice, vals)).reshape(self.values.shape)
+		else:
+			self.values = np.array([[[choice(s) for s in r] for r in p] for \
+								p in self.sample_values])
+
 	def reset(self):
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
+
+	def makeArrays(self):
+		if self.min_samples == self.max_samples:
+			self.sample_values = np.array(self.sample_values)
+		Game.makeArrays(self)
 
 	def toJSON(self):
 		"""

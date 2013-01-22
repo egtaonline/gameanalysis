@@ -1,29 +1,59 @@
 #! /usr/bin/env python2.7
 
 from BasicFunctions import leading_zeros
-from RoleSymmetricGame import Game, SampleGame, PayoffData
+from RoleSymmetricGame import Game, SampleGame, PayoffData, Profile
 from GameIO import io_parser, to_JSON_str
 
 from functools import partial
 from itertools import combinations
-from numpy.random import uniform as U, normal, beta
+from numpy.random import uniform as U, normal, multivariate_normal, beta
 from random import choice
-from numpy import array, arange
+from numpy import array, arange, zeros, fill_diagonal
 import sys
 
 
-def independent(N, S, dist=partial(U,-1,1)):
+def independent(N, S, dstr=partial(U,-1,1)):
+	"""
+	All payoff values drawn independently according to specified distribution.
+	"""
 	roles = map(str, range(N))
 	players = {r:1 for r in roles}
 	strategies = {r:map(str, range(S)) for r in roles}
 	g = Game(roles, players, strategies)
 	for prof in g.allProfiles():
-		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, U(-1,1))] \
+		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, dstr())] \
 				for r in prof})
 	return g
-		
 
-def uniform_zero_sum(S):
+
+def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
+	"""
+	Payoff values for each profile drawn according to multivariate normal.
+
+	The multivariate normal has a constant mean-vector with value drawn from
+	mean_func, constant variance=var, and equal covariance between all pairs
+	of players, is drawn from covar_func.
+	"""
+	roles = map(str, range(N))
+	players = {r:1 for r in roles}
+	strategies = {r:map(str, range(S)) for r in roles}
+	g = Game(roles, players, strategies)
+	mean = zeros(S)
+	mean.fill(mean_func())
+	covar = zeros([S,S])
+	covar.fill(covar_func())
+	fill_diagonal(covar, var)
+	for prof in g.allProfiles():
+		payoffs = multivariate_normal(mean, covar)
+		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[i])] \
+				for i,r in enumerate(roles)})
+	return g
+	
+
+def uniform_zero_sum(S, min_val=-1, max_val=1):
+	"""
+	2-player zero-sum game; player 1 payoffs drawn from a uniform distribution.
+	"""
 	roles = ["row", "column"]
 	players = {r:1 for r in roles}
 	strategies = {"row":["r" + leading_zeros(i,S) for i in range(S)], \
@@ -31,7 +61,7 @@ def uniform_zero_sum(S):
 	g = Game(roles, players, strategies)
 	for prof in g.allProfiles():
 		row_strat = prof["row"].keys()[0]
-		row_val = U(-1,1)
+		row_val = U(min_val, max_val)
 		col_strat = prof["column"].keys()[0]
 		p = {"row":[PayoffData(row_strat, 1, row_val)], \
 				"column":[PayoffData(col_strat, 1, -row_val)]}
@@ -39,7 +69,10 @@ def uniform_zero_sum(S):
 	return g
 
 
-def uniform_symmetric(N, S):
+def uniform_symmetric(N, S, min_val=-1, max_val=-1):
+	"""
+	Symmetric game with each payoff value drawn from a uniform distribution.
+	"""
 	roles = ["All"]
 	players = {"All":N}
 	strategies = {"All":["s" + leading_zeros(i,S) for i in range(S)]}
@@ -47,7 +80,7 @@ def uniform_symmetric(N, S):
 	for prof in g.allProfiles():
 		payoffs = []
 		for strat, count in prof["All"].items():
-			payoffs.append(PayoffData(strat, count, U(-1,1)))
+			payoffs.append(PayoffData(strat, count, U(min_val, max_val)))
 		g.addProfile({"All":payoffs})
 	return g
 
@@ -79,17 +112,10 @@ def congestion(N, facilities, required):
 			for facility in strategies[strat]:
 				useage[facility] += count
 		for strat, count in prof["All"].items():
-			payoffs.append(PayoffData(strat, count, congestion_payoff(useage, \
-					facility_values, strategies[strat])))
+			payoffs.append(PayoffData(strat, count, [sum(useage[f]**arange(3) \
+					* facility_values[f]) for f in strategies[strat]]))
 		g.addProfile({"All":payoffs})
 	return g
-
-
-def congestion_payoff(useage, facility_values, facility_set):
-	value = 0
-	for f in facility_set:
-		value += sum(useage[f]**arange(3) * facility_values[f])
-	return value
 
 
 def local_effect(N, S):
@@ -134,6 +160,45 @@ def local_effect(N, S):
 				value += local_effects[strat][neighbor][1] * count**2
 			payoffs.append(PayoffData(strat, count, value))
 		g.addProfile({"All":payoffs})
+	return g
+
+
+def polymatrix(N, S, matrix_game=independent):
+	"""
+	Creates a polymatrix game using the specified 2-player matrix game function.
+
+	Each player's payoff in each profile is a sum over independent games played
+	against each opponent. Each pair of players plays an instance of the
+	specified random 2-player matrix game.
+	"""
+	roles = map(str, range(N))
+	players = {r:1 for r in roles}
+	strategies = {r : map(str, range(S)) for r in roles}
+	matrices = {pair : matrix_game(2, S) for pair in combinations(roles, 2)}
+	g = Game(roles, players, strategies)
+	
+	for prof in g.allProfiles():
+		payoffs = {r:0 for r in roles}
+		for role in roles:
+			role_strat = prof[role].keys()[0]
+			for other in roles:
+				if role < other:
+					m = matrices[(role, other)]
+					p0 = sorted(m.players.keys())[0]
+					p1 = sorted(m.players.keys())[1]
+				elif role > other:
+					m = matrices[(other, role)]
+					p0 = sorted(m.players.keys())[1]
+					p1 = sorted(m.players.keys())[0]
+				else:
+					continue
+				other_strat = prof[other].keys()[0]
+				s0 = m.strategies[p0][strategies[role].index(role_strat)]
+				s1 = m.strategies[p1][strategies[other].index(other_strat)]
+				m_prof = Profile({p0:{s0:1},p1:{s1:1}})
+				payoffs[role] += m.getPayoff(m_prof, p0, s0)
+		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[r])] \
+						for r in roles})
 	return g
 
 

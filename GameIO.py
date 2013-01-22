@@ -307,6 +307,8 @@ def to_JSON_obj(obj):
 	if hasattr(obj, "toJSON"):
 		return obj.toJSON()
 	if hasattr(obj, "items"):
+		if all([hasattr(k, "toJSON") for k in obj.keys()]):
+			return {to_JSON_obj(k):to_JSON_obj(v) for k,v in obj.items()}
 		return {k:to_JSON_obj(v) for k,v in obj.items()}
 	if hasattr(obj, "__iter__"):
 		return map(to_JSON_obj, obj)
