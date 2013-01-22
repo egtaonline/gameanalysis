@@ -5,13 +5,13 @@ from RoleSymmetricGame import Game, Profile, PayoffData, is_symmetric
 def hierarchical_reduction(game, players={}):
 	if not players:
 		players = {r : game.players[r] / 2 for r in game.roles}
-	HR_game = Game(game.roles, players, game.strategies)
+	HR_game = type(game)(game.roles, players, game.strategies)
 	for reduced_profile in HR_game.allProfiles():
 		try:
 			full_profile = Profile({r:full_game_profile(reduced_profile[r], \
 					game.players[r]) for r in game.roles})
 			HR_game.addProfile({r:[PayoffData(s, reduced_profile[r][s], \
-					game.getPayoff(full_profile, r, s)) for s in \
+					game.getPayoffData(full_profile, r, s)) for s in \
 					full_profile[r]] for r in full_profile})
 		except KeyError:
 			continue
@@ -34,9 +34,9 @@ def full_game_profile(HR_profile, N):
 def deviation_preserving_reduction(game, players={}):
 	if not players:
 		return twins_reduction(game)
-	DPR_game = Game(game.roles, players, game.strategies)
 
 	#it's often faster to go through all of the full-game profiles
+	DPR_game = type(game)(game.roles, players, game.strategies)
 	if len(game) <= DPR_game.size and is_symmetric(game):
 		reduced_profile_data = {}
 		divisible = True
@@ -49,7 +49,7 @@ def deviation_preserving_reduction(game, players={}):
 			if rp not in reduced_profile_data:
 				reduced_profile_data[rp] = {r:[] for r in game.roles}
 			count = rp[role][strat]
-			value = game.getPayoff(full_prof, role, strat)
+			value = game.getPayoffData(full_prof, role, strat)
 			reduced_profile_data[rp][role].append(PayoffData(strat,count,value))
 		if divisible:
 			for prof_data in reduced_profile_data.values():
@@ -63,6 +63,7 @@ def deviation_preserving_reduction(game, players={}):
 			return DPR_game
 	
 	#it's conceptually simpler to go through all of the reduced-game profiles
+	DPR_game = type(game)(game.roles, players, game.strategies)
 	for reduced_profile in DPR_game.allProfiles():
 		try:
 			role_payoffs = {}
@@ -80,8 +81,8 @@ def deviation_preserving_reduction(game, players={}):
 						else:
 							full_profile[r] = full_game_profile( \
 									reduced_profile[r], game.players[r])
-					role_payoffs[r].append(PayoffData(s, reduced_profile[r\
-							][s], game.getPayoff(Profile(full_profile), r, s)))
+					role_payoffs[r].append(PayoffData(s,reduced_profile[r][s],\
+							game.getPayoffData(Profile(full_profile), r, s)))
 			DPR_game.addProfile(role_payoffs)
 		except KeyError:
 			continue
@@ -121,13 +122,12 @@ def dpr_profile(full_profile, reduced_players, full_players=None):
 	return Profile(reduced_profile), role, strat
 
 
-
-
 def twins_reduction(game):
 	return deviation_preserving_reduction(game, {r:2 for r in game.roles})
 
 
 def DPR_profiles(game, players={}):
+	"""Returns the profiles from game that contribute to the DPR game."""
 	if not players:
 		players = {r:2 for r in game.roles}
 	DPR_game = Game(game.roles, players, game.strategies)

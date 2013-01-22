@@ -171,6 +171,9 @@ class Game(dict):
 		v = self.values[self[profile]]
 		return v[self.index(role), self.index(role,strategy)]
 
+	def getPayoffData(self, profile, role, strategy):
+		return self.getPayoff(profile, role, strategy)
+
 	def getExpectedPayoff(self, mix, role=None):
 		if role == None:
 			return (mix * self.expectedValues(mix)).sum(1)
@@ -428,6 +431,11 @@ class SampleGame(Game):
 				p = self.index(role, played[0])
 				samples[r][s] = [0]*len(samples[r][p])
 		self.sample_values.append(np.array(samples))
+	
+	def getPayoffData(self, profile, role, strategy):
+		v = self.sample_values[self[profile]]
+		return v[self.index(role), self.index(role,strategy)]
+
 
 	def resample(self, pair=1):
 		"""
