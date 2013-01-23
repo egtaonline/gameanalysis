@@ -2,6 +2,7 @@
 
 from heapq import heappush, heappop
 
+from HashableClasses import h_dict
 from RoleSymmetricGame import SampleGame, PayoffData
 
 def translate(arr, source_game, target_game):
@@ -112,15 +113,15 @@ def cliques(full_game, known_subgames=[]):
 			if empty_role and len(sg_strat[role]) > 0:
 				continue
 			for s in new_strategies[role] - set(sg_strat[role]):
-				strategies = {r:list(sg_strat[r]) + ([s] if r == role \
-						else []) for r in full_game.roles}
+				strategies = h_dict({r : tuple(sorted(list(sg_strat[r]) + \
+						([s] if r == role else []))) for r in full_game.roles})
+				if strategies in explored_subgames:
+					continue
 				try:
 					new_sg = subgame(full_game, strategies, True)
 				except KeyError:
 					continue
 				maximal=False
-				if new_sg.strategies in explored_subgames:
-					continue
 				subgames.add(new_sg.strategies)
 		if maximal:
 			sg = subgame(full_game, sg_strat)
