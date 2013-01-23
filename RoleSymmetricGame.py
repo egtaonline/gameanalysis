@@ -471,8 +471,7 @@ class SampleGame(Game):
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
 
 	def makeArrays(self):
-		if self.min_samples == self.max_samples:
-			self.sample_values = np.array(self.sample_values)
+		self.sample_values = np.array(self.sample_values)
 		Game.makeArrays(self)
 
 	def toJSON(self):

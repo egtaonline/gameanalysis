@@ -230,16 +230,10 @@ def parse_args():
 			"uSym = uniform symmetric. CG = congestion game.")
 	parser.add_argument("count", type=int, help="Number of random games " +\
 			"to create.")
-	parser.add_argument("-samples", type=int, default=1, help="Number of " +\
-			"noisy samples to give for each profile. -stdev must also be " +\
-			"specified.")
-	parser.add_argument("-stdev", type=float, default=0, help="Standard " +\
-			"deviation of normal noise added to each sample. -samples must " +\
-			"also be specified.")
-	parser.add_argument("-modes", type=int, default=1, help="Number of " +\
-			"Gaussians to mix when generating the noise distribution. " +\
-			"Default=1. Note that setting modex>1 calls a different noise " +\
-			"function.")
+	parser.add_argument("-noise", choices=["None", "normal", \
+			"gaussian_mixture"], default="None", help="Noise function.")
+	parser.add_argument("-noise_args", nargs="*", help="Arguments to be " +\
+			"passed to the noise function.")
 	parser.add_argument("game_args", nargs="*", help="Additional arguments " +\
 			"for game generator function.")
 	assert "-input" not in sys.argv, "no input JSON required"
@@ -265,7 +259,7 @@ def main():
 		game_func = local_effect
 		assert len(game_args) == 2, "game_args specify player & strategy counts"
 	games = [game_func(*game_args) for i in range(args.count)]
-	if args.samples > 1 and args.stdev > 0:
+	if args.samples > 0 and args.stdev > 0:
 		if args.modes <= 1:
 			noisy = map(lambda g: normal_noise(g, args.stdev, args.samples), \
 					games)
