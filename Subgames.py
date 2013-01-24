@@ -111,12 +111,12 @@ def cliques(full_game, known_subgames=[]):
 		maximal = True
 		for role in full_game.roles:
 			if empty_role and len(sg_strat[role]) > 0:
-				maximal=False
 				continue
 			for s in new_strategies[role] - set(sg_strat[role]):
 				strategies = h_dict({r : tuple(sorted(list(sg_strat[r]) + \
 						([s] if r == role else []))) for r in full_game.roles})
 				if strategies in explored_subgames:
+					maximal=False
 					continue
 				try:
 					new_sg = subgame(full_game, strategies, True)
@@ -137,7 +137,8 @@ from GameIO import to_JSON_str, io_parser
 def main():
 	parser = io_parser()
 	args = parser.parse_args()
-	print to_JSON_str(map(lambda s: subgame(args.input, s), cliques(args.input)))
+	print to_JSON_str(map(lambda s: subgame(args.input, s), \
+					cliques(args.input)))
 
 
 if __name__ == "__main__":

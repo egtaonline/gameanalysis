@@ -230,12 +230,12 @@ def parse_args():
 			"uSym = uniform symmetric. CG = congestion game.")
 	parser.add_argument("count", type=int, help="Number of random games " +\
 			"to create.")
-	parser.add_argument("-noise", choices=["None", "normal", \
-			"gaussian_mixture"], default="None", help="Noise function.")
-	parser.add_argument("-noise_args", nargs="*", help="Arguments to be " +\
-			"passed to the noise function.")
-	parser.add_argument("-game_args", nargs="*", help="Additional arguments " +\
-			"for game generator function.")
+	parser.add_argument("-noise", choices=["none", "normal", \
+			"gauss_mix"], default="None", help="Noise function.")
+	parser.add_argument("-noise_args", nargs="*", default=[], \
+			help="Arguments to be passed to the noise function.")
+	parser.add_argument("-game_args", nargs="*", default=[], \
+			help="Additional arguments for game generator function.")
 	assert "-input" not in sys.argv, "no input JSON required"
 	sys.argv = sys.argv[:3] + ["-input", None] + sys.argv[3:]
 	return parser.parse_args()
@@ -243,35 +243,39 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	game_args = map(int, args.game_args)
+
 	if args.type == "uZS":
 		game_func = uniform_zero_sum
-		assert len(game_args) == 1, "game_args must specify strategy count"
+		assert len(args.game_args) == 1, "game_args must specify strategy count"
+		game_args = map(int, args.game_args)
 	elif args.type == "uSym":
 		game_func = uniform_symmetric
-		assert len(game_args) == 2, "game_args must specify player and " +\
+		assert len(args.game_args) == 2, "game_args must specify player and "+\
 									"strategy counts"
-		game_args = map(int, args.game_args[:2])
 	elif args.type == "CG":
 		game_func = congestion
-		assert len(game_args) == 3, "game_args must specify player, " +\
+		assert len(args.game_args) == 3, "game_args must specify player, "+\
 									"facility, and required facility counts"
+		game_args = map(int, args.game_args)
 	elif args.type == "LEG":
 		game_func = local_effect
-		assert len(game_args) == 2, "game_args must specify player and " +\
+		assert len(args.game_args) == 2, "game_args must specify player and "+\
 									"strategy counts"
+		game_args = map(int, args.game_args)
+	
 	games = [game_func(*game_args) for i in range(args.count)]
 
-	if args.samples > 0 and args.stdev > 0:
-		if args.modes <= 1:
-			noisy = map(lambda g: normal_noise(g, args.stdev, args.samples), \
-					games)
-			games = zip(games, noisy)
-		else:
-			out_fname = "/home/egat/Bootstrap/local_effect_games/LEG_6p4s_"
-			noisy = map(lambda g: gaussian_mixture_noise(g, args.stdev, \
-					args.samples, args.modes), games)
-			games = zip(games, noisy)
+	if args.noise == "normal":
+		assert len(args.noise_args) == 2, "noise_args must specify stdev "+\
+											"and sample count"
+		noise_args = [float(args.noise_args[0]), int(args.noise_args[1])]
+		games = map(lambda g: normal_noise(g, *noise_args), games)	
+	elif args.noise == "gauss_mix":
+		assert len(args.noise_args) == 3, "noise_args must specify max "+\
+									"stdev, sample count, and number of modes"
+		noise_args = [float(args.noise_args[0]), int(args.noise_args[1]), \
+						int(args.noise_args[2])]
+		games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)	
 
 	if len(games) == 1:
 		print to_JSON_str(games[0])
