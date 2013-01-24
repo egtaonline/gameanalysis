@@ -445,11 +445,11 @@ class SampleGame(Game):
 		"""
 		if pair == 0:
 			raise NotImplementedError("TODO")
-		elif pair == 1:
+		elif pair == 1:#TODO: handle ragged arrays
 			self.values = map(lambda p: np.average(p, 2, weights= \
 					np.random.multinomial(p.shape[2], np.ones( \
 					p.shape[2])/p.shape[2])), self.sample_values)
-		elif pair == 2:
+		elif pair == 2:#TODO: handle ragged arrays
 			if isinstance(self.sample_values, list):
 				self.sample_values = np.array(self.sample_values, dtype=float)
 			s = self.sample_values.shape[3]
@@ -467,7 +467,7 @@ class SampleGame(Game):
 			self.values = np.array([[[choice(s) for s in r] for r in p] for \
 								p in self.sample_values])
 
-	def reset(self):
+	def reset(self):#TODO: handle ragged arrays
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
 
 	def makeArrays(self):
