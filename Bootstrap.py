@@ -57,7 +57,7 @@ def pre_aggregate(game, count):
 	return agg
 
 
-def bootstrap(game, stat_args=[], stastic=regret, method_args=[], \
+def bootstrap(game, equilibrium, stastic=regret, method_args=[], \
 					method="resample", points=1000):
 	"""
 	Returns a bootstrap distribution for the statistic.
@@ -73,13 +73,30 @@ def bootstrap(game, stat_args=[], stastic=regret, method_args=[], \
 	method = getattr(game, method)
 	for i in range(points):
 		method(*method_args)
-		boot_dstr.append(stastic(game, *stat_args))
+		boot_dstr.append(stastic(game, equilibrium))
 	game.reset()
 	boot_dstr.sort()
 	return boot_dstr
 
 
-def synthetic_bootstrap_experiment(base_game_func):
+def synthetic_bootstrap_experiment(base_game_func, noise_func, statistic=\
+		regret, num_games=1000,sample_sizes=[5,10,20,50,100,200,500], \
+		bootstrap_args=[]):
+	results = [{} for i in range(num_games)]
+	for i in range(num_games):
+		base_game = base_game_func()
+		sample_game = add_samples(base_game, noise_func, 0)
+		for sample_size in sample_sizes:
+			new_samples = sample_size - sample_game.max_samples
+			sample_game = add_samples(sample_game, noise_func, new_samples)
+			equilibria = mixed_nash(sample_game, iters=1000)
+			results[i][sample_size] = [ \
+				{ \
+					"mixture" : eq
+					"regret" : regret(base_game, eq)
+					"bootstrap" : bootstrap(game, [eq]
+				} for eq in equilibria]
+			
 	raise NotImplementedError("TODO")
 
 

@@ -15,6 +15,10 @@ import sys
 def independent(N, S, dstr=partial(U,-1,1)):
 	"""
 	All payoff values drawn independently according to specified distribution.
+
+	N: number of players
+	S: number of strategies
+	dstr: distribution from which payoff values are independently drawn
 	"""
 	roles = map(str, range(N))
 	players = {r:1 for r in roles}
@@ -30,21 +34,31 @@ def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 	"""
 	Payoff values for each profile drawn according to multivariate normal.
 
-	The multivariate normal has a constant mean-vector with value drawn from
-	mean_func, constant variance=var, and equal covariance between all pairs
-	of players, is drawn from covar_func.
+	The multivariate normal for each profile has a constant mean-vector with 
+	value drawn from mean_func, constant variance=var, and equal covariance 
+	between all pairs of players, drawn from covar_func.
+
+	N: number of players
+	S: number of strategies
+	mean_func: distribution from which mean payoff for each profile is drawn
+	var: diagonal entries of covariance matrix
+	covar_func: distribution from which the value of the off-diagonal 
+				covariance matrix entries for each profile is drawn
+
+	Both mean_func and covar_func should be numpy-style random number generators
+	that can return an array.
 	"""
 	roles = map(str, range(N))
 	players = {r:1 for r in roles}
 	strategies = {r:map(str, range(S)) for r in roles}
 	g = Game(roles, players, strategies)
 	mean = zeros(S)
-	mean.fill(mean_func())
 	covar = zeros([S,S])
-	covar.fill(covar_func())
-	fill_diagonal(covar, var)
 	for prof in g.allProfiles():
+		mean.fill(mean_func())
 		payoffs = multivariate_normal(mean, covar)
+		covar.fill(covar_func())
+		fill_diagonal(covar, var)
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[i])] \
 				for i,r in enumerate(roles)})
 	return g
@@ -53,6 +67,10 @@ def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 def uniform_zero_sum(S, min_val=-1, max_val=1):
 	"""
 	2-player zero-sum game; player 1 payoffs drawn from a uniform distribution.
+
+	S: number of strategies
+	min_val: minimum for the uniform distribution
+	max_val: maximum for the uniform distribution
 	"""
 	roles = ["row", "column"]
 	players = {r:1 for r in roles}
@@ -72,6 +90,11 @@ def uniform_zero_sum(S, min_val=-1, max_val=1):
 def uniform_symmetric(N, S, min_val=-1, max_val=-1):
 	"""
 	Symmetric game with each payoff value drawn from a uniform distribution.
+
+	N: number of players
+	S: number of strategies
+	min_val: minimum for the uniform distribution
+	max_val: maximum for the uniform distribution
 	"""
 	roles = ["All"]
 	players = {"All":N}
@@ -163,13 +186,18 @@ def local_effect(N, S):
 	return g
 
 
-def polymatrix(N, S, matrix_game=independent):
+def polymatrix(N, S, matrix_game=partial(independent,2)):
 	"""
 	Creates a polymatrix game using the specified 2-player matrix game function.
 
 	Each player's payoff in each profile is a sum over independent games played
 	against each opponent. Each pair of players plays an instance of the
 	specified random 2-player matrix game.
+
+	N: number of players
+	S: number of strategies
+	matrix_game: a function of one argument (S) that returns 2-player, 
+					S-strategy games.
 	"""
 	roles = map(str, range(N))
 	players = {r:1 for r in roles}
@@ -203,6 +231,13 @@ def polymatrix(N, S, matrix_game=independent):
 
 
 def normal_noise(game, stdev, samples):
+	"""
+	Gives a SampleGame with normal noise added independently to each payoff.
+
+	game: a RSG.Game or RSG.SampleGame
+	stedv: the standard deviation for the noise function
+	samples: numer of samples to take of every profile
+	"""
 	sg = SampleGame(game.roles, game.players, game.strategies)
 	for prof in game.knownProfiles():
 		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
@@ -212,6 +247,15 @@ def normal_noise(game, stdev, samples):
 
 
 def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
+	"""
+	Generate SampleGame with Gaussian mixture noise added to each payoff.
+
+	game: a RSG.Game or RSG.SampleGame
+	max_stdev: maximum standard deviation for the mixed distributions (also 
+				affects how widely the mixed distributions are spaced)
+	samples: numer of samples to take of every profile
+	modes: number of Gaussians to mix
+	"""
 	multipliers = range((-modes+1)/2,0) + [0]*(modes%2) + range(1,modes/2+1)
 	sg = SampleGame(game.roles, game.players, game.strategies)
 	for prof in game.knownProfiles():
