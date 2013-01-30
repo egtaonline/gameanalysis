@@ -1,11 +1,14 @@
 #! /usr/bin/env python2.7
 
+import RandomGames as RG
+
 from GameIO import read, to_JSON_str
 from Subgames import subgame
 from Regret import regret
 from Nash import mixed_nash, replicator_dynamics
 from Reductions import deviation_preserving_reduction as DPR
 
+from sys import stdin
 from os import listdir
 from os.path import join, exists, dirname
 from argparse import ArgumentParser
@@ -63,11 +66,11 @@ def bootstrap(game, equilibrium, stastic=regret, method_args=[], \
 	Returns a bootstrap distribution for the statistic.
 
 	To run a resample regret boostrap:
-		bootstrap(game, [eq])
-	To run a single-sample regret bootstrap:
-		bootstrap(game, [eq], method='single_sample')
+		bootstrap(game, eq)
+	To run a single-sample regret bootstrap: 
+		bootstrap(game, eq, method='single_sample')
 	To run a replicator dynamics bootstrap:
-		bootstrap(game, [eq], replicator_dynamics)
+		bootstrap(game, eq, replicator_dynamics)
 	"""
 	boot_dstr = []
 	method = getattr(game, method)
@@ -79,158 +82,108 @@ def bootstrap(game, equilibrium, stastic=regret, method_args=[], \
 	return boot_dstr
 
 
-def synthetic_bootstrap_experiment(base_game_func, noise_func, statistic=\
-		regret, num_games=1000,sample_sizes=[5,10,20,50,100,200,500], \
-		bootstrap_args=[]):
-	results = [{} for i in range(num_games)]
+def bootstrap_experiment(base_game_func, noisy_game_func, statistic=regret, \
+		num_games=1000, stdevs=[.2,1.,5.,25.], sample_sizes=[5,10,20,50,100, \
+		200,500], bootstrap_args=[]):
+	results = [{s:{} for s in stdevs} for i in range(num_games)]
 	for i in range(num_games):
 		base_game = base_game_func()
-		sample_game = add_samples(base_game, noise_func, 0)
-		for sample_size in sample_sizes:
-			new_samples = sample_size - sample_game.max_samples
-			sample_game = add_samples(sample_game, noise_func, new_samples)
-			equilibria = mixed_nash(sample_game, iters=1000)
-			results[i][sample_size] = [ \
-				{ \
-					"mixture" : eq
-					"regret" : regret(base_game, eq)
-					"bootstrap" : bootstrap(game, [eq]
-				} for eq in equilibria]
-			
-	raise NotImplementedError("TODO")
-
-
-def simulation_bootstrap_experiment(simulated_game_data):
-	raise NotImplementedError("TODO")
-
-
-#TODO: replace this function
-def run_leg_bootstrap_experiment(directory, bootstrap_iters, pre_agg, \
-								subsample_sizes, out_name, bootstrap_func):
-	for filename in sorted(filter(lambda f: f[-5:] == ".json", \
-			listdir(directory))):
-		try:
-			n = filename[-8:-5]
-			int(n)
-		except ValueError:
-			continue
-		out_filename = join(directory, out_name + n + ".json")
-		if exists(out_filename):
-			continue
-		d = read(join(directory, filename))
-		true_game = d['0']
-		game_results = {}
-
-		for variance in set(d.keys()) - {'0'}:
-			game_results[variance] = {}
-			if pre_agg > 0:
-				sample_game = pre_aggregate(d[variance], pre_agg)
-			else:
-				sample_game = d[variance]
-			for size in subsample_sizes:
-				subsample_game = subsample(sample_game, size)
-				equilibria = mixed_nash(subsample_game, iters=1000)
-				game_results[variance][size] = [ \
+		for stdev in stdevs:
+			sample_game = noisy_game_func(base_game, stdev, sample_sizes[-1])
+			for sample_size in sample_sizes:
+				subsample_game = subsample(sample_game, sample_size)
+				equilibria = mixed_nash(sample_game, random_restarts= \
+								subsample_game.maxStrategies, iters=1000)
+				results[i][stdev][sample_size] = [ \
 					{ \
-					"mixture" : eq, \
-					"regret" : regret(true_game, eq), \
-					"bootstrap" : bootstrap_func(subsample_game, [eq], \
-							points=bootstrap_iters)
+						"mixture" : eq,
+						"statistic" : statistic(base_game, eq),
+						"bootstrap" : bootstrap(subsample_game, eq, statistic, \
+												*bootstrap_args)
 					} for eq in equilibria]
-
-		with open(out_filename, 'w') as f:
-			f.write(to_JSON_str(game_results))
-
-
-#TODO: replace this function
-def run_cn_bootstrap_experiment(filename, bootstrap_iters=200, base_size=500, \
-		num_base_games=200, subsample_sizes=[5,10,20,50,100]):
-	DPR6 = partial(DPR, players={'All':6})
-	out_filename = join(dirname(filename), "cn_boot_res_" +str(base_size)+ \
-			"a.json")
-	true_game = read(filename)
-	results = []
-
-	for i in range(num_base_games):
-		base_game = subsample(true_game, base_size)
-		base_game_results = {}
-		for size in subsample_sizes:
-			print size
-			base_game_results[size] = []
-			subsample_game = subsample(base_game, size)
-			equilibria = mixed_nash(DPR6(subsample_game), iters=1000)
-			base_game_results[size] = [ \
-				{ \
-					"mixture" : eq, \
-					"regret" : regret(base_game, eq), \
-					"bootstrap" : bootstrap_regret(subsample_game, eq, \
-							200, 1, DPR6)
-				} for eq in equilibria]
-		results.append(base_game_results)
-
-	with open(out_filename, 'w') as f:
-		f.write(to_JSON_str(results))
-
-
-#TODO: replace this function
-def bootstrap_all(sample_game, true_game, equilibria, iters=200, \
-		reduction=lambda g:g):
-	results = [ \
-	{ \
-		"mixture" : m, \
-		"regret" : regret(true_game, m), \
-		"RD" : replicator_dynamics(true_game, m, 1000), \
-		"profile resamples": [], \
-		"game resamples": [] \
-	} for m in equilibria]
-
-	for i in range(iters):
-		sample_game.resample(1)
-		for j,m in enumerate(equilibria):
-			results[j]["profile resamples"].append( \
-					resample_results(reduction(sample_game), true_game, m))
-
-	for i in range(iters):
-		sample_game.resample(2)
-		for j,m in enumerate(equilibria):
-			results[j]["game resamples"].append( \
-					resample_results(reduction(sample_game), true_game, m))
-
-	sample_game.reset()
 	return results
 
 
-def resample_results(resampled_game, true_game, mix):
-	rd = replicator_dynamics(resampled_game, mix, 1000)
-	results = \
-	{ \
-		"resample_regret" : regret(resampled_game, mix), \
-		"RD" : rd, \
-		"RD_regret" : regret(true_game, rd)
-	}
-	return results
+def parse_args():
+	parser = ArgumentParser()
+	parser.add_argument("game_func", type=str, default="", choices=\
+						["","congestion","local_effect","uniform_symmetric"], \
+						help="Specifies the function generating random base "+\
+						"games. If empty, the script will look for a file "+\
+						"with simulated game data on stdin.")
+	parser.add_argument("noise_func", type=str, default="", choices=["", \
+						"normal","gaussian_mixture"], help="Noise model to "+\
+						"perturb sample payoffs around the base game payoff. "+\
+						"May only be empty if first argument is also empty.")
+	parser.add_argument("-game_args", type=str, nargs="*", default=[], help=\
+						"Arguments to pass to game_func. Usually players "+\
+						"and strategies.")
+	parser.add_argument("-noise_args", type=str, nargs="*", default=[], help=\
+						"Arguments to pass to noise_func. Should not include"+\
+						"noise magnitude or number of samples.")
+	parser.add_argument("-num_games", type=int, default=1000, help="Number "+\
+						"of games to generate per stdev/subsample "+\
+						"combination. Default: 1000")
+	parser.add_argument("-points", type=int, default=1000, help="Number of "+\
+						"bootstrap resamples per equilibrium. Default: 1000")
+	parser.add_argument("-pair", type=str, default="game", choices=["game", \
+						"profile", "payoff"], help="Pairing level to use for "+\
+						"bootstrap resampling. Default: game")
+	parser.add_argument("-agg", type=int, default=0, help="Number of samples "+\
+						"to pre-aggregate. Default: 0")
+	parser.add_argument("-stdevs", type=float, nargs="*", default=\
+						[.2,1.,5.,25.], help="Noise magnitude parameters "+\
+						"passed to the noise model. Default: .2 1. 5. 25.")
+	parser.add_argument("-sample_sizes", type=int, nargs="*", default=\
+						[5,10,20,100,200,500], help="Numbers of samples "+\
+						"per profile at which to test the bootstrap. "+\
+						"Default: 5 10 20 100 200 500")
+	parser.add_argument("--single", action="store_true", help="Set to use "+\
+						"the single_sample_regret function.")
+	parser.add_argument("--rd", action="store_true", help="Set to compute "+\
+						"bootstrap distributions of equilibrium movement by "+\
+						"replicator dynamics.")
+	args = parser.parse_args()
+
+	if args.game_func == "none":
+		game = read(stdin)
+		args.game_func = lambda: game
+		args.noise_func = lambda g,s,c: game.subsample(c)
+	else:
+		assert args.noise_func != "none", "Must specify a noise model."
+		game_args = []
+		for a in args.game_args:
+			try:
+				game_args.append(int(a))
+			except ValueError:
+				game_args.append(float(a))
+		noise_args = []
+		for a in args.noise_args:
+			try:
+				noise_args.append(int(a))
+			except ValueError:
+				noise_args.append(float(a))
+		args.game_func = partial(getattr(RG, args.game_func), *game_args)
+		noise_func = getattr(RG, args.noise_func + "_noise")
+		args.noise_func = lambda g,s,c: noise_func(g,s,c, *noise_args)
+
+	if args.agg > 0:
+		args.noise_func = lambda g,s,c: pre_aggregate(args.noise_func(g,s,c), \
+											args.agg)
+
+	args.bootstrap_args = [[args.pair] if not args.single else [], "resample" \
+						if not args.single else "singleSample", args.points]
+
+	return args
 
 
 def main():
-	parser = ArgumentParser()
-	parser.add_argument("directory", type=str, help="Directory of games.")
-	parser.add_argument("-res", type=int, default=1000, help="Number of "+\
-						"bootstrap resamples per equilibrium.")
-	parser.add_argument("-agg", type=int, default=0, help="Number of samples "+\
-						"to pre-aggregate.")
-	parser.add_argument("--single", action="store_true", help="Set to use "+\
-						"the single_sample_regret function.")
-	args = parser.parse_args()
-
-	out_name = "leg_ss_res_" if args.single else "leg_boot_res_"
-	subsample_sizes = [5,10,20,50,100,200,500,1000]
-	if args.agg:
-		out_name += "_agg" + str(args.agg)
-		subsample_sizes = filter(lambda s: s < 1000/args.agg, subsample_sizes)
-	run_leg_bootstrap_experiment(args.directory, args.res, args.agg, \
-			subsample_sizes, out_name, single_sample_regret if args.single \
-			else bootstrap)
-
+	args = parse_args()
+	results = bootstrap_experiment(args.game_func, args.noise_func, \
+					replicator_dynamics if args.rd else regret, \
+					args.num_games, args.stdevs, args.sample_sizes, \
+					args.bootstrap_args)
+	print to_JSON_str(results, indent=None)
 
 
 if __name__ == "__main__":

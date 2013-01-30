@@ -1,8 +1,9 @@
 #! /usr/bin/env python2.7
 
+import GameIO as IO
+
 from BasicFunctions import leading_zeros
 from RoleSymmetricGame import Game, SampleGame, PayoffData, Profile
-from GameIO import io_parser, to_JSON_str
 
 from functools import partial
 from itertools import combinations
@@ -268,7 +269,7 @@ def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
 
 
 def parse_args():
-	parser = io_parser(description="Generate random games.")
+	parser = IO.io_parser(description="Generate random games.")
 	parser.add_argument("type", choices=["uZS", "uSym", "CG", "LEG"], help= \
 			"Type of random game to generate. uZS = uniform zero sum. " +\
 			"uSym = uniform symmetric. CG = congestion game.")
@@ -322,9 +323,9 @@ def main():
 		games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)	
 
 	if len(games) == 1:
-		print to_JSON_str(games[0])
+		print IO.to_JSON_str(games[0])
 	else:
-		print to_JSON_str(games)
+		print IO.to_JSON_str(games)
 
 
 if __name__ == "__main__":

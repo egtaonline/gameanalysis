@@ -437,11 +437,13 @@ class SampleGame(Game):
 		return v[self.index(role), self.index(role,strategy)]
 
 
-	def resample(self, pair=1):
+	def resample(self, pair="game"):
 		"""
-		pair = 0: resample payoff observations independently (use after DPR)
-		pair = 1: resample paired profile observations (default, best-justified)
-		pair = 2: resample paired game observations (fast, needs equal samples)
+		Overwrites self.values with a bootstrap resample of self.sample_values.
+
+		pair = payoff: resample all payoff observations independently
+		pair = profile: resample paired profile observations
+		pair = game: resample paired game observations
 		"""
 		if pair == 0:
 			raise NotImplementedError("TODO")
