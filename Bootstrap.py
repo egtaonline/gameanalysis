@@ -5,7 +5,7 @@ import RandomGames as RG
 from GameIO import read, to_JSON_str
 from Subgames import subgame
 from Regret import regret
-from Nash import mixed_nash, replicator_dynamics
+from Nash import mixed_nash, replicator_dynamics, pure_nash
 from Reductions import deviation_preserving_reduction as DPR
 
 from sys import stdin
@@ -84,7 +84,7 @@ def bootstrap(game, equilibrium, stastic=regret, method_args=[], \
 
 def bootstrap_experiment(base_game_func, noisy_game_func, statistic=regret, \
 		num_games=1000, stdevs=[.2,1.,5.,25.], sample_sizes=[5,10,20,50,100, \
-		200,500], bootstrap_args=[]):
+		200,500], equilibrium_search=mixed_nash, bootstrap_args=[]):
 	results = [{s:{} for s in stdevs} for i in range(num_games)]
 	for i in range(num_games):
 		base_game = base_game_func()
@@ -92,11 +92,11 @@ def bootstrap_experiment(base_game_func, noisy_game_func, statistic=regret, \
 			sample_game = noisy_game_func(base_game, stdev, sample_sizes[-1])
 			for sample_size in sample_sizes:
 				subsample_game = subsample(sample_game, sample_size)
-				equilibria = mixed_nash(sample_game, random_restarts= \
+				equilibria = equilibrium_search(sample_game, random_restarts= \
 								subsample_game.maxStrategies, iters=1000)
 				results[i][stdev][sample_size] = [ \
 					{ \
-						"mixture" : eq,
+						"profile" : eq,
 						"statistic" : statistic(base_game, eq),
 						"bootstrap" : bootstrap(subsample_game, eq, statistic, \
 												*bootstrap_args)
@@ -143,6 +143,10 @@ def parse_args():
 	parser.add_argument("--rd", action="store_true", help="Set to compute "+\
 						"bootstrap distributions of equilibrium movement by "+\
 						"replicator dynamics.")
+	parser.add_argument("--pure", action="store_true", help="Find an compute "+\
+						"bootstrap regret distributions for pure-strategy "+\
+						"(rather than role-symmetric mixed-strategy) Nash "+\
+						"equilibria.")
 	args = parser.parse_args()
 
 	if args.game_func == "none":
@@ -170,10 +174,9 @@ def parse_args():
 	if args.agg > 0:
 		args.noise_func = lambda g,s,c: pre_aggregate(args.noise_func(g,s,c), \
 											args.agg)
-
+	assert not (args.rd and args.pure), "Must use mixed_nash for rd bootstrap"
 	args.bootstrap_args = [[args.pair] if not args.single else [], "resample" \
 						if not args.single else "singleSample", args.points]
-
 	return args
 
 
@@ -182,7 +185,7 @@ def main():
 	results = bootstrap_experiment(args.game_func, args.noise_func, \
 					replicator_dynamics if args.rd else regret, \
 					args.num_games, args.stdevs, args.sample_sizes, \
-					args.bootstrap_args)
+					pure_nash if args.pure else mixed_nash, args.bootstrap_args)
 	print to_JSON_str(results, indent=None)
 
 
