@@ -92,8 +92,9 @@ def bootstrap_experiment(base_game_func, noisy_game_func, statistic=regret, \
 			sample_game = noisy_game_func(base_game, stdev, sample_sizes[-1])
 			for sample_size in sample_sizes:
 				subsample_game = subsample(sample_game, sample_size)
-				equilibria = equilibrium_search(sample_game, random_restarts= \
-								subsample_game.maxStrategies, iters=1000)
+				equilibria = equilibrium_search(subsample_game, \
+							random_restarts=subsample_game.maxStrategies, \
+							iters=1000)
 				results[i][stdev][sample_size] = [ \
 					{ \
 						"profile" : eq,
