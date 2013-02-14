@@ -15,13 +15,17 @@ tiny = float(np.finfo(np.float64).tiny)
 
 class Profile(h_dict):
 	def __init__(self, role_payoffs):
-		try:
+		arbitrary_value = next(role_payoffs.itervalues())
+		if isinstance(arbitrary_value, list):#Game.addProfile calls like this
 			d = {}
 			for role, payoffs in role_payoffs.items():
 				d[role] = h_dict({p.strategy:p.count for p in payoffs})
 			h_dict.__init__(self, d)
-		except AttributeError:
+		elif isinstance(arbitrary_value, dict):#others should look like this
 			h_dict.__init__(self, {r:h_dict(p) for r,p in role_payoffs.items()})
+		else:
+			raise TypeError("Profile.__init__ can't handle " + \
+							type(arbitrary_value.__name__))
 
 	def remove(self, role, strategy):
 		p = self.asDict()
