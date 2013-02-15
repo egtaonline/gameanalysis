@@ -268,6 +268,23 @@ def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
 	return sg
 
 
+def uniform_noise(game, max_half_width, samples):
+	"""
+	Generate SampleGame with uniform random noise added to each payoff.
+
+	game: a RSG.Game or RSG.SampleGame
+	max_range: maximum half-width of the uniform distribution
+	samples: numer of samples to take of every profile
+	"""
+	sg = SampleGame(game.roles, game.players, game.strategies)
+	for prof in game.knownProfiles():
+		hw = beta(2,1) * max_half_width
+		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
+				U(-hw, hw, samples)) for s in prof[r]] for r \
+				in game.roles})
+	return sg
+
+
 def parse_args():
 	parser = IO.io_parser(description="Generate random games.")
 	parser.add_argument("type", choices=["uZS", "uSym", "CG", "LEG"], help= \
