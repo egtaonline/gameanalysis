@@ -111,9 +111,10 @@ def parse_args():
 						"games. If empty, the script will look for a file "+\
 						"with simulated game data on stdin.")
 	parser.add_argument("noise_func", type=str, default="", choices=["", \
-						"normal","gaussian_mixture"], help="Noise model to "+\
-						"perturb sample payoffs around the base game payoff. "+\
-						"May only be empty if first argument is also empty.")
+						"normal","gaussian_mixture", "uniform"], help=\
+						"Noise model to perturb sample payoffs around the "+\
+						"base game payoff. May only be empty if first "+\
+						"argument is also empty.")
 	parser.add_argument("-game_args", type=str, nargs="*", default=[], help=\
 						"Arguments to pass to game_func. Usually players "+\
 						"and strategies.")
