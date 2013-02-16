@@ -285,6 +285,23 @@ def uniform_noise(game, max_half_width, samples):
 	return sg
 
 
+def mixed_model_noise(game, models=[partial(gaussian_mixture_noise, modes=1), \
+					partial(gaussian_mixture_noise, modes=2)], rates=[.8,.2], \
+					spread, samples):
+	"""
+	Generate SampleGame with noise drawn from several models.
+
+	game: a RSG.Game or RSG.SampleGame
+	models: a list of 2-parameter noise functions to draw from
+	rates: the probabilites with which a payoff will be drawn from each model
+	spread, samples: the parameters passed to the noise functions
+
+	This will require a re-working of the noise models to give noisy samples
+	for a single payoff (or perhaps profile) instead of an entire game.
+	"""
+	raise NotImplementedError("TODO")
+
+
 def parse_args():
 	parser = IO.io_parser(description="Generate random games.")
 	parser.add_argument("type", choices=["uZS", "uSym", "CG", "LEG"], help= \
