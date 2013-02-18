@@ -14,11 +14,27 @@ from numpy import array, arange, zeros, fill_diagonal, cumsum
 from sys import argv
 
 
-def __make_asymmetric_game(player_count, strategy_count):
-	roles = map(str, range(player_count))
+def __make_asymmetric_game(N, S):
+	"""
+	N: number of players
+	S: number of strategies
+	"""
+	roles = ["r" + leading_zeros(i,N) for i in range(N)]
 	players = {r:1 for r in roles}
-	strategies = {r:map(str, range(strategy_count)) for r in roles}
+	strategies = {r:["s"+leading_zeros(i,S) for i in range(S)] for r in roles}
 	return Game(roles, players, strategies)
+
+
+def __make_symmetric_game(N, S):
+	"""
+	N: number of players
+	S: number of strategies
+	"""
+	roles = ["All"]
+	players = {"All":N}
+	strategies = {"All":["s" + leading_zeros(i,S) for i in range(S)]}
+	return Game(roles, players, strategies)
+
 
 def independent(N, S, dstr=partial(U,-1,1)):
 	"""
@@ -74,22 +90,18 @@ def uniform_zero_sum(S, min_val=-1, max_val=1):
 	min_val: minimum for the uniform distribution
 	max_val: maximum for the uniform distribution
 	"""
-	roles = ["row", "column"]
-	players = {r:1 for r in roles}
-	strategies = {"row":["r" + leading_zeros(i,S) for i in range(S)], \
-			"column":["c" + leading_zeros(i,S) for i in range(S)]}
-	g = Game(roles, players, strategies)
+	g = __make_asymmetric_game(2, S)
 	for prof in g.allProfiles():
-		row_strat = prof["row"].keys()[0]
+		row_strat = prof["r0"].keys()[0]
 		row_val = U(min_val, max_val)
-		col_strat = prof["column"].keys()[0]
-		p = {"row":[PayoffData(row_strat, 1, row_val)], \
-				"column":[PayoffData(col_strat, 1, -row_val)]}
+		col_strat = prof["r1"].keys()[0]
+		p = {"r0":[PayoffData(row_strat, 1, row_val)], \
+				"r1":[PayoffData(col_strat, 1, -row_val)]}
 		g.addProfile(p)
 	return g
 
 
-def uniform_symmetric(N, S, min_val=-1, max_val=-1):
+def uniform_symmetric(N, S, min_val=-1, max_val=1):
 	"""
 	Symmetric game with each payoff value drawn from a uniform distribution.
 
@@ -98,10 +110,7 @@ def uniform_symmetric(N, S, min_val=-1, max_val=-1):
 	min_val: minimum for the uniform distribution
 	max_val: maximum for the uniform distribution
 	"""
-	roles = ["All"]
-	players = {"All":N}
-	strategies = {"All":["s" + leading_zeros(i,S) for i in range(S)]}
-	g = Game(roles, players, strategies)
+	g = __make_symmetric_game(N, S)
 	for prof in g.allProfiles():
 		payoffs = []
 		for strat, count in prof["All"].items():
@@ -109,6 +118,35 @@ def uniform_symmetric(N, S, min_val=-1, max_val=-1):
 		g.addProfile({"All":payoffs})
 	return g
 
+
+def sym_2p2s(order=[0,1,2,3], min_val=-1, max_val=1):
+	"""
+	Create a symmetric 2-player 2-strategy game of the specified form.
+
+	Four payoff values get drawn from U(min_val, max_val), and then are assigned
+	to profiles in order from smallest to largest according to the order 
+	parameter as follows:
+
+	   | s0  | s1  |
+	---|-----|-----|
+	s0 | 0,0 | 1,2 |
+	s1 | 2,1 | 3,3 |
+	---|-----|-----|
+	
+	So order=[2,0,3,1] gives a prisoners' dilemma; order=[0,3,1,2] gives a game
+	of chicken.
+	"""
+	g = __make_symmetric_game(2, 2)
+	payoffs = sorted(U(min_val, max_val, 4))
+	g.addProfile({"All":[PayoffData(g.strategies["All"][0], 2, payoffs[ \
+					order[0]])]})
+	g.addProfile({"All":[PayoffData(g.strategies["All"][0], 1, payoffs[ \
+					order[1]]), PayoffData(g.strategies["All"][1], 1, \
+					payoffs[order[2]])]})
+	g.addProfile({"All":[PayoffData(g.strategies["All"][1], 2, payoffs[ \
+					order[3]])]})
+	return g
+	
 
 def congestion(N, facilities, required):
 	"""
@@ -161,9 +199,8 @@ def local_effect(N, S):
 	-linear ~ U[-S,S]
 	-quadratic ~ U[-1,1]
 	"""
-	roles = ["All"]
-	players = {"All":N}
-	strategies = ["s"+str(i) for i in range(S)]
+	g = __make_symmetric_game(N, S)
+	strategies = g.strategies["All"]
 	local_effects = {s:{} for s in strategies}
 	for s in strategies:
 		for d in strategies:
@@ -171,7 +208,6 @@ def local_effect(N, S):
 				local_effects[s][d] = [U(-N-S,N+S),U(-N,N)]
 			elif U(0,S) > 2:
 				local_effects[s][d] = [U(-S,S),U(-1,1)]
-	g = Game(roles, players, {"All":strategies})
 	for prof in g.allProfiles():
 		payoffs = []
 		for strat, count in prof["All"].items():
@@ -201,17 +237,13 @@ def polymatrix(N, S, matrix_game=partial(independent,2)):
 	matrix_game: a function of one argument (S) that returns 2-player, 
 					S-strategy games.
 	"""
-	roles = map(str, range(N))
-	players = {r:1 for r in roles}
-	strategies = {r : map(str, range(S)) for r in roles}
-	matrices = {pair : matrix_game(2, S) for pair in combinations(roles, 2)}
-	g = Game(roles, players, strategies)
-	
+	g = __make_asymmetric_game(N, S)
+	matrices = {pair : matrix_game(S) for pair in combinations(g.roles, 2)}
 	for prof in g.allProfiles():
-		payoffs = {r:0 for r in roles}
-		for role in roles:
+		payoffs = {r:0 for r in g.roles}
+		for role in g.roles:
 			role_strat = prof[role].keys()[0]
-			for other in roles:
+			for other in g.roles:
 				if role < other:
 					m = matrices[(role, other)]
 					p0 = sorted(m.players.keys())[0]
@@ -223,12 +255,12 @@ def polymatrix(N, S, matrix_game=partial(independent,2)):
 				else:
 					continue
 				other_strat = prof[other].keys()[0]
-				s0 = m.strategies[p0][strategies[role].index(role_strat)]
-				s1 = m.strategies[p1][strategies[other].index(other_strat)]
+				s0 = m.strategies[p0][g.strategies[role].index(role_strat)]
+				s1 = m.strategies[p1][g.strategies[other].index(other_strat)]
 				m_prof = Profile({p0:{s0:1},p1:{s1:1}})
 				payoffs[role] += m.getPayoff(m_prof, p0, s0)
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[r])] \
-						for r in roles})
+						for r in g.roles})
 	return g
 
 
