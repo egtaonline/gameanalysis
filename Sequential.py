@@ -2,7 +2,7 @@ from RoleSymmetricGame import Profile, PayoffData, Game
 from BasicFunctions import flatten
 import Nash
 from numpy.linalg import norm
-from RandomGames import generate_normal_noise, independent
+from RandomGames import independent
 import Regret
 from scipy.stats.stats import sem
 
@@ -35,22 +35,23 @@ class ObservationMatrix:
                         for profile, role_strategies in self.profile_dict.items()]
         return Game(g_roles, g_players, g_strategies, g_payoff_data)
 
-def sequential_normal_noise(ss_game, stdev, evaluator, sample_increment):
-    """
-    Creates an observation matrix sequentially with normal noise
-    
-    ss_game - a game to give the basic structure and base payoffs
-    stdev - the standard deviation for use with normal noise generation
-    evaluator - an object that can evaluate whether or not to continue sampling by inspecting game
-    sample_increment - the number of samples to take in each step    
-    """
-    matrix = ObservationMatrix()
-    while evaluator.continue_sampling(matrix):
-        print evaluator.old_equilibria
-        for profile in ss_game.knownProfiles():
-            new_data = generate_normal_noise(ss_game, profile, stdev, sample_increment)
-            matrix.addObservations(profile, new_data)
-    return matrix
+#    TODO: Rewrite to use Bryce's noise generation model
+#def sequential_normal_noise(ss_game, stdev, evaluator, sample_increment):
+#    """
+#    Creates an observation matrix sequentially with normal noise
+#    
+#    ss_game - a game to give the basic structure and base payoffs
+#    stdev - the standard deviation for use with normal noise generation
+#    evaluator - an object that can evaluate whether or not to continue sampling by inspecting game
+#    sample_increment - the number of samples to take in each step    
+#    """
+#    matrix = ObservationMatrix()
+#    while evaluator.continue_sampling(matrix):
+#        print evaluator.old_equilibria
+#        for profile in ss_game.knownProfiles():
+#            new_data = generate_normal_noise(ss_game, profile, stdev, sample_increment)
+#            matrix.addObservations(profile, new_data)
+#    return matrix
 
 class StandardErrorEvaluator:
     def __init__(self, standard_err_threshold, target_set):
