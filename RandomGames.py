@@ -7,10 +7,11 @@ from RoleSymmetricGame import Game, SampleGame, PayoffData, Profile
 
 from functools import partial
 from itertools import combinations
+from bisect import bisect
 from numpy.random import uniform as U, normal, multivariate_normal, beta
 from random import choice
-from numpy import array, arange, zeros, fill_diagonal
-import sys
+from numpy import array, arange, zeros, fill_diagonal, cumsum
+from sys import argv
 
 
 def independent(N, S, dstr=partial(U,-1,1)):
@@ -231,75 +232,66 @@ def polymatrix(N, S, matrix_game=partial(independent,2)):
 	return g
 
 
-def normal_noise(game, stdev, samples):
+def add_noise(game, model, spread, samples):
 	"""
-	Gives a SampleGame with normal noise added independently to each payoff.
-
+	Generate sample game with random noise added to each payoff.
+	
 	game: a RSG.Game or RSG.SampleGame
-	stedv: the standard deviation for the noise function
-	samples: numer of samples to take of every profile
+	model: a 2-parameter function that generates mean-zero noise
+	spread, samples: the parameters passed to the noise function
 	"""
 	sg = SampleGame(game.roles, game.players, game.strategies)
 	for prof in game.knownProfiles():
-		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
-				normal(0, stdev, samples)) for s in prof[r]] for r \
-				in game.roles})
+		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) + \
+				model(spread, samples)) for s in prof[r]] for r in game.roles})
 	return sg
 
 
-def gaussian_mixture_noise(game, max_stdev, samples, modes=2):
+def gaussian_mixture_noise(max_stdev, samples, modes=2):
 	"""
-	Generate SampleGame with Gaussian mixture noise added to each payoff.
+	Generate Gaussian mixture noise to add to one payoff in a game.
 
-	game: a RSG.Game or RSG.SampleGame
 	max_stdev: maximum standard deviation for the mixed distributions (also 
 				affects how widely the mixed distributions are spaced)
 	samples: numer of samples to take of every profile
 	modes: number of Gaussians to mix
 	"""
 	multipliers = range((-modes+1)/2,0) + [0]*(modes%2) + range(1,modes/2+1)
-	sg = SampleGame(game.roles, game.players, game.strategies)
-	for prof in game.knownProfiles():
-		offset = normal(0, max_stdev)
-		stdev = beta(2,1) * max_stdev
-		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) + \
-				normal(choice(multipliers)*offset, stdev, samples)) for s in \
-				prof[r]] for r in game.roles})
-	return sg
+	offset = normal(0, max_stdev)
+	stdev = beta(2,1) * max_stdev
+	return normal(choice(multipliers)*offset, stdev, samples)
 
 
-def uniform_noise(game, max_half_width, samples):
+def uniform_noise(max_half_width, samples):
 	"""
-	Generate SampleGame with uniform random noise added to each payoff.
+	Generate uniform random noise to add to one payoff in a game.
 
-	game: a RSG.Game or RSG.SampleGame
 	max_range: maximum half-width of the uniform distribution
 	samples: numer of samples to take of every profile
 	"""
-	sg = SampleGame(game.roles, game.players, game.strategies)
-	for prof in game.knownProfiles():
-		hw = beta(2,1) * max_half_width
-		sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) +\
-				U(-hw, hw, samples)) for s in prof[r]] for r \
-				in game.roles})
-	return sg
+	hw = beta(2,1) * max_half_width
+	return U(-hw, hw, samples)
 
 
-def mixed_model_noise(game, models=[partial(gaussian_mixture_noise, modes=1), \
-					partial(gaussian_mixture_noise, modes=2)], rates=[.8,.2], \
-					spread, samples):
+normal_noise = partial(normal, 0)
+unimodal_noise = partial(gaussian_mixture_noise, modes=1)
+bimodal_noise = partial(gaussian_mixture_noise, modes=2)
+
+
+def mix_models(models, rates, spread, samples):
 	"""
 	Generate SampleGame with noise drawn from several models.
 
-	game: a RSG.Game or RSG.SampleGame
 	models: a list of 2-parameter noise functions to draw from
 	rates: the probabilites with which a payoff will be drawn from each model
 	spread, samples: the parameters passed to the noise functions
-
-	This will require a re-working of the noise models to give noisy samples
-	for a single payoff (or perhaps profile) instead of an entire game.
 	"""
-	raise NotImplementedError("TODO")
+	cum_rates = cumsum(rates)
+	m = models[bisect(cum_rates, U(0,1))]
+	return m(spread, samples)
+
+
+u80b20_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.8,.2])
 
 
 def parse_args():
@@ -315,8 +307,8 @@ def parse_args():
 			help="Arguments to be passed to the noise function.")
 	parser.add_argument("-game_args", nargs="*", default=[], \
 			help="Additional arguments for game generator function.")
-	assert "-input" not in sys.argv, "no input JSON required"
-	sys.argv = sys.argv[:3] + ["-input", None] + sys.argv[3:]
+	assert "-input" not in argv, "no input JSON required"
+	argv = argv[:3] + ["-input", None] + argv[3:]
 	return parser.parse_args()
 
 

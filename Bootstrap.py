@@ -82,14 +82,15 @@ def bootstrap(game, equilibrium, statistic=regret, method="resample", \
 	return boot_dstr
 
 
-def bootstrap_experiment(base_game_func, noisy_game_func, statistic=regret, \
+def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 		num_games=1000, stdevs=[.2,1.,5.,25.], sample_sizes=[5,10,20,50,100, \
 		200,500], equilibrium_search=mixed_nash, bootstrap_args=[]):
 	results = [{s:{} for s in stdevs} for i in range(num_games)]
 	for i in range(num_games):
 		base_game = base_game_func()
 		for stdev in stdevs:
-			sample_game = noisy_game_func(base_game, stdev, sample_sizes[-1])
+			sample_game = RG.add_noise(base_game, noise_model, stdev, \
+									sample_sizes[-1])
 			for sample_size in sample_sizes:
 				subsample_game = subsample(sample_game, sample_size)
 				equilibria = equilibrium_search(subsample_game)
@@ -111,9 +112,9 @@ def parse_args():
 						"games. If empty, the script will look for a file "+\
 						"with simulated game data on stdin.")
 	parser.add_argument("noise_func", type=str, default="", choices=["", \
-						"normal","gaussian_mixture", "uniform"], help=\
-						"Noise model to perturb sample payoffs around the "+\
-						"base game payoff. May only be empty if first "+\
+						"normal","unimodal","bimodal","u80b20","uniform"], \
+						help="Noise model to perturb sample payoffs around "+\
+						"the base game payoff. May only be empty if first "+\
 						"argument is also empty.")
 	parser.add_argument("-game_args", type=str, nargs="*", default=[], help=\
 						"Arguments to pass to game_func. Usually players "+\
@@ -169,10 +170,10 @@ def parse_args():
 				noise_args.append(float(a))
 		args.game_func = partial(getattr(RG, args.game_func), *game_args)
 		noise_func = getattr(RG, args.noise_func + "_noise")
-		args.noise_func = lambda g,s,c: noise_func(g,s,c, *noise_args)
+		args.noise_func = lambda s,c: noise_func(s,c, *noise_args)
 
 	if args.agg > 0:
-		args.noise_func = lambda g,s,c: pre_aggregate(args.noise_func(g,s,c), \
+		args.noise_func = lambda s,c: pre_aggregate(args.noise_func(s,c), \
 											args.agg)
 	assert not (args.rd and args.pure), "Must use mixed_nash for rd bootstrap"
 	args.bootstrap_args = ["resample" if not args.single else "singleSample", \
