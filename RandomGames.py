@@ -321,6 +321,9 @@ def mix_models(models, rates, spread, samples):
 
 
 u80b20_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.8,.2])
+u60b40_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.6,.4])
+u40b60_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.4,.6])
+u20b80_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.2,.8])
 
 
 def parse_args():
