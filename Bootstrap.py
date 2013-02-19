@@ -102,10 +102,10 @@ def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 def parse_args():
 	parser = ArgumentParser()
 	parser.add_argument("game_func", type=str, default="", choices=\
-						["","congestion","local_effect","uniform_symmetric"], \
-						help="Specifies the function generating random base "+\
-						"games. If empty, the script will look for a file "+\
-						"with simulated game data on stdin.")
+						["","congestion","local_effect","uniform_symmetric", \
+						"sym_2p2s"], help="Specifies the function generating "+\
+						"random base games. If empty, the script will look "+\
+						"for a file with simulated game data on stdin.")
 	parser.add_argument("noise_func", type=str, default="", choices=["", \
 						"normal","unimodal","bimodal","u80b20","uniform"], \
 						help="Noise model to perturb sample payoffs around "+\

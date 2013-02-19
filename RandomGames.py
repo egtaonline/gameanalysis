@@ -119,34 +119,31 @@ def uniform_symmetric(N, S, min_val=-1, max_val=1):
 	return g
 
 
-def sym_2p2s(order=[0,1,2,3], min_val=-1, max_val=1):
+def sym_2p2s(a=0, b=1, c=2, d=3, min_val=-1, max_val=1):
 	"""
 	Create a symmetric 2-player 2-strategy game of the specified form.
 
 	Four payoff values get drawn from U(min_val, max_val), and then are assigned
 	to profiles in order from smallest to largest according to the order 
-	parameter as follows:
+	parameters as follows:
 
 	   | s0  | s1  |
 	---|-----|-----|
-	s0 | 0,0 | 1,2 |
-	s1 | 2,1 | 3,3 |
+	s0 | a,a | b,c |
+	s1 | c,b | d,d |
 	---|-----|-----|
 	
-	So order=[2,0,3,1] gives a prisoners' dilemma; order=[0,3,1,2] gives a game
+	So a=2,b=0,c=3,d=1 gives a prisoners' dilemma; a=0,b=3,c=1,d=2 gives a game
 	of chicken.
 	"""
 	g = __make_symmetric_game(2, 2)
 	payoffs = sorted(U(min_val, max_val, 4))
-	g.addProfile({"All":[PayoffData(g.strategies["All"][0], 2, payoffs[ \
-					order[0]])]})
-	g.addProfile({"All":[PayoffData(g.strategies["All"][0], 1, payoffs[ \
-					order[1]]), PayoffData(g.strategies["All"][1], 1, \
-					payoffs[order[2]])]})
-	g.addProfile({"All":[PayoffData(g.strategies["All"][1], 2, payoffs[ \
-					order[3]])]})
+	g.addProfile({"All":[PayoffData(g.strategies["All"][0], 2, payoffs[a])]})
+	g.addProfile({"All":[PayoffData(g.strategies["All"][0], 1, payoffs[b]), \
+						PayoffData(g.strategies["All"][1], 1, payoffs[c])]})
+	g.addProfile({"All":[PayoffData(g.strategies["All"][1], 2, payoffs[d])]})
 	return g
-	
+
 
 def congestion(N, facilities, required):
 	"""
