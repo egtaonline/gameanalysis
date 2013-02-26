@@ -105,12 +105,15 @@ def cliques(full_game, known_subgames=[]):
 	while(subgames):
 		sg_strat = subgames.pop()
 		empty_role = not all(map(len, sg_strat.values()))
+		empty_game = not any(map(len, sg_strat.values()))
 		explored_subgames.add(sg_strat)
 		maximal = True
 		for role in full_game.roles:
 			if empty_role and len(sg_strat[role]) > 0:
 				continue
-			for s in new_strategies[role] - set(sg_strat[role]):
+			available_strategies = (new_strategies[role] if empty_game \
+					else full_game.strategies[role]) - set(sg_strat[role])
+			for s in available_strategies:
 				strategies = h_dict({r : tuple(sorted(list(sg_strat[r]) + \
 						([s] if r == role else []))) for r in full_game.roles})
 				if strategies in explored_subgames:

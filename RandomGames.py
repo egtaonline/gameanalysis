@@ -288,7 +288,7 @@ def gaussian_mixture_noise(max_stdev, samples, modes=2):
 	multipliers = range((-modes+1)/2,0) + [0]*(modes%2) + range(1,modes/2+1)
 	offset = normal(0, max_stdev)
 	stdev = beta(2,1) * max_stdev
-	return normal(choice(multipliers)*offset, stdev, samples)
+	return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)]
 
 
 def uniform_noise(max_half_width, samples):
