@@ -291,6 +291,28 @@ def gaussian_mixture_noise(max_stdev, samples, modes=2):
 	return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)]
 
 
+normal_noise = partial(normal, 0)
+unimodal_noise = partial(gaussian_mixture_noise, modes=1)
+bimodal_noise = partial(gaussian_mixture_noise, modes=2)
+
+
+def nonzero_gaussian_noise(max_stdev, samples, prob_pos=0.5):
+	"""
+	Generate Noise from a normal distribution centered up to one stdev from 0.
+
+	With prob_pos=0.5, this implements the previous buggy output of 
+	bimodal_noise.
+
+	max_stdev: maximum standard deviation for the mixed distributions (also 
+				affects how widely the mixed distributions are spaced)
+	samples: numer of samples to take of every profile
+	prob_pos: the probability that the noise mean for any payoff will be >0.
+	"""
+	offset = normal(0, max_stdev) * (1 if U(0,1) < prob_pos else -1)
+	stdev = beta(2,1) * max_stdev
+	return normal(offset, stdev, samples)
+
+
 def uniform_noise(max_half_width, samples):
 	"""
 	Generate uniform random noise to add to one payoff in a game.
@@ -300,11 +322,6 @@ def uniform_noise(max_half_width, samples):
 	"""
 	hw = beta(2,1) * max_half_width
 	return U(-hw, hw, samples)
-
-
-normal_noise = partial(normal, 0)
-unimodal_noise = partial(gaussian_mixture_noise, modes=1)
-bimodal_noise = partial(gaussian_mixture_noise, modes=2)
 
 
 def mix_models(models, rates, spread, samples):
