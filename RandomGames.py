@@ -276,7 +276,7 @@ def add_noise(game, model, spread, samples):
 	return sg
 
 
-def gaussian_mixture_noise(max_stdev, samples, modes=2):
+def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=1):
 	"""
 	Generate Gaussian mixture noise to add to one payoff in a game.
 
@@ -284,9 +284,12 @@ def gaussian_mixture_noise(max_stdev, samples, modes=2):
 				affects how widely the mixed distributions are spaced)
 	samples: numer of samples to take of every profile
 	modes: number of Gaussians to mix
+	spread_mult: multiplier for the spread of the Gaussians. Distance between
+				the mean and the nearest distribution is drawn from 
+				N(0,max_stdev*spread_mult).
 	"""
 	multipliers = range((-modes+1)/2,0) + [0]*(modes%2) + range(1,modes/2+1)
-	offset = normal(0, max_stdev)
+	offset = normal(0, max_stdev * spread_mult)
 	stdev = beta(2,1) * max_stdev
 	return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)]
 
@@ -296,7 +299,7 @@ unimodal_noise = partial(gaussian_mixture_noise, modes=1)
 bimodal_noise = partial(gaussian_mixture_noise, modes=2)
 
 
-def nonzero_gaussian_noise(max_stdev, samples, prob_pos=0.5):
+def nonzero_gaussian_noise(max_stdev, samples, prob_pos=0.5, spread_mult=1):
 	"""
 	Generate Noise from a normal distribution centered up to one stdev from 0.
 
@@ -307,8 +310,11 @@ def nonzero_gaussian_noise(max_stdev, samples, prob_pos=0.5):
 				affects how widely the mixed distributions are spaced)
 	samples: numer of samples to take of every profile
 	prob_pos: the probability that the noise mean for any payoff will be >0.
+	spread_mult: multiplier for the spread of the Gaussians. Distance between
+				the mean and the mean of the distribution is drawn from 
+				N(0,max_stdev*spread_mult).
 	"""
-	offset = normal(0, max_stdev) * (1 if U(0,1) < prob_pos else -1)
+	offset = normal(0, max_stdev)*(1 if U(0,1) < prob_pos else -1)*spread_mult
 	stdev = beta(2,1) * max_stdev
 	return normal(offset, stdev, samples)
 
