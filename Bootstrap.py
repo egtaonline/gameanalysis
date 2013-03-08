@@ -78,8 +78,8 @@ def bootstrap(game, equilibrium, statistic=regret, method="resample", \
 
 
 def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
-		num_games=1000, stdevs=[.2,1.,5.,25.], sample_sizes=[5,10,20,50,100, \
-		200,500], equilibrium_search=mixed_nash, bootstrap_args=[]):
+		num_games=1000, stdevs=[.1,1.,10.,100.], sample_sizes=[5,10,20, \
+		50,100,200,500], equilibrium_search=mixed_nash, bootstrap_args=[]):
 	results = [{s:{} for s in stdevs} for i in range(num_games)]
 	for i in range(num_games):
 		base_game = base_game_func()

@@ -42,7 +42,13 @@ def main(input_game, args):
 	#max social welfare
 	soc_opt_prof, soc_opt_welf = max_social_welfare(input_game)
 	print "max social welfare =", round(soc_opt_welf, 4)
-	print "achieved by profile =", soc_opt_prof, "\n\n"
+	print "achieved by profile =", soc_opt_prof
+	if len(input_game.roles) > 1:
+		for r in input_game.roles:
+			role_opt_prof, role_opt_welf = max_social_welfare(input_game, r)
+			print "\tbest total value for", r, "=", role_opt_welf
+			print "\tachieved by profile =", role_opt_prof
+	print "\n\n"
 
 	#iterated elimination of dominated strategies
 	rational_game = iterated_elimination(input_game, pure_strategy_dominance, \
@@ -118,6 +124,9 @@ def main(input_game, args):
 					deviation=BR[r]), input_game.roles))
 			print str(j+1) + ". regret ", ("=" if all_data else ">=") , round(\
 					reg,4), "; social welfare =", round(social_welfare(sg,eq),4)
+			if len(sg.roles) > 1:
+				for r in sg.roles:
+					print "\ttotal value for", r, "=", social_welfare(sg, eq, r)
 
 			support = {r:[] for r in input_game.roles}
 			for k,role in enumerate(input_game.roles):

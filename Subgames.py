@@ -112,7 +112,7 @@ def cliques(full_game, known_subgames=[]):
 			if empty_role and len(sg_strat[role]) > 0:
 				continue
 			available_strategies = (new_strategies[role] if empty_game \
-					else full_game.strategies[role]) - set(sg_strat[role])
+					else set(full_game.strategies[role])) - set(sg_strat[role])
 			for s in available_strategies:
 				strategies = h_dict({r : tuple(sorted(list(sg_strat[r]) + \
 						([s] if r == role else []))) for r in full_game.roles})

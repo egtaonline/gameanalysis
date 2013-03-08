@@ -135,25 +135,34 @@ def safety_value(game, role, strategy):
 	return sv
 
 
-def social_welfare(game, profile):
+def social_welfare(game, profile, role=None):
+	"""
+	Sums values for a pure profile or expected values for a mixed profile.
+
+	Restricts sum to specified role if role != None.
+	"""
 	if is_pure_profile(profile):
-		return (game.values[game[profile]] * game.counts[game[profile]]).sum()
+		values = (game.values[game[profile]] * game.counts[game[profile]])
 	elif is_mixture_array(profile):
 		players = np.array([game.players[r] for r in game.roles])
-		return (game.getExpectedPayoff(profile) * players).sum()
+		values = (game.getExpectedPayoff(profile) * players)
 	elif is_profile_array(profile):
 		return social_welfare(game, game.toProfile(profile))
 	elif is_mixed_profile(profile):
 		return social_welfare(game, game.toArray(profile))
 	else:
 		raise TypeError("unrecognized profile type: " + str(profile))
+	if role == None:
+		return values.sum()
+	else:
+		return values[game.index(role)].sum()
 
 
-def max_social_welfare(game):
+def max_social_welfare(game, role=None):
 	best_prof = None
 	max_sw = -float('inf')
 	for prof in game.knownProfiles():
-		sw = social_welfare(game, prof)
+		sw = social_welfare(game, prof, role)
 		if sw > max_sw:
 			best_prof = prof
 			max_sw = sw
