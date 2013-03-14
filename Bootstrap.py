@@ -83,6 +83,7 @@ def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 	results = [{s:{} for s in stdevs} for i in range(num_games)]
 	for i in range(num_games):
 		base_game = base_game_func()
+		RG.rescale_payoffs(base_game, 0, 100)
 		for stdev in stdevs:
 			sample_game = RG.add_noise(base_game, noise_model, stdev, \
 									sample_sizes[-1])
