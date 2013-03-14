@@ -349,6 +349,20 @@ u40b60_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.4,.6])
 u20b80_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.2,.8])
 
 
+def rescale_payoffs(game, min_payoff=0, max_payoff=100):
+	"""
+	Rescale game's payoffs to be in the range [min_payoff, max_payoff].
+
+	Modifies game.values in-place.
+	"""
+	min_val = game.values.min()
+	max_val = game.values.max()
+	game.values -= min_val
+	game.values *= (max_payoff - min_payoff)
+	game.values /= (max_val - min_val)
+	game.values += min_payoff
+
+
 def parse_args():
 	parser = IO.io_parser(description="Generate random games.")
 	parser.add_argument("type", choices=["uZS", "uSym", "CG", "LEG"], help= \
