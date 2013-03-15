@@ -78,7 +78,7 @@ def bootstrap(game, equilibrium, statistic=regret, method="resample", \
 
 
 def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
-		num_games=1000, stdevs=[.1,1.,10.,100.], sample_sizes=[5,10,20, \
+		num_games=1000, stdevs=[1.,10.,100.], sample_sizes=[5,10,20, \
 		50,100,200,500], equilibrium_search=mixed_nash, bootstrap_args=[]):
 	results = [{s:{} for s in stdevs} for i in range(num_games)]
 	for i in range(num_games):
@@ -130,8 +130,8 @@ def parse_args():
 	parser.add_argument("-agg", type=int, default=0, help="Number of samples "+\
 						"to pre-aggregate. Default: 0")
 	parser.add_argument("-stdevs", type=float, nargs="*", default=\
-						[.2,1.,5.,25.], help="Noise magnitude parameters "+\
-						"passed to the noise model. Default: .2 1. 5. 25.")
+						[1.,10.,100.], help="Noise magnitude parameters "+\
+						"passed to the noise model. Default: 1,10,100")
 	parser.add_argument("-sample_sizes", type=int, nargs="*", default=\
 						[5,10,20,100,200,500], help="Numbers of samples "+\
 						"per profile at which to test the bootstrap. "+\
