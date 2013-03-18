@@ -355,6 +355,7 @@ def rescale_payoffs(game, min_payoff=0, max_payoff=100):
 
 	Modifies game.values in-place.
 	"""
+	game.makeArrays()
 	min_val = game.values.min()
 	max_val = game.values.max()
 	game.values -= min_val
