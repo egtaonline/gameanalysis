@@ -276,7 +276,7 @@ def add_noise(game, model, spread, samples):
 	return sg
 
 
-def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=1):
+def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=2):
 	"""
 	Generate Gaussian mixture noise to add to one payoff in a game.
 
@@ -288,7 +288,7 @@ def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=1):
 				the mean and the nearest distribution is drawn from 
 				N(0,max_stdev*spread_mult).
 	"""
-	multipliers = range((-modes+1)/2,0) + [0]*(modes%2) + range(1,modes/2+1)
+	multipliers = arange(float(modes)) - float(modes-1)/2
 	offset = normal(0, max_stdev * spread_mult)
 	stdev = beta(2,1) * max_stdev
 	return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)]
