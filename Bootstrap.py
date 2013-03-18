@@ -109,7 +109,7 @@ def parse_args():
 						"for a file with simulated game data on stdin.")
 	parser.add_argument("noise_func", type=str, default="", choices=["",\
 						"normal","unimodal","bimodal","u80b20","u60b40",\
-						"u40b60","u20b80","gaussian_mixture"], help=\
+						"u40b60","u20b80","gaussian_mixture", "gumbel"], help=\
 						"Noise model to perturb sample payoffs around the "+\
 						"base game payoff. May only be empty if first "+\
 						"argument is also empty.")

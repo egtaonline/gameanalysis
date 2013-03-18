@@ -8,7 +8,7 @@ from RoleSymmetricGame import Game, SampleGame, PayoffData, Profile
 from functools import partial
 from itertools import combinations
 from bisect import bisect
-from numpy.random import uniform as U, normal, multivariate_normal, beta
+from numpy.random import uniform as U, normal, multivariate_normal, beta, gumbel
 from random import choice
 from numpy import array, arange, zeros, fill_diagonal, cumsum
 from sys import argv
@@ -328,6 +328,11 @@ def uniform_noise(max_half_width, samples):
 	"""
 	hw = beta(2,1) * max_half_width
 	return U(-hw, hw, samples)
+
+
+def gumbel_noise(scale, samples):
+	location = -0.5772*scale
+	return gumbel(location, scale, samples)
 
 
 def mix_models(models, rates, spread, samples):
