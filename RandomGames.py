@@ -330,9 +330,17 @@ def uniform_noise(max_half_width, samples):
 	return U(-hw, hw, samples)
 
 
-def gumbel_noise(scale, samples):
+def gumbel_noise(scale, samples, flip_prob=0.5):
+	"""
+	Generate random noise according to a gumbel distribution.
+
+	Gumbel distributions are skewed, so the default setting of the flip_prob
+	parameter makes it equally likely to be skewed positive or negative
+
+	"""
 	location = -0.5772*scale
-	return gumbel(location, scale, samples)
+	multiplier = -1 if (U(0,1) < flip_prob) else 1
+	return multiplier * gumbel(location, scale, samples)
 
 
 def mix_models(models, rates, spread, samples):
