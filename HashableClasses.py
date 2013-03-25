@@ -81,7 +81,7 @@ class h_array(np.ndarray):
 		return self == other or self > other
 
 
-class Mixture(h_array):
+class Mixture(np.ndarray):
 	def __new__(cls, probabilities, game):
 		a = np.array(probabilities, dtype=float).clip(0)
 		a[a.max(1) == 0] = 1
