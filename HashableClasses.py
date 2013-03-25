@@ -54,7 +54,7 @@ class h_array(np.ndarray):
 		try:
 			return self._hash
 		except AttributeError:
-			self._hash = hash(tuple(self))
+			self._hash = hash(tuple(self.flat))
 			return self._hash
 
 	def __eq__(self, other):
@@ -81,7 +81,7 @@ class h_array(np.ndarray):
 		return self == other or self > other
 
 
-class Mixture(np.ndarray):
+class Mixture(h_array):
 	def __new__(cls, probabilities, game):
 		a = np.array(probabilities, dtype=float).clip(0)
 		a[a.max(1) == 0] = 1
