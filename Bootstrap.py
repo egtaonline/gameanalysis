@@ -107,12 +107,11 @@ def parse_args():
 						"sym_2p2s"], help="Specifies the function generating "+\
 						"random base games. If empty, the script will look "+\
 						"for a file with simulated game data on stdin.")
-	parser.add_argument("noise_func", type=str, default="", choices=["",\
-						"normal","unimodal","bimodal","u80b20","u60b40",\
-						"u40b60","u20b80","gaussian_mixture", "gumbel"], help=\
-						"Noise model to perturb sample payoffs around the "+\
-						"base game payoff. May only be empty if first "+\
-						"argument is also empty.")
+	parser.add_argument("noise_func", type=str, default="", choices=map(lambda \
+						s: s[:-6], filter(lambda s: s.endswith("_noise"), \
+						RG.__dict__.keys())), help="Noise model to perturb "+\
+						"sample payoffs around the base game payoff. May "+\
+						"only be empty if first argument is also empty.")
 	parser.add_argument("-game_args", type=str, nargs="*", default=[], help=\
 						"Arguments to pass to game_func. Usually players "+\
 						"and strategies.")
