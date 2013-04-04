@@ -190,7 +190,7 @@ def local_effect(N, S):
 
 	The one-strategy terms are drawn as follows:
 	-constant ~ U[-N-S,N+S]
-	-linear ~ U[-N,N]
+	-linear ~ U[-N,0]
 
 	The neighbor strategy terms are drawn as follows:
 	-linear ~ U[-S,S]
@@ -202,7 +202,7 @@ def local_effect(N, S):
 	for s in strategies:
 		for d in strategies:
 			if s == d:
-				local_effects[s][d] = [U(-N-S,N+S),U(-N,N)]
+				local_effects[s][d] = [U(-N-S,N+S),U(-N,0)]
 			elif U(0,S) > 2:
 				local_effects[s][d] = [U(-S,S),U(-1,1)]
 	for prof in g.allProfiles():
@@ -356,11 +356,13 @@ def mix_models(models, rates, spread, samples):
 	return m(spread, samples)
 
 
-u80b20_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.8,.2])
-u60b40_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.6,.4])
-u40b60_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.4,.6])
-u20b80_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.2,.8])
+n80b20_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.8,.2])
+n60b40_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.6,.4])
+n40b60_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.4,.6])
+n20b80_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.2,.8])
 
+n25b25u25g25_noise = partial(mix_models, [unimodal_noise, bimodal_noise, \
+		uniform_noise, gumbel_noise], [.25]*4)
 
 def rescale_payoffs(game, min_payoff=0, max_payoff=100):
 	"""
