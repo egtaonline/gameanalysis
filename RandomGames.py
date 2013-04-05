@@ -36,7 +36,7 @@ def __make_symmetric_game(N, S):
 	return Game(roles, players, strategies)
 
 
-def independent(N, S, dstr=partial(U,-1,1)):
+def independent_game(N, S, dstr=partial(U,-1,1)):
 	"""
 	All payoff values drawn independently according to specified distribution.
 
@@ -51,7 +51,7 @@ def independent(N, S, dstr=partial(U,-1,1)):
 	return g
 
 
-def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
+def covariant_game(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 	"""
 	Payoff values for each profile drawn according to multivariate normal.
 
@@ -82,7 +82,7 @@ def covariant(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 	return g
 	
 
-def uniform_zero_sum(S, min_val=-1, max_val=1):
+def uniform_zero_sum_game(S, min_val=-1, max_val=1):
 	"""
 	2-player zero-sum game; player 1 payoffs drawn from a uniform distribution.
 
@@ -101,7 +101,7 @@ def uniform_zero_sum(S, min_val=-1, max_val=1):
 	return g
 
 
-def uniform_symmetric(N, S, min_val=-1, max_val=1):
+def uniform_symmetric_game(N, S, min_val=-1, max_val=1):
 	"""
 	Symmetric game with each payoff value drawn from a uniform distribution.
 
@@ -119,7 +119,7 @@ def uniform_symmetric(N, S, min_val=-1, max_val=1):
 	return g
 
 
-def sym_2p2s(a=0, b=1, c=2, d=3, min_val=-1, max_val=1):
+def sym_2p2s_game(a=0, b=1, c=2, d=3, min_val=-1, max_val=1):
 	"""
 	Create a symmetric 2-player 2-strategy game of the specified form.
 
@@ -145,7 +145,7 @@ def sym_2p2s(a=0, b=1, c=2, d=3, min_val=-1, max_val=1):
 	return g
 
 
-def congestion(N, facilities, required):
+def congestion_game(N, facilities, required):
 	"""
 	Generates random congestion games with N players and nCr(f,r) strategies.
 
@@ -178,7 +178,7 @@ def congestion(N, facilities, required):
 	return g
 
 
-def local_effect(N, S):
+def local_effect_game(N, S):
 	"""
 	Generates random congestion games with N players and S strategies.
 
@@ -221,7 +221,7 @@ def local_effect(N, S):
 	return g
 
 
-def polymatrix(N, S, matrix_game=partial(independent,2)):
+def polymatrix_game(N, S, matrix_game=partial(independent_game,2)):
 	"""
 	Creates a polymatrix game using the specified 2-player matrix game function.
 
@@ -261,6 +261,10 @@ def polymatrix(N, S, matrix_game=partial(independent,2)):
 	return g
 
 
+game_functions = filter(lambda k: k.endswith("game") and not \
+					k.startswith("__"), globals().keys())
+
+
 def add_noise(game, model, spread, samples):
 	"""
 	Generate sample game with random noise added to each payoff.
@@ -294,8 +298,8 @@ def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=2):
 	return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)]
 
 
-normal_noise = partial(normal, 0)
-unimodal_noise = partial(gaussian_mixture_noise, modes=1)
+eq_var_normal_noise = partial(normal, 0)
+normal_noise = partial(gaussian_mixture_noise, modes=1)
 bimodal_noise = partial(gaussian_mixture_noise, modes=2)
 
 
@@ -356,13 +360,18 @@ def mix_models(models, rates, spread, samples):
 	return m(spread, samples)
 
 
-n80b20_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.8,.2])
-n60b40_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.6,.4])
-n40b60_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.4,.6])
-n20b80_noise = partial(mix_models, [unimodal_noise, bimodal_noise], [.2,.8])
+n80b20_noise = partial(mix_models, [normal_noise, bimodal_noise], [.8,.2])
+n60b40_noise = partial(mix_models, [normal_noise, bimodal_noise], [.6,.4])
+n40b60_noise = partial(mix_models, [normal_noise, bimodal_noise], [.4,.6])
+n20b80_noise = partial(mix_models, [normal_noise, bimodal_noise], [.2,.8])
 
-n25b25u25g25_noise = partial(mix_models, [unimodal_noise, bimodal_noise, \
+equal_mix_noise = partial(mix_models, [normal_noise, bimodal_noise, \
 		uniform_noise, gumbel_noise], [.25]*4)
+mostly_normal_noise =  partial(mix_models, [normal_noise, bimodal_noise, \
+		gumbel_noise], [.8,.1,.1])
+
+noise_functions = filter(lambda k: k.endswith("_noise") and not \
+					k.startswith("add_"), globals().keys())
 
 def rescale_payoffs(game, min_payoff=0, max_payoff=100):
 	"""

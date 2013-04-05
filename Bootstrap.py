@@ -102,17 +102,16 @@ def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 
 def parse_args():
 	parser = ArgumentParser()
-	parser.add_argument("game_func", type=str, default="", choices=\
-						["","congestion","local_effect","uniform_symmetric", \
-						"sym_2p2s"], help="Specifies the function generating "+\
-						"random base games. If empty, the script will look "+\
-						"for a file with simulated game data on stdin.")
-	parser.add_argument("noise_func", type=str, default="", choices=set(map( \
-						lambda s: s[:-6], filter(lambda s: s.endswith( \
-						"_noise"), dir(RG)))) - {'add'}, help="Noise model "+\
-						"to perturb sample payoffs around the base game "+\
-						"payoff. May only be empty if first argument is also "+\
-						"empty.")
+	parser.add_argument("game_func", type=str, default="", choices=sorted([ \
+						f[:-5] for f in RG.game_functions]), help="Specifies "+\
+						"the function generating random base games. If "+\
+						"empty, the script will look for a file with "+\
+						"simulated game data on stdin.")
+	parser.add_argument("noise_func", type=str, default="", choices=sorted([ \
+						f[:-6] for f in RG.noise_functions]), help="Noise "+\
+						"model to perturb sample payoffs around the base "+\
+						"game payoff. May only be empty if first argument "+\
+						"is also empty.")
 	parser.add_argument("-game_args", type=str, nargs="*", default=[], help=\
 						"Arguments to pass to game_func. Usually players "+\
 						"and strategies.")
@@ -130,8 +129,8 @@ def parse_args():
 	parser.add_argument("-agg", type=int, default=0, help="Number of samples "+\
 						"to pre-aggregate. Default: 0")
 	parser.add_argument("-stdevs", type=float, nargs="*", default=\
-						[1.,10.,100.], help="Noise magnitude parameters "+\
-						"passed to the noise model. Default: 1,10,100")
+						[.1,1.,10.,100.], help="Noise magnitude parameters "+\
+						"passed to the noise model. Default: .1,1,10,100")
 	parser.add_argument("-sample_sizes", type=int, nargs="*", default=\
 						[5,10,20,100,200,500], help="Numbers of samples "+\
 						"per profile at which to test the bootstrap. "+\
@@ -165,7 +164,8 @@ def parse_args():
 				noise_args.append(int(a))
 			except ValueError:
 				noise_args.append(float(a))
-		args.game_func = partial(getattr(RG, args.game_func), *game_args)
+		args.game_func = partial(getattr(RG, args.game_func + "_game"), \
+									*game_args)
 		noise_func = getattr(RG, args.noise_func + "_noise")
 		args.noise_func = lambda s,c: noise_func(s,c, *noise_args)
 
