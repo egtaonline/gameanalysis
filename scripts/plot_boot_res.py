@@ -59,8 +59,16 @@ def parse_input():
 def get_keys(data):
 	variances = sorted(map(float, data.keys()))
 	subsamples = sorted(map(int, data[str(variances[0])].keys()))
-	resample_count = len(data[str(variances[0])][str(subsamples[0])][0][ \
-			"bootstrap"])
+	resample_count = 0
+	for d in data:
+		for var in variances:
+			for sam in subsamples:
+				try:
+					resample_count = len(data[str(var)][str(sam)][0][ \
+										"bootstrap"])
+					break
+				except IndexError:
+					continue
 	return variances, subsamples, resample_count
 
 

@@ -2,22 +2,26 @@
 
 from json import loads
 from string import join
+from copy import deepcopy
 
 import requests
 
 from GameIO import read, read_v3_profile, read_v3_samples_profile, read_v3_players_profile
 from Reductions import DPR_profiles
 from BasicFunctions import one_line
+from RoleSymmetricGame import SampleGame
 
 
 modifiable_attributes = ["process_memory", "name", "parameter_hash", "active", \
 						"time_per_sample", "nodes", "samples_per_simulation"]
 
+granularities = ["structure", "summary", "observations", "full"]
+
 class TestbedObject:
 	def __init__(self, name, obj_type, name_field="", options={}, \
 			url_options={}, skip_name=False):
 		self.auth = {'auth_token':"g2LHz1mEtbysFngwLMCz"}
-		self.url = "http://d-108-249.eecs.umich.edu/api/v3/" + obj_type
+		self.url = "http://egtaonline.eecs.umich.edu/api/v3/" + obj_type
 
 		data = dict(options)
 		data.update(self.auth)
@@ -28,10 +32,11 @@ class TestbedObject:
 
 		if r.status_code != 200 and not skip_name: #treat name as a name_field
 			r = requests.get(self.url + ".json", data=data)
+			if r.status_code == 404:
+				raise Exception("404 error"+"\n"+r.url+"\n"+r.text)
 			try:
 				ID = filter(lambda s: s[name_field] == name, \
 						loads(r.text)[obj_type])[0]['_id']
-				print ID
 			except IndexError:
 				raise Exception("no such "+obj_type[:-1]+": "+name)
 
@@ -59,8 +64,8 @@ class TestbedObject:
 
 
 class TestbedScheduler(TestbedObject):
-	def __init__(self, name, scheduler_type="generic_"):
-		TestbedObject.__init__(self, name, scheduler_type+"schedulers", "name")
+	def __init__(self, name, scheduler_type="generic"):
+		TestbedObject.__init__(self, name, scheduler_type+"_schedulers", "name")
 
 	def addProfile(self, profile, samples):
 		data = {'sample_count':samples, 'assignment':str(profile)}
@@ -158,7 +163,6 @@ class TestbedProfile(TestbedObject):
 			self.payoffs = read_v3_players_profile(loads(self.json)[0])
 
 
-
 class DPR_scheduler:
 	def __init__(self, scheduler_name, game_name, players, samples):
 		self.TB_scheduler = TestbedScheduler(scheduler_name)
@@ -172,6 +176,40 @@ class DPR_scheduler:
 		self.samples += additional_samples
 		for profile in DPR_profiles(self.TB_game.game, self.players):
 			self.TB_scheduler.addProfile(profile, self.samples)
+
+
+def get_game_data(game_ID):
+	TB_game = TestbedGame(game_ID, granularity="summary")
+	GA_game = SampleGame(TB_game.game.roles, TB_game.game.players, \
+					TB_game.game.strategies)
+	profile_IDs = [p["_id"] for p in loads(TB_game.json)["profiles"]]
+	for i,ID in enumerate(profile_IDs):
+		print i
+		TB_prof = TestbedProfile(ID, granularity="observations")
+		GA_game.addProfile(TB_prof.payoffs)
+	return GA_game
+
+
+def prep_for_bootstrap(game):
+	"""
+	Run this on a credit network game resulting from get_game_data to remove 
+	zeros and ensure that all profiles have the same number of samples.
+	"""
+	game.makeArrays()
+	for p in range(len(game)):
+		for r in range(len(game.roles)):
+			for s in range(game.maxStrategies):
+				if game.counts[p,r,s] > 0:
+					game.sample_values[p,r,s] = filter(None, \
+								game.sample_values[p,r,s])
+	min_len = min(map(len, game.sample_values.flat))
+	for p in range(len(game)):
+		for r in range(len(game.roles)):
+			for s in range(game.maxStrategies):
+				game.sample_values[p,r,s] = game.sample_values[p,r,s][:min_len]
+	game.min_samples = game.max_samples = min_len
+	game.makeArrays()
+	
 
 
 from argparse import ArgumentParser

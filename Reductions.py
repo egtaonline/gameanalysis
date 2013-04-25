@@ -34,6 +34,10 @@ def full_game_profile(HR_profile, N):
 def deviation_preserving_reduction(game, players={}):
 	if not players:
 		return twins_reduction(game)
+	elif isinstance(players, int):
+		players = {game.roles[0]:players}
+	elif isinstance(players, list):
+		players = dict(zip(game.roles, players))
 
 	#it's often faster to go through all of the full-game profiles
 	DPR_game = type(game)(game.roles, players, game.strategies)
