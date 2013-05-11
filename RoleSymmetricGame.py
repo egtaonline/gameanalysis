@@ -95,6 +95,9 @@ class Game(dict):
 	def addProfile(self, role_payoffs):
 		prof = Profile(role_payoffs)
 		if prof in self:
+			print self.counts[self[prof]]
+			print self.values[self[prof]]
+			print role_payoffs
 			raise IOError("duplicate profile: " + str(prof))
 		self.makeLists()
 		self.addProfileArrays(role_payoffs)
@@ -382,8 +385,13 @@ def is_profile_array(arr):
 
 
 def is_mixture_array(arr):
-	return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
-			np.allclose(arr.sum(1), 1)
+	try:
+		return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
+				np.allclose(arr.sum(1), 1)
+	except TypeError as te:
+		return np.allclose(np.array(arr, dtype=float).sum(1), 1)
+#		raise TypeError(type(arr).__name__ + "(" + str(arr.dtype ) +")=" + \
+#						str(arr) + "\n" + te.message)
 
 
 def is_symmetric(game):

@@ -5,6 +5,7 @@ import RandomGames as RG
 from GameIO import read, to_JSON_str
 from Regret import regret
 from Nash import mixed_nash, replicator_dynamics, pure_nash
+from RoleSymmetricGame import SampleGame
 
 from sys import stdin
 from argparse import ArgumentParser
@@ -85,8 +86,11 @@ def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 		base_game = base_game_func()
 		RG.rescale_payoffs(base_game, 0, 100)
 		for stdev in stdevs:
-			sample_game = RG.add_noise(base_game, noise_model, stdev, \
-									sample_sizes[-1])
+			if isinstance(base_game, SampleGame):
+				sample_game = base_game
+			else:
+				sample_game = RG.add_noise(base_game, noise_model, stdev, \
+											sample_sizes[-1])
 			for sample_size in sample_sizes:
 				subsample_game = subsample(sample_game, sample_size)
 				equilibria = equilibrium_search(subsample_game)
@@ -103,12 +107,12 @@ def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 def parse_args():
 	parser = ArgumentParser()
 	parser.add_argument("game_func", type=str, default="", choices=sorted([ \
-						f[:-5] for f in RG.game_functions]), help="Specifies "+\
+						f[:-5] for f in RG.game_functions]) + ["None"], help="Specifies "+\
 						"the function generating random base games. If "+\
 						"empty, the script will look for a file with "+\
 						"simulated game data on stdin.")
 	parser.add_argument("noise_func", type=str, default="", choices=sorted([ \
-						f[:-6] for f in RG.noise_functions]), help="Noise "+\
+						f[:-6] for f in RG.noise_functions]) + ["None"], help="Noise "+\
 						"model to perturb sample payoffs around the base "+\
 						"game payoff. May only be empty if first argument "+\
 						"is also empty.")
@@ -146,12 +150,12 @@ def parse_args():
 						"equilibria.")
 	args = parser.parse_args()
 
-	if args.game_func == "none":
+	if args.game_func == "None":
 		game = read(stdin)
 		args.game_func = lambda: game
-		args.noise_func = lambda g,s,c: game.subsample(c)
+		args.noise_func = lambda s,c: subsample(game, c)
 	else:
-		assert args.noise_func != "none", "Must specify a noise model."
+		assert args.noise_func != "None", "Must specify a noise model."
 		game_args = []
 		for a in args.game_args:
 			try:
