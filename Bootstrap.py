@@ -10,7 +10,7 @@ from RoleSymmetricGame import SampleGame
 from sys import stdin
 from argparse import ArgumentParser
 from random import sample
-from copy import copy
+from copy import copy, deepcopy
 from functools import partial
 
 import numpy as np
@@ -28,6 +28,27 @@ def subsample(game, num_samples):
 	sg.reset()
 	sg.max_samples = num_samples
 	return sg
+
+
+def holdout(game, num_samples):
+	"""
+	Returns the same game as subsample(), but also the game consisting of the 
+	remaining samples. Won't work if payoffs have different numbers of samples.
+	"""
+	game.makeArrays()
+	sg = copy(game)
+	withheld = copy(game)
+	sample_values = deepcopy(sg.sample_values)
+	sample_values = sample_values.swapaxes(0,3)
+	np.random.shuffle(sample_values)
+	sample_values = sample_values.swapaxes(0,3)
+	sg.sample_values = sample_values[:,:,:,:num_samples]
+	sg.max_samples = sg.min_samples = num_samples
+	sg.reset()
+	withheld.sample_values = sample_values[:,:,:,num_samples:]
+	withheld.max_samples = withheld.min_samples = game.max_samples - num_samples
+	withheld.reset()
+	return sg, withheld
 
 
 def pre_aggregate(game, count):
@@ -84,15 +105,18 @@ def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 	results = [{s:{} for s in stdevs} for i in range(num_games)]
 	for i in range(num_games):
 		base_game = base_game_func()
-		RG.rescale_payoffs(base_game, 0, 100)
+		if not isinstance(base_game, SampleGame):
+			RG.rescale_payoffs(base_game, 0, 100)
 		for stdev in stdevs:
-			if isinstance(base_game, SampleGame):
-				sample_game = base_game
-			else:
+			if not isinstance(base_game, SampleGame):
 				sample_game = RG.add_noise(base_game, noise_model, stdev, \
 											sample_sizes[-1])
 			for sample_size in sample_sizes:
-				subsample_game = subsample(sample_game, sample_size)
+				if isinstance(base_game, SampleGame):
+					subsample_game, base_game = holdout(base_game_func(), \
+														sample_size)
+				else:
+					subsample_game = subsample(sample_game, sample_size)
 				equilibria = equilibrium_search(subsample_game)
 				results[i][stdev][sample_size] = [ \
 					{ \
