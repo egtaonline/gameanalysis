@@ -385,13 +385,11 @@ def is_profile_array(arr):
 
 
 def is_mixture_array(arr):
-	try:
+	if arr.dtype != "object":
 		return isinstance(arr, np.ndarray) and np.all(arr >= 0) and \
 				np.allclose(arr.sum(1), 1)
-	except TypeError as te:
+	else:
 		return np.allclose(np.array(arr, dtype=float).sum(1), 1)
-#		raise TypeError(type(arr).__name__ + "(" + str(arr.dtype ) +")=" + \
-#						str(arr) + "\n" + te.message)
 
 
 def is_symmetric(game):
