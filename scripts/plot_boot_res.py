@@ -115,20 +115,20 @@ def plot_percentiles(percentiles, bucket_size, out_file):
 def generate_distributions(data):
 	variances, subsamples, resample_count = get_keys(data[0])
 	distributions = {v:{s:[] for s in subsamples} for v in variances}
-	distributions[0] = []
+	distributions[-1] = []
 	for d in data:
 		for var in variances:
 			for sam in subsamples:
 				for eq_data in d[str(var)][str(sam)]:
 					eq = np.array(eq_data['profile'])
-					regr = eq_data['regret']
-					distributions[0].append(eq_data["statistic"])
+					regr = eq_data['statistic']
+					distributions[-1].append(eq_data["statistic"])
 					distributions[var][sam].extend(eq_data["bootstrap"])
 
 	for v in variances:
 		for s in subsamples:
 			distributions[v][s].sort()
-	distributions[0].sort()
+	distributions[-1].sort()
 	return distributions
 
 
@@ -138,16 +138,16 @@ def plot_distributions(distributions, bucket_pct, axes, out_file):
 	variances = sorted(distributions)
 	subsamples = sorted(distributions[variances[-1]])
 	if x_max == 0.:
-		x_max = distributions[0][-1]
+		x_max = distributions[-1][-1]
 	bucket_width = x_max * bucket_pct
 	bucket_boundaries = np.arange(0, x_max + bucket_width / 2., bucket_width)
 	x_axis_points = np.arange(bucket_width / 2., x_max, bucket_width)
 	for i,v in enumerate(variances):
 		plt.figure(i)
 		plt.xlabel("regret distribution")
-		if v == 0:
+		if v == -1:
 			plt.title("true game")
-			cum_dist = np.array([bisect(distributions[0], b) for b in \
+			cum_dist = np.array([bisect(distributions[-1], b) for b in \
 								bucket_boundaries])
 			plt.plot(x_axis_points, (cum_dist[1:] - cum_dist[:-1]) / \
 					float(cum_dist[-1]), label="true game")
