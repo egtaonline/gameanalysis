@@ -160,7 +160,7 @@ def parse_args():
 						[.1,1.,10.,100.], help="Noise magnitude parameters "+\
 						"passed to the noise model. Default: .1,1,10,100")
 	parser.add_argument("-sample_sizes", type=int, nargs="*", default=\
-						[5,10,20,100,200,500], help="Numbers of samples "+\
+						[5,10,20,50,100,200,500], help="Numbers of samples "+\
 						"per profile at which to test the bootstrap. "+\
 						"Default: 5 10 20 100 200 500")
 	parser.add_argument("--single", action="store_true", help="Set to use "+\
