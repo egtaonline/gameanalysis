@@ -341,6 +341,7 @@ def gumbel_noise(scale, samples, flip_prob=0.5):
 	Gumbel distributions are skewed, so the default setting of the flip_prob
 	parameter makes it equally likely to be skewed positive or negative
 
+	variance ~= 1.6*scale
 	"""
 	location = -0.5772*scale
 	multiplier = -1 if (U(0,1) < flip_prob) else 1
