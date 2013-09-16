@@ -131,7 +131,7 @@ def bootstrap_experiment(base_game_func, noise_model, statistic=regret, \
 def parse_args():
 	parser = ArgumentParser()
 	parser.add_argument("game_func", type=str, default="", choices=sorted([ \
-						f[:-5] for f in RG.game_functions]) + ["None"], help="Specifies "+\
+						f[:-5] for f in RG.game_functions]) + ["None", "single_sample"], help="Specifies "+\
 						"the function generating random base games. If "+\
 						"empty, the script will look for a file with "+\
 						"simulated game data on stdin.")
@@ -157,13 +157,12 @@ def parse_args():
 	parser.add_argument("-agg", type=int, default=0, help="Number of samples "+\
 						"to pre-aggregate. Default: 0")
 	parser.add_argument("-stdevs", type=float, nargs="*", default=\
-						[.1,1.,10.,100.,1000.], help="Noise magnitude "+\
-						"parameters passed to the noise model. Default: "+\
-						".1,1,10,100,1000")
+						[.1,1.,10.,100.], help="Noise magnitude parameters "+\
+						"passed to the noise model. Default: .1,1,10,100")
 	parser.add_argument("-sample_sizes", type=int, nargs="*", default=\
 						[5,10,20,50,100,200,500], help="Numbers of samples "+\
 						"per profile at which to test the bootstrap. "+\
-						"Default: 5 10 20 50 100 200 500")
+						"Default: 5 10 20 100 200 500")
 	parser.add_argument("--single", action="store_true", help="Set to use "+\
 						"the single_sample_regret function.")
 	parser.add_argument("--rd", action="store_true", help="Set to compute "+\
@@ -180,21 +179,24 @@ def parse_args():
 		args.game_func = lambda: game
 		args.noise_func = lambda s,c: subsample(game, c)
 	else:
-		assert args.noise_func != "None", "Must specify a noise model."
-		game_args = []
-		for a in args.game_args:
-			try:
-				game_args.append(int(a))
-			except ValueError:
-				game_args.append(float(a))
+		if args.game_func == "single_sample":
+			game = read(stdin)
+			args.game_func = lambda: game.singleSample()
+		else:
+			game_args = []
+			for a in args.game_args:
+				try:
+					game_args.append(int(a))
+				except ValueError:
+					game_args.append(float(a))
+			args.game_func = partial(getattr(RG, args.game_func + "_game"), \
+										*game_args)
 		noise_args = []
 		for a in args.noise_args:
 			try:
 				noise_args.append(int(a))
 			except ValueError:
 				noise_args.append(float(a))
-		args.game_func = partial(getattr(RG, args.game_func + "_game"), \
-									*game_args)
 		noise_func = getattr(RG, args.noise_func + "_noise")
 		args.noise_func = lambda s,c: noise_func(s,c, *noise_args)
 

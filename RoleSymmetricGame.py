@@ -477,6 +477,7 @@ class SampleGame(Game):
 		else:
 			self.values = np.array([[[choice(s) for s in r] for r in p] for \
 								p in self.sample_values])
+		return self
 
 	def reset(self):#TODO: handle ragged arrays
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
