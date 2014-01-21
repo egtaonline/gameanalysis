@@ -23,6 +23,8 @@ def full_game_profile(HR_profile, N):
 	Returns the symmetric full game profile corresponding to the given
 	symmetric reduced game profile.
 	"""
+	if N < 2:
+		return HR_profile
 	n = sum(HR_profile.values())
 	full_profile = {s : c * N / n  for s,c in HR_profile.items()}
 	while sum(full_profile.values()) < N:
@@ -67,26 +69,27 @@ def deviation_preserving_reduction(game, players={}):
 			return DPR_game
 	
 	#it's conceptually simpler to go through all of the reduced-game profiles
-	DPR_game = type(game)(game.roles, players, game.strategies)
 	for reduced_profile in DPR_game.allProfiles():
 		try:
 			role_payoffs = {}
-			for role in game.roles:
-				role_payoffs[role] = []
-				for s in reduced_profile[role]:
+			for r in game.roles:
+				role_payoffs[r] = []
+				for s in reduced_profile[r]:
 					full_profile = {}
-					for r in game.roles:
-						if r == role:
-							opp_prof = reduced_profile.asDict()[r]
+					for d in game.roles:
+						if r == d:
+							opp_prof = reduced_profile.asDict()[d]
 							opp_prof[s] -= 1
-							full_profile[r] = full_game_profile(opp_prof, \
-									game.players[r] - 1)
-							full_profile[r][s] += 1
+							full_profile[d] = full_game_profile(opp_prof, \
+									game.players[d] - 1)
+							full_profile[d][s] += 1
 						else:
-							full_profile[r] = full_game_profile( \
-									reduced_profile[r], game.players[r])
+							full_profile[d] = full_game_profile( \
+									reduced_profile[d], game.players[d])
 					role_payoffs[r].append(PayoffData(s,reduced_profile[r][s],\
 							game.getPayoffData(Profile(full_profile), r, s)))
+#					p = PayoffData(s,reduced_profile[r][s], game.getPayoffData(Profile(full_profile), r, s))
+#					role_payoffs[r].append(p)
 			DPR_game.addProfile(role_payoffs)
 		except KeyError:
 			continue
@@ -127,7 +130,8 @@ def dpr_profile(full_profile, reduced_players, full_players=None):
 
 
 def twins_reduction(game):
-	return deviation_preserving_reduction(game, {r:2 for r in game.roles})
+	players = {r:min(2,p) for r,p in game.players.items()}
+	return deviation_preserving_reduction(game, players)
 
 
 def DPR_profiles(game, players={}):
