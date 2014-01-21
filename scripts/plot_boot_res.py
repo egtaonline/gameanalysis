@@ -91,7 +91,7 @@ def generate_percentiles(data, bucket_size):
 	return percentiles
 
 
-def plot_percentiles(percentiles, bucket_size, out_file):
+def plot_percentiles(percentiles, bucket_size, out_file, legend_size=12):
 	pp = PdfPages(out_file)
 	variances = sorted(percentiles)
 	subsamples = sorted(percentiles[variances[0]])
@@ -100,16 +100,62 @@ def plot_percentiles(percentiles, bucket_size, out_file):
 		plt.figure(i)
 		plt.xlabel("bootstrap regret distribution percentile")
 		plt.ylabel("cumulative fraction of true game regrets")
-		plt.title("$\sigma \\sim$" +str(v))
+		plt.title("$\\bar{z}$ = " +str(v))
 		plt.axis([0, 100, 0, 1])
 		plt.plot(x_axis_points, x_axis_points/100., "k--", \
 				label="perfect calibration")
 		for s in subsamples:
 			plt.plot(x_axis_points, percentiles[v][s][:-1] / float( \
 					percentiles[v][s][-1]), label=str(s) + " samples")
-		plt.legend(loc="lower right", prop={'size':6})
+		plt.legend(loc="lower right", prop={'size':legend_size})
 		pp.savefig()
 	pp.close()
+
+
+def print_table(filename):
+	with open(filename) as f:
+		data = json.load(f)
+	variances, subsamples, resample_count = get_keys(data[0])
+	points = {10:0,100:0}
+	below_95 = {10:0,100:0}
+	bounds = {10:[],100:[]}
+	for d in data:
+		for sam in [10, 100]:
+			for eq_data in d['100.0'][str(sam)]:
+				points[sam] += 1
+				eq = np.array(eq_data['profile'])
+				regr = eq_data['statistic']
+				regr_dstr = sorted(eq_data["bootstrap"])
+				bounds[sam].append(regr_dstr[int(.95*len(regr_dstr))])
+				if bisect(regr_dstr, regr) < .95*len(regr_dstr):
+					below_95[sam] += 1
+	for sam in bounds:
+		print filename.split('/')[-1].split('.')[0], 100.0, sam, \
+				below_95[sam] / float(points[sam]), \
+				sum(bounds[sam]) / float(len(bounds[sam]))
+
+
+def print_CN_table(filename):
+	with open(filename) as f:
+		data = json.load(f)
+	variances, subsamples, resample_count = get_keys(data[0])
+	points = {10:0,100:0}
+	below_95 = {10:0,100:0}
+	bounds = {10:[],100:[]}
+	for d in data:
+		for sam in [10, 100]:
+			for eq_data in d['0.0'][str(sam)]:
+				points[sam] += 1
+				eq = np.array(eq_data['profile'])
+				regr = eq_data['statistic']
+				regr_dstr = sorted(eq_data["bootstrap"])
+				bounds[sam].append(regr_dstr[int(.95*len(regr_dstr))])
+				if bisect(regr_dstr, regr) < .95*len(regr_dstr):
+					below_95[sam] += 1
+	for sam in bounds:
+		print filename.split('/')[-1].split('.')[0], sam, \
+				below_95[sam] / float(points[sam]), \
+				sum(bounds[sam]) / float(len(bounds[sam]))
 
 
 def generate_distributions(data):
@@ -174,7 +220,7 @@ def generate_quantiles(data, bucket_size):
 			for sam in subsamples:
 				for eq_data in d[str(var)][str(sam)]:
 					eq = np.array(eq_data['profile'])
-					regr = eq_data['stastic']
+					regr = eq_data['statistic']
 					true_dst.append(eq_data["statistic"])
 					sam_dsts[var][sam].extend(eq_data["bootstrap"])
 	
@@ -206,6 +252,25 @@ def plot_quantiles(quantiles, bucket_size, out_file):
 			plt.plot(quantiles[0], quantiles[v][s], label=str(s) + " samples")
 		plt.legend(loc="lower right", prop={'size':6})
 		pp.savefig()
+	pp.close()
+
+
+def falling_quantiles(in_file, out_file):
+	with open(in_file) as f:
+		data = json.load(f)
+	quantiles = generate_quantiles(data, 0.05)
+	pp = PdfPages(out_file)
+	variances = list(reversed(sorted(set(quantiles) - {0})))
+	subsamples = sorted(quantiles[variances[-1]])
+	fig = plt.figure()
+	plt.xlabel("sample size")
+	plt.ylabel("95% regret bound")
+	plt.yscale('log')
+	for v in variances:
+		to_plot = [quantiles[v][s][-1] for s in subsamples]
+		plt.plot(subsamples, to_plot, label="variance: " + str(v))
+	plt.legend(loc="upper right", prop={'size':6})
+	pp.savefig()
 	pp.close()
 
 
