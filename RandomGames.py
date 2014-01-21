@@ -11,7 +11,7 @@ from bisect import bisect
 from numpy.random import uniform as U, normal, multivariate_normal, beta, gumbel
 from random import choice
 from numpy import array, arange, zeros, fill_diagonal, cumsum
-from sys import argv
+import sys
 
 
 def __make_asymmetric_game(N, S):
@@ -390,10 +390,14 @@ def rescale_payoffs(game, min_payoff=0, max_payoff=100):
 
 
 def parse_args():
+	assert "-input" not in sys.argv, "no input JSON required"
+	sys.argv = sys.argv[:3] + ["-input", None] + sys.argv[3:]
+	print sys.argv
 	parser = IO.io_parser(description="Generate random games.")
-	parser.add_argument("type", choices=["uZS", "uSym", "CG", "LEG"], help= \
-			"Type of random game to generate. uZS = uniform zero sum. " +\
-			"uSym = uniform symmetric. CG = congestion game.")
+	parser.add_argument("type", choices=["uZS","uSym","CG","LEG","PMX","ind"],\
+			help="Type of random game to generate. uZS = uniform zero sum. "+\
+			"uSym = uniform symmetric. CG = congestion game. PMX = polymatrix"+\
+			"game. ind = independent game.")
 	parser.add_argument("count", type=int, help="Number of random games " +\
 			"to create.")
 	parser.add_argument("-noise", choices=["none", "normal", \
@@ -402,8 +406,6 @@ def parse_args():
 			help="Arguments to be passed to the noise function.")
 	parser.add_argument("-game_args", nargs="*", default=[], \
 			help="Additional arguments for game generator function.")
-	assert "-input" not in argv, "no input JSON required"
-	argv = argv[:3] + ["-input", None] + argv[3:]
 	return parser.parse_args()
 
 
@@ -411,24 +413,29 @@ def main():
 	args = parse_args()
 
 	if args.type == "uZS":
-		game_func = uniform_zero_sum
+		game_func = uniform_zero_sum_game
 		assert len(args.game_args) == 1, "game_args must specify strategy count"
-		game_args = map(int, args.game_args)
 	elif args.type == "uSym":
-		game_func = uniform_symmetric
+		game_func = uniform_symmetric_game
 		assert len(args.game_args) == 2, "game_args must specify player and "+\
 									"strategy counts"
 	elif args.type == "CG":
-		game_func = congestion
+		game_func = congestion_game
 		assert len(args.game_args) == 3, "game_args must specify player, "+\
 									"facility, and required facility counts"
-		game_args = map(int, args.game_args)
 	elif args.type == "LEG":
-		game_func = local_effect
+		game_func = local_effect_game
 		assert len(args.game_args) == 2, "game_args must specify player and "+\
 									"strategy counts"
-		game_args = map(int, args.game_args)
-	
+	elif args.type == "PMX":
+		game_func = polymatrix_game
+		assert len(args.game_args) == 2, "game_args must specify player and "+\
+									"strategy counts"
+	elif args.type == "ind":
+		game_func = polymatrix_game
+		assert len(args.game_args) == 2, "game_args must specify player and "+\
+									"strategy counts"
+	game_args = map(int, args.game_args)
 	games = [game_func(*game_args) for __ in range(args.count)]
 
 	if args.noise == "normal":
