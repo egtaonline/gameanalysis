@@ -226,7 +226,7 @@ class Game(dict):
 				(1-self.mask).sum(1).reshape(len(self.roles),1)
 
 	def randomMixture(self):
-		m = np.random.uniform(0, 1, size=self.mask.shape)
+		m = np.random.uniform(0, 1, size=self.mask.shape) * (1 - self.mask)
 		return m / m.sum(1).reshape(m.shape[0], 1)
 
 	def biasedMixtures(self, role=None, strategy=None, bias=.9):
@@ -268,6 +268,7 @@ class Game(dict):
 		for r in self.roles:
 			i = self.index(r)
 			p[r] = {}
+			print len(self.strategies[r])
 			for s in self.strategies[r]:
 				j = self.index(r, s)
 				if arr[i,j] > 0:
