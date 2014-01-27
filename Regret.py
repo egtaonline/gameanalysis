@@ -105,6 +105,9 @@ def symmetric_profile_regrets(game):
 
 
 def equilibrium_regrets(game, eq):
+	"""
+	NE regret for all roles and pure strategies.
+	"""
 	if is_mixed_profile(eq):
 		eq = game.toArray(eq)
 	if is_mixture_array(eq):
@@ -119,6 +122,9 @@ def equilibrium_regrets(game, eq):
 
 
 def equilibrium_regret(game, eq, role, mix):
+	"""
+	NE regret for a specific role and mixed strategy.
+	"""
 	regrets = equilibrium_regrets(game, eq)[game.index(role)]
 	reg_arr = [regrets[game.index(role, s)] for s in game.strategies[role]]
 	if isinstance(mix, dict):
@@ -172,12 +178,16 @@ def max_social_welfare(game, role=None):
 from GameIO import read, to_JSON_str, io_parser
 
 def parse_args():
-	parser = io_parser(description="Compute regret in input game(s) of " +\
+	parser = io_parser(description="Compute regret in input game(s) of "+\
 			"specified profiles.")
-	parser.add_argument("profiles", type=str, help="File with profiles from" +\
+	parser.add_argument("profiles", type=str, help="File with profiles from"+\
 			" input games for which regrets should be calculated.")
-	parser.add_argument("--sw", action="store_true", help="Calculate social " +\
+	parser.add_argument("--SW", action="store_true", help="Calculate social "+\
 			"welfare instead of regret.)")
+	parser.add_argument("--NE", action="store_true", help="Calculate 'NE "+\
+			"regrets' (regret a devitor would experience by switching to "+\
+			"each other pure strategy) for each profile instead of the "+\
+			"profiles' regrets")
 	return parser.parse_args()
 
 
@@ -195,8 +205,10 @@ def main():
 			prof_list = [prof_list]
 		regrets.append([])
 		for prof in prof_list:
-			if args.sw:
+			if args.SW:
 				regrets[-1].append(social_welfare(g, prof))
+			elif args.NE:
+				regrets[-1].append(g.toProfile(equilibrium_regrets(g, prof)))
 			else:
 				regrets[-1].append(regret(g, prof))
 	if len(regrets) > 1:
