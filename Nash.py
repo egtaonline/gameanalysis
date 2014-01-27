@@ -21,7 +21,7 @@ def min_regret_profile(game):
 	return min(game.knownProfiles(), key=lambda p: regret(game, p))
 
 
-def mixed_nash(game, regret_thresh=1e-4, dist_thresh=1e-2, random_restarts=0, \
+def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0, \
 		at_least_one=False, *RD_args, **RD_kwds):
 	"""
 	Runs replicator dynamics from multiple starting mixtures.
@@ -120,5 +120,4 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
 
