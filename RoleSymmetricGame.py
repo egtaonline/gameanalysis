@@ -268,7 +268,6 @@ class Game(dict):
 		for r in self.roles:
 			i = self.index(r)
 			p[r] = {}
-			print len(self.strategies[r])
 			for s in self.strategies[r]:
 				j = self.index(r, s)
 				if arr[i,j] > 0:
