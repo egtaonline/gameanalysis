@@ -7,34 +7,37 @@ import numpy as np
 from BasicFunctions import one_line
 from RoleSymmetricGame import is_mixed_profile, is_pure_profile, is_mixture_array, is_profile_array, Profile
 
-def regret(game, prof, role=None, strategy=None, deviation=None, bound=False):
+def regret(game, prof, role=None, strategy=None, deviation=None, bound=True):
 	if role == None and len(game.roles) == 1:
 		role = game.roles[0] #in symmetric games we can deduce the role
+	elif role == None:
+		return max(regret(game, prof, r, strategy, deviation, bound) for \
+				r in game.roles)
+
 	if is_pure_profile(prof):
 		return profile_regret(game, prof, role, strategy, deviation, bound)
-	if is_mixture_array(prof):
+	elif is_mixture_array(prof):
 		return mixture_regret(game, prof, role, deviation, bound)
-	if is_mixed_profile(prof):
+	elif is_mixed_profile(prof):
 		return mixture_regret(game, game.toArray(prof), role, deviation, bound)
-	if is_profile_array(prof):
+	elif is_profile_array(prof):
 		return profile_regret(game, game.toProfile(prof), role, strategy, \
 				deviation, bound)
+
 	raise TypeError(one_line("unrecognized profile type: " + str(prof), 69))
 
 
 def profile_regret(game, prof, role, strategy, deviation, bound):
-	if role == None:
-		return max([profile_regret(game, prof, r, strategy, deviation, bound) \
-				for r in game.roles])
 	if strategy == None:
 		return max([profile_regret(game, prof, role, s, deviation, bound) for \
 				s in prof[role]])
-	if deviation == None:
+	elif deviation == None:
 		try:
 			return max([profile_regret(game, prof, role, strategy, d, bound) \
 					for d in set(game.strategies[role]) - {strategy}])
 		except ValueError: #triggered when there's only one strategy
 			return 0
+
 	dev_prof = prof.deviate(role, strategy, deviation)
 	if dev_prof in game:
 		return game.getPayoff(dev_prof, role, deviation) - \
@@ -44,18 +47,16 @@ def profile_regret(game, prof, role, strategy, deviation, bound):
 
 
 def mixture_regret(game, mix, role, deviation, bound):
+	if deviation == None:
+		return max(mixture_regret(game, mix, role, d, bound) for d in \
+				game.strategies[role])
+	elif any(map(lambda p: p not in game, mixture_neighbors(game, \
+			mix, role, deviation))):
+		return -float("inf") if bound else float("inf")
+
 	strategy_EVs = game.expectedValues(mix)
 	role_EVs = (strategy_EVs * mix).sum(1)
-	if role == None:#doesn't check profiles
-		return max([float(max(strategy_EVs[r][:game.numStrategies[r]]) - \
-			role_EVs[r]) for r in range(len(game.roles))])
 	r = game.index(role)
-	if deviation == None:#doesn't check profiles
-		return float(max(strategy_EVs[r][:game.numStrategies[r]]) - \
-			role_EVs[r])
-	if any(map(lambda p: p not in game, mixture_neighbors(game, \
-			mix, role, deviation))):#the profile check happens here
-		return -float("inf") if bound else float("inf")
 	d = game.index(role, deviation)
 	return float(strategy_EVs[r,d] - role_EVs[r])
 
