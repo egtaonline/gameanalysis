@@ -11,7 +11,8 @@ def pure_nash(game, epsilon=0):
 	"""
 	Finds all pure-strategy epsilon-Nash equilibria.
 	"""
-	return filter(lambda profile: regret(game, profile) <= epsilon, game)
+	return filter(lambda profile: regret(game, profile, bound=False)
+			<= epsilon, game)
 
 
 def min_regret_profile(game):
