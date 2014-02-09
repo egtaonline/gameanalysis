@@ -19,7 +19,7 @@ def min_regret_profile(game):
 	"""
 	Finds the profile with the confirmed lowest regret.
 	"""
-	return min(game.knownProfiles(), key=lambda p: regret(game, p))
+	return min(game.knownProfiles(), key=lambda p: regret(game, p, bound=False))
 
 
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0, \
