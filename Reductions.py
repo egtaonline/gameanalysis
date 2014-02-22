@@ -22,14 +22,26 @@ def full_game_profile(HR_profile, N):
 	"""
 	Returns the symmetric full game profile corresponding to the given
 	symmetric reduced game profile.
+
+	In the event that N isn't divisible by n, we first assign by rounding
+	error and break ties in favor of more-played strategies. The final 
+	tie-breaker is alphabetical order.
 	"""
 	if N < 2:
 		return HR_profile
 	n = sum(HR_profile.values())
 	full_profile = {s : c * N / n  for s,c in HR_profile.items()}
-	while sum(full_profile.values()) < N:
-		full_profile[max([(float(N) / n * HR_profile[s] \
-				- full_profile[s], s) for s in full_profile])[1]] += 1
+	if sum(full_profile.values()) == N:
+		return full_profile
+	
+	#deal with non-divisible strategy counts
+	rounding_error = {s : float(c * N) / n - full_profile[s] for \
+						s,c in HR_profile.items()}
+	strat_order = sorted(HR_profile.keys())
+	strat_order.sort(key=HR_profile.get, reverse=True)
+	strat_order.sort(key=rounding_error.get, reverse=True)
+	for s in strat_order[:N - sum(full_profile.values())]:
+		full_profile[s] += 1
 	return full_profile
 
 
