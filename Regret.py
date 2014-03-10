@@ -209,7 +209,13 @@ def main():
 			if args.SW:
 				regrets[-1].append(social_welfare(g, prof))
 			elif args.NE:
-				regrets[-1].append(g.toProfile(equilibrium_regrets(g, prof)))
+				eqr = equilibrium_regrets(g, prof)
+				eqr_prof = {}
+				for r in g.roles:
+					eqr_prof[r] = {}
+					for s in g.strategies[r]:
+						eqr_prof[r][s] = eqr[g.index(r),g.index(r,s)]
+				regrets[-1].append(eqr_prof)
 			else:
 				regrets[-1].append(regret(g, prof))
 	if len(regrets) > 1:
