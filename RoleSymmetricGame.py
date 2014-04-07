@@ -98,7 +98,6 @@ class Game(dict):
 			raise IOError("duplicate profile: " + str(prof))
 		self.makeLists()
 		self.addProfileArrays(role_payoffs)
-		self.addDevReps(role_payoffs)
 		self[prof] = len(self.values) - 1
 
 	def addProfileArrays(self, role_payoffs):
@@ -115,9 +114,8 @@ class Game(dict):
 		self.values.append(values)
 		self.counts.append(counts)
 
-	def addDevReps(self, role_payoffs):
+		#add dev_reps
 		devs = self.zeros(dtype=int)
-		counts = self.counts[-1]
 		for i, r in enumerate(self.roles):
 			for j, s in enumerate(self.strategies[r]):
 				if counts[i,j] > 0:
