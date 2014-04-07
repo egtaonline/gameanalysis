@@ -191,13 +191,16 @@ class Game(dict):
 		if is_mixed_profile(profile):
 			return self.getSocialWelfare(self.toArray(profile))
 
-	def expectedValues(self, mix):
+	def expectedValues(self, mix, normalize=False):
 		"""
 		Computes the expected value of each pure strategy played against
 		all opponents playing mix.
 
-		The result is normalized by the sum of all profile weights to cope
-		with missing profiles.
+		If normalize=True is set, the result is normalized by the sum of all
+		profile weights to cope with missing profiles.
+
+		Note:	the first use of 'tiny' makes 0^0=1.
+				the second use of 'tiny' makes 0/0=0.
 		"""
 		self.makeArrays()
 		try:
@@ -206,7 +209,11 @@ class Game(dict):
 		except ValueError: #this happens if there's only one strategy
 			weights = ((mix+tiny)**self.counts).prod(1).reshape( \
 					self.values.shape[0], 1) * self.dev_reps / (mix+tiny)
-		return (self.values * weights).sum(0) / (weights.sum(0) + tiny)
+		values = (self.values * weights).sum(0)
+		if normalize:
+			return values / (weights.sum(0) + tiny)
+		else:
+			return values
 
 	def allProfiles(self):
 		return [Profile({r:{s:p[self.index(r)].count(s) for s in set(p[ \
