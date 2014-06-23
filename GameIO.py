@@ -99,6 +99,9 @@ def read_game_JSON(gameJSON):
 		return read_GA_game(gameJSON)
 	elif len(gameJSON["profiles"]) == 0:
 		return Game(*parse_roles(gameJSON["roles"]))
+	elif "symmetry_groups" in gameJSON["profiles"][0] and \
+			"observations" in gameJSON["profiles"][0]:
+		return read_game_JSON_v4(gameJSON)
 	elif "symmetry_groups" in gameJSON["profiles"][0]:
 		return read_game_JSON_v3(gameJSON)
 	elif "observations" in gameJSON["profiles"][0]:
@@ -200,6 +203,24 @@ def read_v3_samples_profile(profileJSON):
 	return {r:[PayoffData(sc[0], sc[1], v) for sc,v in prof[r].items()] for \
 			r in prof}
 
+def read_v4_samples_profile(profileJSON):
+	prof = {}
+	grp_ids = {s["id"]:s for s in profileJSON["symmetry_groups"]}
+	for obs in profileJSON["observations"]:
+		for s in obs["symmetry_groups"]:
+			sym_grp = grp_ids[s["id"]]
+			role = sym_grp["role"]
+			if role not in prof:
+				prof[role] = {}
+			strat = sym_grp["strategy"]
+			count = sym_grp["count"]
+			value = s["payoff"]
+			if (strat, count) not in prof[role]:
+				prof[role][(strat, count)] = []
+			prof[role][(strat, count)].append(value)
+	return {r:[PayoffData(sc[0], sc[1], v) for sc,v in prof[r].items()] for \
+			r in prof}
+
 
 def read_v3_players_profile(profileJSON):
 	raise NotImplementedError
@@ -212,6 +233,8 @@ def read_GA_profile(profileJSON):
 		return Profile(profileJSON)
 
 
+read_game_JSON_v4 = partial(read_game_JSON_new, game_type=SampleGame, \
+		profile_reader=read_v4_samples_profile)
 read_game_JSON_v3 = partial(read_game_JSON_new, game_type=Game, \
 		profile_reader=read_v3_profile)
 read_game_JSON_v3_samples = partial(read_game_JSON_new, game_type=SampleGame, \
