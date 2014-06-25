@@ -98,7 +98,8 @@ if __name__ == "__main__":
 		counts = np.array([prof.get(s,0) for s in leg.strategies])
 		for i in range(samples):
 			rp = np.random.multinomial(leg.players, counts / leg.players)
-			rp = RSG.Profile({"All":dict(zip(leg.strategies,rp))})
+			rp = filter(lambda p:p[1], zip(leg.strategies,rp))
+			rp = RSG.Profile({"All":dict(rp)})
 			random_profiles[rp] = random_profiles.get(rp,0) + 1
 	
 	for prof,count in random_profiles.iteritems():
