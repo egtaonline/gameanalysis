@@ -24,7 +24,7 @@ class Profile(h_dict):
 			h_dict.__init__(self, {r:h_dict(p) for r,p in role_payoffs.items()})
 		else:
 			raise TypeError("Profile.__init__ can't handle " + \
-							type(arbitrary_value.__name__))
+							type(arbitrary_value).__name__)
 
 	def remove(self, role, strategy):
 		p = self.asDict()
@@ -50,8 +50,8 @@ class Profile(h_dict):
 		return {r:{s:self[r][s] for s in self[r]} for r in self}
 
 	def __repr__(self):
-		return join([role +": "+ join([str(count) +" "+ strategy for strategy, \
-			count in self[role].items()], ", ") for role in self], "; ")
+		return join([str(role)+": "+join([str(count)+" "+str(strategy) for \
+			strategy,count in self[role].items()],", ") for role in self],"; ")
 
 	def toJSON(self):
 		return {"type":"GA_Profile", "data":self}
