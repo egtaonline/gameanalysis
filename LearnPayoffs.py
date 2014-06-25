@@ -94,7 +94,7 @@ if __name__ == "__main__":
 	for prof in DPR_profiles(rfg, players):
 		values = leg.sample(prof["All"], samples)
 		rfg.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for s,c in \
-													prof.iteritems()]})
+												prof["All"].iteritems()]})
 		counts = np.array([prof.get(s,0) for s in leg.strategies])
 		for i in range(samples):
 			rp = np.random.multinomial(leg.players, counts / leg.players)
@@ -104,6 +104,6 @@ if __name__ == "__main__":
 	for prof,count in random_profiles.iteritems():
 		values = leg.sample(prof["All"], count)
 		lfg.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for s,c in \
-													prof.iteritems()]})
+												prof["All"].iteritems()]})
 
 		
