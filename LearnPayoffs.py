@@ -2,10 +2,10 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcess as GP
 from itertools import repeat
 
-from Reductions import DPR_profiles
+from Reductions import DPR_profiles, full_prof_DPR
 import RoleSymmetricGame as RSG
 
-def GP_learn(game, players):
+def GP_learn(game, players, var=None):
 	"""
 	Create a GP regression game with the specified number of players.
 
@@ -18,6 +18,7 @@ def GP_learn(game, players):
 				estimate payoff functions.
 	players:	number of players per role in the output game; if symmetric
 				players can be an int, otherwise it must map roles to ints.
+	var:		variance estimate passed to the GP through the nugget parameter.
 	"""
 	if len(game.roles) == 1 and isinstance(players, int):
 		players = {game.roles[0]:players}
@@ -40,8 +41,8 @@ def GP_learn(game, players):
 					except AttributeError: #except will work on RSG.Game
 						x[role][strat].append(c)
 						y[role][strat].append(game.values[p][r,s])
-
-	var = 1 #TODO: actually estimate the noise variance
+	if var == None:
+		var = 1 #TODO: actually estimate the noise variance
 
 	for role in game.roles:
 		for strat in game.strategies[role]:
@@ -64,7 +65,7 @@ def GP_learn(game, players):
 	return learned_game
 	
 
-def prof2vec(game, prof)
+def prof2vec(game, prof):
 	"""
 	Turns a profile (represented as Profile object or count array) into a
 	1-D vector of strategy counts.
@@ -72,6 +73,37 @@ def prof2vec(game, prof)
 	if isinstance(prof, Profile):
 		prof = game.toArray(prof)
 	vec = []
-	for r in range(len(game.roles))
+	for r in range(len(game.roles)):
 		vec.extend(prof[r][:game.numStrategies[r]])
 	return vec
+
+
+
+from ActionGraphGame import local_effect_AGG
+
+if __name__ == "__main__":
+	# run an AGG experiment
+	players = {"All":4}
+	samples = 20
+	leg = local_effect_AGG(41,5,2,3,10)
+
+	rfg = RSG.SampleGame(["All"],{"All":leg.players},{"All":leg.strategies})
+	lfg = RSG.SampleGame(["All"],{"All":leg.players},{"All":leg.strategies})
+
+	random_profiles = {}
+	for prof in DPR_profiles(rfg, players):
+		values = leg.sample(prof["All"], samples)
+		rfg.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for s,c in \
+													prof.iteritems()]})
+		counts = np.array([prof.get(s,0) for s in leg.strategies])
+		for i in range(samples):
+			rp = np.random.multinomial(leg.players, counts / leg.players)
+			rp = RSG.Profile({"All":dict(zip(leg.strategies,rp))})
+			random_profiles[rp] = random_profiles.get(rp,0) + 1
+	
+	for prof,count in random_profiles.iteritems():
+		values = leg.sample(prof["All"], count)
+		lfg.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for s,c in \
+													prof.iteritems()]})
+
+		
