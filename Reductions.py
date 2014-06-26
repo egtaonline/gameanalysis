@@ -63,7 +63,7 @@ def full_prof_DPR(DPR_profile, role, strat, players):
 			full_prof[r][strat] += 1
 		else:
 			full_prof[r] = full_prof_sym(DPR_prof[r], players[r])
-	return full_prof
+	return Profile(full_prof)
 
 
 def deviation_preserving_reduction(game, players={}):
@@ -110,7 +110,7 @@ def deviation_preserving_reduction(game, players={}):
 				for s in DPR_prof[r]:
 					full_prof = full_prof_DPR(DPR_prof, r, s, game.players)
 					role_payoffs[r].append(PayoffData(s,DPR_prof[r][s],\
-							game.getPayoffData(Profile(full_prof), r, s)))
+							game.getPayoffData(full_prof, r, s)))
 			DPR_game.addProfile(role_payoffs)
 		except KeyError:
 			continue
@@ -169,7 +169,7 @@ def DPR_profiles(game, players={}):
 		for r in game.roles:
 			for s in DPR_prof[r]:
 				full_prof = full_prof_DPR(DPR_prof, r, s, game.players)
-				profiles.append(Profile(full_prof))
+				profiles.append(full_prof)
 	return profiles
 
 
