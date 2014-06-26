@@ -21,6 +21,8 @@ def hierarchical_reduction(game, players={}):
 			continue
 	return HR_game
 
+HR = hierarchical_reduction
+
 
 def full_prof_sym(HR_profile, N):
 	"""
@@ -116,6 +118,8 @@ def deviation_preserving_reduction(game, players={}):
 			continue
 	return DPR_game
 
+DPR = deviation_preserving_reduction
+
 
 def dpr_profile(full_profile, reduced_players, full_players=None):
 	"""
@@ -152,7 +156,7 @@ def dpr_profile(full_profile, reduced_players, full_players=None):
 
 def twins_reduction(game):
 	players = {r:min(2,p) for r,p in game.players.items()}
-	return deviation_preserving_reduction(game, players)
+	return DPR(game, players)
 
 
 def DPR_profiles(game, players={}):
@@ -189,9 +193,9 @@ def main():
 	game = args.input
 	players = dict(zip(game.roles, args.players))
 	if args.type == "DPR":
-		print to_JSON_str(deviation_preserving_reduction(game, players))
+		print to_JSON_str(DPR(game, players))
 	elif args.type == "HR":
-		print to_JSON_str(hierarchical_reduction(game, players))
+		print to_JSON_str(HR(game, players))
 	elif args.type == "TR":
 		print to_JSON_str(twins_reduction(game))
 
