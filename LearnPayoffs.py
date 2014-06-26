@@ -132,4 +132,4 @@ def main(experiments):
 
 
 if __name__ == "__main__":
-	main(argv[1])
+	main(int(argv[1]))
