@@ -2,8 +2,9 @@ import numpy as np
 from sklearn.gaussian_process import GaussianProcess as GP
 from itertools import repeat
 
-from Reductions import DPR_profiles, full_prof_DPR
+from Reductions import DPR_profiles, full_prof_DPR, DPR
 import RoleSymmetricGame as RSG
+from Nash import mixed_nash
 
 def GP_learn(game, players, var=None):
 	"""
@@ -36,6 +37,9 @@ def GP_learn(game, players, var=None):
 				if game.counts[p][r][s] > 0:
 					try: #try will work on RSG.SampleGame
 						samples = game.sample_values[p][r,s]
+						for i in range(len(samples)):
+							x[role][strat].append(c + \
+									np.random.normal(0,1e-8,c.shape))
 						x[role][strat].extend(repeat(c, len(samples)))
 						y[role][strat].extend(samples)
 					except AttributeError: #except will work on RSG.Game
@@ -50,16 +54,16 @@ def GP_learn(game, players, var=None):
 			gp.fit(x[role][strat], y[role][strat])
 			gps[role][strat] = gp
 
-	learned_game = Game(game.roles, players, game.strategies)
+	learned_game = RSG.Game(game.roles, players, game.strategies)
 	for prof in learned_game.allProfiles():
 		role_payoffs = {}		
 		for role in game.roles:
-			role_payoffs[r] = []			
+			role_payoffs[role] = []			
 			for strat,count in prof[role].iteritems():
 				full_prof = full_prof_DPR(prof, role, strat, game.players)
 				prof_x = prof2vec(game, full_prof)
 				prof_y = gps[role][strat].predict(prof_x)
-				role_payoffs[r].append(PayoffData(strat, count, prof_y))
+				role_payoffs[role].append(RSG.PayoffData(strat, count, prof_y))
 		learned_game.addProfile(role_payoffs)
 
 	return learned_game
@@ -70,7 +74,7 @@ def prof2vec(game, prof):
 	Turns a profile (represented as Profile object or count array) into a
 	1-D vector of strategy counts.
 	"""
-	if isinstance(prof, Profile):
+	if isinstance(prof, RSG.Profile):
 		prof = game.toArray(prof)
 	vec = []
 	for r in range(len(game.roles)):
@@ -81,30 +85,50 @@ def prof2vec(game, prof):
 
 from ActionGraphGame import local_effect_AGG
 
-if __name__ == "__main__":
+def main(experiments):
 	# run an AGG experiment
 	players = {"All":4}
 	samples = 20
-	leg = local_effect_AGG(41,5,2,3,10)
+	print "trial, reduction regret, learning regret"
+	for i in range(experiments):
+		leg = local_effect_AGG(40,5,2,3,100)
 
-	rfg = RSG.SampleGame(["All"],{"All":leg.players},{"All":leg.strategies})
-	lfg = RSG.SampleGame(["All"],{"All":leg.players},{"All":leg.strategies})
+		fg_reduce = RSG.SampleGame(["All"], {"All":leg.players}, \
+									{"All":leg.strategies})
+		fg_learn = RSG.SampleGame(["All"], {"All":leg.players}, \
+									{"All":leg.strategies})
 
-	random_profiles = {}
-	for prof in DPR_profiles(rfg, players):
-		values = leg.sample(prof["All"], samples)
-		rfg.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for s,c in \
-												prof["All"].iteritems()]})
-		counts = np.array([prof.get(s,0) for s in leg.strategies])
-		for i in range(samples):
-			rp = np.random.multinomial(leg.players, counts / leg.players)
-			rp = filter(lambda p:p[1], zip(leg.strategies,rp))
-			rp = RSG.Profile({"All":dict(rp)})
-			random_profiles[rp] = random_profiles.get(rp,0) + 1
-	
-	for prof,count in random_profiles.iteritems():
-		values = leg.sample(prof["All"], count)
-		lfg.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for s,c in \
-												prof["All"].iteritems()]})
-
+		random_profiles = {}
+		for prof in DPR_profiles(fg_reduce, players):
+			values = leg.sample(prof["All"], samples)
+			fg_reduce.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
+										s,c in prof["All"].iteritems()]})
+			counts = np.array([prof["All"].get(s,0) for s in leg.strategies])
+			for i in range(samples):
+				rp = np.random.multinomial(leg.players, counts / \
+											float(leg.players))
+				rp = filter(lambda p:p[1], zip(leg.strategies,rp))
+				rp = RSG.Profile({"All":dict(rp)})
+				random_profiles[rp] = random_profiles.get(rp,0) + 1
+		rg_reduce = DPR(fg_reduce, players)
 		
+		var = []
+		for prof,count in random_profiles.iteritems():
+			values = leg.sample(prof["All"], count)
+			if count >= samples:
+				for s,v in values.iteritems():
+					var.append(np.var(v))
+			fg_learn.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
+										s,c in prof["All"].iteritems()]})
+		var = sum(var) / float(len(var))
+		rg_learn = GP_learn(fg_learn, players, var)
+
+		NE_reduce = mixed_nash(rg_reduce, at_least_one = True)[0][0]
+		NE_learn = mixed_nash(rg_learn, at_least_one = True)[0][0]
+
+		print i, leg.regret(NE_reduce), leg.regret(NE_learn)
+
+
+
+if __name__ == "__main__":
+	main(argv[1])
