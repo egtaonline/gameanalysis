@@ -91,7 +91,7 @@ def main(experiments):
 	players = {"All":4}
 	samples = 20
 	print "trial, reduction regret, learning regret"
-	for i in range(experiments):
+	for j in range(experiments):
 		leg = local_effect_AGG(40,5,2,3,100)
 
 		fg_reduce = RSG.SampleGame(["All"], {"All":leg.players}, \
@@ -127,7 +127,7 @@ def main(experiments):
 		NE_reduce = mixed_nash(rg_reduce, at_least_one = True)[0][0]
 		NE_learn = mixed_nash(rg_learn, at_least_one = True)[0][0]
 
-		print i, leg.regret(NE_reduce), leg.regret(NE_learn)
+		print j, leg.regret(NE_reduce), leg.regret(NE_learn)
 
 
 
