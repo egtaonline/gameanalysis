@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcess as GP
 from itertools import repeat
+from sys import argv
 
 from Reductions import DPR_profiles, full_prof_DPR, DPR
 import RoleSymmetricGame as RSG
