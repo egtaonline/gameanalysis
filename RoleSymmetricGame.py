@@ -447,7 +447,6 @@ class SampleGame(Game):
 		v = self.sample_values[self[profile]]
 		return v[self.index(role), self.index(role,strategy)]
 
-
 	def resample(self, pair="game"):
 		"""
 		Overwrites self.values with a bootstrap resample of self.sample_values.
@@ -458,10 +457,10 @@ class SampleGame(Game):
 		"""
 		if pair == "payoff":
 			raise NotImplementedError("TODO")
-		elif pair == "profile":#TODO: handle ragged arrays
+		elif pair == "profile":
 			self.values = map(lambda p: np.average(p, 2, weights= \
-					np.random.multinomial(p.shape[2], np.ones( \
-					p.shape[2])/p.shape[2])), self.sample_values)
+					np.random.multinomial(len(p[0,0]), np.ones( \
+					len(p[0,0])) / len(p[0,0]))), self.sample_values)
 		elif pair == "game":#TODO: handle ragged arrays
 			if isinstance(self.sample_values, list):
 				self.sample_values = np.array(self.sample_values, dtype=float)
