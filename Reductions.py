@@ -24,6 +24,9 @@ def hierarchical_reduction(game, players={}):
 HR = hierarchical_reduction
 
 
+HR = hierarchical_reduction
+
+
 def full_prof_sym(HR_profile, N):
 	"""
 	Returns the symmetric full game profile corresponding to the given
@@ -117,6 +120,9 @@ def deviation_preserving_reduction(game, players={}):
 		except KeyError:
 			continue
 	return DPR_game
+
+DPR = deviation_preserving_reduction
+
 
 DPR = deviation_preserving_reduction
 

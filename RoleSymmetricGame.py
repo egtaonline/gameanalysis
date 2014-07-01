@@ -483,10 +483,6 @@ class SampleGame(Game):
 	def reset(self):#TODO: handle ragged arrays
 		self.values = map(lambda p: np.average(p,2), self.sample_values)
 
-	def makeArrays(self):
-		self.sample_values = np.array(self.sample_values)
-		Game.makeArrays(self)
-
 	def toJSON(self):
 		"""
 		Convert to JSON according to the EGTA-online v3 default game spec.
