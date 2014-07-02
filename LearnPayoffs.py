@@ -1,7 +1,14 @@
 import numpy as np
-from sklearn.gaussian_process import GaussianProcess as GP
 from itertools import repeat
 from sys import argv
+
+# import GaussianProcess but don't crash if it wasn't loaded
+import warnings
+warnings.formatwarning = lambda msg, *args: "warning: " + str(msg) + "\n"
+try:
+	from sklearn.gaussian_process import GaussianProcess as GP
+except ImportError:
+	warnings.warn("sklearn.gaussian_process is required to for game learning.")
 
 from Reductions import DPR_profiles, full_prof_DPR, DPR
 import RoleSymmetricGame as RSG
