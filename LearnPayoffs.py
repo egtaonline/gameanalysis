@@ -52,13 +52,12 @@ def GP_learn(game, var_thresh=10):
 
 def GP_DPR(game, players, gps=None):
 	"""
-	Estimate a DPR game from GP regression models.
+	Estimate equilibria of a DPR game from GP regression models.
 	"""
 	if len(game.roles) == 1 and isinstance(players, int):
 		players = {game.roles[0]:players}
 	elif isinstance(players, list):
 		players = dict(zip(game.roles, players))
-
 	if gps == None:
 		gps = GP_learn(game)
 
@@ -74,11 +73,41 @@ def GP_DPR(game, players, gps=None):
 				role_payoffs[role].append(RSG.PayoffData(strat, count, prof_y))
 		learned_game.addProfile(role_payoffs)
 
-	return learned_game
+	return mixed_nash(learned_game)
 
 
+def GP_sampling_RD(game, gps=None):
+	"""
+	Estimate equilibria with RD using random samples from GP regression models.
+	"""
+	if len(game.roles) == 1 and isinstance(players, int):
+		players = {game.roles[0]:players}
+	elif isinstance(players, list):
+		players = dict(zip(game.roles, players))
+	if gps == None:
+		gps = GP_learn(game)
+	raise NotImplementedError("TODO")
 
+	
+def sample_profiles(game, mix, count=1):
+	"""
+	Gives a list of pure-strategy profiles sampled from mix.
 
+	Profiles returned are not necessarily unique.
+	"""
+	profiles = []
+	for _ in range(count):
+		prof = {}
+		for r,role in enumerate(game.roles):
+			prof[role] = {}
+			rp = np.random.multinomial(game.players[role], mix[r][:\
+												game.numStrategies[r]])
+			for strat,count in zip(game.strategies[role], rp):
+				if count > 0:
+					prof[role][strat] = count
+		profiles.append(RSG.Profile(prof))
+	return profiles
+		
 
 def prof2vec(game, prof):
 	"""
