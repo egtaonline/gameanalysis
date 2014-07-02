@@ -195,16 +195,16 @@ def main(experiments):
 				rp = RSG.Profile({"All":dict(rp)})
 				random_profiles[rp] = random_profiles.get(rp,0) + 1
 		rg_reduce = DPR(fg_reduce, players)
+		NE_reduce = mixed_nash(rg_reduce, at_least_one = True)
 		
 		var = []
 		for prof,count in random_profiles.iteritems():
 			values = leg.sample(prof["All"], count)
 			fg_learn.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
 										s,c in prof["All"].iteritems()]})
-		rg_learn = GP_DPR(fg_learn, players)
-
-		NE_reduce = mixed_nash(rg_reduce, at_least_one = True)[0][0]
-		NE_learn = mixed_nash(rg_learn, at_least_one = True)[0][0]
+		GPs = GP_learn(fg_learn)
+		NE_DPR_learn = GP_DPR(fg_learn, players, GPs)
+		NE_sample_learn = GP_sampling_RD(fg_learn, players, GPs)
 
 		print str(j) +", "+ str(leg.regret(NE_reduce)) +", "+ \
 							str(leg.regret(NE_learn))
