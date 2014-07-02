@@ -8,7 +8,7 @@ warnings.formatwarning = lambda msg, *args: "warning: " + str(msg) + "\n"
 try:
 	from sklearn.gaussian_process import GaussianProcess as GP
 except ImportError:
-	warnings.warn("sklearn.gaussian_process is required to for game learning.")
+	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
 from Reductions import DPR_profiles, full_prof_DPR, DPR
 import RoleSymmetricGame as RSG
@@ -26,7 +26,7 @@ def GP_learn(game, var_thresh=10):
 	"""
 	x = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
 	y = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
-	gps = {r:{s:None for s in game.strategies[r]} for r in game.roles}
+	GPs = {r:{s:None for s in game.strategies[r]} for r in game.roles}
 
 	var = []
 	for p in range(len(game)):
@@ -53,11 +53,11 @@ def GP_learn(game, var_thresh=10):
 			gp = GP(storage_mode='light', normalize=False, nugget=var, \
 					random_start=10)
 			gp.fit(x[role][strat], y[role][strat])
-			gps[role][strat] = gp
-	return gps
+			GPs[role][strat] = gp
+	return GPs
 
 
-def GP_DPR(game, players, gps=None):
+def GP_DPR(game, players, GPs=None):
 	"""
 	Estimate equilibria of a DPR game from GP regression models.
 	"""
@@ -65,8 +65,8 @@ def GP_DPR(game, players, gps=None):
 		players = {game.roles[0]:players}
 	elif isinstance(players, list):
 		players = dict(zip(game.roles, players))
-	if gps == None:
-		gps = GP_learn(game)
+	if GPs == None:
+		GPs = GP_learn(game)
 
 	learned_game = RSG.Game(game.roles, players, game.strategies)
 	for prof in learned_game.allProfiles():
@@ -76,14 +76,16 @@ def GP_DPR(game, players, gps=None):
 			for strat,count in prof[role].iteritems():
 				full_prof = full_prof_DPR(prof, role, strat, game.players)
 				prof_x = prof2vec(game, full_prof)
-				prof_y = gps[role][strat].predict(prof_x)
+				prof_y = GPs[role][strat].predict(prof_x)
 				role_payoffs[role].append(RSG.PayoffData(strat, count, prof_y))
 		learned_game.addProfile(role_payoffs)
 
 	return mixed_nash(learned_game)
 
 
-def GP_sampling_RD(game, gps=None):
+def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
+					random_restarts=0, at_least_one=False, iters=10000, \
+					converge_thresh=1e-6, ev_samples=100):
 	"""
 	Estimate equilibria with RD using random samples from GP regression models.
 	"""
@@ -91,9 +93,44 @@ def GP_sampling_RD(game, gps=None):
 		players = {game.roles[0]:players}
 	elif isinstance(players, list):
 		players = dict(zip(game.roles, players))
-	if gps == None:
-		gps = GP_learn(game)
-	raise NotImplementedError("TODO")
+	if GPs == None:
+		GPs = GP_learn(game)
+
+	candidates = []
+	regrets = {}
+	for mix in game.biasedMixtures() + [game.uniformMixture() ]+ \
+			[game.randomMixture() for _ in range(random_restarts)]:
+		for _ in range(iters):
+			old_mix = mix
+			EVs = GP_EVs(game, mix, GPs, ev_samples)
+			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
+			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
+			if norm(mix - old_mix) <= converge_thresh:
+				break
+		mix[mix < 0] = 0
+		candidates.append(mix)
+		EVs = GP_EVs(game, mix, GPs, ev_samples)
+		regrets[mix] = (EVs.max(1) - (EVs * mix).sum(1)).max()
+		
+	candidates.sort(key=regrets.get)
+	equilibria = []
+	for c in filter(lambda c: regrets[c] < regret_thresh, candidates):
+		if all(norm(e - c, 2) >= dist_thresh for e in equilibria):
+			equilibria.append(c)
+	if len(equilibria) == 0 and at_least_one:
+		return [min(candidates, key=regrets.get)]
+	return equilibria
+
+
+def GP_EVs(game, mix, GPs, samples=100):
+	"""Mimics game.ExpectedValues via sampling from the GPs."""
+	EVs = game.zeros()
+	for prof in sample_profiles(game, mix, samples):
+		for r,role in enumerate(game.roles):
+			for s,strat in enumerate(game.strategies[role]):
+				EVs[r,s] += GPs[role][strat].predict(prof2vec(game,prof))
+	return EVs
+				
 
 	
 def sample_profiles(game, mix, count=1):
