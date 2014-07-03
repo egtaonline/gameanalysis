@@ -1,8 +1,11 @@
 import numpy as np
 from random import sample
 from itertools import combinations_with_replacement as CwR
+from os.path import abspath, join
+from cPickle import dump
+from argparse import ArgumentParser
 
-from BasicFunctions import profile_repetitions
+from BasicFunctions import profile_repetitions, leading_zeros
 from HashableClasses import h_dict
 import RoleSymmetricGame as RSG
 
@@ -80,13 +83,12 @@ class Sym_AGG:
 
 
 class Noisy_AGG(Sym_AGG):
-	def __init__(self, players, action_graph={}, utilities={}, \
-				noise=lambda s,p,c:np.random.normal(0,1,c)):
+	def __init__(self, players, action_graph={}, utilities={}, sigma=1):
 		"""
 		noise should be a random function from strategy s and profile p 
 		to an array of floats with length c.
 		"""
-		self.noise = noise
+		self.sigma = sigma
 		Sym_AGG.__init__(self, players, action_graph, utilities)
 
 	def sample(self, profile, count):
@@ -101,7 +103,7 @@ class Noisy_AGG(Sym_AGG):
 			if count == 0:
 				noisy_vals[strat] = val
 			else:
-				noisy_vals[strat] = val + self.noise(strat, profile, count)
+				noisy_vals[strat] = val + np.random.normal(0,self.sigma,c)
 		return noisy_vals	
 	
 	def sampleGame(self, count=1):
@@ -160,6 +162,33 @@ def local_effect_AGG(N, S, D_min=0, D_max=-1, sigma=1):
 				for n,c in prof.iteritems():
 					u[prof] += sum(c**np.arange(3) * local_effects[n])
 		utilities[strat] = u
-	noise = lambda s,p,c: np.random.normal(0,sigma,c)
-	return Noisy_AGG(N, action_graph, utilities, noise)
+	return Noisy_AGG(N, action_graph, utilities, sigma)
+
+
+def parse_args():
+	p = ArgumentParser(description="Generate random action graph games.")
+	p.add_argument("folder", type=str, help="Folder to put games in.")
+	p.add_argument("count", type=int, help="Number of games to create.")
+	p.add_argument("players", type=int, help="Number of players.")
+	p.add_argument("strategies", type=int, help="Number of strategies.")
+	p.add_argument("min_neighbors", type=int, help="Mimimum number of "+\
+						"other strategies that payoffs can depend on.")
+	p.add_argument("max_neighbors", type=int, help="Maximum number of "+\
+						"other strategies that payoffs can depend on.")
+	p.add_argument("sigma", type=float, help="Noise magnitude.")
+	return p.parse_args()
+
+def main():
+	a = parse_args()
+	for i in range(a.count):
+		g = local_effect_AGG(a.players, a.strategies, a.min_neighbors, \
+							a.max_neighbors, a.sigma)
+		name = "LEG_AGG_"+reduce(lambda x,y:str(x)+"-"+str(y), [a.players, \
+				a.strategies, a.min_neighbors, a.max_neighbors, \
+				int(a.sigma)]) + "_" + leading_zeros(i,a.count) + ".pkl"
+		with open(join(abspath(a.folder), name), "w") as f:
+			dump(g,f)
+
+if __name__ == "__main__":
+	main()
 
