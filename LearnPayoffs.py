@@ -85,7 +85,7 @@ def GP_DPR(game, players, GPs=None):
 
 
 def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
-					random_restarts=0, at_least_one=False, iters=10000, \
+					random_restarts=0, at_least_one=False, iters=1000, \
 					converge_thresh=1e-6, ev_samples=100):
 	"""
 	Estimate equilibria with RD using random samples from GP regression models.
@@ -169,7 +169,7 @@ from ActionGraphGame import local_effect_AGG
 
 def main(experiments):
 	# run an AGG experiment
-	players = {"All":4}
+	players = {"All":5}
 	samples = 20
 	print "trial, method, regret"
 	for j in range(experiments):
