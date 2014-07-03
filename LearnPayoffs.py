@@ -14,6 +14,7 @@ from Reductions import DPR_profiles, full_prof_DPR, DPR
 import RoleSymmetricGame as RSG
 from Nash import mixed_nash
 from BasicFunctions import average
+from HashableClasses import h_array
 
 def GP_learn(game, var_thresh=10):
 	"""
@@ -89,10 +90,6 @@ def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
 	"""
 	Estimate equilibria with RD using random samples from GP regression models.
 	"""
-	if len(game.roles) == 1 and isinstance(players, int):
-		players = {game.roles[0]:players}
-	elif isinstance(players, list):
-		players = dict(zip(game.roles, players))
 	if GPs == None:
 		GPs = GP_learn(game)
 
@@ -105,17 +102,17 @@ def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
 			EVs = GP_EVs(game, mix, GPs, ev_samples)
 			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
 			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
-			if norm(mix - old_mix) <= converge_thresh:
+			if np.linalg.norm(mix - old_mix) <= converge_thresh:
 				break
 		mix[mix < 0] = 0
-		candidates.append(mix)
+		candidates.append(h_array(mix))
 		EVs = GP_EVs(game, mix, GPs, ev_samples)
-		regrets[mix] = (EVs.max(1) - (EVs * mix).sum(1)).max()
+		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
 		
 	candidates.sort(key=regrets.get)
 	equilibria = []
 	for c in filter(lambda c: regrets[c] < regret_thresh, candidates):
-		if all(norm(e - c, 2) >= dist_thresh for e in equilibria):
+		if all(np.linalg.norm(e - c, 2) >= dist_thresh for e in equilibria):
 			equilibria.append(c)
 	if len(equilibria) == 0 and at_least_one:
 		return [min(candidates, key=regrets.get)]
@@ -129,6 +126,7 @@ def GP_EVs(game, mix, GPs, samples=100):
 		for r,role in enumerate(game.roles):
 			for s,strat in enumerate(game.strategies[role]):
 				EVs[r,s] += GPs[role][strat].predict(prof2vec(game,prof))
+	EVs /= samples
 	return EVs
 				
 
@@ -173,7 +171,7 @@ def main(experiments):
 	# run an AGG experiment
 	players = {"All":4}
 	samples = 20
-	print "trial, reduction regret, learning regret"
+	print "trial, method, regret"
 	for j in range(experiments):
 		leg = local_effect_AGG(41,5,2,3,100)
 
@@ -204,10 +202,14 @@ def main(experiments):
 										s,c in prof["All"].iteritems()]})
 		GPs = GP_learn(fg_learn)
 		NE_DPR_learn = GP_DPR(fg_learn, players, GPs)
-		NE_sample_learn = GP_sampling_RD(fg_learn, players, GPs)
-
-		print str(j) +", "+ str(leg.regret(NE_reduce)) +", "+ \
-							str(leg.regret(NE_learn))
+		NE_sample_learn = GP_sampling_RD(fg_learn, GPs)
+		
+		for eq in NE_reduce:
+			print str(j) +", DPR, "+ str(leg.regret(eq[0]))
+		for eq in NE_DPR_learn:
+			print str(j) +", DPR_learn, "+ str(leg.regret(eq[0]))
+		for eq in NE_sample_learn:
+			print str(j) +", sample_learn, "+ str(leg.regret(eq[0]))
 
 
 
