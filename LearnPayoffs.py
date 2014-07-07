@@ -47,7 +47,6 @@ def GP_learn(game, var_thresh=10):
 						for i in range(len(samples)):
 							x[role][strat].append(c + \
 									np.random.normal(0,1e-8,c.shape))
-						x[role][strat].extend(repeat(c, len(samples)))
 						y[role][strat].extend(samples)
 					except AttributeError: #except will work on RSG.Game
 						x[role][strat].append(c)
@@ -56,7 +55,8 @@ def GP_learn(game, var_thresh=10):
 
 	for role in game.roles:
 		for strat in game.strategies[role]:
-			gp = GaussianProcess(storage_mode='light', normalize=False, \
+			gp = GaussianProcess(regr="linear", corr="generalized_exponential", \
+								storage_mode='light', normalize=False, \
 								nugget=var, random_start=10)
 			gp.fit(x[role][strat], y[role][strat])
 			GPs[role][strat] = gp
