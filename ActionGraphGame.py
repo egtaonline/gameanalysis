@@ -1,7 +1,8 @@
 import numpy as np
 from random import sample
 from itertools import combinations_with_replacement as CwR
-from os.path import abspath, join
+from os.path import join, exists
+from os import mkdir
 from cPickle import dump
 from argparse import ArgumentParser
 
@@ -103,7 +104,7 @@ class Noisy_AGG(Sym_AGG):
 			if count == 0:
 				noisy_vals[strat] = val
 			else:
-				noisy_vals[strat] = val + np.random.normal(0,self.sigma,c)
+				noisy_vals[strat] = val + np.random.normal(0,self.sigma,count)
 		return noisy_vals	
 	
 	def sampleGame(self, count=1):
@@ -183,10 +184,12 @@ def main():
 	for i in range(a.count):
 		g = local_effect_AGG(a.players, a.strategies, a.min_neighbors, \
 							a.max_neighbors, a.sigma)
-		name = "LEG_AGG_"+reduce(lambda x,y:str(x)+"-"+str(y), [a.players, \
-				a.strategies, a.min_neighbors, a.max_neighbors, \
-				int(a.sigma)]) + "_" + leading_zeros(i,a.count) + ".pkl"
-		with open(join(abspath(a.folder), name), "w") as f:
+		folder = join(a.folder, "LEG_" + reduce(lambda x,y:str(x)+"-"+str(y), \
+				[a.players, a.strategies, a.min_neighbors, a.max_neighbors, \
+				int(a.sigma)]))
+		if not exists(folder):
+			mkdir(folder)
+		with open(join(folder, leading_zeros(i,a.count-1) + ".pkl"), "w") as f:
 			dump(g,f)
 
 if __name__ == "__main__":
