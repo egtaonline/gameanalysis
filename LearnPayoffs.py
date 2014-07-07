@@ -76,9 +76,9 @@ def GP_DPR(game, players, GPs=None):
 
 	learned_game = RSG.Game(game.roles, players, game.strategies)
 	for prof in learned_game.allProfiles():
-		role_payoffs = {}		
+		role_payoffs = {}
 		for role in game.roles:
-			role_payoffs[role] = []			
+			role_payoffs[role] = []
 			for strat,count in prof[role].iteritems():
 				full_prof = full_prof_DPR(prof, role, strat, game.players)
 				prof_x = prof2vec(game, full_prof)
@@ -113,7 +113,7 @@ def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
 		candidates.append(h_array(mix))
 		EVs = GP_EVs(game, mix, GPs, ev_samples)
 		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
-		
+
 	candidates.sort(key=regrets.get)
 	equilibria = []
 	for c in filter(lambda c: regrets[c] < regret_thresh, candidates):
@@ -133,9 +133,9 @@ def GP_EVs(game, mix, GPs, samples=100):
 				EVs[r,s] += GPs[role][strat].predict(prof2vec(game,prof))
 	EVs /= samples
 	return EVs
-				
 
-	
+
+
 def sample_profiles(game, mix, count=1):
 	"""
 	Gives a list of pure-strategy profiles sampled from mix.
@@ -154,7 +154,7 @@ def sample_profiles(game, mix, count=1):
 					prof[role][strat] = count
 		profiles.append(RSG.Profile(prof))
 	return profiles
-		
+
 
 def prof2vec(game, prof):
 	"""
@@ -193,12 +193,12 @@ def sample_near_DPR(AGG, players, samples=10):
 			rp = filter(lambda p:p[1], zip(AGG.strategies,rp))
 			rp = RSG.Profile({"All":dict(rp)})
 			random_profiles[rp] = random_profiles.get(rp,0) + 1
-	
+
 	for prof,count in random_profiles.iteritems():
 		values = AGG.sample(prof["All"], count)
 		g.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
 								s,c in prof["All"].iteritems()]})
-	
+
 	return g
 
 
@@ -249,12 +249,12 @@ def main():
 	DPR_files = sorted(ls(join(a.folder, "DPR")))
 	samples_files = sorted(ls(join(a.folder, "samples")))
 	GP_files = sorted(ls(join(a.folder, "GPs")))
-	
+
 	for DPR_fn, sam_fn, GP_fn in zip(DPR_files, samples_files, GP_files):
 		DPR_game = read(join(a.folder, "DPR", DPR_fn))
 		samples_game = read(join(a.folder, "samples", sam_fn))
 		with open(join(a.folder, "GPs", GP_fn)) as f:
-			GPs = load(f)	
+			GPs = load(f)
 		eq = mixed_nash(DPR_game)
 		DPR_eq.append(map(DPR_game.toProfile, eq))
 		eq = mixed_nash(GP_DPR(samples_game, DPR_game.players, GPs))

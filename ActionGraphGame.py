@@ -16,7 +16,7 @@ class Sym_AGG:
 	def __init__(self, players, action_graph={}, utilities={}):
 		"""
 		Symmetric action graph game.
-		
+
 		Supports drawing noisy payoff samples and computing regret
 		of symmetric mixed strategy profiles.
 
@@ -86,7 +86,7 @@ class Sym_AGG:
 class Noisy_AGG(Sym_AGG):
 	def __init__(self, players, action_graph={}, utilities={}, sigma=1):
 		"""
-		noise should be a random function from strategy s and profile p 
+		noise should be a random function from strategy s and profile p
 		to an array of floats with length c.
 		"""
 		self.sigma = sigma
@@ -105,15 +105,15 @@ class Noisy_AGG(Sym_AGG):
 				noisy_vals[strat] = val
 			else:
 				noisy_vals[strat] = val + np.random.normal(0,self.sigma,count)
-		return noisy_vals	
-	
+		return noisy_vals
+
 	def sampleGame(self, count=1):
 		g = RSG.SampleGame(["All"],{"All":self.players},{"All":self.strategies})
 		for p in g.allProfiles():
 			d = []
 			for s,v in self.sample(p["All"],count).items():
 				d.append(RSG.PayoffData(s,p["All"][s],v))
-			g.addProfile({"All":d})		
+			g.addProfile({"All":d})
 		return g
 
 	def exactGame(self):
@@ -122,9 +122,9 @@ class Noisy_AGG(Sym_AGG):
 			d = []
 			for s,v in self.sample(p["All"],0).items():
 				d.append(RSG.PayoffData(s,p["All"][s],v))
-			g.addProfile({"All":d})		
+			g.addProfile({"All":d})
 		return g
-		
+
 
 
 def local_effect_AGG(N, S, D_min=0, D_max=-1, sigma=1):
@@ -149,7 +149,7 @@ def local_effect_AGG(N, S, D_min=0, D_max=-1, sigma=1):
 	for s,strat in enumerate(strategies):
 		num_neighbors = np.random.randint(D_min, D_max+1)
 		neighbors = sorted(sample(strategies[:s] + strategies[s+1:],\
-										num_neighbors) + [strat]) 
+										num_neighbors) + [strat])
 		action_graph[strat] = neighbors
 		local_effects = {n:np.random.normal(0,1,3) * np.arange(3,0,-1) for \
 						n in action_graph[strat]}
