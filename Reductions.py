@@ -31,7 +31,7 @@ def full_prof_sym(HR_profile, N):
 	symmetric reduced game profile under hierarchical reduction.
 
 	In the event that N isn't divisible by n, we first assign by rounding
-	error and break ties in favor of more-played strategies. The final 
+	error and break ties in favor of more-played strategies. The final
 	tie-breaker is alphabetical order.
 	"""
 	if N < 2:
@@ -40,7 +40,7 @@ def full_prof_sym(HR_profile, N):
 	full_profile = {s : c * N / n  for s,c in HR_profile.items()}
 	if sum(full_profile.values()) == N:
 		return full_profile
-	
+
 	#deal with non-divisible strategy counts
 	rounding_error = {s : float(c * N) / n - full_profile[s] for \
 						s,c in HR_profile.items()}
@@ -65,7 +65,7 @@ def full_prof_DPR(DPR_profile, role, strat, players):
 			full_prof[r] = full_prof_sym(opp_prof, players[r] - 1)
 			full_prof[r][strat] += 1
 		else:
-			full_prof[r] = full_prof_sym(DPR_prof[r], players[r])
+			full_prof[r] = full_prof_sym(full_prof[r], players[r])
 	return Profile(full_prof)
 
 
@@ -103,7 +103,7 @@ def deviation_preserving_reduction(game, players={}):
 				if valid_profile:
 					DPR_game.addProfile(prof_data)
 			return DPR_game
-	
+
 	#it's conceptually simpler to go through all of the reduced-game profiles
 	for DPR_prof in DPR_game.allProfiles():
 		try:
