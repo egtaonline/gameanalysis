@@ -67,7 +67,7 @@ def full_prof_DPR(DPR_profile, role, strat, players):
 			full_prof[r] = full_prof_sym(opp_prof, players[r] - 1)
 			full_prof[r][strat] += 1
 		else:
-			full_prof[r] = full_prof_sym(full_prof[r], players[r])
+			full_prof[r] = full_prof_sym(DPR_profile[r], players[r])
 	return Profile(full_prof)
 
 
