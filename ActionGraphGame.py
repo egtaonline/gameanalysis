@@ -127,7 +127,8 @@ class Noisy_AGG(Sym_AGG):
 
 
 
-def local_effect_AGG(N, S, D_min=0, D_max=-1, sigma=1):
+def local_effect_AGG(N, S, D_min=0, D_max=-1, noise=100, c_m=[0,-4,-2], \
+					c_v=[4,2,1]):
 	"""
 	Creates an AGG representing a noisy LEG with quadratic payoff functions
 
@@ -136,7 +137,9 @@ def local_effect_AGG(N, S, D_min=0, D_max=-1, sigma=1):
 	S		number of strategies
 	D_min	minimum action-graph degree (default=0)
 	D_max	maximum action-graph degree (default=S)
-	sigma	noise magnitude
+	noise	noise variance
+	c_m		means for constant, linear, and quadratic coefficients
+	c_v		variances for constant, linear, and quadratic coefficients
 	"""
 	if D_min < 0 or D_min >= S:
 		D_min = 0
@@ -151,8 +154,8 @@ def local_effect_AGG(N, S, D_min=0, D_max=-1, sigma=1):
 		neighbors = sorted(sample(strategies[:s] + strategies[s+1:],\
 										num_neighbors) + [strat])
 		action_graph[strat] = neighbors
-		local_effects = {n:np.random.normal(0,1,3) * np.arange(3,0,-1) for \
-						n in action_graph[strat]}
+		local_effects = {n:np.array([np.random.normal(m,v) for m,v in \
+						zip(c_m,c_v)]) for n in action_graph[strat]}
 		u = {}
 		for i in range(N):
 			for strats in CwR(neighbors, i):
@@ -163,7 +166,7 @@ def local_effect_AGG(N, S, D_min=0, D_max=-1, sigma=1):
 				for n,c in prof.iteritems():
 					u[prof] += sum(c**np.arange(3) * local_effects[n])
 		utilities[strat] = u
-	return Noisy_AGG(N, action_graph, utilities, sigma)
+	return Noisy_AGG(N, action_graph, utilities, noise)
 
 
 def parse_args():
@@ -173,20 +176,27 @@ def parse_args():
 	p.add_argument("players", type=int, help="Number of players.")
 	p.add_argument("strategies", type=int, help="Number of strategies.")
 	p.add_argument("min_neighbors", type=int, help="Mimimum number of "+\
-						"other strategies that payoffs can depend on.")
+				"other strategies that payoffs can depend on.")
 	p.add_argument("max_neighbors", type=int, help="Maximum number of "+\
-						"other strategies that payoffs can depend on.")
-	p.add_argument("sigma", type=float, help="Noise magnitude.")
+				"other strategies that payoffs can depend on.")
+	p.add_argument("noise", type=float, default=100., help="Variance of "+\
+				"payoff observation noise. Default: 100")
+	p.add_argument("-m", type=float, nargs=3, default=[0,-4,-2], help=\
+				"Means for constant, linear, and quadratic coefficients. "+\
+				"Default: 0 -4 -2")
+	p.add_argument("-s", type=float, nargs=3, default=[4,2,1], help=\
+				"Variances for constant, linear, and quadratic coefficients. "+\
+				"Default: 4 2 1")
 	return p.parse_args()
 
 def main():
 	a = parse_args()
 	for i in range(a.count):
 		g = local_effect_AGG(a.players, a.strategies, a.min_neighbors, \
-							a.max_neighbors, a.sigma)
+							a.max_neighbors, a.noise, a.m, a.s)
 		folder = join(a.folder, "LEG_" + reduce(lambda x,y:str(x)+"-"+str(y), \
 				[a.players, a.strategies, a.min_neighbors, a.max_neighbors, \
-				int(a.sigma)]))
+				int(a.noise)]))
 		if not exists(folder):
 			mkdir(folder)
 		with open(join(folder, leading_zeros(i,a.count-1) + ".pkl"), "w") as f:
