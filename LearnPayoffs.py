@@ -135,7 +135,6 @@ def GP_EVs(game, mix, GPs, samples=100):
 	return EVs
 
 
-
 def sample_profiles(game, mix, count=1):
 	"""
 	Gives a list of pure-strategy profiles sampled from mix.
@@ -202,29 +201,33 @@ def sample_near_DPR(AGG, players, samples=10):
 	return g
 
 
-def learn_AGGs(directory, players=2, samples=10):
-	"""
-	"""
-	for fn in filter(lambda s: s.endswith(".pkl"), ls(directory)):
-		with open(join(directory, fn)) as f:
-			AGG = load(f)
-		DPR_game = sample_at_DPR(AGG, players, samples)
-		sample_game = sample_near_DPR(AGG, players, samples)
-		GPs = GP_learn(sample_game, samples/2)
-		if not exists(join(directory, "DPR")):
-			mkdir(join(directory, "DPR"))
-		if not exists(join(directory, "samples")):
-			mkdir(join(directory, "samples"))
-		if not exists(join(directory, "GPs")):
-			mkdir(join(directory, "GPs"))
-		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
-			f.write(to_JSON_str(DPR_game))
-		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
-			f.write(to_JSON_str(sample_game))
-		with open(join(directory, "GPs", fn), "w") as f:
-			dump(GPs,f)
-
-
+"""
+The following three functions - learn_AGGs(), parse_args(), and main() - take
+a folder full of action graph games and create sub-folders full of DPR, GP_DPR,
+and GP_sample games corresponding to each AGG.
+"""
+#def learn_AGGs(directory, players=2, samples=10):
+#	"""
+#	"""
+#	for fn in filter(lambda s: s.endswith(".pkl"), ls(directory)):
+#		with open(join(directory, fn)) as f:
+#			AGG = load(f)
+#		DPR_game = sample_at_DPR(AGG, players, samples)
+#		sample_game = sample_near_DPR(AGG, players, samples)
+#		GPs = GP_learn(sample_game, samples/2)
+#		if not exists(join(directory, "DPR")):
+#			mkdir(join(directory, "DPR"))
+#		if not exists(join(directory, "samples")):
+#			mkdir(join(directory, "samples"))
+#		if not exists(join(directory, "GPs")):
+#			mkdir(join(directory, "GPs"))
+#		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
+#			f.write(to_JSON_str(DPR_game))
+#		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
+#			f.write(to_JSON_str(sample_game))
+#		with open(join(directory, "GPs", fn), "w") as f:
+#			dump(GPs,f)
+#
 #def parse_args():
 #	p = ArgumentParser(description="Perform game-learning experiments on " +\
 #									"a set of action graph games.")
@@ -232,87 +235,49 @@ def learn_AGGs(directory, players=2, samples=10):
 #	p.add_argument("players", type=int, help="Number of players in DPR game.")
 #	p.add_argument("samples", type=int, help="Samples drawn per DPR profile.")
 #	return p.parse_args()
+#
 #def main():
 #	a = parse_args()
 #	learn_AGGs(a.folder, a.players, a.samples)
 
 
-def main():
-	p = ArgumentParser()
-	p.add_argument("folder", type=str, help="Base dir for DPR, GPS, samples.")
-	a = p.parse_args()
-
-	DPR_eq = []
-	GP_DPR_eq = []
-	GP_sample_eq = []
-
-	DPR_files = sorted(ls(join(a.folder, "DPR")))
-	samples_files = sorted(ls(join(a.folder, "samples")))
-	GP_files = sorted(ls(join(a.folder, "GPs")))
-
-	for DPR_fn, sam_fn, GP_fn in zip(DPR_files, samples_files, GP_files):
-		DPR_game = read(join(a.folder, "DPR", DPR_fn))
-		samples_game = read(join(a.folder, "samples", sam_fn))
-		with open(join(a.folder, "GPs", GP_fn)) as f:
-			GPs = load(f)
-		eq = mixed_nash(DPR_game)
-		DPR_eq.append(map(DPR_game.toProfile, eq))
-		eq = mixed_nash(GP_DPR(samples_game, DPR_game.players, GPs))
-		GP_DPR_eq.append(map(samples_game.toProfile, eq))
-		eq = GP_sampling_RD(samples_game, GPs)
-		GP_sample_eq.append(map(samples_game.toProfile, eq))
-
-	with open(join(a.folder, "DPR_eq.json"), "w") as f:
-		f.write(to_JSON_str(DPR_eq))
-	with open(join(a.folder, "GP_DPR_eq.json"), "w") as f:
-		f.write(to_JSON_str(GP_DPR_eq))
-	with open(join(a.folder, "GP_sample_eq.json"), "w") as f:
-		f.write(to_JSON_str(GP_sample_eq))
-
-
-
-#def main(experiments):
-#	# run an AGG experiment
-#	players = {"All":5}
-#	samples = 20
-#	print "trial, method, regret"
-#	for j in range(experiments):
-#		leg = local_effect_AGG(41,5,2,3,100)
+"""
+The following main() function takes a folder filled with AGGs, plus the
+sub-folders for DPR, GP_DPR, and GP_sample created by the previous section
+and computes equilibria in each small game, then outputs those equilibria and
+their regrets in the corresponding AGGs.
+"""
+#def main():
+#	p = ArgumentParser()
+#	p.add_argument("folder", type=str, help="Base dir for DPR, GPS, samples.")
+#	a = p.parse_args()
 #
-#		fg_reduce = RSG.SampleGame(["All"], {"All":leg.players}, \
-#									{"All":leg.strategies})
-#		fg_learn = RSG.SampleGame(["All"], {"All":leg.players}, \
-#									{"All":leg.strategies})
+#	DPR_eq = []
+#	GP_DPR_eq = []
+#	GP_sample_eq = []
 #
-#		random_profiles = {}
-#		for prof in DPR_profiles(fg_reduce, players):
-#			values = leg.sample(prof["All"], samples)
-#			fg_reduce.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
-#										s,c in prof["All"].iteritems()]})
-#			counts = np.array([prof["All"].get(s,0) for s in leg.strategies])
-#			for i in range(samples):
-#				rp = np.random.multinomial(leg.players, counts / \
-#											float(leg.players))
-#				rp = filter(lambda p:p[1], zip(leg.strategies,rp))
-#				rp = RSG.Profile({"All":dict(rp)})
-#				random_profiles[rp] = random_profiles.get(rp,0) + 1
-#		rg_reduce = DPR(fg_reduce, players)
-#		NE_reduce = mixed_nash(rg_reduce, at_least_one = True)
-#		
-#		for prof,count in random_profiles.iteritems():
-#			values = leg.sample(prof["All"], count)
-#			fg_learn.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
-#										s,c in prof["All"].iteritems()]})
-#		GPs = GP_learn(fg_learn)
-#		NE_DPR_learn = GP_DPR(fg_learn, players, GPs)
-#		NE_sample_learn = GP_sampling_RD(fg_learn, GPs)
-#		
-#		for eq in NE_reduce:
-#			print str(j) +", DPR, "+ str(leg.regret(eq[0]))
-#		for eq in NE_DPR_learn:
-#			print str(j) +", DPR_learn, "+ str(leg.regret(eq[0]))
-#		for eq in NE_sample_learn:
-#			print str(j) +", sample_learn, "+ str(leg.regret(eq[0]))
+#	DPR_files = sorted(ls(join(a.folder, "DPR")))
+#	samples_files = sorted(ls(join(a.folder, "samples")))
+#	GP_files = sorted(ls(join(a.folder, "GPs")))
+#
+#	for DPR_fn, sam_fn, GP_fn in zip(DPR_files, samples_files, GP_files):
+#		DPR_game = read(join(a.folder, "DPR", DPR_fn))
+#		samples_game = read(join(a.folder, "samples", sam_fn))
+#		with open(join(a.folder, "GPs", GP_fn)) as f:
+#			GPs = load(f)
+#		eq = mixed_nash(DPR_game)
+#		DPR_eq.append(map(DPR_game.toProfile, eq))
+#		eq = mixed_nash(GP_DPR(samples_game, DPR_game.players, GPs))
+#		GP_DPR_eq.append(map(samples_game.toProfile, eq))
+#		eq = GP_sampling_RD(samples_game, GPs)
+#		GP_sample_eq.append(map(samples_game.toProfile, eq))
+#
+#	with open(join(a.folder, "DPR_eq.json"), "w") as f:
+#		f.write(to_JSON_str(DPR_eq))
+#	with open(join(a.folder, "GP_DPR_eq.json"), "w") as f:
+#		f.write(to_JSON_str(GP_DPR_eq))
+#	with open(join(a.folder, "GP_sample_eq.json"), "w") as f:
+#		f.write(to_JSON_str(GP_sample_eq))
 
 
 if __name__ == "__main__":
