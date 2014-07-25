@@ -55,8 +55,8 @@ def GP_learn(game, var_thresh=10):
 
 	for role in game.roles:
 		for strat in game.strategies[role]:
-			gp = GaussianProcess(regr="linear", storage_mode='light', \
-							normalize=False,nugget=var, random_start=10)
+			gp = GaussianProcess(storage_mode='light', normalize=False, \
+								nugget=var, random_start=10)
 			gp.fit(x[role][strat], y[role][strat])
 			GPs[role][strat] = gp
 	return GPs
