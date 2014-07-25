@@ -55,9 +55,8 @@ def GP_learn(game, var_thresh=10):
 
 	for role in game.roles:
 		for strat in game.strategies[role]:
-			gp = GaussianProcess(regr="linear", corr="generalized_exponential", \
-								storage_mode='light', normalize=False, \
-								nugget=var, random_start=10)
+			gp = GaussianProcess(regr="linear", storage_mode='light', \
+							normalize=False,nugget=var, random_start=10)
 			gp.fit(x[role][strat], y[role][strat])
 			GPs[role][strat] = gp
 	return GPs
@@ -206,39 +205,39 @@ The following three functions - learn_AGGs(), parse_args(), and main() - take
 a folder full of action graph games and create sub-folders full of DPR, GP_DPR,
 and GP_sample games corresponding to each AGG.
 """
-#def learn_AGGs(directory, players=2, samples=10):
-#	"""
-#	"""
-#	for fn in filter(lambda s: s.endswith(".pkl"), ls(directory)):
-#		with open(join(directory, fn)) as f:
-#			AGG = load(f)
-#		DPR_game = sample_at_DPR(AGG, players, samples)
-#		sample_game = sample_near_DPR(AGG, players, samples)
-#		GPs = GP_learn(sample_game, samples/2)
-#		if not exists(join(directory, "DPR")):
-#			mkdir(join(directory, "DPR"))
-#		if not exists(join(directory, "samples")):
-#			mkdir(join(directory, "samples"))
-#		if not exists(join(directory, "GPs")):
-#			mkdir(join(directory, "GPs"))
-#		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
-#			f.write(to_JSON_str(DPR_game))
-#		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
-#			f.write(to_JSON_str(sample_game))
-#		with open(join(directory, "GPs", fn), "w") as f:
-#			dump(GPs,f)
-#
-#def parse_args():
-#	p = ArgumentParser(description="Perform game-learning experiments on " +\
-#									"a set of action graph games.")
-#	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
-#	p.add_argument("players", type=int, help="Number of players in DPR game.")
-#	p.add_argument("samples", type=int, help="Samples drawn per DPR profile.")
-#	return p.parse_args()
-#
-#def main():
-#	a = parse_args()
-#	learn_AGGs(a.folder, a.players, a.samples)
+def learn_AGGs(directory, players=2, samples=10):
+	"""
+	"""
+	for fn in filter(lambda s: s.endswith(".pkl"), ls(directory)):
+		with open(join(directory, fn)) as f:
+			AGG = load(f)
+		DPR_game = sample_at_DPR(AGG, players, samples)
+		sample_game = sample_near_DPR(AGG, players, samples)
+		GPs = GP_learn(sample_game, samples/2)
+		if not exists(join(directory, "DPR")):
+			mkdir(join(directory, "DPR"))
+		if not exists(join(directory, "samples")):
+			mkdir(join(directory, "samples"))
+		if not exists(join(directory, "GPs")):
+			mkdir(join(directory, "GPs"))
+		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
+			f.write(to_JSON_str(DPR_game))
+		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
+			f.write(to_JSON_str(sample_game))
+		with open(join(directory, "GPs", fn), "w") as f:
+			dump(GPs,f)
+
+def parse_args():
+	p = ArgumentParser(description="Perform game-learning experiments on " +\
+									"a set of action graph games.")
+	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
+	p.add_argument("players", type=int, help="Number of players in DPR game.")
+	p.add_argument("samples", type=int, help="Samples drawn per DPR profile.")
+	return p.parse_args()
+
+def main():
+	a = parse_args()
+	learn_AGGs(a.folder, a.players, a.samples)
 
 
 """
