@@ -205,39 +205,39 @@ The following three functions - learn_AGGs(), parse_args(), and main() - take
 a folder full of action graph games and create sub-folders full of DPR, GP_DPR,
 and GP_sample games corresponding to each AGG.
 """
-def learn_AGGs(directory, players=2, samples=10):
-	"""
-	"""
-	for fn in filter(lambda s: s.endswith(".pkl"), ls(directory)):
-		with open(join(directory, fn)) as f:
-			AGG = load(f)
-		DPR_game = sample_at_DPR(AGG, players, samples)
-		sample_game = sample_near_DPR(AGG, players, samples)
-		GPs = GP_learn(sample_game, samples/2)
-		if not exists(join(directory, "DPR")):
-			mkdir(join(directory, "DPR"))
-		if not exists(join(directory, "samples")):
-			mkdir(join(directory, "samples"))
-		if not exists(join(directory, "GPs")):
-			mkdir(join(directory, "GPs"))
-		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
-			f.write(to_JSON_str(DPR_game))
-		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
-			f.write(to_JSON_str(sample_game))
-		with open(join(directory, "GPs", fn), "w") as f:
-			dump(GPs,f)
-
-def parse_args():
-	p = ArgumentParser(description="Perform game-learning experiments on " +\
-									"a set of action graph games.")
-	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
-	p.add_argument("players", type=int, help="Number of players in DPR game.")
-	p.add_argument("samples", type=int, help="Samples drawn per DPR profile.")
-	return p.parse_args()
-
-def main():
-	a = parse_args()
-	learn_AGGs(a.folder, a.players, a.samples)
+#def learn_AGGs(directory, players=2, samples=10):
+#	"""
+#	"""
+#	for fn in filter(lambda s: s.endswith(".pkl"), ls(directory)):
+#		with open(join(directory, fn)) as f:
+#			AGG = load(f)
+#		DPR_game = sample_at_DPR(AGG, players, samples)
+#		sample_game = sample_near_DPR(AGG, players, samples)
+#		GPs = GP_learn(sample_game, samples/2)
+#		if not exists(join(directory, "DPR")):
+#			mkdir(join(directory, "DPR"))
+#		if not exists(join(directory, "samples")):
+#			mkdir(join(directory, "samples"))
+#		if not exists(join(directory, "GPs")):
+#			mkdir(join(directory, "GPs"))
+#		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
+#			f.write(to_JSON_str(DPR_game))
+#		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
+#			f.write(to_JSON_str(sample_game))
+#		with open(join(directory, "GPs", fn), "w") as f:
+#			dump(GPs,f)
+#
+#def parse_args():
+#	p = ArgumentParser(description="Perform game-learning experiments on " +\
+#									"a set of action graph games.")
+#	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
+#	p.add_argument("players", type=int, help="Number of players in DPR game.")
+#	p.add_argument("samples", type=int, help="Samples drawn per DPR profile.")
+#	return p.parse_args()
+#
+#def main():
+#	a = parse_args()
+#	learn_AGGs(a.folder, a.players, a.samples)
 
 
 """
@@ -277,6 +277,55 @@ their regrets in the corresponding AGGs.
 #		f.write(to_JSON_str(GP_DPR_eq))
 #	with open(join(a.folder, "GP_sample_eq.json"), "w") as f:
 #		f.write(to_JSON_str(GP_sample_eq))
+
+
+"""
+The following main() function  function takes a folder filled with AGGs, plus
+the sub-folders for DPR, GP_DPR, and GP_sample created by the first version of
+main(), and computes expected values for a number of mixed strategies in all
+four versions of the game.
+"""
+def main():
+	p = ArgumentParser()
+	p.add_argument("folder", type=str, help="Base dir for DPR, GPS, samples.")
+	a = p.parse_args()
+
+	DPR_files = sorted(ls(join(a.folder, "DPR")))
+	samples_files = sorted(ls(join(a.folder, "samples")))
+	GP_files = sorted(ls(join(a.folder, "GPs")))
+	AGG_files = sorted(filter(lambda s: s.endswith(".pkl"), ls(a.folder)))
+
+	DPR_game = read(join(a.folder, "DPR", DPR_files[0]))
+	mixtures = DPR_game.biasedMixtures() + [DPR_game.uniformMixture()] +\
+				[DPR_game.randomMixture() for _ in range(100)]
+	with open(join(a.folder, "mixtures.json"), "w") as f:
+		f.write(to_JSON_str(mixtures))
+	with open(join(a.folder, "mixture_values.csv"), "w") as f:
+		f.write("game,mixture,")
+		f.write(",".join("AGG EV "+s for s in DPR_game.strategies["All"])+",")
+		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
+		f.write(",".join("GP_DPR EV " + s for s in \
+						DPR_game.strategies["All"]) + ",")
+		f.write(",".join("GP_sample EV " + s for s in \
+						DPR_game.strategies["All"]) + "\n")
+
+	for i, (DPR_fn, sam_fn, GP_fn, AGG_fn) in enumerate(zip(DPR_files, \
+									samples_files, GP_files, AGG_files):
+		DPR_game = read(join(a.folder, "DPR", DPR_fn))
+		samples_game = read(join(a.folder, "samples", sam_fn))
+		with open(join(a.folder, "GPs", GP_fn)) as f:
+			GPs = load(f)
+		with open(join(a.folder, AGG_fn)) as f:
+			AGG = load(f)
+		for j,mix in emumerate(mixtures):
+			line = [i,j]
+			line.extend(AGG.expectedValues(mix["All"]))
+			line.extend(DPR_game.expectedValues(mix)[0])
+			line.extend(GP_DPR(DPR_game, DPR_game.players, GPs). \
+										expectedValues(mix)[0])
+			line.extend(GP_EVs(samples_game, mix, GPs))
+			with open(join(a.folder, "mixture_values.csv"), "a") as f:
+				f.write(",".join(map(str, line)) + "\n")
 
 
 if __name__ == "__main__":
