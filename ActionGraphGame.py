@@ -20,8 +20,8 @@ class Sym_AGG:
 		Supports drawing noisy payoff samples and computing regret
 		of symmetric mixed strategy profiles.
 
-		players: 		Integer specifying the number of players
-		action_graph: 	Mapping of strategies to lists of strategies. The lists
+		players:		Integer specifying the number of players
+		action_graph:	Mapping of strategies to lists of strategies. The lists
 						specify origins of in-edges in the action graph, so
 						that each strategy is paired with the list of strategies
 						on which its payoff depends. If a strategy's payoff
@@ -67,7 +67,7 @@ class Sym_AGG:
 		self.counts = {s:np.array(c) for s,c in self.counts.iteritems()}
 		self.dev_reps = {s:np.array(d) for s,d in self.dev_reps.iteritems()}
 
-	def regret(self, mix):
+	def expectedValues(self, mix):
 		EVs = np.zeros(mix.shape, dtype=float)
 		for s,strat in enumerate(self.strategies):
 			local_mix = list(mix[self.neighbor_index[strat]])
@@ -80,7 +80,15 @@ class Sym_AGG:
 			EVs[s] = (self.values[strat] * ((local_mix + tiny) ** \
 						self.counts[strat]).prod(1) * self.dev_reps[strat] / \
 						(local_mix[local_index] + tiny)).sum()
+		return EVs
+
+	def regret(self, mix):
+		EVs = self.expectedValues(mix)
 		return max(EVs - sum(mix * EVs))
+
+	def getExpectedPayoff(self, mix):
+		EVs = self.expectedValues(mix)
+		return sum(mix * EVs)
 
 
 class Noisy_AGG(Sym_AGG):

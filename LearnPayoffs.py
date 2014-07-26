@@ -310,14 +310,14 @@ def main():
 						DPR_game.strategies["All"]) + "\n")
 
 	for i, (DPR_fn, sam_fn, GP_fn, AGG_fn) in enumerate(zip(DPR_files, \
-									samples_files, GP_files, AGG_files):
+									samples_files, GP_files, AGG_files)):
 		DPR_game = read(join(a.folder, "DPR", DPR_fn))
 		samples_game = read(join(a.folder, "samples", sam_fn))
 		with open(join(a.folder, "GPs", GP_fn)) as f:
 			GPs = load(f)
 		with open(join(a.folder, AGG_fn)) as f:
 			AGG = load(f)
-		for j,mix in emumerate(mixtures):
+		for j,mix in enumerate(mixtures):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix["All"]))
 			line.extend(DPR_game.expectedValues(mix)[0])
