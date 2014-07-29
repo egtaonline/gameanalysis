@@ -317,15 +317,16 @@ def main():
 	p = ArgumentParser(description="Perform game-learning experiments on " +\
 									"a set of action graph games.")
 	p.add_argument("mode", type=str, choices=["games","regrets","EVs"], help=\
-"""games: creates DPR, GPs, GP_DPR, and samples directories.
-Requires players and samples arguments (other modes don't).
-regrets: computes equilibria and regrets in all games.
-EVs: computes expected values of many mixtures in all games.""")
+				"games mode creates DPR, GPs, GP_DPR, and samples "+\
+				"directories. It requires players and samples arguments "+\
+				"(other modes don't). regrets mode computes equilibria and "+\
+				"regrets in all games. EVs mode computes expected values of "+\
+				"many mixtures in all games.")
 	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
 	p.add_argument("players", type=int, default=0, help=\
-				"Number of players in DPR game.")
+				"Number of players in DPR game. Only for 'games' mode.")
 	p.add_argument("samples", type=int, default=0, help=\
-				"Samples drawn per DPR profile.")
+				"Samples drawn per DPR profile. Only for 'games' mode.")
 	a = p.parse_args()
 	if a.mode == "games":
 		assert a.players > 0 and a.samples > 0
