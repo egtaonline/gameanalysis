@@ -219,7 +219,7 @@ def learn_AGGs(directory, players=2, samples=10):
 		if not exists(join(directory, "GPs")):
 			mkdir(join(directory, "GPs"))
 		if not exists(join(directory, "GP_DPR")):
-			mkdir(join(directory, "GPs"))
+			mkdir(join(directory, "GP_DPR"))
 		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
 			f.write(to_JSON_str(DPR_game))
 		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
