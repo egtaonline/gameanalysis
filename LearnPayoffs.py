@@ -20,6 +20,7 @@ from BasicFunctions import average
 from HashableClasses import h_array
 from ActionGraphGame import local_effect_AGG, Noisy_AGG
 from GameIO import to_JSON_str, read
+from itertools import combinations_with_replacement as CwR, permutations
 
 def GP_learn(game, var_thresh=10):
 	"""
@@ -277,7 +278,7 @@ def EVs_experiment(folder):
 	"""
 	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
 	mixtures = [DPR_game.uniformMixture()] +\
-				mixture_grid(DPR_game.strategies["All"])
+				mixture_grid(len(DPR_game.strategies["All"]))
 	with open(join(folder, "mixtures.json"), "w") as f:
 		f.write(to_JSON_str(mixtures))
 	with open(join(folder, "mixture_values.csv"), "w") as f:
@@ -290,21 +291,20 @@ def EVs_experiment(folder):
 						DPR_game.strategies["All"]) + "\n")
 
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn) in \
-										learned_files(folder):
+								enumerate(learned_files(folder)):
 		with open(AGG_fn) as f:
 			AGG = load(f)
 		DPR_game = read(DPR_fn)
 		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
 			GPs = load(f)
-		with open(GP_DPR_fn) as f:
-			GP_DPR_game = load(f)
+		GP_DPR_game = read(GP_DPR_fn)
 		for j,mix in enumerate(mixtures):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
 			line.extend(DPR_game.expectedValues(mix)[0])
 			line.extend(GP_DPR_game.expectedValues(mix)[0])
-			line.extend(GP_EVs(samples_game, mix, GPs))
+			line.extend(GP_EVs(samples_game, mix, GPs)[0])
 			with open(join(folder, "mixture_values.csv"), "a") as f:
 				f.write(",".join(map(str, line)) + "\n")
 
@@ -319,7 +319,7 @@ def learned_files(folder):
 		yield AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn
 
 
-def mixture_grid(S, points=5, digits=1):
+def mixture_grid(S, points=5, digits=2):
 	"""
 	Generate all choose(S, points) grid points in the simplex.
 
@@ -329,7 +329,7 @@ def mixture_grid(S, points=5, digits=1):
 	mixtures = set()
 	for p in filter(lambda x: abs(sum(x) - 1) < .5/points, CwR(a,S)):
 		for m in permutations(map(lambda x: round(x, digits), p)):
-			mixtures.add(h_array(m))
+			mixtures.add(h_array([m]))
 	return sorted(mixtures)
 
 
@@ -343,9 +343,9 @@ def main():
 				"regrets in all games. EVs mode computes expected values of "+\
 				"many mixtures in all games.")
 	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
-	p.add_argument("players", type=int, default=0, help=\
+	p.add_argument("-p", type=int, default=0, help=\
 				"Number of players in DPR game. Only for 'games' mode.")
-	p.add_argument("samples", type=int, default=0, help=\
+	p.add_argument("-s", type=int, default=0, help=\
 				"Samples drawn per DPR profile. Only for 'games' mode.")
 	a = p.parse_args()
 	if a.mode == "games":
