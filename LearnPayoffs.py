@@ -205,28 +205,35 @@ def learn_AGGs(directory, players=2, samples=10):
 	Takes a folder full of action graph games and create sub-folders full of
 	DPR, GP_DPR, and GP_sample games corresponding to each AGG.
 	"""
-	for fn in filter(lambda s: s.endswith(".pkl"), ls(directory)):
+	if not exists(join(directory, "DPR")):
+		mkdir(join(directory, "DPR"))
+	if not exists(join(directory, "samples")):
+		mkdir(join(directory, "samples"))
+	if not exists(join(directory, "GPs")):
+		mkdir(join(directory, "GPs"))
+	if not exists(join(directory, "GP_DPR")):
+		mkdir(join(directory, "GP_DPR"))
+	for fn in sorted(filter(lambda s: s.endswith(".pkl"), ls(directory))):
+		DPR_name = join(directory, "DPR", fn[:-4]+".json")
+		samples_name = join(directory, "samples", fn[:-4]+".json")
+		GPs_name = join(directory, "GPs", fn), "w")
+		GP_DPR_name = join(directory, "GP_DPR", fn[:-4]+".json")
+		if exists(DPR_name) and exists(samples_name) and \
+				exists(GPs_name) and exists(GP_DPR_name):
+			continue
 		with open(join(directory, fn)) as f:
 			AGG = load(f)
 		DPR_game = sample_at_DPR(AGG, players, samples)
 		sample_game = sample_near_DPR(AGG, players, samples)
 		GPs = GP_learn(sample_game, samples/2)
 		GP_DPR_game = GP_DPR(sample_game, players, GPs)
-		if not exists(join(directory, "DPR")):
-			mkdir(join(directory, "DPR"))
-		if not exists(join(directory, "samples")):
-			mkdir(join(directory, "samples"))
-		if not exists(join(directory, "GPs")):
-			mkdir(join(directory, "GPs"))
-		if not exists(join(directory, "GP_DPR")):
-			mkdir(join(directory, "GP_DPR"))
-		with open(join(directory, "DPR", fn[:-4]+".json"), "w") as f:
+		with open(DPR_name, "w") as f:
 			f.write(to_JSON_str(DPR_game))
-		with open(join(directory, "samples", fn[:-4]+".json"), "w") as f:
+		with open(samples_name, "w") as f:
 			f.write(to_JSON_str(sample_game))
-		with open(join(directory, "GPs", fn), "w") as f:
+		with open(GPs_name) as f:
 			dump(GPs,f)
-		with open(join(directory, "GP_DPR", fn[:-4]+".json"), "w") as f:
+		with open(GP_DPR_name, "w") as f:
 			f.write(to_JSON_str(GP_DPR_game))
 
 
