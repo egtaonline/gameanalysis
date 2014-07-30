@@ -200,40 +200,36 @@ def sample_near_DPR(AGG, players, samples=10):
 	return g
 
 
-def learn_AGGs(directory, players=2, samples=10):
+def learn_AGGs(folder, players=2, samples=10):
 	"""
 	Takes a folder full of action graph games and create sub-folders full of
 	DPR, GP_DPR, and GP_sample games corresponding to each AGG.
 	"""
-	if not exists(join(directory, "DPR")):
-		mkdir(join(directory, "DPR"))
-	if not exists(join(directory, "samples")):
-		mkdir(join(directory, "samples"))
-	if not exists(join(directory, "GPs")):
-		mkdir(join(directory, "GPs"))
-	if not exists(join(directory, "GP_DPR")):
-		mkdir(join(directory, "GP_DPR"))
-	for fn in sorted(filter(lambda s: s.endswith(".pkl"), ls(directory))):
-		DPR_name = join(directory, "DPR", fn[:-4]+".json")
-		samples_name = join(directory, "samples", fn[:-4]+".json")
-		GPs_name = join(directory, "GPs", fn)
-		GP_DPR_name = join(directory, "GP_DPR", fn[:-4]+".json")
-		if exists(DPR_name) and exists(samples_name) and \
-				exists(GPs_name) and exists(GP_DPR_name):
+	if not exists(join(folder, "DPR")):
+		mkdir(join(folder, "DPR"))
+	if not exists(join(folder, "samples")):
+		mkdir(join(folder, "samples"))
+	if not exists(join(folder, "GPs")):
+		mkdir(join(folder, "GPs"))
+	if not exists(join(folder, "GP_DPR")):
+		mkdir(join(folder, "GP_DPR"))
+	for AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn in learned_files(folder):
+		if exists(DPR_fn) and exists(samples_fn) and \
+				exists(GPs_fn) and exists(GP_DPR_fn):
 			continue
-		with open(join(directory, fn)) as f:
+		with open(AGG_fn) as f:
 			AGG = load(f)
 		DPR_game = sample_at_DPR(AGG, players, samples)
 		sample_game = sample_near_DPR(AGG, players, samples)
 		GPs = GP_learn(sample_game, samples/2)
 		GP_DPR_game = GP_DPR(sample_game, players, GPs)
-		with open(DPR_name, "w") as f:
+		with open(DPR_fn, "w") as f:
 			f.write(to_JSON_str(DPR_game))
-		with open(samples_name, "w") as f:
+		with open(samples_fn, "w") as f:
 			f.write(to_JSON_str(sample_game))
-		with open(GPs_name, "w") as f:
+		with open(GPs_fn, "w") as f:
 			dump(GPs,f)
-		with open(GP_DPR_name, "w") as f:
+		with open(GP_DPR_fn, "w") as f:
 			f.write(to_JSON_str(GP_DPR_game))
 
 
@@ -244,22 +240,19 @@ def regrets_experiment(folder):
 	game, then outputs those equilibria and their regrets in the corresponding
 	AGGs.
 	"""
-	p = ArgumentParser()
-	p.add_argument("folder", type=str, help="Base dir for DPR, GPS, samples.")
-	a = p.parse_args()
-
 	DPR_eq = []
 	GP_DPR_eq = []
 	GP_sample_eq = []
 
-	DPR_files = sorted(ls(join(a.folder, "DPR")))
-	samples_files = sorted(ls(join(a.folder, "samples")))
-	GP_files = sorted(ls(join(a.folder, "GPs")))
+	DPR_files = sorted(ls(join(folder, "DPR")))
+	samples_files = sorted(ls(join(folder, "samples")))
+	GP_files = sorted(ls(join(folder, "GPs")))
+	GP_DPR_files = sorted(ls(join(folder, "GP_DPR")))
 
 	for DPR_fn, sam_fn, GP_fn in zip(DPR_files, samples_files, GP_files):
-		DPR_game = read(join(a.folder, "DPR", DPR_fn))
-		samples_game = read(join(a.folder, "samples", sam_fn))
-		with open(join(a.folder, "GPs", GP_fn)) as f:
+		DPR_game = read(join(folder, "DPR", DPR_fn))
+		samples_game = read(join(folder, "samples", sam_fn))
+		with open(join(folder, "GPs", GP_fn)) as f:
 			GPs = load(f)
 		eq = mixed_nash(DPR_game)
 		DPR_eq.append(map(DPR_game.toProfile, eq))
@@ -268,11 +261,11 @@ def regrets_experiment(folder):
 		eq = GP_sampling_RD(samples_game, GPs)
 		GP_sample_eq.append(map(samples_game.toProfile, eq))
 
-	with open(join(a.folder, "DPR_eq.json"), "w") as f:
+	with open(join(folder, "DPR_eq.json"), "w") as f:
 		f.write(to_JSON_str(DPR_eq))
-	with open(join(a.folder, "GP_DPR_eq.json"), "w") as f:
+	with open(join(folder, "GP_DPR_eq.json"), "w") as f:
 		f.write(to_JSON_str(GP_DPR_eq))
-	with open(join(a.folder, "GP_sample_eq.json"), "w") as f:
+	with open(join(folder, "GP_sample_eq.json"), "w") as f:
 		f.write(to_JSON_str(GP_sample_eq))
 
 
@@ -282,14 +275,9 @@ def EVs_experiment(folder):
 	GP_sample created by learn_AGGs(), and computes expected values for a
 	number of mixed strategies in all four versions of the game.
 	"""
-	DPR_files = sorted(ls(join(folder, "DPR")))
-	samples_files = sorted(ls(join(folder, "samples")))
-	GP_files = sorted(ls(join(folder, "GPs")))
-	AGG_files = sorted(filter(lambda s: s.endswith(".pkl"), ls(folder)))
-
-	DPR_game = read(join(folder, "DPR", DPR_files[0]))
-	mixtures = DPR_game.biasedMixtures() + [DPR_game.uniformMixture()] +\
-				[DPR_game.randomMixture() for _ in range(100)]
+	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
+	mixtures = [DPR_game.uniformMixture()] +\
+				mixture_grid(DPR_game.strategies["All"])
 	with open(join(folder, "mixtures.json"), "w") as f:
 		f.write(to_JSON_str(mixtures))
 	with open(join(folder, "mixture_values.csv"), "w") as f:
@@ -301,15 +289,16 @@ def EVs_experiment(folder):
 		f.write(",".join("GP_sample EV " + s for s in \
 						DPR_game.strategies["All"]) + "\n")
 
-	for i, (DPR_fn, sam_fn, GP_fn, AGG_fn) in enumerate(zip(DPR_files, \
-									samples_files, GP_files, AGG_files)):
-		DPR_game = read(join(folder, "DPR", DPR_fn))
-		samples_game = read(join(folder, "samples", sam_fn))
-		with open(join(folder, "GPs", GP_fn)) as f:
-			GPs = load(f)
-		with open(join(folder, AGG_fn)) as f:
+	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn) in \
+										learned_files(folder):
+		with open(AGG_fn) as f:
 			AGG = load(f)
-		GP_DPR_game = GP_DPR(DPR_game, DPR_game.players, GPs)
+		DPR_game = read(DPR_fn)
+		samples_game = read(samples_fn)
+		with open(GPs_fn) as f:
+			GPs = load(f)
+		with open(GP_DPR_fn) as f:
+			GP_DPR_game = load(f)
 		for j,mix in enumerate(mixtures):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
@@ -318,6 +307,30 @@ def EVs_experiment(folder):
 			line.extend(GP_EVs(samples_game, mix, GPs))
 			with open(join(folder, "mixture_values.csv"), "a") as f:
 				f.write(",".join(map(str, line)) + "\n")
+
+
+def learned_files(folder):
+	for fn in sorted(filter(lambda s: s.endswith(".pkl"), ls(folder))):
+		AGG_fn = join(folder, fn)
+		DPR_fn = join(folder, "DPR", fn[:-4]+".json")
+		samples_fn = join(folder, "samples", fn[:-4]+".json")
+		GPs_fn = join(folder, "GPs", fn)
+		GP_DPR_fn = join(folder, "GP_DPR", fn[:-4]+".json")
+		yield AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn
+
+
+def mixture_grid(S, points=5, digits=1):
+	"""
+	Generate all choose(S, points) grid points in the simplex.
+
+	There must be a better way to do this!
+	"""
+	a = np.linspace(0, 1, points)
+	mixtures = set()
+	for p in filter(lambda x: abs(sum(x) - 1) < .5/points, CwR(a,S)):
+		for m in permutations(map(lambda x: round(x, digits), p)):
+			mixtures.add(h_array(m))
+	return sorted(mixtures)
 
 
 def main():
