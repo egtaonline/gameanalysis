@@ -216,7 +216,7 @@ def learn_AGGs(directory, players=2, samples=10):
 	for fn in sorted(filter(lambda s: s.endswith(".pkl"), ls(directory))):
 		DPR_name = join(directory, "DPR", fn[:-4]+".json")
 		samples_name = join(directory, "samples", fn[:-4]+".json")
-		GPs_name = join(directory, "GPs", fn), "w")
+		GPs_name = join(directory, "GPs", fn)
 		GP_DPR_name = join(directory, "GP_DPR", fn[:-4]+".json")
 		if exists(DPR_name) and exists(samples_name) and \
 				exists(GPs_name) and exists(GP_DPR_name):
@@ -231,7 +231,7 @@ def learn_AGGs(directory, players=2, samples=10):
 			f.write(to_JSON_str(DPR_game))
 		with open(samples_name, "w") as f:
 			f.write(to_JSON_str(sample_game))
-		with open(GPs_name) as f:
+		with open(GPs_name, "w") as f:
 			dump(GPs,f)
 		with open(GP_DPR_name, "w") as f:
 			f.write(to_JSON_str(GP_DPR_game))
