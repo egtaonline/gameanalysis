@@ -137,22 +137,25 @@ from GameIO import to_JSON_str, io_parser
 
 def main():
 	parser = io_parser()
-	parser.add_argument("--strategies", type=int, nargs='*', default=[], help=\
-						"If this parameter is non-empty, a subgame with the "
-						"specified strategies will be extracted. Strategies "
-						"should be listed in order by index starting from 0. "
-						"A strategy's index is its position in a list of all "
-						"strategies sorted alphabetically by role and sub-"
-						"sorted alphabetically by strategy name. For example "
-						"if role r1 has strategies s1,s2,s2 and role r2 has "
-						"strategies s1,s2, then the subgame with all but the "
-						"last strategy for each role is extracted by "
-						"'./Subgames.py --strategies 0 1 3'.")
 	parser.description = "Detect all complete subgames in a partial game."
+	parser.add_argument("--strategies", type=int, nargs='*', default=[], help=\
+			"""If this parameter is non-empty, a subgame with the specified 
+			strategies will be extracted. Strategies should be listed in order 
+			by index starting from 0. A strategy's index is its position in a 
+			list of all strategies sorted alphabetically by role and sub-
+			sorted alphabetically by strategy name. For example if role r1 has 
+			strategies s1,s2,s2 and role r2 has strategies s1,s2, then the 
+			subgame with all but the last strategy for each role is extracted 
+			by './Subgames.py --strategies 0 1 3'.""")
+	parser.add_argument("--full", action="store_true", help="Output games "+\
+			"instead of role:strategy mappings.")
 	args = parser.parse_args()
 	if args.strategies == []:
-		print to_JSON_str(map(lambda s: subgame(args.input, s), \
-						cliques(args.input)))
+		c = cliques(args.input)
+		if args.full:
+			print to_JSON_str([subgame(args.input, s) for s in c])
+		else:
+			print to_JSON_str(c)
 	else:
 		game = args.input
 		strategies = {r:[] for r in game.roles}
