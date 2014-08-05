@@ -2,6 +2,7 @@
 
 from HashableClasses import h_dict
 from RoleSymmetricGame import SampleGame, PayoffData
+from GameIO import read
 
 def translate(arr, source_game, target_game):
 	"""
@@ -137,37 +138,67 @@ from GameIO import to_JSON_str, io_parser
 
 def main():
 	parser = io_parser()
-	parser.description = "Detect all complete subgames in a partial game."
-	parser.add_argument("--strategies", type=int, nargs='*', default=[], help=\
-			"""If this parameter is non-empty, a subgame with the specified 
-			strategies will be extracted. Strategies should be listed in order 
-			by index starting from 0. A strategy's index is its position in a 
-			list of all strategies sorted alphabetically by role and sub-
-			sorted alphabetically by strategy name. For example if role r1 has 
-			strategies s1,s2,s2 and role r2 has strategies s1,s2, then the 
-			subgame with all but the last strategy for each role is extracted 
-			by './Subgames.py --strategies 0 1 3'.""")
-	parser.add_argument("--full", action="store_true", help="Output games "+\
-			"instead of role:strategy mappings.")
+	parser.description = "Detect all complete subgames in a partial game or "+\
+						"extract specific subgames."
+	parser.add_argument("mode", choices=["detect","extract"], help="If mode "+\
+			"is set to detect, all complete subgames will be found, and the "+\
+			"output will be a JSON list of role:[strategies] maps "+\
+			"enumerating the complete subgames. If mode is set to extract, "+\
+			"then the output will be a JSON representation of a game or a "+\
+			"list of games with the specified subsets of strategies.")
+	parser.add_argument("-k", metavar="known_subgames", type=str, default="", \
+			help="In 'detect' mode: file containing known complete subgames "+\
+			"from a prior run. If available, this will often speed up the "+\
+			"clique-finding algorithm.")
+	parser.add_argument("--full", action="store_true", help="In 'detect' "+\
+			"mode: setting this flag causes the script to output games "+\
+			"instead of role:strategy maps.")
+	parser.add_argument("-f", metavar="strategies file", type=str, default="", \
+			help="In 'extract' mode: JSON file with role:[strategies] map(s) "+\
+			"of subgame(s) to extract. The file should have the same format "+\
+			"as the output of detect mode (or to extract just one subgame, "+\
+			"a single map instead of a list of them).")
+	parser.add_argument("-s", type=int, nargs='*', default=[], help="In "+\
+			"'extract' mode: a list of strategy indices to extract. A "+\
+			"strategy is specified by its zero-indexed position in a list "+\
+			"of all strategies sorted alphabetically by role and sub-sorted "+\
+			"alphabetically by strategy name. For example if role r1 has "+\
+			"strategies s1,s2,s2 and role r2 has strategies s1,s2, then the "+\
+			"subgame with all but the last strategy for each role is "+\
+			"extracted by './Subgames.py extract -s 0 1 3'. Ignored if -f "+\
+			"is also specified.")
 	args = parser.parse_args()
-	if args.strategies == []:
-		c = cliques(args.input)
-		if args.full:
-			print to_JSON_str([subgame(args.input, s) for s in c])
+	game = args.input
+
+	if args.mode == "detect":
+		if args.k != "":
+			known = read(args.k)
 		else:
-			print to_JSON_str(c)
+			known = []
+		subgames = cliques(game, known)
+		if args.full:
+			subgames = [subgame(game,s) for s in subgames]
 	else:
-		game = args.input
-		strategies = {r:[] for r in game.roles}
-		l = 0
-		i = 0
-		for r in game.roles:
-			while(i < len(args.strategies) and args.strategies[i] < \
-											l + len(game.strategies[r])):
-				strategies[r].append(game.strategies[r][args.strategies[i]-l])
-				i += 1
-			l += len(game.strategies[r])
-		print to_JSON_str(subgame(args.input, strategies))
+		if args.f != "":
+			strategies = read(args.f)
+		elif len(args.s) > 0:
+			strategies = {r:[] for r in game.roles}
+			l = 0
+			i = 0
+			for r in game.roles:
+				while i < len(args.s) and args.s[i] < l + \
+									len(game.strategies[r]):
+					strategies[r].append(game.strategies[r][args.s[i]-l])
+					i += 1
+				l += len(game.strategies[r])
+			strategies = [strategies]
+		else:
+			raise IOError("Please specify either -f or -s for extract mode.")
+		subgames = [subgame(game, s) for s in strategies]
+		if len(subgames) == 1:
+			subgames = subgames[0]
+
+	print to_JSON_str(subgames)
 
 
 if __name__ == "__main__":
