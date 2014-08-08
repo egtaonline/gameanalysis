@@ -22,20 +22,18 @@ from ActionGraphGame import local_effect_AGG, Noisy_AGG
 from GameIO import to_JSON_str, read
 from itertools import combinations_with_replacement as CwR, permutations
 
-def GP_learn(game, var_thresh=10):
+def GP_learn(game):
 	"""
 	Create a GP regression for each role and strategy.
 
 	Parameters:
 	game:		RoleSymmetricGame.SampleGame object with enough data to
 				estimate payoff functions.
-	var_thresh:	minimum observations before a profile's variance is estimated.
 	"""
 	x = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
 	y = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
 	GPs = {r:{s:None for s in game.strategies[r]} for r in game.roles}
 
-	var = []
 	for p in range(len(game)):
 		c = prof2vec(game, game.counts[p])
 		for r,role in enumerate(game.roles):
@@ -43,21 +41,17 @@ def GP_learn(game, var_thresh=10):
 				if game.counts[p][r][s] > 0:
 					try: #try will work on RSG.SampleGame
 						samples = game.sample_values[p][r,s]
-						if len(samples) >= var_thresh:
-							var.append(np.var(samples))
 						for i in range(len(samples)):
 							x[role][strat].append(c + \
-									np.random.normal(0,1e-8,c.shape))
+									np.random.normal(0,1e-6,c.shape))
 						y[role][strat].extend(samples)
 					except AttributeError: #except will work on RSG.Game
 						x[role][strat].append(c)
 						y[role][strat].append(game.values[p][r,s])
-	var = average(var)
 
 	for role in game.roles:
 		for strat in game.strategies[role]:
-			gp = GaussianProcess(storage_mode='light', normalize=False, \
-								nugget=var, random_start=10)
+			gp = GaussianProcess(storage_mode='light', theta0=10)
 			gp.fit(x[role][strat], y[role][strat])
 			GPs[role][strat] = gp
 	return GPs
@@ -220,9 +214,9 @@ def learn_AGGs(folder, players=2, samples=10):
 			continue
 		with open(AGG_fn) as f:
 			AGG = load(f)
-		DPR_game = sample_at_DPR(AGG, players, samples)
+		DPR_game = DPR(sample_at_DPR(AGG, players, samples), players)
 		sample_game = sample_near_DPR(AGG, players, samples)
-		GPs = GP_learn(sample_game, samples/2)
+		GPs = GP_learn(sample_game)
 		GP_DPR_game = GP_DPR(sample_game, players, GPs)
 		with open(DPR_fn, "w") as f:
 			f.write(to_JSON_str(DPR_game))
@@ -244,30 +238,41 @@ def regrets_experiment(folder):
 	DPR_eq = []
 	GP_DPR_eq = []
 	GP_sample_eq = []
+	DPR_regrets = []
+	GP_DPR_regrets = []
+	GP_sample_regrets = []
 
-	DPR_files = sorted(ls(join(folder, "DPR")))
-	samples_files = sorted(ls(join(folder, "samples")))
-	GP_files = sorted(ls(join(folder, "GPs")))
-	GP_DPR_files = sorted(ls(join(folder, "GP_DPR")))
-
-	for DPR_fn, sam_fn, GP_fn in zip(DPR_files, samples_files, GP_files):
-		DPR_game = read(join(folder, "DPR", DPR_fn))
-		samples_game = read(join(folder, "samples", sam_fn))
-		with open(join(folder, "GPs", GP_fn)) as f:
+	for AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn in learned_files(folder):
+		with open(AGG_fn) as f:
+			AGG = load(f)
+		DPR_game = read(DPR_fn)
+		samples_game = read(samples_fn)
+		with open(GPs_fn) as f:
 			GPs = load(f)
+		GP_DPR_game = read(GP_DPR_fn)
+
 		eq = mixed_nash(DPR_game)
-		DPR_eq.append(map(DPR_game.toProfile, eq))
-		eq = mixed_nash(GP_DPR(samples_game, DPR_game.players, GPs))
+		DPR_eq.append(map(samples_game.toProfile, eq))
+		DPR_regrets.append([AGG.regret(e[0]) for e in eq])
+		eq = mixed_nash(GP_DPR_game)
 		GP_DPR_eq.append(map(samples_game.toProfile, eq))
+		GP_DPR_regrets.append([AGG.regret(e[0]) for e in eq])
 		eq = GP_sampling_RD(samples_game, GPs)
 		GP_sample_eq.append(map(samples_game.toProfile, eq))
+		GP_sample_regrets.append([AGG.regret(e[0]) for e in eq])
 
 	with open(join(folder, "DPR_eq.json"), "w") as f:
 		f.write(to_JSON_str(DPR_eq))
+	with open(join(folder, "DPR_regrets.json"), "w") as f:
+		f.write(to_JSON_str(DPR_regrets))
 	with open(join(folder, "GP_DPR_eq.json"), "w") as f:
 		f.write(to_JSON_str(GP_DPR_eq))
+	with open(join(folder, "GP_DPR_regrets.json"), "w") as f:
+		f.write(to_JSON_str(GP_DPR_regrets))
 	with open(join(folder, "GP_sample_eq.json"), "w") as f:
 		f.write(to_JSON_str(GP_sample_eq))
+	with open(join(folder, "GP_sample_regrets.json"), "w") as f:
+		f.write(to_JSON_str(GP_sample_regrets))
 
 
 def EVs_experiment(folder):
@@ -276,6 +281,7 @@ def EVs_experiment(folder):
 	GP_sample created by learn_AGGs(), and computes expected values for a
 	number of mixed strategies in all four versions of the game.
 	"""
+	print join(folder, "DPR", ls(join(folder, "DPR"))[0])
 	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
 	mixtures = [DPR_game.uniformMixture()] +\
 				mixture_grid(len(DPR_game.strategies["All"]))
@@ -349,8 +355,8 @@ def main():
 				"Samples drawn per DPR profile. Only for 'games' mode.")
 	a = p.parse_args()
 	if a.mode == "games":
-		assert a.players > 0 and a.samples > 0
-		learn_AGGs(a.folder, a.players, a.samples)
+		assert a.p > 0 and a.s > 0
+		learn_AGGs(a.folder, a.p, a.s)
 	elif a.mode == "regrets":
 		regrets_experiment(a.folder)
 	elif a.mode =="EVs":
