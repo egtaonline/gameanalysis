@@ -90,8 +90,8 @@ def main(args):
 			print "    " + role + ":", ", ".join(map(lambda pair: \
 					str(pair[1]) + "x " + str(pair[0]), mrp[role].items()))
 
-	if args.g != "":
-		subgames = read(args.g)
+	if args.sg != "":
+		subgames = read(args.sg)
 		print "\n\n" + str(len(subgames)), "subgame" + \
 					("s" if len(subgames) > 1 else "") + "\n"
 	else:
@@ -100,7 +100,7 @@ def main(args):
 	#mixed strategy Nash equilibrium search
 	for i, sg_strat in enumerate(subgames):
 		sg = subgame(rational_game, sg_strat)
-		if args.g != "":
+		if args.sg != "":
 			print "\nsubgame "+str(i+1)+":\n", "\n".join(map(lambda x: x[0] + \
 					":\n\t\t" + "\n\t\t".join(x[1]), sorted( \
 					sg.strategies.items()))).expandtabs(4)
@@ -131,7 +131,7 @@ def main(args):
 						support[role].append(strategy)
 						print "    " + strategy + ": " + str(round(100 * \
 								full_eq[k][l], 2)) + "%"
-			if args.g != "":
+			if args.sg != "":
 				print "best responses:"
 				for role in input_game.roles:
 					deviation_support = deepcopy(support)
