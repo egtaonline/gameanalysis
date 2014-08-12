@@ -121,11 +121,19 @@ def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
 def GP_EVs(game, mix, GPs, samples=100):
 	"""Mimics game.ExpectedValues via sampling from the GPs."""
 	EVs = game.zeros()
-	for prof in sample_profiles(game, mix, samples):
-		for r,role in enumerate(game.roles):
-			for s,strat in enumerate(game.strategies[role]):
-				EVs[r,s] += GPs[role][strat].predict(prof2vec(game,prof))
-	EVs /= samples
+	profs = [prof2vec(game, p) for p in sample_profiles(game, mix, samples)]
+	for r,role in enumerate(game.roles):
+		for s,strat in enumerate(game.strategies[role]):
+			EVs[r,s] = GPs[role][strat].predict(profs).mean()
+	return EVs
+
+
+def GP_point(GPs, mix, players):
+	prof = mix * players
+	EVs = np.zeros(mix.shape)
+	for r,role in enumerate(sorted(GPs)):
+		for s,strat in enumerate(sorted(GPs[role])):
+			EVs[r,s] = GPs[role][strat].predict(prof)
 	return EVs
 
 
@@ -278,8 +286,9 @@ def regrets_experiment(folder):
 def EVs_experiment(folder):
 	"""
 	Takes a folder filled with AGGs, plus the sub-folders for DPR, GP_DPR, and
-	GP_sample created by learn_AGGs(), and computes expected values for a
-	number of mixed strategies in all four versions of the game.
+	GPs created by learn_AGGs(), and computes expected values for a number of
+	mixed strategies in the full game, in the DPR game and using several
+	different methods to extract EVs from the GPs.
 	"""
 	print join(folder, "DPR", ls(join(folder, "DPR"))[0])
 	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
@@ -287,13 +296,16 @@ def EVs_experiment(folder):
 				mixture_grid(len(DPR_game.strategies["All"]))
 	with open(join(folder, "mixtures.json"), "w") as f:
 		f.write(to_JSON_str(mixtures))
-	with open(join(folder, "mixture_values.csv"), "w") as f:
+	out_file = join(folder, "mixture_values.csv")
+	with open(out_file, "w") as f:
 		f.write("game,mixture,")
 		f.write(",".join("AGG EV "+s for s in DPR_game.strategies["All"])+",")
 		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
 		f.write(",".join("GP_DPR EV " + s for s in \
 						DPR_game.strategies["All"]) + ",")
 		f.write(",".join("GP_sample EV " + s for s in \
+						DPR_game.strategies["All"]) + ",")
+		f.write(",".join("GP_point value " + s for s in \
 						DPR_game.strategies["All"]) + "\n")
 
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn) in \
@@ -311,7 +323,8 @@ def EVs_experiment(folder):
 			line.extend(DPR_game.expectedValues(mix)[0])
 			line.extend(GP_DPR_game.expectedValues(mix)[0])
 			line.extend(GP_EVs(samples_game, mix, GPs)[0])
-			with open(join(folder, "mixture_values.csv"), "a") as f:
+			line.extend(GP_point(GPs, mix, AGG.players)[0])
+			with open(out_file, "a") as f:
 				f.write(",".join(map(str, line)) + "\n")
 
 
