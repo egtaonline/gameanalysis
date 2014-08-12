@@ -37,7 +37,8 @@ def full_prof_sym(HR_profile, N):
 	if N < 2:
 		return HR_profile
 	n = sum(HR_profile.values())
-	full_profile = {s : c * N / n  for s,c in HR_profile.items()}
+	full_profile = {s : (c * N / n) if n > 0 else N for s,c in \
+					HR_profile.items()}
 	if sum(full_profile.values()) == N:
 		return full_profile
 
