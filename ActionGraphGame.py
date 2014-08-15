@@ -134,7 +134,6 @@ class Noisy_AGG(Sym_AGG):
 		return g
 
 
-
 def local_effect_AGG(N, S, D_min=0, D_max=-1, noise=100, self_mean=[0,-4,-2], \
 				self_var=[4,2,1], other_mean=[0,0,0], other_var=[tiny,2,1]):
 	"""
@@ -181,6 +180,43 @@ def local_effect_AGG(N, S, D_min=0, D_max=-1, noise=100, self_mean=[0,-4,-2], \
 				u[prof] = 0
 				for n,c in prof.iteritems():
 					u[prof] += sum(c**np.arange(3) * local_effects[n])
+		utilities[strat] = u
+	return Noisy_AGG(N, action_graph, utilities, noise)
+
+
+def uniform_AGG(N, S, D_min=0, D_max=-1, noise=100, min_payoff=-100, \
+				max_payoff=100):
+	"""
+	Creates an AGG with payoff values drawn from a uniform distribution.
+
+	parameters:
+	N			number of players
+	S			number of strategies
+	D_min		minimum action-graph degree (default=0)
+	D_max		maximum action-graph degree (default=S)
+	min_payoff	min value for uniform payoff draws
+	max_payoff	max value for uniform payoff draws
+	noise		noise variance
+	"""
+	if D_min < 0 or D_min >= S:
+		D_min = 0
+	if D_max < 0 or D_max >= S:
+		D_max = S-1
+	strategies = ["s"+str(i) for i in range(S)]
+	action_graph = {}
+	utilities = {}
+	for s,strat in enumerate(strategies):
+		num_neighbors = np.random.randint(D_min, D_max+1)
+		neighbors = sorted(sample(strategies[:s] + strategies[s+1:],\
+										num_neighbors) + [strat])
+		action_graph[strat] = neighbors
+		u = {}
+		for i in range(N):
+			for strats in CwR(neighbors, i):
+				counts = {n:strats.count(n) for n in neighbors if n in strats}
+				counts[strat] = counts.get(strat,0) + 1
+				prof = h_dict(counts)
+				u[prof] = np.random.uniform(min_payoff, max_payoff)
 		utilities[strat] = u
 	return Noisy_AGG(N, action_graph, utilities, noise)
 
