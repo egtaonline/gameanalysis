@@ -223,6 +223,8 @@ def uniform_AGG(N, S, D_min=0, D_max=-1, noise=100, min_payoff=-100, \
 
 def parse_args():
 	p = ArgumentParser(description="Generate random action graph games.")
+	p.add_argument("type", type=str, options=["LEG", "uniform"], help=\
+				"Select game class: local effect game or uniform AGG.")
 	p.add_argument("folder", type=str, help="Folder to put games in.")
 	p.add_argument("count", type=int, help="Number of games to create.")
 	p.add_argument("players", type=int, help="Number of players.")
@@ -238,11 +240,15 @@ def parse_args():
 def main():
 	a = parse_args()
 	for i in range(a.count):
-		g = local_effect_AGG(a.players, a.strategies, a.min_neighbors, \
+		if args.type == "LEG":
+			g = local_effect_AGG(a.players, a.strategies, a.min_neighbors, \
 							a.max_neighbors, a.noise)
-		folder = join(a.folder, "LEG_" + reduce(lambda x,y:str(x)+"-"+str(y), \
-				[a.players, a.strategies, a.min_neighbors, a.max_neighbors, \
-				int(a.noise)]))
+		elif args.type == "uniform":
+				g = uniform_AGG(a.players, a.strategies, a.min_neighbors, \
+							a.max_neighbors, a.noise)
+		folder = join(a.folder, a.type+"_"+ reduce(lambda x,y:str(x) +"-"+ \
+				str(y), [a.players, a.strategies, a.min_neighbors, \
+				a.max_neighbors, int(a.noise)]))
 		if not exists(folder):
 			mkdir(folder)
 		with open(join(folder, leading_zeros(i,a.count-1) + ".pkl"), "w") as f:
