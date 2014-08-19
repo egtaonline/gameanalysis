@@ -176,8 +176,12 @@ def sample_at_DPR(AGG, players, samples=10):
 	g = RSG.SampleGame(["All"], {"All":AGG.players}, {"All":AGG.strategies})
 	for prof in DPR_profiles(g, {"All":players}):
 		values = AGG.sample(prof["All"], samples)
-		g.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
-								s,c in prof["All"].iteritems()]})
+		if all(hasattr(v,"__len__") for v in values.values()):
+			g.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
+									s,c in prof["All"].iteritems()]})
+		else: #only necessary because of old Noisy_AGGs returning non-lists
+			g.addProfile({"All":[RSG.PayoffData(s,c,[values[s]]) for \
+									s,c in prof["All"].iteritems()]})
 	return g
 
 
@@ -189,7 +193,7 @@ def sample_near_DPR(AGG, players, samples=10):
 
 	for prof in DPR_profiles(g, {"All":players}):
 		counts = np.array([prof["All"].get(s,0) for s in AGG.strategies])
-		for i in range(samples):
+		for i in range(max(1,samples)):
 			rp = np.random.multinomial(AGG.players, counts / float(AGG.players))
 			rp = filter(lambda p:p[1], zip(AGG.strategies,rp))
 			rp = RSG.Profile({"All":dict(rp)})
