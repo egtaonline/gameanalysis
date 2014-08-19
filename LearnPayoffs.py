@@ -364,11 +364,12 @@ def main():
 	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
 	p.add_argument("-p", type=int, default=0, help=\
 				"Number of players in DPR game. Only for 'games' mode.")
-	p.add_argument("-s", type=int, default=0, help=\
-				"Samples drawn per DPR profile. Only for 'games' mode.")
+	p.add_argument("-s", type=int, default=-1, help=\
+				"Samples drawn per DPR profile. Only for 'games' mode. Set "+\
+				"to 0 for exact values.")
 	a = p.parse_args()
 	if a.mode == "games":
-		assert a.p > 0 and a.s > 0
+		assert a.p > 0 and a.s > -1
 		learn_AGGs(a.folder, a.p, a.s)
 	elif a.mode == "regrets":
 		regrets_experiment(a.folder)
