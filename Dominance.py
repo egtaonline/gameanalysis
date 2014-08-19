@@ -121,7 +121,7 @@ from GameIO import to_JSON_str, io_parser
 def parse_args():
 	parser = io_parser()
 	parser.add_argument("-o", metavar="OUTPUT FORMAT", choices=["game",\
-			"strategies"], default="strategies", help="'game' outputs a JSON "+\
+			"strategies"], default="game", help="'game' outputs a JSON "+\
 			"representation of the game after IEDS; 'strategies' outputs a "+\
 			"mapping of roles to eliminated strategies. Default=strategies")
 	parser.add_argument("-c", metavar="CRITERION", choices=["PSD","MSD","NBR"],\
