@@ -110,7 +110,7 @@ class Noisy_AGG(Sym_AGG):
 			i = self.indices[strat][h_dict(p)]
 			val = self.values[strat][i]
 			if count == 0:
-				noisy_vals[strat] = val
+				noisy_vals[strat] = [val]
 			else:
 				noisy_vals[strat] = val + np.random.normal(0,self.sigma,count)
 		return noisy_vals
