@@ -120,28 +120,34 @@ from GameIO import to_JSON_str, io_parser
 
 def parse_args():
 	parser = io_parser()
-	parser.add_argument("-type", choices=["PSD", "MSD", "NBR"], default = \
-			"PSD", help="Dominance criterion: PSD = pure-strategy dominance;"+\
-			" MSD = mixed-strategy dominance; NBR = never-best-response. " +\
-			"Default = PSD.")
-	parser.add_argument("-cond", choices=[0,1,2], default=1, help= "0 = " +\
-			"unconditional, 1 = conditional, 2 = conservative. Default = 1.")
-	parser.add_argument("--weak", action="store_true")
+	parser.add_argument("-o", metavar="OUTPUT FORMAT", choices=["game",\
+			"strategies"], default="strategies", help="'game' outputs a JSON "+\
+			"representation of the game after IEDS; 'strategies' outputs a "+\
+			"mapping of roles to eliminated strategies. Default=strategies")
+	parser.add_argument("-c", metavar="CRITERION", choices=["PSD","MSD","NBR"],\
+			default="PSD", help="Dominance criterion: PSD = pure-strategy "+\
+			"dominance; MSD = mixed-strategy dominance; NBR = never-best-"+\
+			"response. Default=PSD")
+	parser.add_argument("-m", metavar="MISSING", choices=[0,1,2], default=1, \
+			help= "Method to handle missing data: 0 = unconditional "+\
+			"dominance, 1 = conditional dominance, 2 = conservative. Default=1")
+	parser.add_argument("--weak", action="store_true", help="If the 'weak' "+\
+			"flag is set, strategies are eliminated even if they are only "+\
+			"weakly dominated.")
 	return parser.parse_args()
 
 
 def main():
 	args = parse_args()
-	if args.type == "PSD":
-		rgame = iterated_elimination(args.input, pure_strategy_dominance, \
-				conditional=args.cond)
-	elif args.type == "MSD":
-		rgame = iterated_elimination(args.input, mixed_strategy_dominance, \
-				conditional=args.cond, weak=args.weak)
-	elif args.type == "NBR":
-		rgame = iterated_elimination(args.input, never_best_response, \
-				conditional=args.cond, weak=args.weak)
-	print to_JSON_str(rgame)
+	criteria = {"PSD":pure_strategy_dominance, "MSD":mixed_strategy_dominance,\
+				"NBR":never_best_response}
+	g = iterated_elimination(args.input, criteria[args.c], conditional=args.m)
+	if args.o == "strategies":
+		eliminated = {r:sorted(set(args.input.strategies[r]) - \
+						set(g.strategies[r])) for r in g.roles}
+		print to_JSON_str(eliminated)
+	else:
+		print to_JSON_str(g)
 
 
 if __name__ == "__main__":
