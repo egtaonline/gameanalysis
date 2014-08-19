@@ -71,7 +71,7 @@ def main(args):
 	print "\n\n"
 
 	#dominated strategies
-	if args.nd!= "":
+	if args.nd != "":
 		rational_game = read(args.nd)
 		eliminated = {r:sorted(set(input_game.strategies[r]) - set( \
 					rational_game.strategies[r])) for r in input_game.roles}
@@ -80,8 +80,10 @@ def main(args):
 			for r in rational_game.roles:
 				if eliminated[r]:
 					print r, ":", ", ".join(eliminated[r])
+		else:
+			print "no dominated strategies found"
 	else:
-		print "no dominated strategies found"
+		rational_game = input_game
 
 	#pure strategy Nash equilibrium search
 	pure_equilibria = pure_nash(rational_game, args.r)
