@@ -8,12 +8,6 @@ from BasicFunctions import one_line
 from RoleSymmetricGame import is_mixed_profile, is_pure_profile, is_mixture_array, is_profile_array, Profile
 
 def regret(game, prof, role=None, strategy=None, deviation=None, bound=True):
-	if role == None and len(game.roles) == 1:
-		role = game.roles[0] #in symmetric games we can deduce the role
-	elif role == None:
-		return max(regret(game, prof, r, strategy, deviation, bound) for \
-				r in game.roles)
-
 	if is_pure_profile(prof):
 		return profile_regret(game, prof, role, strategy, deviation, bound)
 	elif is_mixture_array(prof):
@@ -23,11 +17,16 @@ def regret(game, prof, role=None, strategy=None, deviation=None, bound=True):
 	elif is_profile_array(prof):
 		return profile_regret(game, game.toProfile(prof), role, strategy, \
 				deviation, bound)
-
 	raise TypeError(one_line("unrecognized profile type: " + str(prof), 69))
 
 
-def profile_regret(game, prof, role, strategy, deviation, bound):
+def profile_regret(game, prof, role=None, strategy=None, deviation=None, \
+					bound=None):
+	if role == None and len(game.roles) == 1:
+		role = game.roles[0] #in symmetric games we can deduce the role
+	elif role == None:
+		return max(profile_regret(game, prof, r, strategy, deviation, \
+					bound) for r in game.roles)
 	if strategy == None:
 		return max([profile_regret(game, prof, role, s, deviation, bound) for \
 				s in prof[role]])
@@ -46,7 +45,12 @@ def profile_regret(game, prof, role, strategy, deviation, bound):
 		return -float("inf") if bound else float("inf")
 
 
-def mixture_regret(game, mix, role, deviation, bound):
+def mixture_regret(game, mix, role=None, deviation=None, bound=None):
+	if role == None and len(game.roles) == 1:
+		role = game.roles[0] #in symmetric games we can deduce the role
+	elif role == None:
+		return max(mixture_regret(game, mix, r, deviation, bound) for \
+					r in game.roles)
 	if deviation == None:
 		return max(mixture_regret(game, mix, role, d, bound) for d in \
 				game.strategies[role])
