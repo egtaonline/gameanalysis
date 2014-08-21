@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import multinomial
 from itertools import repeat
 from os import listdir as ls, mkdir
 from os.path import join, exists
@@ -57,7 +58,7 @@ def GP_learn(game):
 	return GPs
 
 
-def GP_DPR(game, players, GPs=None):
+def GP_DPR(game, players, GPs):
 	"""
 	Estimate equilibria of a DPR game from GP regression models.
 	"""
@@ -65,8 +66,6 @@ def GP_DPR(game, players, GPs=None):
 		players = {game.roles[0]:players}
 	elif isinstance(players, list):
 		players = dict(zip(game.roles, players))
-	if GPs == None:
-		GPs = GP_learn(game)
 
 	learned_game = RSG.Game(game.roles, players, game.strategies)
 	for prof in learned_game.allProfiles():
@@ -83,15 +82,14 @@ def GP_DPR(game, players, GPs=None):
 	return learned_game
 
 
-def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
+def GP_sampling_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
 					random_restarts=0, at_least_one=False, iters=1000, \
-					converge_thresh=1e-6, ev_samples=100):
+					converge_thresh=1e-6, ev_samples=1000):
 	"""
 	Estimate equilibria with RD using random samples from GP regression models.
-	"""
-	if GPs == None:
-		GPs = GP_learn(game)
 
+	WARNING: by calling GP_EVs, this assumes that the game is symmetric.
+	"""
 	candidates = []
 	regrets = {}
 	for mix in game.biasedMixtures() + [game.uniformMixture() ]+ \
@@ -118,13 +116,17 @@ def GP_sampling_RD(game, GPs=None, regret_thresh=1e-2, dist_thresh=1e-3, \
 	return equilibria
 
 
-def GP_EVs(game, mix, GPs, samples=100):
-	"""Mimics game.ExpectedValues via sampling from the GPs."""
-	EVs = game.zeros()
-	profs = [prof2vec(game, p) for p in sample_profiles(game, mix, samples)]
-	for r,role in enumerate(game.roles):
-		for s,strat in enumerate(game.strategies[role]):
-			EVs[r,s] = GPs[role][strat].predict(profs).mean()
+def GP_EVs(game, mix, GPs, samples=1000):
+	"""
+	Mimics game.ExpectedValues via sampling from the GPs.
+
+	WARNING: assumes that the game is symmetric!
+	"""
+	r = game.roles[0]
+	p = game.players[r]
+	EVs = []
+	for s in game.strategies[r]:
+		EVs.append(GPs[r][s].predict(multinomial(p, mix[0], samples)).mean())
 	return EVs
 
 
@@ -135,26 +137,6 @@ def GP_point(GPs, mix, players):
 		for s,strat in enumerate(sorted(GPs[role])):
 			EVs[r,s] = GPs[role][strat].predict(prof)
 	return EVs
-
-
-def sample_profiles(game, mix, count=1):
-	"""
-	Gives a list of pure-strategy profiles sampled from mix.
-
-	Profiles returned are not necessarily unique.
-	"""
-	profiles = []
-	for _ in range(count):
-		prof = {}
-		for r,role in enumerate(game.roles):
-			prof[role] = {}
-			rp = np.random.multinomial(game.players[role], mix[r][:\
-												game.numStrategies[r]])
-			for strat,count in zip(game.strategies[role], rp):
-				if count > 0:
-					prof[role][strat] = count
-		profiles.append(RSG.Profile(prof))
-	return profiles
 
 
 def prof2vec(game, prof):
