@@ -276,7 +276,6 @@ def EVs_experiment(folder):
 	mixed strategies in the full game, in the DPR game and using several
 	different methods to extract EVs from the GPs.
 	"""
-	print join(folder, "DPR", ls(join(folder, "DPR"))[0])
 	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
 	mixtures = [DPR_game.uniformMixture()] +\
 				mixture_grid(len(DPR_game.strategies["All"]))
