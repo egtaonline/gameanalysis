@@ -11,6 +11,7 @@ import warnings
 warnings.formatwarning = lambda msg, *args: "warning: " + str(msg) + "\n"
 try:
 	from sklearn.gaussian_process import GaussianProcess
+	from sklearn.grid_search import GridSearchCV
 except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
@@ -23,7 +24,7 @@ from ActionGraphGame import local_effect_AGG, Noisy_AGG
 from GameIO import to_JSON_str, read
 from itertools import combinations_with_replacement as CwR, permutations
 
-def GP_learn(game):
+def GP_learn(game, cross_validate=False):
 	"""
 	Create a GP regression for each role and strategy.
 
@@ -52,9 +53,19 @@ def GP_learn(game):
 
 	for role in game.roles:
 		for strat in game.strategies[role]:
-			gp = GaussianProcess(storage_mode='light', theta0=10)
-			gp.fit(x[role][strat], y[role][strat])
-			GPs[role][strat] = gp
+			if cross_validate:
+				gp = GaussianProcess(storage_mode='light', random_start=3, \
+									thetaL=1e-4, thetaU=1e9, normalize=True)
+				params = {"corr":["absolute_exponential","squared_exponential",\
+						"cubic","linear"], "nugget":[1e-14,1e-10,1e-6,.01,1,\
+						100,1e4]}
+				cv = GridSearchCV(gp, params)
+				cv.fit(x[role][strat], y[role][strat])
+				GPs[role][strat] = cv.best_estimator_
+			else:
+				gp = GaussianProcess(storage_mode='light', theta0=10)
+				gp.fit(x[role][strat], y[role][strat])
+				GPs[role][strat] = gp
 	return GPs
 
 
@@ -127,7 +138,7 @@ def GP_EVs(game, mix, GPs, samples=1000):
 	EVs = []
 	for s in game.strategies[r]:
 		EVs.append(GPs[r][s].predict(multinomial(p, mix[0], samples)).mean())
-	return EVs
+	return np.array([EVs])
 
 
 def GP_point(GPs, mix, players):
@@ -210,7 +221,7 @@ def learn_AGGs(folder, players=2, samples=10):
 			AGG = load(f)
 		DPR_game = DPR(sample_at_DPR(AGG, players, samples), players)
 		sample_game = sample_near_DPR(AGG, players, samples)
-		GPs = GP_learn(sample_game)
+		GPs = GP_learn(sample_game, True)
 		GP_DPR_game = GP_DPR(sample_game, players, GPs)
 		with open(DPR_fn, "w") as f:
 			f.write(to_JSON_str(DPR_game))
@@ -285,9 +296,9 @@ def EVs_experiment(folder):
 	with open(out_file, "w") as f:
 		f.write("game,mixture,")
 		f.write(",".join("AGG EV "+s for s in DPR_game.strategies["All"])+",")
-		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
-		f.write(",".join("GP_DPR EV " + s for s in \
-						DPR_game.strategies["All"]) + ",")
+#		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
+#		f.write(",".join("GP_DPR EV " + s for s in \
+#						DPR_game.strategies["All"]) + ",")
 		f.write(",".join("GP_sample EV " + s for s in \
 						DPR_game.strategies["All"]) + ",")
 		f.write(",".join("GP_point value " + s for s in \
@@ -297,16 +308,16 @@ def EVs_experiment(folder):
 								enumerate(learned_files(folder)):
 		with open(AGG_fn) as f:
 			AGG = load(f)
-		DPR_game = read(DPR_fn)
+#		DPR_game = read(DPR_fn)
 		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
 			GPs = load(f)
-		GP_DPR_game = read(GP_DPR_fn)
+#		GP_DPR_game = read(GP_DPR_fn)
 		for j,mix in enumerate(mixtures):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
-			line.extend(DPR_game.expectedValues(mix)[0])
-			line.extend(GP_DPR_game.expectedValues(mix)[0])
+#			line.extend(DPR_game.expectedValues(mix)[0])
+#			line.extend(GP_DPR_game.expectedValues(mix)[0])
 			line.extend(GP_EVs(samples_game, mix, GPs)[0])
 			line.extend(GP_point(GPs, mix, AGG.players)[0])
 			with open(out_file, "a") as f:
