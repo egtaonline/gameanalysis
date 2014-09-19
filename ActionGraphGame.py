@@ -90,6 +90,9 @@ class Sym_AGG:
 		EVs = self.expectedValues(mix)
 		return sum(mix * EVs)
 
+	def uniformMixture(self):
+		raise NotImplementedError("TODO")
+
 
 class Noisy_AGG(Sym_AGG):
 	def __init__(self, players, action_graph={}, utilities={}, sigma=1):
@@ -134,26 +137,8 @@ class Noisy_AGG(Sym_AGG):
 		return g
 
 
-def local_effect_AGG(N, S, D_min=0, D_max=-1, noise=100, self_mean=[0,-4,-2], \
+def random_LEG(N, S, D_min=0, D_max=-1, noise=100, self_mean=[0,-4,-2], \
 				self_var=[4,2,1], other_mean=[0,0,0], other_var=[tiny,2,1]):
-	"""
-	Creates an AGG representing a noisy LEG with quadratic payoff functions
-
-	parameters:
-	N			number of players
-	S			number of strategies
-	D_min		minimum action-graph degree (default=0)
-	D_max		maximum action-graph degree (default=S)
-	noise		noise variance
-	self_mean	means for constant, linear, and quadratic
-				self-interaction coefficients
-	self_var	variances for constant, linear, and quadratic
-				self-interaction coefficients
-	other_mean	means for constant, linear, and quadratic
-				neighbor-interaction coefficients
-	other_var	variances for constant, linear, and quadratic
-				neighbor-interaction coefficients
-	"""
 	if D_min < 0 or D_min >= S:
 		D_min = 0
 	if D_max < 0 or D_max >= S:
@@ -161,27 +146,35 @@ def local_effect_AGG(N, S, D_min=0, D_max=-1, noise=100, self_mean=[0,-4,-2], \
 	strategies = ["s"+str(i) for i in range(S)]
 	action_graph = {}
 	local_effects = {}
-	utilities = {}
 	for s,strat in enumerate(strategies):
 		num_neighbors = np.random.randint(D_min, D_max+1)
 		neighbors = sorted(sample(strategies[:s] + strategies[s+1:],\
 										num_neighbors) + [strat])
 		action_graph[strat] = neighbors
-		local_effects = {n:np.array([np.random.normal(m,v) for m,v in \
-					zip(other_mean,other_var)]) for n in action_graph[strat]}
-		local_effects[strat] = np.array([np.random.normal(m,v) for m,v in \
-					zip(self_mean, self_var)])
+		local_effects[strat] = {n:[np.random.normal(m,v) for m,v in \
+					zip(other_mean,other_var)] for n in action_graph[strat]}
+		local_effects[strat][strat] = [np.random.normal(m,v) for m,v in \
+					zip(self_mean, self_var)]
+	return {"N":N,"strategies":strategies, "action_graph":action_graph,
+			"local_effects":local_effects, "noise":noise}
+
+
+def LEG_to_AGG(LEG):
+	utilities = {}
+	for strat in LEG["strategies"]:
+		neighbors = LEG["action_graph"][strat]
 		u = {}
-		for i in range(N):
+		for i in range(LEG["N"]):
 			for strats in CwR(neighbors, i):
 				counts = {n:strats.count(n) for n in neighbors if n in strats}
 				counts[strat] = counts.get(strat,0) + 1
 				prof = h_dict(counts)
 				u[prof] = 0
 				for n,c in prof.iteritems():
-					u[prof] += sum(c**np.arange(3) * local_effects[n])
+					le = LEG["local_effects"][strat][n]
+					u[prof] += sum(c**np.arange(len(le)) * le)
 		utilities[strat] = u
-	return Noisy_AGG(N, action_graph, utilities, noise)
+	return Noisy_AGG(LEG["N"], LEG["action_graph"], utilities, LEG["noise"])
 
 
 def uniform_AGG(N, S, D_min=0, D_max=-1, noise=100, min_payoff=-100, \
