@@ -3,7 +3,7 @@ from random import sample
 from itertools import combinations_with_replacement as CwR
 from os.path import join, exists
 from os import mkdir
-from cPickle import dump
+from json import dump
 from argparse import ArgumentParser
 
 from BasicFunctions import profile_repetitions, leading_zeros
@@ -216,35 +216,48 @@ def uniform_AGG(N, S, D_min=0, D_max=-1, noise=100, min_payoff=-100, \
 
 def parse_args():
 	p = ArgumentParser(description="Generate random action graph games.")
-	p.add_argument("-type", type=str, choices=["LEG", "uniform"], help=\
-				"Select game class: local effect game or uniform AGG.")
 	p.add_argument("folder", type=str, help="Folder to put games in.")
 	p.add_argument("count", type=int, help="Number of games to create.")
 	p.add_argument("players", type=int, help="Number of players.")
 	p.add_argument("strategies", type=int, help="Number of strategies.")
 	p.add_argument("min_neighbors", type=int, help="Mimimum number of "+\
-				"other strategies that payoffs can depend on.")
+			"other strategies that payoffs can depend on.")
 	p.add_argument("max_neighbors", type=int, help="Maximum number of "+\
-				"other strategies that payoffs can depend on.")
+			"other strategies that payoffs can depend on.")
 	p.add_argument("noise", type=float, help="Variance of payoff "+\
-				"observation noise.")
-	return p.parse_args()
+			"observation noise.")
+	p.add_argument("-self_mean", type=int, nargs="*", default=[], help=\
+			"Mean coefficients for self-effect functions. Default: 0 -4 -2")
+	p.add_argument("-self_var", type=int, nargs="*", default=[], help=\
+			"Variance of coefficients for self-effect functions. Default: "+\
+			"4 2 1")
+	p.add_argument("-other_mean", type=int, nargs="*", default=[], help=\
+			"Mean coefficients for local-effect functions. Default: 0 0 0")
+	p.add_argument("-other_var", type=int, nargs="*", default=[], help=\
+			"Variance of coefficients for local-effect functions. Default: "+\
+			"0 2 1")
+	a = p.parse_args()
+	if a.self_mean == []:
+		a.self_mean = [0,-4,-2]
+	if a.self_var == []:
+		a.self_var = [4,2,1]
+	if a.other_mean == []:
+		a.other_mean = [0,0,0]
+	if a.other_var == []:
+		a.other_var = [tiny,2,1]
+	return a
 
 def main():
 	a = parse_args()
+	folder = join(a.folder, "LEG_"+str(a.players)+"p_"+str(a.strategies)+\
+				"s_"+str(a.min_neighbors)+"-"+str(a.max_neighbors)+"n_"+\
+				str(len(a.self_mean))+"d_"+str(int(a.noise))+"v")
+	if not exists(folder):
+		mkdir(folder)
 	for i in range(a.count):
-		if a.type == "LEG":
-			g = local_effect_AGG(a.players, a.strategies, a.min_neighbors, \
-							a.max_neighbors, a.noise)
-		elif a.type == "uniform":
-				g = uniform_AGG(a.players, a.strategies, a.min_neighbors, \
-							a.max_neighbors, a.noise)
-		folder = join(a.folder, a.type+"_"+ reduce(lambda x,y:str(x) +"-"+ \
-				str(y), [a.players, a.strategies, a.min_neighbors, \
-				a.max_neighbors, int(a.noise)]))
-		if not exists(folder):
-			mkdir(folder)
-		with open(join(folder, leading_zeros(i,a.count-1) + ".pkl"), "w") as f:
+		g = random_LEG(a.players, a.strategies, a.min_neighbors, \
+						a.max_neighbors, a.noise)
+		with open(join(folder, leading_zeros(i,a.count-1)+".json"), "w") as f:
 			dump(g,f)
 
 if __name__ == "__main__":
