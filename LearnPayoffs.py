@@ -326,12 +326,12 @@ def EVs_experiment(folder):
 
 
 def learned_files(folder):
-	for fn in sorted(filter(lambda s: s.endswith(".pkl"), ls(folder))):
+	for fn in sorted(filter(lambda s: s.endswith(".json"), ls(folder))):
 		AGG_fn = join(folder, fn)
-		DPR_fn = join(folder, "DPR", fn[:-4]+".json")
-		samples_fn = join(folder, "samples", fn[:-4]+".json")
-		GPs_fn = join(folder, "GPs", fn)
-		GP_DPR_fn = join(folder, "GP_DPR", fn[:-4]+".json")
+		DPR_fn = join(folder, "DPR", fn)
+		samples_fn = join(folder, "samples", fn)
+		GPs_fn = join(folder, "GPs", fn[:-4] + "pkl")
+		GP_DPR_fn = join(folder, "GP_DPR", fn)
 		yield AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn
 
 
