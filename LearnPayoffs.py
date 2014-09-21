@@ -200,7 +200,7 @@ def sample_near_DPR(AGG, players, samples=10):
 	return g
 
 
-def learn_AGGs(folder, players=2, samples=10):
+def learn_AGGs(folder, players=2, samples=10, CV=False):
 	"""
 	Takes a folder full of action graph games and create sub-folders full of
 	DPR, GP_DPR, and GP_sample games corresponding to each AGG.
@@ -221,7 +221,7 @@ def learn_AGGs(folder, players=2, samples=10):
 			AGG = LEG_to_AGG(load(f))
 		DPR_game = DPR(sample_at_DPR(AGG, players, samples), players)
 		sample_game = sample_near_DPR(AGG, players, samples)
-		GPs = GP_learn(sample_game, True)
+		GPs = GP_learn(sample_game, CV)
 		GP_DPR_game = GP_DPR(sample_game, players, GPs)
 		with open(DPR_fn, "w") as f:
 			f.write(to_JSON_str(DPR_game))
