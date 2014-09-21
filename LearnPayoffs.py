@@ -20,7 +20,7 @@ import RoleSymmetricGame as RSG
 from Nash import mixed_nash
 from BasicFunctions import average
 from HashableClasses import h_array
-from ActionGraphGame import local_effect_AGG, Noisy_AGG
+from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
 from itertools import combinations_with_replacement as CwR, permutations
 
@@ -63,7 +63,8 @@ def GP_learn(game, cross_validate=False):
 				cv.fit(x[role][strat], y[role][strat])
 				GPs[role][strat] = cv.best_estimator_
 			else:
-				gp = GaussianProcess(storage_mode='light', theta0=10)
+				gp = GaussianProcess(storage_mode='light', corr="cubic", \
+									nugget=1)
 				gp.fit(x[role][strat], y[role][strat])
 				GPs[role][strat] = gp
 	return GPs
@@ -99,7 +100,6 @@ def GP_sampling_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
 	"""
 	Estimate equilibria with RD using random samples from GP regression models.
 
-	WARNING: by calling GP_EVs, this assumes that the game is symmetric.
 	"""
 	candidates = []
 	regrets = {}
@@ -218,7 +218,7 @@ def learn_AGGs(folder, players=2, samples=10):
 				exists(GPs_fn) and exists(GP_DPR_fn):
 			continue
 		with open(AGG_fn) as f:
-			AGG = load(f)
+			AGG = LEG_to_AGG(load(f))
 		DPR_game = DPR(sample_at_DPR(AGG, players, samples), players)
 		sample_game = sample_near_DPR(AGG, players, samples)
 		GPs = GP_learn(sample_game, True)
@@ -296,9 +296,9 @@ def EVs_experiment(folder):
 	with open(out_file, "w") as f:
 		f.write("game,mixture,")
 		f.write(",".join("AGG EV "+s for s in DPR_game.strategies["All"])+",")
-#		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
-#		f.write(",".join("GP_DPR EV " + s for s in \
-#						DPR_game.strategies["All"]) + ",")
+		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
+		f.write(",".join("GP_DPR EV " + s for s in \
+						DPR_game.strategies["All"]) + ",")
 		f.write(",".join("GP_sample EV " + s for s in \
 						DPR_game.strategies["All"]) + ",")
 		f.write(",".join("GP_point value " + s for s in \
@@ -307,17 +307,18 @@ def EVs_experiment(folder):
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn) in \
 								enumerate(learned_files(folder)):
 		with open(AGG_fn) as f:
-			AGG = load(f)
-#		DPR_game = read(DPR_fn)
+			AGG = LEG_to_AGG(load(f))
+		DPR_game = read(DPR_fn)
 		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
 			GPs = load(f)
-#		GP_DPR_game = read(GP_DPR_fn)
+		GP_DPR_game = read(GP_DPR_fn)
+		GP_DPR_game = read(GP_DPR_fn)
 		for j,mix in enumerate(mixtures):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
-#			line.extend(DPR_game.expectedValues(mix)[0])
-#			line.extend(GP_DPR_game.expectedValues(mix)[0])
+			line.extend(DPR_game.expectedValues(mix)[0])
+			line.extend(GP_DPR_game.expectedValues(mix)[0])
 			line.extend(GP_EVs(samples_game, mix, GPs)[0])
 			line.extend(GP_point(GPs, mix, AGG.players)[0])
 			with open(out_file, "a") as f:
@@ -363,10 +364,11 @@ def main():
 	p.add_argument("-s", type=int, default=-1, help=\
 				"Samples drawn per DPR profile. Only for 'games' mode. Set "+\
 				"to 0 for exact values.")
+	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
 	a = p.parse_args()
 	if a.mode == "games":
 		assert a.p > 0 and a.s > -1
-		learn_AGGs(a.folder, a.p, a.s)
+		learn_AGGs(a.folder, a.p, a.s, a.CV)
 	elif a.mode == "regrets":
 		regrets_experiment(a.folder)
 	elif a.mode =="EVs":
