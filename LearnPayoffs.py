@@ -5,6 +5,7 @@ from os import listdir as ls, mkdir
 from os.path import join, exists
 from cPickle import load, dump
 from argparse import ArgumentParser
+import json
 
 # import GaussianProcess but don't crash if it wasn't loaded
 import warnings
@@ -203,7 +204,7 @@ def sample_near_DPR(AGG, players, samples=10):
 def learn_AGGs(folder, players=2, samples=10, CV=False):
 	"""
 	Takes a folder full of action graph games and create sub-folders full of
-	DPR, GP_DPR, and GP_sample games corresponding to each AGG.
+	DPR, GP_sample games corresponding to each AGG.
 	"""
 	if not exists(join(folder, "DPR")):
 		mkdir(join(folder, "DPR"))
@@ -211,26 +212,20 @@ def learn_AGGs(folder, players=2, samples=10, CV=False):
 		mkdir(join(folder, "samples"))
 	if not exists(join(folder, "GPs")):
 		mkdir(join(folder, "GPs"))
-	if not exists(join(folder, "GP_DPR")):
-		mkdir(join(folder, "GP_DPR"))
-	for AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn in learned_files(folder):
-		if exists(DPR_fn) and exists(samples_fn) and \
-				exists(GPs_fn) and exists(GP_DPR_fn):
+	for AGG_fn, DPR_fn, samples_fn, GPs_fn in learned_files(folder):
+		if exists(DPR_fn) and exists(samples_fn) and exists(GPs_fn):
 			continue
 		with open(AGG_fn) as f:
-			AGG = LEG_to_AGG(load(f))
+			AGG = LEG_to_AGG(json.load(f))
 		DPR_game = DPR(sample_at_DPR(AGG, players, samples), players)
 		sample_game = sample_near_DPR(AGG, players, samples)
 		GPs = GP_learn(sample_game, CV)
-		GP_DPR_game = GP_DPR(sample_game, players, GPs)
 		with open(DPR_fn, "w") as f:
 			f.write(to_JSON_str(DPR_game))
 		with open(samples_fn, "w") as f:
 			f.write(to_JSON_str(sample_game))
 		with open(GPs_fn, "w") as f:
 			dump(GPs,f)
-		with open(GP_DPR_fn, "w") as f:
-			f.write(to_JSON_str(GP_DPR_game))
 
 
 def regrets_experiment(folder):
@@ -297,14 +292,12 @@ def EVs_experiment(folder):
 		f.write("game,mixture,")
 		f.write(",".join("AGG EV "+s for s in DPR_game.strategies["All"])+",")
 		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
-		f.write(",".join("GP_DPR EV " + s for s in \
-						DPR_game.strategies["All"]) + ",")
 		f.write(",".join("GP_sample EV " + s for s in \
 						DPR_game.strategies["All"]) + ",")
 		f.write(",".join("GP_point value " + s for s in \
 						DPR_game.strategies["All"]) + "\n")
 
-	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn) in \
+	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
 								enumerate(learned_files(folder)):
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(load(f))
@@ -312,13 +305,10 @@ def EVs_experiment(folder):
 		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
 			GPs = load(f)
-		GP_DPR_game = read(GP_DPR_fn)
-		GP_DPR_game = read(GP_DPR_fn)
 		for j,mix in enumerate(mixtures):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
 			line.extend(DPR_game.expectedValues(mix)[0])
-			line.extend(GP_DPR_game.expectedValues(mix)[0])
 			line.extend(GP_EVs(samples_game, mix, GPs)[0])
 			line.extend(GP_point(GPs, mix, AGG.players)[0])
 			with open(out_file, "a") as f:
@@ -331,8 +321,7 @@ def learned_files(folder):
 		DPR_fn = join(folder, "DPR", fn)
 		samples_fn = join(folder, "samples", fn)
 		GPs_fn = join(folder, "GPs", fn[:-4] + "pkl")
-		GP_DPR_fn = join(folder, "GP_DPR", fn)
-		yield AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn
+		yield AGG_fn, DPR_fn, samples_fn, GPs_fn
 
 
 def mixture_grid(S, points=5, digits=2):
@@ -353,7 +342,7 @@ def main():
 	p = ArgumentParser(description="Perform game-learning experiments on " +\
 									"a set of action graph games.")
 	p.add_argument("mode", type=str, choices=["games","regrets","EVs"], help=\
-				"games mode creates DPR, GPs, GP_DPR, and samples "+\
+				"games mode creates DPR, GPs, and samples "+\
 				"directories. It requires players and samples arguments "+\
 				"(other modes don't). regrets mode computes equilibria and "+\
 				"regrets in all games. EVs mode computes expected values of "+\
