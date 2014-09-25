@@ -3,8 +3,8 @@ from numpy.random import multinomial
 from itertools import repeat
 from os import listdir as ls, mkdir
 from os.path import join, exists
-from cPickle import load, dump
 from argparse import ArgumentParser
+import cPickle
 import json
 
 # import GaussianProcess but don't crash if it wasn't loaded
@@ -225,7 +225,7 @@ def learn_AGGs(folder, players=2, samples=10, CV=False):
 		with open(samples_fn, "w") as f:
 			f.write(to_JSON_str(sample_game))
 		with open(GPs_fn, "w") as f:
-			dump(GPs,f)
+			cPickle.dump(GPs,f)
 
 
 def regrets_experiment(folder):
@@ -300,11 +300,11 @@ def EVs_experiment(folder):
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
 								enumerate(learned_files(folder)):
 		with open(AGG_fn) as f:
-			AGG = LEG_to_AGG(load(f))
+			AGG = LEG_to_AGG(json.load(f))
 		DPR_game = read(DPR_fn)
 		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
-			GPs = load(f)
+			GPs = cPickle.load(f)
 		for j,mix in enumerate(mixtures):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
