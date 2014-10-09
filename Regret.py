@@ -188,7 +188,8 @@ def parse_args():
 	parser.add_argument("profiles", type=str, help="File with profiles from"+\
 			" input games for which regrets should be calculated.")
 	parser.add_argument("--SW", action="store_true", help="Calculate social "+\
-			"welfare instead of regret.)")
+			"welfare instead of regret. Use keyword GLOBAL to calculate max "+\
+			"social welfare.")
 	parser.add_argument("--NE", action="store_true", help="Calculate 'NE "+\
 			"regrets' (regret a devitor would experience by switching to "+\
 			"each other pure strategy) for each profile instead of the "+\
@@ -199,6 +200,12 @@ def parse_args():
 def main():
 	args = parse_args()
 	games = args.input
+
+	#direct call to max_social_welfare()
+	if args.profiles == "GLOBAL" and args.SW:
+		print to_JSON_str(max_social_welfare(games))
+		return
+
 	profiles = read(args.profiles)
 	if not isinstance(profiles, list):
 		profiles = [profiles]
