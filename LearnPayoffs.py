@@ -218,19 +218,23 @@ def learn_AGGs(folder, players=2, samples=10, CV=False):
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
 		DPR_game = DPR(sample_at_DPR(AGG, players, samples), players)
-		sample_game = sample_near_DPR(AGG, players, samples)
-		GPs = GP_learn(sample_game, CV)
 		with open(DPR_fn, "w") as f:
 			f.write(to_JSON_str(DPR_game))
+		del DPR_game
+		sample_game = sample_near_DPR(AGG, players, samples)
+		del AGG
 		with open(samples_fn, "w") as f:
 			f.write(to_JSON_str(sample_game))
+		GPs = GP_learn(sample_game, CV)
+		del sample_game
 		with open(GPs_fn, "w") as f:
 			cPickle.dump(GPs,f)
+		del GPs
 
 
 def regrets_experiment(folder):
 	"""
-	Takes a folder filled with AGGs, plus the sub-folders for DPR, GP_DPR, and
+	Takes a folder filled with AGGs, plus the sub-folders for DPR, GPs and
 	GP_sample created by the learn_AGGs() and computes equilibria in each small
 	game, then outputs those equilibria and their regrets in the corresponding
 	AGGs.
@@ -285,20 +289,33 @@ def EVs_experiment(folder):
 	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
 	mixtures = [DPR_game.uniformMixture()] +\
 				mixture_grid(len(DPR_game.strategies["All"]))
-	with open(join(folder, "mixtures.json"), "w") as f:
-		f.write(to_JSON_str(mixtures))
+	if not exists(join(folder, "mixtures.json")):
+		with open(join(folder, "mixtures.json"), "w") as f:
+			f.write(to_JSON_str(mixtures))
 	out_file = join(folder, "mixture_values.csv")
-	with open(out_file, "w") as f:
-		f.write("game,mixture,")
-		f.write(",".join("AGG EV "+s for s in DPR_game.strategies["All"])+",")
-		f.write(",".join("DPR EV "+s for s in DPR_game.strategies["All"])+",")
-		f.write(",".join("GP_sample EV " + s for s in \
-						DPR_game.strategies["All"]) + ",")
-		f.write(",".join("GP_point value " + s for s in \
-						DPR_game.strategies["All"]) + "\n")
+	if not exists(out_file):
+		last_game = 0
+		last_mix = 0
+		with open(out_file, "w") as f:
+			f.write("game,mixture,")
+			f.write(",".join("AGG EV "+s for s in \
+							DPR_game.strategies["All"]) + ",")
+			f.write(",".join("DPR EV "+s for s in \
+							DPR_game.strategies["All"]) + ",")
+			f.write(",".join("GP_sample EV " + s for s in \
+							DPR_game.strategies["All"]) + ",")
+			f.write(",".join("GP_point value " + s for s in \
+							DPR_game.strategies["All"]) + "\n")
+	else:
+		with open(out_file) as f:
+			last_line = [l for l in f][-1].split(",")
+		last_game = int(last_line[0])
+		last_mix = int(last_line[1])
 
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
 								enumerate(learned_files(folder)):
+		if i < last_game:
+			continue
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
 		DPR_game = read(DPR_fn)
@@ -306,6 +323,8 @@ def EVs_experiment(folder):
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 		for j,mix in enumerate(mixtures):
+			if j <= last_mix:
+				continue
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
 			line.extend(DPR_game.expectedValues(mix)[0])
