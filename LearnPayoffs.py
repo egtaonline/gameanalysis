@@ -323,7 +323,7 @@ def EVs_experiment(folder):
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 		for j,mix in enumerate(mixtures):
-			if j <= last_mix:
+			if i == last_game and j <= last_mix:
 				continue
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
