@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.random import multinomial
-from itertools import repeat
 from os import listdir as ls, mkdir
 from os.path import join, exists
 from argparse import ArgumentParser
@@ -19,7 +18,7 @@ except ImportError:
 from Reductions import DPR_profiles, full_prof_DPR, DPR
 import RoleSymmetricGame as RSG
 from Nash import mixed_nash
-from BasicFunctions import average
+from BasicFunctions import average, nCr
 from HashableClasses import h_array
 from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
@@ -95,27 +94,56 @@ def GP_DPR(game, players, GPs):
 	return learned_game
 
 
-def GP_sampling_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
-					random_restarts=0, at_least_one=False, iters=1000, \
-					converge_thresh=1e-6, ev_samples=1000):
+def GP_EVs(GPs, mix, players, samples=1000):
 	"""
-	Estimate equilibria with RD using random samples from GP regression models.
+	Mimics game.ExpectedValues via sampling from the GPs.
 
+	WARNING: assumes that the game is symmetric!
+	"""
+	EVs = np.zeros(mix.shape)
+	for r,role in enumerate(sorted(GPs)):
+		for s,strat in enumerate(sorted(GPs[role])):
+			profs = multinomial(players, mix[0], samples)
+			EVs[r,s] = GPs[role][strat].predict(profs).mean()
+	return EVs
+
+
+def GP_point(GPs, mix, players):
+	"""
+	Mimics game.ExpectedValues by returning the GPs' value estimates for the ML
+	profile under mix.
+
+	WARNING: assumes that the game is symmetric!
+	"""
+	prof = mix * players
+	EVs = np.zeros(mix.shape)
+	for r,role in enumerate(sorted(GPs)):
+		for s,strat in enumerate(sorted(GPs[role])):
+			EVs[r,s] = GPs[role][strat].predict(prof)
+	return EVs
+
+
+def GP_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
+			random_restarts=0, at_least_one=False, iters=1000, \
+			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_EVs):
+	"""
+	Estimate equilibria with RD using from GP regression models.
 	"""
 	candidates = []
 	regrets = {}
+	players = game.players.values()[0] # assumes game is symmetric
 	for mix in game.biasedMixtures() + [game.uniformMixture() ]+ \
 			[game.randomMixture() for _ in range(random_restarts)]:
 		for _ in range(iters):
 			old_mix = mix
-			EVs = GP_EVs(game, mix, GPs, ev_samples)
+			EVs = EV_func(GPs, mix, players, ev_samples)
 			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
 			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
 			if np.linalg.norm(mix - old_mix) <= converge_thresh:
 				break
 		mix[mix < 0] = 0
 		candidates.append(h_array(mix))
-		EVs = GP_EVs(game, mix, GPs, ev_samples)
+		EVs = EV_func(GPs, mix, players, ev_samples)
 		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
 
 	candidates.sort(key=regrets.get)
@@ -126,29 +154,6 @@ def GP_sampling_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
 	if len(equilibria) == 0 and at_least_one:
 		return [min(candidates, key=regrets.get)]
 	return equilibria
-
-
-def GP_EVs(game, mix, GPs, samples=1000):
-	"""
-	Mimics game.ExpectedValues via sampling from the GPs.
-
-	WARNING: assumes that the game is symmetric!
-	"""
-	r = game.roles[0]
-	p = game.players[r]
-	EVs = []
-	for s in game.strategies[r]:
-		EVs.append(GPs[r][s].predict(multinomial(p, mix[0], samples)).mean())
-	return np.array([EVs])
-
-
-def GP_point(GPs, mix, players):
-	prof = mix * players
-	EVs = np.zeros(mix.shape)
-	for r,role in enumerate(sorted(GPs)):
-		for s,strat in enumerate(sorted(GPs[role])):
-			EVs[r,s] = GPs[role][strat].predict(prof)
-	return EVs
 
 
 def prof2vec(game, prof):
@@ -179,15 +184,26 @@ def sample_at_DPR(AGG, players, samples=10):
 	return g
 
 
-def sample_near_DPR(AGG, players, samples=10):
+def sample_near_DPR(AGG, players, samples_per_profile=10, total_samples=0):
 	"""
+	If samples_per_profile > 0 then total_samples is ignored, and each DPR
+	profile gets the same number of samples drawn near it. Otherwise,
+	total_samples are allocated so that each DPR profile gets the same number
+	+/- 1. The profiles that get one extra sample are chosen uniformly at
+	random.
 	"""
-	random_profiles = {}
 	g = RSG.SampleGame(["All"], {"All":AGG.players}, {"All":AGG.strategies})
-
-	for prof in DPR_profiles(g, {"All":players}):
+	profiles = DPR_profiles(g, {"All":players})
+	np.random.shuffle(profiles)
+	if samples_per_profile > 0:
+		total_samples = len(profiles) * samples_per_profile
+	else:
+		samples_per_profile = total_samples / len(profiles)
+	remainder = total_samples % len(profiles)
+	random_profiles = {}
+	for i,prof in enumerate(profiles):
 		counts = np.array([prof["All"].get(s,0) for s in AGG.strategies])
-		for i in range(max(1,samples)):
+		for _ in range(samples_per_profile + (1 if i < remainder else 0)):
 			rp = np.random.multinomial(AGG.players, counts / float(AGG.players))
 			rp = filter(lambda p:p[1], zip(AGG.strategies,rp))
 			rp = RSG.Profile({"All":dict(rp)})
@@ -201,7 +217,7 @@ def sample_near_DPR(AGG, players, samples=10):
 	return g
 
 
-def learn_AGGs(folder, players=2, samples=10, CV=False):
+def learn_AGGs(folder, players=2, samples=10, CV=False, extras=0):
 	"""
 	Takes a folder full of action graph games and create sub-folders full of
 	DPR, GP_sample games corresponding to each AGG.
@@ -212,6 +228,12 @@ def learn_AGGs(folder, players=2, samples=10, CV=False):
 		mkdir(join(folder, "samples"))
 	if not exists(join(folder, "GPs")):
 		mkdir(join(folder, "GPs"))
+
+	AGG_fn = join(folder, filter(lambda s: s.endswith(".json"), ls(folder))[0])
+	with open(AGG_fn) as f:
+		strategies = len(json.load(f)["strategies"])
+		total_samples = samples * nCr(players + strategies - 1, players)
+
 	for AGG_fn, DPR_fn, samples_fn, GPs_fn in learned_files(folder):
 		if exists(DPR_fn) and exists(samples_fn) and exists(GPs_fn):
 			continue
@@ -221,7 +243,7 @@ def learn_AGGs(folder, players=2, samples=10, CV=False):
 		with open(DPR_fn, "w") as f:
 			f.write(to_JSON_str(DPR_game))
 		del DPR_game
-		sample_game = sample_near_DPR(AGG, players, samples)
+		sample_game = sample_near_DPR(AGG, players + extras, 0, total_samples)
 		del AGG
 		with open(samples_fn, "w") as f:
 			f.write(to_JSON_str(sample_game))
@@ -234,55 +256,49 @@ def learn_AGGs(folder, players=2, samples=10, CV=False):
 
 def regrets_experiment(folder):
 	"""
-	Takes a folder filled with AGGs, plus the sub-folders for DPR, GPs and
-	GP_sample created by the learn_AGGs() and computes equilibria in each small
-	game, then outputs those equilibria and their regrets in the corresponding
-	AGGs.
+	Takes a folder filled with AGGs, plus the sub-folders for DPR and GPs
+	created by the learn_AGGs() and computes equilibria in each small game,
+	then outputs those equilibria and their regrets in the corresponding AGGs.
 	"""
 	DPR_eq = []
-	GP_DPR_eq = []
-	GP_sample_eq = []
+	GP_eq = []
 	DPR_regrets = []
-	GP_DPR_regrets = []
-	GP_sample_regrets = []
+	GP_regrets = []
 
-	for AGG_fn, DPR_fn, samples_fn, GPs_fn, GP_DPR_fn in learned_files(folder):
+	AGG_fn = join(folder, filter(lambda s: s.endswith(".json"), ls(folder))[0])
+	with open(AGG_fn) as f:
+		AGG =json.load(f)
+		G = RSG.Game(["All"], {"All":AGG["N"]}, {"All":AGG["strategies"]})
+
+	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
+					enumerate(learned_files(folder)):
 		with open(AGG_fn) as f:
-			AGG = load(f)
+			AGG = LEG_to_AGG(json.load(f))
 		DPR_game = read(DPR_fn)
-		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
-			GPs = load(f)
-		GP_DPR_game = read(GP_DPR_fn)
+			GPs = cPickle.load(f)
 
 		eq = mixed_nash(DPR_game)
-		DPR_eq.append(map(samples_game.toProfile, eq))
+		DPR_eq.append(map(G.toProfile, eq))
 		DPR_regrets.append([AGG.regret(e[0]) for e in eq])
-		eq = mixed_nash(GP_DPR_game)
-		GP_DPR_eq.append(map(samples_game.toProfile, eq))
-		GP_DPR_regrets.append([AGG.regret(e[0]) for e in eq])
-		eq = GP_sampling_RD(samples_game, GPs)
-		GP_sample_eq.append(map(samples_game.toProfile, eq))
-		GP_sample_regrets.append([AGG.regret(e[0]) for e in eq])
+		eq = GP_RD(G, GPs)
+		GP_eq.append(map(G.toProfile, eq))
+		GP_regrets.append([AGG.regret(e[0]) for e in eq])
 
 	with open(join(folder, "DPR_eq.json"), "w") as f:
 		f.write(to_JSON_str(DPR_eq))
 	with open(join(folder, "DPR_regrets.json"), "w") as f:
 		f.write(to_JSON_str(DPR_regrets))
-	with open(join(folder, "GP_DPR_eq.json"), "w") as f:
-		f.write(to_JSON_str(GP_DPR_eq))
-	with open(join(folder, "GP_DPR_regrets.json"), "w") as f:
-		f.write(to_JSON_str(GP_DPR_regrets))
-	with open(join(folder, "GP_sample_eq.json"), "w") as f:
-		f.write(to_JSON_str(GP_sample_eq))
-	with open(join(folder, "GP_sample_regrets.json"), "w") as f:
-		f.write(to_JSON_str(GP_sample_regrets))
+	with open(join(folder, "GP_eq.json"), "w") as f:
+		f.write(to_JSON_str(GP_eq))
+	with open(join(folder, "GP_regrets.json"), "w") as f:
+		f.write(to_JSON_str(GP_regrets))
 
 
 def EVs_experiment(folder):
 	"""
-	Takes a folder filled with AGGs, plus the sub-folders for DPR, GP_DPR, and
-	GPs created by learn_AGGs(), and computes expected values for a number of
+	Takes a folder filled with AGGs, plus the sub-folders for DPR and GPs
+	created by learn_AGGs(), and computes expected values for a number of
 	mixed strategies in the full game, in the DPR game and using several
 	different methods to extract EVs from the GPs.
 	"""
@@ -328,7 +344,7 @@ def EVs_experiment(folder):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
 			line.extend(DPR_game.expectedValues(mix)[0])
-			line.extend(GP_EVs(samples_game, mix, GPs)[0])
+			line.extend(GP_EVs(GPs, mix, AGG.players)[0])
 			line.extend(GP_point(GPs, mix, AGG.players)[0])
 			with open(out_file, "a") as f:
 				f.write(",".join(map(str, line)) + "\n")
@@ -372,11 +388,12 @@ def main():
 	p.add_argument("-s", type=int, default=-1, help=\
 				"Samples drawn per DPR profile. Only for 'games' mode. Set "+\
 				"to 0 for exact values.")
+	p.add_argument("-e", type=int, default=0, help="Extra players for GP.")
 	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
 	a = p.parse_args()
 	if a.mode == "games":
 		assert a.p > 0 and a.s > -1
-		learn_AGGs(a.folder, a.p, a.s, a.CV)
+		learn_AGGs(a.folder, a.p, a.s, a.CV, a.e)
 	elif a.mode == "regrets":
 		regrets_experiment(a.folder)
 	elif a.mode =="EVs":
