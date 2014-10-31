@@ -24,13 +24,18 @@ from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
 from itertools import combinations_with_replacement as CwR, permutations
 
-def GP_learn(game, cross_validate=False):
+def GP_learn(game, cross_validate=False, diffs=False):
 	"""
 	Create a GP regression for each role and strategy.
 
 	Parameters:
-	game:		RoleSymmetricGame.SampleGame object with enough data to
-				estimate payoff functions.
+	game:			RoleSymmetricGame.SampleGame object with enough data to
+					estimate payoff functions.
+	cross_validate:	If set to True, cross-validation will be used to select
+					parameters of the GPs.
+	diffs:			If set to True, GPs will not learn a strategy's payoff, but
+					rather the difference between the strategy's payoff and the
+					mean payoff for the profile.
 	"""
 	x = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
 	y = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
@@ -43,6 +48,8 @@ def GP_learn(game, cross_validate=False):
 				if game.counts[p][r][s] > 0:
 					try: #try will work on RSG.SampleGame
 						samples = game.sample_values[p][r,s]
+						if diffs:
+							samples -= samples.mean()
 						for i in range(len(samples)):
 							x[role][strat].append(c + \
 									np.random.normal(0,1e-6,c.shape))
@@ -217,7 +224,7 @@ def sample_near_DPR(AGG, players, samples_per_profile=10, total_samples=0):
 	return g
 
 
-def learn_AGGs(folder, players=2, samples=10, CV=False, extras=0):
+def learn_AGGs(folder, players=2, samples=10, CV=False, diffs=False, extras=0):
 	"""
 	Takes a folder full of action graph games and create sub-folders full of
 	DPR, GP_sample games corresponding to each AGG.
@@ -247,7 +254,7 @@ def learn_AGGs(folder, players=2, samples=10, CV=False, extras=0):
 		del AGG
 		with open(samples_fn, "w") as f:
 			f.write(to_JSON_str(sample_game))
-		GPs = GP_learn(sample_game, CV)
+		GPs = GP_learn(sample_game, CV, diffs)
 		del sample_game
 		with open(GPs_fn, "w") as f:
 			cPickle.dump(GPs,f)
@@ -265,24 +272,20 @@ def regrets_experiment(folder):
 	DPR_regrets = []
 	GP_regrets = []
 
-	AGG_fn = join(folder, filter(lambda s: s.endswith(".json"), ls(folder))[0])
-	with open(AGG_fn) as f:
-		AGG =json.load(f)
-		G = RSG.Game(["All"], {"All":AGG["N"]}, {"All":AGG["strategies"]})
-
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
 					enumerate(learned_files(folder)):
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
 		DPR_game = read(DPR_fn)
+		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 
-		eq = mixed_nash(DPR_game)
-		DPR_eq.append(map(G.toProfile, eq))
+		eq = mixed_nash(DPR_game, at_least_one=True)
+		DPR_eq.append(map(samples_game.toProfile, eq))
 		DPR_regrets.append([AGG.regret(e[0]) for e in eq])
-		eq = GP_RD(G, GPs)
-		GP_eq.append(map(G.toProfile, eq))
+		eq = GP_RD(samples_game, GPs, at_least_one=True)
+		GP_eq.append(map(samples_game.toProfile, eq))
 		GP_regrets.append([AGG.regret(e[0]) for e in eq])
 
 	with open(join(folder, "DPR_eq.json"), "w") as f:
@@ -311,7 +314,7 @@ def EVs_experiment(folder):
 	out_file = join(folder, "mixture_values.csv")
 	if not exists(out_file):
 		last_game = 0
-		last_mix = 0
+		last_mix = -1
 		with open(out_file, "w") as f:
 			f.write("game,mixture,")
 			f.write(",".join("AGG EV "+s for s in \
@@ -390,10 +393,12 @@ def main():
 				"to 0 for exact values.")
 	p.add_argument("-e", type=int, default=0, help="Extra players for GP.")
 	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
+	p.add_argument("--diff", action="store_true", help="Learn differences "+\
+					"from mean payoffs.")
 	a = p.parse_args()
 	if a.mode == "games":
 		assert a.p > 0 and a.s > -1
-		learn_AGGs(a.folder, a.p, a.s, a.CV, a.e)
+		learn_AGGs(a.folder, a.p, a.s, a.CV, a.diff, a.e)
 	elif a.mode == "regrets":
 		regrets_experiment(a.folder)
 	elif a.mode =="EVs":
