@@ -267,13 +267,25 @@ def regrets_experiment(folder):
 	created by the learn_AGGs() and computes equilibria in each small game,
 	then outputs those equilibria and their regrets in the corresponding AGGs.
 	"""
-	DPR_eq = []
-	GP_eq = []
-	DPR_regrets = []
-	GP_regrets = []
+	DPR_eq_file = join(folder, "DPR_eq.json")
+	DPR_regrets_file = join(folder, "DPR_regrets.json")
+	GP_eq_file = join(folder, "GP_eq.json")
+	GP_regrets_file = join(folder, "GP_regrets.json")
+	if exists(GP_eq_file):
+		DPR_eq = read(DPR_eq_file)
+		DPR_regrets = read(DPR_regrets_file)
+		GP_eq = read(GP_eq_file)
+		GP_regrets = read(GP_regrets_file)
+	else:
+		DPR_eq = []
+		GP_eq = []
+		DPR_regrets = []
+		GP_regrets = []
 
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
 					enumerate(learned_files(folder)):
+		if i < len(GP_eq):
+			continue
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
 		DPR_game = read(DPR_fn)
@@ -288,14 +300,14 @@ def regrets_experiment(folder):
 		GP_eq.append(map(samples_game.toProfile, eq))
 		GP_regrets.append([AGG.regret(e[0]) for e in eq])
 
-	with open(join(folder, "DPR_eq.json"), "w") as f:
-		f.write(to_JSON_str(DPR_eq))
-	with open(join(folder, "DPR_regrets.json"), "w") as f:
-		f.write(to_JSON_str(DPR_regrets))
-	with open(join(folder, "GP_eq.json"), "w") as f:
-		f.write(to_JSON_str(GP_eq))
-	with open(join(folder, "GP_regrets.json"), "w") as f:
-		f.write(to_JSON_str(GP_regrets))
+		with open(DPR_eq_file, "w") as f:
+			f.write(to_JSON_str(DPR_eq))
+		with open(join(folder, "DPR_regrets.json"), "w") as f:
+			f.write(to_JSON_str(DPR_regrets))
+		with open(join(folder, "GP_eq.json"), "w") as f:
+			f.write(to_JSON_str(GP_eq))
+		with open(join(folder, "GP_regrets.json"), "w") as f:
+			f.write(to_JSON_str(GP_regrets))
 
 
 def EVs_experiment(folder):
