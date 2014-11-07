@@ -296,9 +296,13 @@ def regrets_experiment(folder):
 		eq = mixed_nash(DPR_game, at_least_one=True)
 		DPR_eq.append(map(samples_game.toProfile, eq))
 		DPR_regrets.append([AGG.regret(e[0]) for e in eq])
-		eq = GP_RD(samples_game, GPs, at_least_one=True)
-		GP_eq.append(map(samples_game.toProfile, eq))
-		GP_regrets.append([AGG.regret(e[0]) for e in eq])
+		try:
+			eq = GP_RD(samples_game, GPs, at_least_one=True)
+			GP_eq.append(map(samples_game.toProfile, eq))
+			GP_regrets.append([AGG.regret(e[0]) for e in eq])
+		except AttributeError:
+			GP_eq.append([])
+			GP_regrets.append([])
 
 		with open(DPR_eq_file, "w") as f:
 			f.write(to_JSON_str(DPR_eq))
