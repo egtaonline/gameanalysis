@@ -261,25 +261,28 @@ def learn_AGGs(folder, players=2, samples=10, CV=False, diffs=False, extras=0):
 		del GPs
 
 
-def regrets_experiment(folder):
+def regrets_experiment(folder, skip_DPR=False):
 	"""
 	Takes a folder filled with AGGs, plus the sub-folders for DPR and GPs
 	created by the learn_AGGs() and computes equilibria in each small game,
 	then outputs those equilibria and their regrets in the corresponding AGGs.
 	"""
-	DPR_eq_file = join(folder, "DPR_eq.json")
-	DPR_regrets_file = join(folder, "DPR_regrets.json")
+	if not skip_DPR:
+		DPR_eq_file = join(folder, "DPR_eq.json")
+		DPR_regrets_file = join(folder, "DPR_regrets.json")
 	GP_eq_file = join(folder, "GP_eq.json")
 	GP_regrets_file = join(folder, "GP_regrets.json")
 	if exists(GP_eq_file):
-		DPR_eq = read(DPR_eq_file)
-		DPR_regrets = read(DPR_regrets_file)
+		if not skip_DPR:
+			DPR_eq = read(DPR_eq_file)
+			DPR_regrets = read(DPR_regrets_file)
 		GP_eq = read(GP_eq_file)
 		GP_regrets = read(GP_regrets_file)
 	else:
-		DPR_eq = []
+		if not skip_DPR:
+			DPR_eq = []
+			DPR_regrets = []
 		GP_eq = []
-		DPR_regrets = []
 		GP_regrets = []
 
 	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
@@ -288,14 +291,16 @@ def regrets_experiment(folder):
 			continue
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
-		DPR_game = read(DPR_fn)
+		if not skip_DPR:
+			DPR_game = read(DPR_fn)
 		samples_game = read(samples_fn)
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 
-		eq = mixed_nash(DPR_game, at_least_one=True)
-		DPR_eq.append(map(samples_game.toProfile, eq))
-		DPR_regrets.append([AGG.regret(e[0]) for e in eq])
+		if not skip_DPR:
+			eq = mixed_nash(DPR_game, at_least_one=True)
+			DPR_eq.append(map(samples_game.toProfile, eq))
+			DPR_regrets.append([AGG.regret(e[0]) for e in eq])
 		try:
 			eq = GP_RD(samples_game, GPs, at_least_one=True)
 			GP_eq.append(map(samples_game.toProfile, eq))
@@ -304,10 +309,11 @@ def regrets_experiment(folder):
 			GP_eq.append([])
 			GP_regrets.append([])
 
-		with open(DPR_eq_file, "w") as f:
-			f.write(to_JSON_str(DPR_eq))
-		with open(join(folder, "DPR_regrets.json"), "w") as f:
-			f.write(to_JSON_str(DPR_regrets))
+		if not skip_DPR:
+			with open(DPR_eq_file, "w") as f:
+				f.write(to_JSON_str(DPR_eq))
+			with open(join(folder, "DPR_regrets.json"), "w") as f:
+				f.write(to_JSON_str(DPR_regrets))
 		with open(join(folder, "GP_eq.json"), "w") as f:
 			f.write(to_JSON_str(GP_eq))
 		with open(join(folder, "GP_regrets.json"), "w") as f:
@@ -411,12 +417,15 @@ def main():
 	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
 	p.add_argument("--diff", action="store_true", help="Learn differences "+\
 					"from mean payoffs.")
+	p.add_argument("--skip_DPR", action="store_true", help="In regrets mode "+\
+					"skip DPR experiments (redundant if another e-value has"+\
+					"been run with the same p).")
 	a = p.parse_args()
 	if a.mode == "games":
 		assert a.p > 0 and a.s > -1
 		learn_AGGs(a.folder, a.p, a.s, a.CV, a.diff, a.e)
 	elif a.mode == "regrets":
-		regrets_experiment(a.folder)
+		regrets_experiment(a.folder, a.skip_DPR)
 	elif a.mode =="EVs":
 		EVs_experiment(a.folder)
 
