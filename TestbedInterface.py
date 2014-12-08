@@ -209,7 +209,6 @@ def prep_for_bootstrap(game):
 				game.sample_values[p,r,s] = game.sample_values[p,r,s][:min_len]
 	game.min_samples = game.max_samples = min_len
 	game.makeArrays()
-	
 
 
 from argparse import ArgumentParser

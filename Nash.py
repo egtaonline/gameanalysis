@@ -5,13 +5,13 @@ from numpy.linalg import norm
 from BasicFunctions import call
 from GameIO import to_NFG_asym, read_NE
 from RoleSymmetricGame import tiny, is_constant_sum
-from Regret import regret
+from Regret import profile_regret, mixture_regret
 
 def pure_nash(game, epsilon=0):
 	"""
 	Finds all pure-strategy epsilon-Nash equilibria.
 	"""
-	return filter(lambda profile: regret(game, profile, bound=False)
+	return filter(lambda profile: profile_regret(game, profile, bound=False) \
 			<= epsilon, game)
 
 
@@ -19,7 +19,8 @@ def min_regret_profile(game):
 	"""
 	Finds the profile with the confirmed lowest regret.
 	"""
-	return min(game.knownProfiles(), key=lambda p: regret(game, p, bound=False))
+	return min(game.knownProfiles(), key=lambda p: profile_regret(game, p, \
+				bound=False))
 
 
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0, \
@@ -33,12 +34,12 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0, \
 			[game.randomMixture() for __ in range(random_restarts)]:
 		eq = replicator_dynamics(game, m, *RD_args, **RD_kwds)
 		distances = map(lambda e: norm(e-eq,2), equilibria)
-		if regret(game, eq) <= regret_thresh and all([d >= dist_thresh \
-				for d in distances]):
+		if mixture_regret(game, eq) <= regret_thresh and \
+						all([d >= dist_thresh for d in distances]):
 			equilibria.append(eq)
 		all_eq.append(eq)
 	if len(equilibria) == 0 and at_least_one:
-		return [min(all_eq, key=lambda e: regret(game, e))]
+		return [min(all_eq, key=lambda e: mixture_regret(game, e))]
 	return equilibria
 
 
@@ -54,7 +55,8 @@ def replicator_dynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 		if norm(mix - old_mix) <= converge_thresh:
 			break
 	if verbose:
-		print i+1, "iterations ; mix =", mix, "; regret =", regret(game, mix)
+		print i+1, "iterations ; mix =", mix, "; regret =", \
+					mixture_regret(game, mix)
 	mix[mix < 0] = 0 #occasionally one of the probabilities is barely negative
 	return mix
 
