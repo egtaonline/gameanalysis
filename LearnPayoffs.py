@@ -24,7 +24,7 @@ from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
 from itertools import combinations_with_replacement as CwR, permutations
 
-def GP_learn(game, cross_validate=False, diffs=False):
+def GP_learn(game, cross_validate=False):
 	"""
 	Create a GP regression for each role and strategy.
 
@@ -33,48 +33,75 @@ def GP_learn(game, cross_validate=False, diffs=False):
 					estimate payoff functions.
 	cross_validate:	If set to True, cross-validation will be used to select
 					parameters of the GPs.
-	diffs:			If set to True, GPs will not learn a strategy's payoff, but
-					rather the difference between the strategy's payoff and the
-					mean payoff for the profile.
 	"""
-	x = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
-	y = {r:{s:[] for s in game.strategies[r]} for r in game.roles}
-	GPs = {r:{s:None for s in game.strategies[r]} for r in game.roles}
-
-	for p in range(len(game)):
-		c = prof2vec(game, game.counts[p])
+	#X[r][s] stores the vectorization of each profile in which some players in
+	#role r select strategy s. Profiles are listed in the same order as in the
+	#input game. Y[r][s] stores corresponding payoff values in the same order.
+	#Yd (d=diff) stores the difference from the average payoff. Ywd (w=weighted)
+	#stores difference from expected payoff for a random agent. Ym (m=mean)
+	#stores average payoffs. Ywm stores expected payoff for a random agent.
+	X = {
+		"profiles":[],
+		"samples":{r:{s:[] for s in game.strategies[r]} for r in game.roles}
+	}
+	Y = {
+		"Y":{r:{s:[] for s in game.strategies[r]} for r in game.roles},
+		"Yd":{r:{s:[] for s in game.strategies[r]} for r in game.roles},
+		"Ywd":{r:{s:[] for s in game.strategies[r]} for r in game.roles},
+		"Ym":{r:[] for r in game.roles},
+		"Ywm":{r:[] for r in game.roles}
+	}
+	for p in range(len(game)):#fill X and Y
+		prof = game.counts[p]
+		samples = game.sample_values[p]
+		x = np.array(prof2vec(game, prof), dtype=float)[None].T
+		x = np.tile(x, (1,1,samples.shape[-1]))
+		x += np.random.normal(0,1e-9, x.shape)
+		ym = samples.mean(1).mean(1)
+		ywm = ((samples * x).sum(1) / x.sum(1)).mean(1)
+		X["profiles"].append(x[0,:,0])
 		for r,role in enumerate(game.roles):
+			Y["Ym"][role].append(ym[r])
+			Y["Ywm"][role].append(ywm[r])
 			for s,strat in enumerate(game.strategies[role]):
-				if game.counts[p][r][s] > 0:
-					try: #try will work on RSG.SampleGame
-						samples = game.sample_values[p][r,s]
-						if diffs:
-							samples -= samples.mean()
-						for i in range(len(samples)):
-							x[role][strat].append(c + \
-									np.random.normal(0,1e-6,c.shape))
-						y[role][strat].extend(samples)
-					except AttributeError: #except will work on RSG.Game
-						x[role][strat].append(c)
-						y[role][strat].append(game.values[p][r,s])
+				if prof[r][s] > 0:
+					y = samples[r,s]
+					Y["Y"][role][strat].extend(y)
+					Y["Yd"][role][strat].extend(y - ym)
+					Y["Ywd"][role][strat].extend(y - ywm)
+					for i in range(y.size):
+						X["samples"][role][strat].append(x[0,:,i])
 
+	#GPs stores the learned GP for each role and strategy
+	GPs = {y:{} for y in Y}
 	for role in game.roles:
-		for strat in game.strategies[role]:
-			if cross_validate:
-				gp = GaussianProcess(storage_mode='light', random_start=3, \
-									thetaL=1e-4, thetaU=1e9, normalize=True)
-				params = {"corr":["absolute_exponential","squared_exponential",\
-						"cubic","linear"], "nugget":[1e-14,1e-10,1e-6,.01,1,\
-						100,1e4]}
-				cv = GridSearchCV(gp, params)
-				cv.fit(x[role][strat], y[role][strat])
-				GPs[role][strat] = cv.best_estimator_
-			else:
-				gp = GaussianProcess(storage_mode='light', corr="cubic", \
-									nugget=1)
-				gp.fit(x[role][strat], y[role][strat])
-				GPs[role][strat] = gp
+		for y in ["Ym", "Ywm"]:
+			GPs[y][role] = train_GP(X["profiles"], Y[y][role], cross_validate)
+		for y in ["Y", "Yd", "Ywd"]:
+			GPs[y][role] = {}
+			for strat in game.strategies[role]:
+				GPs[y][role][strat] = train_GP(X["samples"][role][strat], \
+										Y[y][role][strat], cross_validate)
 	return GPs
+
+
+def train_GP(X, Y, cross_validate=False):
+	if cross_validate:
+		gp = GaussianProcess(storage_mode='light', thetaL=1e-4, thetaU=1e9, \
+							normalize=True)
+		params = {
+				"corr":["absolute_exponential","squared_exponential",
+						"cubic","linear"],
+				"regr" : ["constant","linear"],
+				"nugget" : [1e-10,1e-6,1e-2,1e0,1e2,1e4]
+		}
+		cv = GridSearchCV(gp, params, verbose=True)
+		cv.fit(X, Y)
+		return cv.best_estimator_
+	else:
+		gp = GaussianProcess(storage_mode='light', corr="cubic", nugget=1)
+		gp.fit(X, Y)
+		return gp
 
 
 def GP_DPR(game, players, GPs):
