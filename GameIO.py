@@ -78,7 +78,10 @@ def read_JSON(data):
 		if "object" in data: # game downloaded from EGATS
 			return read_JSON(loads(data['object']))
 		if "profiles" in data:
-			return read_game_JSON(data)
+			try:
+				return read_game_JSON(data)
+			except TypeError:
+				raise TypeError("null payoff encountered")
 		if "symmetry_groups" in data:
 			return read_v3_profile(data)
 		if "observations" in data:
