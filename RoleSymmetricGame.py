@@ -418,6 +418,7 @@ class SampleGame(Game):
 		self.sample_values = []
 		self.min_samples = float("inf")
 		self.max_samples = 0
+		self.total_samples = 0
 		Game.__init__(self, *args, **kwargs)
 
 	def addProfile(self, role_payoffs):
@@ -433,6 +434,7 @@ class SampleGame(Game):
 				samples[r][s] = values
 				self.min_samples = min(self.min_samples, len(values))
 				self.max_samples = max(self.max_samples, len(values))
+				self.total_samples += len(values)
 				played.append(strat)
 			for strat in set(self.strategies[role]) - set(played):
 				s = self.index(role, strat)
@@ -442,7 +444,7 @@ class SampleGame(Game):
 				p = self.index(role, played[0])
 				samples[r][s] = [0]*len(samples[r][p])
 		self.sample_values.append(np.array(samples))
-	
+
 	def getPayoffData(self, profile, role, strategy):
 		v = self.sample_values[self[profile]]
 		return v[self.index(role), self.index(role,strategy)]

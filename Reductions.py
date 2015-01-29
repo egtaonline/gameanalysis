@@ -3,7 +3,7 @@
 from RoleSymmetricGame import Game, Profile, PayoffData, is_symmetric
 
 def hierarchical_reduction(game, players={}):
-	players = deduce_players(players)
+	players = deduce_players(game, players)
 	HR_game = type(game)(game.roles, players, game.strategies)
 	for reduced_profile in HR_game.allProfiles():
 		try:
@@ -69,11 +69,12 @@ def full_prof_HR(HR_profile, players):
 	Returns the full game profile whose payoff determines that of strat
 	in the reduced game profile.
 	"""
-	return Profile({r:full_prof_sym(HR_profile[r], players[r])})
+	return Profile({r:full_prof_sym(HR_profile[r], players[r]) for r in \
+															HR_profile})
 
 
 def deviation_preserving_reduction(game, players={}):
-	players = deduce_players(players)
+	players = deduce_players(game, players)
 
 	#it's often faster to go through all of the full-game profiles
 	DPR_game = type(game)(game.roles, players, game.strategies)
@@ -161,7 +162,7 @@ def twins_reduction(game):
 
 def DPR_profiles(game, players={}):
 	"""Returns the profiles from game that contribute to the DPR game."""
-	players = deduce_players(players)
+	players = deduce_players(game, players)
 	DPR_game = Game(game.roles, players, game.strategies)
 	profiles = []
 	for DPR_prof in DPR_game.allProfiles():
@@ -174,12 +175,12 @@ def DPR_profiles(game, players={}):
 
 def HR_profiles(game, players={}):
 	"""Returns the profiles from game that contribute to the HR game."""
-	players = deduce_players(players)
+	players = deduce_players(game, players)
 	HR_game = Game(game.roles, players, game.strategies)
-	return [full_prof_HR(HR_prof) for HR_prof in HR_game.allProfiles()]
+	return [full_prof_HR(HR_prof, players) for HR_prof in HR_game.allProfiles()]
 
 
-def deduce_players(players={}):
+def deduce_players(game, players={}):
 	if not players:
 		players = {r:2 for r in game.roles}
 	elif len(game.roles) == 1 and isinstance(players, int):

@@ -1,5 +1,8 @@
+#! /usr/bin/env python2.7
+
 import numpy as np
 from numpy.random import multinomial
+from random import sample
 from os import listdir as ls, mkdir
 from os.path import join, exists, isdir
 from argparse import ArgumentParser
@@ -92,10 +95,9 @@ def train_GP(X, Y, cross_validate=False):
 		params = {
 				"corr":["absolute_exponential","squared_exponential",
 						"cubic","linear"],
-				"regr" : ["constant","linear"],
-				"nugget" : [1e-10,1e-6,1e-2,1e0,1e2,1e4]
+				"nugget":[1e-10,1e-6,1e-4,1e-2,1e0,1e2,1e4]
 		}
-		cv = GridSearchCV(gp, params, verbose=True)
+		cv = GridSearchCV(gp, params)
 		cv.fit(X, Y)
 		return cv.best_estimator_
 	else:
@@ -224,7 +226,7 @@ def sample_at_reduction(AGG, samples, reduction_profiles, players):
 	s = samples/len(profiles)
 	extras = sample(profiles, samples - s*len(profiles))
 	counts = {p:(s+1 if p in extras else s) for p in profiles}
-	for prof,count in counts:
+	for prof,count in counts.items():
 		values = AGG.sample(prof["All"], count)
 		g.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
 								s,c in prof["All"].iteritems()]})
@@ -256,8 +258,9 @@ def sample_near_reduction(AGG, samples, reduction_profiles, players):
 	extras = sample(profiles, samples - s*len(profiles))
 	counts = {p:(s+1 if p in extras else s) for p in profiles}
 	random_profiles = {}
-	for prof,count in counts:
-		dist = np.array([prof["All"].get(s,0) for s in AGG.strategies])
+	for prof,count in counts.items():
+		dist = np.array([prof["All"].get(s,0) for s in AGG.strategies],
+														dtype=float)
 		dist /= float(AGG.players)
 		for _ in range(count):
 			rp = np.random.multinomial(AGG.players, dist)
@@ -273,14 +276,19 @@ def sample_near_reduction(AGG, samples, reduction_profiles, players):
 	return g
 
 
-def sample_games(folder, players=[2], samples=[100]):
+def sample_games(folder, players=[2], samples=[100], reductions=["HR","DPR"]):
+	game_types = []
+	if "HR" in reductions:
+		game_types += ["at_HR", "near_HR"]
+	if "DPR" in reductions:
+		game_types += ["at_DPR", "near_DPR"]
 	AGG_names = filter(lambda s: s.endswith(".json"), ls(folder))
-	for AGG_name in AGG_names:
+	for AGG_name in sorted(AGG_names):
 		with open(join(folder, AGG_name)) as f:
 			AGG = LEG_to_AGG(json.load(f))
 		for p in players:
 			for n in samples:
-				for game_type in ["at_DPR", "at_HR", "near_DPR", "near_HR"]:
+				for game_type in game_types:
 					sub_folder = game_type + "_"+str(p)+"p"+str(n)+"n"
 					if exists(join(folder, sub_folder, AGG_name)):
 						continue
@@ -471,26 +479,28 @@ def main():
 				"regrets in all games. EVs mode computes expected values of "+\
 				"many mixtures in all games.")
 	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
-	p.add_argument("-p", type=int, default=0, help=\
-				"Number of players in DPR game. Only for 'games' mode.")
-	p.add_argument("-s", type=int, default=-1, help=\
-				"Samples drawn per DPR profile. Only for 'games' mode. Set "+\
-				"to 0 for exact values.")
-	p.add_argument("-e", type=int, default=0, help="Extra players for GP.")
+	p.add_argument("-p", type=int, nargs="*", default=[], help=\
+				"Player sizes of reduced games to try. Only for 'games' mode.")
+	p.add_argument("-n", type=int, nargs="*", default=[], help=\
+				"Numbers of samples to try. Only for 'games' mode.")
 	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
-	p.add_argument("--diff", action="store_true", help="Learn differences "+\
-					"from mean payoffs.")
-	p.add_argument("--skip_DPR", action="store_true", help="In regrets mode "+\
-					"skip DPR experiments (redundant if another e-value has"+\
-					"been run with the same p).")
+	p.add_argument("--skip", type=str, choices=["HR", "DPR", ""], default="",
+				help="Don't generate games of the specified reduction type.")
 	a = p.parse_args()
 	if a.mode == "games":
-		assert a.p > 0 and a.s > -1
-		learn_AGGs(a.folder, a.p, a.s, a.CV, a.diff, a.e)
+		assert a.p
+		assert a.n
+		reductions = ["HR", "DPR"]
+		if a.skip in reductions:
+			reductions.remove(a.skip)
+		sample_games(a.folder, a.p, a.n, reductions)
+		learn_games(a.folder, a.CV)
 	elif a.mode == "regrets":
-		regrets_experiment(a.folder, a.skip_DPR)
+		raise NotImplementedError("TODO: update this")
+#		regrets_experiment(a.folder, a.skip_DPR)
 	elif a.mode =="EVs":
-		EVs_experiment(a.folder)
+		raise NotImplementedError("TODO: update this")
+#		EVs_experiment(a.folder)
 
 
 if __name__ == "__main__":
