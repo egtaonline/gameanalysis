@@ -472,12 +472,13 @@ def mixture_grid(S, points=5, digits=2):
 def main():
 	p = ArgumentParser(description="Perform game-learning experiments on " +\
 									"a set of action graph games.")
-	p.add_argument("mode", type=str, choices=["games","regrets","EVs"], help=\
-				"games mode creates DPR, GPs, and samples "+\
-				"directories. It requires players and samples arguments "+\
-				"(other modes don't). regrets mode computes equilibria and "+\
-				"regrets in all games. EVs mode computes expected values of "+\
-				"many mixtures in all games.")
+	p.add_argument("mode", type=str, choices=["games","learn","regrets","EVs"],
+				help="games mode creates at_DPR, at_HR, near_DPR, and near_HR "+
+				"directories. It requires players and samples arguments "+
+				"(other modes don't). learn mode creates _GPs.pkl files. "+
+				"regrets mode computes equilibria and regrets in all games. "+
+				"EVs mode computes expected values of many mixtures in all "+
+				"games.")
 	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
 	p.add_argument("-p", type=int, nargs="*", default=[], help=\
 				"Player sizes of reduced games to try. Only for 'games' mode.")
@@ -494,6 +495,7 @@ def main():
 		if a.skip in reductions:
 			reductions.remove(a.skip)
 		sample_games(a.folder, a.p, a.n, reductions)
+	elif a.mode == "learn":
 		learn_games(a.folder, a.CV)
 	elif a.mode == "regrets":
 		raise NotImplementedError("TODO: update this")
