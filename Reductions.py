@@ -3,12 +3,7 @@
 from RoleSymmetricGame import Game, Profile, PayoffData, is_symmetric
 
 def hierarchical_reduction(game, players={}):
-	if not players:
-		players = {r : game.players[r] / 2 for r in game.roles}
-	elif len(game.roles) == 1 and isinstance(players, int):
-		players = {game.roles[0]:players}
-	elif isinstance(players, list):
-		players = dict(zip(game.roles, players))
+	players = deduce_players(game, players)
 	HR_game = type(game)(game.roles, players, game.strategies)
 	for reduced_profile in HR_game.allProfiles():
 		try:
@@ -20,8 +15,6 @@ def hierarchical_reduction(game, players={}):
 		except KeyError:
 			continue
 	return HR_game
-
-HR = hierarchical_reduction
 
 
 HR = hierarchical_reduction
@@ -71,13 +64,17 @@ def full_prof_DPR(DPR_profile, role, strat, players):
 	return Profile(full_prof)
 
 
+def full_prof_HR(HR_profile, players):
+	"""
+	Returns the full game profile whose payoff determines that of strat
+	in the reduced game profile.
+	"""
+	return Profile({r:full_prof_sym(HR_profile[r], players[r]) for r in \
+															HR_profile})
+
+
 def deviation_preserving_reduction(game, players={}):
-	if not players:
-		return twins_reduction(game)
-	elif len(game.roles) == 1 and isinstance(players, int):
-		players = {game.roles[0]:players}
-	elif isinstance(players, list):
-		players = dict(zip(game.roles, players))
+	players = deduce_players(game, players)
 
 	#it's often faster to go through all of the full-game profiles
 	DPR_game = type(game)(game.roles, players, game.strategies)
@@ -120,8 +117,6 @@ def deviation_preserving_reduction(game, players={}):
 		except KeyError:
 			continue
 	return DPR_game
-
-DPR = deviation_preserving_reduction
 
 
 DPR = deviation_preserving_reduction
@@ -167,12 +162,7 @@ def twins_reduction(game):
 
 def DPR_profiles(game, players={}):
 	"""Returns the profiles from game that contribute to the DPR game."""
-	if not players:
-		players = {r:2 for r in game.roles}
-	elif len(game.roles) == 1 and isinstance(players, int):
-		players = {game.roles[0]:players}
-	elif isinstance(players, list):
-		players = dict(zip(game.roles, players))
+	players = deduce_players(game, players)
 	DPR_game = Game(game.roles, players, game.strategies)
 	profiles = []
 	for DPR_prof in DPR_game.allProfiles():
@@ -181,6 +171,23 @@ def DPR_profiles(game, players={}):
 				full_prof = full_prof_DPR(DPR_prof, r, s, game.players)
 				profiles.append(full_prof)
 	return profiles
+
+
+def HR_profiles(game, players={}):
+	"""Returns the profiles from game that contribute to the HR game."""
+	players = deduce_players(game, players)
+	HR_game = Game(game.roles, players, game.strategies)
+	return [full_prof_HR(HR_prof, players) for HR_prof in HR_game.allProfiles()]
+
+
+def deduce_players(game, players={}):
+	if not players:
+		players = {r:2 for r in game.roles}
+	elif len(game.roles) == 1 and isinstance(players, int):
+		players = {game.roles[0]:players}
+	elif isinstance(players, list):
+		players = dict(zip(game.roles, players))
+	return players
 
 
 from GameIO import to_JSON_str, io_parser
