@@ -309,13 +309,21 @@ def learn_games(folder, cross_validate=False):
 	Goes through sub-folders of folder (which should have all been created by
 	sample_games) and runs GP_learn on each sample game; creates a pkl file
 	corresponding to each input json file
+
+	If the folder has no sub-folders, learn_games instead learns all the json
+	files that sit directly in folder.
 	"""
-	for sub_folder in filter(lambda s: isdir(join(folder, s)), ls(folder)):
+	sub_folders = filter(lambda s: isdir(join(folder, s)), ls(folder))
+	if len(sub_folders) == 0:
+		sub_folders = [folder]
+	for sub_folder in sub_folders:
 		for game_name in filter(lambda s: s.endswith(".json"), ls(folder)):
 			GPs_name = join(folder, sub_folder, game_name[:-5] + "_GPs.pkl")
 			if exists(GPs_name):
 				continue
 			game = read(join(folder, sub_folder, game_name))
+			if type(game) != RSG.SampleGame:
+				continue
 			GPs = GP_learn(game, cross_validate)
 			with open(GPs_name, "w") as f:
 				cPickle.dump(GPs, f)
@@ -484,9 +492,9 @@ def main():
 				"Player sizes of reduced games to try. Only for 'games' mode.")
 	p.add_argument("-n", type=int, nargs="*", default=[], help=\
 				"Numbers of samples to try. Only for 'games' mode.")
-	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
 	p.add_argument("--skip", type=str, choices=["HR", "DPR", ""], default="",
 				help="Don't generate games of the specified reduction type.")
+	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
 	a = p.parse_args()
 	if a.mode == "games":
 		assert a.p
