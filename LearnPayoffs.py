@@ -361,7 +361,7 @@ def regrets_experiment(AGG_folder, samples_folder, reduction, players):
 	file_names = [f.split(".")[0] for f in sorted(filter(lambda f: \
 					f.endswith(".json"), ls(AGG_folder)))]
 	for fn in file_names:
-		if fn in GP_eq:
+		if fn in reduction_eq:
 			continue
 		AGG_fn = join(AGG_folder, fn + ".json")
 		assert exists(AGG_fn), AGG_fn + " doesn't exist"
@@ -380,7 +380,8 @@ def regrets_experiment(AGG_folder, samples_folder, reduction, players):
 		eq = mixed_nash(reduced_game, at_least_one=True)
 		reduction_eq[fn] = map(samples_game.toProfile, eq)
 		reduction_regrets[fn] = [AGG.regret(e[0]) for e in eq]
-#TODO: update for multiple GPs!!!
+
+#TODO: handle multiple GPs
 		eq = GP_RD(samples_game, GPs, at_least_one=True)
 		GP_eq[fn] = map(samples_game.toProfile, eq)
 		GP_regrets[fn] = [AGG.regret(e[0]) for e in eq]
@@ -389,7 +390,7 @@ def regrets_experiment(AGG_folder, samples_folder, reduction, players):
 			f.write(to_JSON_str(reduction_eq))
 		with open(reduction_regrets_file, "w") as f:
 			f.write(to_JSON_str(reduction_regrets))
-		with open(gp_eq_file), "w") as f:
+		with open(gp_eq_file, "w") as f:
 			f.write(to_JSON_str(GP_eq))
 		with open(gp_regrets_file, "w") as f:
 			f.write(to_JSON_str(GP_regrets))
