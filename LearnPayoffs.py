@@ -18,7 +18,7 @@ try:
 except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
-from Reductions import HR_profiles, DPR_profiles, full_prof_DPR, DPR
+from Reductions import HR_profiles, DPR_profiles, full_prof_DPR, DPR, HR
 import RoleSymmetricGame as RSG
 from Nash import mixed_nash
 from BasicFunctions import average, nCr, leading_zeros
@@ -338,71 +338,65 @@ def write_game(game, base_folder, sub_folder, game_name):
 		f.write(to_JSON_str(game))
 
 
-def regrets_experiment(folder, skip_DPR=False):
+def regrets_experiment(AGG_folder, samples_folder, reduction, players):
 	"""
-	Takes a folder filled with AGGs, plus the sub-folders for DPR and GPs
-	created by the learn_AGGs() and computes equilibria in each small game,
-	then outputs those equilibria and their regrets in the corresponding AGGs.
+	reduction should be either HR or DPR (imported from Reductions.py)
+	players is the number of players in the reduced game
 	"""
-	if not skip_DPR:
-		DPR_eq_file = join(folder, "DPR_eq.json")
-		DPR_regrets_file = join(folder, "DPR_regrets.json")
-	GP_eq_file = join(folder, "GP_eq.json")
-	GP_regrets_file = join(folder, "GP_regrets.json")
+	reduction_eq_file = join(samples_folder, "reduction_eq.json")
+	reduction_regrets_file = join(samples_folder, "reduction_regrets.json")
+	GP_eq_file = join(samples_folder, "GP_eq.json")
+	GP_regrets_file = join(samples_folder, "GP_regrets.json")
 	if exists(GP_eq_file):
-		if not skip_DPR:
-			DPR_eq = read(DPR_eq_file)
-			DPR_regrets = read(DPR_regrets_file)
+		reduction_eq = read(reduction_eq_file)
+		reduction_regrets = read(reduction_regrets_file)
 		GP_eq = read(GP_eq_file)
 		GP_regrets = read(GP_regrets_file)
 	else:
-		if not skip_DPR:
-			DPR_eq = []
-			DPR_regrets = []
-		GP_eq = []
-		GP_regrets = []
+		reduction_eq = {}
+		reduction_regrets = {}
+		GP_eq = {}
+		GP_regrets = {}
 
-	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
-					enumerate(learned_files(folder)):
-		if i < len(GP_eq):
+	file_names = [f.split(".")[0] for f in sorted(filter(lambda f: \
+					f.endswith(".json"), ls(AGG_folder)))]
+	for fn in file_names:
+		if fn in GP_eq:
 			continue
+		AGG_fn = join(AGG_folder, fn + ".json")
+		assert exists(AGG_fn), AGG_fn + " doesn't exist"
+		samples_fn = join(samples_folder, fn + ".json")
+		assert exists(samples_fn), AGG_fn + " doesn't exist"
+		GPs_fn = join(samples_folder, fn + "_GPs.pkl")
+		assert exists(GPs_fn), AGG_fn + " doesn't exist"
+
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
-		if not skip_DPR:
-			DPR_game = read(DPR_fn)
 		samples_game = read(samples_fn)
+		reduced_game = reduction(samples_game, players)
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 
-		if not skip_DPR:
-			eq = mixed_nash(DPR_game, at_least_one=True)
-			DPR_eq.append(map(samples_game.toProfile, eq))
-			DPR_regrets.append([AGG.regret(e[0]) for e in eq])
-		try:
-			eq = GP_RD(samples_game, GPs, at_least_one=True)
-			GP_eq.append(map(samples_game.toProfile, eq))
-			GP_regrets.append([AGG.regret(e[0]) for e in eq])
-		except AttributeError:
-			GP_eq.append([])
-			GP_regrets.append([])
+		eq = mixed_nash(reduced_game, at_least_one=True)
+		reduction_eq[fn] = map(samples_game.toProfile, eq)
+		reduction_regrets[fn] = [AGG.regret(e[0]) for e in eq]
+#TODO: update for multiple GPs!!!
+		eq = GP_RD(samples_game, GPs, at_least_one=True)
+		GP_eq[fn] = map(samples_game.toProfile, eq)
+		GP_regrets[fn] = [AGG.regret(e[0]) for e in eq]
 
-		if not skip_DPR:
-			with open(DPR_eq_file, "w") as f:
-				f.write(to_JSON_str(DPR_eq))
-			with open(join(folder, "DPR_regrets.json"), "w") as f:
-				f.write(to_JSON_str(DPR_regrets))
-		with open(join(folder, "GP_eq.json"), "w") as f:
+		with open(reduction_eq_file, "w") as f:
+			f.write(to_JSON_str(reduction_eq))
+		with open(reduction_regrets_file, "w") as f:
+			f.write(to_JSON_str(reduction_regrets))
+		with open(gp_eq_file), "w") as f:
 			f.write(to_JSON_str(GP_eq))
-		with open(join(folder, "GP_regrets.json"), "w") as f:
+		with open(gp_regrets_file, "w") as f:
 			f.write(to_JSON_str(GP_regrets))
 
 
-def EVs_experiment(folder):
+def EVs_experiment(AGG_folder, samples_folder, reduction, players):
 	"""
-	Takes a folder filled with AGGs, plus the sub-folders for DPR and GPs
-	created by learn_AGGs(), and computes expected values for a number of
-	mixed strategies in the full game, in the DPR game and using several
-	different methods to extract EVs from the GPs.
 	"""
 	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
 	mixtures = [DPR_game.uniformMixture()] +\
