@@ -130,56 +130,57 @@ def GP_DPR(game, players, GPs):
 	return learned_game
 
 
-def GP_EVs(GPs, mix, players, samples=1000):
+def GP_sample(game, GPs, mix, players, samples=1000):
 	"""
 	Mimics game.ExpectedValues via sampling from the GPs.
-
-	WARNING: assumes that the game is symmetric!
 	"""
 	EVs = np.zeros(mix.shape)
-	for r,role in enumerate(sorted(GPs)):
-		for s,strat in enumerate(sorted(GPs[role])):
-			profs = multinomial(players, mix[0], samples)
-			EVs[r,s] = GPs[role][strat].predict(profs).mean()
+	partial_profiles = []
+	for r,role in enumerate(game.roles):
+		partial_profiles.append(multinomial(players[role], mix[r], samples))
+	profiles = [prof2vec(game, p), for p in zip(*partial_profiles)]
+	for r,role in enumerate(game.roles):
+		for s,strat in enumerate(game.strategies[role]):
+			EVs[r,s] = GPs[role][strat].predict(profiles).mean()
 	return EVs
 
 
-def GP_point(GPs, mix, players):
+def GP_point(game, GPs, mix, players, *args):
 	"""
-	Mimics game.ExpectedValues by returning the GPs' value estimates for the ML
-	profile under mix.
+	Mimics game.ExpectedValues by returning the GPs' value estimates for the
+	profile with population proportions equal to the mixture probabilities.
 
-	WARNING: assumes that the game is symmetric!
+	*args is ignored ... it allows the same signature as GP_sample()
 	"""
-	prof = mix * players
+	prof = [mix[r]*players[role] for r,role in enumerate(game.roles)]
+	vec = prof2vec(game, prof)
 	EVs = np.zeros(mix.shape)
-	for r,role in enumerate(sorted(GPs)):
-		for s,strat in enumerate(sorted(GPs[role])):
-			EVs[r,s] = GPs[role][strat].predict(prof)
+	for r,role in enumerate(game.roles):
+		for s,strat in enumerate(game.strategies[role]):
+			EVs[r,s] = GPs[role][strat].predict(vec)
 	return EVs
 
 
 def GP_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
 			random_restarts=0, at_least_one=False, iters=1000, \
-			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_EVs):
+			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_sample):
 	"""
 	Estimate equilibria with RD using from GP regression models.
 	"""
 	candidates = []
 	regrets = {}
-	players = game.players.values()[0] # assumes game is symmetric
 	for mix in game.biasedMixtures() + [game.uniformMixture() ]+ \
 			[game.randomMixture() for _ in range(random_restarts)]:
 		for _ in range(iters):
 			old_mix = mix
-			EVs = EV_func(GPs, mix, players, ev_samples)
+			EVs = EV_func(game, GPs, mix, game.players, ev_samples)
 			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
 			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
 			if np.linalg.norm(mix - old_mix) <= converge_thresh:
 				break
 		mix[mix < 0] = 0
 		candidates.append(h_array(mix))
-		EVs = EV_func(GPs, mix, players, ev_samples)
+		EVs = EV_func(game, GPs, mix, game.players, ev_samples)
 		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
 
 	candidates.sort(key=regrets.get)
@@ -311,7 +312,7 @@ def learn_games(folder, cross_validate=False):
 	corresponding to each input json file
 
 	If the folder has no sub-folders, learn_games instead learns all the json
-	files that sit directly in folder.
+	files that sit directly in that folder.
 	"""
 	sub_folders = filter(lambda s: isdir(join(folder, s)), ls(folder))
 	if len(sub_folders) == 0:
@@ -441,8 +442,8 @@ def EVs_experiment(AGG_folder, samples_folder, reduction, players):
 			line = [i,j]
 			line.extend(AGG.expectedValues(mix[0]))
 			line.extend(DPR_game.expectedValues(mix)[0])
-			line.extend(GP_EVs(GPs, mix, AGG.players)[0])
-			line.extend(GP_point(GPs, mix, AGG.players)[0])
+			line.extend(GP_sample(game, GPs, mix, AGG.players)[0])
+			line.extend(GP_point(game, GPs, mix, AGG.players)[0])
 			with open(out_file, "a") as f:
 				f.write(",".join(map(str, line)) + "\n")
 
