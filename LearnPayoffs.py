@@ -110,6 +110,8 @@ def GP_DPR(game, players, GPs):
 	"""
 	Estimate equilibria of a DPR game from GP regression models.
 	"""
+#TODO: fix this
+	raise NotImplementedError("TODO: fix this")
 	if len(game.roles) == 1 and isinstance(players, int):
 		players = {game.roles[0]:players}
 	elif isinstance(players, list):
@@ -339,38 +341,23 @@ def write_game(game, base_folder, sub_folder, game_name):
 		f.write(to_JSON_str(game))
 
 
-def regrets_experiment(AGG_folder, samples_folder, reduction, players):
+def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players
+					results_file):
 	"""
-	reduction should be either HR or DPR (imported from Reductions.py)
-	players is the number of players in the reduced game
+	Extracting common code for running regrets and EVs experiments
 	"""
-	reduction_eq_file = join(samples_folder, "reduction_eq.json")
-	reduction_regrets_file = join(samples_folder, "reduction_regrets.json")
-	GP_eq_file = join(samples_folder, "GP_eq.json")
-	GP_regrets_file = join(samples_folder, "GP_regrets.json")
-	if exists(GP_eq_file):
-		reduction_eq = read(reduction_eq_file)
-		reduction_regrets = read(reduction_regrets_file)
-		GP_eq = read(GP_eq_file)
-		GP_regrets = read(GP_regrets_file)
+	if exists(results_file):
+		results = read(results_file)
 	else:
-		reduction_eq = {}
-		reduction_regrets = {}
-		GP_eq = {}
-		GP_regrets = {}
-
+		results = {}
 	file_names = [f.split(".")[0] for f in sorted(filter(lambda f: \
 					f.endswith(".json"), ls(AGG_folder)))]
 	for fn in file_names:
-		if fn in reduction_eq:
+		if fn in results:
 			continue
 		AGG_fn = join(AGG_folder, fn + ".json")
-		assert exists(AGG_fn), AGG_fn + " doesn't exist"
 		samples_fn = join(samples_folder, fn + ".json")
-		assert exists(samples_fn), AGG_fn + " doesn't exist"
 		GPs_fn = join(samples_folder, fn + "_GPs.pkl")
-		assert exists(GPs_fn), AGG_fn + " doesn't exist"
-
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
 		samples_game = read(samples_fn)
@@ -378,74 +365,39 @@ def regrets_experiment(AGG_folder, samples_folder, reduction, players):
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 
-		eq = mixed_nash(reduced_game, at_least_one=True)
-		reduction_eq[fn] = map(samples_game.toProfile, eq)
-		reduction_regrets[fn] = [AGG.regret(e[0]) for e in eq]
-
-#TODO: handle multiple GPs
-		eq = GP_RD(samples_game, GPs, at_least_one=True)
-		GP_eq[fn] = map(samples_game.toProfile, eq)
-		GP_regrets[fn] = [AGG.regret(e[0]) for e in eq]
-
-		with open(reduction_eq_file, "w") as f:
-			f.write(to_JSON_str(reduction_eq))
-		with open(reduction_regrets_file, "w") as f:
-			f.write(to_JSON_str(reduction_regrets))
-		with open(gp_eq_file, "w") as f:
-			f.write(to_JSON_str(GP_eq))
-		with open(gp_regrets_file, "w") as f:
-			f.write(to_JSON_str(GP_regrets))
+		results[fn] = exp_type(AGG, samples_game, reduced_game, GPs)
+		with open(results_file, "w") as f:
+			f.write(to_JSON_str(results))
 
 
-def EVs_experiment(AGG_folder, samples_folder, reduction, players):
+def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	"""
 	"""
-	DPR_game = read(join(folder, "DPR", ls(join(folder, "DPR"))[0]))
-	mixtures = [DPR_game.uniformMixture()] +\
-				mixture_grid(len(DPR_game.strategies["All"]))
-	if not exists(join(folder, "mixtures.json")):
-		with open(join(folder, "mixtures.json"), "w") as f:
-			f.write(to_JSON_str(mixtures))
-	out_file = join(folder, "mixture_values.csv")
-	if not exists(out_file):
-		last_game = 0
-		last_mix = -1
-		with open(out_file, "w") as f:
-			f.write("game,mixture,")
-			f.write(",".join("AGG EV "+s for s in \
-							DPR_game.strategies["All"]) + ",")
-			f.write(",".join("DPR EV "+s for s in \
-							DPR_game.strategies["All"]) + ",")
-			f.write(",".join("GP_sample EV " + s for s in \
-							DPR_game.strategies["All"]) + ",")
-			f.write(",".join("GP_point value " + s for s in \
-							DPR_game.strategies["All"]) + "\n")
-	else:
-		with open(out_file) as f:
-			last_line = [l for l in f][-1].split(",")
-		last_game = int(last_line[0])
-		last_mix = int(last_line[1])
+	results = {"reduction":{}, "GP":{}}
 
-	for i, (AGG_fn, DPR_fn, samples_fn, GPs_fn) in \
-								enumerate(learned_files(folder)):
-		if i < last_game:
-			continue
-		with open(AGG_fn) as f:
-			AGG = LEG_to_AGG(json.load(f))
-		DPR_game = read(DPR_fn)
-		samples_game = read(samples_fn)
-		with open(GPs_fn) as f:
-			GPs = cPickle.load(f)
-		for j,mix in enumerate(mixtures):
-			if i == last_game and j <= last_mix:
-				continue
-			line = [i,j]
-			line.extend(AGG.expectedValues(mix[0]))
-			line.extend(DPR_game.expectedValues(mix)[0])
-			line.extend(GP_sample(game, GPs, mix, AGG.players)[0])
-			line.extend(GP_point(game, GPs, mix, AGG.players)[0])
-			with open(out_file, "a") as f:
-				f.write(",".join(map(str, line)) + "\n")
+	reduced_eq = mixed_nash(reduced_game, at_least_one=True)
+	results["reduction"]["eq"] = map(samples_game.to_profile, reduced_eq)
+	results["reduction"]["regrets"] = [AGG.regret(e[0]) for e in reduced_eq]
+
+	GP_eq = GP_RD(samples_game, GPs, at_least_one=True)
+	results["GP"]["eq"] = map(samples_game.toProfile, GP_eq)
+	results["GP"]["regrets"] = [AGG.regret(e[0]) for e in GP_eq]
+
+	return results
+
+
+def EVs_experiment(AGG, samples_game, reduced_game, GPs):
+	"""
+	"""
+	results = {"AGG":{},"reduction":{},"GP_DPR":{},"GP_sample":{},"GP_point":{}}
+	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game):
+		prof = samples_game.to_profile(mix)
+		results["AGG"][prof] = AGG.expectedValues(mix[0])
+		results["reduction"][prof] = reduced_game.expectedValues(mix)
+		results["GP_DPR"][prof] = GP_DPR(samples_game, GPs, mix)
+		results["GP_sample"][prof] = GP_sample(samples_game, GPs, mix)
+		results["GP_point"][prof] = GP_point(samples_game, GPs, mix)
+	return results
 
 
 def learned_files(folder):
@@ -465,6 +417,8 @@ def mixture_grid(S, points=5, digits=2):
 
 	There must be a better way to do this!
 	"""
+#TODO: fix this
+	raise NotImplementedError("TODO: fix this")
 	a = np.linspace(0, 1, points)
 	mixtures = set()
 	for p in filter(lambda x: abs(sum(x) - 1) < .5/points, CwR(a,S)):
@@ -502,11 +456,11 @@ def main():
 	elif a.mode == "learn":
 		learn_games(a.folder, a.CV)
 	elif a.mode == "regrets":
-		raise NotImplementedError("TODO: update this")
-#		regrets_experiment(a.folder, a.skip_DPR)
+#TODO: fix this
+		raise NotImplementedError("TODO: fix this")
 	elif a.mode =="EVs":
-		raise NotImplementedError("TODO: update this")
-#		EVs_experiment(a.folder)
+#TODO: fix this
+		raise NotImplementedError("TODO: fix this")
 
 
 if __name__ == "__main__":
