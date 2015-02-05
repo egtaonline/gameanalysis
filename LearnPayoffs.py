@@ -25,7 +25,8 @@ from BasicFunctions import average, nCr, leading_zeros
 from HashableClasses import h_array
 from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
-from itertools import combinations_with_replacement as CwR, permutations
+from itertools import combinations_with_replacement as CwR
+from itertools import permutations, product
 
 def GP_learn(game, cross_validate=False):
 	"""
@@ -106,14 +107,7 @@ def train_GP(X, Y, cross_validate=False):
 		return gp
 
 
-def GP_DPR(game, GPs, mix, players=[3,5,7]):
-	"""
-	Estimate equilibria of a DPR game from GP regression models.
-	"""
-	if isinstance(players, int):
-		players = [players]
-#TODO: fix this
-	raise NotImplementedError("TODO: fix this")
+def GP_DPR(game, GPs, players=3):
 	if len(game.roles) == 1 and isinstance(players, int):
 		players = {game.roles[0]:players}
 	elif isinstance(players, list):
@@ -142,7 +136,7 @@ def GP_sample(game, GPs, mix, players, samples=1000):
 	partial_profiles = []
 	for r,role in enumerate(game.roles):
 		partial_profiles.append(multinomial(players[role], mix[r], samples))
-	profiles = [prof2vec(game, p), for p in zip(*partial_profiles)]
+	profiles = [prof2vec(game, p) for p in zip(*partial_profiles)]
 	for r,role in enumerate(game.roles):
 		for s,strat in enumerate(game.strategies[role]):
 			EVs[r,s] = GPs[role][strat].predict(profiles).mean()
@@ -343,8 +337,8 @@ def write_game(game, base_folder, sub_folder, game_name):
 		f.write(to_JSON_str(game))
 
 
-def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players
-					results_file):
+def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players,
+					results_file, *args, **kwds):
 	"""
 	Extracting common code for running regrets and EVs experiments
 	"""
@@ -352,7 +346,7 @@ def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players
 		results = read(results_file)
 	else:
 		results = {}
-	file_names = [f.split(".")[0] for f in sorted(filter(lambda f: \
+	file_names = [f.split(".")[0] for f in sorted(filter(lambda f:
 					f.endswith(".json"), ls(AGG_folder)))]
 	for fn in file_names:
 		if fn in results:
@@ -367,7 +361,8 @@ def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 
-		results[fn] = exp_type(AGG, samples_game, reduced_game, GPs)
+		results[fn] = exp_type(AGG, samples_game, reduced_game, GPs,
+								*args, **kwds)
 		with open(results_file, "w") as f:
 			f.write(to_JSON_str(results))
 
@@ -388,17 +383,22 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	return results
 
 
-def EVs_experiment(AGG, samples_game, reduced_game, GPs):
+def EVs_experiment(AGG, samples_game, reduced_game, GPs, points=1000,
+					players=[3,5,7]):
 	"""
 	"""
-	results = {"AGG":{},"reduction":{},"GP_DPR":{},"GP_sample":{},"GP_point":{}}
-	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game):
+	GP_DPR = {p:GP_DPR(GPs, p) for p in players}
+	results = {"AGG":{}, "reduction":{}, "GP_sample":{}, "GP_point":{},
+				"GP_DPR":{p:{} for p in players}}
+	for mix in [reduced_game.uniformMixture()] + \
+				mixture_grid(reduced_game, points):
 		prof = samples_game.to_profile(mix)
 		results["AGG"][prof] = AGG.expectedValues(mix[0])
 		results["reduction"][prof] = reduced_game.expectedValues(mix)
-		results["GP_DPR"][prof] = GP_DPR(samples_game, GPs, mix)
 		results["GP_sample"][prof] = GP_sample(samples_game, GPs, mix)
 		results["GP_point"][prof] = GP_point(samples_game, GPs, mix)
+		for p in players:
+			results["GP_DPR"][p][prof] = GP_DPR[p].expectedValues(mix)
 	return results
 
 
@@ -413,17 +413,27 @@ def learned_files(folder):
 		yield AGG_fn, DPR_fn, samples_fn, GPs_fn
 
 
-def mixture_grid(S, points=5, digits=2):
+def mixture_grid(game, points=5, digits=2):
+	"""
+	Cross-product of sym_mix_grid outputs for each role.
+	"""
+	role_mixtures = []
+	for r,role in enumerate(game.roles):
+		mix = sym_mix_grid(game.numStrategies[r], points, digits)
+		mix += [0]*(game.maxStrategies - game.numStrategies[r])
+		role_mixtures.append(mix)
+	return [h_array(p).squeeze() for p in  product(*role_mixtures)]
+
+
+def sym_mix_grid(num_strats, points, digits=2):
 	"""
 	Generate all choose(S, points) grid points in the simplex.
 
 	There must be a better way to do this!
 	"""
-#TODO: fix this
-	raise NotImplementedError("TODO: fix this")
 	a = np.linspace(0, 1, points)
 	mixtures = set()
-	for p in filter(lambda x: abs(sum(x) - 1) < .5/points, CwR(a,S)):
+	for p in filter(lambda x: abs(sum(x) - 1) < .5/points, CwR(a,num_strats)):
 		for m in permutations(map(lambda x: round(x, digits), p)):
 			mixtures.add(h_array([m]))
 	return sorted(mixtures)
