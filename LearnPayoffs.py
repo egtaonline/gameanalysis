@@ -106,10 +106,12 @@ def train_GP(X, Y, cross_validate=False):
 		return gp
 
 
-def GP_DPR(game, players, GPs):
+def GP_DPR(game, GPs, mix, players=[3,5,7]):
 	"""
 	Estimate equilibria of a DPR game from GP regression models.
 	"""
+	if isinstance(players, int):
+		players = [players]
 #TODO: fix this
 	raise NotImplementedError("TODO: fix this")
 	if len(game.roles) == 1 and isinstance(players, int):
