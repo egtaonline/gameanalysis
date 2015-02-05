@@ -426,15 +426,16 @@ class SampleGame(Game):
 		self.addSamples(role_payoffs)
 
 	def addSamples(self, role_payoffs):
+		num_samples = len(role_payoffs.values()[0][0].value)
+		self.min_samples = min(self.min_samples, num_samples)
+		self.max_samples = max(self.max_samples, num_samples)
+		self.total_samples += num_samples
 		samples = map(list, self.zeros())
 		for r, role in enumerate(self.roles):
 			played = []
 			for strat, count, values in role_payoffs[role]:
 				s = self.index(role, strat)
 				samples[r][s] = values
-				self.min_samples = min(self.min_samples, len(values))
-				self.max_samples = max(self.max_samples, len(values))
-				self.total_samples += len(values)
 				played.append(strat)
 			for strat in set(self.strategies[role]) - set(played):
 				s = self.index(role, strat)
