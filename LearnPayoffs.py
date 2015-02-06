@@ -4,7 +4,7 @@ import numpy as np
 from numpy.random import multinomial
 from random import sample
 from os import listdir as ls, mkdir
-from os.path import join, exists, isdir
+from os.path import join, exists, isdir, dirname, basename, abspath
 from argparse import ArgumentParser
 import cPickle
 import json
@@ -27,6 +27,8 @@ from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
 from itertools import combinations_with_replacement as CwR
 from itertools import permutations, product
+
+#TODO: deal with multiple types of GP!!!
 
 def GP_learn(game, cross_validate=False):
 	"""
@@ -107,7 +109,7 @@ def train_GP(X, Y, cross_validate=False):
 		return gp
 
 
-def GP_DPR(game, GPs, players=3):
+def GP_DPR(game, GPs, players):
 	if len(game.roles) == 1 and isinstance(players, int):
 		players = {game.roles[0]:players}
 	elif isinstance(players, list):
@@ -341,6 +343,9 @@ def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players,
 					results_file, *args, **kwds):
 	"""
 	Extracting common code for running regrets and EVs experiments
+
+	No extra args required for regrets_experiment.
+	EVs_experiment can take points or GP_DPR_players.
 	"""
 	if exists(results_file):
 		results = read(results_file)
@@ -373,7 +378,7 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	results = {"reduction":{}, "GP":{}}
 
 	reduced_eq = mixed_nash(reduced_game, at_least_one=True)
-	results["reduction"]["eq"] = map(samples_game.to_profile, reduced_eq)
+	results["reduction"]["eq"] = map(samples_game.toProfile, reduced_eq)
 	results["reduction"]["regrets"] = [AGG.regret(e[0]) for e in reduced_eq]
 
 	GP_eq = GP_RD(samples_game, GPs, at_least_one=True)
@@ -384,21 +389,21 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 
 
 def EVs_experiment(AGG, samples_game, reduced_game, GPs, points=1000,
-					players=[3,5,7]):
+					GP_DPR_players=[3,5,7]):
 	"""
 	"""
-	GP_DPR = {p:GP_DPR(GPs, p) for p in players}
+	GP_DPR_games = {p:GP_DPR(game, GPs, p) for p in GP_DPR_players}
 	results = {"AGG":{}, "reduction":{}, "GP_sample":{}, "GP_point":{},
-				"GP_DPR":{p:{} for p in players}}
+				"GP_DPR":{p:{} for p in GP_DPR_players}}
 	for mix in [reduced_game.uniformMixture()] + \
 				mixture_grid(reduced_game, points):
-		prof = samples_game.to_profile(mix)
+		prof = samples_game.toProfile(mix)
 		results["AGG"][prof] = AGG.expectedValues(mix[0])
 		results["reduction"][prof] = reduced_game.expectedValues(mix)
 		results["GP_sample"][prof] = GP_sample(samples_game, GPs, mix)
 		results["GP_point"][prof] = GP_point(samples_game, GPs, mix)
-		for p in players:
-			results["GP_DPR"][p][prof] = GP_DPR[p].expectedValues(mix)
+		for p in GP_DPR_players:
+			results["GP_DPR"][p][prof] = GP_DPR_games[p].expectedValues(mix)
 	return results
 
 
@@ -452,8 +457,7 @@ def main():
 	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
 	p.add_argument("-p", type=int, nargs="*", default=[], help=\
 				"Player sizes of reduced games to try. Only for 'games' mode.")
-	p.add_argument("-n", type=int, nargs="*", default=[], help=\
-				"Numbers of samples to try. Only for 'games' mode.")
+	p.add_argument("-n", type=int, nargs="*", default=[])
 	p.add_argument("--skip", type=str, choices=["HR", "DPR", ""], default="",
 				help="Don't generate games of the specified reduction type.")
 	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
@@ -467,12 +471,17 @@ def main():
 		sample_games(a.folder, a.p, a.n, reductions)
 	elif a.mode == "learn":
 		learn_games(a.folder, a.CV)
-	elif a.mode == "regrets":
-#TODO: fix this
-		raise NotImplementedError("TODO: fix this")
-	elif a.mode =="EVs":
-#TODO: fix this
-		raise NotImplementedError("TODO: fix this")
+	else:
+		assert len(a.p)==1, "please specify one reduction size with -p"
+		reduction = HR if "HR" in basename(a.folder) else DPR
+		if a.mode == "regrets":
+			exp_type = regrets_experiment
+			res_file = join(a.folder, "regrets_results.json")
+		elif a.mode == "EVs":
+			exp_type = EVs_experiment
+			res_file = join(a.folder, "EVs_results.json")
+		run_experiments(dirname(abspath(a.folder)), a.folder,
+						exp_type, reduction, a.p[0], res_file)
 
 
 if __name__ == "__main__":
