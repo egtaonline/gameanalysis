@@ -138,14 +138,15 @@ def GP_DPR(game, GPs, players):
 	return learned_game
 
 
-def GP_sample(game, GPs, mix, players, samples=1000):
+def GP_sample(game, GPs, mix, samples=1000):
 	"""
 	Mimics game.ExpectedValues via sampling from the GPs.
 	"""
 	EVs = np.zeros(mix.shape)
 	partial_profiles = []
 	for r,role in enumerate(game.roles):
-		partial_profiles.append(multinomial(players[role], mix[r], samples))
+		partial_profiles.append(multinomial(game.players[role], mix[r],
+															samples))
 	profiles = [prof2vec(game, p) for p in zip(*partial_profiles)]
 	for r,role in enumerate(game.roles):
 		for s,strat in enumerate(game.strategies[role]):
@@ -153,14 +154,14 @@ def GP_sample(game, GPs, mix, players, samples=1000):
 	return EVs
 
 
-def GP_point(game, GPs, mix, players, *args):
+def GP_point(game, GPs, mix, *args):
 	"""
 	Mimics game.ExpectedValues by returning the GPs' value estimates for the
 	profile with population proportions equal to the mixture probabilities.
 
 	*args is ignored ... it allows the same signature as GP_sample()
 	"""
-	prof = [mix[r]*players[role] for r,role in enumerate(game.roles)]
+	prof = [mix[r]*game.players[role] for r,role in enumerate(game.roles)]
 	vec = prof2vec(game, prof)
 	EVs = np.zeros(mix.shape)
 	for r,role in enumerate(game.roles):
@@ -396,8 +397,8 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	return results
 
 
-def EVs_experiment(AGG, samples_game, reduced_game, GPs, points=1000,
-					GP_DPR_players=[3,5,7]):
+def EVs_experiment(AGG, samples_game, reduced_game, GPs, sample_points=1000,
+						GP_DPR_players=[3,5,7]):
 	"""
 	"""
 	predictors = {"Y":GPs["Y"], "Yd":{}, "Ywd":{}}
@@ -409,54 +410,40 @@ def EVs_experiment(AGG, samples_game, reduced_game, GPs, points=1000,
 												GPs["Yd"][role][strat])
 			predictors["Ywd"][role][strat] = DiffGP(GPs["Ywm"][role],
 												GPs["Ywd"][role][strat])
-	GP_DPR_games = {}
-	results = {"AGG":{}, "reduction":{}, "GP":{}}
-	for y in ["Y","Yd","Ywd"]:
-		results["GP"][y] = {"sample":{}, "point":{}, "DPR":
-								{p:{} for p in GP_DPR_players}}
-		GP_DPR_games[y] = {p:GP_DPR(samples_game, predictors[y], p) for
+	GP_DPR_games = {p:GP_DPR(samples_game, predictors["Ywd"], p) for
 												p in GP_DPR_players}
+	results = {"AGG":{}, "reduction":{}, "GP_sample":{},
+				"GP_point":{y:{} for y in predictors},
+				"GP_DPR":{p:{} for p in GP_DPR_players}}
 
-	for mix in [reduced_game.uniformMixture()] + \
-				mixture_grid(reduced_game, points):
+	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game,
+									sum(samples_game.numStrategies) + 1):
 		prof = samples_game.toProfile(mix)
 		results["AGG"][prof] = AGG.expectedValues(mix[0])
 		results["reduction"][prof] = reduced_game.expectedValues(mix)
+		results["GP_sample"][prof] = GP_sample(samples_game, predictors["Ywd"],
+														mix, sample_points)
 		for y in ["Y","Yd","Ywd"]:
-			results["GP"][y]["sample"][prof] = GP_sample(samples_game,
-													predictors[y], mix)
-			results["GP"][y]["point"][prof] = GP_point(samples_game,
-													predictors[y], mix)
-			for p in GP_DPR_players:
-				results["GP"][y]["DPR"][p][prof] = \
-								GP_DPR_games[p].expectedValues(mix)
+			results["GP_point"][y][prof] = GP_point(samples_game,
+												predictors[y], mix)
+		for p in GP_DPR_players:
+			results["GP_DPR"][p][prof] = GP_DPR_games[p].expectedValues(mix)
 	return results
 
 
-#def learned_files(folder):
-#	for fn in sorted(filter(lambda s: s.endswith(".json"), ls(folder))):
-#		AGG_fn = join(folder, fn)
-#		DPR_fn = join(folder, "DPR", fn)
-#		HR_fn = join(folder, "HR", fn)
-#		DPR_samples_fn = join(folder, "DPR_samples", fn)
-#		HR_samples_fn = join(folder, "HR_samples", fn)
-#		GPs_fn = join(folder, "GPs", fn[:-4] + "pkl")
-#		yield AGG_fn, DPR_fn, samples_fn, GPs_fn
-
-
-def mixture_grid(game, points=5, digits=2):
+def mixture_grid(game, points=5):
 	"""
 	Cross-product of sym_mix_grid outputs for each role.
 	"""
 	role_mixtures = []
 	for r,role in enumerate(game.roles):
-		mix = sym_mix_grid(game.numStrategies[r], points, digits)
+		mix = sym_mix_grid(game.numStrategies[r], points)
 		mix += [0]*(game.maxStrategies - game.numStrategies[r])
 		role_mixtures.append(mix)
-	return [h_array(p).squeeze() for p in  product(*role_mixtures)]
+	return [h_array(p).squeeze(1) for p in  product(*role_mixtures)]
 
 
-def sym_mix_grid(num_strats, points, digits=2):
+def sym_mix_grid(num_strats, points):
 	"""
 	Generate all choose(S, points) grid points in the simplex.
 
@@ -465,7 +452,7 @@ def sym_mix_grid(num_strats, points, digits=2):
 	a = np.linspace(0, 1, points)
 	mixtures = set()
 	for p in filter(lambda x: abs(sum(x) - 1) < .5/points, CwR(a,num_strats)):
-		for m in permutations(map(lambda x: round(x, digits), p)):
+		for m in permutations(p):
 			mixtures.add(h_array([m]))
 	return sorted(mixtures)
 
