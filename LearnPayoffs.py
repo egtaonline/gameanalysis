@@ -28,7 +28,15 @@ from GameIO import to_JSON_str, read
 from itertools import combinations_with_replacement as CwR
 from itertools import permutations, product
 
-#TODO: deal with multiple types of GP!!!
+
+class DiffGP:
+	def __init__(self, GP_mean, GP_diff):
+		self.GP_mean = GP_mean
+		self.GP_diff = GP_diff
+
+	def predict(self, vec):
+		return self.GP_mean.predict(vec) + self.GP_diff.predict(vec)
+
 
 def GP_learn(game, cross_validate=False):
 	"""
@@ -392,30 +400,48 @@ def EVs_experiment(AGG, samples_game, reduced_game, GPs, points=1000,
 					GP_DPR_players=[3,5,7]):
 	"""
 	"""
-	GP_DPR_games = {p:GP_DPR(game, GPs, p) for p in GP_DPR_players}
-	results = {"AGG":{}, "reduction":{}, "GP_sample":{}, "GP_point":{},
-				"GP_DPR":{p:{} for p in GP_DPR_players}}
+	predictors = {"Y":GPs["Y"], "Yd":{}, "Ywd":{}}
+	for role in samples_game.roles:
+		predictors["Yd"][role] = {}
+		predictors["Ywd"][role] = {}
+		for strat in samples_game.strategies[role]:
+			predictors["Yd"][role][strat] = DiffGP(GPs["Ym"][role],
+												GPs["Yd"][role][strat])
+			predictors["Ywd"][role][strat] = DiffGP(GPs["Ywm"][role],
+												GPs["Ywd"][role][strat])
+	GP_DPR_games = {}
+	results = {"AGG":{}, "reduction":{}, "GP":{}}
+	for y in ["Y","Yd","Ywd"]:
+		results["GP"][y] = {"sample":{}, "point":{}, "DPR":
+								{p:{} for p in GP_DPR_players}}
+		GP_DPR_games[y] = {p:GP_DPR(samples_game, predictors[y], p) for
+												p in GP_DPR_players}
+
 	for mix in [reduced_game.uniformMixture()] + \
 				mixture_grid(reduced_game, points):
 		prof = samples_game.toProfile(mix)
 		results["AGG"][prof] = AGG.expectedValues(mix[0])
 		results["reduction"][prof] = reduced_game.expectedValues(mix)
-		results["GP_sample"][prof] = GP_sample(samples_game, GPs, mix)
-		results["GP_point"][prof] = GP_point(samples_game, GPs, mix)
-		for p in GP_DPR_players:
-			results["GP_DPR"][p][prof] = GP_DPR_games[p].expectedValues(mix)
+		for y in ["Y","Yd","Ywd"]:
+			results["GP"][y]["sample"][prof] = GP_sample(samples_game,
+													predictors[y], mix)
+			results["GP"][y]["point"][prof] = GP_point(samples_game,
+													predictors[y], mix)
+			for p in GP_DPR_players:
+				results["GP"][y]["DPR"][p][prof] = \
+								GP_DPR_games[p].expectedValues(mix)
 	return results
 
 
-def learned_files(folder):
-	for fn in sorted(filter(lambda s: s.endswith(".json"), ls(folder))):
-		AGG_fn = join(folder, fn)
-		DPR_fn = join(folder, "DPR", fn)
-		HR_fn = join(folder, "HR", fn)
-		DPR_samples_fn = join(folder, "DPR_samples", fn)
-		HR_samples_fn = join(folder, "HR_samples", fn)
-		GPs_fn = join(folder, "GPs", fn[:-4] + "pkl")
-		yield AGG_fn, DPR_fn, samples_fn, GPs_fn
+#def learned_files(folder):
+#	for fn in sorted(filter(lambda s: s.endswith(".json"), ls(folder))):
+#		AGG_fn = join(folder, fn)
+#		DPR_fn = join(folder, "DPR", fn)
+#		HR_fn = join(folder, "HR", fn)
+#		DPR_samples_fn = join(folder, "DPR_samples", fn)
+#		HR_samples_fn = join(folder, "HR_samples", fn)
+#		GPs_fn = join(folder, "GPs", fn[:-4] + "pkl")
+#		yield AGG_fn, DPR_fn, samples_fn, GPs_fn
 
 
 def mixture_grid(game, points=5, digits=2):
