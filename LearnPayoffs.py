@@ -416,8 +416,7 @@ def EVs_experiment(AGG, samples_game, reduced_game, GPs, sample_points=1000,
 				"GP_point":{y:{} for y in predictors},
 				"GP_DPR":{p:{} for p in GP_DPR_players}}
 
-	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game,
-									sum(samples_game.numStrategies) + 1):
+	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game, 5):
 		try:
 			prof = str(tuple(mix.flat))
 			results["AGG"][prof] = tuple(AGG.expectedValues(mix[0]).flat)
