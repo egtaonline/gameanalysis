@@ -361,13 +361,15 @@ def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players,
 	else:
 		results = {}
 	file_names = [f.split(".")[0] for f in sorted(filter(lambda f:
-					f.endswith(".json"), ls(AGG_folder)))]
+				f.endswith(".json") and "results" not in f, ls(AGG_folder)))]
 	for fn in file_names:
 		if fn in results:
 			continue
 		AGG_fn = join(AGG_folder, fn + ".json")
 		samples_fn = join(samples_folder, fn + ".json")
 		GPs_fn = join(samples_folder, fn + "_GPs.pkl")
+		if not (exists(AGG_fn) and exists(samples_fn) and exists(GPs_fn)):
+			continue
 		with open(AGG_fn) as f:
 			AGG = LEG_to_AGG(json.load(f))
 		samples_game = read(samples_fn)
