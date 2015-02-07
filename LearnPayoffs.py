@@ -418,18 +418,21 @@ def EVs_experiment(AGG, samples_game, reduced_game, GPs, sample_points=1000,
 
 	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game,
 									sum(samples_game.numStrategies) + 1):
-		prof = str(tuple(mix.flat))
-		results["AGG"][prof] = tuple(AGG.expectedValues(mix[0]).flat)
-		results["reduction"][prof] = \
-						tuple(reduced_game.expectedValues(mix).flat)
-		results["GP_sample"][prof] = tuple(GP_sample(samples_game, \
-						predictors["Ywd"], mix, sample_points).flat)
-		for y in ["Y","Yd","Ywd"]:
-			results["GP_point"][y][prof] = tuple(GP_point(samples_game,
-												predictors[y], mix).flat)
-		for p in GP_DPR_players:
-			results["GP_DPR"][p][prof] = \
-							tuple(GP_DPR_games[p].expectedValues(mix).flat)
+		try:
+			prof = str(tuple(mix.flat))
+			results["AGG"][prof] = tuple(AGG.expectedValues(mix[0]).flat)
+			results["reduction"][prof] = \
+							tuple(reduced_game.expectedValues(mix).flat)
+			results["GP_sample"][prof] = tuple(GP_sample(samples_game, \
+							predictors["Ywd"], mix, sample_points).flat)
+			for y in ["Y","Yd","Ywd"]:
+				results["GP_point"][y][prof] = tuple(GP_point(samples_game,
+													predictors[y], mix).flat)
+			for p in GP_DPR_players:
+				results["GP_DPR"][p][prof] = \
+								tuple(GP_DPR_games[p].expectedValues(mix).flat)
+		except ValueError:
+			continue
 	return results
 
 
