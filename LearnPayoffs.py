@@ -377,7 +377,17 @@ def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players,
 		with open(GPs_fn) as f:
 			GPs = cPickle.load(f)
 
-		results[fn] = exp_type(AGG, samples_game, reduced_game, GPs,
+		predictors = {"Y":GPs["Y"], "Yd":{}, "Ywd":{}}
+		for role in samples_game.roles:
+			predictors["Yd"][role] = {}
+			predictors["Ywd"][role] = {}
+			for strat in samples_game.strategies[role]:
+				predictors["Yd"][role][strat] = DiffGP(GPs["Ym"][role],
+													GPs["Yd"][role][strat])
+				predictors["Ywd"][role][strat] = DiffGP(GPs["Ywm"][role],
+													GPs["Ywd"][role][strat])
+
+		results[fn] = exp_type(AGG, samples_game, reduced_game, predictors,
 								*args, **kwds)
 		with open(results_file, "w") as f:
 			json.dump(results, f)
@@ -392,8 +402,7 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	results["reduction"]["eq"] = map(samples_game.toProfile, reduced_eq)
 	results["reduction"]["regrets"] = [AGG.regret(e[0]) for e in reduced_eq]
 
-	predictor = DiffGP(GPs["Ywm"][role], GPs["Ywd"][role][strat])
-	GP_eq = GP_RD(samples_game, predictor, at_least_one=True)
+	GP_eq = GP_RD(samples_game, GPs["Ywd"], at_least_one=True)
 	results["GP"]["eq"] = map(samples_game.toProfile, GP_eq)
 	results["GP"]["regrets"] = [AGG.regret(e[0]) for e in GP_eq]
 
@@ -404,19 +413,10 @@ def EVs_experiment(AGG, samples_game, reduced_game, GPs, sample_points=1000,
 						GP_DPR_players=[3,5,7]):
 	"""
 	"""
-	predictors = {"Y":GPs["Y"], "Yd":{}, "Ywd":{}}
-	for role in samples_game.roles:
-		predictors["Yd"][role] = {}
-		predictors["Ywd"][role] = {}
-		for strat in samples_game.strategies[role]:
-			predictors["Yd"][role][strat] = DiffGP(GPs["Ym"][role],
-												GPs["Yd"][role][strat])
-			predictors["Ywd"][role][strat] = DiffGP(GPs["Ywm"][role],
-												GPs["Ywd"][role][strat])
-	GP_DPR_games = {p:GP_DPR(samples_game, predictors["Ywd"], p) for
+	GP_DPR_games = {p:GP_DPR(samples_game, GPs["Ywd"], p) for
 												p in GP_DPR_players}
 	results = {"AGG":{}, "reduction":{}, "GP_sample":{},
-				"GP_point":{y:{} for y in predictors},
+				"GP_point":{y:{} for y in GPs},
 				"GP_DPR":{p:{} for p in GP_DPR_players}}
 
 	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game, 5):
@@ -426,10 +426,10 @@ def EVs_experiment(AGG, samples_game, reduced_game, GPs, sample_points=1000,
 			results["reduction"][prof] = \
 							tuple(reduced_game.expectedValues(mix).flat)
 			results["GP_sample"][prof] = tuple(GP_sample(samples_game, \
-							predictors["Ywd"], mix, sample_points).flat)
+							GPs["Ywd"], mix, sample_points).flat)
 			for y in ["Y","Yd","Ywd"]:
 				results["GP_point"][y][prof] = tuple(GP_point(samples_game,
-													predictors[y], mix).flat)
+													GPs[y], mix).flat)
 			for p in GP_DPR_players:
 				results["GP_DPR"][p][prof] = \
 								tuple(GP_DPR_games[p].expectedValues(mix).flat)
