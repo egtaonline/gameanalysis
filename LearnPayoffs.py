@@ -172,7 +172,7 @@ def GP_point(game, GPs, mix, *args):
 
 def GP_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
 			random_restarts=0, at_least_one=False, iters=1000, \
-			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_sample):
+			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_point):
 	"""
 	Estimate equilibria with RD using from GP regression models.
 	"""
@@ -182,14 +182,14 @@ def GP_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
 			[game.randomMixture() for _ in range(random_restarts)]:
 		for _ in range(iters):
 			old_mix = mix
-			EVs = EV_func(game, GPs, mix, game.players, ev_samples)
+			EVs = EV_func(game, GPs, mix, ev_samples)
 			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
 			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
 			if np.linalg.norm(mix - old_mix) <= converge_thresh:
 				break
 		mix[mix < 0] = 0
 		candidates.append(h_array(mix))
-		EVs = EV_func(game, GPs, mix, game.players, ev_samples)
+		EVs = EV_func(game, GPs, mix, ev_samples)
 		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
 
 	candidates.sort(key=regrets.get)
