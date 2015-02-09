@@ -392,7 +392,8 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	results["reduction"]["eq"] = map(samples_game.toProfile, reduced_eq)
 	results["reduction"]["regrets"] = [AGG.regret(e[0]) for e in reduced_eq]
 
-	GP_eq = GP_RD(samples_game, GPs, at_least_one=True)
+	predictor = DiffGP(GPs["Ywm"][role], GPs["Ywd"][role][strat])
+	GP_eq = GP_RD(samples_game, predictor, at_least_one=True)
 	results["GP"]["eq"] = map(samples_game.toProfile, GP_eq)
 	results["GP"]["regrets"] = [AGG.regret(e[0]) for e in GP_eq]
 
