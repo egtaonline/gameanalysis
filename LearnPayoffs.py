@@ -348,6 +348,25 @@ def write_game(game, base_folder, sub_folder, game_name):
 		f.write(to_JSON_str(game))
 
 
+def list_games(folder, extension=".json", exclude=["results"]):
+	file_names = sorted(filter(lambda f: f.endswith(extension), ls(folder)))
+	for e in exclude:
+		file_names = filter(lambda f: e not in f, file_names)
+	return file_names
+
+
+def read_LEGs(folder, exclude=["results"]):
+	"""
+	"""
+	for fn in list_games(folder, ".json", exclude):
+		with open(join(AGG_folder, fn + ".json")) as f:
+			AGG = LEG_to_AGG(json.load(f))
+		yield AGG
+
+
+def read_GPs(folder, exclude=["results"])
+
+
 def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players,
 					results_file, *args, **kwds):
 	"""
@@ -398,14 +417,20 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	"""
 	results = {"reduction":{}, "GP":{"Y":{},"Yd":{},"Ywd":{}}}
 
-	reduced_eq = mixed_nash(reduced_game, at_least_one=True)
-	results["reduction"]["eq"] = map(samples_game.toProfile, reduced_eq)
-	results["reduction"]["regrets"] = [AGG.regret(e[0]) for e in reduced_eq]
+	try:
+		reduced_eq = mixed_nash(reduced_game, at_least_one=True)
+		results["reduction"]["eq"] = map(samples_game.toProfile, reduced_eq)
+		results["reduction"]["regrets"] = [AGG.regret(e[0]) for e in reduced_eq]
+	except:
+		pass
 
 	for y in ["Y", "Yd", "Ywd"]:
-		GP_eq = GP_RD(samples_game, GPs[y], at_least_one=True)
-		results["GP"][y]["eq"] = map(samples_game.toProfile, GP_eq)
-		results["GP"][y]["regrets"] = [AGG.regret(e[0]) for e in GP_eq]
+		try:
+			GP_eq = GP_RD(samples_game, GPs[y], at_least_one=True)
+			results["GP"][y]["eq"] = map(samples_game.toProfile, GP_eq)
+			results["GP"][y]["regrets"] = [AGG.regret(e[0]) for e in GP_eq]
+		except:
+			pass
 
 	return results
 
