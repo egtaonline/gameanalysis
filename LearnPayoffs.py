@@ -356,15 +356,20 @@ def list_games(folder, extension=".json", exclude=["results"]):
 
 
 def read_LEGs(folder, exclude=["results"]):
-	"""
-	"""
 	for fn in list_games(folder, ".json", exclude):
-		with open(join(AGG_folder, fn + ".json")) as f:
+		with open(join(folder, fn)) as f:
 			AGG = LEG_to_AGG(json.load(f))
-		yield AGG
+		yield fn, AGG
 
 
-def read_GPs(folder, exclude=["results"])
+def read_models(folder, exclude=["results"]):
+	GP_files = list_games(folder, ".pkl", exclude)
+	samples_files = list_games(folder, ".json", exclude)
+	for fn in zip(GP_files, samples_files):
+		with open(join(folder, fn)) as f:
+			GPs = cPickle.load(f)
+		samples_game = read(fn)
+		yield fn, GPs, samples_game
 
 
 def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players,
@@ -435,33 +440,20 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	return results
 
 
-def EVs_experiment(AGG, samples_game, reduced_game, GPs, sample_points=1000,
-						GP_DPR_players=[3,5,7]):
+def AGG_EVs(LEGs_folder, results_file, mixture_points=0):
 	"""
 	"""
-	GP_DPR_games = {p:GP_DPR(samples_game, GPs["Ywd"], p) for
-												p in GP_DPR_players}
-	results = {"AGG":{}, "reduction":{}, "GP_sample":{},
-				"GP_point":{y:{} for y in GPs},
-				"GP_DPR":{p:{} for p in GP_DPR_players}}
-
-	for mix in [reduced_game.uniformMixture()] + mixture_grid(reduced_game, 5):
-		try:
-			prof = str(tuple(mix.flat))
-			results["AGG"][prof] = tuple(AGG.expectedValues(mix[0]).flat)
-			results["reduction"][prof] = \
-							tuple(reduced_game.expectedValues(mix).flat)
-			results["GP_sample"][prof] = tuple(GP_sample(samples_game, \
-							GPs["Ywd"], mix, sample_points).flat)
-			for y in ["Y","Yd","Ywd"]:
-				results["GP_point"][y][prof] = tuple(GP_point(samples_game,
-													GPs[y], mix).flat)
-			for p in GP_DPR_players:
-				results["GP_DPR"][p][prof] = \
-								tuple(GP_DPR_games[p].expectedValues(mix).flat)
-		except ValueError:
-			continue
-	return results
+	if mixture_points == 0:
+		mixture_points = len(json.load(list_games(LEGs_folder, \
+								".json")[0])["strategies"]) + 1
+	test_pts = [reduced_game.uniformMixture()] + mixture_grid(reduced_game, 5)
+	results = {"test_pts":test_pts, "AGG_EVs":{}}
+	for fn, AGG in read_LEGs(LEGs_folder):
+		for mix in test_pts:
+			EVs = AGG.expectedValues(mix[0])
+			results["AGG_EVs"][fn.split(".")[0]] = EVs.tolist()
+	with open(results_file, "w") as f:
+		json.dump(results, f)
 
 
 def mixture_grid(game, points=5):
