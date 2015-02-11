@@ -443,15 +443,21 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 def AGG_EVs(LEGs_folder, results_file, mixture_points=0):
 	"""
 	"""
+	with open(join(LEGs_folder, list_games(LEGs_folder, ".json",
+							[basename(results_file)])[0])) as f:
+		j = json.load(f)
+		dummy_game = RSG.Game(["All"], {"All":j["N"]}, {"All":j["strategies"]})
 	if mixture_points == 0:
-		mixture_points = len(json.load(list_games(LEGs_folder, \
-								".json")[0])["strategies"]) + 1
-	test_pts = [reduced_game.uniformMixture()] + mixture_grid(reduced_game, 5)
-	results = {"test_pts":test_pts, "AGG_EVs":{}}
-	for fn, AGG in read_LEGs(LEGs_folder):
+		mixture_points = dummy_game.numStrategies[0] + 1
+	test_pts = mixture_grid(dummy_game, mixture_points)
+	results = {"test_pts":[pt.tolist() for pt in test_pts], "AGG_EVs":{}}
+	for fn, AGG in read_LEGs(LEGs_folder, [basename(results_file)]):
+		game_name = fn.split(".")[0]
+		results[game_name] = []
 		for mix in test_pts:
 			EVs = AGG.expectedValues(mix[0])
-			results["AGG_EVs"][fn.split(".")[0]] = EVs.tolist()
+			results["AGG_EVs"][game_name].append(EVs.tolist())
+			break
 	with open(results_file, "w") as f:
 		json.dump(results, f)
 
