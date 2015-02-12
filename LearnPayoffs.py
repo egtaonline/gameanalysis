@@ -450,14 +450,13 @@ def AGG_EVs(LEGs_folder, results_file, mixture_points=0):
 	if mixture_points == 0:
 		mixture_points = dummy_game.numStrategies[0] + 1
 	test_pts = mixture_grid(dummy_game, mixture_points)
-	results = {"test_pts":[pt.tolist() for pt in test_pts], "AGG_EVs":{}}
+	results = {"test_pts":[pt.tolist() for pt in test_pts]}
 	for fn, AGG in read_LEGs(LEGs_folder, [basename(results_file)]):
 		game_name = fn.split(".")[0]
 		results[game_name] = []
 		for mix in test_pts:
 			EVs = AGG.expectedValues(mix[0])
-			results["AGG_EVs"][game_name].append(EVs.tolist())
-			break
+			results[game_name].append(EVs.tolist())
 	with open(results_file, "w") as f:
 		json.dump(results, f)
 
