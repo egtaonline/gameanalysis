@@ -6,6 +6,8 @@ from random import sample
 from os import listdir as ls, mkdir
 from os.path import join, exists, isdir, dirname, basename, abspath
 from argparse import ArgumentParser
+from itertools import combinations_with_replacement as CwR, permutations, \
+						product
 import cPickle
 import json
 
@@ -21,12 +23,9 @@ except ImportError:
 from Reductions import HR_profiles, DPR_profiles, full_prof_DPR, DPR, HR
 import RoleSymmetricGame as RSG
 from Nash import mixed_nash
-from BasicFunctions import average, nCr, leading_zeros
 from HashableClasses import h_array
 from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
-from itertools import combinations_with_replacement as CwR
-from itertools import permutations, product
 
 
 class DiffGP:
