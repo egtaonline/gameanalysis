@@ -439,14 +439,25 @@ def regrets_experiment(AGG, samples_game, reduced_game, GPs):
 	return results
 
 
-def AGG_EVs(LEGs_folder, results_file, mixture_points=0):
+def AGG_EVs(LEGs_folder, results_file, mixture_points=0, exclude=[]):
 	"""
+	Compute EVs of grid-spaced mixtures in each LEG
+
+	For each game in LEGs_folder and for each mixture in the grid, the expected
+	value each strategy played against that mixture is computed using the AGG
+	representation of the game. A JSON representation of the results is dumped
+	to results_file.
+
+	mixture_points:	number of points to space evenly over [0,1] in the grid of
+					mixed strategies. If unspecified, defaults to strategies+1
+	exclude:	If there are .json files other than the LEGs and the results
+				file in LEGs_folder, specify filename substrings to filter out.
 	"""
 	with open(join(LEGs_folder, list_games(LEGs_folder, ".json",
-							[basename(results_file)])[0])) as f:
+						exclude+[basename(results_file)])[0])) as f:
 		j = json.load(f)
 		dummy_game = RSG.Game(["All"], {"All":j["N"]}, {"All":j["strategies"]})
-	if mixture_points == 0:
+	if mixture_points < 2:
 		mixture_points = dummy_game.numStrategies[0] + 1
 	test_pts = mixture_grid(dummy_game, mixture_points)
 	results = {"test_pts":[pt.tolist() for pt in test_pts]}
@@ -487,19 +498,16 @@ def sym_mix_grid(num_strats, points):
 
 
 def main():
-	p = ArgumentParser(description="Perform game-learning experiments on " +\
-									"a set of action graph games.")
-	p.add_argument("mode", type=str, choices=["games","learn","regrets","EVs"],
-				help="games mode creates at_DPR, at_HR, near_DPR, and near_HR "+
-				"directories. It requires players and samples arguments "+
-				"(other modes don't). learn mode creates _GPs.pkl files. "+
-				"regrets mode computes equilibria and regrets in all games. "+
-				"EVs mode computes expected values of many mixtures in all "+
-				"games.")
+	p = ArgumentParser(description="Perform game-learning experiments.")
+	p.add_argument("mode", type=str, choices=["games","learn","regrets","EVs"])
 	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
+	p.add_argument("-y", type=str, choices=["Y", "Yd", "Ywd"], default="Ywd")
+	p.add_argument("--EV-type", choices=["AGG"], default="AGG")
 	p.add_argument("-p", type=int, nargs="*", default=[], help=\
-				"Player sizes of reduced games to try. Only for 'games' mode.")
-	p.add_argument("-n", type=int, nargs="*", default=[])
+				"Player sizes of reduced games to try.")
+	p.add_argument("-g", type=int, default=0, help="Mixture grid points.")
+	p.add_argument("-n", type=int, nargs="*", default=[], help=\
+				"Number of samples.")
 	p.add_argument("--skip", type=str, choices=["HR", "DPR", ""], default="",
 				help="Don't generate games of the specified reduction type.")
 	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
@@ -513,17 +521,9 @@ def main():
 		sample_games(a.folder, a.p, a.n, reductions)
 	elif a.mode == "learn":
 		learn_games(a.folder, a.CV)
-	else:
-		assert len(a.p)==1, "please specify one reduction size with -p"
-		reduction = HR if "HR" in basename(a.folder) else DPR
-		if a.mode == "regrets":
-			exp_type = regrets_experiment
-			res_file = join(a.folder, "regrets_results.json")
-		elif a.mode == "EVs":
-			exp_type = EVs_experiment
-			res_file = join(a.folder, "EVs_results.json")
-		run_experiments(dirname(abspath(a.folder)), a.folder,
-						exp_type, reduction, a.p[0], res_file)
+	elif a.mode == "EVs":
+		if a.EV_type == "AGG":
+			AGG_EVs(a.folder, join(a.folder, "AGG_EVs.json"), a.g)
 
 
 if __name__ == "__main__":
