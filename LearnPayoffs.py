@@ -524,6 +524,8 @@ def main():
 	elif a.mode == "EVs":
 		if a.EV_type == "AGG":
 			AGG_EVs(a.folder, join(a.folder, "AGG_EVs.json"), a.g)
+		else:
+			raise NotImplementedError("TODO")
 
 
 if __name__ == "__main__":
