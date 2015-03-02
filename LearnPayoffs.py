@@ -82,8 +82,11 @@ def GP_learn(game, cross_validate=False):
 					Y["Y"][role][strat].extend(y)
 					Y["Yd"][role][strat].extend(y - ym)
 					Y["Ywd"][role][strat].extend(y - ywm)
+					fi = flat_index(game, role, strat)
 					for i in range(y.size):
-						X["samples"][role][strat].append(x[0,:,i])
+						x_s = x[0,:,i]
+						x_s[fi] -= 1
+						X["samples"][role][strat].append(x_s)
 
 	#GPs stores the learned GP for each role and strategy
 	GPs = {y:{} for y in Y}
@@ -96,6 +99,10 @@ def GP_learn(game, cross_validate=False):
 				GPs[y][role][strat] = train_GP(X["samples"][role][strat], \
 										Y[y][role][strat], cross_validate)
 	return GPs
+
+
+def flat_index(game, role, strat):
+	return sum(game.numStrategies[:game.index(role)]) + game.index(role, strat)
 
 
 def train_GP(X, Y, cross_validate=False):
@@ -130,6 +137,7 @@ def GP_DPR(game, GPs, players):
 			for strat,count in prof[role].iteritems():
 				full_prof = full_prof_DPR(prof, role, strat, game.players)
 				prof_x = prof2vec(game, full_prof)
+				prof_x[flat_index(game, role, strat)] -= 1
 				prof_y = GPs[role][strat].predict(prof_x)
 				role_payoffs[role].append(RSG.PayoffData(strat, count, prof_y))
 		learned_game.addProfile(role_payoffs)
@@ -142,13 +150,17 @@ def GP_sample(game, GPs, mix, samples=1000):
 	Mimics game.ExpectedValues via sampling from the GPs.
 	"""
 	EVs = np.zeros(mix.shape)
-	partial_profiles = []
+	partial_profs = []
 	for r,role in enumerate(game.roles):
-		partial_profiles.append(multinomial(game.players[role], mix[r],
-															samples))
-	profiles = [prof2vec(game, p) for p in zip(*partial_profiles)]
+		partial_profs.append(multinomial(game.players[role], mix[r], samples))
+	profiles = [prof2vec(game, p) for p in zip(*partial_profs)]
 	for r,role in enumerate(game.roles):
 		for s,strat in enumerate(game.strategies[role]):
+			other_profs = copy(profiles)
+			fi = flat_index(game, role, strat)
+			#TODO: figure out whether this loop can be avoided with an array
+			for prof in other_profs:
+				prof[fi] -= 1
 			EVs[r,s] = GPs[role][strat].predict(profiles).mean()
 	return EVs
 
