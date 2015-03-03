@@ -483,6 +483,10 @@ def AGG_EVs(LEGs_folder, results_file, mixture_points=0, exclude=[]):
 		json.dump(results, f)
 
 
+def GP_EVs(GPs_folder, results_file, mixture_points=0, exclude=[]):
+	raise NotImplementedError("TODO")
+
+
 def mixture_grid(game, points=5):
 	"""
 	Cross-product of sym_mix_grid outputs for each role.
