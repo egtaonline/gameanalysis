@@ -280,6 +280,7 @@ class Game(dict):
 		return Profile(p)
 
 	def toArray(self, prof):
+                prof = h_dict(prof)
 		if is_mixed_profile(prof):
 			a = self.zeros(dtype=float)
 		elif is_pure_profile(prof):
