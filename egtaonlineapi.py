@@ -21,7 +21,17 @@ class scheduler(adict):
         update = self._api.get_scheduler(self.id, verbose=True)
         # Sum profiles that aren't complete
         return sum(req['current_count'] < req['requirement']
-                   for req in update.scheduling_requirements or [])
+                   for req in update.scheduling_requirements or ())
+
+    def are_profiles_still_active(self, profiles):
+        """Returns true if any of the profile ids in profiles are still active"""
+        profiles = set(profiles)
+        # Update info
+        update = self._api.get_scheduler(self.id, verbose=True)
+        for req in update.scheduling_requirements or ():
+            if req['profile_id'] in profiles and req['current_count'] < req['requirement']:
+                return True
+        return False
 
     def add_profile(self, profile_desc, update=False):
         """Add a profile to this simulator
@@ -29,7 +39,7 @@ class scheduler(adict):
         See egtaonline.remove_profile for more documentation
 
         """
-        self._api.add_profile(self.id, profile_desc, update)
+        return self._api.add_profile(self.id, profile_desc, update)
 
     def remove_profile(self, profile_desc):
         """Removes a specific profile from this simulator
@@ -178,6 +188,8 @@ class egtaonline(object):
         remove the one that matches this one first. Only useful if updating the
         requested count of a profile.
 
+        returns the profile id of the added profile
+
         """
         if update:
             self.remove_profile(scheduler_id, profile_desc)
@@ -185,11 +197,12 @@ class egtaonline(object):
         resp = self._request(
             'post',
             'generic_schedulers/%d/add_profile.json' % scheduler_id,
-            data = {
+            data={
                 'assignment': str(analysis.profile(profile_desc)),
                 'count': count
             })
         resp.raise_for_status()
+        return json.loads(resp.text)['id']
 
     def remove_profile(self, scheduler_id, profile_desc):
         """Removes a profile from a scheduler
