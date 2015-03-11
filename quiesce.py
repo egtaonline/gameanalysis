@@ -179,6 +179,7 @@ class quieser(object):
         #
         # This is an overestimate because checking is expensive
         count = self.scheduler.num_running_profiles()
+        profile_ids = set()
         for prof in profiles:
             # First, we check / block until we can schedule another profile
 
@@ -194,14 +195,13 @@ class quieser(object):
                 count = self.scheduler.num_running_profiles()
 
             count += 1
-            self.api.add_profile(self.scheduler.id, prof, self.obs_count)
+            profile_ids.add(self.api.add_profile(self.scheduler.id, prof, self.obs_count))
 
-        # Like before, but we block until everything is finished
-        if count > 0:
-            count = self.scheduler.num_running_profiles()
-        while count > 0:
+        # Check that all scheduled profiles are finished executing
+        active_profiles = self.scheduler.are_profiles_still_active(profile_ids)
+        while active_profiles:
             time.sleep(self.sleep_time)
-            count = self.scheduler.num_running_profiles()
+            active_profiles = self.scheduler.are_profiles_still_active(profile_ids)
 
     def get_data(self):
         """Gets current game data"""
