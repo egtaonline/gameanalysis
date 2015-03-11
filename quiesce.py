@@ -5,6 +5,8 @@
 import argparse
 import time
 import itertools
+import logging
+import sys
 
 import BasicFunctions as funcs
 
@@ -30,6 +32,7 @@ PARSER.add_argument('-t', '--sleep-time', metavar='delta', type=int, default=600
 PARSER.add_argument('-n', '--max-subgame-size', metavar='n', type=int,
                     default=3,
                     help='Maximum subgame size to require exploration. Defaults to 3')
+PARSER.add_argument('-v', '--verbose', action='count', default=0, help='verbosity level')
 
 def max_strategies(subgame, **_):
     """Max number of strategies per role in subgame"""
@@ -52,7 +55,7 @@ class quieser(object):
     # TODO keep track up most recent set of data, and have schedule update it
     # after it finishes blocking
     def __init__(self, scheduler, auth_token, game=None, max_profiles=10000,
-                 sleep_time=300, subgame_limit=None):
+                 sleep_time=300, subgame_limit=None, verbosity=0):
         # pylint: disable=too-many-arguments
         # Get api and access to standard objects
         self.api = egta.egtaonline(auth_token)
@@ -91,6 +94,11 @@ class quieser(object):
         self.subgame_limit = subgame_limit
         self.subgame_size = sum_strategies # TODO allow other functions
 
+        # Logging
+        self.log = logging.getLogger(self.__class__.__name__)
+        self.log.setLevel(40 - verbosity * 10)
+        self.log.addHandler(logging.StreamHandler(sys.stderr))
+
     def quiesce(self):
         """Starts the process of quiescing
 
@@ -103,9 +111,9 @@ class quieser(object):
         while not self.confirmed_equilibria or self.necessary:
             # Get next subgame to explore
             _, subgame = self.necessary.pop() if self.necessary else self.backup.pop()
-            print "\nExploring subgame:\t", subgame
+            self.log.debug(">>> Exploring subgame:\t%s", subgame)
             if not self.explored.add(subgame):  # already explored
-                print "***Already Explored Subgame***"
+                self.log.debug("--- Already Explored Subgame:\t%s", subgame)
                 continue
 
             # Schedule subgame
@@ -114,8 +122,8 @@ class quieser(object):
 
             # Find equilibria in the subgame
             equilibria = game_data.equilibria(eq_subgame=subgame)
-            for eq in equilibria:
-                print "Found equilibrium:\t", eq
+            for equilibrium in equilibria:
+                self.log.debug("Found equilibrium:\t%s", equilibrium)
 
             # Schedule all deviations from found equilibria
             self.schedule_profiles(itertools.chain.from_iterable(
@@ -128,22 +136,23 @@ class quieser(object):
             for equilibrium in equilibria:
                 self.queue_deviations(equilibrium, game_data)
 
-        print "\nConfirmed Equilibria:"
-        for i, eq in enumerate(self.confirmed_equilibria):
-            print (i + 1), ")", eq
+        self.log.info("Confirmed Equilibria:")
+        for i, equilibrium in enumerate(self.confirmed_equilibria):
+            self.log.info("%d:\t%s", (i + 1), equilibrium)
 
     def queue_deviations(self, equilibrium, game_data):
         """Queues deviations to an equilibrium"""
         responses = game_data.responses(equilibrium)
-        print "Responses:\t", responses
+        self.log.debug("Responses:\t%s", responses)
         if not responses:  # Found equilibrium
             self.confirmed_equilibria.add(equilibrium)
-            print "!!!Confirmed!!!:\t", equilibrium
+            self.log.info("!!! Confirmed Equilibrium:\t%s", equilibrium)
         else: # Queue up next subgames
             supp = equilibrium.support()
             # If it's a large subgame, best responses should not be necessary
             large_subgame = self.subgame_size(supp, role_counts=self.role_counts) \
                             >= self.subgame_limit
+
             for role, rresps in responses.iteritems():
                 ordered = sorted(rresps.iteritems(), key=lambda x: -x[1])
                 strat, gain = ordered[0]  # best response
@@ -198,15 +207,22 @@ class quieser(object):
         """Gets current game data"""
         return analysis.game_data(self.api.get_game(self.game.id, 'summary'))
 
-if __name__ == '__main__':
+
+def main():
+    """Main function, declared so it doesn't have global scope"""
     args = PARSER.parse_args()
 
     quies = quieser(
         int(args.scheduler) if args.scheduler.isdigit() else args.scheduler,
-        args.auth,
-        args.game and (int(args.game) if args.game.isdigit() else args.game),
-        args.max_profiles,
-        args.sleep_time)
+        auth_token=args.auth,
+        game=args.game and (int(args.game) if args.game.isdigit() else args.game),
+        max_profiles=args.max_profiles,
+        sleep_time=args.sleep_time,
+        subgame_limit=args.max_subgame_size,
+        verbosity=args.verbose)
 
     quies.quiesce()
-    print '[[ done ]]'
+
+
+if __name__ == '__main__':
+    main()
