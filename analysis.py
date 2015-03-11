@@ -160,20 +160,32 @@ class subgame(containers.frozendict):
         """
         return self >= other_subgame
 
+    def asset(self):
+        """Returns a view of the subgame as a set of role strategy pairs"""
+        return frozenset(self.iterrolestrats())
+
+    def iterrolestrats(self):
+        """Returns an iterable over role strategy pairs in this subgame"""
+        return itertools.chain.from_iterable(
+            ((r, s) for s in ss) for r, ss in self.iteritems())
+
     def __le__(self, other):
+        """is subgame"""
         assert self.keys() == other.keys(), "subgames must have the same roles"
         return all(s <= other[r] for r, s in self.iteritems())
 
-
     def __ge__(self, other):
+        """is supergame"""
         assert self.keys() == other.keys(), "subgames must have the same roles"
         return all(s >= other[r] for r, s in self.iteritems())
 
     def __lt__(self, other):
+        """is strict subgame"""
         assert self.keys() == other.keys(), "subgames must have the same roles"
         return all(s < other[r] for r, s in self.iteritems())
 
     def __gt__(self, other):
+        """is strict supergame"""
         assert self.keys() == other.keys(), "subgames must have the same roles"
         return all(s > other[r] for r, s in self.iteritems())
 
@@ -183,6 +195,8 @@ class subgame(containers.frozendict):
 
 class mixture(containers.frozendict):
     """Representation of an mixture, not tied to an particular game"""
+    # pylint: disable=too-few-public-methods
+
     def __init__(self, *args, **kwargs):
         temp = dict(*args, **kwargs)
         super(mixture, self).__init__(
@@ -198,30 +212,51 @@ class mixture(containers.frozendict):
 
 class subgame_set(object):
     """Set of subgames, supports relevant operations on such a set"""
-    # TODO this could be more efficient if it were actually a set, but then
-    # subgames would have to be immutable which would require a frozendict
+    # pylint: disable=too-few-public-methods
 
+    # This class uses an inverted index from a role strategy tuple to every
+    # subgame that contains that role strategy tuple.
     def __init__(self, iterable=[]):
-        self.subgames = set()
+        # pylint: disable=dangerous-default-value
+        self.inverted_index = {}
         for added_subgame in iterable:
             self.add(added_subgame)
 
     def add(self, added_subgame):
         """Adds a subgame to the set
 
-        Returns True if the set was modified"""
-        for current_subgame in self.subgames:
-            if added_subgame <= current_subgame:
-                # Subset to this one already exists
-                return False
-            elif added_subgame > current_subgame:
-                # Game in set is a subgame
-                self.subgames.pop(current_subgame)
-        self.subgames.add(added_subgame)
+        Returns True if the set was modified
+
+        """
+        # If dominated, don't add
+        if added_subgame in self:
+            return False
+
+        # Otherwise, add and remove all subgames
+        for key in added_subgame.iterrolestrats():
+            bucket = self.inverted_index.setdefault(key, set())
+            for current_subgame in bucket:
+                if added_subgame > current_subgame:
+                    # Game in bucket is a subgame
+                    bucket.pop(current_subgame)
+            bucket.add(added_subgame)
         return True
 
     def __contains__(self, check_subgame):
-        return any(check_subgame <= game for game in self.subgames)
+        # Because every role strat key in the inverted index points to every
+        # subgame that has that role strategy in it's support, we only need to
+        # look in the bucket of an arbitrary role or strategy.
+        key = next(check_subgame.iterrolestrats())
+        bucket = self.inverted_index.get(key, set())
+        return any(check_subgame <= game for game in bucket)
+
+    def __repr__(self):
+        # XXX Expensive!
+        if not self.inverted_index:
+            return '{}'
+        else:
+            return '{' + repr(set.union(*self.inverted_index.values()))[5:-2] + '}'
+
 
 #############
 # Utilities #
