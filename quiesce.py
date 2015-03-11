@@ -1,8 +1,12 @@
 #!/usr/bin/env python
+"""Python script for quiessing a game"""
+# pylint: disable=relative-import
+
 import argparse
 import time
 import itertools
-from Queue import PriorityQueue as priorityqueue
+
+import BasicFunctions as funcs
 
 import egtaonlineapi as egta
 import analysis
@@ -17,21 +21,38 @@ PARSER.add_argument('-g', '--game', metavar='game_id', type=int, default=None,
                     help='''The id of the game used to indicate how to schedule.
                     If not provided, this will try and determine the game, but may fail.
                     ''')
-PARSER.add_argument('-n', '--max-profiles', metavar='num-profiles', type=int,
+PARSER.add_argument('-m', '--max-profiles', metavar='num-profiles', type=int,
                     default=10000, help='''Maximum number of profiles to ever have
                     scheduled at a time. Defaults to 10000.''')
 PARSER.add_argument('-t', '--sleep-time', metavar='delta', type=int, default=600,
                     help='''Time to wait in seconds between checking egtaonline for
                     job completion. Defaults to 300.''')
+PARSER.add_argument('-n', '--max-subgame-size', metavar='n', type=int,
+                    default=3,
+                    help='Maximum subgame size to require exploration. Defaults to 3')
+
+def max_strategies(subgame, **_):
+    """Max number of strategies per role in subgame"""
+    return max(len(strats) for strats in subgame.values())
+
+def sum_strategies(subgame, **_):
+    """Sum of all strategies in each role in subgame"""
+    return sum(len(strats) for strats in subgame.values())
+
+def num_profiles(subgame, role_counts, **_):
+    """Returns the number of profiles in a subgame"""
+    return funcs.prod(funcs.game_size(role_counts[role], len(strats))
+                      for role, strats in subgame.iteritems())
 
 class quieser(object):
     """Class to manage quiesing of a scheduler"""
     # pylint: disable=too-many-instance-attributes
+    # pylint: disable=star-args
 
     # TODO keep track up most recent set of data, and have schedule update it
     # after it finishes blocking
     def __init__(self, scheduler, auth_token, game=None, max_profiles=10000,
-                 sleep_time=300):
+                 sleep_time=300, subgame_limit=None):
         # pylint: disable=too-many-arguments
         # Get api and access to standard objects
         self.api = egta.egtaonline(auth_token)
@@ -49,10 +70,26 @@ class quieser(object):
         self.full_game = analysis.subgame(
             (r['name'], set(r['strategies'])) for r in self.game.roles)
 
-        # Set useful variables
+        # Set up progress containers
+        # Set initial subgames: currently this is all pure profiles
+        # The subgames to necessary explore to consider quiessed
+        self.necessary = containers.priorityqueue(
+            (0, analysis.subgame(rs)) for rs in itertools.product(
+                *([(r, {s}) for s in ss] for r, ss in self.full_game.iteritems())))
+        # Subgames to try only if no equilibria have been found. Priority is a
+        # tuple first indicating if it was a best response then indicating the
+        # regret
+        self.backup = containers.priorityqueue()
+        # Subgames we've already explored
+        self.explored = analysis.subgame_set()
+        self.confirmed_equilibria = set()
+
+        # Set useful quiesing variables
         self.obs_count = self.scheduler.default_observation_requirement
         self.max_profiles = max_profiles
         self.sleep_time = sleep_time
+        self.subgame_limit = subgame_limit
+        self.subgame_size = sum_strategies # TODO allow other functions
 
     def quiesce(self):
         """Starts the process of quiescing
@@ -60,39 +97,23 @@ class quieser(object):
         No writes happen until this method is called
 
         """
-        # Keeps a set of explored subgames, a queue of necessary subgames to
-        # explore, and a queue of optional subgames to explore if no equilibria
-        # have been found. The queues use the negative regret of the deviation
-        # that generated them as a key to prompt exploration.
-
-        # pylint: disable=star-args
-
-        # Set initial subgames
-        #
-        # TODO Initial subgames might not want to include all pure profiles
-        necessary = containers.priorityqueue(
-            (0, analysis.subgame(rs)) for rs in itertools.product(
-                *([(r, {s}) for s in ss] for r, ss in self.full_game.iteritems())))
-        backup = containers.priorityqueue()
-        explored = analysis.subgame_set()
-        confirmed_equilibria = set()
 
         # TODO could be changed to allow multiple stopping conditions
         # TODO could be changed to be parallel
-        while not confirmed_equilibria or necessary:
+        while not self.confirmed_equilibria or self.necessary:
             # Get next subgame to explore
-            _, subgame = necessary.pop() if necessary else backup.pop()
+            _, subgame = self.necessary.pop() if self.necessary else self.backup.pop()
             print "\nExploring subgame:\t", subgame
-            if not explored.add(subgame):  # already explored
+            if not self.explored.add(subgame):  # already explored
                 print "***Already Explored Subgame***"
                 continue
 
             # Schedule subgame
             self.schedule_profiles(subgame.get_subgame_profiles(self.role_counts))
-            data = self.get_data()
+            game_data = self.get_data()
 
             # Find equilibria in the subgame
-            equilibria = data.equilibria(eq_subgame=subgame)
+            equilibria = game_data.equilibria(eq_subgame=subgame)
             for eq in equilibria:
                 print "Found equilibrium:\t", eq
 
@@ -100,28 +121,42 @@ class quieser(object):
             self.schedule_profiles(itertools.chain.from_iterable(
                 eq.support().get_deviation_profiles(self.full_game, self.role_counts)
                 for eq in equilibria))
-            data = self.get_data()
+            game_data = self.get_data()
 
             # Confirm equilibria and add beneficial deviating subgames to
             # future exploration
-            for equm in equilibria:
-                responses = sorted(data.responses(equm), reverse=True)
-                print "Responses:\t", responses
-                if not responses:  # Found equilibrium
-                    confirmed_equilibria.add(equm)
-                    print "!!!Confirmed!!!:\t", equm
-                else: # Queue up next subgames
-                    supp = equm.support()
-                    b_reg, b_role, b_strat = responses[0]
-                    # Best response becomes necessary to explore
-                    necessary.append((-b_reg, supp.with_deviation(b_role, b_strat)))
-                    # All others become backups if we run out without finding one
-                    for reg, role, strat in responses[1:]:
-                        backup.append((-reg, supp.with_deviation(role, strat)))
+            for equilibrium in equilibria:
+                self.queue_deviations(equilibrium, game_data)
 
         print "\nConfirmed Equilibria:"
-        for i, eq in enumerate(confirmed_equilibria):
+        for i, eq in enumerate(self.confirmed_equilibria):
             print (i + 1), ")", eq
+
+    def queue_deviations(self, equilibrium, game_data):
+        """Queues deviations to an equilibrium"""
+        responses = game_data.responses(equilibrium)
+        print "Responses:\t", responses
+        if not responses:  # Found equilibrium
+            self.confirmed_equilibria.add(equilibrium)
+            print "!!!Confirmed!!!:\t", equilibrium
+        else: # Queue up next subgames
+            supp = equilibrium.support()
+            # If it's a large subgame, best responses should not be necessary
+            large_subgame = self.subgame_size(supp, role_counts=self.role_counts) \
+                            >= self.subgame_limit
+            for role, rresps in responses.iteritems():
+                ordered = sorted(rresps.iteritems(), key=lambda x: -x[1])
+                strat, gain = ordered[0]  # best response
+                if large_subgame:
+                    # Large, so add to backup with priority 0 (highest)
+                    self.backup.append(((0, -gain), supp.with_deviation(role, strat)))
+                else:
+                    # Best response becomes necessary to explore
+                    self.necessary.append((-gain, supp.with_deviation(role, strat)))
+                # All others become backups if we run out without finding one
+                # These all have priority 1 (lowest)
+                for strat, gain in ordered[1:]:
+                    self.backup.append(((1, -gain), supp.with_deviation(role, strat)))
 
     def schedule_profiles(self, profiles):
         """Schedules an interable of profiles

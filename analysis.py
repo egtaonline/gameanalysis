@@ -2,7 +2,12 @@
 #
 # This package defined all of the data objects that are used for analysis. It
 # wraps a lot of bryces methods to make things much easier.
+"""A python module that contains analysis tools. Most are a wrapper around
+Bryce's methods
 
+"""
+
+# pylint: disable=relative-import
 import itertools
 from collections import Counter as counter
 
@@ -12,16 +17,15 @@ import Nash as nash
 
 import containers
 
-class game_data(dict):
-    """Game object, that just has wrapper convenience methods around the native
-    summary game json that egtaonline produces
+class game_data(object):
+    """Game object, that just has wrapper convenience methods around Bryce's
+    scripts
 
     """
-    def __init__(self, *vargs, **kwargs):
-        super(game_data, self).__init__(*vargs, **kwargs)
-        self._analysis_game = gameio.read_JSON(self)
+    def __init__(self, *args, **kwargs):
+        self._analysis_game = gameio.read_JSON(dict(*args, **kwargs))
 
-    def subgames(self, known_subgames=[]):
+    def subgames(self, known_subgames=()):
         """Find maximal subgames"""
         return (subgame(sg) for sg
                 in subgames.cliques(self._analysis_game, known_subgames))
@@ -35,20 +39,23 @@ class game_data(dict):
         return [mixture(analysis_subgame.toProfile(
             e, supp_thresh=support_threshold)) for e in eqs]
 
-    def responses(self, mix, regret_threshold=1e-3):
+    def responses(self, mix, gain_threshold=1e-3):
         """Returns the gain for deviation by role and strategy
 
-        Return value is an iterable of (gain, role, strat)
+        Return value is {role: {strategy: gain}} where gain must be greater
+        than gain_threshold and there is never a role pointing to am empty set
+        of strategies.
 
         """
         mix = self._analysis_game.toArray(mix)
         payoffs = self._analysis_game.expectedValues(mix)
         role_payoffs = (payoffs * mix).sum(axis=1)
         regrets = payoffs - role_payoffs[:, None]
-        return itertools.chain.from_iterable(
-            ((g, r, s) for s, g in zip(self._analysis_game.strategies[r], gs)
-             if g > regret_threshold)
-            for r, (i, gs) in zip(self._analysis_game.roles, enumerate(regrets)))
+        return {role: stratgains for role, stratgains
+                in ((role, {s: g for s, g in zip(strats, gains) if g > gain_threshold})
+                    for (role, strats), gains
+                    in zip(self._analysis_game.strategies.iteritems(), regrets))
+                if stratgains}
 
 
 class profile(dict):
@@ -216,8 +223,7 @@ class subgame_set(object):
 
     # This class uses an inverted index from a role strategy tuple to every
     # subgame that contains that role strategy tuple.
-    def __init__(self, iterable=[]):
-        # pylint: disable=dangerous-default-value
+    def __init__(self, iterable=()):
         self.inverted_index = {}
         for added_subgame in iterable:
             self.add(added_subgame)
