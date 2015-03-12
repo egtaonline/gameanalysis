@@ -13,6 +13,7 @@ import BasicFunctions as funcs
 import egtaonlineapi as egta
 import analysis
 import containers
+import reduction
 
 PARSER = argparse.ArgumentParser(description='Quiesce a generic scheduler on egtaonline.')
 PARSER.add_argument('-a', '--auth', metavar='auth_token', required=True,
@@ -33,6 +34,9 @@ PARSER.add_argument('-n', '--max-subgame-size', metavar='n', type=int,
                     default=3,
                     help='Maximum subgame size to require exploration. Defaults to 3')
 PARSER.add_argument('-v', '--verbose', action='count', default=0, help='verbosity level')
+PARSER.add_argument('--dpr', nargs="+", metavar="role-or-count", default=(),
+                    help='''If specified, does a dpr reduction with role strategy counts.
+                    e.g. --dpr role1 count1 role2 count2...''')
 
 def max_strategies(subgame, **_):
     """Max number of strategies per role in subgame"""
@@ -55,7 +59,7 @@ class quieser(object):
     # TODO keep track up most recent set of data, and have schedule update it
     # after it finishes blocking
     def __init__(self, scheduler, auth_token, game=None, max_profiles=10000,
-                 sleep_time=300, subgame_limit=None, verbosity=0):
+                 sleep_time=300, subgame_limit=None, verbosity=0, dpr=None):
         # pylint: disable=too-many-arguments
         # Get api and access to standard objects
         self.api = egta.egtaonline(auth_token)
@@ -72,6 +76,13 @@ class quieser(object):
         self.role_counts = {r['name']: r['count'] for r in self.game.roles}
         self.full_game = analysis.subgame(
             (r['name'], set(r['strategies'])) for r in self.game.roles)
+        
+        # Set up reduction
+        if dpr:
+            self.reduction = reduction.dpr_reduction(self.role_counts, dpr)
+            self.role_counts = dpr
+        else:
+            self.reduction = reduction.no_reduction()
 
         # Set up progress containers
         # Set initial subgames: currently this is all pure profiles
@@ -180,7 +191,10 @@ class quieser(object):
         # This is an overestimate because checking is expensive
         count = self.scheduler.num_running_profiles()
         profile_ids = set()
-        for prof in profiles:
+
+        # Iterate through full game profiles
+        for prof in itertools.chain.from_iterable(
+                self.reduction.expand_profile(p) for p in profiles):
             # First, we check / block until we can schedule another profile
 
             # Sometimes scheduled profiles already exist, and so even though we
@@ -205,8 +219,13 @@ class quieser(object):
 
     def get_data(self):
         """Gets current game data"""
-        return analysis.game_data(self.api.get_game(self.game.id, 'summary'))
+        return analysis.game_data(self.reduction.reduce_game_data(
+            self.api.get_game(self.game.id, 'summary')))
 
+
+def parse_dpr(dpr_list):
+    """Turn list of role counts into dictionary"""
+    return {dpr_list[2*i]: int(dpr_list[2*i+1]) for i in xrange(len(dpr_list)//2)}
 
 def main():
     """Main function, declared so it doesn't have global scope"""
@@ -219,7 +238,8 @@ def main():
         max_profiles=args.max_profiles,
         sleep_time=args.sleep_time,
         subgame_limit=args.max_subgame_size,
-        verbosity=args.verbose)
+        verbosity=args.verbose,
+        dpr=parse_dpr(args.dpr))
 
     quies.quiesce()
 
