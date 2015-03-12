@@ -34,6 +34,9 @@ PARSER.add_argument('-t', '--sleep-time', metavar='sleep-time', type=int, defaul
 PARSER.add_argument('-m', '--max-subgame-size', metavar='max-subgame-size', type=int,
                     default=3,
                     help='Maximum subgame size to require exploration. Defaults to 3')
+PARSER.add_argument('-n', '--num-subgames', metavar='num-subgames', type=int,
+                    default=1,
+                    help='Maximum subgame size to require exploration. Defaults to 3')
 PARSER.add_argument('--dpr', nargs="+", metavar="role-or-count", default=(),
                     help='''If specified, does a dpr reduction with role strategy counts.
                     e.g. --dpr role1 1 role2 2 ...''')
@@ -61,7 +64,8 @@ class quieser(object):
     # TODO keep track up most recent set of data, and have schedule update it
     # after it finishes blocking
     def __init__(self, game, auth_token, scheduler=None, max_profiles=10000,
-                 sleep_time=300, subgame_limit=None, dpr=None, verbosity=0):
+                 sleep_time=300, subgame_limit=None, num_subgames=1, dpr=None,
+                 verbosity=0):
         # pylint: disable=too-many-arguments
 
         # Get api and access to standard objects
@@ -103,17 +107,18 @@ class quieser(object):
         self.explored = analysis.subgame_set()
         self.confirmed_equilibria = set()
 
+        # Logging
+        self.log = logging.getLogger(self.__class__.__name__)
+        self.log.setLevel(40 - verbosity * 10)
+        self.log.addHandler(logging.StreamHandler(sys.stderr))
+
         # Set useful quiesing variables
         self.obs_count = self.scheduler.default_observation_requirement
         self.max_profiles = max_profiles
         self.sleep_time = sleep_time
         self.subgame_limit = subgame_limit
         self.subgame_size = sum_strategies # TODO allow other functions
-
-        # Logging
-        self.log = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(40 - verbosity * 10)
-        self.log.addHandler(logging.StreamHandler(sys.stderr))
+        self.num_subgames = num_subgames
 
     def quiesce(self):
         """Starts the process of quiescing
@@ -125,21 +130,19 @@ class quieser(object):
         # TODO could be changed to allow multiple stopping conditions
         # TODO could be changed to be parallel
         while not self.confirmed_equilibria or self.necessary:
-            # Get next subgame to explore
-            _, subgame = self.necessary.pop() if self.necessary else self.backup.pop()
-            self.log.debug(">>> Exploring subgame:\t%s", subgame)
-            if not self.explored.add(subgame):  # already explored
-                self.log.debug("--- Already Explored Subgame:\t%s", subgame)
-                continue
+            # Get next subgames to explore
+            subgames = self.get_next_subgames()
+            self.log.debug(">>> Exploring subgames:\t%s", subgames)
 
-            # Schedule subgame
-            self.schedule_profiles(subgame.get_subgame_profiles(self.role_counts))
+            # Schedule subgames
+            self.schedule_profiles(itertools.chain.from_iterable(
+                sg.get_subgame_profiles(self.role_counts) for sg in subgames))
             game_data = self.get_data()
 
             # Find equilibria in the subgame
-            equilibria = game_data.equilibria(eq_subgame=subgame)
-            for equilibrium in equilibria:
-                self.log.debug("Found equilibrium:\t%s", equilibrium)
+            equilibria = list(itertools.chain.from_iterable(
+                game_data.equilibria(eq_subgame=subgame) for subgame in subgames))
+            self.log.debug("Found equilibria:\t%s", equilibria)
 
             # Schedule all deviations from found equilibria
             self.schedule_profiles(itertools.chain.from_iterable(
@@ -155,6 +158,23 @@ class quieser(object):
         self.log.info("Confirmed Equilibria:")
         for i, equilibrium in enumerate(self.confirmed_equilibria):
             self.log.info("%d:\t%s", (i + 1), equilibrium)
+
+    def get_next_subgames(self):
+        """Gets a list of subgames to explore next"""
+        subgames = []
+        # This loop essentially says keep dequing subgames as long as you
+        # haven't exceeded the threshold and either there's more necessary
+        # subgames, or there are more backup subgames, you've scheduled no
+        # subgames currently, and you still haven't found an equilibrium
+        while (len(subgames) < self.num_subgames and (
+                self.necessary or (
+                    not subgames and self.backup and not self.confirmed_equilibria))):
+            _, subgame = self.necessary.pop() if self.necessary else self.backup.pop()
+            if not self.explored.add(subgame):  # already explored
+                self.log.debug("--- Already Explored Subgame:\t%s", subgame)
+            else:
+                subgames.append(subgame)
+        return subgames
 
     def queue_deviations(self, equilibrium, game_data):
         """Queues deviations to an equilibrium"""
@@ -243,6 +263,7 @@ def main():
         max_profiles=args.max_profiles,
         sleep_time=args.sleep_time,
         subgame_limit=args.max_subgame_size,
+        num_subgames=args.num_subgames,
         dpr=parse_dpr(args.dpr),
         verbosity=args.verbose)
 

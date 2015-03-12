@@ -36,8 +36,8 @@ class game_data(object):
         analysis_subgame = subgames.subgame(self._analysis_game, eq_subgame)
         eqs = nash.mixed_nash(analysis_subgame,
                               dist_thresh=support_threshold, **nash_args)
-        return [mixture(analysis_subgame.toProfile(
-            e, supp_thresh=support_threshold)) for e in eqs]
+        return (mixture(analysis_subgame.toProfile(
+            e, supp_thresh=support_threshold)) for e in eqs)
 
     def responses(self, mix, gain_threshold=1e-3):
         """Returns the gain for deviation by role and strategy
