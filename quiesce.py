@@ -16,28 +16,30 @@ import containers
 import reduction
 
 PARSER = argparse.ArgumentParser(description='Quiesce a generic scheduler on egtaonline.')
+PARSER.add_argument('-g', '--game', metavar='game-id', type=int, required=True,
+                    help='The id of the game to pull data from / to quiesce')
 PARSER.add_argument('-a', '--auth', metavar='auth_token', required=True,
                     help='An authorization token to allow access to egtaonline.')
-PARSER.add_argument('-s', '--scheduler', metavar='scheduler', required=True,
-                    help='The name or id of the scheduler to quiesce.')
-PARSER.add_argument('-g', '--game', metavar='game_id', type=int, default=None,
-                    help='''The id of the game used to indicate how to schedule.
-                    If not provided, this will try and determine the game, but may fail.
-                    ''')
-PARSER.add_argument('-m', '--max-profiles', metavar='num-profiles', type=int,
+# Ideally this will just create a new scheduler and won't require and argument
+PARSER.add_argument('-s', '--scheduler', metavar='generic-scheduler-id', type=int,
+                    default=None,
+                    help='''The id of the generic scheduler to quiesce. If not provided,
+                    this will attempt to find a matching generic scheduler''')
+PARSER.add_argument('-p', '--max-profiles', metavar='max-num-profiles', type=int,
                     default=10000, help='''Maximum number of profiles to ever have
                     scheduled at a time. Defaults to 10000.''')
-PARSER.add_argument('-t', '--sleep-time', metavar='delta', type=int, default=600,
+PARSER.add_argument('-t', '--sleep-time', metavar='sleep-time', type=int, default=600,
                     help='''Time to wait in seconds between checking egtaonline for
-                    job completion. Defaults to 300.''')
-PARSER.add_argument('-n', '--max-subgame-size', metavar='n', type=int,
+                    job completion. Defaults to 300 (5 minutes).''')
+PARSER.add_argument('-m', '--max-subgame-size', metavar='max-subgame-size', type=int,
                     default=3,
                     help='Maximum subgame size to require exploration. Defaults to 3')
-PARSER.add_argument('-v', '--verbose', action='count', default=0, help='verbosity level')
 PARSER.add_argument('--dpr', nargs="+", metavar="role-or-count", default=(),
                     help='''If specified, does a dpr reduction with role strategy counts.
-                    e.g. --dpr role1 count1 role2 count2...''')
+                    e.g. --dpr role1 1 role2 2 ...''')
+PARSER.add_argument('-v', '--verbose', action='count', default=0, help='verbosity level')
 
+# These are methods to measure the size of a game
 def max_strategies(subgame, **_):
     """Max number of strategies per role in subgame"""
     return max(len(strats) for strats in subgame.values())
@@ -58,25 +60,28 @@ class quieser(object):
 
     # TODO keep track up most recent set of data, and have schedule update it
     # after it finishes blocking
-    def __init__(self, scheduler, auth_token, game=None, max_profiles=10000,
-                 sleep_time=300, subgame_limit=None, verbosity=0, dpr=None):
+    def __init__(self, game, auth_token, scheduler=None, max_profiles=10000,
+                 sleep_time=300, subgame_limit=None, dpr=None, verbosity=0):
         # pylint: disable=too-many-arguments
+
         # Get api and access to standard objects
         self.api = egta.egtaonline(auth_token)
+        self.game = self.api.get_game(game, granularity='summary')
+        if not scheduler:
+            # If not specified we need to find the scheduler id. First find the
+            # games simulator instance id, and then match against all generic
+            # schedulers
+            sim_inst_id = self.api.get_game(self.game.id).simulator_instance_id
+            scheduler = analysis.only(gs for gs in self.api.get_generic_schedulers()
+                                      if gs.simulator_instance_id == sim_inst_id).id
         self.scheduler = self.api.get_scheduler(scheduler, verbose=True)
         self.simulator = self.api.get_simulator(self.scheduler.simulator_id)
-        sim_inst_id = self.api.get_scheduler(self.scheduler.id).simulator_instance_id
-        if game is None:
-            # Hack to find game with same simulator instance id
-            game = analysis.only(g for g in self.api.get_games()
-                                 if g.simulator_instance_id == sim_inst_id).id
-            self.game = self.api.get_game(game, granularity='summary')
 
         # Set other game information
         self.role_counts = {r['name']: r['count'] for r in self.game.roles}
         self.full_game = analysis.subgame(
             (r['name'], set(r['strategies'])) for r in self.game.roles)
-        
+
         # Set up reduction
         if dpr:
             self.reduction = reduction.dpr_reduction(self.role_counts, dpr)
@@ -232,14 +237,14 @@ def main():
     args = PARSER.parse_args()
 
     quies = quieser(
-        int(args.scheduler) if args.scheduler.isdigit() else args.scheduler,
+        game=args.game,
         auth_token=args.auth,
-        game=args.game and (int(args.game) if args.game.isdigit() else args.game),
+        scheduler=args.scheduler,
         max_profiles=args.max_profiles,
         sleep_time=args.sleep_time,
         subgame_limit=args.max_subgame_size,
-        verbosity=args.verbose,
-        dpr=parse_dpr(args.dpr))
+        dpr=parse_dpr(args.dpr),
+        verbosity=args.verbose)
 
     quies.quiesce()
 
