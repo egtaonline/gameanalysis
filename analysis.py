@@ -241,10 +241,11 @@ class subgame_set(object):
         # Otherwise, add and remove all subgames
         for key in added_subgame.iterrolestrats():
             bucket = self.inverted_index.setdefault(key, set())
-            for current_subgame in bucket:
+            # Copy bucket to avoid concurrent modification
+            for current_subgame in list(bucket):
                 if added_subgame > current_subgame:
                     # Game in bucket is a subgame
-                    bucket.pop(current_subgame)
+                    bucket.remove(current_subgame)
             bucket.add(added_subgame)
         return True
 
