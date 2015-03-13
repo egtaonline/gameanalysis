@@ -1,15 +1,9 @@
 #! /usr/bin/env python2.7
 
+import cPickle
 import numpy as np
 from numpy.random import multinomial
-from random import sample
-from os import listdir as ls, mkdir
-from os.path import join, exists, isdir, dirname, basename, abspath
 from argparse import ArgumentParser
-from itertools import combinations_with_replacement as CwR, permutations, \
-						product
-import cPickle
-import json
 
 # import GaussianProcess but don't crash if it wasn't loaded
 import warnings
@@ -20,89 +14,220 @@ try:
 except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
-from Reductions import HR_profiles, DPR_profiles, full_prof_DPR, DPR, HR
 import RoleSymmetricGame as RSG
-from Nash import mixed_nash
+from Reductions import full_prof_DPR
 from HashableClasses import h_array
-from ActionGraphGame import LEG_to_AGG
 from GameIO import to_JSON_str, read
 
 
-class DiffGP:
-	def __init__(self, GP_mean, GP_diff):
-		self.GP_mean = GP_mean
-		self.GP_diff = GP_diff
-
-	def predict(self, vec):
-		return self.GP_mean.predict(vec) + self.GP_diff.predict(vec)
+class ZeroPredictor:
+	def predict(self, *args, **kwds):
+		return 0
 
 
-def GP_learn(game, cross_validate=False):
+def _blocked_attribute(*args, **kwds):
+	raise TypeError("unsupported operation")
+
+
+class GP_Game(RSG.game):
 	"""
-	Create a GP regression for each role and strategy.
+	"""
+	addProfile = addProfileArrays = isComplete = _blocked_attribute
+	makeLists = makeArrays = allProfiles = knownProfiles = _blocked_attribute
+	toJSON = to_TB_JSON = _blocked_attribute
 
-	Parameters:
-	game:			RoleSymmetricGame.SampleGame object with enough data to
+	def __init__(self, sample_game, CV=False, diffs=None, EVs="point", \
+					DPR_size={}):
+		"""
+		game:		RoleSymmetricGame.SampleGame object with enough data to
 					estimate payoff functions.
-	cross_validate:	If set to True, cross-validation will be used to select
+		CV:			If set to True, cross-validation will be used to select
 					parameters of the GPs.
-	"""
-	#X[r][s] stores the vectorization of each profile in which some players in
-	#role r select strategy s. Profiles are listed in the same order as in the
-	#input game. Y[r][s] stores corresponding payoff values in the same order.
-	#Yd (d=diff) stores the difference from the average payoff. Ywd (w=weighted)
-	#stores difference from expected payoff for a random agent. Ym (m=mean)
-	#stores average payoffs. Ywm stores expected payoff for a random agent.
-	X = {
-		"profiles":[],
-		"samples":{r:{s:[] for s in game.strategies[r]} for r in game.roles}
-	}
-	Y = {
-		"Y":{r:{s:[] for s in game.strategies[r]} for r in game.roles},
-		"Yd":{r:{s:[] for s in game.strategies[r]} for r in game.roles},
-		"Ywd":{r:{s:[] for s in game.strategies[r]} for r in game.roles},
-		"Ym":{r:[] for r in game.roles},
-		"Ywm":{r:[] for r in game.roles}
-	}
-	for p in range(len(game)):#fill X and Y
-		prof = game.counts[p]
-		samples = game.sample_values[p]
-		x = np.array(prof2vec(game, prof), dtype=float)[None].T
-		x = np.tile(x, (1,1,samples.shape[-1]))
-		x += np.random.normal(0,1e-9, x.shape)
-		ym = samples.mean(1).mean(1)
-		ywm = ((samples * x).sum(1) / x.sum(1)).mean(1)
-		X["profiles"].append(x[0,:,0])
-		for r,role in enumerate(game.roles):
-			Y["Ym"][role].append(ym[r])
-			Y["Ywm"][role].append(ywm[r])
-			for s,strat in enumerate(game.strategies[role]):
-				if prof[r][s] > 0:
-					y = samples[r,s]
-					Y["Y"][role][strat].extend(y)
-					Y["Yd"][role][strat].extend(y - ym)
-					Y["Ywd"][role][strat].extend(y - ywm)
-					fi = flat_index(game, role, strat)
-					for i in range(y.size):
-						x_s = x[0,:,i]
-						x_s[fi] -= 1
-						X["samples"][role][strat].append(x_s)
-
-	#GPs stores the learned GP for each role and strategy
-	GPs = {y:{} for y in Y}
-	for role in game.roles:
-		for y in ["Ym", "Ywm"]:
-			GPs[y][role] = train_GP(X["profiles"], Y[y][role], cross_validate)
-		for y in ["Y", "Yd", "Ywd"]:
-			GPs[y][role] = {}
-			for strat in game.strategies[role]:
-				GPs[y][role][strat] = train_GP(X["samples"][role][strat], \
-										Y[y][role][strat], cross_validate)
-	return GPs
+		diffs:		None: learn payoffs directly
+					'strat': learn differences from average strategy payoff
+					'player': learn differences from average player payoff
+		EVs:		'point': estimate EVs via GP_point
+					'sample': estimate EVs via GP_sample
+					'DPR': estimate EVs via GP_DPR
+		DPR_size:	default number of players to use for GP_DPR EV estimation
+		"""
+		assert diffs in {None, "strat", "player"}
+		assert EVs in {"point", "sample", "DPR"}
+		self.CV = CV
+		self.diffs = diffs
+		self.EVs = EVs
+		if DPR_size != {}:
+			self.DPR_size = DPR_size
+		else:
+			self.DPR_size = {r:3 for r in sample_game.roles}
+		for attr in sample_game.__dict__.keys():
+			if attr not in {"dev_reps", "values", "counts", "sample_values"}:
+				self.__dict__[attr] = sample_game.__dict__[attr]
+		self.learn(sample_game.counts, sample_game.sample_values)
 
 
-def flat_index(game, role, strat):
-	return sum(game.numStrategies[:game.index(role)]) + game.index(role, strat)
+	def learn(self, counts, sample_values):
+		X_profiles = []
+		X_samples = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
+		Y_mean = {r:"" for r in self.roles}
+		Y_diff = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
+
+		#extract data in an appropriate form for learning
+		for p in range(len(counts)):
+			prof = counts[p]
+			samples = sample_values[p]
+			x = self.flatten(prof)
+			X_profiles.append(x)
+			if diff == 0:
+				ym = [0]*len(self.roles)
+			elif diff == 1:
+				ym = samples.mean(2).sum(1) / (x > 0).sum(1)
+			elif diff == 2:
+				ym = (samples.mean(2) * x).sum(1) / x.sum(1)
+			for r,role in enumerate(self.roles):
+				Y_mean[role].append(ym[r])
+				for s,strat in enumerate(self.strategies[role]):
+					if prof[r][s] > 0:
+						y = ym[r] - samples[r,s]
+						Y_diff[role][strat].extend(y)
+						fi = self.flat_index(role, strat)
+						for i in range(len(y)):
+							x_s = x + np.random.normal(0, 1e-9, len(x))
+							x_s[fi] -= 1
+							X_samples[role][strat].append(x_s)
+		#learn the GPs
+		self.GPs = {}
+		for role in self.roles:
+			self.GPs[r] = {}
+			if self.diffs:
+				self.GPs[r][None] = train_GP(X_profiles, Y_mean)
+			else:
+				self.GPs[r][None] = ZeroPredictor()
+			for strat in self.strategies[role]:
+				self.GPs[role][strat] = train_GP(X_samples[role][strat], \
+												Y_diff[role][strat], self.CV)
+
+
+	def flat_index(self, role, strat):
+		return sum(self.numStrategies[:self.index(role)]) + \
+					self.strategies[role].index(strat)
+
+
+	def flatten(self, prof):
+		"""
+		Turns a profile (represented as Profile object or count array) into a
+		1-D vector of strategy counts.
+		"""
+		vec = []
+		for r in range(len(self.roles)):
+			vec.extend(prof[r][:self.numStrategies[r]])
+		return np.array(vec)
+
+
+	def getPayoff(self, profile, role, strategy):
+		profile = self.flatten(self.toArray(profile))
+		return self.GPs[role][None].predict(profile) - \
+				self.GPs[role][strategy].predict(profile)
+
+
+	def getEV(self, mix, role, strategy, EVs=None, DPR_players=0, samples=1000):
+		if EVs == None:
+			EVs = self.EVs
+		if EVs == "point":
+			return self.GP_point(mix, role, strategy)
+		elif EVs == "sample":
+			return self.GP_sample(mix, role, strategy, samples)
+		elif EVs == "DPR":
+			return self.GP_DPR(mix, role, strategy, DPR_players)
+
+
+	def getSocialWelfare(self, profile):
+		return self.expectedValues(self.toArray(profile)).sum()
+
+
+	def expectedValues(self, mix, EVs=None, DPR_players=0, samples=1000):
+		values = self.zeros()
+		for r,role in enumerate(self.roles):
+			for s,strat in enumerate(self.strategies[role]):
+				values[r][s] = self.getEV(mix,role,strat,DPR_players,samples)
+		return values
+
+
+	def __repr__(self):
+		return (str(self.__class__.__name__) + ":\n\troles: " + \
+				join(self.roles, ",") + "\n\tplayers:\n\t\t" + \
+				join(map(lambda x: str(x[1]) + "x " + str(x[0]), \
+				sorted(self.players.items())), "\n\t\t") + \
+				"\n\tstrategies:\n\t\t" + join(map(lambda x: x[0] + \
+				":\n\t\t\t" + join(x[1], "\n\t\t\t"), \
+				sorted(self.strategies.items())), "\n\t\t")).expandtabs(4)
+
+	def __cmp__(self, other):
+		return cmp(type(self), type(other) or\
+				cmp(self.roles, other.roles) or \
+				cmp(self.players, other.players) or \
+				cmp(self.strategies, other.strategies) or \
+				cmp(self.GPs, other.GPs)
+
+
+	def GP_DPR(self, mix, players=0):
+		if not players:
+			players = self.DPR_size
+		if len(self.roles) == 1 and isinstance(players, int):
+			players = {self.roles[0]:players}
+		elif isinstance(players, list):
+			players = dict(zip(self.roles, players))
+		if not isinstance(players, RSG.Profile):
+			players = RSG.Profile(players)
+		if players not in self.DPR:
+			self.fill_DPR(players)
+		return self.DPR[players].expectedValues(mix)
+
+
+	def fill_DPR(self, players)
+		learned_game = RSG.Game(self.roles, players, self.strategies)
+		for prof in learned_game.allProfiles():
+			role_payoffs = {}
+			for role in self.roles:
+				role_payoffs[role] = []
+				for strat,count in prof[role].iteritems():
+					full_prof = full_prof_DPR(prof, role, strat, self.players)
+					prof_x = self.flatten(full_prof)
+					prof_x[self.flat_index(role, strat)] -= 1
+					prof_y = self.GPs[role][strat].predict(prof_x)
+					role_payoffs[role].append(RSG.PayoffData(strat, count, \
+																prof_y))
+			learned_game.addProfile(role_payoffs)
+		self.DPR[players] = learned_game
+
+
+	def GP_sample(self, mix, samples=1000):
+		EVs = self.zeros()
+		partial_profs = []
+		for r,role in enumerate(self.roles):
+			partial_profs.append(multinomial(self.players[role],mix[r],samples))
+		profiles = [self.flatten(p) for p in zip(*partial_profs)]
+		for r,role in enumerate(self.roles):
+			for s,strat in enumerate(self.strategies[role]):
+				opp_profs = copy(profiles)
+				fi = self.flat_index(role, strat)
+				for prof in opp_profs:
+					prof[fi] -= 1
+				EVs[r,s] = (self.GPs[role][None].predict(opp_profs) - \
+							self.GPs[role][strat].predict(opp_profs)).mean()
+		return EVs
+
+
+	def GP_point(self, mix, *args):
+		prof = [mix[r]*self.players[role] for r,role in enumerate(self.roles)]
+		vec = self.flatten(prof)
+		EVs = self.zeros()
+		for r,role in enumerate(self.roles):
+			for s,strat in enumerate(self.strategies[role]):
+				EVs[r,s] = self.GPs[role][None].predict(vec) - \
+							self.GPs[role][strat].predict(vec)
+		return EVs
+
 
 
 def train_GP(X, Y, cross_validate=False):
@@ -123,422 +248,37 @@ def train_GP(X, Y, cross_validate=False):
 		return gp
 
 
-def GP_DPR(game, GPs, players):
-	if len(game.roles) == 1 and isinstance(players, int):
-		players = {game.roles[0]:players}
-	elif isinstance(players, list):
-		players = dict(zip(game.roles, players))
-
-	learned_game = RSG.Game(game.roles, players, game.strategies)
-	for prof in learned_game.allProfiles():
-		role_payoffs = {}
-		for role in game.roles:
-			role_payoffs[role] = []
-			for strat,count in prof[role].iteritems():
-				full_prof = full_prof_DPR(prof, role, strat, game.players)
-				prof_x = prof2vec(game, full_prof)
-				prof_x[flat_index(game, role, strat)] -= 1
-				prof_y = GPs[role][strat].predict(prof_x)
-				role_payoffs[role].append(RSG.PayoffData(strat, count, prof_y))
-		learned_game.addProfile(role_payoffs)
-
-	return learned_game
 
 
-def GP_sample(game, GPs, mix, samples=1000):
-	"""
-	Mimics game.ExpectedValues via sampling from the GPs.
-	"""
-	EVs = np.zeros(mix.shape)
-	partial_profs = []
-	for r,role in enumerate(game.roles):
-		partial_profs.append(multinomial(game.players[role], mix[r], samples))
-	profiles = [prof2vec(game, p) for p in zip(*partial_profs)]
-	for r,role in enumerate(game.roles):
-		for s,strat in enumerate(game.strategies[role]):
-			other_profs = copy(profiles)
-			fi = flat_index(game, role, strat)
-			#TODO: figure out whether this loop can be avoided with an array
-			for prof in other_profs:
-				prof[fi] -= 1
-			EVs[r,s] = GPs[role][strat].predict(profiles).mean()
-	return EVs
+#def GP_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
+#			random_restarts=0, at_least_one=False, iters=1000, \
+#			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_point):
+#	"""
+#	Estimate equilibria with RD using from GP regression models.
+#	"""
+#	candidates = []
+#	regrets = {}
+#	for mix in game.biasedMixtures() + [game.uniformMixture() ]+ \
+#			[game.randomMixture() for _ in range(random_restarts)]:
+#		for _ in range(iters):
+#			old_mix = mix
+#			EVs = EV_func(game, GPs, mix, ev_samples)
+#			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
+#			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
+#			if np.linalg.norm(mix - old_mix) <= converge_thresh:
+#				break
+#		mix[mix < 0] = 0
+#		candidates.append(h_array(mix))
+#		EVs = EV_func(game, GPs, mix, ev_samples)
+#		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
+#
+#	candidates.sort(key=regrets.get)
+#	equilibria = []
+#	for c in filter(lambda c: regrets[c] < regret_thresh, candidates):
+#		if all(np.linalg.norm(e - c, 2) >= dist_thresh for e in equilibria):
+#			equilibria.append(c)
+#	if len(equilibria) == 0 and at_least_one:
+#		return [min(candidates, key=regrets.get)]
+#	return equilibria
 
 
-def GP_point(game, GPs, mix, *args):
-	"""
-	Mimics game.ExpectedValues by returning the GPs' value estimates for the
-	profile with population proportions equal to the mixture probabilities.
-
-	*args is ignored ... it allows the same signature as GP_sample()
-	"""
-	prof = [mix[r]*game.players[role] for r,role in enumerate(game.roles)]
-	vec = prof2vec(game, prof)
-	EVs = np.zeros(mix.shape)
-	for r,role in enumerate(game.roles):
-		for s,strat in enumerate(game.strategies[role]):
-			EVs[r,s] = GPs[role][strat].predict(vec)
-	return EVs
-
-
-def GP_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
-			random_restarts=0, at_least_one=False, iters=1000, \
-			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_point):
-	"""
-	Estimate equilibria with RD using from GP regression models.
-	"""
-	candidates = []
-	regrets = {}
-	for mix in game.biasedMixtures() + [game.uniformMixture() ]+ \
-			[game.randomMixture() for _ in range(random_restarts)]:
-		for _ in range(iters):
-			old_mix = mix
-			EVs = EV_func(game, GPs, mix, ev_samples)
-			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
-			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
-			if np.linalg.norm(mix - old_mix) <= converge_thresh:
-				break
-		mix[mix < 0] = 0
-		candidates.append(h_array(mix))
-		EVs = EV_func(game, GPs, mix, ev_samples)
-		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
-
-	candidates.sort(key=regrets.get)
-	equilibria = []
-	for c in filter(lambda c: regrets[c] < regret_thresh, candidates):
-		if all(np.linalg.norm(e - c, 2) >= dist_thresh for e in equilibria):
-			equilibria.append(c)
-	if len(equilibria) == 0 and at_least_one:
-		return [min(candidates, key=regrets.get)]
-	return equilibria
-
-
-def prof2vec(game, prof):
-	"""
-	Turns a profile (represented as Profile object or count array) into a
-	1-D vector of strategy counts.
-	"""
-	if isinstance(prof, RSG.Profile):
-		prof = game.toArray(prof)
-	vec = []
-	for r in range(len(game.roles)):
-		vec.extend(prof[r][:game.numStrategies[r]])
-	return vec
-
-
-def sample_at_reduction(AGG, samples, reduction_profiles, players):
-	"""
-	AGG:		ActionGraphGame.Noisy_AGG object
-	samples:	total number of samples to collect; will be spread as evenly as
-				possibl across generated profiles; profiles that get sampled one
-				extra time are chosen uniformly at random
-	reduction_profiles:
-				function that takes a number of players and generates a set of
-				profiles; intended settings: DPR_profiles, HR_profiles
-	players:	number of players in the reduced game; passed as an argument to
-				reduction_profiles
-
-	RETURNS:	RoleSymmetricGame.SampleGame object with samples drawn from AGG;
-				samples are allocated as evenly as possible to profiles
-				generated by reduction_profiles
-	"""
-	g = RSG.SampleGame(["All"], {"All":AGG.players}, {"All":AGG.strategies})
-	profiles = reduction_profiles(g, {"All":players})
-	s = samples/len(profiles)
-	extras = sample(profiles, samples - s*len(profiles))
-	counts = {p:(s+1 if p in extras else s) for p in profiles}
-	for prof,count in counts.items():
-		values = AGG.sample(prof["All"], count)
-		g.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
-								s,c in prof["All"].iteritems()]})
-	return g
-
-
-def sample_near_reduction(AGG, samples, reduction_profiles, players):
-	"""
-	AGG:		ActionGraphGame.Noisy_AGG object
-	samples:	total number of samples to collect; will be spread as evenly as
-				possibl across generated profiles; profiles that get sampled one
-				extra time are chosen uniformly at random
-	reduction_profiles:
-				function that takes a number of players and generates a set of
-				profiles; intended settings: DPR_profiles, HR_profiles
-	players:	number of players in the reduced game; passed as an argument to
-				reduction_profiles
-
-	RETURNS:	RoleSymmetricGame.SampleGame object with samples drawn from AGG;
-				samples are allocated near near the profiles generated by
-				reduction_profiles by treating the fraction of players in a
-				profile playing each strategy as a distribution and drawing N
-				samples from it; the resulting N-player profile gets sampled
-				from the noisy AGG.
-	"""
-	g = RSG.SampleGame(["All"], {"All":AGG.players}, {"All":AGG.strategies})
-	profiles = reduction_profiles(g, {"All":players})
-	s = samples/len(profiles)
-	extras = sample(profiles, samples - s*len(profiles))
-	counts = {p:(s+1 if p in extras else s) for p in profiles}
-	random_profiles = {}
-	for prof,count in counts.items():
-		dist = np.array([prof["All"].get(s,0) for s in AGG.strategies],
-														dtype=float)
-		dist /= float(AGG.players)
-		for _ in range(count):
-			rp = np.random.multinomial(AGG.players, dist)
-			rp = filter(lambda p:p[1], zip(AGG.strategies,rp))
-			rp = RSG.Profile({"All":dict(rp)})
-			random_profiles[rp] = random_profiles.get(rp,0) + 1
-
-	for prof,count in random_profiles.iteritems():
-		values = AGG.sample(prof["All"], count)
-		g.addProfile({"All":[RSG.PayoffData(s,c,values[s]) for \
-								s,c in prof["All"].iteritems()]})
-
-	return g
-
-
-def sample_games(folder, players=[2], samples=[100], reductions=["HR","DPR"]):
-	game_types = []
-	if "HR" in reductions:
-		game_types += ["at_HR", "near_HR"]
-	if "DPR" in reductions:
-		game_types += ["at_DPR", "near_DPR"]
-	AGG_names = filter(lambda s: s.endswith(".json"), ls(folder))
-	for AGG_name in sorted(AGG_names):
-		with open(join(folder, AGG_name)) as f:
-			AGG = LEG_to_AGG(json.load(f))
-		for p in players:
-			for n in samples:
-				for game_type in game_types:
-					sub_folder = game_type + "_"+str(p)+"p"+str(n)+"n"
-					if exists(join(folder, sub_folder, AGG_name)):
-						continue
-					if game_type=="at_DPR":
-						game = sample_at_reduction(AGG, n, DPR_profiles, p)
-					elif game_type=="at_HR":
-						game = sample_at_reduction(AGG, n, HR_profiles, p)
-					elif game_type=="near_DPR":
-						game = sample_near_reduction(AGG, n, DPR_profiles, p)
-					elif game_type=="near_HR":
-						game = sample_near_reduction(AGG, n, HR_profiles, p)
-					write_game(game, folder, sub_folder, AGG_name)
-					del game
-
-
-def learn_games(folder, cross_validate=False):
-	"""
-	Goes through sub-folders of folder (which should have all been created by
-	sample_games) and runs GP_learn on each sample game; creates a pkl file
-	corresponding to each input json file
-
-	If the folder has no sub-folders, learn_games instead learns all the json
-	files that sit directly in that folder.
-	"""
-	sub_folders = filter(lambda s: isdir(join(folder, s)), ls(folder))
-	if len(sub_folders) == 0:
-		sub_folders = [folder]
-	for sub_folder in sub_folders:
-		for game_name in filter(lambda s: s.endswith(".json"), ls(folder)):
-			GPs_name = join(folder, sub_folder, game_name[:-5] + "_GPs.pkl")
-			if exists(GPs_name):
-				continue
-			game = read(join(folder, sub_folder, game_name))
-			if type(game) != RSG.SampleGame:
-				continue
-			GPs = GP_learn(game, cross_validate)
-			with open(GPs_name, "w") as f:
-				cPickle.dump(GPs, f)
-
-
-def write_game(game, base_folder, sub_folder, game_name):
-	game_folder = join(base_folder, sub_folder)
-	if not exists(game_folder):
-		mkdir(game_folder)
-	game_file = join(game_folder, game_name)
-	with open(game_file, "w") as f:
-		f.write(to_JSON_str(game))
-
-
-def list_games(folder, extension=".json", exclude=["results"]):
-	file_names = sorted(filter(lambda f: f.endswith(extension), ls(folder)))
-	for e in exclude:
-		file_names = filter(lambda f: e not in f, file_names)
-	return file_names
-
-
-def read_LEGs(folder, exclude=["results"]):
-	for fn in list_games(folder, ".json", exclude):
-		with open(join(folder, fn)) as f:
-			AGG = LEG_to_AGG(json.load(f))
-		yield fn, AGG
-
-
-def read_models(folder, exclude=["results"]):
-	GP_files = list_games(folder, ".pkl", exclude)
-	samples_files = list_games(folder, ".json", exclude)
-	for fn in zip(GP_files, samples_files):
-		with open(join(folder, fn)) as f:
-			GPs = cPickle.load(f)
-		samples_game = read(fn)
-		yield fn, GPs, samples_game
-
-
-def run_experiments(AGG_folder, samples_folder, exp_type, reduction, players,
-					results_file, *args, **kwds):
-	"""
-	Extracting common code for running regrets and EVs experiments
-
-	No extra args required for regrets_experiment.
-	EVs_experiment can take points or GP_DPR_players.
-	"""
-	if exists(results_file):
-		results = read(results_file)
-	else:
-		results = {}
-	file_names = [f.split(".")[0] for f in sorted(filter(lambda f:
-				f.endswith(".json") and "results" not in f, ls(AGG_folder)))]
-	for fn in file_names:
-		if fn in results:
-			continue
-		AGG_fn = join(AGG_folder, fn + ".json")
-		samples_fn = join(samples_folder, fn + ".json")
-		GPs_fn = join(samples_folder, fn + "_GPs.pkl")
-		if not (exists(AGG_fn) and exists(samples_fn) and exists(GPs_fn)):
-			continue
-		with open(AGG_fn) as f:
-			AGG = LEG_to_AGG(json.load(f))
-		samples_game = read(samples_fn)
-		reduced_game = reduction(samples_game, players)
-		with open(GPs_fn) as f:
-			GPs = cPickle.load(f)
-
-		predictors = {"Y":GPs["Y"], "Yd":{}, "Ywd":{}}
-		for role in samples_game.roles:
-			predictors["Yd"][role] = {}
-			predictors["Ywd"][role] = {}
-			for strat in samples_game.strategies[role]:
-				predictors["Yd"][role][strat] = DiffGP(GPs["Ym"][role],
-													GPs["Yd"][role][strat])
-				predictors["Ywd"][role][strat] = DiffGP(GPs["Ywm"][role],
-													GPs["Ywd"][role][strat])
-
-		results[fn] = exp_type(AGG, samples_game, reduced_game, predictors,
-								*args, **kwds)
-		with open(results_file, "w") as f:
-			json.dump(results, f)
-
-
-def regrets_experiment(AGG, samples_game, reduced_game, GPs):
-	"""
-	"""
-	results = {"reduction":{}, "GP":{"Y":{},"Yd":{},"Ywd":{}}}
-
-	try:
-		reduced_eq = mixed_nash(reduced_game, at_least_one=True)
-		results["reduction"]["eq"] = map(samples_game.toProfile, reduced_eq)
-		results["reduction"]["regrets"] = [AGG.regret(e[0]) for e in reduced_eq]
-	except:
-		pass
-
-	for y in ["Y", "Yd", "Ywd"]:
-		try:
-			GP_eq = GP_RD(samples_game, GPs[y], at_least_one=True)
-			results["GP"][y]["eq"] = map(samples_game.toProfile, GP_eq)
-			results["GP"][y]["regrets"] = [AGG.regret(e[0]) for e in GP_eq]
-		except:
-			pass
-
-	return results
-
-
-def AGG_EVs(LEGs_folder, results_file, mixture_points=0, exclude=[]):
-	"""
-	Compute EVs of grid-spaced mixtures in each LEG
-
-	For each game in LEGs_folder and for each mixture in the grid, the expected
-	value each strategy played against that mixture is computed using the AGG
-	representation of the game. A JSON representation of the results is dumped
-	to results_file.
-
-	mixture_points:	number of points to space evenly over [0,1] in the grid of
-					mixed strategies. If unspecified, defaults to strategies+1
-	exclude:	If there are .json files other than the LEGs and the results
-				file in LEGs_folder, specify filename substrings to filter out.
-	"""
-	with open(join(LEGs_folder, list_games(LEGs_folder, ".json",
-						exclude+[basename(results_file)])[0])) as f:
-		j = json.load(f)
-		dummy_game = RSG.Game(["All"], {"All":j["N"]}, {"All":j["strategies"]})
-	if mixture_points < 2:
-		mixture_points = dummy_game.numStrategies[0] + 1
-	test_pts = mixture_grid(dummy_game, mixture_points)
-	results = {"test_pts":[pt.tolist() for pt in test_pts]}
-	for fn, AGG in read_LEGs(LEGs_folder, [basename(results_file)]):
-		game_name = fn.split(".")[0]
-		results[game_name] = []
-		for mix in test_pts:
-			EVs = AGG.expectedValues(mix[0])
-			results[game_name].append(EVs.tolist())
-	with open(results_file, "w") as f:
-		json.dump(results, f)
-
-
-def mixture_grid(game, points=5):
-	"""
-	Cross-product of sym_mix_grid outputs for each role.
-	"""
-	role_mixtures = []
-	for r,role in enumerate(game.roles):
-		mix = sym_mix_grid(game.numStrategies[r], points)
-		mix += [0]*(game.maxStrategies - game.numStrategies[r])
-		role_mixtures.append(mix)
-	return [h_array(p).squeeze(1) for p in  product(*role_mixtures)]
-
-
-def sym_mix_grid(num_strats, points):
-	"""
-	Generate all choose(S, points) grid points in the simplex.
-
-	There must be a better way to do this!
-	"""
-	a = np.linspace(0, 1, points)
-	mixtures = set()
-	for p in filter(lambda x: abs(sum(x) - 1) < .5/points, CwR(a,num_strats)):
-		for m in permutations(p):
-			mixtures.add(h_array([m]))
-	return sorted(mixtures)
-
-
-def main():
-	p = ArgumentParser(description="Perform game-learning experiments.")
-	p.add_argument("mode", type=str, choices=["games","learn","regrets","EVs"])
-	p.add_argument("folder", type=str, help="Folder containing pickled AGGs.")
-	p.add_argument("-y", type=str, choices=["Y", "Yd", "Ywd"], default="Ywd")
-	p.add_argument("--EV-type", choices=["AGG"], default="AGG")
-	p.add_argument("-p", type=int, nargs="*", default=[], help=\
-				"Player sizes of reduced games to try.")
-	p.add_argument("-g", type=int, default=0, help="Mixture grid points.")
-	p.add_argument("-n", type=int, nargs="*", default=[], help=\
-				"Number of samples.")
-	p.add_argument("--skip", type=str, choices=["HR", "DPR", ""], default="",
-				help="Don't generate games of the specified reduction type.")
-	p.add_argument("--CV", action="store_true", help="Perform cross-validation")
-	a = p.parse_args()
-	if a.mode == "games":
-		assert a.p
-		assert a.n
-		reductions = ["HR", "DPR"]
-		if a.skip in reductions:
-			reductions.remove(a.skip)
-		sample_games(a.folder, a.p, a.n, reductions)
-	elif a.mode == "learn":
-		learn_games(a.folder, a.CV)
-	elif a.mode == "EVs":
-		if a.EV_type == "AGG":
-			AGG_EVs(a.folder, join(a.folder, "AGG_EVs.json"), a.g)
-		else:
-			raise NotImplementedError("TODO")
-
-
-if __name__ == "__main__":
-	main()
