@@ -25,7 +25,7 @@ def _blocked_attribute(*args, **kwds):
 	raise TypeError("unsupported operation")
 
 
-class GP_Game(RSG.game):
+class GP_Game(RSG.Game):
 	"""
 	"""
 	addProfile = addProfileArrays = isComplete = _blocked_attribute
@@ -65,7 +65,7 @@ class GP_Game(RSG.game):
 	def learn(self, counts, sample_values):
 		X_profiles = []
 		X_samples = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
-		Y_mean = {r:"" for r in self.roles}
+		Y_mean = {r:[] for r in self.roles}
 		Y_diff = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
 
 		#extract data in an appropriate form for learning
@@ -74,11 +74,11 @@ class GP_Game(RSG.game):
 			samples = sample_values[p]
 			x = self.flatten(prof)
 			X_profiles.append(x)
-			if diff == 0:
+			if self.diffs == None:
 				ym = [0]*len(self.roles)
-			elif diff == 1:
+			elif self.diffs == "strat":
 				ym = samples.mean(2).sum(1) / (x > 0).sum(1)
-			elif diff == 2:
+			elif self.diffs == "players":
 				ym = (samples.mean(2) * x).sum(1) / x.sum(1)
 			for r,role in enumerate(self.roles):
 				Y_mean[role].append(ym[r])
@@ -159,7 +159,7 @@ class GP_Game(RSG.game):
 				sorted(self.strategies.items())), "\n\t\t")).expandtabs(4)
 
 	def __cmp__(self, other):
-		return cmp(type(self), type(other) or\
+		return cmp(type(self), type(other)) or\
 				cmp(self.roles, other.roles) or \
 				cmp(self.players, other.players) or \
 				cmp(self.strategies, other.strategies) or \
@@ -180,7 +180,7 @@ class GP_Game(RSG.game):
 		return self.DPR[players].expectedValues(mix)
 
 
-	def fill_DPR(self, players)
+	def fill_DPR(self, players):
 		learned_game = RSG.Game(self.roles, players, self.strategies)
 		for prof in learned_game.allProfiles():
 			role_payoffs = {}
@@ -274,8 +274,8 @@ def parse_args():
 
 def main():
 	a = parse_args()
-	g = args.input
-	g = GP_game(a.input, a.CV, a.diffs, a.EVs, a.DPR_size)
+	g = a.input
+	g = GP_Game(a.input, a.CV, a.diffs, a.EVs, a.DPR_size)
 	if a.output != "":
 		sys.stdout.close()
 		with open(a.output, "w") as f:
