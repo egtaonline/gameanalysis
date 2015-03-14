@@ -1,9 +1,7 @@
 #! /usr/bin/env python2.7
 
-import cPickle
-import numpy as np
-from numpy.random import multinomial
-from argparse import ArgumentParser
+from numpy import array
+from numpy.random import multinomial, normal
 
 # import GaussianProcess but don't crash if it wasn't loaded
 import warnings
@@ -16,8 +14,6 @@ except ImportError:
 
 import RoleSymmetricGame as RSG
 from Reductions import full_prof_DPR
-from HashableClasses import h_array
-from GameIO import to_JSON_str, read
 
 
 class ZeroPredictor:
@@ -92,7 +88,7 @@ class GP_Game(RSG.game):
 						Y_diff[role][strat].extend(y)
 						fi = self.flat_index(role, strat)
 						for i in range(len(y)):
-							x_s = x + np.random.normal(0, 1e-9, len(x))
+							x_s = x + normal(0, 1e-9, len(x))
 							x_s[fi] -= 1
 							X_samples[role][strat].append(x_s)
 		#learn the GPs
@@ -121,7 +117,7 @@ class GP_Game(RSG.game):
 		vec = []
 		for r in range(len(self.roles)):
 			vec.extend(prof[r][:self.numStrategies[r]])
-		return np.array(vec)
+		return array(vec)
 
 
 	def getPayoff(self, profile, role, strategy):
@@ -229,56 +225,65 @@ class GP_Game(RSG.game):
 		return EVs
 
 
+constant_params = {
+	"storage_mode":"light",
+	"thetaL":1e-4,
+	"thetaU":1e9,
+	"normalize":True
+}
+CV_params = {
+	"corr":["absolute_exponential","squared_exponential","cubic","linear"],
+	"nugget":[1e-10,1e-6,1e-4,1e-2,1e0,1e2,1e4]
+}
+default_params = {
+	"corr":"cubic",
+	"nugget":1
+}
+
 
 def train_GP(X, Y, cross_validate=False):
 	if cross_validate:
-		gp = GaussianProcess(storage_mode='light', thetaL=1e-4, thetaU=1e9, \
-							normalize=True)
-		params = {
-				"corr":["absolute_exponential","squared_exponential",
-						"cubic","linear"],
-				"nugget":[1e-10,1e-6,1e-4,1e-2,1e0,1e2,1e4]
-		}
-		cv = GridSearchCV(gp, params)
+		gp = GaussianProcess(**constant_params)
+		cv = GridSearchCV(gp, **CV_params)
 		cv.fit(X, Y)
-		return cv.best_estimator_
+		params = cv.best_estimator_.get_params()
 	else:
-		gp = GaussianProcess(storage_mode='light', corr="cubic", nugget=1)
-		gp.fit(X, Y)
-		return gp
+		params = dict(constant_params, **default_params)
+	gp = GaussianProcess(**params)
+	gp.fit(X, Y)
+	return gp
 
 
+import cPickle
+from GameIO import io_parser
+
+def parse_args():
+	parser = io_parser()
+	parser.add_argument("--EVs", choices=["point","sample","DPR"], default=
+						"point", help="default method for game.expectedValues")
+	parser.add_argument("--diffs", choices=["None", "strat", "player"],
+						default="None", help="set to strat or player to learn"+
+						"differences from profile-average payoffs")
+	parser.add_argument("--CV", action="store_true", help="cross-validation")
+	parser.add_argument("--DPR_size", type=int, default=3, help="")
+	args = parser.parse_args()
+	if args.diffs == "None":
+		args.diffs = None
+	return args
 
 
-#def GP_RD(game, GPs, regret_thresh=1e-2, dist_thresh=1e-3, \
-#			random_restarts=0, at_least_one=False, iters=1000, \
-#			converge_thresh=1e-6, ev_samples=1000, EV_func=GP_point):
-#	"""
-#	Estimate equilibria with RD using from GP regression models.
-#	"""
-#	candidates = []
-#	regrets = {}
-#	for mix in game.biasedMixtures() + [game.uniformMixture() ]+ \
-#			[game.randomMixture() for _ in range(random_restarts)]:
-#		for _ in range(iters):
-#			old_mix = mix
-#			EVs = EV_func(game, GPs, mix, ev_samples)
-#			mix = (EVs - game.minPayoffs + RSG.tiny) * mix
-#			mix = mix / mix.sum(1).reshape(mix.shape[0],1)
-#			if np.linalg.norm(mix - old_mix) <= converge_thresh:
-#				break
-#		mix[mix < 0] = 0
-#		candidates.append(h_array(mix))
-#		EVs = EV_func(game, GPs, mix, ev_samples)
-#		regrets[h_array(mix)] = (EVs.max(1) - (EVs * mix).sum(1)).max()
-#
-#	candidates.sort(key=regrets.get)
-#	equilibria = []
-#	for c in filter(lambda c: regrets[c] < regret_thresh, candidates):
-#		if all(np.linalg.norm(e - c, 2) >= dist_thresh for e in equilibria):
-#			equilibria.append(c)
-#	if len(equilibria) == 0 and at_least_one:
-#		return [min(candidates, key=regrets.get)]
-#	return equilibria
+def main():
+	a = parse_args()
+	g = args.input
+	g = GP_game(a.input, a.CV, a.diffs, a.EVs, a.DPR_size)
+	if a.output != "":
+		sys.stdout.close()
+		with open(a.output, "w") as f:
+			cPickle.dump(g, f)
+	else:
+		print cPickle.dumps(g)
 
+
+if __name__ == "__main__":
+	main()
 
