@@ -80,7 +80,7 @@ def covariant_game(N, S, mean_func=lambda:0, var=1, covar_func=partial(U,0,1)):
 		g.addProfile({r:[PayoffData(prof[r].keys()[0], 1, payoffs[i])] \
 				for i,r in enumerate(g.roles)})
 	return g
-	
+
 
 def uniform_zero_sum_game(S, min_val=-1, max_val=1):
 	"""
