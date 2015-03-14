@@ -1,16 +1,19 @@
 #! /usr/bin/env python2.7
 
 from urllib import urlopen
-from json import loads, dumps
 from xml.dom.minidom import parseString, Document
 from functools import partial
+from argparse import ArgumentParser
+
+import json
+import cPickle
+import sys
 
 from HashableClasses import h_array
 from BasicFunctions import one_line
-from RoleSymmetricGame import Game, PayoffData, is_asymmetric, is_symmetric, Profile, SampleGame
-
-import sys
-from argparse import ArgumentParser
+from RoleSymmetricGame import Game, PayoffData, is_asymmetric, is_symmetric, \
+							Profile, SampleGame
+from LearnPayoffs import GP_Game
 
 def read(source):
 	if isinstance(source, basestring):
@@ -32,6 +35,10 @@ def detect_and_load(data_str):
 	json_data = load_JSON(data_str)
 	if json_data != None:
 		return read_JSON(json_data)
+	try:
+		return cPickle.loads(data_str)
+	except cPickle.UnpicklingError:
+		pass
 	xml_data = load_XML(data_str)
 	if xml_data != None:
 		return read_XML(xml_data)
@@ -46,7 +53,7 @@ def load_JSON(data):
 	if isinstance(data, list) or isinstance(data, dict):
 		return data
 	try:
-		return loads(data)
+		return json.loads(data)
 	except:
 		return None
 
@@ -76,7 +83,7 @@ def read_JSON(data):
 		return map(read_JSON, data)
 	if isinstance(data, dict):
 		if "object" in data: # game downloaded from EGATS
-			return read_JSON(loads(data['object']))
+			return read_JSON(json.loads(data['object']))
 		if "profiles" in data:
 			try:
 				return read_game_JSON(data)
@@ -327,7 +334,7 @@ def read_NE(data):
 
 
 def to_JSON_str(obj, indent=2):
-	return dumps(to_JSON_obj(obj), sort_keys=True, indent=indent)
+	return json.dumps(to_JSON_obj(obj), sort_keys=True, indent=indent)
 
 
 def to_JSON_obj(obj):
@@ -339,7 +346,7 @@ def to_JSON_obj(obj):
 		return {k:to_JSON_obj(v) for k,v in obj.items()}
 	if hasattr(obj, "__iter__"):
 		return map(to_JSON_obj, obj)
-	return loads(dumps(obj))
+	return json.loads(json.dumps(obj))
 
 
 def to_XML(game):
