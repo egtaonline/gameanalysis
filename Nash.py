@@ -3,7 +3,7 @@
 from numpy.linalg import norm
 
 from BasicFunctions import call
-from GameIO import to_NFG_asym, read_NE
+import GameIO
 from RoleSymmetricGame import tiny, is_constant_sum
 from Regret import profile_regret, mixture_regret
 
@@ -63,14 +63,12 @@ def replicator_dynamics(game, mix, iters=10000, converge_thresh=1e-8, \
 
 def gambit_lp(game):
 	assert is_constant_sum(game), "game must be constant sum for LP"
-	eq = read_NE(call("gambit-lp -q", to_NFG_asym(game)))
+	eq = GameIO.read_NE(call("gambit-lp -q", GameIO.to_NFG_asym(game)))
 	return game.toProfile(eq.reshape(len(game.roles), game.maxStrategies))
 
 
-from GameIO import io_parser, to_JSON_str
-
 def parse_args():
-	parser = io_parser()
+	parser = GameIO.io_parser()
 	parser.add_argument("-r", metavar="REGRET", type=float, default=1e-3, \
 			help="Max allowed regret for approximate Nash equilibria. " + \
 			"default=1e-3")
@@ -116,9 +114,9 @@ def main():
 	elif args.type == "mrp":
 		equilibria = map(min_regret_profile, games)
 	if len(equilibria) > 1:
-		print to_JSON_str(equilibria)
+		print GameIO.to_JSON_str(equilibria)
 	else:
-		print to_JSON_str(equilibria[0])
+		print GameIO.to_JSON_str(equilibria[0])
 
 
 if __name__ == "__main__":

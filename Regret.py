@@ -180,10 +180,10 @@ def max_social_welfare(game, role=None):
 	return best_prof, max_sw
 
 
-from GameIO import read, to_JSON_str, io_parser
+import GameIO
 
 def parse_args():
-	parser = io_parser(description="Compute regret in input game(s) of "+\
+	parser = GameIO.io_parser(description="Compute regret in input game(s) "+\
 			"specified profiles.")
 	parser.add_argument("profiles", type=str, help="File with profiles from"+\
 			" input games for which regrets should be calculated.")
@@ -203,10 +203,10 @@ def main():
 
 	#direct call to max_social_welfare()
 	if args.profiles == "GLOBAL" and args.SW:
-		print to_JSON_str(max_social_welfare(games))
+		print GameIO.to_JSON_str(max_social_welfare(games))
 		return
 
-	profiles = read(args.profiles)
+	profiles = GameIO.read(args.profiles)
 	if not isinstance(profiles, list):
 		profiles = [profiles]
 	if not isinstance(games, list):
@@ -230,9 +230,9 @@ def main():
 			else:
 				regrets[-1].append(regret(g, prof))
 	if len(regrets) > 1:
-		print to_JSON_str(regrets)
+		print GameIO.to_JSON_str(regrets)
 	else:
-		print to_JSON_str(regrets[0])
+		print GameIO.to_JSON_str(regrets[0])
 
 
 if __name__ == "__main__":

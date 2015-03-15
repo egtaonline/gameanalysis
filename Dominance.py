@@ -116,10 +116,10 @@ def mixed_strategy_dominance(game, conditional=True, weak=False):
 	raise NotImplementedError("TODO")
 
 
-from GameIO import to_JSON_str, io_parser
+import GameIO
 
 def parse_args():
-	parser = io_parser()
+	parser = GameIO.io_parser()
 	parser.add_argument("-type", choices=["PSD", "MSD", "NBR"], default = \
 			"PSD", help="Dominance criterion: PSD = pure-strategy dominance;"+\
 			" MSD = mixed-strategy dominance; NBR = never-best-response. " +\
@@ -141,7 +141,7 @@ def main():
 	elif args.type == "NBR":
 		rgame = iterated_elimination(args.input, never_best_response, \
 				conditional=args.cond, weak=args.weak)
-	print to_JSON_str(rgame)
+	print GameIO.to_JSON_str(rgame)
 
 
 if __name__ == "__main__":

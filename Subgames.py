@@ -132,11 +132,11 @@ def cliques(full_game, known_subgames=[]):
 	return sorted(maximal_subgames, key=len)
 
 
-from GameIO import to_JSON_str, io_parser
+import GameIO
 
 
 def main():
-	parser = io_parser()
+	parser = GameIO.io_parser()
 	parser.description = "Detect all complete subgames in a partial game."
 	parser.add_argument("--strategies", type=int, nargs='*', default=[], help=\
 			"""If this parameter is non-empty, a subgame with the specified 
@@ -153,9 +153,9 @@ def main():
 	if args.strategies == []:
 		c = cliques(args.input)
 		if args.full:
-			print to_JSON_str([subgame(args.input, s) for s in c])
+			print GameIO.to_JSON_str([subgame(args.input, s) for s in c])
 		else:
-			print to_JSON_str(c)
+			print GameIO.to_JSON_str(c)
 	else:
 		game = args.input
 		strategies = {r:[] for r in game.roles}
@@ -167,7 +167,7 @@ def main():
 				strategies[r].append(game.strategies[r][args.strategies[i]-l])
 				i += 1
 			l += len(game.strategies[r])
-		print to_JSON_str(subgame(args.input, strategies))
+		print GameIO.to_JSON_str(subgame(args.input, strategies))
 
 
 if __name__ == "__main__":

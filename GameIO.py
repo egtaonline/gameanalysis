@@ -5,15 +5,15 @@ from xml.dom.minidom import parseString, Document
 from functools import partial
 from argparse import ArgumentParser
 
+import sys
 import json
 import cPickle
-import sys
 
 from HashableClasses import h_array
 from BasicFunctions import one_line
 from RoleSymmetricGame import Game, PayoffData, is_asymmetric, is_symmetric, \
 							Profile, SampleGame
-from LearnPayoffs import GP_Game
+from LearnedModels import GP_Game
 
 def read(source):
 	if isinstance(source, basestring):

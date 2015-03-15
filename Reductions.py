@@ -1,6 +1,7 @@
 #! /usr/bin/env python2.7
 
 from RoleSymmetricGame import Game, Profile, PayoffData, is_symmetric
+import GameIO
 
 def hierarchical_reduction(game, players={}):
 	players = deduce_players(game, players)
@@ -190,10 +191,8 @@ def deduce_players(game, players={}):
 	return players
 
 
-from GameIO import to_JSON_str, io_parser
-
 def parse_args():
-	parser = io_parser()
+	parser = GameIO.io_parser()
 	parser.add_argument("type", choices=["DPR", "HR", "TR"], help="Type " + \
 			"of reduction to perform.")
 	parser.add_argument("players", type=int, default=[], nargs="*", help= \
@@ -206,11 +205,11 @@ def main():
 	game = args.input
 	players = dict(zip(game.roles, args.players))
 	if args.type == "DPR":
-		print to_JSON_str(DPR(game, players))
+		print GameIO.to_JSON_str(DPR(game, players))
 	elif args.type == "HR":
-		print to_JSON_str(HR(game, players))
+		print GameIO.to_JSON_str(HR(game, players))
 	elif args.type == "TR":
-		print to_JSON_str(twins_reduction(game))
+		print GameIO.to_JSON_str(twins_reduction(game))
 
 
 if __name__ == "__main__":

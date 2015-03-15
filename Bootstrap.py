@@ -1,8 +1,8 @@
 #! /usr/bin/env python2.7
 
 import RandomGames as RG
+import GameIO
 
-from GameIO import read, to_JSON_str
 from Regret import regret
 from Nash import mixed_nash, replicator_dynamics, pure_nash
 from RoleSymmetricGame import SampleGame
@@ -175,12 +175,12 @@ def parse_args():
 	args = parser.parse_args()
 
 	if args.game_func == "None":
-		game = read(stdin)
+		game = GameIO.read(stdin)
 		args.game_func = lambda: game
 		args.noise_func = lambda s,c: subsample(game, c)
 	else:
 		if args.game_func == "single_sample":
-			game = read(stdin)
+			game = GameIO.read(stdin)
 			args.game_func = lambda: game.singleSample()
 		else:
 			game_args = []
@@ -215,7 +215,7 @@ def main():
 					replicator_dynamics if args.rd else regret, \
 					args.num_games, args.stdevs, args.sample_sizes, \
 					pure_nash if args.pure else mixed_nash, args.bootstrap_args)
-	print to_JSON_str(results, indent=None)
+	print GameIO.to_JSON_str(results, indent=None)
 
 
 if __name__ == "__main__":
