@@ -2,10 +2,10 @@
 #
 # This package defined all of the data objects that are used for analysis. It
 # wraps a lot of bryces methods to make things much easier.
-"""A python module that contains analysis tools. Most are a wrapper around
+'''A python module that contains analysis tools. Most are a wrapper around
 Bryce's methods
 
-"""
+'''
 
 # pylint: disable=relative-import
 import itertools
@@ -18,20 +18,20 @@ import Nash as nash
 import containers
 
 class game_data(object):
-    """Game object, that just has wrapper convenience methods around Bryce's
+    '''Game object, that just has wrapper convenience methods around Bryce's
     scripts
 
-    """
+    '''
     def __init__(self, *args, **kwargs):
         self._analysis_game = gameio.read_JSON(dict(*args, **kwargs))
 
     def subgames(self, known_subgames=()):
-        """Find maximal subgames"""
+        '''Find maximal subgames'''
         return (subgame(sg) for sg
                 in subgames.cliques(self._analysis_game, known_subgames))
 
     def equilibria(self, eq_subgame=None, support_threshold=1e-3, **nash_args):
-        """Finds the equilibria of a subgame"""
+        '''Finds the equilibria of a subgame'''
         eq_subgame = eq_subgame or self._analysis_game.strategies
         analysis_subgame = subgames.subgame(self._analysis_game, eq_subgame)
         eqs = nash.mixed_nash(analysis_subgame,
@@ -40,13 +40,13 @@ class game_data(object):
             e, supp_thresh=support_threshold)) for e in eqs)
 
     def responses(self, mix, gain_threshold=1e-3):
-        """Returns the gain for deviation by role and strategy
+        '''Returns the gain for deviation by role and strategy
 
         Return value is {role: {strategy: gain}} where gain must be greater
         than gain_threshold and there is never a role pointing to am empty set
         of strategies.
 
-        """
+        '''
         mix = self._analysis_game.toArray(mix)
         payoffs = self._analysis_game.expectedValues(mix)
         role_payoffs = (payoffs * mix).sum(axis=1)
@@ -59,7 +59,7 @@ class game_data(object):
 
 
 class profile(dict):
-    """A representation of a game profile"""
+    '''A representation of a game profile'''
     def __init__(self, *args, **kwargs):
         if len(args) == 1 and isinstance(args[0], basestring):
             # String representation
@@ -85,23 +85,23 @@ class profile(dict):
             self.validate()
 
     def validate(self):
-        """Validates the profile, throws an error if structure is incorrect"""
+        '''Validates the profile, throws an error if structure is incorrect'''
         # TODO validate that all counts are equal
         for role, strats in self.iteritems():
-            assert isinstance(role, basestring), "role must be a string"
-            assert isinstance(strats, dict), "strategy counts must be in a dict"
+            assert isinstance(role, basestring), 'role must be a string'
+            assert isinstance(strats, dict), 'strategy counts must be in a dict'
             for strat, count in strats.iteritems():
-                assert isinstance(strat, basestring), "strategies must be strings"
-                assert isinstance(count, int), "strategy counts must be ints"
+                assert isinstance(strat, basestring), 'strategies must be strings'
+                assert isinstance(count, int), 'strategy counts must be ints'
 
     def symmetry_groups(self):
-        """Convert profile to symmetry groups representation"""
+        '''Convert profile to symmetry groups representation'''
         return list(itertools.chain.from_iterable(
             ({'role':r, 'strategy':s, 'count':c} for s, c in cs.iteritems())
             for r, cs in self.iteritems()))
 
     def profile_string(self):
-        """Convert profile to an egta string"""
+        '''Convert profile to an egta string'''
         return '; '.join(
             '%s: %s' % (r, ', '.join(
                 '%d %s' % (c, s) for s, c in cs.iteritems()))
@@ -111,18 +111,19 @@ class profile(dict):
         return self.profile_string()
 
     def __repr__(self):
-        return "profile(%s)" % super(profile, self).__repr__()
+        return 'profile(%s)' % super(profile, self).__repr__()
 
 
 class subgame(containers.frozendict):
-    """Modification of a dict with convenience methods and validation"""
+    '''Modification of a dict with convenience methods and validation'''
 
     def __init__(self, *args, **kwargs):
         temp = dict(*args, **kwargs)
         super(subgame, self).__init__((r, frozenset(s)) for r, s in temp.iteritems())
 
     def get_subgame_profiles(self, role_counts):
-        """Returns an iterable over all subgame profiles"""
+        '''Returns an iterable over all subgame profiles'''
+        # pylint: disable=star-args
         # Compute the product of assignments by role and turn back into dictionary
         return (profile(rs) for rs in itertools.product(
             # Iterate through all strategy allocations per role and compute
@@ -133,7 +134,7 @@ class subgame(containers.frozendict):
               for r, ss in self.iteritems())))
 
     def get_deviation_profiles(self, full_game, role_counts):
-        """Returns an iterable over all deviations from every subgame profile"""
+        '''Returns an iterable over all deviations from every subgame profile'''
         for role, strats in self.iteritems():
             deviation_counts = role_counts.copy()
             deviation_counts[role] -= 1
@@ -145,63 +146,63 @@ class subgame(containers.frozendict):
                     yield deviation_prof
 
     def with_deviation(self, role, strat):
-        """Returns a new subgame that includes the deviation"""
+        '''Returns a new subgame that includes the deviation'''
         assert role in self.iterkeys(), \
-            "Can't have role %s deviate when roles are %s" % (role, self.keys())
+            'Can\'t have role %s deviate when roles are %s' % (role, self.keys())
         return subgame((r, itertools.chain(ss, [strat])) if r == role else (r, ss)
                        for r, ss in self.iteritems())
 
     def issubgame(self, other_subgame):
-        """Returns True if this is a subgame of other_subgame
+        '''Returns True if this is a subgame of other_subgame
 
         Throws an error if their roles don't match
 
-        """
+        '''
         return self <= other_subgame
 
     def issupergame(self, other_subgame):
-        """Returns True if this is a supergame of other_subgame
+        '''Returns True if this is a supergame of other_subgame
 
         Throws an error if their roles don't match
 
-        """
+        '''
         return self >= other_subgame
 
     def asset(self):
-        """Returns a view of the subgame as a set of role strategy pairs"""
+        '''Returns a view of the subgame as a set of role strategy pairs'''
         return frozenset(self.iterrolestrats())
 
     def iterrolestrats(self):
-        """Returns an iterable over role strategy pairs in this subgame"""
+        '''Returns an iterable over role strategy pairs in this subgame'''
         return itertools.chain.from_iterable(
             ((r, s) for s in ss) for r, ss in self.iteritems())
 
     def __le__(self, other):
-        """is subgame"""
-        assert self.keys() == other.keys(), "subgames must have the same roles"
+        '''is subgame'''
+        assert self.keys() == other.keys(), 'subgames must have the same roles'
         return all(s <= other[r] for r, s in self.iteritems())
 
     def __ge__(self, other):
-        """is supergame"""
-        assert self.keys() == other.keys(), "subgames must have the same roles"
+        '''is supergame'''
+        assert self.keys() == other.keys(), 'subgames must have the same roles'
         return all(s >= other[r] for r, s in self.iteritems())
 
     def __lt__(self, other):
-        """is strict subgame"""
-        assert self.keys() == other.keys(), "subgames must have the same roles"
+        '''is strict subgame'''
+        assert self.keys() == other.keys(), 'subgames must have the same roles'
         return all(s < other[r] for r, s in self.iteritems())
 
     def __gt__(self, other):
-        """is strict supergame"""
-        assert self.keys() == other.keys(), "subgames must have the same roles"
+        '''is strict supergame'''
+        assert self.keys() == other.keys(), 'subgames must have the same roles'
         return all(s > other[r] for r, s in self.iteritems())
 
     def __repr__(self):
-        return "subgame(%s)" % super(subgame, self).__repr__()
+        return 'subgame(%s)' % super(subgame, self).__repr__()
 
 
 class mixture(containers.frozendict):
-    """Representation of an mixture, not tied to an particular game"""
+    '''Representation of an mixture, not tied to an particular game'''
     # pylint: disable=too-few-public-methods
 
     def __init__(self, *args, **kwargs):
@@ -212,13 +213,13 @@ class mixture(containers.frozendict):
             for r, ss in temp.iteritems())
 
     def support(self):
-        """Returns the subgame where this mixture has support"""
+        '''Returns the subgame where this mixture has support'''
         return subgame((r, {s for s, p in ss.iteritems() if p > 0})
                        for r, ss in self.iteritems())
 
 
 class subgame_set(object):
-    """Set of subgames, supports relevant operations on such a set"""
+    '''Set of subgames, supports relevant operations on such a set'''
     # pylint: disable=too-few-public-methods
 
     # This class uses an inverted index from a role strategy tuple to every
@@ -229,11 +230,11 @@ class subgame_set(object):
             self.add(added_subgame)
 
     def add(self, added_subgame):
-        """Adds a subgame to the set
+        '''Adds a subgame to the set
 
         Returns True if the set was modified
 
-        """
+        '''
         # If dominated, don't add
         if added_subgame in self:
             return False
@@ -263,25 +264,3 @@ class subgame_set(object):
             return '{}'
         else:
             return '{' + repr(set.union(*self.inverted_index.values()))[5:-2] + '}'
-
-
-#############
-# Utilities #
-#############
-
-def only(gen):
-    """Returns the only element in a collection
-
-    Throws a LookupError if collection contains more or less than one element
-
-    """
-    gen = iter(gen)
-    try:
-        res = next(gen)
-    except StopIteration:
-        raise LookupError('Iterator was empty')
-    try:
-        next(gen)
-    except StopIteration:
-        return res
-    raise LookupError('Iterator had more than one element')
