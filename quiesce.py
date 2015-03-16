@@ -43,7 +43,7 @@ SCHED_GROUP = PARSER.add_argument_group('Scheduler parameters',
                                         description='''Parameters for the scheduler. If
                                         use existing scheduler is specified, all of rest
                                         are ignored''')
-SCHED_GROUP.add_argument('-u', '--use-existing-scheduler', metavar='scheduler-id',
+SCHED_GROUP.add_argument('-s', '--use-existing-scheduler', metavar='scheduler-id',
                          nargs='?', const=0,
                          help='''Forces this to find an existing scheduler, optionally
                          specified by scheduler id. If scheduler id is not specified,
