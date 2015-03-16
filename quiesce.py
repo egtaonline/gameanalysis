@@ -20,8 +20,8 @@ PARSER.add_argument('-g', '--game', metavar='game-id', type=int, required=True,
 PARSER.add_argument('-a', '--auth', metavar='auth-token', required=True,
                     help='An authorization token to allow access to egtaonline.')
 PARSER.add_argument('-p', '--max-profiles', metavar='max-num-profiles', type=int,
-                    default=10000, help='''Maximum number of profiles to ever have
-                    scheduled at a time. Defaults to 10000.''')
+                    default=1000, help='''Maximum number of profiles to ever have
+                    scheduled at a time. Defaults to 1000.''')
 PARSER.add_argument('-t', '--sleep-time', metavar='sleep-time', type=int, default=600,
                     help='''Time to wait in seconds between checking egtaonline for
                     job completion. Defaults to 300 (5 minutes).''')
@@ -35,7 +35,9 @@ PARSER.add_argument('-n', '--num-subgames', metavar='num-subgames', type=int,
 PARSER.add_argument('--dpr', nargs='+', metavar='role-or-count', default=(),
                     help='''If specified, does a dpr reduction with role strategy counts.
                     e.g. --dpr role1 1 role2 2 ...''')
-PARSER.add_argument('-v', '--verbose', action='count', default=0, help='verbosity level')
+PARSER.add_argument('-v', '--verbose', action='count', default=0,
+                    help='''Verbosity level. Two for confirmed equilibria, three for
+                    everything.''')
 
 SCHED_GROUP = PARSER.add_argument_group('Scheduler parameters',
                                         description='''Parameters for the scheduler. If
@@ -102,6 +104,7 @@ class quieser(object):
         scheduler_id = self._get_scheduler_id(scheduler_id, **scheduler_options)
         self.log.info('Using scheduler %d', scheduler_id)
         self.scheduler = self.api.get_scheduler(scheduler_id, verbose=True)
+        self.scheduler.update(active=1) # Make scheduler active
         self.simulator = self.api.get_simulator(self.scheduler['simulator_id'])
 
         # Set other game information
@@ -205,10 +208,18 @@ class quieser(object):
             # Generate a random name
             name = '%s_generic_quiesce_%s' % (self.game['name'],
                                               utils.random_string(6))
+            size = self.api.get_game(self.game['id'], 'structure')['size']
             sched = self.api.create_generic_scheduler(
-                sim_id, name, True, process_memory, self.game['size'],
-                observation_time, obs_per_sim, obs_req, nodes,
-                dict(self.game['configuration']))
+                simulator_id=sim_id,
+                name=name,
+                active=1,
+                process_memory=process_memory,
+                size=size,
+                time_per_observation=observation_time,
+                observations_per_simulation=obs_per_sim,
+                nodes=nodes,
+                default_observation_requirement=obs_req,
+                configuration=dict(self.game['configuration']))
 
             # Add roles and counts to scheduler
             for role in self.game['roles']:
