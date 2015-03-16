@@ -8,8 +8,6 @@ import itertools
 import logging
 import sys
 
-import BasicFunctions as funcs
-
 import egtaonlineapi as egta
 import analysis
 import containers
@@ -77,7 +75,7 @@ def sum_strategies(subgame, **_):
 
 def num_profiles(subgame, role_counts, **_):
     '''Returns the number of profiles in a subgame'''
-    return funcs.prod(funcs.game_size(role_counts[role], len(strats))
+    return utils.prod(utils.game_size(role_counts[role], len(strats))
                       for role, strats in subgame.iteritems())
 
 class quieser(object):
