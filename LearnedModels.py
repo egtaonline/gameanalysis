@@ -14,7 +14,8 @@ except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
 from dpr import full_prof_DPR
-from RoleSymmetricGame import Game, Profile, PayoffData
+from RoleSymmetricGame import Game, PayoffData
+from HashableClasses import h_dict
 
 
 class ZeroPredictor:
@@ -43,16 +44,17 @@ class GP_Game(Game):
 		diffs:		None: learn payoffs directly
 					'strat': learn differences from average strategy payoff
 					'player': learn differences from average player payoff
-		EVs:		'point': estimate EVs via GP_point
-					'sample': estimate EVs via GP_sample
-					'DPR': estimate EVs via GP_DPR
-		DPR_size:	default number of players to use for GP_DPR EV estimation
+		EVs:		'point': estimate EVs via point_EVs
+					'sample': estimate EVs via sample_EVs
+					'DPR': estimate EVs via DPR_EVs
+		DPR_size:	default number of players to use for DPR_EVs
 		"""
 		assert diffs in {None, "strat", "player"}
 		assert EVs in {"point", "sample", "DPR"}
 		self.CV = CV
 		self.diffs = diffs
 		self.EVs = EVs
+		self.DPR = {}
 		if DPR_size != {}:
 			self.DPR_size = DPR_size
 		else:
@@ -130,15 +132,15 @@ class GP_Game(Game):
 		return self.expectedValues(self.toArray(profile)).sum()
 
 
-	def expectedValues(self, mix, EVs=None, DPR_players=0, samples=1000):
+	def expectedValues(self, mix, EVs=None, DPR_size=0, samples=1000):
 		if EVs == None:
 			EVs = self.EVs
 		if EVs == "point":
-			return self.GP_point(mix)
+			return self.point_EVs(mix)
 		elif EVs == "sample":
-			return self.GP_sample(mix, samples)
+			return self.sample_EVs(mix, samples)
 		elif EVs == "DPR":
-			return self.GP_DPR(mix, DPR_players)
+			return self.DPR_EVs(mix, DPR_size)
 
 
 	def __repr__(self):
@@ -158,15 +160,15 @@ class GP_Game(Game):
 				cmp(self.GPs, other.GPs)
 
 
-	def GP_DPR(self, mix, players=0):
+	def DPR_EVs(self, mix, players=0):
 		if not players:
 			players = self.DPR_size
 		if len(self.roles) == 1 and isinstance(players, int):
 			players = {self.roles[0]:players}
 		elif isinstance(players, list):
 			players = dict(zip(self.roles, players))
-		if not isinstance(players, Profile):
-			players = Profile(players)
+		if not isinstance(players, h_dict):
+			players = h_dict(players)
 		if players not in self.DPR:
 			self.fill_DPR(players)
 		return self.DPR[players].expectedValues(mix)
@@ -180,39 +182,48 @@ class GP_Game(Game):
 				role_payoffs[role] = []
 				for strat,count in prof[role].iteritems():
 					full_prof = full_prof_DPR(prof, role, strat, self.players)
-					prof_x = self.flatten(full_prof)
-					prof_x[self.flat_index(role, strat)] -= 1
-					prof_y = self.GPs[role][strat].predict(prof_x)
-					role_payoffs[role].append(PayoffData(strat, count, prof_y))
+					x = self.flatten(self.toArray(full_prof))
+					x[self.flat_index(role, strat)] -= 1
+					y_mean = self.GPs[role][None].predict(x)
+					y_diff = self.GPs[role][strat].predict(x)
+					y = y_mean - y_diff
+					role_payoffs[role].append(PayoffData(strat, count, y))
 			learned_game.addProfile(role_payoffs)
 		self.DPR[players] = learned_game
 
 
-	def GP_sample(self, mix, samples=1000):
+	def sample_EVs(self, mix, samples=1000):
 		EVs = self.zeros()
-		partial_profs = []
+		profiles = array(zip(*[multinomial(self.players[role] - 1, mix[r], \
+							samples) for r,role in enumerate(self.roles)]))
+		deviators = array(zip(*[multinomial(1, mix[r], samples) for \
+							r,role in enumerate(self.roles)]))
+		print profiles
+		print deviators
 		for r,role in enumerate(self.roles):
-			partial_profs.append(multinomial(self.players[role],mix[r],samples))
-		profiles = [self.flatten(p) for p in zip(*partial_profs)]
-		for r,role in enumerate(self.roles):
+			x = profiles + deviators
+			x[:,r,:] -= deviators[:,r,:]
+			x = map(self.flatten, x)
+			print x
 			for s,strat in enumerate(self.strategies[role]):
-				opp_profs = copy(profiles)
-				fi = self.flat_index(role, strat)
-				for prof in opp_profs:
-					prof[fi] -= 1
-				EVs[r,s] = (self.GPs[role][None].predict(opp_profs) - \
-							self.GPs[role][strat].predict(opp_profs)).mean()
+				EVs[r,s] = (self.GPs[role][None].predict(x) - \
+							self.GPs[role][strat].predict(x)).mean()
 		return EVs
 
 
-	def GP_point(self, mix, *args):
-		prof = [mix[r]*self.players[role] for r,role in enumerate(self.roles)]
-		vec = self.flatten(prof)
+	def point_EVs(self, mix, *args):
+		prof = array([mix[r]*self.players[role] for r,role in \
+										enumerate(self.roles)])
+		dev = array([mix[r]*(self.players[role]-1) for r,role in \
+										enumerate(self.roles)])
 		EVs = self.zeros()
 		for r,role in enumerate(self.roles):
+			x = array(prof)
+			x[r,:] = dev[r,:]
+			x = self.flatten(x)
+			y_mean = self.GPs[role][None].predict(x)
 			for s,strat in enumerate(self.strategies[role]):
-				EVs[r,s] = self.GPs[role][None].predict(vec) - \
-							self.GPs[role][strat].predict(vec)
+				EVs[r,s] = y_mean - self.GPs[role][strat].predict(x)
 		return EVs
 
 
