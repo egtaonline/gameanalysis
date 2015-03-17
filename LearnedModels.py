@@ -55,13 +55,13 @@ class GP_Game(Game):
 		self.diffs = diffs
 		self.EVs = EVs
 		self.DPR = {}
-		if DPR_size != {}:
-			self.DPR_size = DPR_size
-		else:
-			self.DPR_size = {r:3 for r in sample_game.roles}
 		for attr in sample_game.__dict__.keys():
 			if attr not in {"dev_reps", "values", "counts", "sample_values"}:
 				self.__dict__[attr] = sample_game.__dict__[attr]
+		if DPR_size != {}:
+			self.DPR_size = DPR_size
+		else:
+			self.DPR_size = {r:min(3, self.players) for r in self.roles}
 		self.learn(sample_game.counts, sample_game.sample_values)
 
 
@@ -198,13 +198,10 @@ class GP_Game(Game):
 							samples) for r,role in enumerate(self.roles)]))
 		deviators = array(zip(*[multinomial(1, mix[r], samples) for \
 							r,role in enumerate(self.roles)]))
-		print profiles
-		print deviators
 		for r,role in enumerate(self.roles):
 			x = profiles + deviators
 			x[:,r,:] -= deviators[:,r,:]
 			x = map(self.flatten, x)
-			print x
 			for s,strat in enumerate(self.strategies[role]):
 				EVs[r,s] = (self.GPs[role][None].predict(x) - \
 							self.GPs[role][strat].predict(x)).mean()
