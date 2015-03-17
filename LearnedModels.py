@@ -243,7 +243,7 @@ default_params = {
 def train_GP(X, Y, cross_validate=False):
 	if cross_validate:
 		gp = GaussianProcess(**constant_params)
-		cv = GridSearchCV(gp, **CV_params)
+		cv = GridSearchCV(gp, CV_params)
 		cv.fit(X, Y)
 		params = cv.best_estimator_.get_params()
 	else:
