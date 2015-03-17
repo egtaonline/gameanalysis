@@ -13,7 +13,7 @@ try:
 except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
-from Reductions import full_prof_DPR
+from dpr import full_prof_DPR
 from RoleSymmetricGame import Game, Profile, PayoffData
 
 
