@@ -98,7 +98,7 @@ class GP_Game(Game):
 		self.GPs = {r:{} for r in self.roles}
 		for role in self.roles:
 			if self.diffs:
-				self.GPs[role][None] = train_GP(X_profiles, Y_mean)
+				self.GPs[role][None] = train_GP(X_profiles, Y_mean[role])
 			else:
 				self.GPs[role][None] = ZeroPredictor()
 			for strat in self.strategies[role]:
