@@ -80,9 +80,9 @@ class GP_Game(Game):
 			if self.diffs == None:
 				ym = [0]*len(self.roles)
 			elif self.diffs == "strat":
-				ym = samples.mean(2).sum(1) / (x > 0).sum(1)
+				ym = samples.mean(2).sum(1) / (prof > 0).sum(1)
 			elif self.diffs == "player":
-				ym = (samples.mean(2) * x).sum(1) / x.sum(1)
+				ym = (samples.mean(2) * prof).sum(1) / prof.sum(1)
 			for r,role in enumerate(self.roles):
 				Y_mean[role].append(ym[r])
 				for s,strat in enumerate(self.strategies[role]):
