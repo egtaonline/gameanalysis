@@ -14,7 +14,9 @@ def parse_args():
 						default="None", help="set to strat or player to learn"+
 						"differences from profile-average payoffs")
 	parser.add_argument("--CV", action="store_true", help="cross-validation")
-	parser.add_argument("--DPR_size", type=int, default=3, help="")
+	parser.add_argument("--DPR_size", type=int, nargs="*", default=[], help=
+						"Number of players per role (in alphabetical order) "+
+						"to be used by default for DPR_EVs.")
 	args = parser.parse_args()
 	if args.diffs == "None":
 		args.diffs = None
@@ -23,7 +25,7 @@ def parse_args():
 
 def main():
 	a = parse_args()
-	g = a.input
+	a.DPR_size = dict(zip(a.input.roles, a.DPR_size))
 	g = GP_Game(a.input, a.CV, a.diffs, a.EVs, a.DPR_size)
 	if a.output != "":
 		sys.stdout.close()
