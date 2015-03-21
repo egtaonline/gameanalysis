@@ -10,11 +10,14 @@ def parse_args():
 			"which expected values should be calculated.")
 	parser.add_argument("EVs_file", type=str, help="File to which output "+
 			"should be written. Can contain partial output.")
+	parser.add_argument("EVs_method", type=str, choices=["point", "sample",
+			"DPR"] help="Choices: point, sample, DPR.")
 	return parser.parse_args()
 
 def main():
 	args = parse_args()
 	game = args.input
+	game.EVs = args.EVs_method
 	mixtures = GameIO.read(args.mix_file)
 	if exists(args.EVs_file):
 		EVs = GameIO.read(args.EVs_file)
