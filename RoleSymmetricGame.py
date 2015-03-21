@@ -409,8 +409,8 @@ def is_zero_sum(game):
 
 def is_constant_sum(game):
 	game.makeArrays()
-	s = game.values[0].sum()
-	return np.allclose(game.values.sum(1).sum(1), s)
+	s = (game.counts[0] * game.values[0]).sum()
+	return np.allclose((game.counts * game.values).sum(1).sum(1), s)
 
 
 class SampleGame(Game):
