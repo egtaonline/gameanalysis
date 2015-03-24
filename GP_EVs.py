@@ -12,11 +12,16 @@ def parse_args():
 			"should be written. Can contain partial output.")
 	parser.add_argument("EVs_method", type=str, choices=["point", "sample",
 			"DPR"] help="Choices: point, sample, DPR.")
+	parser.add_argument("--DPRsize" type=int, default=0, help="Only required "+
+			"if EVs_method=DPR.")
 	return parser.parse_args()
 
 def main():
 	args = parse_args()
 	game = args.input
+	if args.EVs_method == "DPR":
+		assert args.DPRsize > 1, "--DPRsize must be specified"
+		game.DPR_size = args.DPRsize
 	game.EVs = args.EVs_method
 	mixtures = GameIO.read(args.mix_file)
 	if exists(args.EVs_file):
