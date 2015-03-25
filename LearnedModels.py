@@ -124,8 +124,8 @@ class GP_Game(Game):
 
 	def getPayoff(self, profile, role, strategy):
 		profile = self.flatten(self.toArray(profile))
-		return self.GPs[role][None].predict(profile) - \
-				self.GPs[role][strategy].predict(profile)
+		return self.predict(role, None, profile) - \
+				self.predict(role, strategy, profile)
 
 
 	def getSocialWelfare(self, profile):
@@ -184,8 +184,8 @@ class GP_Game(Game):
 					full_prof = full_prof_DPR(prof, role, strat, self.players)
 					x = self.flatten(self.toArray(full_prof))
 					x[self.flat_index(role, strat)] -= 1
-					y_mean = self.GPs[role][None].predict(x)
-					y_diff = self.GPs[role][strat].predict(x)
+					y_mean = self.predict(role, None, x)
+					y_diff = self.predict(role, strat, x)
 					y = y_mean - y_diff
 					role_payoffs[role].append(PayoffData(strat, count, y))
 			learned_game.addProfile(role_payoffs)
@@ -202,9 +202,9 @@ class GP_Game(Game):
 			x = profiles + deviators
 			x[:,r,:] -= deviators[:,r,:]
 			x = map(self.flatten, x)
+			y_mean = self.predict(role, None, x)
 			for s,strat in enumerate(self.strategies[role]):
-				EVs[r,s] = (self.GPs[role][None].predict(x) - \
-							self.GPs[role][strat].predict(x)).mean()
+				EVs[r,s] = (y_mean - self.predict(role, strat, x)).mean()
 		return EVs
 
 
@@ -218,10 +218,20 @@ class GP_Game(Game):
 			x = array(prof)
 			x[r,:] = dev[r,:]
 			x = self.flatten(x)
-			y_mean = self.GPs[role][None].predict(x)
+			y_mean = self.predict(role, None, x)
 			for s,strat in enumerate(self.strategies[role]):
-				EVs[r,s] = y_mean - self.GPs[role][strat].predict(x)
+				EVs[r,s] = y_mean - self.predict(role, strat, x)
 		return EVs
+
+	def predict(self, role, strat, x):
+		"""
+		Exists because games learned with sklearn 0.14 are missing y_ndim_
+		"""
+		try:
+			return self.GPs[role][strat].predict(x)
+		except AttributeError:
+			self.GPs[role][strat].y_ndim_ = 1
+			return self.GPs[role][strat].predict(x)
 
 
 constant_params = {
