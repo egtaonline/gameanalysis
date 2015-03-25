@@ -12,7 +12,7 @@ def parse_args():
 			"should be written. Can contain partial output.")
 	parser.add_argument("EVs_method", type=str, choices=["point", "sample",
 			"DPR"], help="Choices: point, sample, DPR.")
-	parser.add_argument("--DPRsize" type=int, default=0, help="Only required "+
+	parser.add_argument("--DPRsize", type=int, default=0, help="Only required "+
 			"if EVs_method=DPR.")
 	return parser.parse_args()
 
