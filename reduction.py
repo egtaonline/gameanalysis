@@ -13,10 +13,12 @@ class no_reduction(object):
 
     def reduce_game_data(self, game_summary):
         """Returns the same data that passed in"""
+        # pylint: disable=no-self-use
         return game_summary
 
     def expand_profile(self, profile):
         """Returns an generator of the singleton profile"""
+        # pylint: disable=no-self-use
         yield profile
 
 class dpr_reduction(object):
@@ -44,7 +46,8 @@ class dpr_reduction(object):
 
         for role, strats in profile.iteritems():
             for strat in strats:
-                # pylint: disable=cell-var-from-loop pylint is wrong about what's happening
+                # pylint: disable=cell-var-from-loop
+                # pylint is wrong about what's happening
                 # Copy and monkey patch to get function to pass and meet mutable invariant
                 monkey_prof = analysis.profile(copy.deepcopy(profile))
                 monkey_prof.asDict = lambda: monkey_prof

@@ -12,10 +12,12 @@ import itertools
 from collections import Counter as counter
 
 import GameIO as gameio
-import Subgames as subgames
 import Nash as nash
+import Subgames as subgames
+import RoleSymmetricGame as rsg
 
 import containers
+
 
 class game_data(object):
     '''Game object, that just has wrapper convenience methods around Bryce's
@@ -25,6 +27,55 @@ class game_data(object):
     def __init__(self, *args, **kwargs):
         self._analysis_game = gameio.read_JSON(dict(*args, **kwargs))
 
+    def complete_subgame(self, sub):
+        '''Returns true if subgame is complete'''
+        return self.all_profile_data(sub.subgame_profiles(
+            self._analysis_game.players))
+
+    def all_profile_data(self, profiles):
+        '''Returns true if all profiles have game data'''
+        return all(self._analysis_game.has_key(rsg.Profile(p)) for p in profiles)
+
+    # def subgames(self):
+    #     '''Find maximal subgames'''
+    #     # TODO This could probably be sped up with smart ordering of roles and
+    #     # strategies and the resulting search
+
+    #     # Start with seeded queue of complete subgames
+    #     # This queue will only contain subgames we have enough data for
+    #     full_game = subgame(self._analysis_game.strategies)
+    #     queue = [sg for sg in itertools.chain(
+    #         full_game.pure_subgames(),
+    #         known_subgames
+    #     ) if self.complete_subgame(sg)]
+    #     # Initialize set of all maximal subgames
+    #     subs = subgame_set()
+
+    #     while queue:
+    #         sub = queue.pop()
+    #         if not subs.add(sub):
+    #             continue
+    #         maximal = True
+    #         for role, strategies in full_game.iteritems():
+    #             role_counts = dict(self._analysis_game.players)
+    #             role_counts[role] -= 1
+    #             for strat in strategies.difference(sub[role]):
+    #                 dev_sub = dict(sub)
+    #                 dev_sub[role] = itertools.chain(dev_sub[role], [strat])
+    #                 dev_sub = subgame(dev_sub)
+    #                 # Essentially this is a generator of all the additional
+    #                 # profiles. It has to add one to the deviating profile for
+    #                 # the full subgame - 1 player in the deviating role
+    #                 profs = (profile(p, **{role: counter(p[role], **{strat: 1})})
+    #                          for p in dev_sub.subgame_profiles(role_counts))
+    #                 if self.all_profile_data(profs):
+    #                     # We have all the data!
+    #                     maximal = False
+    #                     queue.append(dev_sub)
+    #         if maximal:
+    #             yield sub
+
+    # Wrote my own more performant subgame finder
     def subgames(self, known_subgames=()):
         '''Find maximal subgames'''
         return (subgame(sg) for sg
@@ -121,9 +172,13 @@ class subgame(containers.frozendict):
         temp = dict(*args, **kwargs)
         super(subgame, self).__init__((r, frozenset(s)) for r, s in temp.iteritems())
 
-    def get_subgame_profiles(self, role_counts):
+    def pure_subgames(self):
+        '''Returns an iterator of all pure subgames'''
+        return (subgame(rs) for rs in itertools.product(
+            *([(r, {s}) for s in ss] for r, ss in self.iteritems())))
+
+    def subgame_profiles(self, role_counts):
         '''Returns an iterable over all subgame profiles'''
-        # pylint: disable=star-args
         # Compute the product of assignments by role and turn back into dictionary
         return (profile(rs) for rs in itertools.product(
             # Iterate through all strategy allocations per role and compute
@@ -133,12 +188,12 @@ class subgame(containers.frozendict):
               # For each role
               for r, ss in self.iteritems())))
 
-    def get_deviation_profiles(self, full_game, role_counts):
+    def deviation_profiles(self, full_game, role_counts):
         '''Returns an iterable over all deviations from every subgame profile'''
         for role, strats in self.iteritems():
             deviation_counts = role_counts.copy()
             deviation_counts[role] -= 1
-            for prof in self.get_subgame_profiles(deviation_counts):
+            for prof in self.subgame_profiles(deviation_counts):
                 for deviation in full_game[role].difference(strats):
                     deviation_prof = prof.copy()
                     deviation_prof[role] = deviation_prof[role].copy()
@@ -250,6 +305,19 @@ class subgame_set(object):
             bucket.add(added_subgame)
         return True
 
+    def maximal_subgames(self):
+        '''Returns a set of the maximal subgames'''
+        # XXX Expensive!
+
+        # Alternatively:
+        #
+        # set.union(*self.inverted_index.values())
+        return set(itertools.chain.from_iterable(
+            self.inverted_index.itervalues()))
+
+    def __iter__(self):
+        return iter(self.maximal_subgames())
+
     def __contains__(self, check_subgame):
         # Because every role strat key in the inverted index points to every
         # subgame that has that role strategy in it's support, we only need to
@@ -259,8 +327,4 @@ class subgame_set(object):
         return any(check_subgame <= game for game in bucket)
 
     def __repr__(self):
-        # XXX Expensive!
-        if not self.inverted_index:
-            return '{}'
-        else:
-            return '{' + repr(set.union(*self.inverted_index.values()))[5:-2] + '}'
+        return '{' + repr(self.maximal_subgames())[5:-2] + '}'

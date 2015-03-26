@@ -138,7 +138,7 @@ class egtaonline(object):
             return scheduler(json.loads(resp.text), _api=self)
 
         named = scheduler(utils.only(s for s in self.get_generic_schedulers()
-                                     if s.name == scheduler_name))
+                                     if s['name'] == scheduler_name))
         if verbose:
             return self.get_scheduler(named.scheduler_id, verbose=True)
         return named
