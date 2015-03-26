@@ -6,13 +6,16 @@ import argparse
 import time
 import itertools
 import logging
+from logging import handlers
 import sys
+import smtplib
 
 import egtaonlineapi as egta
 import analysis
 import containers
 import reduction
 import utils
+
 
 PARSER = argparse.ArgumentParser(description='Quiesce a generic scheduler on egtaonline.')
 PARSER.add_argument('-g', '--game', metavar='game-id', type=int, required=True,
@@ -38,6 +41,11 @@ PARSER.add_argument('--dpr', nargs='+', metavar='role-or-count', default=(),
 PARSER.add_argument('-v', '--verbose', action='count', default=0,
                     help='''Verbosity level. Two for confirmed equilibria, three for
                     everything.''')
+PARSER.add_argument('-e', '--email_verbosity', action='count', default=0, 
+                    help='''Verbosity level for email. Two for confirmed equilibria, three for everything''')
+PARSER.add_argument('-r', '--recipient', action='append', default=[],
+                    help='''Specify an email address to receive email logs at. Can specify multiple email addresses.''')
+
 
 SCHED_GROUP = PARSER.add_argument_group('Scheduler parameters',
                                         description='''Parameters for the scheduler. If
@@ -89,7 +97,7 @@ class quieser(object):
     # after it finishes blocking
     def __init__(self, game, auth_token, scheduler_id=None, max_profiles=10000,
                  sleep_time=300, subgame_limit=None, num_subgames=1, dpr=None,
-                 scheduler_options=containers.frozendict(), verbosity=0):
+                 scheduler_options=containers.frozendict(), verbosity=0, email_verbosity=0, recipients=[]):
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
 
@@ -97,6 +105,18 @@ class quieser(object):
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(40 - verbosity * 10)
         self.log.addHandler(logging.StreamHandler(sys.stderr))
+
+        # Email Logging
+        if len(recipients) > 0:
+            email_subject = "EGTA Online Quiesce Status"
+            smtp_host = "localhost"        
+            server = smtplib.server(smtp_host) # must get correct hostname to send mail
+            smtp_fromaddr = "EGTA Online <egta_online@" + server.local_hostname + ">"
+            server.quit() # dummy server is now useless
+
+            email_handler = handlers.SMTPHandler(smtp_host, smtp_fromaddr, recipients, email_subject)
+            email_handler.setLevel(40 - email_verbosity*10)
+            self.log.addHandler(email_handler)
 
         # Get api and access to standard objects
         self.api = egta.egtaonline(auth_token)
@@ -380,10 +400,16 @@ def main():
             'obs_req': args.default_obs_req,
             'nodes': args.nodes
         },
-        verbosity=args.verbose)
+        verbosity=args.verbose,
+        email_verbosity=args.email_verbosity,
+        recipients=args.recipient)
 
     quies.quiesce()
-
-
+   
+    try:  
+      email_logger.info("Your script for game %d has finished running", args.game)
+    except:
+      pass
+      
 if __name__ == '__main__':
     main()
