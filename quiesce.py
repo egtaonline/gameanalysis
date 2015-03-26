@@ -375,6 +375,9 @@ class quieser(object):
         return analysis.game_data(self.reduction.reduce_game_data(
             self.api.get_game(self.game['id'], 'summary')))
 
+    def delete_scheduler(self):
+        '''Deletes the scheduler'''
+        self.scheduler.delete()
 
 def parse_dpr(dpr_list):
     '''Turn list of role counts into dictionary'''
@@ -403,7 +406,11 @@ def main():
         },
         verbosity=args.verbose)
 
-    quies.quiesce()
+    try:
+        quies.quiesce()
+    finally:
+        quies.log.debug('Deleting scheduler')
+        quies.delete_scheduler()
 
 
 if __name__ == '__main__':
