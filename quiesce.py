@@ -110,7 +110,7 @@ class quieser(object):
         if len(recipients) > 0:
             email_subject = "EGTA Online Quiesce Status"
             smtp_host = "localhost"        
-            server = smtplib.server(smtp_host) # must get correct hostname to send mail
+            server = smtplib.SMTP(smtp_host) # must get correct hostname to send mail
             smtp_fromaddr = "EGTA Online <egta_online@" + server.local_hostname + ">"
             server.quit() # dummy server is now useless
 
