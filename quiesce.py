@@ -405,11 +405,6 @@ def main():
         recipients=args.recipient)
 
     quies.quiesce()
-   
-    try:  
-      email_logger.info("Your script for game %d has finished running", args.game)
-    except:
-      pass
       
 if __name__ == '__main__':
     main()
