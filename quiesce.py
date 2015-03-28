@@ -37,9 +37,9 @@ PARSER.add_argument('--dpr', nargs='+', metavar='role-or-count', default=(),
                     help='''If specified, does a dpr reduction with role strategy counts.  e.g.
                     --dpr role1 1 role2 2 ...''')
 PARSER.add_argument('-v', '--verbose', action='count', default=0,
-                    help='''Verbosity level. Two for confirmed equilibria, three for everything. Logging
-                    is output to standard error''')
-
+                    help='''Verbosity level. Two for confirmed equilibria,
+                    three for everything. Logging is output to standard
+                    error''')
 SCHED_GROUP = PARSER.add_argument_group(
     'Scheduler parameters', description='Parameters for the scheduler')
 SCHED_GROUP.add_argument('-y', '--memory', metavar='process-memory', type=int,
@@ -83,6 +83,7 @@ def _json_default(obj):
 def _to_json_str(obj):
     '''Converts general objects into nice output string'''
     return json.dumps(obj, indent=2, default=_json_default)
+
 
 # Main class
 class quieser(object):
