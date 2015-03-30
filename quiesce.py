@@ -341,11 +341,7 @@ def main():
         },
         verbosity=args.verbose)
 
-    try:
-        quies.quiesce()
-    finally:
-        quies.log.debug('Deleting scheduler %d', quies.scheduler['id'])
-        quies.delete_scheduler()
+    quies.quiesce()
 
 
 if __name__ == '__main__':
