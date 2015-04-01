@@ -18,27 +18,30 @@ import containers
 import reduction
 import utils
 
-
-PARSER = argparse.ArgumentParser(description='Quiesce a generic scheduler on egtaonline.')
+PARSER = argparse.ArgumentParser(description='''Quiesce a generic scheduler on
+egtaonline.''')
 PARSER.add_argument('-g', '--game', metavar='game-id', type=int, required=True,
-                    help='The id of the game to pull data from / to quiesce')
+                    help='''The id of the game to pull data from / to
+                    quiesce''')
 PARSER.add_argument('-a', '--auth', metavar='auth-token', required=True,
-                    help='An authorization token to allow access to egtaonline.')
-PARSER.add_argument('-p', '--max-profiles', metavar='max-num-profiles', type=int,
-                    default=1000, help='''Maximum number of profiles to ever have
-                    scheduled at a time. Defaults to 1000.''')
-PARSER.add_argument('-t', '--sleep-time', metavar='sleep-time', type=int, default=600,
-                    help='''Time to wait in seconds between checking egtaonline for
-                    job completion. Defaults to 300 (5 minutes).''')
-PARSER.add_argument('-m', '--max-subgame-size', metavar='max-subgame-size', type=int,
-                    default=3,
-                    help='Maximum subgame size to require exploration. Defaults to 3')
+                    help='''An authorization token to allow access to
+                    egtaonline.''')
+PARSER.add_argument('-p', '--max-profiles', metavar='max-num-profiles',
+                    type=int, default=1000, help='''Maximum number of profiles
+                    to ever have scheduled at a time. Defaults to 1000.''')
+PARSER.add_argument('-t', '--sleep-time', metavar='sleep-time', type=int,
+                    default=300, help='''Time to wait in seconds between
+                    checking egtaonline for job completion. Defaults to 300 (5
+                    minutes).''')
+PARSER.add_argument('-m', '--max-subgame-size', metavar='max-subgame-size',
+                    type=int, default=3, help='''Maximum subgame size to
+                    require exploration. Defaults to 3''')
 PARSER.add_argument('-n', '--num-subgames', metavar='num-subgames', type=int,
-                    default=1,
-                    help='''Maximum number of subgames to explore simultaneously.  Defaults to 1''')
+                    default=1, help='''Maximum number of subgames to explore
+                    simultaneously.  Defaults to 1''')
 PARSER.add_argument('--dpr', nargs='+', metavar='role-or-count', default=(),
-                    help='''If specified, does a dpr reduction with role strategy counts.  e.g.
-                    --dpr role1 1 role2 2 ...''')
+                    help='''If specified, does a dpr reduction with role
+                    strategy counts.  e.g.  --dpr role1 1 role2 2 ...''')
 PARSER.add_argument('-v', '--verbose', action='count', default=0,
                     help='''Verbosity level. Two for confirmed equilibria,
                     three for everything. Logging is output to standard
@@ -61,31 +64,39 @@ SCHED_GROUP.add_argument('-s', '--use-existing-scheduler', metavar='scheduler-id
 SCHED_GROUP.add_argument('-y', '--memory', metavar='process-memory', type=int,
                          default=4096, help='''The process memory to schedule
                          jobs with in MB. Defaults to 4096''')
-SCHED_GROUP.add_argument('-o', '--observation-time', metavar='observation-time', type=int,
-                         default=600,
-                         help='The time to allow for each observation in seconds.  Defaults to 600')
-SCHED_GROUP.add_argument('--obs-per-sim', metavar='observations-per-simulation', type=int,
-                         default=10,
-                         help='The number of observations to run per simulation. Defaults to 10')
-SCHED_GROUP.add_argument('--default-obs-req', metavar='default-observation-requirement',
-                         type=int, default=10,
-                         help='The default observation requirement. Defaults to 10')
+SCHED_GROUP.add_argument('-o', '--observation-time',
+                         metavar='observation-time', type=int, default=600,
+                         help='''The time to allow for each observation in
+                         seconds.  Defaults to 600''')
+SCHED_GROUP.add_argument('--obs-per-sim',
+                         metavar='observations-per-simulation', type=int,
+                         default=10, help='''The number of observations to run
+                         per simulation. Defaults to 10''')
+SCHED_GROUP.add_argument('--default-obs-req',
+                         metavar='default-observation-requirement', type=int,
+                         default=10, help='''The default observation
+                         requirement. Defaults to 10''')
 SCHED_GROUP.add_argument('--nodes', metavar='nodes', type=int, default=1,
-                         help='Number of nodes to run the simulation on. Defaults to 1')
+                         help='''Number of nodes to run the simulation
+                         on. Defaults to 1''')
+
 
 # These are methods to measure the size of a game
 def max_strategies(subgame, **_):
     '''Max number of strategies per role in subgame'''
     return max(len(strats) for strats in subgame.values())
 
+
 def sum_strategies(subgame, **_):
     '''Sum of all strategies in each role in subgame'''
     return sum(len(strats) for strats in subgame.values())
+
 
 def num_profiles(subgame, role_counts, **_):
     '''Returns the number of profiles in a subgame'''
     return utils.prod(utils.game_size(role_counts[role], len(strats))
                       for role, strats in subgame.iteritems())
+
 
 # For output of general objects
 def _json_default(obj):
@@ -95,6 +106,7 @@ def _json_default(obj):
     elif isinstance(obj, collections.Iterable):
         return list(obj)
     raise TypeError('Can\'t serialize %s of type %s' % (obj, type(obj)))
+
 
 def _to_json_str(obj):
     '''Converts general objects into nice output string'''
@@ -106,9 +118,10 @@ class quieser(object):
     '''Class to manage quiesing of a scheduler'''
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, game, auth_token, max_profiles=10000,
-                 sleep_time=300, subgame_limit=None, num_subgames=1, dpr=None,
-                 scheduler_options=containers.frozendict(), verbosity=0, email_verbosity=0, recipients=[]):
+    def __init__(self, game, auth_token, max_profiles=10000, sleep_time=300,
+                 subgame_limit=None, num_subgames=1, dpr=None,
+                 scheduler_options=containers.frozendict(), verbosity=0,
+                 email_verbosity=0, recipients=[]):
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
 
@@ -137,7 +150,7 @@ class quieser(object):
         self.scheduler = self._create_scheduler(**scheduler_options)
         self.scheduler = self.api.get_scheduler(self.scheduler['id'],
                                                 verbose=True)
-        self.scheduler.update(active=1) # Make scheduler active
+        self.scheduler.update(active=1)  # Make scheduler active
         self.simulator = self.api.get_simulator(self.scheduler['simulator_id'])
 
         # Set other game information
@@ -170,7 +183,7 @@ class quieser(object):
         self.max_profiles = max_profiles
         self.sleep_time = sleep_time
         self.subgame_limit = subgame_limit
-        self.subgame_size = sum_strategies # TODO allow other functions
+        self.subgame_size = sum_strategies  # TODO allow other functions
         self.num_subgames = num_subgames
 
     def _create_scheduler(self, process_memory=4096,
@@ -181,7 +194,7 @@ class quieser(object):
 
         # Find simulator by matching on fullname
         sim_id = utils.only(s for s in self.api.get_simulators()
-                            if '%s-%s' % (s['name'], s['version']) == \
+                            if '%s-%s' % (s['name'], s['version']) ==
                             self.game['simulator_fullname'])['id']
         # Generate a random name
         name = '%s_generic_quiesce_%s' % (self.game['name'],
@@ -235,8 +248,8 @@ class quieser(object):
 
             # Schedule all deviations from found equilibria
             self.schedule_profiles(itertools.chain.from_iterable(
-                eq.support().deviation_profiles(self.full_game, self.role_counts)
-                for eq in equilibria))
+                eq.support().deviation_profiles(
+                    self.full_game, self.role_counts) for eq in equilibria))
             game_data = self.get_data()
             self.log.debug('Finished exploring equilibria deviations')
 
@@ -257,8 +270,10 @@ class quieser(object):
         # subgames currently, and you still haven't found an equilibrium
         while (len(subgames) < self.num_subgames and (
                 self.necessary or (
-                    not subgames and self.backup and not self.confirmed_equilibria))):
-            _, subgame = self.necessary.pop() if self.necessary else self.backup.pop()
+                    not subgames and self.backup
+                    and not self.confirmed_equilibria))):
+            _, subgame = (self.necessary.pop() if self.necessary
+                          else self.backup.pop())
             if not self.explored.add(subgame):  # already explored
                 self.log.debug('--- Already explored subgame ---\n%s',
                                _to_json_str(subgame))
@@ -274,25 +289,28 @@ class quieser(object):
             self.confirmed_equilibria.add(equilibrium)
             self.log.info('!!! Confirmed equilibrium !!!\n%s',
                           _to_json_str(equilibrium))
-        else: # Queue up next subgames
+        else:  # Queue up next subgames
             supp = equilibrium.support()
             # If it's a large subgame, best responses should not be necessary
             large_subgame = self.subgame_size(supp, role_counts=self.role_counts) \
-                            >= self.subgame_limit
+                >= self.subgame_limit
 
             for role, rresps in responses.iteritems():
                 ordered = sorted(rresps.iteritems(), key=lambda x: -x[1])
                 strat, gain = ordered[0]  # best response
                 if large_subgame:
                     # Large, so add to backup with priority 0 (highest)
-                    self.backup.append(((0, -gain), supp.with_deviation(role, strat)))
+                    self.backup.append(
+                        ((0, -gain), supp.with_deviation(role, strat)))
                 else:
                     # Best response becomes necessary to explore
-                    self.necessary.append((-gain, supp.with_deviation(role, strat)))
+                    self.necessary.append(
+                        (-gain, supp.with_deviation(role, strat)))
                 # All others become backups if we run out without finding one
                 # These all have priority 1 (lowest)
                 for strat, gain in ordered[1:]:
-                    self.backup.append(((1, -gain), supp.with_deviation(role, strat)))
+                    self.backup.append(
+                        ((1, -gain), supp.with_deviation(role, strat)))
 
     def schedule_profiles(self, profiles):
         '''Schedules an interable of profiles
@@ -325,14 +343,16 @@ class quieser(object):
                 count = self.scheduler.num_running_profiles()
 
             count += 1
-            profile_ids.add(self.api.add_profile(self.scheduler.scheduler_id, prof,
+            profile_ids.add(self.api.add_profile(self.scheduler.scheduler_id,
+                                                 prof,
                                                  self.obs_count))
 
         # Check that all scheduled profiles are finished executing
         active_profiles = self.scheduler.are_profiles_still_active(profile_ids)
         while active_profiles:
             time.sleep(self.sleep_time)
-            active_profiles = self.scheduler.are_profiles_still_active(profile_ids)
+            active_profiles = self.scheduler.are_profiles_still_active(
+                profile_ids)
 
     def get_data(self):
         '''Gets current game data'''
@@ -343,9 +363,11 @@ class quieser(object):
         '''Deletes the scheduler'''
         self.scheduler.delete()
 
+
 def parse_dpr(dpr_list):
     '''Turn list of role counts into dictionary'''
-    return {dpr_list[2*i]: int(dpr_list[2*i+1]) for i in xrange(len(dpr_list)//2)}
+    return {dpr_list[2*i]: int(dpr_list[2*i+1])
+            for i in xrange(len(dpr_list)//2)}
 
 
 def main():
