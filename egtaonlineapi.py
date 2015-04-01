@@ -97,6 +97,14 @@ class scheduler(dict):
         '''
         return self._api.update_generic_scheduler(self.scheduler_id, **kwargs)
 
+    def delete(self):
+        '''Delete generic scheduler
+
+        This will fail if scheduler is not generic
+
+        '''
+        self._api.delete_generic_scheduler(self.scheduler_id)
+
 class egtaonline(object):
     '''Class to wrap egtaonline api'''
     def __init__(self, auth_token, domain='egtaonline.eecs.umich.edu',
@@ -138,7 +146,7 @@ class egtaonline(object):
             return scheduler(json.loads(resp.text), _api=self)
 
         named = scheduler(utils.only(s for s in self.get_generic_schedulers()
-                                     if s.name == scheduler_name))
+                                     if s['name'] == scheduler_name))
         if verbose:
             return self.get_scheduler(named.scheduler_id, verbose=True)
         return named
@@ -202,6 +210,12 @@ class egtaonline(object):
         '''Remove a role from the scheduler'''
         resp = self.request('post', 'generic_schedulers/%d/remove_role.json' % \
                             scheduler_id, data={'role': role})
+        resp.raise_for_status()
+
+    def delete_generic_scheduler(self, scheduler_id):
+        '''Delete a generic scheduler'''
+        resp = self.request('delete', 'generic_schedulers/%d.json' % \
+                            scheduler_id)
         resp.raise_for_status()
 
     def get_simulators(self):
