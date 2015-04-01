@@ -46,10 +46,12 @@ PARSER.add_argument('-v', '--verbose', action='count', default=0,
                     help='''Verbosity level. Two for confirmed equilibria,
                     three for everything. Logging is output to standard
                     error''')
-PARSER.add_argument('-e', '--email_verbosity', action='count', default=0, 
-                    help='''Verbosity level for email. Two for confirmed equilibria, three for everything''')
+PARSER.add_argument('-e', '--email_verbosity', action='count', default=0,
+                    help='''Verbosity level for email. Two for confirmed
+                    equilibria, three for everything''')
 PARSER.add_argument('-r', '--recipient', action='append', default=[],
-                    help='''Specify an email address to receive email logs at. Can specify multiple email addresses.''')
+                    help='''Specify an email address to receive email logs
+                    at. Can specify multiple email addresses.''')
 
 
 SCHED_GROUP = PARSER.add_argument_group('Scheduler parameters',
@@ -113,63 +115,65 @@ def _to_json_str(obj):
     return json.dumps(obj, indent=2, default=_json_default)
 
 
+def _get_logger(name, level, email_level, recipients):
+    '''Returns an appropriate logger'''
+    log = logging.getLogger(name)
+    log.setLevel(40 - level * 10)
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+    log.addHandler(handler)
+
+    # Email Logging
+    if recipients:
+        email_subject = "EGTA Online Quiesce Status"
+        smtp_host = "localhost"
+        smtp_fromaddr = "EGTA Online <egta_online@quiesc.umich.edu>"
+
+        email_handler = handlers.SMTPHandler(smtp_host, smtp_fromaddr,
+                                             recipients, email_subject)
+        email_handler.setLevel(40 - email_level * 10)
+        log.addHandler(email_handler)
+
+    return log
+
+
 # Main class
 class quieser(object):
     '''Class to manage quiesing of a scheduler'''
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, game, auth_token, max_profiles=10000, sleep_time=300,
-                 subgame_limit=None, num_subgames=1, dpr=None,
+    def __init__(self, game_id, auth_token, max_profiles=10000,
+                 sleep_time=300, subgame_limit=None, num_subgames=1, dpr=None,
                  scheduler_options=containers.frozendict(), verbosity=0,
                  email_verbosity=0, recipients=[]):
         # pylint: disable=too-many-arguments
         # pylint: disable=too-many-locals
 
-        # Logging
-        self.log = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(40 - verbosity * 10)
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
-        self.log.addHandler(handler)
-
-        # Email Logging
-        if len(recipients) > 0:
-            email_subject = "EGTA Online Quiesce Status"
-            smtp_host = "localhost"        
-            server = smtplib.SMTP(smtp_host) # must get correct hostname to send mail
-            smtp_fromaddr = "EGTA Online <egta_online@" + server.local_hostname + ">"
-            server.quit() # dummy server is now useless
-
-            email_handler = handlers.SMTPHandler(smtp_host, smtp_fromaddr, recipients, email_subject)
-            email_handler.setLevel(40 - email_verbosity*10)
-            self.log.addHandler(email_handler)
-
         # Get api and access to standard objects
-        self.api = egta.egtaonline(auth_token)
-        self.game = self.api.get_game(game, granularity='summary')
-        self.scheduler = self._create_scheduler(**scheduler_options)
-        self.scheduler = self.api.get_scheduler(self.scheduler['id'],
-                                                verbose=True)
-        self.scheduler.update(active=1)  # Make scheduler active
-        self.simulator = self.api.get_simulator(self.scheduler['simulator_id'])
+        self._log = _get_logger(self.__class__.__name__, verbosity,
+                                email_verbosity, recipients)
+        self._api = egta.egtaonline(auth_token)
+        self._game_id = game_id
+        game = self._api.get_game(game_id, granularity='summary')
+        self._scheduler = self._create_scheduler(game, **scheduler_options)
 
         # Set other game information
-        self.role_counts = {r['name']: r['count'] for r in self.game['roles']}
-        self.full_game = analysis.subgame(
-            (r['name'], set(r['strategies'])) for r in self.game['roles'])
+        self._role_counts = {r['name']: r['count'] for r in game['roles']}
+        self._full_game = analysis.subgame(
+            (r['name'], set(r['strategies'])) for r in game['roles'])
 
         # Set up reduction
         if dpr:
-            self.reduction = reduction.dpr_reduction(self.role_counts, dpr)
-            self.role_counts = dpr
+            self._reduction = reduction.dpr_reduction(self._role_counts, dpr)
+            self._role_counts = dpr
         else:
-            self.reduction = reduction.no_reduction()
+            self._reduction = reduction.no_reduction()
 
         # Set up progress containers
         # Set initial subgames: currently this is all pure profiles
         # The subgames to necessary explore to consider quiessed
         self.necessary = containers.priorityqueue(
-            (0, subg) for subg in self.full_game.pure_subgames())
+            (0, subg) for subg in self._full_game.pure_subgames())
         # Subgames to try only if no equilibria have been found. Priority is a
         # tuple first indicating if it was a best response then indicating the
         # regret
@@ -179,28 +183,45 @@ class quieser(object):
         self.confirmed_equilibria = set()
 
         # Set useful quiesing variables
-        self.obs_count = self.scheduler['default_observation_requirement']
+        self.obs_count = self._scheduler['default_observation_requirement']
         self.max_profiles = max_profiles
         self.sleep_time = sleep_time
         self.subgame_limit = subgame_limit
         self.subgame_size = sum_strategies  # TODO allow other functions
         self.num_subgames = num_subgames
 
-    def _create_scheduler(self, process_memory=4096,
+    def _create_scheduler(self, game, process_memory=4096,
                           observation_time=600, obs_req=10, obs_per_sim=10,
                           nodes=1):
         '''Creates a generic scheduler with the appropriate parameters'''
         # pylint: disable=too-many-arguments
 
+        sim_inst_id = sim_inst_id = self._api.get_game(
+            self._game_id)['simulator_instance_id']
+        schedulers = [gs for gs in self._api.get_generic_schedulers() if
+                      gs['simulator_instance_id'] == sim_inst_id and
+                      gs['process_memory'] == process_memory and
+                      gs['time_per_observation'] == observation_time and
+                      gs['default_observation_requirement'] == obs_req and
+                      gs['observations_per_simulation'] == obs_per_sim and
+                      gs['nodes'] == nodes]
+
+        if len(schedulers) > 0:
+            # found at least one exact match so use it
+            sched = schedulers[0]
+            sched.update(active=1)
+            self._log.debug('Using scheduler %d', sched['id'])
+            return sched
+
         # Find simulator by matching on fullname
-        sim_id = utils.only(s for s in self.api.get_simulators()
-                            if '%s-%s' % (s['name'], s['version']) ==
-                            self.game['simulator_fullname'])['id']
+        sim_id = utils.only(s for s in self._api.get_simulators() if '%s-%s' %
+                            (s['name'], s['version']) ==
+                            game['simulator_fullname'])['id']
         # Generate a random name
-        name = '%s_generic_quiesce_%s' % (self.game['name'],
+        name = '%s_generic_quiesce_%s' % (game['name'],
                                           utils.random_string(6))
-        size = self.api.get_game(self.game['id'], 'structure')['size']
-        sched = self.api.create_generic_scheduler(
+        size = self._api.get_game(self._game_id, 'structure')['size']
+        sched = self._api.create_generic_scheduler(
             simulator_id=sim_id,
             name=name,
             active=1,
@@ -210,13 +231,13 @@ class quieser(object):
             observations_per_simulation=obs_per_sim,
             nodes=nodes,
             default_observation_requirement=obs_req,
-            configuration=dict(self.game['configuration']))
+            configuration=dict(game['configuration']))
 
         # Add roles and counts to scheduler
-        for role in self.game['roles']:
+        for role in game['roles']:
             sched.add_role(role['name'], role['count'])
 
-        self.log.debug('Created scheduler %d', sched['id'])
+        self._log.debug('Created scheduler %d', sched['id'])
         return sched
 
     def quiesce(self):
@@ -230,36 +251,36 @@ class quieser(object):
         while not self.confirmed_equilibria or self.necessary:
             # Get next subgames to explore
             subgames = self.get_next_subgames()
-            self.log.debug('>>> Exploring subgames <<<\n%s',
-                           _to_json_str(subgames))
+            self._log.debug('>>> Exploring subgames <<<\n%s',
+                            _to_json_str(subgames))
 
             # Schedule subgames
             self.schedule_profiles(itertools.chain.from_iterable(
-                sg.subgame_profiles(self.role_counts) for sg in subgames))
+                sg.subgame_profiles(self._role_counts) for sg in subgames))
             game_data = self.get_data()
-            self.log.debug('Finished exploring subgames')
+            self._log.debug('Finished exploring subgames')
 
             # Find equilibria in the subgame
             equilibria = list(itertools.chain.from_iterable(
                 game_data.equilibria(eq_subgame=subgame)
                 for subgame in subgames))
-            self.log.debug('Found candidate equilibria\n%s',
-                           _to_json_str(equilibria))
+            self._log.debug('Found candidate equilibria\n%s',
+                            _to_json_str(equilibria))
 
             # Schedule all deviations from found equilibria
             self.schedule_profiles(itertools.chain.from_iterable(
                 eq.support().deviation_profiles(
-                    self.full_game, self.role_counts) for eq in equilibria))
+                    self._full_game, self._role_counts) for eq in equilibria))
             game_data = self.get_data()
-            self.log.debug('Finished exploring equilibria deviations')
+            self._log.debug('Finished exploring equilibria deviations')
 
             # Confirm equilibria and add beneficial deviating subgames to
             # future exploration
             for equilibrium in equilibria:
                 self.queue_deviations(equilibrium, game_data)
 
-        self.log.info('Finished quiescing\nConfirmed equilibria:\n%s',
-                      _to_json_str(self.confirmed_equilibria))
+        self._log.info('Finished quiescing\nConfirmed equilibria:\n%s',
+                       _to_json_str(self.confirmed_equilibria))
 
     def get_next_subgames(self):
         '''Gets a list of subgames to explore next'''
@@ -275,8 +296,8 @@ class quieser(object):
             _, subgame = (self.necessary.pop() if self.necessary
                           else self.backup.pop())
             if not self.explored.add(subgame):  # already explored
-                self.log.debug('--- Already explored subgame ---\n%s',
-                               _to_json_str(subgame))
+                self._log.debug('--- Already explored subgame ---\n%s',
+                                _to_json_str(subgame))
             else:
                 subgames.append(subgame)
         return subgames
@@ -284,15 +305,15 @@ class quieser(object):
     def queue_deviations(self, equilibrium, game_data):
         '''Queues deviations to an equilibrium'''
         responses = game_data.responses(equilibrium)
-        self.log.debug('Responses\n%s', _to_json_str(responses))
+        self._log.debug('Responses\n%s', _to_json_str(responses))
         if not responses:  # Found equilibrium
             self.confirmed_equilibria.add(equilibrium)
-            self.log.info('!!! Confirmed equilibrium !!!\n%s',
-                          _to_json_str(equilibrium))
+            self._log.info('!!! Confirmed equilibrium !!!\n%s',
+                           _to_json_str(equilibrium))
         else:  # Queue up next subgames
             supp = equilibrium.support()
             # If it's a large subgame, best responses should not be necessary
-            large_subgame = self.subgame_size(supp, role_counts=self.role_counts) \
+            large_subgame = self.subgame_size(supp, role_counts=self._role_counts) \
                 >= self.subgame_limit
 
             for role, rresps in responses.iteritems():
@@ -323,12 +344,12 @@ class quieser(object):
         # Number of running profiles
         #
         # This is an overestimate because checking is expensive
-        count = self.scheduler.num_running_profiles()
+        count = self._scheduler.num_running_profiles()
         profile_ids = set()
 
         # Iterate through full game profiles
         for prof in itertools.chain.from_iterable(
-                self.reduction.expand_profile(p) for p in profiles):
+                self._reduction.expand_profile(p) for p in profiles):
             # First, we check / block until we can schedule another profile
 
             # Sometimes scheduled profiles already exist, and so even though we
@@ -336,32 +357,33 @@ class quieser(object):
             # stops up from waiting a long time if we hit this threshold by
             # accident
             if count >= self.max_profiles:
-                count = self.scheduler.num_running_profiles()
+                count = self._scheduler.num_running_profiles()
             # Wait until we can schedule more profiles
             while count >= self.max_profiles:
                 time.sleep(self.sleep_time)
-                count = self.scheduler.num_running_profiles()
+                count = self._scheduler.num_running_profiles()
 
             count += 1
-            profile_ids.add(self.api.add_profile(self.scheduler.scheduler_id,
-                                                 prof,
-                                                 self.obs_count))
+            profile_ids.add(self._api.add_profile(self._scheduler.scheduler_id,
+                                                  prof,
+                                                  self.obs_count))
 
         # Check that all scheduled profiles are finished executing
-        active_profiles = self.scheduler.are_profiles_still_active(profile_ids)
+        active_profiles = self._scheduler.are_profiles_still_active(
+            profile_ids)
         while active_profiles:
             time.sleep(self.sleep_time)
-            active_profiles = self.scheduler.are_profiles_still_active(
+            active_profiles = self._scheduler.are_profiles_still_active(
                 profile_ids)
 
     def get_data(self):
         '''Gets current game data'''
-        return analysis.game_data(self.reduction.reduce_game_data(
-            self.api.get_game(self.game['id'], 'summary')))
+        return analysis.game_data(self._reduction.reduce_game_data(
+            self._api.get_game(self._game_id, 'summary')))
 
     def delete_scheduler(self):
         '''Deletes the scheduler'''
-        self.scheduler.delete()
+        self._scheduler.delete()
 
 
 def parse_dpr(dpr_list):
@@ -375,7 +397,7 @@ def main():
     args = PARSER.parse_args()
 
     quies = quieser(
-        game=args.game,
+        game_id=args.game,
         auth_token=args.auth,
         max_profiles=args.max_profiles,
         sleep_time=args.sleep_time,
