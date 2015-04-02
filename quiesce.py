@@ -36,9 +36,6 @@ PARSER.add_argument('-t', '--sleep-time', metavar='sleep-time', type=int,
 PARSER.add_argument('-m', '--max-subgame-size', metavar='max-subgame-size',
                     type=int, default=3, help='''Maximum subgame size to
                     require exploration. Defaults to 3''')
-PARSER.add_argument('-n', '--num-subgames', metavar='num-subgames', type=int,
-                    default=1, help='''Maximum number of subgames to explore
-                    simultaneously.  Defaults to 1''')
 PARSER.add_argument('--dpr', nargs='+', metavar='role-or-count', default=(),
                     help='''If specified, does a dpr reduction with role
                     strategy counts.  e.g.  --dpr role1 1 role2 2 ...''')
@@ -115,17 +112,18 @@ def _to_json_str(obj):
     return json.dumps(obj, indent=2, default=_json_default)
 
 
-def _get_logger(name, level, email_level, recipients):
+def _get_logger(name, level, email_level, recipients, game_id):
     '''Returns an appropriate logger'''
     log = logging.getLogger(name)
     log.setLevel(40 - level * 10)
     handler = logging.StreamHandler(sys.stderr)
-    handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+    handler.setFormatter(logging.Formatter(
+        '%%(asctime)s (%d) %%(message)s' % game_id))
     log.addHandler(handler)
 
     # Email Logging
     if recipients:
-        email_subject = "EGTA Online Quiesce Status"
+        email_subject = "EGTA Online Quiesce Status for Game %d" % game_id
         smtp_host = "localhost"
         smtp_fromaddr = "EGTA Online <egta_online@quiesc.umich.edu>"
 
@@ -151,7 +149,7 @@ class quieser(object):
 
         # Get api and access to standard objects
         self._log = _get_logger(self.__class__.__name__, verbosity,
-                                email_verbosity, recipients)
+                                email_verbosity, recipients, game_id)
         self._api = egta.egtaonline(auth_token)
         self._game_id = game_id
         game = self._api.get_game(game_id, granularity='summary')
@@ -169,26 +167,12 @@ class quieser(object):
         else:
             self._reduction = reduction.no_reduction()
 
-        # Set up progress containers
-        # Set initial subgames: currently this is all pure profiles
-        # The subgames to necessary explore to consider quiessed
-        self.necessary = containers.priorityqueue(
-            (0, subg) for subg in self._full_game.pure_subgames())
-        # Subgames to try only if no equilibria have been found. Priority is a
-        # tuple first indicating if it was a best response then indicating the
-        # regret
-        self.backup = containers.priorityqueue()
-        # Subgames we've already explored
-        self.explored = analysis.subgame_set()
-        self.confirmed_equilibria = set()
-
         # Set useful quiesing variables
-        self.obs_count = self._scheduler['default_observation_requirement']
-        self.max_profiles = max_profiles
-        self.sleep_time = sleep_time
-        self.subgame_limit = subgame_limit
-        self.subgame_size = sum_strategies  # TODO allow other functions
-        self.num_subgames = num_subgames
+        self._obs_count = self._scheduler['default_observation_requirement']
+        self._max_profiles = max_profiles
+        self._sleep_time = sleep_time
+        self._subgame_limit = subgame_limit
+        self._subgame_size = sum_strategies  # TODO allow other functions
 
     def _create_scheduler(self, game, process_memory=4096,
                           observation_time=600, obs_req=10, obs_per_sim=10,
@@ -247,146 +231,191 @@ class quieser(object):
 
         '''
 
-        # TODO could be changed to allow multiple stopping conditions
-        while not self.confirmed_equilibria or self.necessary:
-            # Get next subgames to explore
-            subgames = self.get_next_subgames()
-            self._log.debug('>>> Exploring subgames <<<\n%s',
-                            _to_json_str(subgames))
+        # This handles scheduling all pf the profiles
+        sched = profile_scheduler(self._log, self._scheduler, self._reduction,
+                                  self._max_profiles, self._full_game,
+                                  self._role_counts, self._obs_count,
+                                  self._full_game.pure_subgames())
 
-            # Schedule subgames
-            self.schedule_profiles(itertools.chain.from_iterable(
-                sg.subgame_profiles(self._role_counts) for sg in subgames))
-            game_data = self.get_data()
-            self._log.debug('Finished exploring subgames')
+        pending = []
+        confirmed_equilibria = set()
+        backup = containers.priorityqueue()
 
-            # Find equilibria in the subgame
-            equilibria = list(itertools.chain.from_iterable(
-                game_data.equilibria(eq_subgame=subgame)
-                for subgame in subgames))
-            self._log.debug('Found candidate equilibria\n%s',
-                            _to_json_str(equilibria))
+        while not confirmed_equilibria or sched.not_done() or pending:
+            # Schedule as many as we can, and update pending list
+            pending.extend(sched.schedule_more())
 
-            # Schedule all deviations from found equilibria
-            self.schedule_profiles(itertools.chain.from_iterable(
-                eq.support().deviation_profiles(
-                    self._full_game, self._role_counts) for eq in equilibria))
-            game_data = self.get_data()
-            self._log.debug('Finished exploring equilibria deviations')
+            # See what's finished
+            game_data = analysis.game_data(self._reduction.reduce_game_data(
+                self._api.get_game(self._game_id, 'summary')))
 
-            # Confirm equilibria and add beneficial deviating subgames to
-            # future exploration
-            for equilibrium in equilibria:
-                self.queue_deviations(equilibrium, game_data)
+            running = self._scheduler.running_profiles()
+
+            def check((item, ids)):
+                if ids.intersection(running):
+                    return True
+                # Item is complete
+                if isinstance(item, analysis.subgame):  # Subgame
+                    self._analyze_subgame(game_data, item, sched)
+                else:  # Equilibria
+                    self._analyze_equilibrium(game_data, item,
+                                              confirmed_equilibria,
+                                              sched, backup)
+                # This item was processed, so remove from pending
+                return False
+
+            # Process and complete pending jobs and remove from pending
+            pending = filter(check, pending)
+
+            if pending:
+                # We're still waiting for jobs to complete, so take a break
+                time.sleep(self._sleep_time)
+            elif not confirmed_equilibria and not sched.not_done():
+                # We've finished all the required stuff, but still haven't
+                # found an equilibrium, so pop a backup off
+                sched.append(backup.pop()[1])
 
         self._log.info('Finished quiescing\nConfirmed equilibria:\n%s',
-                       _to_json_str(self.confirmed_equilibria))
+                       _to_json_str(confirmed_equilibria))
 
-    def get_next_subgames(self):
-        '''Gets a list of subgames to explore next'''
-        subgames = []
-        # This loop essentially says keep dequing subgames as long as you
-        # haven't exceeded the threshold and either there's more necessary
-        # subgames, or there are more backup subgames, you've scheduled no
-        # subgames currently, and you still haven't found an equilibrium
-        while (len(subgames) < self.num_subgames and (
-                self.necessary or (
-                    not subgames and self.backup
-                    and not self.confirmed_equilibria))):
-            _, subgame = (self.necessary.pop() if self.necessary
-                          else self.backup.pop())
-            if not self.explored.add(subgame):  # already explored
-                self._log.debug('--- Already explored subgame ---\n%s',
-                                _to_json_str(subgame))
-            else:
-                subgames.append(subgame)
-        return subgames
+    def _analyze_subgame(self, game_data, subgame, sched):
+        '''Computes subgame equilibrium and queues them to be scheduled'''
+        equilibria = list(game_data.equilibria(eq_subgame=subgame))
+        self._log.debug('Found candidate equilibria:\n%s\nin subgame:\n%s\n',
+                        _to_json_str(equilibria), _to_json_str(subgame))
+        sched.extend(equilibria)
 
-    def queue_deviations(self, equilibrium, game_data):
-        '''Queues deviations to an equilibrium'''
+    def _analyze_equilibrium(self, game_data, equilibrium,
+                             confirmed_equilibria, sched, backup):
+        '''Analyzes responses to an equilibrium and book keeps accordingly'''
         responses = game_data.responses(equilibrium)
-        self._log.debug('Responses\n%s', _to_json_str(responses))
+        self._log.debug('Responses:\n%s\nto candidate equilibrium:\n%s\n',
+                        _to_json_str(responses),
+                        _to_json_str(equilibrium))
+
         if not responses:  # Found equilibrium
-            self.confirmed_equilibria.add(equilibrium)
-            self._log.info('!!! Confirmed equilibrium !!!\n%s',
+            confirmed_equilibria.add(equilibrium)
+            self._log.info('Confirmed equilibrium:\n%s\n',
                            _to_json_str(equilibrium))
+
         else:  # Queue up next subgames
             supp = equilibrium.support()
             # If it's a large subgame, best responses should not be necessary
-            large_subgame = self.subgame_size(supp, role_counts=self._role_counts) \
-                >= self.subgame_limit
+            large_subgame = self._subgame_size(supp, role_counts=self._role_counts) \
+                >= self._subgame_limit
 
             for role, rresps in responses.iteritems():
                 ordered = sorted(rresps.iteritems(), key=lambda x: -x[1])
                 strat, gain = ordered[0]  # best response
                 if large_subgame:
                     # Large, so add to backup with priority 0 (highest)
-                    self.backup.append(
+                    backup.append(
                         ((0, -gain), supp.with_deviation(role, strat)))
                 else:
                     # Best response becomes necessary to explore
-                    self.necessary.append(
-                        (-gain, supp.with_deviation(role, strat)))
-                # All others become backups if we run out without finding one
-                # These all have priority 1 (lowest)
+                    sched.append(supp.with_deviation(role, strat))
+                # All others become backups if we run out without
+                # finding one These all have priority 1 (lowest)
                 for strat, gain in ordered[1:]:
-                    self.backup.append(
+                    backup.append(
                         ((1, -gain), supp.with_deviation(role, strat)))
-
-    def schedule_profiles(self, profiles):
-        '''Schedules an interable of profiles
-
-        Makes sure not to exceed max_profiles, and to only query the state of
-        the simulator every sleep_time seconds when blocking on simulation
-        execution
-
-        '''
-        # Number of running profiles
-        #
-        # This is an overestimate because checking is expensive
-        count = self._scheduler.num_running_profiles()
-        profile_ids = set()
-
-        # Iterate through full game profiles
-        for prof in itertools.chain.from_iterable(
-                self._reduction.expand_profile(p) for p in profiles):
-            # First, we check / block until we can schedule another profile
-
-            # Sometimes scheduled profiles already exist, and so even though we
-            # increment our count, the global count doesn't increase. This
-            # stops up from waiting a long time if we hit this threshold by
-            # accident
-            if count >= self.max_profiles:
-                count = self._scheduler.num_running_profiles()
-            # Wait until we can schedule more profiles
-            while count >= self.max_profiles:
-                time.sleep(self.sleep_time)
-                count = self._scheduler.num_running_profiles()
-
-            count += 1
-            profile_ids.add(self._api.add_profile(self._scheduler.scheduler_id,
-                                                  prof,
-                                                  self.obs_count))
-
-        # Check that all scheduled profiles are finished executing
-        active_profiles = self._scheduler.are_profiles_still_active(
-            profile_ids)
-        while active_profiles:
-            time.sleep(self.sleep_time)
-            active_profiles = self._scheduler.are_profiles_still_active(
-                profile_ids)
-
-    def get_data(self):
-        '''Gets current game data'''
-        return analysis.game_data(self._reduction.reduce_game_data(
-            self._api.get_game(self._game_id, 'summary')))
 
     def delete_scheduler(self):
         '''Deletes the scheduler'''
         self._scheduler.delete()
 
 
-def parse_dpr(dpr_list):
+class profile_scheduler(object):
+    '''Class that handles scheduling profiles'''
+    def __init__(self, log, scheduler, reduction, max_profiles, full_game,
+                 role_counts, obs_count, init_items=()):
+        self._scheduler = scheduler
+        self._log = log
+
+        self._max_profiles = max_profiles
+        self._full_game = full_game
+        self._role_counts = role_counts
+        self._reduction = reduction
+        self._obs_count = obs_count
+
+        self._item = None  # None if there are no more profiles
+        self._profs = None
+        self._profile_ids = None
+
+        self._necessary = list(self._full_game.pure_subgames())
+        self._explored_subgames = analysis.subgame_set()
+
+    def not_done(self):
+        '''Returns True if there is nothing else this can schedule'''
+        return self._necessary or self._item
+
+    def _set_active_item(self):
+        '''Sets item and profs if not defined and possible'''
+        while not self._item and self._necessary:
+            self._item = self._necessary.pop()
+            self._profile_ids = set()
+
+            if isinstance(self._item, analysis.subgame):  # Subgame
+                if not self._explored_subgames.add(self._item):
+                    # already explored
+                    self._log.debug('Already explored subgame:\n%s\n',
+                                    _to_json_str(self._item))
+                    self._item = None
+                    continue
+                self._log.debug('Exploring subgame:\n%s\n',
+                                _to_json_str(self._item))
+                self._profs = self._item.subgame_profiles(self._role_counts)
+
+            else:  # Equilibria
+                self._log.debug('Exploring equilibrium deviations:\n%s\n',
+                                _to_json_str(self._item))
+                self._profs = self._item.support().deviation_profiles(
+                    self._full_game, self._role_counts)
+
+            # Un-reduce profiles
+            self._profs = itertools.chain.from_iterable(
+                self._reduction.expand_profile(p) for p in self._profs)
+
+    def schedule_more(self):
+        '''Schedules as many profiles as possible
+
+        Returns a generator of item, profile id set pairs for every item that
+        became fully scheduled.
+
+        '''
+        count = self._scheduler.num_running_profiles()
+
+        # Loop over necessary that we can schedule
+        while count < self._max_profiles and (self._item or self._necessary):
+            self._set_active_item()
+
+            # Try to schedule profiles in last "item"
+            while count < self._max_profiles and self._item:
+                try:
+                    # Schedule more profiles
+                    for _ in xrange(count, self._max_profiles):
+                        prof_id = self._scheduler.add_profile(
+                            next(self._profs),
+                            self._obs_count)
+                        self._profile_ids.add(prof_id)
+                except StopIteration:
+                    # This set is gone, get the next task yo schedule
+                    yield self._item, self._profile_ids
+                    self._item = None
+
+                # Update count
+                count = self._scheduler.num_running_profiles()
+
+    def append(self, item):
+        '''Add one more item to get scheduled'''
+        self._necessary.append(item)
+
+    def extend(self, items):
+        '''Add an iterator of items to get scheduled'''
+        self._necessary.extend(items)
+
+
+def _parse_dpr(dpr_list):
     '''Turn list of role counts into dictionary'''
     return {dpr_list[2*i]: int(dpr_list[2*i+1])
             for i in xrange(len(dpr_list)//2)}
@@ -402,8 +431,7 @@ def main():
         max_profiles=args.max_profiles,
         sleep_time=args.sleep_time,
         subgame_limit=args.max_subgame_size,
-        num_subgames=args.num_subgames,
-        dpr=parse_dpr(args.dpr),
+        dpr=_parse_dpr(args.dpr),
         scheduler_options={
             'process_memory': args.memory,
             'observation_time': args.observation_time,

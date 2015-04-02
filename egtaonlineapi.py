@@ -42,6 +42,15 @@ class scheduler(dict):
         return sum(req['current_count'] < req['requirement']
                    for req in update['scheduling_requirements'] or ())
 
+    def running_profiles(self):
+        '''Get a set of the active profile ids'''
+        # Update info
+        update = self._api.get_scheduler(self.scheduler_id, verbose=True)
+        # Sum profiles that aren't complete
+        return {req['profile_id']
+                for req in update['scheduling_requirements'] or ()
+                if req['current_count'] < req['requirement']}
+
     def are_profiles_still_active(self, profiles):
         '''Returns true if any of the profile ids in profiles are still active'''
         profiles = set(profiles)
