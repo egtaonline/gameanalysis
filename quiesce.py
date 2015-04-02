@@ -8,7 +8,6 @@ import itertools
 import logging
 from logging import handlers
 import sys
-import smtplib
 import collections
 import json
 
@@ -188,7 +187,10 @@ class quieser(object):
             # found at least one exact match so use it
             sched = schedulers[0]
             sched.update(active=1)
-            self._log.debug('Using scheduler %d', sched['id'])
+            self._log.info('Using scheduler %d' +
+                           '(http://egtaonline.eecs.umich.edu/' +
+                           'generic_schedulers/%d)',
+                           sched['id'], sched['id'])
             return sched
 
         # Find simulator by matching on fullname
@@ -215,7 +217,10 @@ class quieser(object):
         for role in game['roles']:
             sched.add_role(role['name'], role['count'])
 
-        self._log.debug('Created scheduler %d', sched['id'])
+        self._log.info('Created scheduler %d' +
+                       '(http://egtaonline.eecs.umich.edu/' +
+                       'generic_schedulers/%d)',
+                       sched['id'], sched['id'])
         return sched
 
     def quiesce(self):
@@ -438,6 +443,6 @@ def main():
         recipients=args.recipient)
 
     quies.quiesce()
-      
+
 if __name__ == '__main__':
     main()
