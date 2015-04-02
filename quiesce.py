@@ -187,7 +187,7 @@ class quieser(object):
             # found at least one exact match so use it
             sched = schedulers[0]
             sched.update(active=1)
-            self._log.info('Using scheduler %d' +
+            self._log.info('Using scheduler %d ' +
                            '(http://egtaonline.eecs.umich.edu/' +
                            'generic_schedulers/%d)',
                            sched['id'], sched['id'])
@@ -217,7 +217,7 @@ class quieser(object):
         for role in game['roles']:
             sched.add_role(role['name'], role['count'])
 
-        self._log.info('Created scheduler %d' +
+        self._log.info('Created scheduler %d ' +
                        '(http://egtaonline.eecs.umich.edu/' +
                        'generic_schedulers/%d)',
                        sched['id'], sched['id'])
