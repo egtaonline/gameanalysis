@@ -27,8 +27,8 @@ PARSER.add_argument('-a', '--auth', metavar='auth-token', required=True,
                     help='''An authorization token to allow access to
                     egtaonline.''')
 PARSER.add_argument('-p', '--max-profiles', metavar='max-num-profiles',
-                    type=int, default=1000, help='''Maximum number of profiles
-                    to ever have scheduled at a time. Defaults to 1000.''')
+                    type=int, default=500, help='''Maximum number of profiles
+                    to ever have scheduled at a time. Defaults to 500.''')
 PARSER.add_argument('-t', '--sleep-time', metavar='sleep-time', type=int,
                     default=300, help='''Time to wait in seconds between
                     checking egtaonline for job completion. Defaults to 300 (5
@@ -52,14 +52,8 @@ PARSER.add_argument('-r', '--recipient', action='append', default=[],
 
 
 SCHED_GROUP = PARSER.add_argument_group('Scheduler parameters',
-                                        description='''Parameters for the scheduler. If
-                                        use existing scheduler is specified, all of rest
-                                        are ignored''')
-SCHED_GROUP.add_argument('-s', '--use-existing-scheduler', metavar='scheduler-id',
-                         nargs='?', const=0,
-                         help='''Forces this to find an existing scheduler, optionally
-                         specified by scheduler id. If scheduler id is not specified,
-                         throws an error if anything other than one scheduler is found''')
+                                        description='''Parameters for the
+                                        scheduler.''')
 SCHED_GROUP.add_argument('-y', '--memory', metavar='process-memory', type=int,
                          default=4096, help='''The process memory to schedule
                          jobs with in MB. Defaults to 4096''')
@@ -125,7 +119,7 @@ def _get_logger(name, level, email_level, recipients, game_id):
     if recipients:
         email_subject = "EGTA Online Quiesce Status for Game %d" % game_id
         smtp_host = "localhost"
-        smtp_fromaddr = "EGTA Online <egta_online@quiesc.umich.edu>"
+        smtp_fromaddr = "EGTA Online <egta_online@quiesce.umich.edu>"
 
         email_handler = handlers.SMTPHandler(smtp_host, smtp_fromaddr,
                                              recipients, email_subject)
