@@ -36,7 +36,8 @@ class dpr_reduction(object):
         """Returns the DPR reduced version of a game summary"""
         # pylint: disable=protected-access
         return gameio.to_JSON_obj(reductions.deviation_preserving_reduction(
-            gameio.read_JSON(game_summary), self.reduced_counts))
+            analysis.game_data(game_summary)._analysis_game,
+            self.reduced_counts))
 
     def expand_profile(self, profile):
         """Returns a generator for all full game profiles necessary to create the
