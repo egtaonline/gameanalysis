@@ -25,7 +25,9 @@ class game_data(object):
 
     '''
     def __init__(self, *args, **kwargs):
-        self._analysis_game = gameio.read_JSON(dict(*args, **kwargs))
+        temp = dict(*args, **kwargs)
+        temp['profiles'] = temp['profiles'] or []
+        self._analysis_game = gameio.read_JSON(temp)
 
     def complete_subgame(self, sub):
         '''Returns true if subgame is complete'''
