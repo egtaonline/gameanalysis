@@ -326,6 +326,10 @@ class quieser(object):
         '''Deletes the scheduler'''
         self._scheduler.delete()
 
+    def deactivate(self):
+        '''Deactivates the scheduler'''
+        self._scheduler.update(active=0)
+
 
 class profile_scheduler(object):
     '''Class that handles scheduling profiles'''
@@ -445,7 +449,11 @@ def main():
         email_verbosity=args.email_verbosity,
         recipients=args.recipient)
 
-    quies.quiesce()
+    try:
+        quies.quiesce()
+    finally:
+        quies.deactivate()
+
 
 if __name__ == '__main__':
     main()
