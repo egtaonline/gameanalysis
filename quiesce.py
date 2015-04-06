@@ -282,6 +282,9 @@ class quieser(object):
         equilibria = list(game_data.equilibria(eq_subgame=subgame))
         self._log.debug('Found candidate equilibria:\n%s\nin subgame:\n%s\n',
                         _to_json_str(equilibria), _to_json_str(subgame))
+        if not equilibria:
+            self._log.info('Found no equilibria in subgame:\n%s\n',
+                           _to_json_str(equilibria))
         sched.extend(equilibria)
 
     def _analyze_equilibrium(self, game_data, equilibrium,
