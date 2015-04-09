@@ -245,9 +245,7 @@ class quieser(object):
             pending.extend(sched.schedule_more())
 
             # See what's finished
-            game_data = analysis.game_data(self._reduction.reduce_game_data(
-                self._api.get_game(self._game_id, 'summary')))
-
+            game_data = self._get_game()
             running = self._scheduler.running_profiles()
 
             def check((item, ids)):
@@ -276,6 +274,22 @@ class quieser(object):
 
         self._log.info('Finished quiescing\nConfirmed equilibria:\n%s',
                        _to_json_str(confirmed_equilibria))
+
+    def _get_game(self, tries=10):
+        '''Get the game data
+
+        This function retries a number of times, in case it gets corrupted data
+
+        '''
+        for _ in xrange(tries):
+            try:
+                game_data = analysis.game_data(self._reduction.reduce_game_data(
+                    self._api.get_game(self._game_id, 'summary')))
+                return game_data
+            finally:
+                # Wait a sec if we failed
+                time.sleep(1)
+        raise ValueError("Couldn't get clean game data")
 
     def _analyze_subgame(self, game_data, subgame, sched):
         '''Computes subgame equilibrium and queues them to be scheduled'''
@@ -451,6 +465,8 @@ def main():
 
     try:
         quies.quiesce()
+    except Exception, e:
+        quies._log.error('Caught exception: %s', e)
     finally:
         quies.deactivate()
 
