@@ -287,8 +287,8 @@ class quieser(object):
                     self._api.get_game(self._game_id, 'summary')))
                 return game_data
             finally:
-                # Wait a sec if we failed
-                time.sleep(1)
+                # Wait a minute if we failed
+                time.sleep(60)
         raise ValueError("Couldn't get clean game data")
 
     def _analyze_subgame(self, game_data, subgame, sched):
