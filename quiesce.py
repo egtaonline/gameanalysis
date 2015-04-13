@@ -310,9 +310,10 @@ class quieser(object):
                         _to_json_str(equilibrium))
 
         if not responses:  # Found equilibrium
-            confirmed_equilibria.add(equilibrium)
-            self._log.info('Confirmed equilibrium:\n%s\n',
-                           _to_json_str(equilibrium))
+            if equilibrium not in confirmed_equilibria:
+                confirmed_equilibria.add(equilibrium)
+                self._log.info('Confirmed equilibrium:\n%s\n',
+                               _to_json_str(equilibrium))
 
         else:  # Queue up next subgames
             supp = equilibrium.support()
