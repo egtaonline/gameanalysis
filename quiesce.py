@@ -16,6 +16,7 @@ import analysis
 import containers
 import reduction
 import utils
+import smtplib
 
 PARSER = argparse.ArgumentParser(description='''Quiesce a generic scheduler on
 egtaonline.''')
