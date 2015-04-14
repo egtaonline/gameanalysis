@@ -243,6 +243,9 @@ class quieser(object):
                                   self._full_game.pure_subgames())
 
         pending = []
+        # Instead of using a set here, using an equilibrium set
+        # (e.g. equilibria that are almost the same are counted arbitrarily as
+        # exactly the same should probably be used)
         confirmed_equilibria = set()
         backup = containers.priorityqueue()
 
@@ -272,6 +275,11 @@ class quieser(object):
 
             if pending:
                 # We're still waiting for jobs to complete, so take a break
+                #
+                # Note, this isn't the best way to do this. In principle we
+                # should just check if any were immediately resolved, in which
+                # case we try to schedule again. The current implementation has
+                # slightly worse performance when requiescing something.
                 time.sleep(self._sleep_time)
             elif not confirmed_equilibria and not sched.not_done():
                 # We've finished all the required stuff, but still haven't
