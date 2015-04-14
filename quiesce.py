@@ -118,7 +118,7 @@ def _get_logger(name, level, email_level, recipients, game_id):
     if recipients:
         email_subject = "EGTA Online Quiesce Status for Game %d" % game_id
         smtp_host = "localhost"
-        smtp_fromaddr = "EGTA Online <egta_online@quiesce.umich.edu>"
+        smtp_fromaddr = "EGTA Online <egta_online@" + server.local_hostname + ">"
 
         email_handler = handlers.SMTPHandler(smtp_host, smtp_fromaddr,
                                              recipients, email_subject)
