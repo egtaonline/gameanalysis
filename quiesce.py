@@ -118,8 +118,13 @@ def _get_logger(name, level, email_level, recipients, game_id):
     if recipients:
         email_subject = "EGTA Online Quiesce Status for Game %d" % game_id
         smtp_host = "localhost"
-        smtp_fromaddr = "EGTA Online <egta_online@" + server.local_hostname + ">"
 
+        # XXX - we need to do this to match the from address to the local host name
+        # XXX - otherwise, email logging will not work
+        server = smtplib.SMTP(smtp_host) # must get correct hostname to send mail
+        smtp_fromaddr = "EGTA Online <egta_online@" + server.local_hostname + ">"
+        server.quit() # dummy server is now useless
+        
         email_handler = handlers.SMTPHandler(smtp_host, smtp_fromaddr,
                                              recipients, email_subject)
         email_handler.setLevel(40 - email_level * 10)
