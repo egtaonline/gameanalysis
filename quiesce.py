@@ -10,6 +10,7 @@ from logging import handlers
 import sys
 import collections
 import json
+import traceback
 
 import egtaonlineapi as egta
 import analysis
@@ -254,7 +255,15 @@ class quieser(object):
             pending.extend(sched.schedule_more())
 
             # See what's finished
-            game_data = self._get_game()
+            try:
+                game_data = self._get_game()
+            except Exception, e:
+                # Sometimes getting game data fails. Just wait and try again
+                self._log.warn('Encountered error getting game data: (%s) %s\n'
+                               + 'Sleeping, then trying again\n',
+                               e.__class__.__name__, e)
+                time.sleep(self._sleep_time)
+                continue
             running = self._scheduler.running_profiles()
 
             def check((item, ids)):
@@ -289,21 +298,10 @@ class quieser(object):
         self._log.info('Finished quiescing\nConfirmed equilibria:\n%s',
                        _to_json_str(confirmed_equilibria))
 
-    def _get_game(self, tries=10):
-        '''Get the game data
-
-        This function retries a number of times, in case it gets corrupted data
-
-        '''
-        for _ in xrange(tries):
-            try:
-                game_data = analysis.game_data(self._reduction.reduce_game_data(
-                    self._api.get_game(self._game_id, 'summary')))
-                return game_data
-            finally:
-                # Wait a minute if we failed
-                time.sleep(60)
-        raise ValueError("Couldn't get clean game data")
+    def _get_game(self):
+        '''Get the game data'''
+        return analysis.game_data(self._reduction.reduce_game_data(
+            self._api.get_game(self._game_id, 'summary')))
 
     def _analyze_subgame(self, game_data, subgame, sched):
         '''Computes subgame equilibrium and queues them to be scheduled'''
@@ -481,7 +479,8 @@ def main():
     try:
         quies.quiesce()
     except Exception, e:
-        quies._log.error('Caught exception: %s', e)
+        quies._log.error('Caught exception: (%s) %s\nWith traceback:\n%s\n',
+                         e.__class__.__name__, e, traceback.format_exc())
     finally:
         quies.deactivate()
 
