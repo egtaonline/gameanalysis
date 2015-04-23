@@ -14,7 +14,7 @@ except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
 from dpr import full_prof_DPR
-from RoleSymmetricGame import Game, PayoffData
+from RoleSymmetricGame import Game, PayoffData, tiny
 from HashableClasses import h_dict
 
 
@@ -66,17 +66,17 @@ class GP_Game(Game):
 
 
 	def learn(self, counts, sample_values):
-		X_profiles = []
-		X_samples = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
-		Y_mean = {r:[] for r in self.roles}
-		Y_diff = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
+		X = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
+		X[None] = []
+		Y = {r:{s:[] for s in list(self.strategies[r])+[None]} for r
+					in self.roles}
+		nugget = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
 
 		#extract data in an appropriate form for learning
 		for p in range(len(counts)):
 			prof = counts[p]
 			samples = sample_values[p]
-			x = self.flatten(prof)
-			X_profiles.append(x)
+			X[None].append(self.flatten(prof))
 			if self.diffs == None:
 				ym = [0]*len(self.roles)
 			elif self.diffs == "strat":
@@ -84,26 +84,25 @@ class GP_Game(Game):
 			elif self.diffs == "player":
 				ym = (samples.mean(2) * prof).sum(1) / prof.sum(1)
 			for r,role in enumerate(self.roles):
-				Y_mean[role].append(ym[r])
+				Y[role][None].append(ym)
 				for s,strat in enumerate(self.strategies[role]):
 					if prof[r][s] > 0:
-						y = ym[r] - samples[r,s]
-						Y_diff[role][strat].extend(y)
-						fi = self.flat_index(role, strat)
-						for i in range(len(y)):
-							x_s = x + normal(0, 1e-9, len(x))
-							x_s[fi] -= 1
-							X_samples[role][strat].append(x_s)
+						y = ym - samples[r,s]
+						Y[role][strat].append(y.mean())
+						nugget[role][strat].append((y.var() / y.mean())**2)
+						dev = self.array_index(role, strat)
+						X[role][strat].append(self.flatten(prof - dev))
 		#learn the GPs
 		self.GPs = {r:{} for r in self.roles}
 		for role in self.roles:
 			if self.diffs:
-				self.GPs[role][None] = train_GP(X_profiles, Y_mean[role])
+				self.GPs[role][None] = train_GP(X[None], Y[role][None],
+												cross_validate=self.CV)
 			else:
 				self.GPs[role][None] = ZeroPredictor()
 			for strat in self.strategies[role]:
-				self.GPs[role][strat] = train_GP(X_samples[role][strat], \
-												Y_diff[role][strat], self.CV)
+				self.GPs[role][strat] = train_GP(X[role][strat],
+								Y[role][strat], nugget[role][strat], self.CV)
 
 
 	def flat_index(self, role, strat):
@@ -236,29 +235,26 @@ class GP_Game(Game):
 
 constant_params = {
 	"storage_mode":"light",
-	"thetaL":1e-4,
-	"thetaU":1e9,
-	"normalize":True
+	"thetaL":1e-8,
+	"thetaU":1e8,
+	"normalize":True,
+	"corr":"squared_exponential"
 }
 CV_params = {
-	"corr":["absolute_exponential","squared_exponential","cubic","linear"],
-	"nugget":[1e-10,1e-6,1e-4,1e-2,1e0,1e2,1e4]
 }
 default_params = {
-	"corr":"cubic",
-	"nugget":1
 }
 
 
-def train_GP(X, Y, cross_validate=False):
+def train_GP(X, Y, nugget=tiny, cross_validate=False):
 	if cross_validate:
-		gp = GaussianProcess(**constant_params)
+		gp = GaussianProcess(nugget=nugget, **constant_params)
 		cv = GridSearchCV(gp, CV_params)
 		cv.fit(X, Y)
 		params = cv.best_estimator_.get_params()
 	else:
 		params = dict(constant_params, **default_params)
-	gp = GaussianProcess(**params)
+	gp = GaussianProcess(nugget=nugget, **params)
 	gp.fit(X, Y)
 	return gp
 
