@@ -28,7 +28,7 @@ def main():
 		EVs = GameIO.read(args.EVs_file)
 	else:
 		EVs = []
-	for m in mixtures:
+	for m in mixtures[len(EVs):]:
 		EVs.append(game.expectedValues(game.toArray(m)))
 		with open(args.EVs_file,"w") as f:
 			f.write(GameIO.to_JSON_str(EVs))
