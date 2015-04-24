@@ -14,7 +14,7 @@ except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
 from dpr import full_prof_DPR
-from RoleSymmetricGame import Game, PayoffData, tiny
+from RoleSymmetricGame import Game, PayoffData
 from HashableClasses import h_dict
 
 
@@ -246,7 +246,7 @@ default_params = {
 }
 
 
-def train_GP(X, Y, nugget=tiny, cross_validate=False):
+def train_GP(X, Y, nugget=1e-8, cross_validate=False):
 	if cross_validate:
 		gp = GaussianProcess(nugget=nugget, **constant_params)
 		cv = GridSearchCV(gp, CV_params)
