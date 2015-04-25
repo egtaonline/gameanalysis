@@ -109,16 +109,10 @@ class GP_Game(Game):
 				self.GPs[role][None] = ZeroPredictor()
 			for strat in self.strategies[role]:
 				#fill in average variance where we refused to estimate it
-				variances = array(variances)
-				variances[variances < 0] = variances[variances > 0].mean()
-#				#normalize variance to get nuggets, prevent enormous nugget
-#				y_abs = abs(array(Y[role][strat]))
-#				y_abs[y_abs < 1] = 1
-#				nugget = (variances**.5 / y_abs)**2
-#				self.GPs[role][strat] = train_GP(X[role][strat],
-#								Y[role][strat], nugget, self.CV)
+				v = array(variances[role][strat[)
+				v[variances < 0] = v[v > 0].mean()
 				self.GPs[role][strat] = train_GP(X[role][strat],
-								Y[role][strat], variances, self.CV)
+								Y[role][strat], v, self.CV)
 
 
 	def flat_index(self, role, strat):
