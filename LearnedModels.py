@@ -246,7 +246,7 @@ default_params = {
 }
 
 
-def train_GP(X, Y, nugget=1e-8, cross_validate=False):
+def train_GP(X, Y, nugget=1e-4, cross_validate=False):
 	if cross_validate:
 		gp = GaussianProcess(nugget=nugget, **constant_params)
 		cv = GridSearchCV(gp, CV_params)
