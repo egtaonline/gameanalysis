@@ -27,8 +27,7 @@ def _blocked_attribute(*args, **kwds):
 	raise TypeError("unsupported operation")
 
 
-min_nugget = 1e-8
-max_nugget = 1e8
+default_nugget = 1
 
 
 class GP_Game(Game):
@@ -74,7 +73,7 @@ class GP_Game(Game):
 		X[None] = []
 		Y = {r:{s:[] for s in list(self.strategies[r])+[None]} for r
 					in self.roles}
-		nugget = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
+		variances = {r:{s:[] for s in self.strategies[r]} for r in self.roles}
 
 		#extract data in an appropriate form for learning
 		for p in range(len(counts)):
@@ -93,9 +92,11 @@ class GP_Game(Game):
 					if prof[r][s] > 0:
 						y = ym - samples[r,s]
 						Y[role][strat].append(y.mean())
-						n = (y.var() / (y.mean()+tiny))**2
-						n = max(min(n, max_nugget), min_nugget)
-						nugget[role][strat].append(n)
+						#refuse to estimate variance from fewer than 5 points
+						if len(y) >= 5:
+							variances[role][strat].append(y.var())
+						else:
+							variances[role][strat].append(-1)
 						dev = self.array_index(role, strat)
 						X[role][strat].append(self.flatten(prof - dev))
 		#learn the GPs
@@ -107,8 +108,17 @@ class GP_Game(Game):
 			else:
 				self.GPs[role][None] = ZeroPredictor()
 			for strat in self.strategies[role]:
+				#fill in average variance where we refused to estimate it
+				variances = array(variances)
+				variances[variances < 0] = variances[variances > 0].mean()
+#				#normalize variance to get nuggets, prevent enormous nugget
+#				y_abs = abs(array(Y[role][strat]))
+#				y_abs[y_abs < 1] = 1
+#				nugget = (variances**.5 / y_abs)**2
+#				self.GPs[role][strat] = train_GP(X[role][strat],
+#								Y[role][strat], nugget, self.CV)
 				self.GPs[role][strat] = train_GP(X[role][strat],
-								Y[role][strat], nugget[role][strat], self.CV)
+								Y[role][strat], variances, self.CV)
 
 
 	def flat_index(self, role, strat):
@@ -252,7 +262,7 @@ default_params = {
 }
 
 
-def train_GP(X, Y, nugget=min_nugget, cross_validate=False):
+def train_GP(X, Y, nugget=default_nugget, cross_validate=False):
 	if cross_validate:
 		gp = GaussianProcess(nugget=nugget, **constant_params)
 		cv = GridSearchCV(gp, CV_params)
