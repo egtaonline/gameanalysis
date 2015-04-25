@@ -27,6 +27,9 @@ def _blocked_attribute(*args, **kwds):
 	raise TypeError("unsupported operation")
 
 
+default_nugget = 1e-4
+
+
 class GP_Game(Game):
 	"""
 	"""
@@ -89,7 +92,8 @@ class GP_Game(Game):
 					if prof[r][s] > 0:
 						y = ym - samples[r,s]
 						Y[role][strat].append(y.mean())
-						nugget[role][strat].append((y.var() / y.mean())**2)
+						n = (y.var() / y.mean())**2
+						nugget[role][strat].append(min(n, default_nugget))
 						dev = self.array_index(role, strat)
 						X[role][strat].append(self.flatten(prof - dev))
 		#learn the GPs
@@ -246,7 +250,7 @@ default_params = {
 }
 
 
-def train_GP(X, Y, nugget=1e-4, cross_validate=False):
+def train_GP(X, Y, nugget=default_nugget, cross_validate=False):
 	if cross_validate:
 		gp = GaussianProcess(nugget=nugget, **constant_params)
 		cv = GridSearchCV(gp, CV_params)
