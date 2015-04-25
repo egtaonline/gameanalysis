@@ -14,7 +14,7 @@ except ImportError:
 	warnings.warn("sklearn.gaussian_process is required for game learning.")
 
 from dpr import full_prof_DPR
-from RoleSymmetricGame import Game, PayoffData
+from RoleSymmetricGame import Game, PayoffData, tiny
 from HashableClasses import h_dict
 
 
@@ -92,8 +92,8 @@ class GP_Game(Game):
 					if prof[r][s] > 0:
 						y = ym - samples[r,s]
 						Y[role][strat].append(y.mean())
-						n = (y.var() / y.mean())**2
-						nugget[role][strat].append(min(n, default_nugget))
+						n = (y.var() / (y.mean()+tiny))**2
+						nugget[role][strat].append(max(n, default_nugget))
 						dev = self.array_index(role, strat)
 						X[role][strat].append(self.flatten(prof - dev))
 		#learn the GPs
