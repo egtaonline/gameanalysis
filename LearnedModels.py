@@ -110,7 +110,7 @@ class GP_Game(Game):
 			for strat in self.strategies[role]:
 				#fill in average variance where we refused to estimate it
 				v = array(variances[role][strat])
-				v[variances < 0] = v[v > 0].mean()
+				v[v < 0] = v[v > 0].mean()
 				self.GPs[role][strat] = train_GP(X[role][strat],
 								Y[role][strat], v, self.CV)
 
