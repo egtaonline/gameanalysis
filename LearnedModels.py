@@ -254,7 +254,7 @@ CV_params = {
 	"theta0":[1e-5,1e-3,1e-1,10,1e3]
 }
 default_params = {
-	"corr":"squared_exponential"
+	"corr":"squared_exponential",
 	"theta0":1e-1
 }
 
