@@ -37,16 +37,16 @@ class GP_Game(Game):
 	makeLists = makeArrays = allProfiles = knownProfiles = _blocked_attribute
 	toJSON = to_TB_JSON = _blocked_attribute
 
-	def __init__(self, sample_game, CV=False, diffs=None, EVs="point", \
+	def __init__(self, sample_game, diffs=None, CV=False, EVs="point", \
 					DPR_size={}):
 		"""
 		game:		RoleSymmetricGame.SampleGame object with enough data to
 					estimate payoff functions.
-		CV:			If set to True, cross-validation will be used to select
-					parameters of the GPs.
 		diffs:		None: learn payoffs directly
 					'strat': learn differences from average strategy payoff
 					'player': learn differences from average player payoff
+		CV:			If set to True, cross-validation will be used to select
+					parameters of the GPs.
 		EVs:		'point': estimate EVs via point_EVs
 					'sample': estimate EVs via sample_EVs
 					'DPR': estimate EVs via DPR_EVs
@@ -247,12 +247,15 @@ constant_params = {
 	"storage_mode":"light",
 	"thetaL":1e-8,
 	"thetaU":1e8,
-	"normalize":True,
-	"corr":"squared_exponential"
+	"normalize":True
 }
 CV_params = {
+	"corr":["absolute_exponential","squared_exponential","cubic","linear"],
+	"theta0":[1e-5,1e-3,1e-1,10,1e3]
 }
 default_params = {
+	"corr":"squared_exponential"
+	"theta0":1e-1
 }
 
 
