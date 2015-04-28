@@ -19,8 +19,7 @@ def parse_args():
 
 def main():
 	a = parse_args()
-	a.DPR_size = dict(zip(a.input.roles, a.DPR_size))
-	g = GP_Game(a.input, a.CV, a.diffs, a.EVs, a.DPR_size)
+	g = GP_Game(a.input, a.diffs)
 	if a.output != "":
 		sys.stdout.close()
 		with open(a.output, "w") as f:

@@ -111,8 +111,12 @@ class GP_Game(Game):
 				#fill in average variance where we refused to estimate it
 				v = array(variances[role][strat])
 				v[v < 0] = v[v > 0].mean()
+				#normalize variance to get nugget, but don't increase it
+				y = abs(array(Y[role][strat]))
+				y[y < 1] = 1
+				nugget = (v**.5 / y)**2
 				self.GPs[role][strat] = train_GP(X[role][strat],
-								Y[role][strat], v, self.CV)
+								Y[role][strat], nugget, self.CV)
 
 
 	def flat_index(self, role, strat):
