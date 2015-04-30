@@ -1,7 +1,7 @@
 #! /usr/bin/env python2.7
 
 from dpr import DPR, HR, twins_reduction
-from GameIO import io_parser
+from GameIO import io_parser, to_JSON_str
 
 def parse_args():
 	parser = io_parser()
@@ -17,11 +17,11 @@ def main():
 	game = args.input
 	players = dict(zip(game.roles, args.players))
 	if args.type == "DPR":
-		print GameIO.to_JSON_str(DPR(game, players))
+		print to_JSON_str(DPR(game, players))
 	elif args.type == "HR":
-		print GameIO.to_JSON_str(HR(game, players))
+		print to_JSON_str(HR(game, players))
 	elif args.type == "TR":
-		print GameIO.to_JSON_str(twins_reduction(game))
+		print to_JSON_str(twins_reduction(game))
 
 
 if __name__ == "__main__":
