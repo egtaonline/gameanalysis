@@ -137,12 +137,13 @@ def dpr_profile(full_profile, reduced_players, full_players=None):
 		else:
 			role = r
 			reduction_factors[r] = (full_players[r]-1) / (reduced_players[r]-1)
-	for s,c in full_profile[role].items():
-		if c % reduction_factors[r] != 0:
-			if strat != None:
-				raise NotImplementedError("This function doesn't handle "+\
-										"non-divisible player counts yet.")
-			strat = s
+	for role in full_profile:
+		for s,c in full_profile[role].items():
+			if c % reduction_factors[r] != 0:
+				if strat != None:
+					raise NotImplementedError("This function doesn't handle "+\
+											"non-divisible player counts yet.")
+				strat = s
 	reduced_profile = {r:{} for r in reduced_players}
 	for r in full_profile:
 		for s,c in full_profile[role].items():
