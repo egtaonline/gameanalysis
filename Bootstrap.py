@@ -76,7 +76,7 @@ def pre_aggregate(game, count):
 	return agg
 
 
-def bootstrap(game, equilibriums, statistic=regret, method="resample", method_args=[], points=1000):
+def bootstrap(game, equilibria, statistic=regret, method="resample", method_args=[], points=1000):
 	"""
 	Returns a bootstrap distribution for the statistic.
 
@@ -87,12 +87,12 @@ def bootstrap(game, equilibriums, statistic=regret, method="resample", method_ar
 	To run a replicator dynamics bootstrap:
 		bootstrap(game, eq, replicator_dynamics)
 	"""
-        boot_lists = [[] for x in xrange(0,len(equilibriums))]
+        boot_lists = [[] for x in xrange(0,len(equilibria))]
         method = getattr(game, method)
         for __ in range(points):
             method(*method_args)
             count = 0
-            for eq in equilibriums:
+            for eq in equilibria:
                 boot_lists[count].append(statistic(game, eq))
                 count = count + 1
         game.reset()
