@@ -7,7 +7,7 @@ def parse_args():
 	parser = GameIO.io_parser()
 	parser.add_argument("EVs", choices=["point", "sample", "DPR"])
 	parser.add_argument("--DPR_size", type=int, default=0)
-	parser.add_argument("--one", action=store_true)
+	parser.add_argument("--one", action="store_true")
 	args = parser.parse_args()
 	if args.EVs == "DPR":
 		assert args.DPR_size > 0, "DPR requires a value for --DPR_size"
