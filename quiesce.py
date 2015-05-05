@@ -92,7 +92,7 @@ def num_profiles(subgame, role_counts, **_):
                       for role, strats in subgame.iteritems())
 
 
-# For output of general objects
+# For output of general objects e.g. logging
 def _json_default(obj):
     '''Function for json default kwargs'''
     if isinstance(obj, collections.Mapping):
@@ -126,7 +126,7 @@ def _get_logger(name, level, email_level, recipients, game_id):
         server = smtplib.SMTP(smtp_host) # must get correct hostname to send mail
         smtp_fromaddr = "EGTA Online <egta_online@" + server.local_hostname + ">"
         server.quit() # dummy server is now useless
-        
+
         email_handler = handlers.SMTPHandler(smtp_host, smtp_fromaddr,
                                              recipients, email_subject)
         email_handler.setLevel(40 - email_level * 10)
@@ -237,7 +237,7 @@ class quieser(object):
 
         '''
 
-        # This handles scheduling all pf the profiles
+        # This handles scheduling all of the profiles
         sched = profile_scheduler(self._log, self._scheduler, self._reduction,
                                   self._max_profiles, self._full_game,
                                   self._role_counts, self._obs_count,
