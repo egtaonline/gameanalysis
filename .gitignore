@@ -1,16 +1,3 @@
-# Research Files #
-##################
-/research
-
-research.py
-time_RD.py
-disp_cn_res.py
-
-NE_regret.pytmp.json
-s.json
-
-cliques_h53v68
-
 # Python #
 ##########
 *.pyc
@@ -20,6 +7,14 @@ cliques_h53v68
 *.swp
 *~
 \#*\#
+
+# Virtual Env #
+###############
+/bin
+/include
+/lib
+/man
+/pip-selfcheck.json
 
 # Misc #
 ########
