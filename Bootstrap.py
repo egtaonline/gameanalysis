@@ -2,7 +2,7 @@
 
 import RandomGames as RG
 
-from GameIO import read, to_JSON_obj, io_parser
+from GameIO import read, to_JSON_str, io_parser
 from Regret import regret
 from Nash import mixed_nash, replicator_dynamics, pure_nash
 from RoleSymmetricGame import SampleGame
@@ -76,7 +76,7 @@ def pre_aggregate(game, count):
 	return agg
 
 
-def bootstrap(game, equilibria, intervals, statistic=regret, method="resample", method_args=[], points=1000):
+def bootstrap(game, equilibria, intervals = [95], statistic=regret, method="resample", method_args=[], points=1000):
 	"""
 	Returns a bootstrap distribution for the statistic.
 
@@ -125,7 +125,7 @@ def main():
         if not isinstance(intervals, list):
             intervals = [intervals]
         results = bootstrap(game,profiles,intervals,points = point)
-        print to_JSON_obj(results)
+        print to_JSON_str(results)
 
 
 if __name__ == "__main__":
