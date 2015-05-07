@@ -1,18 +1,19 @@
 import operator
-import scipy
 import math
+import functools
 import numpy as np
+import scipy.misc as spm
 from subprocess import PIPE, Popen
 
 
 def prod(collection):
     '''Product of all elements in the collection'''
-    return reduce(operator.mul, collection)
+    return functools.reduce(operator.mul, collection)
 
 
 def choose(n, r):
     '''Returns the number of ways to choose r things from n things'''
-    return scipy.comb(n, r, exact=True)
+    return spm.comb(n, r, exact=True)
 
 
 def game_size(n, s):
@@ -26,18 +27,18 @@ def profile_repetitions(p):
     '''Number of normal form profiles that correspond to a role-symmetric profile
 
     '''
-    return prod(math.factorial(sum(row)) / prod(map(math.factorial, row))
+    return prod(math.factorial(sum(row)) // prod(map(math.factorial, row))
                 for row in p)
 
 
-def mean(numbers):
-    '''Arithmetic mean'''
-    n = 0
-    mean = 0.0
-    for x in numbers:
-        n += 1
-        mean += (x - mean)/n
-    return mean
+# def mean(numbers):
+#     '''Arithmetic mean'''
+#     n = 0
+#     mean = 0.0
+#     for x in numbers:
+#         n += 1
+#         mean += (x - mean)/n
+#     return mean
 
 
 def one_line(string, line_width=80):
