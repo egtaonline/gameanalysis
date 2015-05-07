@@ -207,7 +207,6 @@ class Game(object):
         # The first use of 'tiny' makes 0^0=1.
         # The second use of 'tiny' makes 0/0=0.
         tiny = np.finfo(float).tiny
-
         weights = (((mix+tiny)**self._counts).prod((1, 2))[:, None, None]
                    * self._dev_reps / (mix+tiny))
         values = np.sum(self._values * weights, 0)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import itertools
+import argparse
 import numpy as np
 import numpy.linalg as linalg
 
@@ -16,17 +17,16 @@ def pure_nash(game, epsilon=0):
 def min_regret_profile(game):
     '''Finds the profile with the confirmed lowest regret.
 
-    Returns a tuple of the minimum regret and the the profile with the minimum
-    regret.
-
     '''
     return min((regret.pure_strategy_regret(game, prof), prof)
-               for prof in game)
+               for prof in game)[1]
 
 
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
                at_least_one=False, *rd_args, **rd_kwargs):
-    '''Runs replicator dynamics from multiple starting mixtures.
+    '''Finds role-symmetric, mixed Nash equilibria using replicator dynamics
+
+    Returns a generator of mixed profiles
 
     regret_thresh:   The threshold to consider an equilibrium found
     dist_thresh:     The threshold for considering equilibria distinct
@@ -45,7 +45,7 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
             game.biasedMixtures(),
             (game.uniformMixture(),),
             (game.randomMixture() for _ in range(random_restarts))):
-        eq = replicator_dynamics(game, mix, *rd_args, **rd_kwargs)
+        eq = _replicator_dynamics(game, mix, *rd_args, **rd_kwargs)
         # TODO More efficient way to check distinctness
         reg = regret.mixture_regret(game, eq)
         if reg <= regret_thresh and \
@@ -68,7 +68,7 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
     tiny = np.finfo(float).tiny
     for i in range(max_iters):
         old_mix = mix
-        mix = (game.expectedValues(mix) - game.minPayoffs + tiny) * mix
+        mix = (game.expected_values(mix) - game.minPayoffs + tiny) * mix
         mix = mix / mix.sum(1)[:, np.newaxis]
         if linalg.norm(mix - old_mix) <= converge_thresh:
             break
@@ -79,53 +79,49 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
                 regret.mixture_regret(game, mix)))
     return np.maximum(mix, 0)  # Probabilities are occasionally negative
 
-
-def parse_args():
-    parser = io_parser()
-    parser.add_argument('-r', metavar='REGRET', type=float, default=1e-3, \
-            help='Max allowed regret for approximate Nash equilibria. ' + \
-            'default=1e-3')
-    parser.add_argument('-d', metavar="DISTANCE", type=float, default=1e-3, \
-            help="L2-distance threshold to consider equilibria distinct. " + \
-            "default=1e-3")
-    parser.add_argument("-c", metavar="CONVERGENCE", type=float, default=1e-8, \
-            help="Replicator dynamics convergence thrshold. default=1e-8")
-    parser.add_argument("-i", metavar="ITERATIONS", type=int, default=10000, \
-            help="Max replicator dynamics iterations. default=1e4")
-    parser.add_argument("-s", metavar="SUPPORT", type=float, default=1e-3, \
-            help="Min probability for a strategy to be considered in " + \
-            "support. default=1e-3")
-    parser.add_argument("-type", choices=["mixed", "pure", "mrp"], default= \
-            "mixed", help="Type of approximate equilibrium to compute: " + \
-            "role-symmetric mixed-strategy Nash, pure-strategy Nash, or " + \
-            "min-regret profile. default=mixed")
-    parser.add_argument("-p", metavar="POINTS", type=int, default=0, \
-            help="Number of random points from which to initialize " + \
-            "replicator dynamics in addition to the default set of uniform " +\
-            "and heavily-biased mixtures.")
-    parser.add_argument("--one", action="store_true", help="Always report " +\
-            "at least one equilibrium per game.")
-    args = parser.parse_args()
-    games = args.input
-    if not isinstance(games, list):
-        games = [games]
-    return games, args
+PARSER = argparse.ArgumentParser(description='')
+PARSER.add_argument('--regret', '-r', metavar='regret', type=float, default=1e-3,
+                    help='''Max allowed regret for approximate Nash equilibria.
+                    default=1e-3''')
+PARSER.add_argument('--distance', '-d', metavar='distance', type=float,
+                    default=1e-3, help='''L2-distance threshold to consider
+                    equilibria distinct.  default=1e-3''')
+PARSER.add_argument('--convergence', '-c', metavar='convergence', type=float,
+                    default=1e-8, help='''Replicator dynamics convergence
+                    thrshold. default=1e-8''')
+PARSER.add_argument('--max-iterations', '-i', metavar='iterations', type=int,
+                    default=10000, help='''Max replicator dynamics
+                    iterations. default=10000''')
+PARSER.add_argument('--support', '-s', metavar='support', type=float,
+                    default=1e-3, help='''Min probability for a strategy to be
+                    considered in support. default=1e-3''')
+PARSER.add_argument('--type', '-t', choices=["mixed", "pure", "mrp"],
+                    default='mixed', help='''Type of approximate equilibrium to
+                    compute: role-symmetric mixed-strategy Nash, pure-strategy
+                    Nash, or min-regret profile. default=mixed''')
+PARSER.add_argument('--random-points', '-p', metavar='points', type=int,
+                    default=0, help='''Number of random points from which to
+                    initialize replicator dynamics in addition to the default
+                    set of uniform and heavily-biased mixtures.''')
+PARSER.add_argument('--one', '-o', action="store_true", help='''Always report
+at least one equilibrium per game. This will return the minimum regret
+equilibrium found, regardless of whether it was below the regret threshold''')
 
 
 def main():
-    games, args = parse_args()
+    args = PARSER.parse_args()
     if args.type == 'pure':
-        equilibria = [pure_nash(g, args.r) for g in games]
-        if args.one:
-            for i in range(len(games)):
-                if len(equilibria[i]) == 0:
-                    equilibria[i] = min_regret_profile(games[i])
+        equilibria = [pure_nash(g, args.r) or min_regret_profile(g) for g in games]
     elif args.type == 'mixed':
-        equilibria = [[g.toProfile(eq, args.s) for eq in mixed_nash(g, \
-                args.r, args.d, args.p, args.one, iters=args.i, \
-                converge_thresh=args.c)] for g in games]
+        equilibria = [[g.toProfile(eq, args.s) for eq
+                       in mixed_nash(g, args.r, args.d, args.p, args.one, iters=args.i,
+                                     converge_thresh=args.c)]
+                      for g in games]
     elif args.type == 'mrp':
         equilibria = map(min_regret_profile, games)
+    else:
+        raise ValueError('Unknown command given: %s' % args.type)
+
     if len(equilibria) > 1:
         print to_JSON_str(equilibria)
     else:
