@@ -5,8 +5,8 @@ import numpy as np
 import scipy.misc as spm
 from collections import Counter
 
-import funcs
-from hcollections import frozendict
+from gameanalysis import funcs
+from gameanalysis.hcollections import frozendict
 
 
 class PureProfile(frozendict):

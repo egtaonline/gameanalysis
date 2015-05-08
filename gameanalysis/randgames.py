@@ -1,10 +1,9 @@
-#! /usr/bin/env python2.7
 import sys
 import argparse
 import numpy as np
 import numpy.random as r
 
-import rsgame
+from gameanalysis import rsgame
 
 # import GameIO as IO
 
@@ -416,8 +415,11 @@ PARSER.add_argument('--game_args', nargs='+', default=[], \
                     help='Additional arguments for game generator function.')
 
 
-def main():
-    args = PARSER.parse_args()
+def command(args, prog=''):
+    PARSER.prog = ('%s %s' % (PARSER.prog, prog)).strip()
+    args = PARSER.parse_args(args)
+    print(args)
+    sys.exit(0)
 
     if args.type == 'uzs':
         assert len(args.game_args) == 1, 'Must specify strategy count for uniform zero sum'
@@ -458,7 +460,3 @@ def main():
     #     noise_args = [float(args.noise_args[0]), int(args.noise_args[1]), \
     #                     int(args.noise_args[2])]
     #     games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)
-
-
-if __name__ == '__main__':
-    main()
