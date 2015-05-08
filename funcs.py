@@ -3,7 +3,6 @@ import math
 import functools
 import numpy as np
 import scipy.misc as spm
-from subprocess import PIPE, Popen
 
 
 def prod(collection):
@@ -47,16 +46,6 @@ def one_line(string, line_width=80):
     if len(string) > line_width:
         return string[:3*line_width/4] + "..." + string[-line_width/4+3:]
     return string
-
-
-def leading_zeros(i, m):
-    '''Pad the string of integer i with leading zeros to equal length of m.'''
-    return str(i).zfill(len(str(m)))
-
-
-def call(proc_name, in_pipe):
-    p = Popen(proc_name, shell=True, stdin=PIPE, stdout=PIPE)
-    return p.communicate(in_pipe)[0]
 
 
 def weighted_least_squares(x, y, weights):
