@@ -231,7 +231,8 @@ class GP_Game(Game):
 			x = array(prof)
 			x[r,:] = dev[r,:]
 			x = self.flatten(x)
-			y_mean = self.predict(role, None, x)
+			y_mean = 0
+#			y_mean = self.predict(role, None, x)
 			for s,strat in enumerate(self.strategies[role]):
 				EVs[r,s] = y_mean - self.predict(role, strat, x)
 		return EVs
