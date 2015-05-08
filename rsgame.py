@@ -1,8 +1,8 @@
 '''This module contains data structures and accompanying methods for working
 with role symmetric games'''
-import json
 import itertools
 import numpy as np
+import scipy.misc as spm
 from collections import Counter
 
 import funcs
@@ -136,13 +136,6 @@ class EmptyGame(object):
                  strats, self.players[role])]
             for role, strats in self.strategies.items())))
 
-    # def _is_mixture_array(arr):
-    # if not isinstance(arr, np.ndarray):
-    #     return False
-    # if arr.dtype == "object":
-    #     arr = np.array(arr, dtype=float)
-    # return np.all(arr >= 0) and np.allclose(arr.sum(1), 1)
-
     def to_profile(self, array):
         '''Converts an array profile representation into a dictionary representation
 
@@ -200,20 +193,20 @@ class EmptyGame(object):
 
     def __repr__(self):
         return (('%s:\n\t'
-                'Roles: %s\n\t'
-                'Players:\n\t\t%s\n\t'
-                'Strategies:\n\t\t%s\n') % (
-                    self.__class__.__name__,
-                    ', '.join(sorted(self.strategies)),
-                    '\n\t\t'.join('%dx %s' % (count, role)
-                                  for role, count
-                                  in sorted(self.players.items())),
-                    '\n\t\t'.join('%s:\n\t\t\t%s' % (
-                        role,
-                        '\n\t\t\t'.join(strats))
-                                  for role, strats
-                                  in sorted(self.strategies.items()))
-                )).expandtabs(4)
+                 'Roles: %s\n\t'
+                 'Players:\n\t\t%s\n\t'
+                 'Strategies:\n\t\t%s\n') % (
+                     self.__class__.__name__,
+                     ', '.join(sorted(self.strategies)),
+                     '\n\t\t'.join('%dx %s' % (count, role)
+                                   for role, count
+                                   in sorted(self.players.items())),
+                     '\n\t\t'.join('%s:\n\t\t\t%s' % (
+                         role,
+                         '\n\t\t\t'.join(strats))
+                                   for role, strats
+                                   in sorted(self.strategies.items()))
+                 )).expandtabs(4)
 
 
 class Game(EmptyGame):
@@ -249,8 +242,6 @@ class Game(EmptyGame):
                                  len(self.strategies),
                                  self._max_strategies))
         self._counts = np.zeros_like(self._values, dtype=int)
-        # TODO make uint? May screw up arithmetic
-        self._dev_reps = np.zeros_like(self._values, dtype=int)
 
         for p, profile_data in enumerate(payoff_data):
             prof = PureProfile((role, {s: c for s, c, _ in dats})
@@ -267,21 +258,29 @@ class Game(EmptyGame):
                     self._values[p, r, s] = np.average(payoffs)
                     self._counts[p, r, s] = count
 
-            # TODO move to another scan? only dependent on counts
-            # Must be done after counts is complete
-            for r, (role, strats) in enumerate(self.strategies.items()):
-                for s, strat in enumerate(strats):
-                    if self._counts[p, r, s] > 0:
-                        opp_prof = np.copy(self._counts[p])
-                        opp_prof[r, s] -= 1
-                        try:
-                            self._dev_reps[p, r, s] = funcs\
-                                .profile_repetitions(opp_prof)
-                        except OverflowError:
-                            self._dev_reps = np.array(self._dev_reps,
-                                                      dtype=object)
-                            self._dev_reps[p, r, s] = funcs\
-                                .profile_repetitions(opp_prof)
+        # Approximate dev_reps
+        strat_counts = np.array(list(self.players.values()))
+        player_factorial = spm.factorial(self._counts).prod(2)
+        totals = np.prod(spm.factorial(strat_counts) / player_factorial, 1)
+        self._dev_reps = (totals[:, np.newaxis, np.newaxis] *
+                          self._counts / strat_counts[:, np.newaxis])
+
+        # self._dev_reps = np.zeros_like(self._values, dtype=int)
+            # # TODO move to another scan? only dependent on counts
+            # # Must be done after counts is complete
+            # for r, (role, strats) in enumerate(self.strategies.items()):
+            #     for s, strat in enumerate(strats):
+            #         if self._counts[p, r, s] > 0:
+            #             opp_prof = np.copy(self._counts[p])
+            #             opp_prof[r, s] -= 1
+            #             try:
+            #                 self._dev_reps[p, r, s] = funcs\
+            #                     .profile_repetitions(opp_prof)
+            #             except OverflowError:
+            #                 self._dev_reps = np.array(self._dev_reps,
+            #                                           dtype=object)
+            #                 self._dev_reps[p, r, s] = funcs\
+            #                     .profile_repetitions(opp_prof)
 
         self._compute_min_payoffs()
 
@@ -391,10 +390,10 @@ class Game(EmptyGame):
         return iter(self._profile_map)
 
     def __repr__(self):
-        return ('%spayoff data for %d out of %d profiles' % (
+        return '%spayoff data for %d out of %d profiles' % (
             super().__repr__(),
             len(self._profile_map),
-            self._size)).expandtabs(4)
+            self._size)
 
     # def to_TB_JSON(self):
     #     '''

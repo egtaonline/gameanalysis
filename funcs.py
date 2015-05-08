@@ -10,16 +10,11 @@ def prod(collection):
     return functools.reduce(operator.mul, collection)
 
 
-def choose(n, r):
-    '''Returns the number of ways to choose r things from n things'''
-    return spm.comb(n, r, exact=True)
-
-
-def game_size(n, s):
+def game_size(n, s, exact=True):
     '''Number of profiles in a symmetric game with n players and s strategies
 
     '''
-    return choose(n+s-1, n)
+    return spm.comb(n+s-1, n, exact=exact)
 
 
 def profile_repetitions(p):
