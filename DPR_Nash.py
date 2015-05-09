@@ -17,7 +17,7 @@ def main():
 	for i in range(100):
 		game_file = join(args.folder, str(i)+".json")
 		game = DPR(GameIO.read(game_file), args.players)
-		equilibria = [g.toProfile(eq) for eq in Nash.mixed_nash(g, \
+		equilibria = [game.toProfile(eq) for eq in Nash.mixed_nash(game, \
 												at_least_one=True)]
 		eq_file = join(args.folder, str(i)+"_DPR-EQ.json")
 		with open(eq_file,"w") as f:
