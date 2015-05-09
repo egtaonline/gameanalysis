@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from os.path import join
 
 def parse_args():
-	parser = ArgumenParser()
+	parser = ArgumentParser()
 	parser.add_argument("players", type=int)
 	parser.add_argument("folder", type=str)
 	return parser.parse_args()
