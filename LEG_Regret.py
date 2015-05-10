@@ -26,12 +26,14 @@ def main():
 						"_GP-p_EQ-D3","_GP-p_EQ-D5","_GP-p_EQ-p",
 						"_GP-s_EQ-D3","_GP-s_EQ-D5","_GP-s_EQ-D5",
 						"_DPR-EQ"]:
+			regret_fn = join(args.EQ_folder, str(index)+eq_type+"_regret.json")
+			if exists(regret_fn):
+				continue
 			eq_fn = join(args.EQ_folder, str(index)+eq_type+".json")
 			if exists(eq_fn):
 				equilibria = map(empty_game.toArray, GameIO.read(eq_fn))
 				regrets = [game.regret(eq[0]) for eq in equilibria]
-				with open(join(args.EQ_folder, str(index)+eq_type+
-										"_regret.json"), "w") as rf:
+				with open(out_file, "w") as rf:
 					json.dump(regrets, rf)
 
 if __name__ == "__main__":
