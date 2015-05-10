@@ -13,6 +13,8 @@ def parse_args():
 	parser.add_argument("folder", type=str)
 	parser.add_argument("--no_mean", action="store_true")
 	parser.add_argument("--DPR_size", type=int, default=0)
+	parser.add_argument("--start", type=int, default=0)
+	parser.add_argument("--stop", type=int, default=100)
 	args = parser.parse_args()
 	if args.EVs == "DPR":
 		assert args.DPR_size > 0, "DPR requires a value for --DPR_size"
@@ -20,7 +22,7 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	for i in range(100):
+	for i in range(start, stop):
 		game_file = join(args.folder, str(i)+"_GP-"+args.diffs[0]+".pkl")
 		game = GameIO.read(game_file)
 		game.EVs = args.EVs
