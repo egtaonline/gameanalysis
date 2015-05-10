@@ -22,7 +22,7 @@ def parse_args():
 
 def main():
 	args = parse_args()
-	for i in range(start, stop):
+	for i in range(args.start, args.stop):
 		game_file = join(args.folder, str(i)+"_GP-"+args.diffs[0]+".pkl")
 		game = GameIO.read(game_file)
 		game.EVs = args.EVs
