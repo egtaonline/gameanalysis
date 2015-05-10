@@ -13,11 +13,13 @@ def parse_args():
 	parser = ArgumentParser()
 	parser.add_argument("LEG_folder", type=str)
 	parser.add_argument("EQ_folder", type=str)
+	parser.add_argument("--start", type=int, default=0)
+	parser.add_argument("--stop", type=int, default=100)
 	return parser.parse_args()
 
 def main():
 	args = parse_args()
-	for index in range(100):
+	for index in range(args.start, args.stop):
 		with open(join(args.LEG_folder, str(index) + ".json")) as f:
 			game = AGG.LEG_to_AGG(json.load(f))
 		empty_game = RSG.Game(["All"], {"All":game.players},
@@ -26,12 +28,14 @@ def main():
 						"_GP-p_EQ-D3","_GP-p_EQ-D5","_GP-p_EQ-p",
 						"_GP-s_EQ-D3","_GP-s_EQ-D5","_GP-s_EQ-D5",
 						"_DPR-EQ"]:
+			regret_fn = join(args.EQ_folder, str(index)+eq_type+"_regret.json")
+			if exists(regret_fn):
+				continue
 			eq_fn = join(args.EQ_folder, str(index)+eq_type+".json")
 			if exists(eq_fn):
 				equilibria = map(empty_game.toArray, GameIO.read(eq_fn))
 				regrets = [game.regret(eq[0]) for eq in equilibria]
-				with open(join(args.EQ_folder, str(index)+eq_type+
-										"_regret.json"), "w") as rf:
+				with open(regret_fn, "w") as rf:
 					json.dump(regrets, rf)
 
 if __name__ == "__main__":
