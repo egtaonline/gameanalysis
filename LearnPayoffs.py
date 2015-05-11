@@ -2,12 +2,13 @@
 
 import cPickle
 from os.path import exists, join
+from argparse import ArgumentParser
 import GameIO
 from LearnedModels import GP_Game
 
 
 def parse_args():
-	parser = GameIO.io_parser()
+	parser = ArgumentParser()
 	parser.add_argument("diffs", choices=["None", "strat", "player"], help=
 					"Set to strat or player to learn differences from "
 					"profile-average payoffs; None learns payoffs directly.")
