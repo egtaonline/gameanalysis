@@ -11,6 +11,7 @@ def parse_args():
 	parser.add_argument("diffs", choices=["None", "strat", "player"], help=
 					"Set to strat or player to learn differences from "
 					"profile-average payoffs; None learns payoffs directly.")
+	parser.add_argument("--CV", action="store_true")
 	args = parser.parse_args()
 	if args.diffs == "None":
 		args.diffs = None
@@ -19,7 +20,7 @@ def parse_args():
 
 def main():
 	a = parse_args()
-	g = GP_Game(a.input, a.diffs)
+	g = GP_Game(a.input, a.diffs, a.CV)
 	if a.output != "":
 		sys.stdout.close()
 		with open(a.output, "w") as f:

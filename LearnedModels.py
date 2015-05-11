@@ -27,7 +27,7 @@ def _blocked_attribute(*args, **kwds):
 	raise TypeError("unsupported operation")
 
 
-default_nugget = 1
+default_nugget = .1
 
 
 class GP_Game(Game):
@@ -255,23 +255,29 @@ constant_params = {
 }
 CV_params = {
 	"corr":["absolute_exponential","squared_exponential","cubic","linear"],
-	"theta0":[1e-5,1e-3,1e-1,10,1e3]
+	"nugget":[1e-4,1e-1,1e2]
+	"theta0":[1e-4,1e-1,1e2]
 }
 default_params = {
 	"corr":"squared_exponential",
 	"theta0":1e-1
+	"nugget":default_nugget
 }
 
 
 def train_GP(X, Y, nugget=default_nugget, cross_validate=False):
 	if cross_validate:
-		gp = GaussianProcess(nugget=nugget, **constant_params)
+		gp = GaussianProcess(**constant_params)
+		if nugget != default_nugget:
+			CV_params["nugget"].append(nugget)
 		cv = GridSearchCV(gp, CV_params)
 		cv.fit(X, Y)
 		params = cv.best_estimator_.get_params()
+		if nugget != default_nugget:
+			CV_params["nugget"] = CV_params["nugget"][:-1]
 	else:
 		params = dict(constant_params, **default_params)
-	gp = GaussianProcess(nugget=nugget, **params)
+	gp = GaussianProcess(**params)
 	gp.fit(X, Y)
 	return gp
 
