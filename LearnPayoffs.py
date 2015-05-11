@@ -16,10 +16,7 @@ def parse_args():
 	parser.add_argument("folder", type=str)
 	parser.add_argument("--start", type=int, default=0)
 	parser.add_argument("--stop", type=int, default=100)
-	args = parser.parse_args()
-	if args.diffs == "None":
-		args.diffs = None
-	return args
+	return parser.parse_args()
 
 
 def main():
@@ -27,6 +24,8 @@ def main():
 	for index in range(args.start, args.stop):
 		out_file = join(args.folder, str(index) + ("_CV-" if args.CV else
 									"_GP-") + args.diffs[0]+".pkl")
+		if args.diffs == "None":
+			args.diffs = None
 		if exists(out_file):
 			continue
 		with open(join(args.folder, str(index) + ".json")) as f:
