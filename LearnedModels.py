@@ -15,7 +15,7 @@ except ImportError:
 
 from dpr import full_prof_DPR
 from RoleSymmetricGame import Game, PayoffData, tiny
-from HashableClasses import h_dict
+from HashableClasses import h_dict, h_array
 
 
 class ZeroPredictor:
@@ -25,9 +25,6 @@ class ZeroPredictor:
 
 def _blocked_attribute(*args, **kwds):
 	raise TypeError("unsupported operation")
-
-
-default_nugget = .1
 
 
 class GP_Game(Game):
@@ -255,30 +252,53 @@ constant_params = {
 }
 CV_params = {
 	"corr":["absolute_exponential","squared_exponential","cubic","linear"],
-	"nugget":[1e-4,1e-1,1e2]
+	"nugget":[1e-4,1e-1,1e2],
 	"theta0":[1e-4,1e-1,1e2]
 }
 default_params = {
 	"corr":"squared_exponential",
-	"theta0":1e-1
-	"nugget":default_nugget
+	"theta0":1e-1,
+	"nugget":1e-1
 }
 
 
-def train_GP(X, Y, nugget=default_nugget, cross_validate=False):
+class NGP(GaussianProcess):
+	def __init__(self, regr='constant', corr='squared_exponential', beta0=None,
+				storage_mode='full', verbose=False, theta0=1e-1, thetaL=None,
+				thetaU=None, optimizer='fmin_cobyla', random_start=1,
+				normalize=True, nugget=10. * tiny, random_state=None,
+				nugget_map={}):
+		self.nugget_map = nugget_map
+		GaussianProcess.__init__(self, regr, corr, beta0, storage_mode,
+								verbose, theta0, thetaL, thetaU, optimizer,
+								random_start, normalize, nugget, random_state)
+
+	def fit(self, X, y):
+		old_nugget = self.nugget
+		self.nugget = [self.nugget_map[h_array(x)] for x in X]
+		GaussianProcess.fit(self, X, y)
+		self.nugget = old_nugget
+		return self
+
+
+def train_GP(X, Y, nugget=None, cross_validate=False):
 	if cross_validate:
-		gp = GaussianProcess(**constant_params)
-		if nugget != default_nugget:
-			CV_params["nugget"].append(nugget)
+		if nugget != None:
+			nugget_map = dict(zip(map(h_array, X), nugget))
+			gp = NGP(nugget_map=nugget_map, **constant_params)
+			old_nugget = CV_params["nugget"]
+			del CV_params["nugget"]
+		else:
+			gp = GaussianProcess(**constant_params)
 		cv = GridSearchCV(gp, CV_params)
 		cv.fit(X, Y)
 		params = cv.best_estimator_.get_params()
-		if nugget != default_nugget:
-			CV_params["nugget"] = CV_params["nugget"][:-1]
+		if nugget != None:
+			CV_params["nugget"] = old_nugget
+			params["nugget"] = nugget
+			del params["nugget_map"]
 	else:
 		params = dict(constant_params, **default_params)
 	gp = GaussianProcess(**params)
 	gp.fit(X, Y)
 	return gp
-
-
