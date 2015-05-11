@@ -153,12 +153,14 @@ class quieser(object):
         self._api = egta.egtaonline(auth_token)
         self._game_id = game_id
         game = self._api.get_game(game_id, granularity='summary')
-        self._scheduler = self._create_scheduler(game, **scheduler_options)
 
         # Set other game information
         self._role_counts = {r['name']: r['count'] for r in game['roles']}
         self._full_game = analysis.subgame(
             (r['name'], set(r['strategies'])) for r in game['roles'])
+
+        # Set up scheduler
+        self._scheduler = self._create_scheduler(game, **scheduler_options)
 
         # Set up reduction
         if dpr:
@@ -180,6 +182,11 @@ class quieser(object):
         '''Creates a generic scheduler with the appropriate parameters'''
         # pylint: disable=too-many-arguments
 
+        # Is to check that the number of players in each role match, it's a
+        # hacky solution, but egta doesn't expose the necessary information.
+        candidate_name = '%s_generic_quiesce_%s' % (
+            game['name'],
+            '_'.join('%s_%d' % rc for rc in self._role_counts.iteritems()))
         sim_inst_id = sim_inst_id = self._api.get_game(
             self._game_id)['simulator_instance_id']
         schedulers = [gs for gs in self._api.get_generic_schedulers() if
@@ -188,7 +195,8 @@ class quieser(object):
                       gs['time_per_observation'] == observation_time and
                       gs['default_observation_requirement'] == obs_req and
                       gs['observations_per_simulation'] == obs_per_sim and
-                      gs['nodes'] == nodes]
+                      gs['nodes'] == nodes and
+                      gs['name'].startswith(candidate_name)]
 
         if len(schedulers) > 0:
             # found at least one exact match so use it
@@ -205,8 +213,7 @@ class quieser(object):
                             (s['name'], s['version']) ==
                             game['simulator_fullname'])['id']
         # Generate a random name
-        name = '%s_generic_quiesce_%s' % (game['name'],
-                                          utils.random_string(6))
+        name = '%s_%s' % (candidate_name, utils.random_string(6))
         size = self._api.get_game(self._game_id, 'structure')['size']
         sched = self._api.create_generic_scheduler(
             simulator_id=sim_id,
