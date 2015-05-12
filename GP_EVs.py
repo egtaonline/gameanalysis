@@ -30,19 +30,20 @@ def main():
 	for index in range(args.start, args.stop):
 		in_file = join(args.folder, str(index)+"_"+args.game_type+".pkl")
 		out_file = join(args.folder, str(index)+"_"+args.game_type+"_EVs.json")
-		if exists(out_file):
+		try:
 			EVs = GameIO.read(out_file)
 			if len(EVs) == len(mixtures):
 				continue
-		else:
+		except:
 			EVs = []
 		game = GameIO.read(in_file)
 		game.DPR_size = args.DPR_size
 		game.EVs = args.EVs_method
 		for m in mixtures[len(EVs):]:
 			EVs.append(game.expectedValues(game.toArray(m)))
-			with open(out_file,"w") as f:
-				f.write(GameIO.to_JSON_str(EVs))
+			if len(EVs) % 10 == 0 or len(EVs) == len(mixtures):
+				with open(out_file,"w") as f:
+					f.write(GameIO.to_JSON_str(EVs))
 
 if __name__ == "__main__":
 	main()
