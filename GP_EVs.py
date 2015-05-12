@@ -31,7 +31,7 @@ def main():
 		in_file = join(args.folder, str(index)+"_"+args.game_type+".pkl")
 		out_file = join(args.folder, str(index)+"_"+args.game_type+"_EVs.json")
 		if exists(out_file):
-			EVs = GameIO.read(EVs_file)
+			EVs = GameIO.read(out_file)
 			if len(EVs) == len(mixtures):
 				continue
 		else:
