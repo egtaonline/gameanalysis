@@ -19,9 +19,10 @@ def parse_args():
 			"required if EVs_method=DPR.")
 	parser.add_argument("--start", type=int, default=0)
 	parser.add_argument("--stop", type=int, default=100)
+	args = parser.parse_args()
 	if args.EVs_method == "DPR":
 		assert args.DPR_size > 1, "--DPR_size must be specified"
-	return parser.parse_args()
+	return args
 
 def main():
 	args = parse_args()
