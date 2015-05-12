@@ -36,7 +36,7 @@ def main():
 				continue
 		else:
 			EVs = []
-		game = GameIO.read(join(args.folder, str(index) + "_" + args.game_type))
+		game = GameIO.read(in_file)
 		game.DPR_size = args.DPR_size
 		game.EVs = args.EVs_method
 		for m in mixtures[len(EVs):]:
