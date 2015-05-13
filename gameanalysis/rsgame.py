@@ -3,6 +3,7 @@ with role symmetric games'''
 
 import itertools
 import math
+import collections
 import numpy as np
 import scipy.misc as spm
 from collections import Counter
@@ -14,6 +15,7 @@ from gameanalysis.hcollections import frozendict
 # Raise an error on any funny business
 np.seterr(all='raise')
 _exact_factorial = np.vectorize(math.factorial, otypes=[object])
+_TINY = np.finfo(float).tiny
 
 
 class PureProfile(frozendict):
@@ -75,7 +77,7 @@ class PureProfile(frozendict):
                          for role, strats in self.items())
 
     def __repr__(self):
-        return 'PureProfile' + super().__repr__()[10:]
+        return 'PureProfile' + super().__repr__()[12:]
 
 
 class MixedProfile(frozendict):
@@ -114,7 +116,7 @@ class MixedProfile(frozendict):
         return PureProfile(json_['data'])
 
     def __repr__(self):
-        return 'MixedProfile' + super().__repr__()[10:]
+        return 'MixedProfile' + super().__repr__()[12:]
 
 
 class EmptyGame(object):
@@ -133,7 +135,13 @@ class EmptyGame(object):
                                      for r, s in strategies.items())
 
         self._max_strategies = max(len(s) for s in self.strategies.values())
-        self._obs_size = (len(self.strategies), self._max_strategies)
+        # All of the valid strategy positions
+        self._mask = np.zeros((len(self.strategies), self._max_strategies),
+                              dtype=bool)
+        self._mask.ravel()[list(itertools.chain.from_iterable(
+            (i * self._max_strategies + r for r in range(len(ses)))
+            for i, ses in enumerate(self.strategies.values())))] = True
+
 
     def all_profiles(self):
         '''Returns a generator over all profiles'''
@@ -155,10 +163,14 @@ class EmptyGame(object):
         if isinstance(array, collections.Mapping):
             return array  # Already a profile
         array = np.asarray(array)
-        type_map = {float: MixedProfile, int: PureProfile}
-        return type_map[array.dtype]((role, zip(strats, counts))
-                                     for counts, (role, strats)
-                                     in zip(array, self.strategies.items()))
+        type_map = {
+            float: MixedProfile,
+            int: PureProfile,
+            np.float64: MixedProfile}
+        type_ = array.dtype.type
+        return type_map[type_]((role, zip(strats, counts))
+                               for counts, (role, strats)
+                               in zip(array, self.strategies.items()))
 
     def to_array(self, prof):
         '''Converts a dictionary profile representation into an array representation
@@ -173,7 +185,7 @@ class EmptyGame(object):
         if isinstance(prof, np.ndarray):  # Already an array
             return prof
         type_ = type(next(iter(next(iter(prof.values())).values())))
-        array = np.zeros(self._obs_size, dtype=type_)
+        array = np.zeros_like(self._mask, dtype=type_)
         for r, (role, strats) in enumerate(prof.items()):
             for s, (strategy, payoff) in enumerate(strats.items()):
                 array[r, s] = payoff
@@ -246,16 +258,6 @@ class Game(EmptyGame):
     def __init__(self, players, strategies, payoff_data=()):
         super().__init__(players, strategies)
 
-        # TODO This is for replicator dynamics, it should be moved there. It
-        # should be possible to do with a masked min over the counts array
-        # greater than 0
-        self._min_payoffs = np.empty(self._obs_size)
-        self._min_payoffs.fill(np.inf)
-
-        # TODO: Generate this better
-        # TODO This might not be necessary
-        # self._mask = np.array([[False]*len(s) + [True]*(self._max_strategies - len(s))
-        #                        for s in self.strategies.values()])
         self._size = funcs.prod(funcs.game_size(self.players[role], len(strats))
                                 for role, strats in self.strategies.items())
         self._role_index = {r: i for i, r in enumerate(self.strategies.keys())}
@@ -284,7 +286,7 @@ class Game(EmptyGame):
                     self._values[p, r, s] = np.average(payoffs)
                     self._counts[p, r, s] = count
 
-        try:
+        try:  # Use approximate unless it errors out
             self._dev_reps = _comp_dev_reps(self._counts, self.players)
         except FloatingPointError:
             self._dev_reps = _comp_dev_reps(self._counts, self.players,
@@ -298,19 +300,20 @@ class Game(EmptyGame):
         '''Assigns _min_payoffs to the minimum payoff for every role strategy
 
         '''
-        self._min_payoffs = (np.ma.masked_array(self._values, self._counts == 0)
+        self._min_payoffs = (np.ma.masked_array(self._values,
+                                                self._counts == 0)
                              .min(0).filled(0))
 
     def get_payoff(self, profile, role, strategy):
         '''Returns the payoff for a specific profile, role, and strategy'''
-        p = self._profile_map[profile]
+        p = self._profile_map[self.to_profile(profile)]
         r = self._role_index[role]
         s = self._strategy_index[role][strategy]
         return self._values[p, r, s]
 
     def get_payoffs(self, profile):
         '''Returns a dictionary mapping roles to strategies to payoff'''
-        payoffs = self._values[self._profile_map[profile]]
+        payoffs = self._values[self._profile_map[self.to_profile(profile)]]
         return {role: dict(zip(strats, strat_payoffs))
                 for (role, strats), strat_payoffs
                 in zip(self.strategies.items(), payoffs)}
@@ -338,9 +341,9 @@ class Game(EmptyGame):
         '''
         # The first use of 'tiny' makes 0^0=1.
         # The second use of 'tiny' makes 0/0=0.
-        tiny = np.finfo(float).tiny
-        weights = (((mix+tiny)**self._counts).prod((1, 2))[:, None, None]
-                   * self._dev_reps / (mix+tiny))
+        mix = self.to_array(mix)
+        weights = (((mix + _TINY)**self._counts).prod((1, 2))[:, None, None]
+                   * self._dev_reps / (mix + _TINY))
         values = np.sum(self._values * weights, 0)
         return values
 
@@ -348,41 +351,64 @@ class Game(EmptyGame):
         '''Returns true if every profile has data'''
         return len(self._profile_map) == self._size
 
-    # def uniformMixture(self):
-    #     return np.array(1-self.mask, dtype=float) / \
-    #             (1-self.mask).sum(1).reshape(len(self.roles),1)
+    def uniform_mixture(self, as_array=False):
+        '''Returns a uniform mixed profile
 
-    # def randomMixture(self):
-    #     # TODO, this should probably be dirichlet, e.g. normalized gammas
-    #     m = np.random.uniform(0, 1, size=self.mask.shape) * (1 - self.mask)
-    #     return m / m.sum(1).reshape(m.shape[0], 1)
+        Set as_array to True to return the array representation of the profile.
 
-    # def biasedMixtures(self, role=None, strategy=None, bias=.9):
-    #     '''
-    #     Gives mixtures where the input strategy has bias weight for its role.
+        '''
+        mix = self._mask / self._mask.sum(1)[:, np.newaxis]
+        if as_array:
+            return mix
+        else:
+            return self.to_profile(mix)
 
-    #     Probability for that role's remaining strategies is distributed
-    #     uniformly, as is probability for all strategies of other roles.
+    def random_mixture(self, alpha=1, as_array=False):
+        '''Return a random mixed profile
 
-    #     Returns a list even when a single role & strategy are specified, since
-    #     the main use case is starting replicator dynamics from several mixtures.
-    #     '''
-    #     assert 0 <= bias <= 1, "probabilities must be between zero and one"
-    #     if self.maxStrategies == 1:
-    #         return [self.uniformMixture()]
-    #     if role == None:
-    #         return flatten([self.biasedMixtures(r, strategy, bias) for r \
-    #                 in filter(lambda r: self.numStrategies[self.index(r)] \
-    #                 > 1, self.roles)])
-    #     if strategy == None:
-    #         return flatten([self.biasedMixtures(role, s, bias) for s in \
-    #                 self.strategies[role]])
-    #     i = self.array_index(role, strategy, dtype=float)
-    #     m = 1. - self.mask - i
-    #     m /= m.sum(1).reshape(m.shape[0], 1)
-    #     m[self.index(role)] *= (1. - bias)
-    #     m += i*bias
-    #     return [m]
+        Mixed profiles are sampled from a dirichlet distribution with parameter
+        alpha. If alpha = 1 (the default) this is a uniform distribution over
+        the simplex for each role. alpha \in (0, 1) is baised towards high
+        entropy mixtures, i.e. mixtures where one strategy is played in
+        majority. alpha \in (1, oo) is baised towards low entropy (uniform)
+        mixtures.
+
+        Set as_array to True to return an array representation of the profile.
+
+        '''
+        mix = np.random.gamma(alpha, size=self._mask.shape) * self._mask
+        mix /= mix.sum(1)[:, np.newaxis]
+        if as_array:
+            return mix
+        else:
+            return self.to_profile(mix)
+
+    def biased_mixtures(self, bias=.9, as_array=False):
+        '''Gives generator of mixtures where in each mixture a single role-strategy is
+        played with bias, and the rest are uniform
+
+        Probability for that role's remaining strategies is distributed
+        uniformly, as is probability for all strategies of other roles.
+
+        Returns a list even when a single role & strategy are specified, since
+        the main use case is starting replicator dynamics from several
+        mixtures.
+
+        '''
+        assert 0 <= bias <= 1, 'probabilities must be between zero and one'
+        uniform = self.uniform_mixture(as_array=True)
+        for r, (role, strats) in enumerate(self.strategies.items()):
+            if len(strats) == 1:
+                continue
+            for s, strat in enumerate(strats):
+                biased = uniform.copy()
+                biased[r, s] = 0
+                biased[r] /= biased[r].sum() / (1 - bias)
+                biased[r, s] = bias
+                if as_array:
+                    yield biased
+                else:
+                    yield self.to_profile(biased)
 
     def is_constant_sum(self):
         '''Returns true if this game is constant sum'''
