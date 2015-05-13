@@ -25,7 +25,7 @@ def main():
 		eq_file = join(args.EQ_folder, str(index) + args.game_type + ".json")
 		out_file = join(args.EQ_folder, str(index)+ args.game_type +
 													"_regret.json")
-		if exists(out_file) or (not exists(eq_fn)):
+		if exists(out_file) or (not exists(eq_file)):
 			continue
 		with open(agg_file) as f:
 			game = AGG.LEG_to_AGG(json.load(f))
@@ -33,7 +33,7 @@ def main():
 								{"All":game.strategies})
 		equilibria = map(empty_game.toArray, GameIO.read(eq_file))
 		regrets = [game.regret(eq[0]) for eq in equilibria]
-		with open(regret_fn, "w") as f:
+		with open(out_file, "w") as f:
 			json.dump(regrets, f)
 
 if __name__ == "__main__":
