@@ -1,5 +1,7 @@
 import sys
 import argparse
+import json
+import collections
 import numpy as np
 import numpy.random as r
 
@@ -17,24 +19,50 @@ from gameanalysis import rsgame
 # from numpy import array, arange, zeros, fill_diagonal, cumsum
 
 
-def _gen_asymmetric_game(num_players, num_strategies):
-    '''Create an asymmetric game'''
-    role_len = len(str(num_players - 1))
-    strat_len = len(str(num_strategies - 1))
+def _gen_rs_game(num_roles, num_players, num_strategies):
+    '''Create a role symmetric game'''
+    try:
+        num_players = list(num_players)
+    except TypeError:
+        num_players = [num_players] * num_roles
+    try:
+        num_strategies = list(num_strategies)
+    except TypeError:
+        num_strategies = [num_strategies] * num_roles
+
+    assert len(num_players) == num_roles, \
+        'length of num_players must equal num_roles'
+    assert all(p > 0 for p in num_players), \
+        'number of players must be greater than zero'
+    assert len(num_strategies) == num_roles, \
+        'length of num_strategies must equal num_roles'
+    assert all(s > 0 for s in num_strategies), \
+        'number of strategies must be greater than zero'
+
+    role_len = len(str(num_roles - 1))
+    strat_len = [len(str(x - 1)) for x in num_strategies]
     strategies = {'r%0*d' % (role_len, r):
-                  {'s%0*d' % (strat_len, s) for s in range(num_strategies)}
-                  for r in range(num_players)}
-    players = {role: 1 for role in strategies}
+                  {'s%0*d' % (s_len, s) for s in range(num_strat)}
+                  for r, num_strat, s_len
+                  in zip(range(num_roles), num_strategies, strat_len)}
+    players = dict(zip(strategies, num_players))
     return rsgame.EmptyGame(players, strategies)
 
 
-def _gen_symmetric_game(num_players, num_strategies):
-    '''Create a symmetric game'''
-    strat_len = len(str(num_strategies - 1))
-    players = {'all': num_players}
-    strategies = {'all': {'s%0*d' % (strat_len, s) for s
-                          in range(num_strategies)}}
-    return rsgame.EmptyGame(players, strategies)
+def role_symmetric_game(num_roles, num_players, num_strategies,
+                        distribution=lambda: r.uniform(-1, 1)):
+    '''Generate a random role symmetric game
+
+    num_players and num_strategies can be scalers, or lists of length
+    num_roles. Payoffs are drawn from distribution.
+
+    '''
+    game = _gen_rs_game(num_roles, num_players, num_strategies)
+    profile_data = ({role: {(strat, count, distribution())
+                            for strat, count in strats.items()}
+                     for role, strats in prof.items()}
+                    for prof in game.all_profiles())
+    return rsgame.Game(game.players, game.strategies, profile_data)
 
 
 def independent_game(num_players, num_strategies,
@@ -45,12 +73,17 @@ def independent_game(num_players, num_strategies,
     distribution. The distribution defaults to uniform from -1 to 1.
 
     '''
-    game = _gen_asymmetric_game(num_players, num_strategies)
-    profile_data = ({role: {(strat, count, distribution())
-                            for strat, count in strats.items()}
-                     for role, strats in prof.items()}
-                    for prof in game.all_profiles())
-    return rsgame.Game(game.players, game.strategies, profile_data)
+    return role_symmetric_game(num_players, 1, num_strategies)
+
+
+def symmetric_game(num_players, num_strategies,
+                   distribution=lambda: r.uniform(-1, 1)):
+    '''Generate a random symmetric game
+
+    distribution defaults to uniform from -1 to 1.
+
+    '''
+    return role_symmetric_game(1, num_players, num_strategies)
 
 
 def covariant_game(num_players, num_strategies, mean_dist=lambda: 0, var=1,
@@ -73,7 +106,7 @@ def covariant_game(num_players, num_strategies, mean_dist=lambda: 0, var=1,
     generators that can return an array.
 
     '''
-    game = _gen_asymmetric_game(num_players, num_strategies)
+    game = _gen_rs_game(num_players, 1, num_strategies)
     mean = np.empty(num_strategies)
     covar = np.empty((num_strategies, num_strategies))
 
@@ -96,7 +129,7 @@ def zero_sum_game(num_strategies, distribution=lambda: r.uniform(-1, 1)):
     distribution defaults to uniform between -1 and 1
 
     '''
-    game = _gen_asymmetric_game(2, num_strategies)
+    game = _gen_rs_game(2, 1, num_strategies)
     role1, role2 = game.strategies
     payoff_data = []
     for prof in game.all_profiles():
@@ -107,21 +140,6 @@ def zero_sum_game(num_strategies, distribution=lambda: r.uniform(-1, 1)):
             role1: {(row_strat, 1, row_payoff)},
             role2: {(col_strat, 1, -row_payoff)}})
     return rsgame.Game(game.players, game.strategies, payoff_data)
-
-
-def symmetric_game(num_players, num_strategies,
-                   distribution=lambda: r.uniform(-1, 1)):
-    '''Generate a random symmetric game
-
-    distribution defaults to uniform from -1 to 1.
-
-    '''
-    game = _gen_symmetric_game(num_players, num_strategies)
-    profile_data = ({role: {(strat, count, distribution())
-                            for strat, count in strats.items()}
-                     for role, strats in prof.items()}
-                    for prof in game.all_profiles())
-    return rsgame.Game(game.players, game.strategies, profile_data)
 
 
 def sym_2p2s_game(a=0, b=1, c=2, d=3,
@@ -144,7 +162,7 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3,
     distribution must accept a size parameter a la numpy distributions.
 
     '''
-    game = _gen_symmetric_game(2, 2)
+    game = _gen_rs_game(1, 2, 2)
     role, strats = next(iter(game.strategies.item()))
     strats = list(strats)
 
@@ -400,34 +418,40 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3,
 #     game.values /= (max_val - min_val)
 #     game.values += min_payoff
 
-PARSER = argparse.ArgumentParser(description='Generate random games')
-PARSER.add_argument('type', choices=['uzs', 'usym', 'cg', 'leg', 'pmx', 'ind'],
-                    help='''Type of random game to generate. uzs = uniform zero
-                    sum.  usym = uniform symmetric. cg = congestion game. pmx =
-                    polymatrix game. ind = independent game.''')
-PARSER.add_argument('--count', '-c', type=int, default=1,
-                    help='Number of random games to create. Default = 1')
-PARSER.add_argument('--noise', choices=['none', 'normal', \
-                                       'gauss_mix'], default='none', help='Noise function.')
-PARSER.add_argument('--noise_args', nargs='+', default=[], \
-                    help='Arguments to be passed to the noise function.')
-PARSER.add_argument('--game_args', nargs='+', default=[], \
-                    help='Additional arguments for game generator function.')
+_PARSER = argparse.ArgumentParser(description='Generate random games')
+_PARSER.add_argument('type',
+                     choices=['uzs', 'usym', 'cg', 'leg', 'pmx', 'ind'],
+                     help='''Type of random game to generate. uzs = uniform zero
+                     sum.  usym = uniform symmetric. cg = congestion game. pmx
+                     = polymatrix game. ind = independent game.''')
+_PARSER.add_argument('arg', nargs='*', default=[],
+                     help='Additional arguments for game generator function.')
+_PARSER.add_argument('--count', '-c', type=int, default=1,
+                     help='Number of random games to create. Default = 1')
+_PARSER.add_argument('--noise', choices=['none', 'normal', 'gauss_mix'],
+                     default='none', help='Noise function.')
+_PARSER.add_argument('--noise_args', nargs='+', default=[],
+                     help='Arguments to be passed to the noise function.')
+_PARSER.add_argument('--output', '-o', metavar='output', default=sys.stdout,
+                     type=argparse.FileType('w'),
+                     help='Output destination; defaults to standard out')
+_PARSER.add_argument('--indent', '-i', metavar='indent', type=int,
+                     default=None,
+                     help='Indent for json output; default = None')
 
 
 def command(args, prog=''):
-    PARSER.prog = ('%s %s' % (PARSER.prog, prog)).strip()
-    args = PARSER.parse_args(args)
-    print(args)
-    sys.exit(0)
+    _PARSER.prog = ('%s %s' % (_PARSER.prog, prog)).strip()
+    args = _PARSER.parse_args(args)
 
     if args.type == 'uzs':
-        assert len(args.game_args) == 1, 'Must specify strategy count for uniform zero sum'
-        game_func = lambda: zero_sum_game(*map(int, args.game_args))
+        assert len(args.arg) == 1, \
+            'Must specify strategy count for uniform zero sum'
+        game_func = lambda: zero_sum_game(*map(int, args.arg))
     elif args.type == 'usym':
-        assert len(args.game_args) == 2, \
+        assert len(args.arg) == 2, \
             'Must specify player and strategy counts for uniform symmetric'
-        game_func = lambda: symmetric_game(*map(int, args.game_args))
+        game_func = lambda: symmetric_game(*map(int, args.arg))
     # elif args.type == 'cs':
     #     game_func = congestion_game
     #     assert len(args.game_args) == 3, 'game_args must specify player, '+\
@@ -460,3 +484,7 @@ def command(args, prog=''):
     #     noise_args = [float(args.noise_args[0]), int(args.noise_args[1]), \
     #                     int(args.noise_args[2])]
     #     games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)
+
+    json.dump(games, args.output, default=lambda x: x.to_json(),
+              indent=args.indent)
+    args.output.write('\n')

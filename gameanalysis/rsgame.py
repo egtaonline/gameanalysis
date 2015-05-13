@@ -1,12 +1,18 @@
 '''This module contains data structures and accompanying methods for working
 with role symmetric games'''
 import itertools
+import math
 import numpy as np
 import scipy.misc as spm
 from collections import Counter
 
 from gameanalysis import funcs
 from gameanalysis.hcollections import frozendict
+
+
+# Raise an error on any funny business
+np.seterr(all='raise')
+_exact_factorial = np.vectorize(math.factorial, otypes=[object])
 
 
 class PureProfile(frozendict):
@@ -183,7 +189,7 @@ class EmptyGame(object):
     def to_json(self):
         '''Convert to a json serializable format'''
         return {'players': dict(self.players),
-                'strategies': {r: list(s) for r, s in self.strategies}}
+                'strategies': {r: list(s) for r, s in self.strategies.items()}}
 
     @staticmethod
     def from_json(json_):
@@ -207,6 +213,25 @@ class EmptyGame(object):
                                    for role, strats
                                    in sorted(self.strategies.items()))
                  )).expandtabs(4)
+
+
+def _comp_dev_reps(counts, players, exact=False):
+    '''Uses fast floating point math to compute devreps'''
+    if exact:
+        dtype = object
+        factorial = _exact_factorial
+        div = lambda a, b: a // b
+    else:
+        dtype = float
+        factorial = spm.factorial
+        div = lambda a, b: a / b
+
+    strat_counts = np.array(list(players.values()), dtype=dtype)
+    player_factorial = factorial(counts).prod(2)
+    totals = np.prod(div(factorial(strat_counts), player_factorial), 1)
+    dev_reps = div(totals[:, np.newaxis, np.newaxis] *
+                   counts, strat_counts[:, np.newaxis])
+    return dev_reps
 
 
 class Game(EmptyGame):
@@ -258,30 +283,11 @@ class Game(EmptyGame):
                     self._values[p, r, s] = np.average(payoffs)
                     self._counts[p, r, s] = count
 
-        # Approximate dev_reps
-        strat_counts = np.array(list(self.players.values()))
-        player_factorial = spm.factorial(self._counts).prod(2)
-        totals = np.prod(spm.factorial(strat_counts) / player_factorial, 1)
-        self._dev_reps = (totals[:, np.newaxis, np.newaxis] *
-                          self._counts / strat_counts[:, np.newaxis])
-
-        # self._dev_reps = np.zeros_like(self._values, dtype=int)
-            # # TODO move to another scan? only dependent on counts
-            # # Must be done after counts is complete
-            # for r, (role, strats) in enumerate(self.strategies.items()):
-            #     for s, strat in enumerate(strats):
-            #         if self._counts[p, r, s] > 0:
-            #             opp_prof = np.copy(self._counts[p])
-            #             opp_prof[r, s] -= 1
-            #             try:
-            #                 self._dev_reps[p, r, s] = funcs\
-            #                     .profile_repetitions(opp_prof)
-            #             except OverflowError:
-            #                 self._dev_reps = np.array(self._dev_reps,
-            #                                           dtype=object)
-            #                 self._dev_reps[p, r, s] = funcs\
-            #                     .profile_repetitions(opp_prof)
-
+        try:
+            self._dev_reps = _comp_dev_reps(self._counts, self.players)
+        except FloatingPointError:
+            self._dev_reps = _comp_dev_reps(self._counts, self.players,
+                                            exact=True)
         self._compute_min_payoffs()
 
     def __hash__(self):
@@ -419,7 +425,7 @@ class Game(EmptyGame):
     def to_json(self):
         '''Convert to json according to the egta-online v3 default game spec'''
         return {'players': dict(self.players),
-                'strategies': {r: list(s) for r, s in self.strategies},
+                'strategies': {r: list(s) for r, s in self.strategies.items()},
                 'profiles': list(itertools.chain.from_iterable(
                     ({role: [(strat, count, self.get_payoff(prof, role, strat))
                              for strat, count in strats.items()]}
