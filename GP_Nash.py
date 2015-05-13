@@ -3,7 +3,7 @@
 import GameIO
 import Nash
 from argparse import ArgumentParser
-from os.path import join
+from os.path import join, exists
 from LearnedModels import ZeroPredictor
 
 def parse_args():
