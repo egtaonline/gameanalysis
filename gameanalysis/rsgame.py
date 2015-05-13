@@ -1,5 +1,6 @@
 '''This module contains data structures and accompanying methods for working
 with role symmetric games'''
+
 import itertools
 import math
 import numpy as np

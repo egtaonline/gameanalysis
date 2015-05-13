@@ -3,6 +3,7 @@ import math
 import numpy as np
 
 from gameanalysis import randgames, funcs
+import test
 from test import utils
 
 TINY = np.finfo(float).tiny
@@ -43,32 +44,36 @@ def exact_dev_reps(game):
     return dev_reps
 
 
-# The lambda: 0 means that the payoffs are all zero, since they don't matter
-@utils.apply([x()] for x in (
-    lambda: randgames.symmetric_game(2, 2, lambda: 0),
-    lambda: randgames.symmetric_game(2, 5, lambda: 0),
-    lambda: randgames.symmetric_game(5, 2, lambda: 0),
-    lambda: randgames.symmetric_game(5, 5, lambda: 0),
-    lambda: randgames.independent_game(2, 2, lambda: 0),
-    lambda: randgames.independent_game(2, 5, lambda: 0),
-    lambda: randgames.independent_game(5, 2, lambda: 0),
-    lambda: randgames.independent_game(5, 5, lambda: 0),
-    lambda: randgames.role_symmetric_game(2, 2, 2, lambda: 0),
-    lambda: randgames.role_symmetric_game(2, 2, 5, lambda: 0),
-    lambda: randgames.role_symmetric_game(2, 5, 2, lambda: 0),
-    lambda: randgames.role_symmetric_game(2, 5, 5, lambda: 0),
-    # Big Games
-    lambda: randgames.symmetric_game(5, 40, lambda: 0),
-    lambda: randgames.symmetric_game(3, 160, lambda: 0),
-    lambda: randgames.symmetric_game(50, 2, lambda: 0),
-    lambda: randgames.symmetric_game(20, 5, lambda: 0),
-    # Limit of approximate dev reps
-    lambda: randgames.symmetric_game(170, 2, lambda: 0),
-    lambda: randgames.symmetric_game(1000, 2, lambda: 0),
-    lambda: randgames.symmetric_game(90, 5, lambda: 0),
-    lambda: randgames.role_symmetric_game(2, 2, 40, lambda: 0),
-    lambda: randgames.symmetric_game(12, 12, lambda: 0)
-))
+def generate_games():
+    '''Returns a generator for game testing'''
+    # The lambda: 0 means that the payoffs are all zero, since they don't matter
+    yield [randgames.symmetric_game(2, 2, lambda: 0)]
+    yield [randgames.symmetric_game(2, 5, lambda: 0)]
+    yield [randgames.symmetric_game(5, 2, lambda: 0)]
+    yield [randgames.symmetric_game(5, 5, lambda: 0)]
+    yield [randgames.independent_game(2, 2, lambda: 0)]
+    yield [randgames.independent_game(2, 5, lambda: 0)]
+    yield [randgames.independent_game(5, 2, lambda: 0)]
+    yield [randgames.independent_game(5, 5, lambda: 0)]
+    yield [randgames.role_symmetric_game(2, 2, 2, lambda: 0)]
+    yield [randgames.role_symmetric_game(2, 2, 5, lambda: 0)]
+    yield [randgames.role_symmetric_game(2, 5, 2, lambda: 0)]
+    yield [randgames.role_symmetric_game(2, 5, 5, lambda: 0)]
+
+    if test._CONFIG['big_tests']:  # Big Games
+        yield [randgames.symmetric_game(5, 40, lambda: 0)]
+        yield [randgames.symmetric_game(3, 160, lambda: 0)]
+        yield [randgames.symmetric_game(50, 2, lambda: 0)]
+        yield [randgames.symmetric_game(20, 5, lambda: 0)]
+        # Limit of approximate dev reps
+        yield [randgames.symmetric_game(170, 2, lambda: 0)]
+        yield [randgames.symmetric_game(1000, 2, lambda: 0)]
+        yield [randgames.symmetric_game(90, 5, lambda: 0)]
+        yield [randgames.role_symmetric_game(2, 2, 40, lambda: 0)]
+        yield [randgames.symmetric_game(12, 12, lambda: 0)]
+
+
+@utils.apply(generate_games())
 def devreps_approx_test(game):
     approx = approx_dev_reps(game)
     exact = exact_dev_reps(game)

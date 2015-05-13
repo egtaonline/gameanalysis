@@ -418,7 +418,8 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3,
 #     game.values /= (max_val - min_val)
 #     game.values += min_payoff
 
-_PARSER = argparse.ArgumentParser(description='Generate random games')
+_PARSER = argparse.ArgumentParser(description='Generate random games',
+                                  add_help=False)
 _PARSER.add_argument('type',
                      choices=['uzs', 'usym', 'cg', 'leg', 'pmx', 'ind'],
                      help='''Type of random game to generate. uzs = uniform zero
@@ -440,8 +441,11 @@ _PARSER.add_argument('--indent', '-i', metavar='indent', type=int,
                      help='Indent for json output; default = None')
 
 
-def command(args, prog=''):
-    _PARSER.prog = ('%s %s' % (_PARSER.prog, prog)).strip()
+def command(args, prog, print_help=False):
+    _PARSER.prog = ('%s %s' % (_PARSER.prog, prog))
+    if print_help:
+        _PARSER.print_help()
+        return
     args = _PARSER.parse_args(args)
 
     if args.type == 'uzs':
