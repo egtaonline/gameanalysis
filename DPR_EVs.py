@@ -9,10 +9,10 @@ from dpr import DPR
 
 def parse_args():
 	parser = ArgumentParser()
-	parser.add_argument("DPR_size", type=int)
 	parser.add_argument("folder", type=str)
 	parser.add_argument("mix_file", type=str, help="File with mixtures for "+
 			"which expected values should be calculated.")
+	parser.add_argument("DPR_size", type=int)
 	parser.add_argument("--start", type=int, default=0)
 	parser.add_argument("--stop", type=int, default=100)
 	return parser.parse_args()
