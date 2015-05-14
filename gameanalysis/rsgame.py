@@ -13,7 +13,7 @@ from gameanalysis.hcollections import frozendict
 
 
 # Raise an error on any funny business
-np.seterr(all='raise')
+np.seterr(over='raise')
 _exact_factorial = np.vectorize(math.factorial, otypes=[object])
 _TINY = np.finfo(float).tiny
 
@@ -91,6 +91,14 @@ class MixedProfile(frozendict):
         super().__init__(((r, frozendict(p)) for r, p
                           in dict(*args, **kwargs).items()))
 
+    def support(self):
+        '''Returns the support of this mixed profile
+
+        The support is a dict mapping roles to strategies.
+
+        '''
+        return {role: set(strats) for role, strats in self.items()}
+
     def trim_support(self, supp_thresh=1e-3):
         '''Returns a new mixed profiles without strategies played less than
         supp_thresh
@@ -142,7 +150,6 @@ class EmptyGame(object):
             (i * self._max_strategies + r for r in range(len(ses)))
             for i, ses in enumerate(self.strategies.values())))] = True
 
-
     def all_profiles(self):
         '''Returns a generator over all profiles'''
         return map(PureProfile, itertools.product(*(
@@ -168,7 +175,8 @@ class EmptyGame(object):
             int: PureProfile,
             np.float64: MixedProfile}
         type_ = array.dtype.type
-        return type_map[type_]((role, zip(strats, counts))
+        return type_map[type_]((role, ((strat, count) for strat, count
+                                       in zip(strats, counts) if count > 0))
                                for counts, (role, strats)
                                in zip(array, self.strategies.items()))
 
@@ -185,171 +193,13 @@ class EmptyGame(object):
         if isinstance(prof, np.ndarray):  # Already an array
             return prof
         type_ = type(next(iter(next(iter(prof.values())).values())))
+        # TODO allow fill val?
         array = np.zeros_like(self._mask, dtype=type_)
-        for r, (role, strats) in enumerate(prof.items()):
-            for s, (strategy, payoff) in enumerate(strats.items()):
-                array[r, s] = payoff
+        for r, (role, strats) in enumerate(self.strategies.items()):
+            for s, strategy in enumerate(strats):
+                if strategy in prof[role]:
+                    array[r, s] = prof[role][strategy]
         return array
-
-    def is_symmetric(self):
-        '''Returns true if this game is symmetric'''
-        return len(self.strategies) == 1
-
-    def is_asymmetric(self):
-        '''Returns true if this game is asymmetric'''
-        return all(p == 1 for p in self.players.values())
-
-    def to_json(self):
-        '''Convert to a json serializable format'''
-        return {'players': dict(self.players),
-                'strategies': {r: list(s) for r, s in self.strategies.items()}}
-
-    @staticmethod
-    def from_json(json_):
-        '''Load a profile from its json representation'''
-        params = gameio._game_from_json(json_)
-        return EmptyGame(*params[:2])
-
-    def __repr__(self):
-        return (('%s:\n\t'
-                 'Roles: %s\n\t'
-                 'Players:\n\t\t%s\n\t'
-                 'Strategies:\n\t\t%s\n') % (
-                     self.__class__.__name__,
-                     ', '.join(sorted(self.strategies)),
-                     '\n\t\t'.join('%dx %s' % (count, role)
-                                   for role, count
-                                   in sorted(self.players.items())),
-                     '\n\t\t'.join('%s:\n\t\t\t%s' % (
-                         role,
-                         '\n\t\t\t'.join(strats))
-                                   for role, strats
-                                   in sorted(self.strategies.items()))
-                 )).expandtabs(4)
-
-
-def _comp_dev_reps(counts, players, exact=False):
-    '''Uses fast floating point math to compute devreps'''
-    if exact:
-        dtype = object
-        factorial = _exact_factorial
-        div = lambda a, b: a // b
-    else:
-        dtype = float
-        factorial = spm.factorial
-        div = lambda a, b: a / b
-
-    strat_counts = np.array(list(players.values()), dtype=dtype)
-    player_factorial = factorial(counts).prod(2)
-    totals = np.prod(div(factorial(strat_counts), player_factorial), 1)
-    dev_reps = div(totals[:, np.newaxis, np.newaxis] *
-                   counts, strat_counts[:, np.newaxis])
-    return dev_reps
-
-
-class Game(EmptyGame):
-    '''Role-symmetric game representation.
-
-    players:     mapping from roles to number of players per role
-    strategies:  mapping from roles to per-role strategy sets
-    payoff_data: collection of data objects mapping roles to collections
-                 of (strategy, count, value) tuples
-    '''
-    def __init__(self, players, strategies, payoff_data=()):
-        super().__init__(players, strategies)
-
-        self._size = funcs.prod(funcs.game_size(self.players[role], len(strats))
-                                for role, strats in self.strategies.items())
-        self._role_index = {r: i for i, r in enumerate(self.strategies.keys())}
-        self._strategy_index = {r: {s: i for i, s in enumerate(strats)}
-                                for r, strats in self.strategies.items()}
-
-        payoff_data = list(payoff_data)  # To measure length
-        self._profile_map = {}
-        self._values = np.zeros((len(payoff_data),
-                                 len(self.strategies),
-                                 self._max_strategies))
-        self._counts = np.zeros_like(self._values, dtype=int)
-
-        for p, profile_data in enumerate(payoff_data):
-            prof = PureProfile((role, {s: c for s, c, _ in dats})
-                               for role, dats in profile_data.items())
-            assert prof not in self._profile_map, 'Duplicate profile %s' % prof
-            self._profile_map[prof] = p
-
-            for r, role in enumerate(self.strategies):
-                for strategy, count, payoffs in profile_data[role]:
-                    s = self._strategy_index[role][strategy]
-                    assert self._counts[p, r, s] == 0, (
-                        'Duplicate role strategy pair (%s, %s)'
-                        % (role, strategy))
-                    self._values[p, r, s] = np.average(payoffs)
-                    self._counts[p, r, s] = count
-
-        try:  # Use approximate unless it errors out
-            self._dev_reps = _comp_dev_reps(self._counts, self.players)
-        except FloatingPointError:
-            self._dev_reps = _comp_dev_reps(self._counts, self.players,
-                                            exact=True)
-        self._compute_min_payoffs()
-
-    def __hash__(self):
-        return hash((self.players, self.strategies))
-
-    def _compute_min_payoffs(self):
-        '''Assigns _min_payoffs to the minimum payoff for every role strategy
-
-        '''
-        self._min_payoffs = (np.ma.masked_array(self._values,
-                                                self._counts == 0)
-                             .min(0).filled(0))
-
-    def get_payoff(self, profile, role, strategy):
-        '''Returns the payoff for a specific profile, role, and strategy'''
-        p = self._profile_map[self.to_profile(profile)]
-        r = self._role_index[role]
-        s = self._strategy_index[role][strategy]
-        return self._values[p, r, s]
-
-    def get_payoffs(self, profile):
-        '''Returns a dictionary mapping roles to strategies to payoff'''
-        payoffs = self._values[self._profile_map[self.to_profile(profile)]]
-        return {role: dict(zip(strats, strat_payoffs))
-                for (role, strats), strat_payoffs
-                in zip(self.strategies.items(), payoffs)}
-
-    # def getExpectedPayoff(self, mix, role=None):
-    #     if role is None:
-    #         return (mix * self.expectedValues(mix)).sum(1)
-    #     return (mix * self.expectedValues(mix)).sum(1)[self.index(role)]
-
-    # def getSocialWelfare(self, profile):
-    #     if is_pure_profile(profile):
-    #         return self.values[self[profile]].sum()
-    #     if is_mixture_array(profile):
-    #         players = np.array([self.players[r] for r in self.roles])
-    #         return (self.getExpectedPayoff(profile) * players).sum()
-    #     if is_profile_array(profile):
-    #         return self.getSocialWelfare(self.toProfile(profile))
-    #     if is_mixed_profile(profile):
-    #         return self.getSocialWelfare(self.toArray(profile))
-
-    def expected_values(self, mix):
-        '''Computes the expected value of each pure strategy played against all
-        opponents playing mix.
-
-        '''
-        # The first use of 'tiny' makes 0^0=1.
-        # The second use of 'tiny' makes 0/0=0.
-        mix = self.to_array(mix)
-        weights = (((mix + _TINY)**self._counts).prod((1, 2))[:, None, None]
-                   * self._dev_reps / (mix + _TINY))
-        values = np.sum(self._values * weights, 0)
-        return values
-
-    def is_complete(self):
-        '''Returns true if every profile has data'''
-        return len(self._profile_map) == self._size
 
     def uniform_mixture(self, as_array=False):
         '''Returns a uniform mixed profile
@@ -410,6 +260,198 @@ class Game(EmptyGame):
                 else:
                     yield self.to_profile(biased)
 
+    def is_symmetric(self):
+        '''Returns true if this game is symmetric'''
+        return len(self.strategies) == 1
+
+    def is_asymmetric(self):
+        '''Returns true if this game is asymmetric'''
+        return all(p == 1 for p in self.players.values())
+
+    def to_json(self):
+        '''Convert to a json serializable format'''
+        return {'players': dict(self.players),
+                'strategies': {r: list(s) for r, s in self.strategies.items()}}
+
+    @staticmethod
+    def from_json(json_):
+        '''Load a profile from its json representation'''
+        params = gameio._game_from_json(json_)
+        return EmptyGame(*params[:2])
+
+    def __hash__(self):
+        return hash((self.players, self.strategies))
+
+    def __repr__(self):
+        return '<%s: %s, %s>' % (
+            self.__class__.__name__,
+            dict(self.players),
+            {r: set(ses) for r, ses in self.strategies.items()})
+
+    def __str__(self):
+        return (('%s:\n\t'
+                 'Roles: %s\n\t'
+                 'Players:\n\t\t%s\n\t'
+                 'Strategies:\n\t\t%s\n') % (
+                     self.__class__.__name__,
+                     ', '.join(sorted(self.strategies)),
+                     '\n\t\t'.join('%dx %s' % (count, role)
+                                   for role, count
+                                   in sorted(self.players.items())),
+                     '\n\t\t'.join('%s:\n\t\t\t%s' % (
+                         role,
+                         '\n\t\t\t'.join(strats))
+                                   for role, strats
+                                   in sorted(self.strategies.items()))
+                 )).expandtabs(4)
+
+
+def _comp_dev_reps(counts, players, exact=False):
+    '''Uses fast floating point math to compute devreps'''
+    # Sets up functions to be exact or approximate
+    if exact:
+        dtype = object
+        factorial = _exact_factorial
+        div = lambda a, b: a // b
+    else:
+        dtype = float
+        factorial = spm.factorial
+        div = lambda a, b: a / b
+
+    # Actual computation
+    strat_counts = np.array(list(players.values()), dtype=dtype)
+    player_factorial = factorial(counts).prod(2)
+    totals = np.prod(div(factorial(strat_counts), player_factorial), 1)
+    dev_reps = div(totals[:, np.newaxis, np.newaxis] *
+                   counts, strat_counts[:, np.newaxis])
+    return dev_reps
+
+
+class Game(EmptyGame):
+    '''Role-symmetric game representation.
+
+    players:     mapping from roles to number of players per role
+    strategies:  mapping from roles to per-role strategy sets
+    payoff_data: collection of data objects mapping roles to collections
+                 of (strategy, count, value) tuples
+    '''
+    def __init__(self, players, strategies, payoff_data=()):
+        super().__init__(players, strategies)
+
+        self._size = funcs.prod(funcs.game_size(self.players[role], len(strats))
+                                for role, strats in self.strategies.items())
+        self._role_index = {r: i for i, r in enumerate(self.strategies.keys())}
+        self._strategy_index = {r: {s: i for i, s in enumerate(strats)}
+                                for r, strats in self.strategies.items()}
+
+        payoff_data = list(payoff_data)  # To measure length
+        self._profile_map = {}
+        self._values = np.zeros((len(payoff_data),
+                                 len(self.strategies),
+                                 self._max_strategies))
+        self._counts = np.zeros_like(self._values, dtype=int)
+
+        for p, profile_data in enumerate(payoff_data):
+            prof = PureProfile((role, {s: c for s, c, _ in dats})
+                               for role, dats in profile_data.items())
+            assert prof not in self._profile_map, 'Duplicate profile %s' % prof
+            self._profile_map[prof] = p
+
+            for r, role in enumerate(self.strategies):
+                for strategy, count, payoffs in profile_data[role]:
+                    s = self._strategy_index[role][strategy]
+                    assert self._counts[p, r, s] == 0, (
+                        'Duplicate role strategy pair (%s, %s)'
+                        % (role, strategy))
+                    self._values[p, r, s] = np.average(payoffs)
+                    self._counts[p, r, s] = count
+
+        try:  # Use approximate unless it errors out
+            self._dev_reps = _comp_dev_reps(self._counts, self.players)
+        except FloatingPointError:
+            self._dev_reps = _comp_dev_reps(self._counts, self.players,
+                                            exact=True)
+        self._compute_min_payoffs()
+
+    def _compute_min_payoffs(self):
+        '''Assigns _min_payoffs to the minimum payoff for every role'''
+        # TODO Remove filled? There should be no mask
+        self._min_payoffs = (np.ma.masked_array(self._values,
+                                                self._counts == 0)
+                             .min((0, 2)).filled(0))
+
+    def get_payoff(self, profile, role, strategy):
+        '''Returns the payoff for a specific profile, role, and strategy'''
+        p = self._profile_map[self.to_profile(profile)]
+        r = self._role_index[role]
+        s = self._strategy_index[role][strategy]
+        return self._values[p, r, s]
+
+    def get_payoff_default(self, profile, role, strategy, default=np.inf):
+        '''Returns the payoff for a specific profile, role, and strategy
+
+        If the profile doesn't exist, returns default instead.
+
+        '''
+        prof = self.to_profile(profile)
+        if prof in self:
+            return self.get_payoff(prof, role, strategy)
+        else:
+            return default
+
+    def get_payoffs(self, profile):
+        '''Returns a dictionary mapping roles to strategies to payoff'''
+        payoffs = self._values[self._profile_map[self.to_profile(profile)]]
+        return {role: {strat: payoff for strat, payoff
+                       in zip(strats, strat_payoffs) if strat in profile[role]}
+                for (role, strats), strat_payoffs
+                in zip(self.strategies.items(), payoffs)}
+
+    def get_expected_payoff(self, mix, as_array=False):
+        '''Returns a dict of the expected payoff of a mixed strategy to each role
+
+        If as_array, then an array in role order is returned.
+
+        '''
+        payoff = (mix * self.expectedValues(mix)).sum(1)
+        if as_array:
+            return payoff
+        else:
+            return dict(zip(payoff, self.strategies))
+
+    def get_pure_social_welfare(self, profile):
+        '''Returns the social welfare of a pure strategy profile'''
+        p = self.profile_map[self.to_profile(profile)]
+        return np.sum(self._values * self._counts)
+
+    def get_mixed_social_welfare(self, mix):
+        '''Returns the social welfare of a mixed strategy profile'''
+        return self.get_expected_payoff(mix, as_array=True).dot(
+            self.players.values())
+
+    def get_max_social_welfare(self):
+        '''Returns the maximum social welfare over the known profiles'''
+        return np.sum(self._values * self._counts, (1, 2)).max()
+
+    def expected_values(self, mix):
+        '''Computes the expected value of each pure strategy played against all
+        opponents playing mix.
+
+        '''
+        # The first use of 'tiny' makes 0^0=1.
+        # The second use of 'tiny' makes 0/0=0.
+        mix = self.to_array(mix)
+        old = np.seterr(under='ignore')  # ignore underflow
+        weights = (((mix + _TINY)**self._counts).prod((1, 2))[:, None, None]
+                   * self._dev_reps / (mix + _TINY))
+        values = np.sum(self._values * weights, 0)
+        np.seterr(**old)  # Go back to old settings
+        return values
+
+    def is_complete(self):
+        '''Returns true if every profile has data'''
+        return len(self._profile_map) == self._size
+
     def is_constant_sum(self):
         '''Returns true if this game is constant sum'''
         profile_sums = np.sum(self._counts * self._values, (1, 2))
@@ -423,8 +465,14 @@ class Game(EmptyGame):
         return iter(self._profile_map)
 
     def __repr__(self):
+        return '%s, %d / %d>' % (
+            super().__repr__()[:-1],
+            len(self._profile_map),
+            self._size)
+
+    def __str__(self):
         return '%spayoff data for %d out of %d profiles' % (
-            super().__repr__(),
+            super().__str__(),
             len(self._profile_map),
             self._size)
 

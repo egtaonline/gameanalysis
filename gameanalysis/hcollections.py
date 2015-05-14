@@ -15,9 +15,13 @@ class frozendict(collections.Mapping):
     '''
 
     def __init__(self, *args, **kwargs):
-        self._d = collections.OrderedDict(
-            sorted(dict(*args, **kwargs).items()))
-        self._hash = None
+        if args and isinstance(args[0], frozendict):
+            self._d = args[0]._d
+            self._hash = args[0]._hash
+        else:
+            self._d = collections.OrderedDict(
+                sorted(dict(*args, **kwargs).items()))
+            self._hash = None
 
     def __iter__(self):
         return iter(self._d)

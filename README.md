@@ -3,6 +3,7 @@ Game Analysis
 
 This is a set of python scripts to manipulate empirical game data.
 
+
 Installation
 ------------
 
@@ -35,9 +36,18 @@ $ pip install -r requirements.txt
 
 TODO: At some point run tests to check.
 
+
 Usage
 -----
 
 After installation, you need to activate virtualenv every time you want to use
 this library. It can be activated with `. bin/activate` and deactivated with
 `deactivate`.
+
+
+Open Design Questions
+---------------------
+
+1. Are profiles and mixed profiles necessary, or should we just use arbitrary
+   mapping types and have functions that can operate on them?
+2. Should the array representation of profiles be exposed or hidden?
