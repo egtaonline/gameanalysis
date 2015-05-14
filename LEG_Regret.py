@@ -22,8 +22,7 @@ def main():
 	args = parse_args()
 	for index in range(args.start, args.stop):
 		agg_file = join(args.LEG_folder, str(index) + ".json")
-		eq_file = join(args.EQ_folder, str(index) +"_"+ args.game_type +
-													"_EQ-p.json")
+		eq_file = join(args.EQ_folder, str(index) +"_"+ args.game_type +".json")
 		out_file = join(args.EQ_folder, str(index) +"_"+ args.game_type +
 													"_regret.json")
 		if exists(out_file) or (not exists(eq_file)):
