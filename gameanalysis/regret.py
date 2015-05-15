@@ -1,4 +1,3 @@
-'''TODO'''
 import argparse
 import numpy as np
 
@@ -69,11 +68,11 @@ def mixture_deviation_gains(game, mix, as_array=False):
         role_evs = (strategy_evs * mix).sum(1)
         # No data for specific deviations
         # This is set after role_evs to not get invalid data
-        strategy_evs[~_deviation_data(game, mix) & game._mask] = np.inf
+        strategy_evs[~_deviation_data(game, mix) & game._mask] = np.nan
         gains = strategy_evs - role_evs[:, np.newaxis]
     else:  # No necessary data
         gains = np.empty_like(game._mask)
-        gains.fill(np.inf)
+        gains.fill(np.nan)
 
     if as_array:
         gains[~game._mask] = 0

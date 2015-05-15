@@ -399,7 +399,7 @@ class Game(EmptyGame):
         s = self._strategy_index[role][strategy]
         return self._values[p, r, s]
 
-    def get_payoff_default(self, profile, role, strategy, default=np.inf):
+    def get_payoff_default(self, profile, role, strategy, default=np.nan):
         '''Returns the payoff for a specific profile, role, and strategy
 
         If the profile doesn't exist, returns default instead.
