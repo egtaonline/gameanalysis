@@ -1,10 +1,9 @@
-import sys
-import argparse
-import json
+# import sys
+# import argparse
+# import json
 from collections import Counter
 
-import funcs
-import rsgame
+from gameanalysis import funcs
 
 
 def _game_from_json(json_):
@@ -194,37 +193,37 @@ def _samples_profile_v4_from_json(prof_json):
 #     return prof
 
 
-PARSER = argparse.ArgumentParser('Converts between game data formats')
-PARSER.add_argument('--input', '-i', type=argparse.FileType('r'),
-                    default=sys.stdin,
-                    help='Input game. Defaults to stdin.')
-PARSER.add_argument('--output', '-o', type=argparse.FileType('w'),
-                    default=sys.stdout,
-                    help='Output game. Defaults to stdout.')
-PARSER.add_argument('--format', '-f', choices=('json', 'nfg'),
-                    default='json', help='Output format.')
-PARSER.add_argument('--game-type', '-g',
-                    choices=('empty-game', 'game', 'sample-game'),
-                    default='game',
-                    help='''Interpret input as one of the game types. Output
-                    will match.''')
+# PARSER = argparse.ArgumentParser('Converts between game data formats')
+# PARSER.add_argument('--input', '-i', type=argparse.FileType('r'),
+#                     default=sys.stdin,
+#                     help='Input game. Defaults to stdin.')
+# PARSER.add_argument('--output', '-o', type=argparse.FileType('w'),
+#                     default=sys.stdout,
+#                     help='Output game. Defaults to stdout.')
+# PARSER.add_argument('--format', '-f', choices=('json', 'nfg'),
+#                     default='json', help='Output format.')
+# PARSER.add_argument('--game-type', '-g',
+#                     choices=('empty-game', 'game', 'sample-game'),
+#                     default='game',
+#                     help='''Interpret input as one of the game types. Output
+#                     will match.''')
 
-GAME_TYPE = {
-    'empty-game': rsgame.EmptyGame,
-    'game': rsgame.Game,
-    'sample-game': rsgame.SampleGame
-}
+# GAME_TYPE = {
+#     'empty-game': rsgame.EmptyGame,
+#     'game': rsgame.Game,
+#     'sample-game': rsgame.SampleGame
+# }
 
-OUTPUT_TYPE = {
-    'json': lambda game, out: json.dump(game.to_json(), out)
-}
-
-
-def main():
-    args = PARSER.parse_args()
-    game = GAME_TYPE[args.game_type].from_json(json.load(args.input))
-    OUTPUT_TYPE[args.format](game, args.output)
+# OUTPUT_TYPE = {
+#     'json': lambda game, out: json.dump(game.to_json(), out)
+# }
 
 
-if __name__ == '__main__':
-    main()
+# def main():
+#     args = PARSER.parse_args()
+#     game = GAME_TYPE[args.game_type].from_json(json.load(args.input))
+#     OUTPUT_TYPE[args.format](game, args.output)
+
+
+# if __name__ == '__main__':
+#     main()

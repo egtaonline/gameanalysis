@@ -12,7 +12,7 @@ except ImportError:
                      'installed (`pip install -r requirements.txt`).\n')
     sys.exit(1)
 
-from gameanalysis import randgames
+from gameanalysis import randgames, nash
 
 # TODO add a way to run tests from here
 
@@ -31,7 +31,7 @@ class HelpPrinter(object):
         if print_help:
             parser.print_help()
             return
-        args = parser.parse_args(args)
+        args, _ = parser.parse_known_args(args)
         if args.command is None:
             PARSER.print_help()
         else:
@@ -73,6 +73,7 @@ class TestRunner(object):
 
 COMMANDS = collections.OrderedDict([
     ('rand', randgames),
+    ('nash', nash),
     ('test', TestRunner),
     ('help', HelpPrinter)
 ])

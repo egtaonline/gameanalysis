@@ -8,7 +8,7 @@ import numpy as np
 import scipy.misc as spm
 from collections import Counter
 
-from gameanalysis import funcs
+from gameanalysis import funcs, gameio
 from gameanalysis.hcollections import frozendict
 
 
@@ -259,6 +259,18 @@ class EmptyGame(object):
                     yield biased
                 else:
                     yield self.to_profile(biased)
+
+    def pure_mixtures(self, as_array=False):
+        '''Returns a generator over all mixtures where the probability of playing a
+        strategy is either 1 or 0
+
+        Set as_array to True to return the mixed profiles in array form.
+
+        '''
+        wrap = self.to_array if as_array else lambda x: x
+        return (wrap(MixedProfile(rs)) for rs in itertools.product(
+            *([(r, {s: 1}) for s in sorted(ss)] for r, ss
+              in self.strategies.items())))
 
     def is_symmetric(self):
         '''Returns true if this game is symmetric'''
