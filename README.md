@@ -51,3 +51,9 @@ Open Design Questions
 1. Are profiles and mixed profiles necessary, or should we just use arbitrary
    mapping types and have functions that can operate on them?
 2. Should the array representation of profiles be exposed or hidden?
+3. Figure out exactly what the interface of Game is. Specifically, for
+   efficiency of some calculations it's necessary to expose things like _mask,
+   _counts, and _value, as well as the array form of some profiles for
+   efficiency. However, they're unintuitive, and so it seems weird to expose
+   them.
+4. PureProfile and MixedProfile or Profile and Mixture
