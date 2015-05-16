@@ -248,17 +248,18 @@ constant_params = {
 	"storage_mode":"light",
 	"thetaL":1e-8,
 	"thetaU":1e8,
-	"normalize":True
+	"normalize":True,
+	"theta0":1e-3
 }
 CV_params = {
 	"corr":["absolute_exponential","squared_exponential","cubic","linear"],
 	"nugget":[1e-4,1e-1,1e2],
-	"theta0":[1e-4,1e-1,1e2]
+#	"theta0":[1e-4,1e-1,1e2]
 }
 default_params = {
 	"corr":"squared_exponential",
-	"theta0":1e-1,
 	"nugget":1e-1
+#	"theta0":1e-1,
 }
 
 
