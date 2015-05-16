@@ -9,7 +9,7 @@ import scipy.misc as spm
 from collections import Counter
 
 from gameanalysis import funcs, gameio
-from gameanalysis.hcollections import frozendict
+from gameanalysis.collect import frozendict
 
 
 # Raise an error on any funny business
@@ -556,7 +556,7 @@ class SampleGame(Game):
 #                 p = self.index(role, played[0])
 #                 samples[r][s] = [0]*len(samples[r][p])
 #         self.sample_values.append(np.array(samples))
-    
+
 #     def getPayoffData(self, profile, role, strategy):
 #         v = self.sample_values[self[profile]]
 #         return v[self.index(role), self.index(role,strategy)]

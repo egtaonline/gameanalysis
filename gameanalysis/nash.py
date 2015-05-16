@@ -87,12 +87,12 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
 _PARSER = argparse.ArgumentParser(add_help=False, description='''Compute nash
 equilibria in a game.''')
 _PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
-                     type=argparse.FileType('r'), help='''Input game file;
-                     default=stdin''')
+                     type=argparse.FileType('r'), help='''Input game file.
+                     (default: stdin)''')
 _PARSER.add_argument('--output', '-o', metavar='eq-file', default=sys.stdout,
                      type=argparse.FileType('w'), help='''Output equilibria
                      file. This file will contain a json list of mixed
-                     profiles; default=stdout''')
+                     profiles. (default: stdout)''')
 _PARSER.add_argument('--regret', '-r', metavar='thresh', type=float,
                      default=1e-3, help='''Max allowed regret for approximate
                      Nash equilibria; default=1e-3''')
