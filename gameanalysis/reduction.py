@@ -76,8 +76,11 @@ def _profile_contributions(profile, players, reduced_players):
               for role, count in players.items()}
     for role, strats in profile.items():
         r_fracts = dict(fracts)
-        # FIXME special case when reduced down to one player
-        r_fracts[role] = (players[role] - 1) // (reduced_players[role] - 1)
+        # The conditional fixed the case when one player is reduced down to one
+        # player, but it does not support reducing n > 1 players down to 1,
+        # which requires a hierarchical reduction.
+        r_fracts[role] = (1 if players[role] == reduced_players[role] == 1
+                          else (players[role] - 1) // (reduced_players[role] - 1))
         for strat in strats:
             prof_copy = dict(profile)
             prof_copy[role] = dict(strats)
