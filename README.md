@@ -45,6 +45,22 @@ this library. It can be activated with `. bin/activate` and deactivated with
 `deactivate`.
 
 
+Style Guidelines
+----------------
+
+Generally follow PEP8 standard.
+
+1. Single quotes
+2. Lowercase underscore for mathod names
+3. Camelcase classes
+4. Unless obvious or necessary, try to only import modules not specific
+   functions or classes from a module.
+5. Put a docstring for every public function and class. The first line should
+   be short summary followed by a more detailed description perhaps detailing
+   information about parameters or return values.
+6. flake8
+
+
 Open Design Questions
 ---------------------
 
@@ -59,3 +75,7 @@ Open Design Questions
 4. PureProfile and MixedProfile or Profile and Mixture
 5. Whether to include version numbers or descriptions on profiles / mixtures or
    keep them a raw description.
+6. Need to change defualt game representation from
+   [{role: [(strat, count, payoff)]}] to [{role: [(strat, count, [payoffs])]}]
+7. Handle games where data doesn't exist for every role strategy pair, but only
+   some agents.

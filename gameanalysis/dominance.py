@@ -1,17 +1,16 @@
+'''TODO'''
 import sys
 import argparse
 import json
+import math
 import itertools
 import numpy as np
 
-from gameanalysis import rsgame, regret
+from gameanalysis import rsgame, regret, subgame
 
-# from math import isinf
-
-# from RoleSymmetricGame import Profile
-# from Regret import regret
-# from Subgames import subgame
-
+# TODO: I dislike the way that the missing data handling is specified. (0, 1,
+# 2) that are also used as boolean values. It also seems like some of these
+# functions could be more efficient.
 
 def iterated_elimination(game, criterion, *args, **kwargs):
     '''Iterated elimination of dominated strategies
@@ -20,48 +19,55 @@ def iterated_elimination(game, criterion, *args, **kwargs):
     criterion = function to find dominated strategies
 
     '''
-    reduced_game = eliminate_strategies(game, criterion, *args, **kwargs)
+    reduced_game = _eliminate_strategies(game, criterion, *args, **kwargs)
     while len(reduced_game) < len(game):
         game = reduced_game
-        reduced_game = eliminate_strategies(game, criterion, *args, **kwargs)
+        reduced_game = _eliminate_strategies(game, criterion, *args, **kwargs)
     return game
 
 
-def eliminate_strategies(game, criterion, *args, **kwargs):
+def _eliminate_strategies(game, criterion, *args, **kwargs):
     eliminated = criterion(game, *args, **kwargs)
-    return subgame(game, {r : set(game.strategies[r]) - eliminated[r] \
-            for r in game.roles})
+    return (subgame.EmptySubgame(game,
+                                 {role: set(strats) - eliminated[role]
+                                  for role, strats in game.strategies.items()})
+            ).create_game()
 
 
-def best_responses(game, prof, role=None, strategy=None):
-    '''If role is unspecified, bestResponses returns a dict mapping each role all
-    of its strategy-level results. If strategy is unspecified, best_responses
-    returns a dict mapping strategies to the set of best responses to the
-    opponent-profile without that strategy.
+def best_responses(game, prof):
+    '''Returns the best responses to a profile
+
+    The return a dict mapping role to a two tuple. The first element of the two
+    tuple is a set of confirmed best responses. The second is a set of
+    strategies without data so they may be a better response or not.
 
     '''
-    if role == None:
-        return {r: best_responses(game, prof, r, strategy) for r \
-                in game.roles}
-    if strategy == None and isinstance(prof, Profile):
-        return {s: best_responses(game, prof, role, s) for s in \
-                prof[role]}
-    best_deviations = set()
-    biggest_gain = -np.inf
-    unknown = set()
-    for dev in game.strategies[role]:
-        reg = regret(game, prof, role, strategy, dev)
-        if isinf(reg):
-            unknown.add(dev)
-        elif reg > biggest_gain:
-            best_deviations = {dev}
-            biggest_gain = reg
-        elif reg == biggest_gain:
-            best_deviations.add(dev)
-    return best_deviations, unknown
+    prof = game.to_profile(prof)
+    gains = regret.pure_strategy_deviation_gains(game, prof)
+    responses = {}
+
+    for role, strat_gains in gains.items():
+        role_best = set()
+        role_unknown = set()
+        for strat, dev_gains in strat_gains.items():
+            best_deviations = []
+            biggest_gain = -np.inf
+            unknown = set()
+            for dev, gain in dev_gains.items():
+                if math.isnan(gain):
+                    unknown.add(dev)
+                elif gain > biggest_gain:
+                    best_deviations = {dev}
+                    biggest_gain = gain
+                elif gain == biggest_gain:
+                    best_deviations.add(dev)
+            role_best.update(best_deviations)
+            role_unknown.update(unknown)
+        responses[role] = (role_best, role_unknown)
+    return responses
 
 
-def never_best_response(game, conditional=True):
+def never_best_response(game, conditional=1):
     '''Never-a-weak-best-response criterion for IEDS
 
     This criterion is very strong: it can eliminate strict Nash equilibria.
@@ -70,17 +76,53 @@ def never_best_response(game, conditional=True):
     non_best_responses = {role: set(strats) for role, strats
                           in game.strategies.items()}
     for prof in game:
-        for r in game.roles:
-            for s in prof[r]:
-                br, unknown = best_responses(game, prof, r, s)
-                non_best_responses[r] -= set(br)
-                if conditional:
-                    non_best_responses[r] -= unknown
+        for role, (best, unknown) in best_responses(game, prof).items():
+            non_best_responses[role] -= set(best)
+            if conditional:
+                non_best_responses[role] -= unknown
     return non_best_responses
+
+
+def dominates(game, role, dominant, dominated, conditional=1, weak=False):
+    dominance_observed = False
+    for prof in game:
+        if dominated in prof[role]:
+            reg = regret(game, prof, role, dominated, dominant)
+            if reg > 0 and not math.isnan(reg):
+                dominance_observed = True
+            elif (reg < 0) or (reg == 0 and not weak) or \
+                    (math.isnan(reg) and conditional):
+                return False
+        elif conditional > 1 and dominant in prof[role] and \
+                (prof.deviate(role, dominant, dominated) not in game):
+                return False
+    return dominance_observed
+
+
+def _undominated(game, prof, conditional=1, weak=False):
+    '''Returns a mapping from role to strategies to strategy set
+
+    The final set are the of the deviations that the first strategy is not
+    dominated by. Another way to put it would this this maps from role to
+    strategies to deviations that don't dominate strategy.
+
+    '''
+    gains = regret.pure_strategy_deviation_gains(game, prof)
+    return {role:
+            {strat:
+             {dev for dev, gain in dev_gains.items()
+              if gain < 0  # There was a positive gain once
+              or (gain == 0 and not weak)  # Tie counts for strict
+              or (conditional and np.isnan(gain))  # Missing data
+              or (conditional > 1 and prof.deviate(dev, strat) not in game)}
+             for strat, dev_gains in strat_grains.items()}
+            for role, strat_gains in gains.items()}
 
 
 def pure_strategy_dominance(game, conditional=1, weak=False):
     '''Pure-strategy dominance criterion for IEDS
+
+    Returns a mapping from role to dominated strategies.
 
     conditional:
         0: unconditional dominance
@@ -88,33 +130,23 @@ def pure_strategy_dominance(game, conditional=1, weak=False):
         2: extra-conservative conditional dominance
 
     '''
-    dominated_strategies = {r: set() for r in game.strategies}
-    for role, strats in game.strategies.items():
-        for dominant, dominated in itertools.product(strats, repeat=2):
-            if dominant == dominated or \
-               dominated in dominated_strategies[role] or \
-               dominant in dominated_strategies[role]:
-                continue
-            if dominates(game, role, dominant, dominated, conditional, weak):
-                dominated_strategies[role].add(dominated)
-    return dominated_strategies
-
-
-def dominates(game, role, dominant, dominated, conditional=True, weak=False):
-    dominance_observed = False
+    dominated_strategies = {role: {st: set(strats) - st for st in strats}
+                            for role, strats in game.strategies}
     for prof in game:
-        if dominated in prof[role]:
-            reg = regret(game, prof, role, dominated, dominant)
-            if reg > 0 and not isinf(reg):
-                dominance_observed = True
-            elif (reg < 0) or (reg == 0 and not weak) or \
-                    (isinf(reg) and conditional):
-                return False
-        elif conditional > 1 and dominant in prof[role] and \
-                (prof.deviate(role, dominant, dominated) not in game):
-                return False
-    return dominance_observed
+        undominated = _undominated(game, prof, conditional, weak)
+        for role, strats in undominated.items():
+            for strat, undom in strats.items():
+                dominated_strategies[role][strat] -= undom
+        if all(all(not dom for dom in strats.values())
+               for strats in dominated_strategies.values()):
+            break  # No domination
 
+    return {role: {strat for strat, dom in strats if dom}
+            for role, strats in dominated_strategies.items()}
+
+#####################
+# Dominance Command #
+#####################
 
 _CRITERIA = {
         'psd': pure_strategy_dominance,

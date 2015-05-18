@@ -1,37 +1,34 @@
+'''TODO'''
 import argparse
 import numpy as np
 
 from gameanalysis import subgame
 
 
-def _pure_strategy_deviation_gains(game, prof):
-    '''Like the non private version, but this returns generators of tuples'''
-    prof = game.to_profile(prof)
-    return ((role,
-             ((strat,
-               ((dev, game.get_payoff_default(prof.deviate(role, strat, dev),
-                                              role, dev) - payoff)
-                for dev in game.strategies[role]))
-              for strat, payoff in strat_payoffs.items()))
-            for role, strat_payoffs in game.get_payoffs(prof).items())
-
-
 def pure_strategy_deviation_gains(game, prof):
     '''Returns a nested dict containing all of the gains from deviation
 
-    The nested dict maps role to strategy to deviation to gain.
+    The nested dict maps role to strategy to deviation to gain. The profile
+    must have data.
 
     '''
-    return {role: {strat: dict(dev_gain) for strat, dev_gain in strat_gain}
-            for role, strat_gain
-            in _pure_strategy_deviation_gains(game, prof)}
+    prof = game.to_profile(prof)
+    return {role:
+            {strat:
+             {dev: game.get_payoff(
+                 prof.deviate(role, strat, dev, default=np.nan),
+                 role, dev) - payoff
+              for dev in game.strategies[role]}
+             for strat, payoff in strat_payoffs.items()}
+            for role, strat_payoffs in game.get_payoffs(prof).items()}
 
 
 def pure_strategy_regret(game, prof):
     '''Returns the regret of a pure strategy profile in a game'''
-    return max(max(max(gain for _, gain in dev_gain)
-                   for _, dev_gain in strat_gain)
-               for _, strat_gain in _pure_strategy_deviation_gains(game, prof))
+    return max(max(max(gain for _, gain in dev_gain.items())
+                   for _, dev_gain in strat_gain.items())
+               for _, strat_gain
+               in pure_strategy_deviation_gains(game, prof).items())
 
 
 def _subgame_data(game, mix):

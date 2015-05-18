@@ -347,7 +347,7 @@ class Game(EmptyGame):
     payoff_data: collection of data objects mapping roles to collections
                  of (strategy, count, value) tuples
     '''
-    def __init__(self, players, strategies, payoff_data=()):
+    def __init__(self, players, strategies, payoff_data):
         super().__init__(players, strategies)
 
         self._size = funcs.prod(funcs.game_size(self.players[role], len(strats))
@@ -392,24 +392,19 @@ class Game(EmptyGame):
                                                 self._counts == 0)
                              .min((0, 2)).filled(0))
 
-    def get_payoff(self, profile, role, strategy):
-        '''Returns the payoff for a specific profile, role, and strategy'''
+    def get_payoff(self, profile, role, strategy, default=None):
+        '''Returns the payoff for a specific profile, role, and strategy
+
+        If there's no data for the profile, and a default is specified, that is
+        returned.
+
+        '''
+        if default is not None and profile not in self:
+            return default
         p = self._profile_map[self.to_profile(profile)]
         r = self._role_index[role]
         s = self._strategy_index[role][strategy]
         return self._values[p, r, s]
-
-    def get_payoff_default(self, profile, role, strategy, default=np.nan):
-        '''Returns the payoff for a specific profile, role, and strategy
-
-        If the profile doesn't exist, returns default instead.
-
-        '''
-        prof = self.to_profile(profile)
-        if prof in self:
-            return self.get_payoff(prof, role, strategy)
-        else:
-            return default
 
     def get_payoffs(self, profile):
         '''Returns a dictionary mapping roles to strategies to payoff'''

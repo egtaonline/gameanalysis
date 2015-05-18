@@ -3,20 +3,40 @@ import bisect
 import itertools
 
 from gameanalysis import rsgame
-# from HashableClasses import h_dict
-# from RoleSymmetricGame import SampleGame, PayoffData
-# from GameIO import read
 
 
 def pure_subgames(game):
     '''Returns a generator of every pure subgame in a game
 
-    A pure subgame is a subgame where each role only has one strategy.
+    A pure subgame is a subgame where each role only has one strategy. This
+    returns the pure subgames in sorted order based off of role and strategy
+    names.
 
     '''
     return (EmptySubgame(game, dict(rs)) for rs in itertools.product(
         *([(r, {s}) for s in sorted(ss)] for r, ss
           in game.strategies.items())))
+
+
+def _strategies_to_set(strategies):
+    '''Converts a strategies dict to a set of role strategy tuples'''
+    return frozenset(itertools.chain.from_iterable(
+        ((r, s) for s in ses) for r, ses in strategies.items()))
+
+
+def _extract_profiles(game, strategies):
+    '''Given a game and a reduced set of strategies, create a general profile
+    structure to feed into a game initialization
+
+    '''
+    subgame_set = _strategies_to_set(strategies)
+    for prof in game:
+        if not _strategies_to_set(prof).issubset(subgame_set):
+            continue  # Profile not in subgame
+        payoffs = game.get_payoffs(prof)
+        yield {role: [(strat, prof[role][strat], (payoff,))
+                      for strat, payoff in strat_payoffs.items()]
+               for role, strat_payoffs in payoffs.items()}
 
 
 class EmptySubgame(rsgame.EmptyGame):
@@ -63,6 +83,19 @@ class EmptySubgame(rsgame.EmptyGame):
         strats = dict(self.strategies)
         strats[role] = list(strats[role]) + [strategy]
         return EmptySubgame(self.full_game, strats)
+
+    def create_game(self):
+        '''Returns a new game that only has data for profiles in this subgame
+
+        '''
+        return rsgame.Game(self.players, self.strategies,
+                           _extract_profiles(self.full_game, self.strategies))
+
+# XXX I wanted to make a multiple inheritance subgame object that behaved like
+# a game, but also had data. I couldn't get this to work with pythons multiple
+# inheritance. It would have been a diamond pattern, which isn't great. I'm not
+# sure what the best approach is, but given that the data basically has to be
+# copied for efficiency, I just made an explicit call in EmptySubgame.
 
 # def translate(arr, source_game, target_game):
 #     '''
@@ -137,18 +170,16 @@ class EmptySubgame(rsgame.EmptyGame):
 #             return False
 #     return True
 
-def _subgame_to_set(subgame):
-    '''Converts a subgame to a set of role strategy tuples'''
-    return frozenset(itertools.chain.from_iterable(
-        ((r, s) for s in ses) for r, ses in subgame.strategies.items()))
-
-
 def maximal_subgames(game):
-    # invariant that we have data for every subgame in queue
+    '''Returns a generator over all maximally complete subgames
 
-    # FIXME still needs stopping condition, and actual order to iteration
+    The subgames returned are empty subgames.
+
+    '''
+    # invariant that we have data for every subgame in queue
     queue = [sub for sub in pure_subgames(game)
              if all(p in game for p in sub.all_profiles())]
+    # Bisect strategies
     bsts = {role: tuple(sorted(ses)) for role, ses in game.strategies.items()}
     maximals = []
     while queue:
@@ -165,23 +196,22 @@ def maximal_subgames(game):
         # always find the largest subset first, but subsequent 'maximal'
         # subsets may actually be subsets of previous maximal subsets.
         if maximal:
-            as_set = _subgame_to_set(sub)
+            as_set = _strategies_to_set(sub.strategies)
             if not any(as_set.issubset(max_sub) for max_sub in maximals):
                 maximals.append(as_set)
                 yield sub
 
+###################
+# Subgame Command #
+###################
 
 _PARSER = argparse.ArgumentParser(description='''Detect all complete subgames
 in a partial game or extract specific subgames.''')
-_PARSER.add_argument('mode', choices=['detect', 'extract'], help='''If mode is
+_PARSER.add_argument('mode', choices=('detect', 'extract'), help='''If mode is
 set to detect, all complete subgames will be found, and the output will be a
 JSON list of role:[strategies] maps enumerating the complete subgames. If mode
 is set to extract, then the output will be a JSON representation of a game or a
 list of games with the specified subsets of strategies.''')
-_PARSER.add_argument('-k', metavar='known_subgames', type=str, default='',
-                     help='''In 'detect' mode: file containing known complete
-                     subgames from a prior run. If available, this will often
-                     speed up the clique-finding algorithm.''')
 _PARSER.add_argument('--full', action='store_true', help='''In 'detect' mode:
 setting this flag causes the script to output games instead of role:strategy
 maps.''')
