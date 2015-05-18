@@ -57,3 +57,5 @@ Open Design Questions
    efficiency. However, they're unintuitive, and so it seems weird to expose
    them.
 4. PureProfile and MixedProfile or Profile and Mixture
+5. Whether to include version numbers or descriptions on profiles / mixtures or
+   keep them a raw description.
