@@ -6,19 +6,47 @@ import itertools
 from gameanalysis import rsgame
 
 
+def _to_support_set(profile):
+    '''Takes a profile like object and returns a set representing the support
+
+    In this case, a profile object is a dict mapping role to an interable of
+    strategies. This includes cases when the iterable of strategies is another
+    mapping type to any sort of information. The support set is simply a set of
+    (role, strategy) that have support in this profile type.
+
+    '''
+    return set(itertools.chain.from_iterable(
+        ((r, s) for s in ses) for r, ses in profile.items()))
+
+
+def _hr_profiles(game, reduced_players):
+    '''Returns a generator over tuples of hr profiles and the corresponding profile
+    for payoff data
+
+    '''
+    # TODO Right now this is written only for exact HR
+    fracts = {role: count // reduced_players[role]
+              for role, count in game.players.items()}
+    for profile in game:
+        if all(all(cnt % fracts[r] == 0 for cnt in ses.values())
+               for r, ses in profile.items()):
+            red_prof = rsgame.PureProfile(
+                (r, [(s, cnt // fracts[r])
+                     for s, cnt in ses.items()])
+                for r, ses in profile.items())
+            yield red_prof, profile
+
+
 def hierarchical_reduction(game, players):
-    raise NotImplementedError
-#     HR_game = type(game)(game.roles, players, game.strategies)
-#     for reduced_profile in HR_game.allProfiles():
-#         try:
-#             full_profile = Profile({r:full_prof_sym(reduced_profile[r], \
-#                     game.players[r]) for r in game.roles})
-#             HR_game.addProfile({r:[PayoffData(s, reduced_profile[r][s], \
-#                     game.getPayoffData(full_profile, r, s)) for s in \
-#                     full_profile[r]] for r in full_profile})
-#         except KeyError:
-#             continue
-#     return HR_game
+    '''Convert an input game to a reduced game with new players
+
+    This version uses exact math, and so will fail if your player counts are
+    not DPR reducible.
+
+    '''
+    profiles = (red_prof.to_input_profile(game.get_payoffs(profile))
+                for red_prof, profile in _hr_profiles(game, players))
+    return rsgame.Game(players, game.strategies, profiles)
 
 
 # def full_prof_sym(HR_profile, N):
@@ -49,24 +77,24 @@ def hierarchical_reduction(game, players):
 #     return full_profile
 
 
-def full_prof_DPR(DPR_profile, role, strat, players):
-    '''Returns the full game profile whose payoff determines that of strat in the
-    reduced game profile.
+# def full_prof_DPR(DPR_profile, role, strat, players):
+#     '''Returns the full game profile whose payoff determines that of strat in the
+#     reduced game profile.
 
-    '''
-    full_prof = {}
-    for r in DPR_profile:
-        if r == role:
-            opp_prof = DPR_profile.asDict()[r]
-            opp_prof[strat] -= 1
-            full_prof[r] = full_prof_sym(opp_prof, players[r] - 1)
-            full_prof[r][strat] += 1
-        else:
-            full_prof[r] = full_prof_sym(DPR_profile[r], players[r])
-    return rsgame.PureProfile(full_prof)
+#     '''
+#     full_prof = {}
+#     for r in DPR_profile:
+#         if r == role:
+#             opp_prof = DPR_profile.asDict()[r]
+#             opp_prof[strat] -= 1
+#             full_prof[r] = full_prof_sym(opp_prof, players[r] - 1)
+#             full_prof[r][strat] += 1
+#         else:
+#             full_prof[r] = full_prof_sym(DPR_profile[r], players[r])
+#     return rsgame.PureProfile(full_prof)
 
 
-def _profile_contributions(profile, players, reduced_players):
+def _dpr_profile_contributions(profile, players, reduced_players):
     '''Returns a generator of dpr profiles and the role-strategy pair that
     contributes to it
 
@@ -103,38 +131,29 @@ def deviation_preserving_reduction(game, players):
     '''Convert an input game to a reduced game with new players
 
     This version uses exact math, and so will fail if your player counts are
-    not DPR reducible.
+    not DPR reducible. It also means the minimum number of players to reduce a
+    role to is 2, unless the role only has one player to begin with.
 
     '''
-    # Map from profile to (role, strat) to a list of payoffs
+    # Map from profile to role to strat to a list of payoffs
+    # This allows us to incrementally build DPR profiles as we scan the data
     # The list is so we can keep multiple observations, but it's not clear how
     # well we can take advantage of this.
     profile_map = {}
     for prof in game:
         payoffs = game.get_payoffs(prof)
-        for red_prof, role, strat in _profile_contributions(
+        for red_prof, role, strat in _dpr_profile_contributions(
                 prof, game.players, players):
-            (profile_map.setdefault(red_prof, {}).setdefault((role, strat), [])
+            (profile_map.setdefault(red_prof, {})
+             .setdefault(role, {})
+             .setdefault(strat, [])
              .append(payoffs[role][strat]))
 
-    # What follows is a long, but documented generator expression.
-    #
-    # This stage builds the structure {role: sym_group}
-    profs = ({role: {(strat, counts, tuple(payoff_map[(role, strat)]))
-                     for strat, counts in strats.items()}
-              for role, strats in prof.items()}
-             # Profile map contains a profile key {role: {strat: count}} and a
-             # payoff map {(role, strat): payoff}, all the info we need to
-             # construct a profile
-             for prof, payoff_map in profile_map.items()
-             # This final stage turns the profile into (role, strat) tuples and
-             # verifies that all are present in the payoff map before we
-             # construct a profile. Otherwise we would not have data for all of
-             # the strategies for a profile.
-             if all(rs in payoff_map for rs in itertools.chain.from_iterable(
-                 ((r, s) for s in ses) for r, ses in prof.items())))
+    profiles = (prof.to_input_profile(payoff_map)
+                for prof, payoff_map in profile_map.items()
+                if _to_support_set(payoff_map) == _to_support_set(prof))
 
-    return rsgame.Game(players, game.strategies, profs)
+    return rsgame.Game(players, game.strategies, profiles)
 
 
 def twins_reduction(game, _=None):

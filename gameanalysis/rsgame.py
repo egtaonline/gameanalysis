@@ -18,6 +18,10 @@ _exact_factorial = np.vectorize(math.factorial, otypes=[object])
 _TINY = np.finfo(float).tiny
 
 
+# TODO Remove reliance on _values in game to allow more efficient computation
+# of a subgame.
+
+
 class PureProfile(frozendict):
     '''A pure profile is a static assignment of players to roles and strategies
 
@@ -58,6 +62,19 @@ class PureProfile(frozendict):
         if role_copy[strategy] == 0:
             role_copy.pop(strategy)
         return PureProfile(copy)
+
+    def to_input_profile(self, payoff_map):
+        '''Given a payoff map, which maps role to strategy to payoffs, return an input
+        profile for game construction
+
+        This requires that the payoff map contains data for every role and
+        strategy in the profile. An input profile looks like {role: [(strat,
+        count, payoffs)]}, and is necessary to construct a game object.
+
+        '''
+        return {role: {(strat, counts, payoff_map[role][strat])
+                       for strat, counts in strats.items()}
+                for role, strats in self.items()}
 
     def to_json(self):
         '''Return a representation that is json serializable'''

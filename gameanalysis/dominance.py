@@ -3,7 +3,6 @@ import sys
 import argparse
 import json
 import math
-import itertools
 import numpy as np
 
 from gameanalysis import rsgame, regret, subgame
@@ -11,6 +10,14 @@ from gameanalysis import rsgame, regret, subgame
 # TODO: I dislike the way that the missing data handling is specified. (0, 1,
 # 2) that are also used as boolean values. It also seems like some of these
 # functions could be more efficient.
+
+# TODO EmptySubgame.create_game duplicates all of the data in the game, but
+# most of these functions only rely on the profile map. It'd be much faster to
+# just scan the map once and filter out the invalid profiles. This game copy
+# that just references the full game would be much faster, but lacks some of
+# the functionality. I'm not sure what the best way to handle this is, but it
+# would make this significantly more performant.
+
 
 def iterated_elimination(game, criterion, *args, **kwargs):
     '''Iterated elimination of dominated strategies
@@ -34,7 +41,7 @@ def _eliminate_strategies(game, criterion, *args, **kwargs):
             ).create_game()
 
 
-def best_responses(game, prof):
+def _best_responses(game, prof):
     '''Returns the best responses to a profile
 
     The return a dict mapping role to a two tuple. The first element of the two
@@ -76,27 +83,11 @@ def never_best_response(game, conditional=1):
     non_best_responses = {role: set(strats) for role, strats
                           in game.strategies.items()}
     for prof in game:
-        for role, (best, unknown) in best_responses(game, prof).items():
+        for role, (best, unknown) in _best_responses(game, prof).items():
             non_best_responses[role] -= set(best)
             if conditional:
                 non_best_responses[role] -= unknown
     return non_best_responses
-
-
-def dominates(game, role, dominant, dominated, conditional=1, weak=False):
-    dominance_observed = False
-    for prof in game:
-        if dominated in prof[role]:
-            reg = regret(game, prof, role, dominated, dominant)
-            if reg > 0 and not math.isnan(reg):
-                dominance_observed = True
-            elif (reg < 0) or (reg == 0 and not weak) or \
-                    (math.isnan(reg) and conditional):
-                return False
-        elif conditional > 1 and dominant in prof[role] and \
-                (prof.deviate(role, dominant, dominated) not in game):
-                return False
-    return dominance_observed
 
 
 def _undominated(game, prof, conditional=1, weak=False):
@@ -149,13 +140,13 @@ def pure_strategy_dominance(game, conditional=1, weak=False):
 #####################
 
 _CRITERIA = {
-        'psd': pure_strategy_dominance,
-        'nbr': never_best_response}
+    'psd': pure_strategy_dominance,
+    'nbr': never_best_response}
 
 _MISSING = {
-        'uncond': 0,
-        'cond': 1,
-        'conservative': 2}
+    'uncond': 0,
+    'cond': 1,
+    'conservative': 2}
 
 _PARSER = argparse.ArgumentParser(add_help=False, description='')
 _PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
