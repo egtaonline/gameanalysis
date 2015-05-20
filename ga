@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+'''TODO'''
 import sys
 
 if not hasattr(sys, 'real_prefix'):
-    sys.stderr.write('Could not detect virtualen. Make sure that you\'ve '
+    sys.stderr.write('Could not detect virtualenv. Make sure that you\'ve '
                      'activated the virtual env\n(`. bin/activate`).\n')
     sys.exit(1)
 
@@ -11,7 +12,7 @@ import nose
 import collections
 import textwrap
 
-from gameanalysis import randgames, nash, reduction
+from gameanalysis import randgames, nash, reduction, subgame
 
 
 class HelpPrinter(object):
@@ -72,6 +73,7 @@ COMMANDS = collections.OrderedDict([
     ('rand', randgames),
     ('nash', nash),
     ('reduce', reduction),
+    ('subgame', subgame),
     ('test', TestRunner),
     ('help', HelpPrinter)
 ])

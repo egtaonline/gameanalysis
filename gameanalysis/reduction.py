@@ -1,22 +1,8 @@
 import sys
 import argparse
 import json
-import itertools
 
-from gameanalysis import rsgame
-
-
-def _to_support_set(profile):
-    '''Takes a profile like object and returns a set representing the support
-
-    In this case, a profile object is a dict mapping role to an interable of
-    strategies. This includes cases when the iterable of strategies is another
-    mapping type to any sort of information. The support set is simply a set of
-    (role, strategy) that have support in this profile type.
-
-    '''
-    return set(itertools.chain.from_iterable(
-        ((r, s) for s in ses) for r, ses in profile.items()))
+from gameanalysis import rsgame, subgame
 
 
 def _hr_profiles(game, reduced_players):
@@ -108,7 +94,8 @@ def _dpr_profile_contributions(profile, players, reduced_players):
         # player, but it does not support reducing n > 1 players down to 1,
         # which requires a hierarchical reduction.
         r_fracts[role] = (1 if players[role] == reduced_players[role] == 1
-                          else (players[role] - 1) // (reduced_players[role] - 1))
+                          else ((players[role] - 1)
+                                // (reduced_players[role] - 1)))
         for strat in strats:
             prof_copy = dict(profile)
             prof_copy[role] = dict(strats)
@@ -151,7 +138,8 @@ def deviation_preserving_reduction(game, players):
 
     profiles = (prof.to_input_profile(payoff_map)
                 for prof, payoff_map in profile_map.items()
-                if _to_support_set(payoff_map) == _to_support_set(prof))
+                if (subgame.support_set(payoff_map)
+                    == subgame.support_set(prof)))
 
     return rsgame.Game(players, game.strategies, profiles)
 

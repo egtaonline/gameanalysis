@@ -525,11 +525,12 @@ class Game(EmptyGame):
         '''Convert to json according to the egta-online v3 default game spec'''
         return {'players': dict(self.players),
                 'strategies': {r: list(s) for r, s in self.strategies.items()},
-                'profiles': list(itertools.chain.from_iterable(
-                    ({role: [(strat, count, self.get_payoff(prof, role, strat))
-                             for strat, count in strats.items()]}
-                     for role, strats in prof.items())
-                    for prof in self._profile_map))}
+                'profiles': [
+                    {role:
+                     [(strat, count, [self.get_payoff(prof, role, strat)])
+                      for strat, count in strats.items()]
+                     for role, strats in prof.items()}
+                    for prof in self._profile_map]}
 
     @staticmethod
     def from_json(json_):

@@ -1,5 +1,13 @@
+'''Module for performing actions on subgames
+
+A subgame is a game with a restricted set of strategies that usually make
+analysis tractable.
+
+'''
+import sys
 import argparse
 import bisect
+import json
 import itertools
 
 from gameanalysis import rsgame
@@ -18,8 +26,20 @@ def pure_subgames(game):
           in game.strategies.items())))
 
 
-def _strategies_to_set(strategies):
-    '''Converts a strategies dict to a set of role strategy tuples'''
+# TODO This returns a set over the support of a profile that can be useful for
+# making comparisons between supports. This feels like it belongs in a class
+# instead of as a function, but the class would basically have this one
+# function. It could be tied in with EmptySubgame, but that seems verbose and
+# somewhat over designed.
+def support_set(strategies):
+    '''Takes a support like object and returns a set representing the support
+
+    A support like object is a dict mapping role to an iterable of
+    strategies. This includes cases when the iterable of strategies is another
+    mapping type to any sort of information, e.g. a profile. The support set is
+    simply a set of (role, strategy) that have support in this profile type.
+
+    '''
     return frozenset(itertools.chain.from_iterable(
         ((r, s) for s in ses) for r, ses in strategies.items()))
 
@@ -29,9 +49,9 @@ def _extract_profiles(game, strategies):
     structure to feed into a game initialization
 
     '''
-    subgame_set = _strategies_to_set(strategies)
+    subgame_set = support_set(strategies)
     for prof in game:
-        if not _strategies_to_set(prof).issubset(subgame_set):
+        if not support_set(prof).issubset(subgame_set):
             continue  # Profile not in subgame
         payoffs = game.get_payoffs(prof)
         yield {role: [(strat, prof[role][strat], (payoff,))
@@ -84,18 +104,12 @@ class EmptySubgame(rsgame.EmptyGame):
         strats[role] = list(strats[role]) + [strategy]
         return EmptySubgame(self.full_game, strats)
 
-    def create_game(self):
-        '''Returns a new game that only has data for profiles in this subgame
 
-        '''
-        return rsgame.Game(self.players, self.strategies,
-                           _extract_profiles(self.full_game, self.strategies))
+def subgame(game, strategies):
+    '''Returns a new game that only has data for profiles in strategies'''
+    return rsgame.Game(game.players, strategies,
+                       _extract_profiles(game, strategies))
 
-# XXX I wanted to make a multiple inheritance subgame object that behaved like
-# a game, but also had data. I couldn't get this to work with pythons multiple
-# inheritance. It would have been a diamond pattern, which isn't great. I'm not
-# sure what the best approach is, but given that the data basically has to be
-# copied for efficiency, I just made an explicit call in EmptySubgame.
 
 # def translate(arr, source_game, target_game):
 #     '''
@@ -196,7 +210,7 @@ def maximal_subgames(game):
         # always find the largest subset first, but subsequent 'maximal'
         # subsets may actually be subsets of previous maximal subsets.
         if maximal:
-            as_set = _strategies_to_set(sub.strategies)
+            as_set = support_set(sub.strategies)
             if not any(as_set.issubset(max_sub) for max_sub in maximals):
                 maximals.append(as_set)
                 yield sub
@@ -205,61 +219,102 @@ def maximal_subgames(game):
 # Subgame Command #
 ###################
 
-_PARSER = argparse.ArgumentParser(description='''Detect all complete subgames
-in a partial game or extract specific subgames.''')
-_PARSER.add_argument('mode', choices=('detect', 'extract'), help='''If mode is
-set to detect, all complete subgames will be found, and the output will be a
-JSON list of role:[strategies] maps enumerating the complete subgames. If mode
-is set to extract, then the output will be a JSON representation of a game or a
-list of games with the specified subsets of strategies.''')
-_PARSER.add_argument('--full', action='store_true', help='''In 'detect' mode:
-setting this flag causes the script to output games instead of role:strategy
-maps.''')
-_PARSER.add_argument('-f', metavar='strategies file', type=str, default='',
-                     help='''In 'extract' mode: JSON file with
-                     role:[strategies] map(s) of subgame(s) to extract. The
-                     file should have the same format as the output of detect
-                     mode (or to extract just one subgame, a single map instead
-                     of a list of them).''')
-_PARSER.add_argument('-s', type=int, nargs='*', default=[], help='''In
-'extract' mode: a list of strategy indices to extract. A strategy is specified
-by its zero-indexed position in a list of all strategies sorted alphabetically
-by role and sub-sorted alphabetically by strategy name. For example if role r1
-has strategies s1,s2,s2 and role r2 has strategies s1,s2, then the subgame with
-all but the last strategy for each role is extracted by './Subgames.py extract
--s 0 1 3'. Ignored if -f is also specified.''')
+
+def _parse_text_spec(game, spec):
+    subgame = {}
+    current_role = '<undefined role>'
+    for role_strat in spec:
+        if role_strat in game.strategies:
+            current_role = role_strat
+        elif role_strat in game.strategies[current_role]:
+            subgame.setdefault(current_role, set()).add(role_strat)
+        else:
+            raise ValueError('%s was not a role or a strategy in role %s' %
+                             (role_strat, current_role))
+    return EmptySubgame(game, subgame)
+
+
+def _parse_index_spec(game, spec):
+    index_list = sorted(support_set(game.strategies))
+    subgame = {}
+    for index in spec:
+        role, strat = index_list[index]
+        subgame.setdefault(role, set()).add(strat)
+    return EmptySubgame(game, subgame)
+
+
+_PARSER = argparse.ArgumentParser(add_help=False, description='''Extract
+subgames and optionally detects all complete subgames. All subgame
+specifications will be concatentated.''')
+_PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
+                     type=argparse.FileType('r'), help='''Input game file.
+                     (default: stdin)''')
+_PARSER.add_argument('--output', '-o', metavar='subgame-file',
+                     default=sys.stdout, type=argparse.FileType('w'),
+                     help='''Output subgame file. This file will contain a json
+                     list of subgames. (default: stdout)''')
+_PARSER.add_argument('--no-extract', '-n', action='store_true', help='''Don't
+extract full subgame data, just print the specifications of the subgames. This
+is mainly only useful with the detect option.''')
+
+_SUB_GROUP = _PARSER.add_argument_group(title='subgame specifications',
+                                        description='''These are all of the
+                                        ways to specify subgames to
+                                        extract. All of these specifications
+                                        are concatentated together before being
+                                        output.''')
+_SUB_GROUP.add_argument('--detect', '-d', action='store_true', help='''Run
+clique finding to detect maximally complete subgames.''')
+_SUB_GROUP.add_argument('--subgame-file', '-f', metavar='file', default=[],
+                        type=argparse.FileType('r'), action='append', help='''A
+                        file that contains a list of subgames. The same format
+                        that can be output by this script with the no-extract
+                        option. This can be specified multiple times.''')
+_SUB_GROUP.add_argument('--text-spec', '-t', nargs='+', metavar='role-strat',
+                        default=[], action='append', help='''Specify a subgame
+                        as a list of roles and strategies. To specify the
+                        subgame where role0 has strategies strat0 and strat2
+                        and role1 has strategy strat1 enter "role0 strat0
+                        strat2 role1 strat1". This option is ambiguous if
+                        strategies share names with roles. For unambiguous
+                        specification, use index specification. This can be
+                        entered several times in order to specify several
+                        subgames.''')
+_SUB_GROUP.add_argument('--index-spec', '-s', type=int, nargs='+', default=[],
+                        metavar='strat-index', action='append', help='''Specify
+                        a subgame with a list of strategy indices. A strategy
+                        is specified by its zero-indexed position in a list of
+                        all strategies sorted alphabetically by role and
+                        sub-sorted alphabetically by strategy name. For example
+                        if role1 has strategies s1, s2, and s3 and role2 has
+                        strategies s4 and s5, then the subgame with all but the
+                        last strategy for each role is extracted by "0 1
+                        3". This can be specified multiple times for several
+                        subgames.''')
 
 
 def command(args, prog, print_help=False):
     _PARSER.prog = '%s %s' % (_PARSER.prog, prog)
+    if print_help:
+        _PARSER.print_help()
+        return
     args = _PARSER.parse_args(args)
+    game = rsgame.Game.from_json(json.load(args.input))
 
-    if args.mode == 'detect':
-        if args.k != '':
-            known = read(args.k)
-        else:
-            known = []
-        subgames = cliques(game, known)
-        if args.full:
-            subgames = [subgame(game,s) for s in subgames]
-    else:
-        if args.f != '':
-            strategies = read(args.f)
-        elif len(args.s) > 0:
-            strategies = {r:[] for r in game.roles}
-            l = 0
-            i = 0
-            for r in game.roles:
-                while i < len(args.s) and args.s[i] < l + \
-                                    len(game.strategies[r]):
-                    strategies[r].append(game.strategies[r][args.s[i]-l])
-                    i += 1
-                l += len(game.strategies[r])
-            strategies = [strategies]
-        else:
-            raise IOError('Please specify either -f or -s for extract mode.')
-        subgames = [subgame(game, s) for s in strategies]
-        if len(subgames) == 1:
-            subgames = subgames[0]
+    # Collect all subgames
+    subgames = []
+    if args.detect:
+        subgames.extend(maximal_subgames(game))
+    for sub_file in args.subgame_file:
+        # This actually adds EmptyGames instead of EmptySubgames, but for our
+        # use they'll function the same.
+        subgames.extend(rsgame.EmptyGame.from_json(sub)
+                        for sub in json.load(sub_file))
+    subgames.extend(_parse_text_spec(game, spec) for spec in args.text_spec)
+    subgames.extend(_parse_index_spec(game, spec) for spec in args.index_spec)
 
-    #print to_JSON_str(subgames)
+    if not args.no_extract:
+        subgames = [subgame(game, sub.strategies) for sub in subgames]
+
+    json.dump(subgames, args.output, default=lambda x: x.to_json())
+    args.output.write('\n')

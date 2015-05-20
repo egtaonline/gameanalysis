@@ -11,7 +11,7 @@ from gameanalysis import rsgame, regret, subgame
 # 2) that are also used as boolean values. It also seems like some of these
 # functions could be more efficient.
 
-# TODO EmptySubgame.create_game duplicates all of the data in the game, but
+# TODO subgame.subgame duplicates all of the data in the game, but
 # most of these functions only rely on the profile map. It'd be much faster to
 # just scan the map once and filter out the invalid profiles. This game copy
 # that just references the full game would be much faster, but lacks some of
@@ -35,10 +35,9 @@ def iterated_elimination(game, criterion, *args, **kwargs):
 
 def _eliminate_strategies(game, criterion, *args, **kwargs):
     eliminated = criterion(game, *args, **kwargs)
-    return (subgame.EmptySubgame(game,
-                                 {role: set(strats) - eliminated[role]
-                                  for role, strats in game.strategies.items()})
-            ).create_game()
+    return subgame.subgame(game,
+                           {role: set(strats) - eliminated[role]
+                            for role, strats in game.strategies.items()})
 
 
 def _best_responses(game, prof):

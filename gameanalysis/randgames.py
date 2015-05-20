@@ -26,17 +26,10 @@ try:
         for word in f:
             _WORD_LIST.append(word[:-1])
 except FileNotFoundError:
-    # req = requests.get('https://gist.githubusercontent.com/deekayen/4148741/'
-    #                    'raw/39e69e84e011c86c0357633f225ea5fbf8a1430a/1-1000'
-    #                    '.txt')
-    # if req.ok:
-    #     with open(_WORD_LIST_FILE, 'w') as f:
-    #         f.write(req.text)
-    #     _WORD_LIST.extend(req.iter_lines())
     pass
 
 
-def _random_strings(number, prefix='x', padding=None, cool=True):
+def _random_strings(number, prefix='x', padding=None, cool=False):
     '''Generate random strings without repetition
 
     If cool (the default) these strings are generated from a word list,
@@ -53,7 +46,7 @@ def _random_strings(number, prefix='x', padding=None, cool=True):
         return ('%s%0*d' % (prefix, padding, i) for i in range(number))
 
 
-def _gen_rs_game(num_roles, num_players, num_strategies):
+def _gen_rs_game(num_roles, num_players, num_strategies, cool=False):
     '''Create a role symmetric game'''
     try:
         num_players = list(num_players)
@@ -73,21 +66,23 @@ def _gen_rs_game(num_roles, num_players, num_strategies):
     assert all(s > 0 for s in num_strategies), \
         'number of strategies must be greater than zero'
 
-    strategies = {role: set(_random_strings(num_strat)) for role, num_strat
-                  in zip(_random_strings(num_roles), num_strategies)}
+    strategies = {role: set(_random_strings(num_strat, prefix='s', cool=cool))
+                  for role, num_strat
+                  in zip(_random_strings(num_roles, prefix='r', cool=cool),
+                         num_strategies)}
     players = dict(zip(strategies, num_players))
     return rsgame.EmptyGame(players, strategies)
 
 
 def role_symmetric_game(num_roles, num_players, num_strategies,
-                        distribution=lambda: r.uniform(-1, 1)):
+                        distribution=lambda: r.uniform(-1, 1), cool=False):
     '''Generate a random role symmetric game
 
     num_players and num_strategies can be scalers, or lists of length
     num_roles. Payoffs are drawn from distribution.
 
     '''
-    game = _gen_rs_game(num_roles, num_players, num_strategies)
+    game = _gen_rs_game(num_roles, num_players, num_strategies, cool=cool)
     profile_data = ({role: {(strat, count, distribution())
                             for strat, count in strats.items()}
                      for role, strats in prof.items()}
@@ -96,28 +91,28 @@ def role_symmetric_game(num_roles, num_players, num_strategies,
 
 
 def independent_game(num_players, num_strategies,
-                     distribution=lambda: r.uniform(-1, 1)):
+                     distribution=lambda: r.uniform(-1, 1), cool=False):
     '''Generate an independent game
 
     All payoff values drawn independently according to specified
     distribution. The distribution defaults to uniform from -1 to 1.
 
     '''
-    return role_symmetric_game(num_players, 1, num_strategies)
+    return role_symmetric_game(num_players, 1, num_strategies, cool=cool)
 
 
 def symmetric_game(num_players, num_strategies,
-                   distribution=lambda: r.uniform(-1, 1)):
+                   distribution=lambda: r.uniform(-1, 1), cool=False):
     '''Generate a random symmetric game
 
     distribution defaults to uniform from -1 to 1.
 
     '''
-    return role_symmetric_game(1, num_players, num_strategies)
+    return role_symmetric_game(1, num_players, num_strategies, cool=cool)
 
 
 def covariant_game(num_players, num_strategies, mean_dist=lambda: 0, var=1,
-                   covar_dist=r.uniform):
+                   covar_dist=lambda: r.uniform(0, 1), cool=False):
     '''Generate a covariant game
 
     Payoff values for each profile drawn according to multivariate normal.
@@ -136,7 +131,7 @@ def covariant_game(num_players, num_strategies, mean_dist=lambda: 0, var=1,
     generators that can return an array.
 
     '''
-    game = _gen_rs_game(num_players, 1, num_strategies)
+    game = _gen_rs_game(num_players, 1, num_strategies, cool=cool)
     mean = np.empty(num_strategies)
     covar = np.empty((num_strategies, num_strategies))
 
@@ -151,7 +146,8 @@ def covariant_game(num_players, num_strategies, mean_dist=lambda: 0, var=1,
     return rsgame.Game(game.players, game.strategies, profile_data)
 
 
-def zero_sum_game(num_strategies, distribution=lambda: r.uniform(-1, 1)):
+def zero_sum_game(num_strategies, distribution=lambda: r.uniform(-1, 1),
+                  cool=False):
     '''Generate a two-player, zero-sum game
 
     2-player zero-sum game; player 1 payoffs drawn from given distribution
@@ -159,7 +155,7 @@ def zero_sum_game(num_strategies, distribution=lambda: r.uniform(-1, 1)):
     distribution defaults to uniform between -1 and 1
 
     '''
-    game = _gen_rs_game(2, 1, num_strategies)
+    game = _gen_rs_game(2, 1, num_strategies, cool=cool)
     role1, role2 = game.strategies
     payoff_data = []
     for prof in game.all_profiles():
@@ -467,6 +463,10 @@ _PARSER.add_argument('--output', '-o', metavar='output', default=sys.stdout,
 _PARSER.add_argument('--indent', '-i', metavar='indent', type=int,
                      default=None,
                      help='Indent for json output; default = None')
+_PARSER.add_argument('--cool', '-c', action='store_true', help='''Use role and
+strategy names that come from a text file instead of indexed names. This
+produces more "fun" games as thy have more interesting names, but it is harder
+to use in an automated sense because the names can't be predicted.''')
 
 
 def command(args, prog, print_help=False):
@@ -479,11 +479,11 @@ def command(args, prog, print_help=False):
     if args.type == 'uzs':
         assert len(args.arg) == 1, \
             'Must specify strategy count for uniform zero sum'
-        game = zero_sum_game(*map(int, args.arg))
+        game = zero_sum_game(*map(int, args.arg), cool=args.cool)
     elif args.type == 'usym':
         assert len(args.arg) == 2, \
             'Must specify player and strategy counts for uniform symmetric'
-        game = symmetric_game(*map(int, args.arg))
+        game = symmetric_game(*map(int, args.arg), cool=args.cool)
     # elif args.type == 'cs':
     #     game_func = congestion_game
     #     assert len(args.game_args) == 3, 'game_args must specify player, '+\
