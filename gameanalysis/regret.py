@@ -1,8 +1,10 @@
 '''TODO'''
+import sys
 import argparse
+import json
 import numpy as np
 
-from gameanalysis import subgame
+from gameanalysis import subgame, rsgame
 
 
 def pure_strategy_deviation_gains(game, prof):
@@ -128,56 +130,37 @@ def mixture_regret(game, mix):
 #             in game.strategies[role]}
 
 
-_PARSER = argparse.ArgumentParser(description='''Compute regret in input game
-of specified profiles.''')
-_PARSER.add_argument('profiles', type=str, help='''File with profiles from input
-games for which regrets should be calculated.''')
-_PARSER.add_argument('--sw', action='store_true', help='''Calculate social
-welfare instead of regret. Use keyword GLOBAL to calculate max social
-welfare.''')
-_PARSER.add_argument('--ne', action='store_true', help='''Calculate 'NE regrets'
-(regret a devitor would experience by switching to each other pure strategy)
-for each profile instead of the profiles' regrets''')
+_PARSER = argparse.ArgumentParser(add_help=False, description='''Compute regret
+in input game of specified profiles.''')
+_PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
+                     type=argparse.FileType('r'), help='''Input game file.
+                     (default: stdin)''')
+_PARSER.add_argument('--output', '-o', metavar='file', default=sys.stdout,
+                     type=argparse.FileType('w'), help='''Output dominance
+                     file. The contents depend on the format specified.
+                     (default: stdout)''')
+_PARSER.add_argument('profiles', type=argparse.FileType('r'), help='''File with
+profiles from input games for which regrets should be calculated. This file
+needs to be a json list. of profiles''')
+# _PARSER.add_argument('--sw', action='store_true', help='''Calculate social
+# welfare instead of regret. Use keyword GLOBAL to calculate max social
+# welfare.''')
+# _PARSER.add_argument('--ne', action='store_true', help='''Calculate 'NE regrets'
+# (regret a devitor would experience by switching to each other pure strategy)
+# for each profile instead of the profiles' regrets''')
 
 
 def command(args, prog, print_help=False):
     _PARSER.prog = '%s %s' % (_PARSER.prog, prog)
-    args = _PARSER.parse_args()
-    games = args.input
+    if print_help:
+        _PARSER.print_help()
+        return
+    args = _PARSER.parse_args(args)
+    game = rsgame.Game.from_json(json.load(args.input))
+    profiles = [prof for prof in json.load(args.profiles)]
 
-    #direct call to max_social_welfare()
-    # if args.profiles == 'GLOBAL' and args.SW:
-    #     print to_JSON_str(max_social_welfare(games))
-    #     return
+    # Need to differentiate between mixed and pure
+    regrets = [mixture_regret(game, prof) for prof in profiles]
 
-    profiles = read(args.profiles)
-    if not isinstance(profiles, list):
-        profiles = [profiles]
-    if not isinstance(games, list):
-        games = [games] * len(profiles)
-    regrets = []
-    for g, prof_list in zip(games, profiles):
-        if not isinstance(prof_list, list):
-            prof_list = [prof_list]
-        regrets.append([])
-        for prof in prof_list:
-            if args.SW:
-                regrets[-1].append(social_welfare(g, prof))
-            elif args.NE:
-                eqr = equilibrium_regrets(g, prof)
-                eqr_prof = {}
-                for r in g.roles:
-                    eqr_prof[r] = {}
-                    for s in g.strategies[r]:
-                        eqr_prof[r][s] = eqr[g.index(r),g.index(r,s)]
-                regrets[-1].append(eqr_prof)
-            else:
-                regrets[-1].append(regret(g, prof))
-    # if len(regrets) > 1:
-    #     print to_JSON_str(regrets)
-    # else:
-    #     print to_JSON_str(regrets[0])
-
-
-if __name__ == '__main__':
-    main()
+    json.dump(regrets, args.output, defaults=lambda x: x.to_json())
+    args.output.write('\n')

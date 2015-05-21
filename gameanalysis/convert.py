@@ -13,11 +13,11 @@ _PARSER = argparse.ArgumentParser(add_help=False, description='''Converts
 between game data formats. Currently this is only useful for modernizing old
 game json formats.''')
 _PARSER.add_argument('--input', '-i', type=argparse.FileType('r'),
-                     default=sys.stdin, help='''Input game file. (default:
-                     stdin)''')
+                     metavar='file', default=sys.stdin, help='''Input game
+                     file. (default: stdin)''')
 _PARSER.add_argument('--output', '-o', type=argparse.FileType('w'),
-                     default=sys.stdout, help='''Output game file. (default:
-                     stdout)''')
+                     metavar='file', default=sys.stdout, help='''Output game
+                     file. (default: stdout)''')
 _PARSER.add_argument('--format', '-f', choices=_OUTPUT_TYPE, default='json',
                      help='''Output format. (default: %(default)s)''')
 

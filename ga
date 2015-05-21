@@ -12,7 +12,8 @@ import nose
 import collections
 import textwrap
 
-from gameanalysis import randgames, nash, reduction, subgame
+from gameanalysis import randgames, nash, reduction, subgame, convert
+from gameanalysis import dominance, regret
 
 
 class HelpPrinter(object):
@@ -70,10 +71,13 @@ class TestRunner(object):
 
 
 COMMANDS = collections.OrderedDict([
-    ('rand', randgames),
     ('nash', nash),
     ('reduce', reduction),
     ('subgame', subgame),
+    ('regret', regret),
+    ('dominance', dominance),
+    ('rand', randgames),
+    ('convert', convert),
     ('test', TestRunner),
     ('help', HelpPrinter)
 ])

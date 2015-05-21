@@ -17,9 +17,11 @@ np.seterr(over='raise')
 _exact_factorial = np.vectorize(math.factorial, otypes=[object])
 _TINY = np.finfo(float).tiny
 
+# TODO Change profile to be a general mapping to mapping to number and make
+# functions to operate on them accordingly
 
-# TODO Remove reliance on _values in game to allow more efficient computation
-# of a subgame.
+# TODO remove reliance on underlying array data structures, and provide array
+# access to appropriate efficient parts.
 
 
 class PureProfile(frozendict):
@@ -446,7 +448,7 @@ class Game(EmptyGame):
     def get_pure_social_welfare(self, profile):
         '''Returns the social welfare of a pure strategy profile'''
         p = self.profile_map[self.to_profile(profile)]
-        return np.sum(self._values * self._counts)
+        return np.sum(self._values[p] * self._counts[p])
 
     def get_mixed_social_welfare(self, mix):
         '''Returns the social welfare of a mixed strategy profile'''

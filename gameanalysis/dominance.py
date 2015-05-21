@@ -151,21 +151,21 @@ _PARSER = argparse.ArgumentParser(add_help=False, description='')
 _PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
                      type=argparse.FileType('r'), help='''Input game file.
                      (default: stdin)''')
-_PARSER.add_argument('--output', '-o', metavar='output-file',
-                     default=sys.stdout, type=argparse.FileType('w'),
-                     help='''Output dominance file. The contents depend on the
-                     format specified.  (default: stdout)''')
+_PARSER.add_argument('--output', '-o', metavar='file', default=sys.stdout,
+                     type=argparse.FileType('w'), help='''Output dominance
+                     file. The contents depend on the format specified.
+                     (default: stdout)''')
 _PARSER.add_argument('--format', '-f', choices=('game', 'strategies'),
                      default='game', help='''Output formats: game = outputs a
                      JSON representation of the game after IEDS; strategies =
                      outputs a mapping of roles to eliminated strategies.
                      (default: %(default)s)''')
-_PARSER.add_argument('--criterion', '-c', metavar='criterion', default='psd',
-                     choices=_CRITERIA, help='''Dominance criterion: psd =
-                     pure-strategy dominance; nbr =
-                     never-best-response. (default: %(default)s)''')
-_PARSER.add_argument('--missing', '-m', metavar='missing', choices=_MISSING,
-                     default=1, help='''Method to handle missing data: uncond =
+_PARSER.add_argument('--criterion', '-c', default='psd', choices=_CRITERIA,
+                     help='''Dominance criterion: psd = pure-strategy
+                     dominance; nbr = never-best-response. (default:
+                     %(default)s)''')
+_PARSER.add_argument('--missing', '-m', choices=_MISSING, default='cond',
+                     help='''Method to handle missing data: uncond =
                      unconditional dominance; cond = conditional dominance;
                      conservative = conservative. (default: %(default)s)''')
 _PARSER.add_argument('--weak', '-w', action='store_true', help='''If set,
@@ -183,8 +183,8 @@ def command(args, prog, print_help=False):
                                    conditional=_MISSING[args.missing])
 
     if args.format == 'strategies':
-        eliminated = {role: sorted(strats.difference(subgame.strategies[role]))
-                      for role, strats in game.strategies.items()}
-        json.dump(eliminated, args.output)
-    else:
-        json.dump(subgame, args.output, default=lambda x: x.to_json())
+        subgame = {role: sorted(strats.difference(subgame.strategies[role]))
+                   for role, strats in game.strategies.items()}
+
+    json.dump(subgame, args.output, default=lambda x: x.to_json())
+    args.output.write('\n')

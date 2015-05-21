@@ -1,5 +1,4 @@
 import collections
-# TODO Change to collect and include non hashable collections?
 
 
 def __blocked_attribute(*args, **kwargs):
