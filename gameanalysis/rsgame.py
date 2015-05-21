@@ -161,6 +161,8 @@ class EmptyGame(object):
         self.strategies = frozendict((r, frozenset(s))
                                      for r, s in strategies.items())
 
+        self._size = funcs.prod(funcs.game_size(self.players[r], len(strats))
+                                for r, strats in self.strategies.items())
         self._max_strategies = max(len(s) for s in self.strategies.values())
         # All of the valid strategy positions
         self._mask = np.zeros((len(self.strategies), self._max_strategies),
@@ -369,8 +371,6 @@ class Game(EmptyGame):
     def __init__(self, players, strategies, payoff_data):
         super().__init__(players, strategies)
 
-        self._size = funcs.prod(funcs.game_size(self.players[role], len(strats))
-                                for role, strats in self.strategies.items())
         self._role_index = {r: i for i, r in enumerate(self.strategies.keys())}
         self._strategy_index = {r: {s: i for i, s in enumerate(strats)}
                                 for r, strats in self.strategies.items()}
