@@ -70,7 +70,9 @@ def _gen_rs_game(num_roles, num_players, num_strategies, cool=False):
                   for role, num_strat
                   in zip(_random_strings(num_roles, prefix='r', cool=cool),
                          num_strategies)}
-    players = dict(zip(strategies, num_players))
+    # FIXME This doesn't produce the correct behavior. Number of roles and
+    # number of strategies should be core corresponding roles.
+    players = dict(zip(sorted(strategies), num_players))
     return rsgame.EmptyGame(players, strategies)
 
 
@@ -444,13 +446,39 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3,
 #     game.values /= (max_val - min_val)
 #     game.values += min_payoff
 
+def _zero_sum_parse(zs_args, **kwargs):
+    assert len(args.arg) == 1, \
+        'Must specify strategy count for uniform zero sum'
+    return zero_sum_game(*map(int, zs_args), **kwargs)
+
+
+def _symmetric_parse(sym_args, **kwargs):
+    assert len(args.arg) == 2, \
+        'Must specify player and strategy counts for uniform symmetric'
+    return symmetric_game(*map(int, sym_args), **kwargs),
+
+
+def _role_symmetric_parse(rs_args, **kwargs):
+    int_args = list(map(int, rs_args))
+    num_roles = int_args[0]
+    assert len(int_args) == 2 * num_roles + 1, \
+        'Must specify a number of players and strategies for each role'
+    num_players = int_args[1:1+num_roles]
+    num_strats = int_args[-num_roles:]
+    return role_symmetric_game(num_roles, num_players, num_strats, **kwargs)
+
+
+_MAPPING = {
+    'uzs': _zero_sum_parse,
+    'usym': _symmetric_parse,
+    'ursym': _role_symmetric_parse
+}
+
 _PARSER = argparse.ArgumentParser(description='Generate random games',
                                   add_help=False)
-_PARSER.add_argument('type',
-                     choices=['uzs', 'usym', 'cg', 'leg', 'pmx', 'ind'],
-                     help='''Type of random game to generate. uzs = uniform zero
-                     sum.  usym = uniform symmetric. cg = congestion game. pmx
-                     = polymatrix game. ind = independent game.''')
+_PARSER.add_argument('type', choices=_MAPPING, help='''Type of random game to
+generate. uzs = uniform zero sum.  usym = uniform symmetric. cg = congestion
+game. pmx = polymatrix game. ind = independent game.''')
 _PARSER.add_argument('arg', nargs='*', default=[],
                      help='Additional arguments for game generator function.')
 _PARSER.add_argument('--noise', choices=['none', 'normal', 'gauss_mix'],
@@ -476,14 +504,7 @@ def command(args, prog, print_help=False):
         return
     args = _PARSER.parse_args(args)
 
-    if args.type == 'uzs':
-        assert len(args.arg) == 1, \
-            'Must specify strategy count for uniform zero sum'
-        game = zero_sum_game(*map(int, args.arg), cool=args.cool)
-    elif args.type == 'usym':
-        assert len(args.arg) == 2, \
-            'Must specify player and strategy counts for uniform symmetric'
-        game = symmetric_game(*map(int, args.arg), cool=args.cool)
+    game = _MAPPING[args.type](args.arg, cool=args.cool)
     # elif args.type == 'cs':
     #     game_func = congestion_game
     #     assert len(args.game_args) == 3, 'game_args must specify player, '+\
@@ -500,8 +521,6 @@ def command(args, prog, print_help=False):
     #     game_func = polymatrix_game
     #     assert len(args.game_args) == 2, 'game_args must specify player and '+\
     #                                 'strategy counts'
-    else:
-        raise ValueError('Unknown game type: %s' % args.type)
 
     # if args.noise == 'normal':
     #     assert len(args.noise_args) == 2, 'noise_args must specify stdev '+\
