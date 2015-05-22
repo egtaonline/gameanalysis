@@ -1,7 +1,7 @@
 import operator
 import math
 import functools
-import numpy as np
+#import numpy as np
 import scipy.misc as spm
 
 
@@ -25,6 +25,25 @@ def profile_repetitions(p):
                 for row in p)
 
 
+def only(iterable):
+    '''Return the only element of an iterable
+
+    Throws a value error if the iterable doesn't contain only one element
+
+    '''
+    try:
+        it = iter(iterable)
+        value = next(it)
+        try:
+            next(it)
+        except StopIteration:
+            return value
+        raise ValueError('Iterable had more than one element')
+    except TypeError:
+        raise ValueError('Input was not iterable')
+    except StopIteration:
+        raise ValueError('Input was empty')
+
 # def mean(numbers):
 #     '''Arithmetic mean'''
 #     n = 0
@@ -43,16 +62,16 @@ def one_line(string, line_width=80):
     return string
 
 
-def weighted_least_squares(x, y, weights):
-    '''appends the ones for you; puts 1D weights into a diagonal matrix'''
-    try:
-        A = np.append(x, np.ones([x.shape[0],1]), axis=1)
-        W = np.zeros([x.shape[0]]*2)
-        np.fill_diagonal(W, weights)
-        return y.T.dot(W).dot(A).dot(np.linalg.inv(A.T.dot(W).dot(A)))
-    except np.linalg.linalg.LinAlgError:
-        z = A.T.dot(W).dot(A)
-        for i in range(z.shape[0]):
-            for j in range(z.shape[1]):
-                z[i,j] += np.random.uniform(-tiny,tiny)
-        return y.T.dot(W).dot(A).dot(np.linalg.inv(z))
+# def weighted_least_squares(x, y, weights):
+#     '''appends the ones for you; puts 1D weights into a diagonal matrix'''
+#     try:
+#         A = np.append(x, np.ones([x.shape[0],1]), axis=1)
+#         W = np.zeros([x.shape[0]]*2)
+#         np.fill_diagonal(W, weights)
+#         return y.T.dot(W).dot(A).dot(np.linalg.inv(A.T.dot(W).dot(A)))
+#     except np.linalg.linalg.LinAlgError:
+#         z = A.T.dot(W).dot(A)
+#         for i in range(z.shape[0]):
+#             for j in range(z.shape[1]):
+#                 z[i,j] += np.random.uniform(-tiny,tiny)
+#         return y.T.dot(W).dot(A).dot(np.linalg.inv(z))

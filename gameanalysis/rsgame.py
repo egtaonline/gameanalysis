@@ -8,7 +8,7 @@ import numpy as np
 import scipy.misc as spm
 from collections import Counter
 
-from gameanalysis import funcs, gameio
+from gameanalysis import funcs, gameio, profile
 from gameanalysis.collect import frozendict
 
 
@@ -23,128 +23,8 @@ _TINY = np.finfo(float).tiny
 # TODO remove reliance on underlying array data structures, and provide array
 # access to appropriate efficient parts.
 
-
-class PureProfile(frozendict):
-    '''A pure profile is a static assignment of players to roles and strategies
-
-    This is an immutable container that maps roles to strategies to
-    counts. Only strategies with at least one player playing them are
-    represented.
-
-    '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(((r, frozendict(p)) for r, p
-                          in dict(*args, **kwargs).items()))
-
-    def remove(self, role, strategy):
-        '''Return a new profile with one less player playing strategy'''
-        copy = dict(self)
-        role_copy = dict(copy[role])
-        copy[role] = role_copy
-        role_copy[strategy] -= 1
-        if role_copy[strategy] == 0:
-            role_copy.pop(strategy)
-        return PureProfile(copy)
-
-    def add(self, role, strategy):
-        '''Return a new profile where strategy has one more player'''
-        copy = dict(self)
-        role_copy = Counter(copy[role])
-        copy[role] = role_copy
-        role_copy[strategy] += 1
-        return PureProfile(copy)
-
-    def deviate(self, role, strategy, deviation):
-        '''Returns a new profile where one player deviated'''
-        copy = dict(self)
-        role_copy = Counter(copy[role])
-        copy[role] = role_copy
-        role_copy[strategy] -= 1
-        role_copy[deviation] += 1
-        if role_copy[strategy] == 0:
-            role_copy.pop(strategy)
-        return PureProfile(copy)
-
-    def to_input_profile(self, payoff_map):
-        '''Given a payoff map, which maps role to strategy to payoffs, return an input
-        profile for game construction
-
-        This requires that the payoff map contains data for every role and
-        strategy in the profile. An input profile looks like {role: [(strat,
-        count, payoffs)]}, and is necessary to construct a game object.
-
-        '''
-        return {role: {(strat, counts, payoff_map[role][strat])
-                       for strat, counts in strats.items()}
-                for role, strats in self.items()}
-
-    def to_json(self):
-        '''Return a representation that is json serializable'''
-        return {'type': 'GA_PureProfile',
-                'data': {r: dict(s) for r, s in self.items()}}
-
-    @staticmethod
-    def from_json(json_):
-        '''Load a profile from its json representation'''
-        assert json_['type'] == 'GA_PureProfile', 'Improper type of profile'
-        return PureProfile(json_['data'])
-
-    def __str__(self):
-        return '; '.join('%s: %s' %
-                         (role, ', '.join('%d %s' % (count, strat)
-                                          for strat, count in strats.items()))
-                         for role, strats in self.items())
-
-    def __repr__(self):
-        return 'PureProfile' + super().__repr__()[12:]
-
-
-class MixedProfile(frozendict):
-    '''A mixed profile is distribution over strategies for each role.
-
-    This is an immutable container that maps roles to strategies to
-    probabilities. Only strategies with support are represented.
-
-    '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(((r, frozendict(p)) for r, p
-                          in dict(*args, **kwargs).items()))
-
-    def support(self):
-        '''Returns the support of this mixed profile
-
-        The support is a dict mapping roles to strategies.
-
-        '''
-        return {role: set(strats) for role, strats in self.items()}
-
-    def trim_support(self, supp_thresh=1e-3):
-        '''Returns a new mixed profiles without strategies played less than
-        supp_thresh
-
-        '''
-        def process_roles():
-            for role, strats in self.items():
-                new_strats = [(strat, prob) for strat, prob in strats.items()
-                              if prob >= supp_thresh]
-                total_prob = sum(prob for _, prob in new_strats)
-                yield role, {strat: p / total_prob for strat, p in new_strats}
-        return MixedProfile(process_roles())
-
-    def to_json(self):
-        '''Return a representation that is json serializable'''
-        return {'type': 'GA_MixedProfile',
-                'data': {r: dict(s) for r, s in self.items()}}
-
-    @staticmethod
-    def from_json(json_):
-        '''Load a profile from its json representation'''
-        assert json_['type'] == 'GA_MixedProfile', 'Improper type of profile'
-        return PureProfile(json_['data'])
-
-    def __repr__(self):
-        return 'MixedProfile' + super().__repr__()[12:]
-
+# TODO allow all profile / mix functions to take either style of profile, and
+# convert to the appropriate one.
 
 class EmptyGame(object):
     '''Role symmetric game representation
@@ -173,7 +53,7 @@ class EmptyGame(object):
 
     def all_profiles(self):
         '''Returns a generator over all profiles'''
-        return map(PureProfile, itertools.product(*(
+        return map(profile.PureProfile, itertools.product(*(
             [(role, Counter(comb)) for comb
              in itertools.combinations_with_replacement(
                  strats, self.players[role])]
@@ -192,9 +72,9 @@ class EmptyGame(object):
             return array  # Already a profile
         array = np.asarray(array)
         type_map = {
-            float: MixedProfile,
-            int: PureProfile,
-            np.float64: MixedProfile}
+            float: profile.MixedProfile,
+            int: profile.PureProfile,
+            np.float64: profile.MixedProfile}
         type_ = array.dtype.type
         return type_map[type_]((role, ((strat, count) for strat, count
                                        in zip(strats, counts) if count > 0))
@@ -210,11 +90,12 @@ class EmptyGame(object):
         If an array is passed in, nothing is changed.
 
         '''
+        # TODO allow fill val, e.g. default value
 
         if isinstance(prof, np.ndarray):  # Already an array
             return prof
-        type_ = type(next(iter(next(iter(prof.values())).values())))
-        # TODO allow fill val?
+        type_ = np.asarray(list(itertools.chain.from_iterable(
+            s.values() for s in prof.values()))).dtype
         array = np.zeros_like(self._mask, dtype=type_)
         for r, (role, strats) in enumerate(self.strategies.items()):
             for s, strategy in enumerate(strats):
@@ -289,7 +170,7 @@ class EmptyGame(object):
 
         '''
         wrap = self.to_array if as_array else lambda x: x
-        return (wrap(MixedProfile(rs)) for rs in itertools.product(
+        return (wrap(profile.MixedProfile(rs)) for rs in itertools.product(
             *([(r, {s: 1}) for s in sorted(ss)] for r, ss
               in self.strategies.items())))
 
@@ -383,8 +264,8 @@ class Game(EmptyGame):
         self._counts = np.zeros_like(self._values, dtype=int)
 
         for p, profile_data in enumerate(payoff_data):
-            prof = PureProfile((role, {s: c for s, c, _ in dats})
-                               for role, dats in profile_data.items())
+            prof = profile.PureProfile((role, {s: c for s, c, _ in dats})
+                                       for role, dats in profile_data.items())
             assert prof not in self._profile_map, 'Duplicate profile %s' % prof
             self._profile_map[prof] = p
 
@@ -425,9 +306,14 @@ class Game(EmptyGame):
         s = self._strategy_index[role][strategy]
         return self._values[p, r, s]
 
-    def get_payoffs(self, profile):
+    def get_payoffs(self, profile, as_array=False):
         '''Returns a dictionary mapping roles to strategies to payoff'''
-        payoffs = self._values[self._profile_map[self.to_profile(profile)]]
+        # TODO Convert profile into hashable profile (e.g. allow array input)
+        index = self._profile_map[self.to_profile(profile)]
+        payoffs = self._values[index]
+        if as_array:
+            return payoffs
+        counts = self._counts[index]
         return {role: {strat: payoff for strat, payoff
                        in zip(strats, strat_payoffs) if strat in profile[role]}
                 for (role, strats), strat_payoffs
@@ -439,7 +325,7 @@ class Game(EmptyGame):
         If as_array, then an array in role order is returned.
 
         '''
-        payoff = (mix * self.expectedValues(mix)).sum(1)
+        payoff = (mix * self.expected_values(mix)).sum(1)
         if as_array:
             return payoff
         else:
@@ -489,6 +375,12 @@ class Game(EmptyGame):
 
     def __iter__(self):
         return iter(self._profile_map)
+
+    # TODO add function that iterates over profiles and payoffs
+    # simultaneously. This should be faster then doing `for prof in game:
+    # game.get_payoffs(prof)` and all that really needs to be done is to return
+    # the zip of _values and _counts. How to handle what to return as an array
+    # poses some complications
 
     def __repr__(self):
         return '%s, %d / %d>' % (
