@@ -42,8 +42,9 @@ PARSER.add_argument('--dpr', nargs='+', metavar='role-or-count', default=(),
                     strategy counts.  e.g.  --dpr role1 1 role2 2 ...''')
 PARSER.add_argument('-v', '--verbose', action='count', default=0,
                     help='''Verbosity level. Two for confirmed equilibria,
-                    three for everything. Logging is output to standard
-                    error''')
+                    three for major scheduling actions, four for minor
+                    scheduling actions (i.e. every profile). Logging is output
+                    to standard error''')
 PARSER.add_argument('-e', '--email_verbosity', action='count', default=0,
                     help='''Verbosity level for email. Two for confirmed
                     equilibria, three for everything''')
@@ -110,7 +111,7 @@ def _to_json_str(obj):
 def _get_logger(name, level, email_level, recipients, game_id):
     '''Returns an appropriate logger'''
     log = logging.getLogger(name)
-    log.setLevel(40 - level * 10)
+    log.setLevel(max(40 - level * 10, 1))  # 0 is no logging
     handler = logging.StreamHandler(sys.stderr)
     handler.setFormatter(logging.Formatter(
         '%%(asctime)s (%d) %%(message)s' % game_id))
@@ -433,8 +434,14 @@ class profile_scheduler(object):
                 try:
                     # Schedule more profiles
                     for _ in xrange(count, self._max_profiles):
+                        prof = next(self._profs)
+                        self._log.log(1, 'Scheduling %d observations for '
+                                      'profile:\n%s\n'
+                                      'with EGTA representation:\n%s\n',
+                                      self._obs_count, _to_json_str(prof),
+                                      prof)
                         prof_id = self._scheduler.add_profile(
-                            next(self._profs),
+                            prof,
                             self._obs_count)
                         self._profile_ids.add(prof_id)
                 except StopIteration:
