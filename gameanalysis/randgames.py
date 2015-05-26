@@ -56,15 +56,27 @@ def _random_strings(number, prefix='x', padding=None, cool=False):
 def _compact_payoffs(game):
     '''Given a game returns a compact representation of the payoffs
 
-    Two things are returned. The first is an s1 x s2 x ... x sn x n matrix
-    where n is the total number of players. Element s1 x s2 x ... x sn x j is
-    the payoff to player j when player 1 plays s1, player2 plays s2, etc.
+    Parameters
+    ----------
+    game : rsgame.Game
+        The game to generate a compact payoff matrix for
 
-    The second has type [(role, [strat])], where the first list indexes the
-    players, and the second indexes the strategies for that player.
+    Returns
+    -------
+    payoffs : ndarray; shape (s1, s2, ..., sn, n)
+        payoffs[s1, s2, ..., sn, j] is the payoff to player j when player 1
+        plays s1, player 2 plays s2, etc. n is the total number of players.
+
+    strategies : [(role, [strat])]
+        The first list indexes the players, and the second indexes the
+        strategies for that player.
 
     '''
-    pass
+    strategies = list(itertools.chain.from_iterable(
+        itertools.repeat((role, list(strats)), game.players[role])
+        for role, strats in game.strategies.items()))
+
+    return None, strategies
 
 
 def _gen_rs_game(num_roles, num_players, num_strategies, cool=False):

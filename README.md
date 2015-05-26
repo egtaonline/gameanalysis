@@ -45,6 +45,31 @@ this library. It can be activated with `. bin/activate` and deactivated with
 `deactivate`.
 
 
+Games
+-----
+
+There are three game types EmptyGame, Game, and SampleGame.
+
+EmptyGame contains several functions that are valid for games without payoff
+data.
+
+Game is a potentially sparse mapping from role symmetric profiles to
+payoffs. It behaves mostly like a python dictionary from profiles to payoff
+dictionaries.
+
+SampleGame retains payoff data for every observation. This allows it to
+resample the payoff data for every individual profile.
+
+
+Profiles
+--------
+
+Profiles and Mixtures have a dictionary representation and a corresponding
+array representation that is only valid for the existing game object as it
+depends on the order that strategy names were hashed. The existence of array
+versions is for efficiency of many operations.
+
+
 Style Guidelines
 ----------------
 
@@ -64,18 +89,8 @@ Generally follow PEP8 standard.
 Open Design Questions
 ---------------------
 
-1. Are profiles and mixed profiles necessary, or should we just use arbitrary
-   mapping types and have functions that can operate on them?
-2. Should the array representation of profiles be exposed or hidden?
-3. Figure out exactly what the interface of Game is. Specifically, for
-   efficiency of some calculations it's necessary to expose things like _mask,
-   _counts, and _value, as well as the array form of some profiles for
-   efficiency. However, they're unintuitive, and so it seems weird to expose
-   them.
-4. PureProfile and MixedProfile or Profile and Mixture
-5. Whether to include version numbers or descriptions on profiles / mixtures or
+1. Whether to include version numbers or descriptions on profiles / mixtures or
    keep them a raw description.
-6. Need to change defualt game representation from
-   [{role: [(strat, count, payoff)]}] to [{role: [(strat, count, [payoffs])]}]
-7. Handle games where data doesn't exist for every role strategy pair, but only
-   some agents.
+2. How to handle games where data doesn't exist for every role strategy pair, but only
+   some agents. Currently any incomplete profile is ignored / errors. There
+   might not be an efficient way to handle this case.

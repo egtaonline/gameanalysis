@@ -1,13 +1,42 @@
 '''Methods for interacting with mappings from role to strategy to value'''
-from gameanalysis.collect import frozendict
+import collections
+import numpy as np
+
+from gameanalysis import collect
 
 
-class Support(frozendict):
+class Support(collect.frozendict):
     '''A static assignment of roles to strategies'''
+    # TODO implement
     pass
 
 
-class PureProfile(frozendict):
+class _RoleStratMap(collect.frozendict):
+    '''An abstract class that provides common methods between Profiles and Mixtures
+
+    '''
+    def __init__(self, *args, **kwargs):
+        super().__init__(((r, collect.frozendict(p)) for r, p
+                          in dict(*args, **kwargs).items()))
+
+    def support(self):
+        '''Returns the support of this mixed profile
+
+        The support is a dict mapping roles to strategies.
+
+        '''
+        # TODO make this a support object
+        return {role: set(strats) for role, strats in self.items()}
+
+    def to_json(self):
+        '''Return a representation that is json serializable'''
+        return {r: dict(s) for r, s in self.items()}
+
+    def __repr__(self):
+        return self.__class__.__name__ + super().__repr__()[12:]
+
+
+class Profile(_RoleStratMap):
     '''A static assignment of players to roles and strategies
 
     This is an immutable container that maps roles to strategies to
@@ -15,9 +44,6 @@ class PureProfile(frozendict):
     represented.
 
     '''
-    def __init__(self, *args, **kwargs):
-        super().__init__(((r, frozendict(p)) for r, p
-                          in dict(*args, **kwargs).items()))
 
     def remove(self, role, strategy):
         '''Return a new profile with one less player playing strategy'''
@@ -27,26 +53,26 @@ class PureProfile(frozendict):
         role_copy[strategy] -= 1
         if role_copy[strategy] == 0:
             role_copy.pop(strategy)
-        return PureProfile(copy)
+        return Profile(copy)
 
     def add(self, role, strategy):
         '''Return a new profile where strategy has one more player'''
         copy = dict(self)
-        role_copy = Counter(copy[role])
+        role_copy = collections.Counter(copy[role])
         copy[role] = role_copy
         role_copy[strategy] += 1
-        return PureProfile(copy)
+        return Profile(copy)
 
     def deviate(self, role, strategy, deviation):
         '''Returns a new profile where one player deviated'''
         copy = dict(self)
-        role_copy = Counter(copy[role])
+        role_copy = collections.Counter(copy[role])
         copy[role] = role_copy
         role_copy[strategy] -= 1
         role_copy[deviation] += 1
         if role_copy[strategy] == 0:
             role_copy.pop(strategy)
-        return PureProfile(copy)
+        return Profile(copy)
 
     def to_input_profile(self, payoff_map):
         '''Given a payoff map, which maps role to strategy to payoffs, return an input
@@ -61,16 +87,10 @@ class PureProfile(frozendict):
                        for strat, counts in strats.items()}
                 for role, strats in self.items()}
 
-    def to_json(self):
-        '''Return a representation that is json serializable'''
-        return {'type': 'GA_PureProfile',
-                'data': {r: dict(s) for r, s in self.items()}}
-
     @staticmethod
     def from_json(json_):
         '''Load a profile from its json representation'''
-        assert json_['type'] == 'GA_PureProfile', 'Improper type of profile'
-        return PureProfile(json_['data'])
+        return Profile(json_)
 
     def __str__(self):
         return '; '.join('%s: %s' %
@@ -78,11 +98,8 @@ class PureProfile(frozendict):
                                           for strat, count in strats.items()))
                          for role, strats in self.items())
 
-    def __repr__(self):
-        return 'PureProfile' + super().__repr__()[12:]
 
-
-class MixedProfile(frozendict):
+class Mixture(_RoleStratMap):
     '''A mixed profile is distribution over strategies for each role.
 
     This is an immutable container that maps roles to strategies to
@@ -90,16 +107,8 @@ class MixedProfile(frozendict):
 
     '''
     def __init__(self, *args, **kwargs):
-        super().__init__(((r, frozendict(p)) for r, p
+        super().__init__(((r, collect.frozendict(p)) for r, p
                           in dict(*args, **kwargs).items()))
-
-    def support(self):
-        '''Returns the support of this mixed profile
-
-        The support is a dict mapping roles to strategies.
-
-        '''
-        return {role: set(strats) for role, strats in self.items()}
 
     def trim_support(self, supp_thresh=1e-3):
         '''Returns a new mixed profiles without strategies played less than
@@ -112,18 +121,16 @@ class MixedProfile(frozendict):
                               if prob >= supp_thresh]
                 total_prob = sum(prob for _, prob in new_strats)
                 yield role, {strat: p / total_prob for strat, p in new_strats}
-        return MixedProfile(process_roles())
-
-    def to_json(self):
-        '''Return a representation that is json serializable'''
-        return {'type': 'GA_MixedProfile',
-                'data': {r: dict(s) for r, s in self.items()}}
+        return Mixture(process_roles())
 
     @staticmethod
     def from_json(json_):
         '''Load a profile from its json representation'''
-        assert json_['type'] == 'GA_MixedProfile', 'Improper type of profile'
-        return MixedProfile(json_['data'])
+        return Mixture(json_)
 
-    def __repr__(self):
-        return 'MixedProfile' + super().__repr__()[12:]
+
+def trim_mixture_array_support(mixture, supp_thresh=1e-3):
+    '''Trims strategies played less than supp_thresh from the support'''
+    mixture *= mixture >= supp_thresh
+    mixture /= mixture.sum(1)[:, np.newaxis]
+    return mixture
