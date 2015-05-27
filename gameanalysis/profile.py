@@ -32,9 +32,6 @@ class _RoleStratMap(collect.frozendict):
         '''Return a representation that is json serializable'''
         return {r: dict(s) for r, s in self.items()}
 
-    def __repr__(self):
-        return self.__class__.__name__ + super().__repr__()[12:]
-
 
 class Profile(_RoleStratMap):
     '''A static assignment of players to roles and strategies

@@ -1,7 +1,6 @@
 import operator
 import math
 import functools
-#import numpy as np
 import scipy.misc as spm
 
 
@@ -75,3 +74,56 @@ def one_line(string, line_width=80):
 #             for j in range(z.shape[1]):
 #                 z[i,j] += np.random.uniform(-tiny,tiny)
 #         return y.T.dot(W).dot(A).dot(np.linalg.inv(z))
+
+
+def _reverse(seq, start, end):
+    '''Helper function needed for ordered_permutations'''
+    end -= 1
+    if end <= start:
+        return
+    while True:
+        seq[start], seq[end] = seq[end], seq[start]
+        if start == end or start+1 == end:
+            return
+        start += 1
+        end -= 1
+
+
+def ordered_permutations(seq):
+    """Return an iterable over all of the permutations in seq
+
+    The elements of seq must be orderable. The permutations are taken relative
+    to the value of the items in seq, not just their index. Thus:
+
+    >>> list(ordered_permutations([1, 2, 1]))
+    [(1, 1, 2), (1, 2, 1), (2, 1, 1)]
+
+    This function is taken from this blog post:
+    http://blog.bjrn.se/2008/04/lexicographic-permutations-using.html
+    And this stack overflow post:
+    https://stackoverflow.com/questions/6534430/why-does-pythons-itertools-permutations-contain-duplicates-when-the-original
+
+    """
+    seq = sorted(seq)
+    if not seq:
+        return
+    first = 0
+    last = len(seq)
+    yield tuple(seq)
+    if last == 1:
+        return
+    while True:
+        next = last - 1
+        while True:
+            next1 = next
+            next -= 1
+            if seq[next] < seq[next1]:
+                mid = last - 1
+                while seq[next] >= seq[mid]:
+                    mid -= 1
+                seq[next], seq[mid] = seq[mid], seq[next]
+                _reverse(seq, next1, last)
+                yield tuple(seq)
+                break
+            if next == first:
+                return

@@ -7,7 +7,7 @@ import numpy as np
 import numpy.random as r
 from collections import Counter
 
-from gameanalysis import rsgame, funcs as fs
+from gameanalysis import rsgame, funcs
 
 # import GameIO as IO
 
@@ -56,6 +56,10 @@ def _random_strings(number, prefix='x', padding=None, cool=False):
 def _compact_payoffs(game):
     '''Given a game returns a compact representation of the payoffs
 
+    In this case compact means that they're in one ndarray. This
+    representation is inefficient for almost everything by an independent game
+    with full data.
+
     Parameters
     ----------
     game : rsgame.Game
@@ -76,7 +80,33 @@ def _compact_payoffs(game):
         itertools.repeat((role, list(strats)), game.players[role])
         for role, strats in game.strategies.items()))
 
-    return None, strategies
+    payoffs = np.empty([len(s) for _, s in strategies] + [len(strategies)])
+    for profile, payoff in game.payoffs(as_array=True):
+        # This generator expression takes a role symmetric profile with payoffs
+        # and generates tuples of strategy indexes and payoffs for every player
+        # when that player plays the given strategy.
+
+        # The first line takes results in the form:
+        # (((r1i1, r1p1), (r1i2, r1p2)), ((r1i1, r2p1),)) that is grouped by
+        # role, then by player in the role, then grouped strategy index and
+        # payoff, and turns it into a single tuple of indices and payoffs.
+        perms = (zip(*itertools.chain.from_iterable(sp))
+                 # This product is over roles
+                 for sp in itertools.product(*[
+                     # This computes all of the ordered permutations of
+                     # strategies in a given role, e.g. if two players play s1
+                     # and one plays s2, this iterates over all possible ways
+                     # that could be expressed in an asymmetric game.
+                     funcs.ordered_permutations(itertools.chain.from_iterable(
+                         # This iterates over the strategy counts, and
+                         # duplicates strategy indices and payoffs based on the
+                         # strategy counts.
+                         itertools.repeat((i, v), c) for i, (c, v)
+                         in enumerate(zip(p, pay))))
+                     for p, pay in zip(profile, payoff)]))
+        for inds, utils in perms:
+            payoffs[inds] = utils
+    return payoffs, strategies
 
 
 def _gen_rs_game(num_roles, num_players, num_strategies, cool=False):
@@ -99,6 +129,7 @@ def _gen_rs_game(num_roles, num_players, num_strategies, cool=False):
     assert all(s > 0 for s in num_strategies), \
         'number of strategies must be greater than zero'
 
+    # This list is necessary to maintain consistent order.
     roles = list(_random_strings(num_roles, prefix='r', cool=cool))
     strategies = {role: set(_random_strings(num_strat, prefix='s', cool=cool))
                   for role, num_strat
@@ -116,10 +147,10 @@ def role_symmetric_game(num_roles, num_players, num_strategies,
 
     '''
     game = _gen_rs_game(num_roles, num_players, num_strategies, cool=cool)
-    profile_data = ({role: {(strat, count, [distribution()])
-                            for strat, count in strats.items()}
+    profile_data = [{role: [(strat, count, [distribution()])
+                            for strat, count in strats.items()]
                      for role, strats in prof.items()}
-                    for prof in game.all_profiles())
+                    for prof in game.all_profiles()]
     return rsgame.Game(game.players, game.strategies, profile_data)
 
 
@@ -174,7 +205,7 @@ def covariant_game(num_players, num_strategies, mean_dist=lambda: 0, var=1,
         covar.fill(covar_dist())
         np.fill_diagonal(covar, var)
         payoffs = r.multivariate_normal(mean, covar)
-        profile_data.append({role: {(fs.only(strats), 1, payoffs[i])}
+        profile_data.append({role: [(funcs.only(strats), 1, [payoffs[i]])]
                              for i, (role, strats) in enumerate(prof.items())})
     return rsgame.Game(game.players, game.strategies, profile_data)
 
@@ -190,15 +221,15 @@ def zero_sum_game(num_strategies, distribution=lambda: r.uniform(-1, 1),
     '''
     game = _gen_rs_game(2, 1, num_strategies, cool=cool)
     role1, role2 = game.strategies
-    payoff_data = []
+    profile_data = []
     for prof in game.all_profiles():
-        row_strat = fs.only(prof[role1])
-        col_strat = fs.only(prof[role2])
+        row_strat = funcs.only(prof[role1])
+        col_strat = funcs.only(prof[role2])
         row_payoff = distribution()
-        payoff_data.append({
-            role1: {(row_strat, 1, row_payoff)},
-            role2: {(col_strat, 1, -row_payoff)}})
-    return rsgame.Game(game.players, game.strategies, payoff_data)
+        profile_data.append({
+            role1: [(row_strat, 1, [row_payoff])],
+            role2: [(col_strat, 1, [-row_payoff])]})
+    return rsgame.Game(game.players, game.strategies, profile_data)
 
 
 def sym_2p2s_game(a=0, b=1, c=2, d=3,
@@ -223,16 +254,16 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3,
 
     '''
     game = _gen_rs_game(1, 2, 2, cool=cool)
-    role, strats = fs.only(game.strategies.item())
+    role, strats = funcs.only(game.strategies.item())
     strats = list(strats)
 
     payoffs = sorted(distribution(4))
-    payoff_data = [
-        {role: {(strats[0], 2, payoffs[a])}},
-        {role: {(strats[0], 1, payoffs[b]),
-                (strats[1], 1, payoffs[c])}},
-        {role: {(strats[1], 2, payoffs[d])}}]
-    return rsgame.Game(game.players, game.strategies, payoff_data)
+    profile_data = [
+        {role: [(strats[0], 2, [payoffs[a]])]},
+        {role: [(strats[0], 1, [payoffs[b]]),
+                (strats[1], 1, [payoffs[c]])]},
+        {role: [(strats[1], 2, [payoffs[d]])]}]
+    return rsgame.Game(game.players, game.strategies, profile_data)
 
 
 def congestion_game(num_players, num_facilities, num_required, **kwargs):
@@ -269,19 +300,18 @@ def congestion_game(num_players, num_facilities, num_required, **kwargs):
             array[index] += 1
         return array
 
-    def profiles():
-        ''' Returns a generator over profiles'''
-        for prof in itertools.combinations_with_replacement(
-                strategies, num_players):
-            usage = to_array(itertools.chain.from_iterable(prof))
-            payoffs = np.sum(usage[:, np.newaxis] ** np.arange(3) * values, 1)
-            yield {role:
-                   [(strat_string(strat), count, to_array(strat).dot(payoffs))
-                    for strat, count in Counter(prof).items()]}
+    profile_data = []
+    for prof in itertools.combinations_with_replacement(
+            strategies, num_players):
+        usage = to_array(itertools.chain.from_iterable(prof))
+        payoffs = np.sum(usage[:, np.newaxis] ** np.arange(3) * values, 1)
+        profile_data.append(
+            {role: [(strat_string(strat), count, to_array(strat).dot(payoffs))
+                    for strat, count in Counter(prof).items()]})
 
     return rsgame.Game({role: num_players},
                        {role: {strat_string(strat) for strat in strategies}},
-                       profiles())
+                       profile_data)
 
 
 def local_effect_game(num_players, num_strategies, cool=False):
@@ -305,7 +335,7 @@ def local_effect_game(num_players, num_strategies, cool=False):
 
     '''
     game = _gen_rs_game(1, num_players, num_strategies)
-    role, strategies = fs.only(game.strategies.items())
+    role, strategies = funcs.only(game.strategies.items())
     strategies = list(strategies)
     smap = _index(strategies)
 
@@ -339,18 +369,18 @@ def local_effect_game(num_players, num_strategies, cool=False):
         array[list(indices)] = counts
         return array
 
-    def profiles():
-        '''Generator of all profile data'''
-        for prof in game.all_profiles():
-            counts = to_array(prof)
-            payoffs = np.sum(local_effects *
-                             counts[:, np.newaxis] ** np.arange(3),
-                             (1, 2))
-            yield {role: [(strat, count, [payoffs[smap[strat]]])
-                          for strat, count in strats.items()]
-                   for role, strats in prof.items()}
+    profile_data = []
+    for prof in game.all_profiles():
+        counts = to_array(prof)
+        payoffs = np.sum(local_effects *
+                         counts[:, np.newaxis] ** np.arange(3),
+                         (1, 2))
+        profile_data.append(
+            {role: [(strat, count, [payoffs[smap[strat]]])
+                    for strat, count in strats.items()]
+             for role, strats in prof.items()})
 
-    return rsgame.Game(game.players, game.strategies, profiles())
+    return rsgame.Game(game.players, game.strategies, profile_data)
 
 
 def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
@@ -373,16 +403,16 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
     for players in itertools.combinations(range(num_players),
                                           players_per_matrix):
         subgame = matrix_game(players_per_matrix, num_strategies)
-        sub_payoffs = _compact_payoffs(subgame)
-        new_shape = np.array([1] * num_strategies + [num_players])
-        new_shape[list(players)] = num_players
-        payoffs += sub_payoffs.reshape(new_shape)
+        sub_payoffs, _ = _compact_payoffs(subgame)
+        new_shape = np.array([1] * num_players + [players_per_matrix])
+        new_shape[list(players)] = num_strategies
+        payoffs[..., list(players)] += sub_payoffs.reshape(new_shape)
 
     game = _gen_rs_game(num_players, 1, num_strategies, cool=cool)
     indexible = [(role, list(strats)) for role, strats
                  in game.strategies.items()]
 
-    profs = ({role: [(strats[ind], 1, value)]
+    profs = [{role: [(strats[ind], 1, value)]
               for value, ind, (role, strats)
               in zip(payoff, inds, indexible)}
              # This zip makes puts each array of player payoffs with the
@@ -392,7 +422,7 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
              for payoff, inds
              in zip(payoffs.reshape((-1, num_players)),
                     itertools.product(range(num_strategies),
-                                      repeat=num_players)))
+                                      repeat=num_players))]
 
     return rsgame.Game(game.players, game.strategies, profs)
 

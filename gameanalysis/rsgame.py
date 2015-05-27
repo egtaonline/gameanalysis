@@ -50,7 +50,7 @@ class EmptyGame(object):
 
     def all_profiles(self):
         '''Returns a generator over all profiles'''
-        return map(profile.PureProfile, itertools.product(*(
+        return map(profile.Profile, itertools.product(*(
             [(role, Counter(comb)) for comb
              in itertools.combinations_with_replacement(
                  strats, self.players[role])]
@@ -275,8 +275,8 @@ class Game(EmptyGame):
         self._counts = np.zeros_like(self._values, dtype=int)
 
         for p, profile_data in enumerate(payoff_data):
-            prof = profile.PureProfile((role, {s: c for s, c, _ in dats})
-                                       for role, dats in profile_data.items())
+            prof = profile.Profile((role, {s: c for s, c, _ in dats})
+                                   for role, dats in profile_data.items())
             assert prof not in self._profile_map, 'Duplicate profile %s' % prof
             self._profile_map[prof] = p
 
@@ -306,7 +306,8 @@ class Game(EmptyGame):
     def data_profiles(self):
         '''Returns an iterator over all profiles with data
 
-        Note: this returns profiles in a different order than payoff_iter
+        Note: this returns profiles in a different order than payoffs
+
         '''
         return self._profile_map.keys()
 
@@ -325,12 +326,12 @@ class Game(EmptyGame):
         s = self._strategy_index[role][strategy]
         return self._values[p, r, s]
 
-    def _payoff_dict(self, value, count):
+    def _payoff_dict(self, counts, values):
         '''Merges a value/payoff array and a counts array into a payoff dict'''
-        return {role: {strat: payoff for strat, payoff, count
-                       in zip(strats, s_value, s_count) if count > 0}
-                for (role, strats), s_value, s_count
-                in zip(self.strategies.items(), value, count)}
+        return {role: {strat: payoff for strat, count, payoff
+                       in zip(strats, s_count, s_value) if count > 0}
+                for (role, strats), s_count, s_value
+                in zip(self.strategies.items(), counts, values)}
 
     def get_payoffs(self, profile, as_array=False):
         '''Returns a dictionary mapping roles to strategies to payoff'''
@@ -340,7 +341,7 @@ class Game(EmptyGame):
             return payoffs
         return self._payoff_dict(self._counts[index], payoffs)
 
-    def payoff_iter(self, as_array=False):
+    def payoffs(self, as_array=False):
         '''Returns an iterable of tuples of (profile, payoffs)
 
         If as_array is True, they are given in their array representation
@@ -417,7 +418,7 @@ class Game(EmptyGame):
         return np.allclose(profile_sums, np.mean(profile_sums))
 
     def items(self, as_array=False):
-        '''Identical to payoff_iter
+        '''Identical to payoffs
 
         Returns an iterable of tuples of (profile, payoffs). This is to make a
         Game behave like a dictionary from profiles to payoff dictionaries.
@@ -425,7 +426,7 @@ class Game(EmptyGame):
         If as_array is True, they are given in their array representation
 
         '''
-        return self.payoff_iter(as_array=as_array)
+        return self.payoffs(as_array=as_array)
 
     def __contains__(self, profile):
         '''Returns true if data for that profile exists'''
