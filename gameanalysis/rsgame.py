@@ -24,27 +24,46 @@ _TINY = np.finfo(float).tiny
 
 
 class EmptyGame(object):
-    '''Role symmetric game representation
+    '''Role-symmetric game representation
 
     This object only contains methods and information about definition of the
     game, and does not contain methods to operate on observation data.
 
-    players:    a mapping from roles to number of players in that role
-    strategies: a mapping from roles to strategies
+    Parameters
+    ----------
+    players : {role: count}
+        Mapping from roles to number of players per role.
+    strategies : {role: {strategy}}
+        Mapping from roles to per-role strategy sets.
+
+    Members
+    -------
+    players : {role: count}
+        An immutable copy of the input players.
+    strategies : {role: {strategy}}
+        An immutable copy of the input strategies. The iteration order of
+        roles, and strategies per role are the cannon iteration order for this
+        Game, and the order the strategies and roles will be mapped in the
+        array representation. Note that this can be different than the order of
+        the object that is passed in.
+    mask : ndarray, shape (num_roles, max_strategies), dtype bool
+        A boolean array that indicates which elements of an array profile or
+        payoff representation contain valid input. Any element that's False
+        must contain a zero in respective representations.
 
     '''
     def __init__(self, players, strategies, _=None):
         self.players = collect.frozendict(players)
         self.strategies = collect.frozendict((r, frozenset(s))
-                                         for r, s in strategies.items())
+                                             for r, s in strategies.items())
 
         self._size = funcs.prod(funcs.game_size(self.players[r], len(strats))
                                 for r, strats in self.strategies.items())
         max_strategies = max(len(s) for s in self.strategies.values())
         # All of the valid strategy positions
-        self._mask = np.zeros((len(self.strategies), max_strategies),
-                              dtype=bool)
-        self._mask.ravel()[list(itertools.chain.from_iterable(
+        self.mask = np.zeros((len(self.strategies), max_strategies),
+                             dtype=bool)
+        self.mask.ravel()[list(itertools.chain.from_iterable(
             (i * max_strategies + r for r in range(len(ses)))
             for i, ses in enumerate(self.strategies.values())))] = True
 
@@ -111,7 +130,7 @@ class EmptyGame(object):
         # of strategies is large.
         if isinstance(prof, np.ndarray):  # Already an array
             return np.asarray(prof, dtype=dtype)
-        array = np.zeros_like(self._mask, dtype=dtype)
+        array = np.zeros_like(self.mask, dtype=dtype)
         for r, (role, strats) in enumerate(self.strategies.items()):
             for s, strategy in enumerate(strats):
                 if strategy in prof[role]:
@@ -124,7 +143,7 @@ class EmptyGame(object):
         Set as_array to True to return the array representation of the profile.
 
         '''
-        mix = self._mask / self._mask.sum(1)[:, np.newaxis]
+        mix = self.mask / self.mask.sum(1)[:, np.newaxis]
         if as_array:
             return mix
         else:
@@ -143,7 +162,7 @@ class EmptyGame(object):
         Set as_array to True to return an array representation of the profile.
 
         '''
-        mix = np.random.gamma(alpha, size=self._mask.shape) * self._mask
+        mix = np.random.gamma(alpha, size=self.mask.shape) * self.mask
         mix /= mix.sum(1)[:, np.newaxis]
         if as_array:
             return mix
@@ -254,14 +273,36 @@ def _compute_dev_reps(counts, players, exact=False):
 
 
 class Game(EmptyGame):
-    '''Role-symmetric game representation.
+    '''Role-symmetric game representation
 
-    players:     mapping from roles to number of players per role
-    strategies:  mapping from roles to per-role strategy sets
-    payoff_data: collection of data objects mapping roles to collections
-                 of (strategy, count, value) tuples
+    Parameters
+    ----------
+    players : {role: count}
+        Mapping from roles to number of players per role.
+    strategies : {role: {strategy}}
+        Mapping from roles to per-role strategy sets.
+    payoff_data : [{role: [(strat, count, [payoff])]}]
+        Collection of data objects mapping roles to collections of (strategy,
+        count, value) tuples.
+
+    Members
+    -------
+    players : {role: count}
+        An immutable copy of the input players.
+    strategies : {role: {strategy}}
+        An immutable copy of the input strategies. The iteration order of
+        roles, and strategies per role are the cannon iteration order for this
+        Game, and the order the strategies and roles will be mapped in the
+        array representation. Note that this can be different than the order of
+        the object that is passed in.
+    mask : ndarray, shape (num_roles, max_strategies), dtype bool
+        A boolean array that indicates which elements of an array profile or
+        payoff representation contain valid input. Any element that's False
+        must contain a zero in respective representations.
+    min_payoffs : ndarray, shape (num_roles,), dtype float
+        The minimum payoff a role can ever have.
+
     '''
-    # TODO make game behave like a dict of profiles to payoff dicts
     def __init__(self, players, strategies, payoff_data):
         super().__init__(players, strategies)
 
@@ -271,7 +312,7 @@ class Game(EmptyGame):
 
         payoff_data = list(payoff_data)  # To measure length
         self._profile_map = {}
-        self._values = np.zeros((len(payoff_data),) + self._mask.shape)
+        self._values = np.zeros((len(payoff_data),) + self.mask.shape)
         self._counts = np.zeros_like(self._values, dtype=int)
 
         for p, profile_data in enumerate(payoff_data):
@@ -299,9 +340,9 @@ class Game(EmptyGame):
     def _compute_min_payoffs(self):
         '''Assigns _min_payoffs to the minimum payoff for every role'''
         # TODO Remove filled? There should be no mask
-        self._min_payoffs = (np.ma.masked_array(self._values,
-                                                self._counts == 0)
-                             .min((0, 2)).filled(0))
+        self.min_payoffs = (np.ma.masked_array(self._values,
+                                               self._counts == 0)
+                            .min((0, 2)).filled(0))
 
     def data_profiles(self):
         '''Returns an iterator over all profiles with data

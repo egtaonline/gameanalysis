@@ -67,14 +67,14 @@ def mixture_deviation_gains(game, mix, as_array=False):
         role_evs = (strategy_evs * mix).sum(1)
         # No data for specific deviations
         # This is set after role_evs to not get invalid data
-        strategy_evs[~_deviation_data(game, mix) & game._mask] = np.nan
+        strategy_evs[~_deviation_data(game, mix) & game.mask] = np.nan
         gains = strategy_evs - role_evs[:, np.newaxis]
     else:  # No necessary data
-        gains = np.empty_like(game._mask)
+        gains = np.empty_like(game.mask)
         gains.fill(np.nan)
 
     if as_array:
-        gains[~game._mask] = 0
+        gains[~game.mask] = 0
         return gains
     else:
         return {role: {strat: gains[r, s] for s, strat in enumerate(strats)}
