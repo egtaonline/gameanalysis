@@ -18,8 +18,7 @@ def parse_args():
 def main():
 	args = parse_args()
 	for index in range(args.start, args.stop):
-		out_file = join(args.folder, str(index) + ("_CV-" if args.CV else
-									"_GP-") + "N.pkl")
+		out_file = join(args.folder, str(index) + "_GP-N.pkl")
 		if exists(out_file):
 			continue
 		with open(join(args.folder, str(index) + ".json")) as f:
