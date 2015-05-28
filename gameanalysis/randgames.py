@@ -50,7 +50,7 @@ def _random_strings(number, prefix='x', padding=None, cool=False):
     else:
         if padding is None:
             padding = len(str(number - 1))
-        return ('%s%0*d' % (prefix, padding, i) for i in range(number))
+        return ('{}{:0{}d}'.format(prefix, i, padding) for i in range(number))
 
 
 def _compact_payoffs(game):
@@ -291,7 +291,7 @@ def congestion_game(num_players, num_facilities, num_required, **kwargs):
 
     def strat_string(strat):
         '''Turns strategy into a string'''
-        return 'f{%s}' % ', '.join(map(str, strat))
+        return 'f{{{}}}'.format(', '.join(map(str, strat)))
 
     def to_array(facilities):
         '''Turns an iterable of facilities into an array'''
@@ -602,7 +602,7 @@ to use in an automated sense because the names can't be predicted.''')
 
 
 def command(args, prog, print_help=False):
-    _PARSER.prog = ('%s %s' % (_PARSER.prog, prog))
+    _PARSER.prog = '{}{}'.format(_PARSER.prog, prog)
     if print_help:
         _PARSER.print_help()
         return

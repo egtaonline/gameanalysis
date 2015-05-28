@@ -78,7 +78,7 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
         if linalg.norm(mix - old_mix) <= converge_thresh:
             break
         if verbose:
-            sys.stderr.write('%d: mix = %s, regret = %f\n' % (
+            sys.stderr.write('{:d}: mix = {}, regret = {:f}\n'.format(
                 i + 1,
                 mix,
                 regret.mixture_regret(game, mix)))
@@ -123,7 +123,7 @@ equilibrium found, regardless of whether it was below the regret threshold''')
 
 
 def command(args, prog, print_help=False):
-    _PARSER.prog = '%s %s' % (_PARSER.prog, prog)
+    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
     if print_help:
         _PARSER.print_help()
         return
@@ -143,7 +143,7 @@ def command(args, prog, print_help=False):
     elif args.type == 'mrp':
         equilibria = [min_regret_profile(game)]
     else:
-        raise ValueError('Unknown command given: %s' % args.type)
+        raise ValueError('Unknown command given: {}'.format(args.type))
 
     json.dump(equilibria, args.output, default=lambda x: x.to_json())
     args.output.write('\n')

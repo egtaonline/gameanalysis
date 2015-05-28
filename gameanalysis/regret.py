@@ -151,7 +151,7 @@ needs to be a json list. of profiles''')
 
 
 def command(args, prog, print_help=False):
-    _PARSER.prog = '%s %s' % (_PARSER.prog, prog)
+    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
     if print_help:
         _PARSER.print_help()
         return

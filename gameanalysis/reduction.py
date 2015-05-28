@@ -179,7 +179,7 @@ def _parse_inorder(players, game):
     parsed = {}
     for i in range(0, len(players), 2):
         assert players[i] in game.strategies, \
-            'role "%s" not found in game' % players[i]
+            'role "{}" not found in game'.format(players[i])
         parsed[players[i]] = int(players[i + 1])
     return parsed
 
@@ -213,7 +213,7 @@ role2 2"''')
 
 
 def command(args, prog, print_help=False):
-    _PARSER.prog = '%s %s' % (_PARSER.prog, prog)
+    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
     if print_help:
         _PARSER.print_help()
         return

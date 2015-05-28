@@ -23,7 +23,7 @@ _PARSER.add_argument('--format', '-f', choices=_OUTPUT_TYPE, default='json',
 
 
 def command(args, prog, print_help=False):
-    _PARSER.prog = '%s %s' % (_PARSER.prog, prog)
+    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
     if print_help:
         _PARSER.print_help()
         return

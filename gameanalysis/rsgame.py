@@ -228,22 +228,22 @@ class EmptyGame(object):
         return EmptyGame(*params[:2])
 
     def __repr__(self):
-        return '<%s: %s, %s>' % (
+        return '<{}: {}, {}>'.format(
             self.__class__.__name__,
             dict(self.players),
             {r: set(ses) for r, ses in self.strategies.items()})
 
     def __str__(self):
-        return (('%s:\n\t'
-                 'Roles: %s\n\t'
-                 'Players:\n\t\t%s\n\t'
-                 'Strategies:\n\t\t%s\n') % (
+        return (('{}:\n\t'
+                 'Roles: {}\n\t'
+                 'Players:\n\t\t{}\n\t'
+                 'Strategies:\n\t\t{}\n').format(
                      self.__class__.__name__,
                      ', '.join(sorted(self.strategies)),
-                     '\n\t\t'.join('%dx %s' % (count, role)
+                     '\n\t\t'.join('{:d}x {}'.format(count, role)
                                    for role, count
                                    in sorted(self.players.items())),
-                     '\n\t\t'.join('%s:\n\t\t\t%s' % (
+                     '\n\t\t'.join('{}:\n\t\t\t{}'.format(
                          role,
                          '\n\t\t\t'.join(strats))
                          for role, strats
@@ -318,15 +318,16 @@ class Game(EmptyGame):
         for p, profile_data in enumerate(payoff_data):
             prof = profile.Profile((role, {s: c for s, c, _ in dats})
                                    for role, dats in profile_data.items())
-            assert prof not in self._profile_map, 'Duplicate profile %s' % prof
+            assert prof not in self._profile_map, \
+                'Duplicate profile {}'.format(prof)
             self._profile_map[prof] = p
 
             for r, role in enumerate(self.strategies):
                 for strategy, count, payoffs in profile_data[role]:
                     s = self._strategy_index[role][strategy]
                     assert self._counts[p, r, s] == 0, (
-                        'Duplicate role strategy pair (%s, %s)'
-                        % (role, strategy))
+                        'Duplicate role strategy pair ({}, {})'
+                        .format(role, strategy))
                     self._values[p, r, s] = np.average(payoffs)
                     self._counts[p, r, s] = count
 
@@ -485,13 +486,13 @@ class Game(EmptyGame):
         return self.get_payoffs(profile)
 
     def __repr__(self):
-        return '%s, %d / %d>' % (
+        return '{}, {:d} / {:d}>'.format(
             super().__repr__()[:-1],
             len(self._profile_map),
             self._size)
 
     def __str__(self):
-        return '%spayoff data for %d out of %d profiles' % (
+        return '{}payoff data for {:d} out of {:d} profiles'.format(
             super().__str__(),
             len(self._profile_map),
             self._size)

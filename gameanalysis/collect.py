@@ -38,8 +38,9 @@ class frozendict(collections.Mapping):
         return self._hash
 
     def __repr__(self):
-        return '%s({%s})' % (self.__class__.__name__,
-                             ', '.join('%s: %s' % i for i in self.items()))
+        return '{}({{{}}})'.format(
+            self.__class__.__name__,
+            ', '.join('{!r}: {!r}'.format(k, v) for k, v in self.items()))
 
 
 # class harray(np.ndarray):

@@ -229,8 +229,8 @@ def _parse_text_spec(game, spec):
         elif role_strat in game.strategies[current_role]:
             subgame.setdefault(current_role, set()).add(role_strat)
         else:
-            raise ValueError('%s was not a role or a strategy in role %s' %
-                             (role_strat, current_role))
+            raise ValueError('{} was not a role or a strategy in role {}'
+                             .format(role_strat, current_role))
     return EmptySubgame(game, subgame)
 
 
@@ -294,7 +294,7 @@ _SUB_GROUP.add_argument('--index-spec', '-s', type=int, nargs='+', default=[],
 
 
 def command(args, prog, print_help=False):
-    _PARSER.prog = '%s %s' % (_PARSER.prog, prog)
+    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
     if print_help:
         _PARSER.print_help()
         return
