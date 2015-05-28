@@ -16,6 +16,7 @@ except ImportError:
 
 from RoleSymmetricGame import Game
 from HashableClasses import h_array
+from BasicFunctions import prod
 
 
 def _blocked_attribute(*args, **kwds):
