@@ -12,6 +12,7 @@ def parse_args():
 			"excluding index and extension. Example: CV-N")
 	parser.add_argument("EVs", choices=["point", "sample", "DPR"])
 	parser.add_argument("folder", type=str)
+	parser.add_argument("--no_mean", action="store_true")
 	parser.add_argument("--DPR_size", type=int, default=0)
 	parser.add_argument("--start", type=int, default=0)
 	parser.add_argument("--stop", type=int, default=100)
