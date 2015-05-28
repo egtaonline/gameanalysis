@@ -1,9 +1,8 @@
 #! /usr/bin/env python2.7
 
-import cPickle
+import cPickle, json
 from os.path import exists, join
 from argparse import ArgumentParser
-import GameIO
 from NormalizedLearning import GP_Game
 
 
@@ -22,7 +21,7 @@ def main():
 		if exists(out_file):
 			continue
 		with open(join(args.folder, str(index) + ".json")) as f:
-			sample_game = GameIO.read(f)
+			sample_game = json.load(f)
 		game = GP_Game(sample_game)
 		with open(out_file, "w") as f:
 			cPickle.dump(game, f)
