@@ -2,9 +2,11 @@
 
 import GameIO
 import Nash
+from NormalizedLearning import GP_Game
+
+import cPickle
 from argparse import ArgumentParser
 from os.path import join, exists
-from NormalizedLearning import GP_Game
 
 def parse_args():
 	parser = ArgumentParser()
