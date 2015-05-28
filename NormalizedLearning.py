@@ -186,7 +186,7 @@ class GP_Game(Game):
 				EVs[r,s] = self.predict(role, strat, x)
 		return EVs
 
-	def predict(self, role, strat, x, samples=1):
+	def predict(self, role, strat, x, samples=None):
 		"""
 		Exists because games learned with sklearn 0.14 are missing y_ndim_
 		"""
