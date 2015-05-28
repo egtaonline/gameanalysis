@@ -75,21 +75,21 @@ class GP_Game(Game):
 					s = self.index(role, strat)
 					v = np.array(values, dtype=float)
 					x[r,s] = count
-					Y[r][s].append(v.mean())
-					S[r][s].append(v)
+					Y[role][strat].append(v.mean())
+					S[role][strat].append(v)
 			for r,role in enumerate(self.roles):
 				for s,strat in enumerate(self.strategies[role]):
 					if x[r,s] > 0:
 						dev = self.array_index(role, strat)
-						X[r][s].append(self.flatten(x - dev))
+						X[role][strat].append(self.flatten(x - dev))
 
 		#normalize Y so that mean=0 and var=1
 		#convert S to normalized variances
-		for role in self.roles:
-			for strat in self.strategies[role]:
+		for r,role in enumerate(self.roles):
+			for s,strat in enumerate(self.strategies[role]):
 				y = np.array(Y[role][strat])
-				self.payoffMeans[role, strat] = m = y.mean()
-				self.payoffVars[role, strat] = v = y.var()
+				self.payoffMeans[r,s] = m = y.mean()
+				self.payoffVars[r,s] = v = y.var()
 				Y[role][strat] = (y - m) / v
 				var = np.array([np.var((s - m) / v) for s in S[role][strat]])
 				S[role][strat] = var / Y[role][strat]**2
