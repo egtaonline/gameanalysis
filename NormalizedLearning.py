@@ -167,9 +167,8 @@ class GP_Game(Game):
 			x = profiles + deviators
 			x[:,r,:] -= deviators[:,r,:]
 			x = map(self.flatten, x)
-			y_mean = self.predict(role, None, x)
 			for s,strat in enumerate(self.strategies[role]):
-				EVs[r,s] = (y_mean - self.predict(role, strat, x)).mean()
+				EVs[r,s] = self.predict(role, strat, x, samples).mean()
 		return EVs
 
 
@@ -183,20 +182,19 @@ class GP_Game(Game):
 			x = np.array(prof)
 			x[r,:] = dev[r,:]
 			x = self.flatten(x)
-			y_mean = self.predict(role, None, x)
 			for s,strat in enumerate(self.strategies[role]):
-				EVs[r,s] = y_mean - self.predict(role, strat, x)
+				EVs[r,s] = self.predict(role, strat, x)
 		return EVs
 
-	def predict(self, role, strat, x):
+	def predict(self, role, strat, x, samples=1):
 		"""
 		Exists because games learned with sklearn 0.14 are missing y_ndim_
 		"""
 		try:
-			return self.GPs[role][strat].predict(x)
+			return self.GPs[role][strat].predict(x, samples)
 		except AttributeError:
 			self.GPs[role][strat].y_ndim_ = 1
-			return self.GPs[role][strat].predict(x)
+			return self.GPs[role][strat].predict(x, samples)
 
 
 def train_GP(X, Y, nugget):
