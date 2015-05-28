@@ -137,7 +137,7 @@ class GP_Game(Game):
 
 
 	def expectedValues(self, mix):
-		return self.GP_estimates(self, mix)*self.payoffVars + self.payoffMeans
+		return self.GP_estimates(mix)*self.payoffVars + self.payoffMeans
 
 
 	def __repr__(self):
