@@ -36,7 +36,7 @@ def main():
 			game = cPickle.load(f)
 		game.EVs = args.EVs
 		equilibria = [game.toProfile(eq) for eq in Nash.mixed_nash(game, \
-													at_least_one=True)]
+											at_least_one=True)]
 		with open(out_file, "w") as f:
 			f.write(GameIO.to_JSON_str(equilibria))
 

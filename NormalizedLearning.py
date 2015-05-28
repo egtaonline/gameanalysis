@@ -74,9 +74,11 @@ class GP_Game(Game):
 				for strat,count,values in prof[role]:
 					s = self.index(role, strat)
 					v = np.array(values, dtype=float)
+					m = v.mean()
 					x[r,s] = count
-					Y[role][strat].append(v.mean())
+					Y[role][strat].append(m)
 					S[role][strat].append(v)
+					self.minPayoffs[r,:] = min(self.minPayoffs[r,0], m)
 			for r,role in enumerate(self.roles):
 				for s,strat in enumerate(self.strategies[role]):
 					if x[r,s] > 0:

@@ -6,7 +6,7 @@ import numpy as np
 
 from BasicFunctions import one_line
 from RoleSymmetricGame import is_mixed_profile, is_pure_profile, is_mixture_array, is_profile_array, Profile
-from LearnedModels import GP_Game
+from NormalizedLearning import GP_Game
 
 def regret(game, prof, role=None, strategy=None, deviation=None, bound=True):
 	if is_pure_profile(prof):

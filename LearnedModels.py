@@ -249,7 +249,7 @@ constant_params = {
 	"thetaL":1e-8,
 	"thetaU":1e8,
 	"normalize":True,
-	"theta0":1e-3
+	"theta0":1
 }
 CV_params = {
 	"corr":["absolute_exponential","squared_exponential","cubic","linear"],
