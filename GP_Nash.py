@@ -4,7 +4,7 @@ import GameIO
 import Nash
 from argparse import ArgumentParser
 from os.path import join, exists
-from LearnedModels import ZeroPredictor
+from NormalizedLearning import GP_Game
 
 def parse_args():
 	parser = ArgumentParser()
@@ -12,7 +12,6 @@ def parse_args():
 			"excluding index and extension. Example: CV-N")
 	parser.add_argument("EVs", choices=["point", "sample", "DPR"])
 	parser.add_argument("folder", type=str)
-	parser.add_argument("--no_mean", action="store_true")
 	parser.add_argument("--DPR_size", type=int, default=0)
 	parser.add_argument("--start", type=int, default=0)
 	parser.add_argument("--stop", type=int, default=100)
@@ -30,12 +29,9 @@ def main():
 						"DPR" else "")+("d" if args.no_mean else "")+".json")
 		if exists(out_file):
 			continue
-		game = GameIO.read(in_file)
+		with open(in_file) as f:
+			game = cPickle.load(f)
 		game.EVs = args.EVs
-		game.DPR_size = args.DPR_size
-		if args.no_mean:
-			for role in game.roles:
-				game.GPs[role][None] = ZeroPredictor()
 		equilibria = [game.toProfile(eq) for eq in Nash.mixed_nash(game, \
 													at_least_one=True)]
 		with open(out_file, "w") as f:
