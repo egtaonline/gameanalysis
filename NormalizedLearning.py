@@ -38,7 +38,7 @@ class GP_Game(Game):
 					'sample': estimate EVs via sample_EVs
 		"""
 		#set up RSG.Game member variables
-		self.roles = sorted(json_data.players.keys())
+		self.roles = sorted(json_data["players"].keys())
 		self.players = json_data["players"]
 		self.strategies = {r:sorted(json_data["strategies"][r]) \
 							for r in self.roles}
