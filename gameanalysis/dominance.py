@@ -1,4 +1,4 @@
-'''TODO'''
+"""TODO"""
 import sys
 import argparse
 import json
@@ -20,12 +20,12 @@ from gameanalysis import rsgame, regret, subgame
 
 
 def iterated_elimination(game, criterion, *args, **kwargs):
-    '''Iterated elimination of dominated strategies
+    """Iterated elimination of dominated strategies
 
     input:
     criterion = function to find dominated strategies
 
-    '''
+    """
     reduced_game = _eliminate_strategies(game, criterion, *args, **kwargs)
     while len(reduced_game) < len(game):
         game = reduced_game
@@ -41,13 +41,13 @@ def _eliminate_strategies(game, criterion, *args, **kwargs):
 
 
 def _best_responses(game, prof):
-    '''Returns the best responses to a profile
+    """Returns the best responses to a profile
 
     The return a dict mapping role to a two tuple. The first element of the two
     tuple is a set of confirmed best responses. The second is a set of
     strategies without data so they may be a better response or not.
 
-    '''
+    """
     prof = game.to_profile(prof)
     gains = regret.pure_strategy_deviation_gains(game, prof)
     responses = {}
@@ -74,11 +74,11 @@ def _best_responses(game, prof):
 
 
 def never_best_response(game, conditional=1):
-    '''Never-a-weak-best-response criterion for IEDS
+    """Never-a-weak-best-response criterion for IEDS
 
     This criterion is very strong: it can eliminate strict Nash equilibria.
 
-    '''
+    """
     non_best_responses = {role: set(strats) for role, strats
                           in game.strategies.items()}
     for prof in game:
@@ -90,13 +90,13 @@ def never_best_response(game, conditional=1):
 
 
 def _undominated(game, prof, conditional=1, weak=False):
-    '''Returns a mapping from role to strategies to strategy set
+    """Returns a mapping from role to strategies to strategy set
 
     The final set are the of the deviations that the first strategy is not
     dominated by. Another way to put it would this this maps from role to
     strategies to deviations that don't dominate strategy.
 
-    '''
+    """
     gains = regret.pure_strategy_deviation_gains(game, prof)
     return {role:
             {strat:
@@ -110,7 +110,7 @@ def _undominated(game, prof, conditional=1, weak=False):
 
 
 def pure_strategy_dominance(game, conditional=1, weak=False):
-    '''Pure-strategy dominance criterion for IEDS
+    """Pure-strategy dominance criterion for IEDS
 
     Returns a mapping from role to dominated strategies.
 
@@ -119,7 +119,7 @@ def pure_strategy_dominance(game, conditional=1, weak=False):
         1: conditional dominance
         2: extra-conservative conditional dominance
 
-    '''
+    """
     dominated_strategies = {role: {st: set(strats) - st for st in strats}
                             for role, strats in game.strategies}
     for prof in game:

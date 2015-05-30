@@ -1,5 +1,5 @@
-'''This module contains data structures and accompanying methods for working
-with role symmetric games'''
+"""This module contains data structures and accompanying methods for working
+with role symmetric games"""
 
 import itertools
 import math
@@ -24,7 +24,7 @@ _TINY = np.finfo(float).tiny
 
 
 class EmptyGame(object):
-    '''Role-symmetric game representation
+    """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
     game, and does not contain methods to operate on observation data.
@@ -51,7 +51,7 @@ class EmptyGame(object):
         payoff representation contain valid input. Any element that's False
         must contain a zero in respective representations.
 
-    '''
+    """
     def __init__(self, players, strategies, _=None):
         self.players = collect.frozendict(players)
         self.strategies = collect.frozendict((r, frozenset(s))
@@ -68,7 +68,7 @@ class EmptyGame(object):
             for i, ses in enumerate(self.strategies.values())))] = True
 
     def all_profiles(self):
-        '''Returns a generator over all profiles'''
+        """Returns a generator over all profiles"""
         return map(profile.Profile, itertools.product(*(
             [(role, Counter(comb)) for comb
              in itertools.combinations_with_replacement(
@@ -76,9 +76,9 @@ class EmptyGame(object):
             for role, strats in self.strategies.items())))
 
     def _as_dict(self, array):
-        '''Converts an array profile representation to a dictionary representation
+        """Converts an array profile representation to a dictionary representation
 
-        '''
+        """
         if isinstance(array, collections.Mapping):
             return array  # Already a profile
         array = np.asarray(array)
@@ -88,35 +88,35 @@ class EmptyGame(object):
                 in zip(array, self.strategies.items())}
 
     def as_profile(self, array):
-        '''Converts an array profile representation into a dictionary representation
+        """Converts an array profile representation into a dictionary representation
 
         The dictionary representation is a mapping from roles to strategies to
         counts.
 
         If a profile is passed in, nothing is changed.
 
-        '''
+        """
         if isinstance(array, profile.Profile):
             return array
         else:
             return profile.Profile(self._as_dict(array))
 
     def as_mixture(self, array):
-        '''Converts an array profile representation into a dictionary representation
+        """Converts an array profile representation into a dictionary representation
 
         The dictionary representation is a mapping from roles to strategies to
         counts.
 
         If a profile is passed in, nothing is changed.
 
-        '''
+        """
         if isinstance(array, profile.Mixture):
             return array
         else:
             return profile.Mixture(self._as_dict(array))
 
     def as_array(self, prof, dtype=float):
-        '''Converts a dictionary profile representation into an array representation
+        """Converts a dictionary profile representation into an array representation
 
         The array representation is a matrix roles x max_strategies where the
         mapping is defined by the order in the strategies dictionary.
@@ -125,7 +125,7 @@ class EmptyGame(object):
 
         By definition, an invalid entries are zero.
 
-        '''
+        """
         # XXX This could be inefficient if supports are small, but the number
         # of strategies is large.
         if isinstance(prof, np.ndarray):  # Already an array
@@ -138,11 +138,11 @@ class EmptyGame(object):
         return array
 
     def uniform_mixture(self, as_array=False):
-        '''Returns a uniform mixed profile
+        """Returns a uniform mixed profile
 
         Set as_array to True to return the array representation of the profile.
 
-        '''
+        """
         mix = self.mask / self.mask.sum(1)[:, np.newaxis]
         if as_array:
             return mix
@@ -150,7 +150,7 @@ class EmptyGame(object):
             return self.as_mixture(mix)
 
     def random_mixture(self, alpha=1, as_array=False):
-        '''Return a random mixed profile
+        """Return a random mixed profile
 
         Mixed profiles are sampled from a dirichlet distribution with parameter
         alpha. If alpha = 1 (the default) this is a uniform distribution over
@@ -161,7 +161,7 @@ class EmptyGame(object):
 
         Set as_array to True to return an array representation of the profile.
 
-        '''
+        """
         mix = np.random.gamma(alpha, size=self.mask.shape) * self.mask
         mix /= mix.sum(1)[:, np.newaxis]
         if as_array:
@@ -170,7 +170,7 @@ class EmptyGame(object):
             return self.as_mixture(mix)
 
     def biased_mixtures(self, bias=.9, as_array=False):
-        '''Gives generator of mixtures where in each mixture a single role-strategy is
+        """Gives generator of mixtures where in each mixture a single role-strategy is
         played with bias, and the rest are uniform
 
         Probability for that role's remaining strategies is distributed
@@ -180,7 +180,7 @@ class EmptyGame(object):
         the main use case is starting replicator dynamics from several
         mixtures.
 
-        '''
+        """
         assert 0 <= bias <= 1, 'probabilities must be between zero and one'
         uniform = self.uniform_mixture(as_array=True)
         for r, (role, strats) in enumerate(self.strategies.items()):
@@ -197,33 +197,33 @@ class EmptyGame(object):
                     yield self.as_mixture(biased)
 
     def pure_mixtures(self, as_array=False):
-        '''Returns a generator over all mixtures where the probability of playing a
+        """Returns a generator over all mixtures where the probability of playing a
         strategy is either 1 or 0
 
         Set as_array to True to return the mixed profiles in array form.
 
-        '''
+        """
         wrap = self.as_array if as_array else lambda x: x
         return (wrap(profile.Mixture(rs)) for rs in itertools.product(
             *([(r, {s: 1}) for s in sorted(ss)] for r, ss
               in self.strategies.items())))
 
     def is_symmetric(self):
-        '''Returns true if this game is symmetric'''
+        """Returns true if this game is symmetric"""
         return len(self.strategies) == 1
 
     def is_asymmetric(self):
-        '''Returns true if this game is asymmetric'''
+        """Returns true if this game is asymmetric"""
         return all(p == 1 for p in self.players.values())
 
     def to_json(self):
-        '''Convert to a json serializable format'''
+        """Convert to a json serializable format"""
         return {'players': dict(self.players),
                 'strategies': {r: list(s) for r, s in self.strategies.items()}}
 
     @staticmethod
     def from_json(json_):
-        '''Load a profile from its json representation'''
+        """Load a profile from its json representation"""
         params = gameio._game_from_json(json_)
         return EmptyGame(*params[:2])
 
@@ -252,7 +252,7 @@ class EmptyGame(object):
 
 
 def _compute_dev_reps(counts, players, exact=False):
-    '''Uses fast floating point math to compute devreps'''
+    """Uses fast floating point math to compute devreps"""
     # Sets up functions to be exact or approximate
     if exact:
         dtype = object
@@ -273,7 +273,7 @@ def _compute_dev_reps(counts, players, exact=False):
 
 
 class Game(EmptyGame):
-    '''Role-symmetric game representation
+    """Role-symmetric game representation
 
     Parameters
     ----------
@@ -302,7 +302,7 @@ class Game(EmptyGame):
     min_payoffs : ndarray, shape (num_roles,), dtype float
         The minimum payoff a role can ever have.
 
-    '''
+    """
     def __init__(self, players, strategies, payoff_data):
         super().__init__(players, strategies)
 
@@ -339,27 +339,27 @@ class Game(EmptyGame):
         self._compute_min_payoffs()
 
     def _compute_min_payoffs(self):
-        '''Assigns _min_payoffs to the minimum payoff for every role'''
+        """Assigns _min_payoffs to the minimum payoff for every role"""
         # TODO Remove filled? There should be no mask
         self.min_payoffs = (np.ma.masked_array(self._values,
                                                self._counts == 0)
                             .min((0, 2)).filled(0))
 
     def data_profiles(self):
-        '''Returns an iterator over all profiles with data
+        """Returns an iterator over all profiles with data
 
         Note: this returns profiles in a different order than payoffs
 
-        '''
+        """
         return self._profile_map.keys()
 
     def get_payoff(self, profile, role, strategy, default=None):
-        '''Returns the payoff for a specific profile, role, and strategy
+        """Returns the payoff for a specific profile, role, and strategy
 
         If there's no data for the profile, and a default is specified, that is
         returned instead.
 
-        '''
+        """
         profile = self.as_profile(profile)
         if default is not None and profile not in self:
             return default
@@ -369,14 +369,14 @@ class Game(EmptyGame):
         return self._values[p, r, s]
 
     def _payoff_dict(self, counts, values):
-        '''Merges a value/payoff array and a counts array into a payoff dict'''
+        """Merges a value/payoff array and a counts array into a payoff dict"""
         return {role: {strat: payoff for strat, count, payoff
                        in zip(strats, s_count, s_value) if count > 0}
                 for (role, strats), s_count, s_value
                 in zip(self.strategies.items(), counts, values)}
 
     def get_payoffs(self, profile, as_array=False):
-        '''Returns a dictionary mapping roles to strategies to payoff'''
+        """Returns a dictionary mapping roles to strategies to payoff"""
         index = self._profile_map[self.as_profile(profile)]
         payoffs = self._values[index]
         if as_array:
@@ -384,11 +384,11 @@ class Game(EmptyGame):
         return self._payoff_dict(self._counts[index], payoffs)
 
     def payoffs(self, as_array=False):
-        '''Returns an iterable of tuples of (profile, payoffs)
+        """Returns an iterable of tuples of (profile, payoffs)
 
         If as_array is True, they are given in their array representation
 
-        '''
+        """
         iterable = zip(self._counts, self._values)
         if as_array:
             return iterable
@@ -398,11 +398,11 @@ class Game(EmptyGame):
                     for counts, payoffs in iterable)
 
     def get_expected_payoff(self, mix, as_array=False):
-        '''Returns a dict of the expected payoff of a mixed strategy to each role
+        """Returns a dict of the expected payoff of a mixed strategy to each role
 
         If as_array, then an array in role order is returned.
 
-        '''
+        """
         mix = self.as_mixture(mix)
         payoff = (mix * self.expected_values(mix, as_array=True)).sum(1)
         if as_array:
@@ -411,29 +411,29 @@ class Game(EmptyGame):
             return dict(zip(payoff, self.strategies))
 
     def get_pure_social_welfare(self, profile):
-        '''Returns the social welfare of a pure strategy profile'''
+        """Returns the social welfare of a pure strategy profile"""
         # TODO move to regret
         indexable = self.as_profile(profile)
         array = self.as_array(profile, dtype=int)
         return np.sum(array * self.get_payoffs(indexable, as_array=True))
 
     def get_mixed_social_welfare(self, mix):
-        '''Returns the social welfare of a mixed strategy profile'''
+        """Returns the social welfare of a mixed strategy profile"""
         # TODO move to regret
         return self.get_expected_payoff(mix, as_array=True).dot(
             self.players.values())
 
     def get_max_social_welfare(self):
-        '''Returns the maximum social welfare over the known profiles'''
+        """Returns the maximum social welfare over the known profiles"""
         # This should probably stay here, because it can't be moved without
         # exposing underlying structure or making it less efficient
         return np.sum(self._values * self._counts, (1, 2)).max()
 
     def expected_values(self, mix, as_array=False):
-        '''Computes the expected value of each pure strategy played against all
+        """Computes the expected value of each pure strategy played against all
         opponents playing mix.
 
-        '''
+        """
         # The first use of 'tiny' makes 0^0=1.
         # The second use of 'tiny' makes 0/0=0.
         mix = self.as_array(mix)
@@ -451,38 +451,38 @@ class Game(EmptyGame):
                     in zip(self.strategies.items(), values)}
 
     def is_complete(self):
-        '''Returns true if every profile has data'''
+        """Returns true if every profile has data"""
         return len(self._profile_map) == self._size
 
     def is_constant_sum(self):
-        '''Returns true if this game is constant sum'''
+        """Returns true if this game is constant sum"""
         profile_sums = np.sum(self._counts * self._values, (1, 2))
         return np.allclose(profile_sums, np.mean(profile_sums))
 
     def items(self, as_array=False):
-        '''Identical to payoffs
+        """Identical to payoffs
 
         Returns an iterable of tuples of (profile, payoffs). This is to make a
         Game behave like a dictionary from profiles to payoff dictionaries.
 
         If as_array is True, they are given in their array representation
 
-        '''
+        """
         return self.payoffs(as_array=as_array)
 
     def __contains__(self, profile):
-        '''Returns true if data for that profile exists'''
+        """Returns true if data for that profile exists"""
         return profile in self._profile_map
 
     def __iter__(self):
-        '''Basically identical to an iterator over data_profiles'''
+        """Basically identical to an iterator over data_profiles"""
         return iter(self.data_profiles())
 
     def __getitem__(self, profile):
-        '''Identical to get payoffs, makes game behave like a dictionary of profiles to
+        """Identical to get payoffs, makes game behave like a dictionary of profiles to
         payoffs
 
-        '''
+        """
         return self.get_payoffs(profile)
 
     def __repr__(self):
@@ -498,7 +498,7 @@ class Game(EmptyGame):
             self._size)
 
     def to_json(self):
-        '''Convert to json according to the egta-online v3 default game spec'''
+        """Convert to json according to the egta-online v3 default game spec"""
         return {'players': dict(self.players),
                 'strategies': {r: list(s) for r, s in self.strategies.items()},
                 'profiles': [
@@ -510,7 +510,7 @@ class Game(EmptyGame):
 
     @staticmethod
     def from_json(json_):
-        '''Load a profile from its json representation'''
+        """Load a profile from its json representation"""
         return Game(*gameio._game_from_json(json_))
 
 
@@ -519,7 +519,7 @@ class Game(EmptyGame):
 # TODO make sure sample game has a method to return payoffs to mean, instead of
 # performing a bootstrap sample.
 class SampleGame(Game):
-    '''A Role Symmetric Game that has multiple samples per observation'''
+    """A Role Symmetric Game that has multiple samples per observation"""
     def __init__(self, players, strategies, payoff_data=()):
         super().__init(players, strategies, payoff_data)
 #         self.sample_values = []
@@ -554,13 +554,13 @@ class SampleGame(Game):
 #         return v[self.index(role), self.index(role,strategy)]
 
 #     def resample(self, pair="game"):
-#         '''
+#         """
 #         Overwrites self.values with a bootstrap resample of self.sample_values.
 
 #         pair = payoff: resample all payoff observations independently
 #         pair = profile: resample paired profile observations
 #         pair = game: resample paired game observations
-#         '''
+#         """
 #         if pair == "payoff":
 #             raise NotImplementedError("TODO")
 #         elif pair == "profile":
@@ -575,7 +575,7 @@ class SampleGame(Game):
 #                     np.random.multinomial(s, np.ones(s)/s))
 
 #     def singleSample(self):
-#         '''Makes self.values be a single sample from each sample set.'''
+#         """Makes self.values be a single sample from each sample set."""
 #         if self.max_samples == self.min_samples:
 #             self.makeArrays()
 #             vals = self.sample_values.reshape([prod(self.values.shape), \
@@ -590,9 +590,9 @@ class SampleGame(Game):
 #         self.values = map(lambda p: np.average(p,2), self.sample_values)
 
 #     def toJSON(self):
-#         '''
+#         """
 #         Convert to JSON according to the EGTA-online v3 default game spec.
-#         '''
+#         """
 #         game_dict = {}
 #         game_dict["players"] = self.players
 #         game_dict["strategies"] = self.strategies
@@ -605,9 +605,9 @@ class SampleGame(Game):
 #         return game_dict
 
 #     # def to_TB_JSON(self):
-#     #     '''
+#     #     """
 #     #     Convert to JSON according to the EGTA-online v3 sample-game spec.
-#     #     '''
+#     #     """
 #     #     game_dict = {}
 #     #     game_dict["roles"] = [{"name":role, "count":self.players[role], \
 #     #                 "strategies": list(self.strategies[role])} for role \

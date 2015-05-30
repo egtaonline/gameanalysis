@@ -6,10 +6,10 @@ from gameanalysis import rsgame, subgame
 
 
 def _hr_profiles(game, reduced_players):
-    '''Returns a generator over tuples of hr profiles and the corresponding profile
+    """Returns a generator over tuples of hr profiles and the corresponding profile
     for payoff data
 
-    '''
+    """
     # TODO Right now this is written only for exact HR
     fracts = {role: count // reduced_players[role]
               for role, count in game.players.items()}
@@ -24,26 +24,26 @@ def _hr_profiles(game, reduced_players):
 
 
 def hierarchical_reduction(game, players):
-    '''Convert an input game to a reduced game with new players
+    """Convert an input game to a reduced game with new players
 
     This version uses exact math, and so will fail if your player counts are
     not DPR reducible.
 
-    '''
+    """
     profiles = (red_prof.to_input_profile(game.get_payoffs(profile))
                 for red_prof, profile in _hr_profiles(game, players))
     return rsgame.Game(players, game.strategies, profiles)
 
 
 # def full_prof_sym(HR_profile, N):
-#     '''Returns the symmetric full game profile corresponding to the given
+#     """Returns the symmetric full game profile corresponding to the given
 #     symmetric reduced game profile under hierarchical reduction.
 
 #     In the event that N isn't divisible by n, we first assign by rounding
 #     error and break ties in favor of more-played strategies. The final
 #     tie-breaker is alphabetical order.
 
-#     '''
+#     """
 #     if N < 2:
 #         return HR_profile
 #     n = sum(HR_profile.values())
@@ -64,10 +64,10 @@ def hierarchical_reduction(game, players):
 
 
 # def full_prof_DPR(DPR_profile, role, strat, players):
-#     '''Returns the full game profile whose payoff determines that of strat in the
+#     """Returns the full game profile whose payoff determines that of strat in the
 #     reduced game profile.
 
-#     '''
+#     """
 #     full_prof = {}
 #     for r in DPR_profile:
 #         if r == role:
@@ -81,10 +81,10 @@ def hierarchical_reduction(game, players):
 
 
 def _dpr_profile_contributions(profile, players, reduced_players):
-    '''Returns a generator of dpr profiles and the role-strategy pair that
+    """Returns a generator of dpr profiles and the role-strategy pair that
     contributes to it
 
-    '''
+    """
     # TODO Right now this is written only for exact DPR
     fracts = {role: count // reduced_players[role]
               for role, count in players.items()}
@@ -115,13 +115,13 @@ def _dpr_profile_contributions(profile, players, reduced_players):
 
 
 def deviation_preserving_reduction(game, players):
-    '''Convert an input game to a reduced game with new players
+    """Convert an input game to a reduced game with new players
 
     This version uses exact math, and so will fail if your player counts are
     not DPR reducible. It also means the minimum number of players to reduce a
     role to is 2, unless the role only has one player to begin with.
 
-    '''
+    """
     # Map from profile to role to strat to a list of payoffs
     # This allows us to incrementally build DPR profiles as we scan the data
     # The list is so we can keep multiple observations, but it's not clear how
@@ -150,7 +150,7 @@ def twins_reduction(game, _=None):
 
 
 # def DPR_profiles(game, players={}):
-#     '''Returns the profiles from game that contribute to the DPR game.'''
+#     """Returns the profiles from game that contribute to the DPR game."""
 #     if not players:
 #         players = {r: 2 for r in game.roles}
 #     elif len(game.roles) == 1 and isinstance(players, int):

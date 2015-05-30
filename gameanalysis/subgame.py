@@ -1,9 +1,9 @@
-'''Module for performing actions on subgames
+"""Module for performing actions on subgames
 
 A subgame is a game with a restricted set of strategies that usually make
 analysis tractable.
 
-'''
+"""
 import sys
 import argparse
 import bisect
@@ -14,13 +14,13 @@ from gameanalysis import rsgame
 
 
 def pure_subgames(game):
-    '''Returns a generator of every pure subgame in a game
+    """Returns a generator of every pure subgame in a game
 
     A pure subgame is a subgame where each role only has one strategy. This
     returns the pure subgames in sorted order based off of role and strategy
     names.
 
-    '''
+    """
     return (EmptySubgame(game, dict(rs)) for rs in itertools.product(
         *([(r, {s}) for s in sorted(ss)] for r, ss
           in game.strategies.items())))
@@ -32,23 +32,23 @@ def pure_subgames(game):
 # function. It could be tied in with EmptySubgame, but that seems verbose and
 # somewhat over designed.
 def support_set(strategies):
-    '''Takes a support like object and returns a set representing the support
+    """Takes a support like object and returns a set representing the support
 
     A support like object is a dict mapping role to an iterable of
     strategies. This includes cases when the iterable of strategies is another
     mapping type to any sort of information, e.g. a profile. The support set is
     simply a set of (role, strategy) that have support in this profile type.
 
-    '''
+    """
     return frozenset(itertools.chain.from_iterable(
         ((r, s) for s in ses) for r, ses in strategies.items()))
 
 
 def _extract_profiles(game, strategies):
-    '''Given a game and a reduced set of strategies, create a general profile
+    """Given a game and a reduced set of strategies, create a general profile
     structure to feed into a game initialization
 
-    '''
+    """
     subgame_set = support_set(strategies)
     for prof in game:
         if not support_set(prof).issubset(subgame_set):
@@ -60,22 +60,22 @@ def _extract_profiles(game, strategies):
 
 
 class EmptySubgame(rsgame.EmptyGame):
-    '''A subgame corresponding to an empty game
+    """A subgame corresponding to an empty game
 
     empty_game is the full game that this is a subgame of. strategies is a
     reduced role-strategy mapping for the subgame.
 
     This class provides methods that don't require payoff data.
 
-    '''
+    """
     def __init__(self, game, strategies):
         super().__init__(game.players, strategies)
         self.full_game = game
 
     def deviation_profiles(self):
-        '''Return a generator of every deviation profile, the role, and deviation
+        """Return a generator of every deviation profile, the role, and deviation
 
-        '''
+        """
         for role, strats in self.strategies.items():
             nd_players = dict(self.players)
             nd_players[role] -= 1
@@ -85,10 +85,10 @@ class EmptySubgame(rsgame.EmptyGame):
                     yield prof.add(role, dev), role, dev
 
     def additional_strategy_profiles(self, role, strat):
-        '''Returns a generator of all additional profiles that exist in the subgame
+        """Returns a generator of all additional profiles that exist in the subgame
         with strat
 
-        '''
+        """
         # This uses the observation that the added profiles are all of the
         # profiles of the new subgame with one less player in role, and then
         # where that last player always plays strat
@@ -99,25 +99,25 @@ class EmptySubgame(rsgame.EmptyGame):
         return (p.add(role, strat) for p in new_game.all_profiles())
 
     def add_strategy(self, role, strategy):
-        '''Returns a subgame with the additional strategy'''
+        """Returns a subgame with the additional strategy"""
         strats = dict(self.strategies)
         strats[role] = list(strats[role]) + [strategy]
         return EmptySubgame(self.full_game, strats)
 
 
 def subgame(game, strategies):
-    '''Returns a new game that only has data for profiles in strategies'''
+    """Returns a new game that only has data for profiles in strategies"""
     return rsgame.Game(game.players, strategies,
                        _extract_profiles(game, strategies))
 
 
 # def translate(arr, source_game, target_game):
-#     '''
+#     """
 #     Translates a mixture, profile, count, or payoff array between related
 #     games based on role/strategy indices.
 
 #     Useful for testing full-game regret of subgame equilibria.
-#     '''
+#     """
 #     a = target_game.zeros()
 #     for role in target_game.roles:
 #         for strategy in source_game.strategies[role]:
@@ -128,11 +128,11 @@ def subgame(game, strategies):
 
 
 # def subgame(game, strategies={}, require_all=False):
-#     '''
+#     """
 #     Creates a game with a subset each role's strategies.
 
 #     default settings result in a subgame with no strategies
-#     '''
+#     """
 #     if not strategies:
 #         strategies = {r:[] for r in game.roles}
 #     sg = type(game)(game.roles, game.players, strategies)
@@ -185,11 +185,11 @@ def subgame(game, strategies):
 #     return True
 
 def maximal_subgames(game):
-    '''Returns a generator over all maximally complete subgames
+    """Returns a generator over all maximally complete subgames
 
     The subgames returned are empty subgames.
 
-    '''
+    """
     # invariant that we have data for every subgame in queue
     queue = [sub for sub in pure_subgames(game)
              if all(p in game for p in sub.all_profiles())]

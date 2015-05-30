@@ -6,11 +6,11 @@ def __blocked_attribute(*args, **kwargs):
 
 
 class frozendict(collections.Mapping):
-    '''An immutable hashable dictionary
+    """An immutable hashable dictionary
 
     Keys are stored in sorted order
 
-    '''
+    """
 
     def __init__(self, *args, **kwargs):
         if args and isinstance(args[0], frozendict):

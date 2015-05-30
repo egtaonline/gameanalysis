@@ -2,7 +2,7 @@ import numpy as np
 
 
 def find_primes(n):
-    '''Returns a list of all primes up to n'''
+    """Returns a list of all primes up to n"""
     primes = [2]
     for i in range(3, n+1):
         is_prime = True
@@ -16,7 +16,7 @@ def find_primes(n):
 
 
 def prime_factor(n, dtype=np.uint64):
-    '''Create a lookup array of prime factorizations
+    """Create a lookup array of prime factorizations
 
     Returns two things:
     0) a n+1 x (number of primes <= n) array with dtype dtype.
@@ -25,7 +25,7 @@ def prime_factor(n, dtype=np.uint64):
     1) an array with all of the primes less than or equal to n.  Corresponds
        with the columns of the first array.
 
-    '''
+    """
     primes = np.array(find_primes(n), dtype=dtype)
     factors = np.zeros((n+1, len(primes)), dtype=dtype)
     for i in range(2, n+1):
@@ -39,7 +39,7 @@ def prime_factor(n, dtype=np.uint64):
 
 
 def multinomial_coef(array, dtype=np.uint64):
-    '''Calculate the multinomial coefficient for an array of ints
+    """Calculate the multinomial coefficient for an array of ints
 
     WARNING: Because numpy does not have overflow checking for int math, this
     computes in modulo dtype space.
@@ -57,7 +57,7 @@ def multinomial_coef(array, dtype=np.uint64):
     This does math in prime facorization space to avoid overflows, but they are
     obviously still possible.
 
-    '''
+    """
     array = np.asarray(array)
     shp = array.shape[:-1]
     num_mult = array.shape[-1]

@@ -1,4 +1,4 @@
-'''TODO'''
+"""TODO"""
 import sys
 import argparse
 import json
@@ -8,12 +8,12 @@ from gameanalysis import subgame, rsgame
 
 
 def pure_strategy_deviation_gains(game, prof):
-    '''Returns a nested dict containing all of the gains from deviation
+    """Returns a nested dict containing all of the gains from deviation
 
     The nested dict maps role to strategy to deviation to gain. The profile
     must have data.
 
-    '''
+    """
     prof = game.to_profile(prof)
     return {role:
             {strat:
@@ -26,7 +26,7 @@ def pure_strategy_deviation_gains(game, prof):
 
 
 def pure_strategy_regret(game, prof):
-    '''Returns the regret of a pure strategy profile in a game'''
+    """Returns the regret of a pure strategy profile in a game"""
     return max(max(max(gain for _, gain in dev_gain.items())
                    for _, dev_gain in strat_gain.items())
                for _, strat_gain
@@ -34,16 +34,16 @@ def pure_strategy_regret(game, prof):
 
 
 def _subgame_data(game, mix):
-    '''Returns true if we have all support data'''
+    """Returns true if we have all support data"""
     sub = subgame.EmptySubgame(game, game.to_profile(mix).support())
     return all(prof in game for prof in sub.all_profiles())
 
 
 def _deviation_data(game, mix):
-    '''Returns a boolean array where True means we have data on mix deviations to
+    """Returns a boolean array where True means we have data on mix deviations to
     that role strat
 
-    '''
+    """
     mix = game.to_profile(mix)
     support = mix.support()
     has_data = {role: {strat: True for strat in strats}
@@ -55,12 +55,12 @@ def _deviation_data(game, mix):
 
 
 def mixture_deviation_gains(game, mix, as_array=False):
-    '''Returns all the gains from deviation from a mixed strategy
+    """Returns all the gains from deviation from a mixed strategy
 
     Return type is a dict mapping role to deviation to gain. This is equivalent
     to what is sometimes called equilibrium regret.
 
-    '''
+    """
     if _subgame_data(game, mix):
         mix = game.to_array(mix)
         strategy_evs = game.expected_values(mix)
@@ -82,7 +82,7 @@ def mixture_deviation_gains(game, mix, as_array=False):
 
 
 def mixture_regret(game, mix):
-    '''Return the regret of a mixture profile'''
+    """Return the regret of a mixture profile"""
     return mixture_deviation_gains(game, mix, as_array=True).max()
 
 

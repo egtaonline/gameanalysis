@@ -5,31 +5,31 @@ import scipy.misc as spm
 
 
 def prod(collection):
-    '''Product of all elements in the collection'''
+    """Product of all elements in the collection"""
     return functools.reduce(operator.mul, collection)
 
 
 def game_size(n, s, exact=True):
-    '''Number of profiles in a symmetric game with n players and s strategies
+    """Number of profiles in a symmetric game with n players and s strategies
 
-    '''
+    """
     return spm.comb(n+s-1, n, exact=exact)
 
 
 def profile_repetitions(p):
-    '''Number of normal form profiles that correspond to a role-symmetric profile
+    """Number of normal form profiles that correspond to a role-symmetric profile
 
-    '''
+    """
     return prod(math.factorial(sum(row)) // prod(map(math.factorial, row))
                 for row in p)
 
 
 def only(iterable):
-    '''Return the only element of an iterable
+    """Return the only element of an iterable
 
     Throws a value error if the iterable doesn't contain only one element
 
-    '''
+    """
     try:
         it = iter(iterable)
         value = next(it)
@@ -44,7 +44,7 @@ def only(iterable):
         raise ValueError('Input was empty')
 
 # def mean(numbers):
-#     '''Arithmetic mean'''
+#     """Arithmetic mean"""
 #     n = 0
 #     mean = 0.0
 #     for x in numbers:
@@ -54,7 +54,9 @@ def only(iterable):
 
 
 def one_line(string, line_width=80):
-    '''If string s is longer than line width, cut it off and append "..."'''
+    """If string s is longer than line width, cut it off and append "..."
+
+    """
     string = string.replace('\n', '')
     if len(string) > line_width:
         return string[:3*line_width/4] + "..." + string[-line_width/4+3:]
@@ -62,7 +64,7 @@ def one_line(string, line_width=80):
 
 
 # def weighted_least_squares(x, y, weights):
-#     '''appends the ones for you; puts 1D weights into a diagonal matrix'''
+#     """appends the ones for you; puts 1D weights into a diagonal matrix"""
 #     try:
 #         A = np.append(x, np.ones([x.shape[0],1]), axis=1)
 #         W = np.zeros([x.shape[0]]*2)
@@ -77,7 +79,7 @@ def one_line(string, line_width=80):
 
 
 def _reverse(seq, start, end):
-    '''Helper function needed for ordered_permutations'''
+    """Helper function needed for ordered_permutations"""
     end -= 1
     if end <= start:
         return

@@ -7,7 +7,7 @@ from gameanalysis import funcs
 
 
 def _game_from_json(json_):
-    '''Returns constructor arguments for a game from parsed json'''
+    """Returns constructor arguments for a game from parsed json"""
     if 'players' in json_ and 'strategies' in json_:
         return _ga_game_from_json(json_)
     elif not json_['profiles']:
@@ -29,17 +29,17 @@ def _game_from_json(json_):
 
 
 def _ga_game_from_json(json_):
-    '''Returns parameters necessary for constructing a game analysis game when
+    """Returns parameters necessary for constructing a game analysis game when
     starting is proper output
 
-    '''
+    """
     return (json_['players'],
             json_['strategies'],
             json_.get('profiles', ()))
 
 
 def _roles_from_json(json_):
-    '''Load json that has a roles field instead'''
+    """Load json that has a roles field instead"""
     roles = json_['roles']
     players = {r['name']: int(r['count']) for r in roles}
     strategies = {r['name']: r['strategies'] for r in roles}
@@ -47,7 +47,7 @@ def _roles_from_json(json_):
 
 
 def _new_game_from_json(json_, profile_reader):
-    '''Interprets a new style game'''
+    """Interprets a new style game"""
     players, strategies, _ = _roles_from_json(json_)
     return (players, strategies,
             (profile_reader(prof) for prof in json_['profiles']))
@@ -79,7 +79,7 @@ def _old_game_from_json(json_):
 
 
 def _profile_v2_from_json(prof_json):
-    '''Interprets a version 2 profile'''
+    """Interprets a version 2 profile"""
     profile = {}
     for role_dict in prof_json['roles']:
         role = role_dict['name']
@@ -93,7 +93,7 @@ def _profile_v2_from_json(prof_json):
 
 
 def _profile_v3_from_json(prof_json):
-    '''Interprets a version 3 profile'''
+    """Interprets a version 3 profile"""
     prof = {}
     for sym_grp in prof_json['symmetry_groups']:
         strat_data = prof.setdefault(sym_grp['role'], [])
@@ -104,7 +104,7 @@ def _profile_v3_from_json(prof_json):
 
 
 def _samples_profile_v3_from_json(prof_json):
-    '''Interprets a version 3 profile with sample data'''
+    """Interprets a version 3 profile with sample data"""
     prof = {}
     for obs in prof_json['observations']:
         for sym_grp in obs['symmetry_groups']:
@@ -122,7 +122,7 @@ def _samples_profile_v3_from_json(prof_json):
 
 
 def _samples_profile_v4_from_json(prof_json):
-    '''Interprets a version 4 sample profile'''
+    """Interprets a version 4 sample profile"""
     prof = {}
     grp_ids = {sg['id']: sg for sg in prof_json['symmetry_groups']}
     for obs in prof_json['observations']:
