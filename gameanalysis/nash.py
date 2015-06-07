@@ -1,3 +1,4 @@
+"""Module for computing nash equilibria"""
 import sys
 import itertools
 import argparse
@@ -84,6 +85,9 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
                 regret.mixture_regret(game, mix)))
     return np.maximum(mix, 0)  # Probabilities are occasionally negative
 
+##########
+# Parser #
+##########
 
 _PARSER = argparse.ArgumentParser(add_help=False, description='''Compute nash
 equilibria in a game.''')

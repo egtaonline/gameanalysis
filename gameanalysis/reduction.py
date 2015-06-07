@@ -1,3 +1,4 @@
+"""Module for computing player reductions"""
 import sys
 import argparse
 import json
@@ -7,10 +8,11 @@ from gameanalysis import rsgame, subgame
 
 def _hr_profiles(game, reduced_players):
     """Returns a generator over tuples of hr profiles and the corresponding profile
-    for payoff data
+    for payoff data.
+
+    The profile must be evenly divisible for the reduction.
 
     """
-    # TODO Right now this is written only for exact HR
     fracts = {role: count // reduced_players[role]
               for role, count in game.players.items()}
     for profile in game:
@@ -145,6 +147,12 @@ def deviation_preserving_reduction(game, players):
 
 
 def twins_reduction(game, _=None):
+    """Compute twins reduction on a game.
+
+    This is identical to a DPR where every role is mapped to two players
+    (except for roles with only a single player).
+
+    """
     players = {r: min(2, p) for r, p in game.players.items()}
     return deviation_preserving_reduction(game, players)
 
@@ -166,14 +174,19 @@ def twins_reduction(game, _=None):
 #                 profiles.append(full_prof)
 #     return profiles
 
+##########
+# Parser #
+##########
 
 def _parse_sorted(players, game):
+    """Parser reduction input for roles in sorted order"""
     assert len(players) == len(game.strategies), \
         'Must input a reduced count for every role'
     return dict(zip(game.strategies, map(int, players)))
 
 
 def _parse_inorder(players, game):
+    """Parser input for role number pairs"""
     assert len(players) == 2 * len(game.strategies), \
         'Must input a reduced count for every role'
     parsed = {}

@@ -1,4 +1,4 @@
-"""TODO"""
+"""A module for computing regret and social welfare of profiles"""
 import sys
 import argparse
 import json
@@ -86,6 +86,19 @@ def mixture_regret(game, mix):
     return mixture_deviation_gains(game, mix, as_array=True).max()
 
 
+def pure_social_welfare(game, profile):
+    """Returns the social welfare of a pure strategy profile in game"""
+    indexable = game.as_profile(profile)
+    array = game.as_array(profile, dtype=int)
+    return np.sum(array * game.get_payoffs(indexable, as_array=True))
+
+
+def mixed_social_welfare(game, mix):
+    """Returns the social welfare of a mixed strategy profile"""
+    return game.get_expected_payoff(mix, as_array=True).dot(
+        game.players.values())
+
+
 # def neighbors(game, p, *args, **kwargs):
 #     if isinstance(p, Profile):
 #         return profile_neighbors(game, p, *args, **kwargs)
@@ -129,6 +142,31 @@ def mixture_regret(game, mix):
 #     return {s: regret(game, rsgame.Profile({role:{s:game.players[role]}})) for s \
 #             in game.strategies[role]}
 
+##########
+# Parser #
+##########
+
+def _is_pure_profile(prof):
+    """Returns true of the profile is pure"""
+    # For an asymmetric game, this will always return false, but then it
+    # shouldn't be an issue.
+    return any(sum(strats.values()) > 1.5 for strats in prof.values())
+
+
+_TYPE = {
+    'regret': lambda prof: (pure_strategy_regret(prof)
+                            if _is_pure_profile(prof)
+                            else mixture_regret(prof)),
+    'gains': lambda prof: (pure_strategy_deviation_gains(prof)
+                           if _is_pure_profile(prof)
+                           else mixture_deviation_gains(prof)),
+    'ne': lambda prof: (pure_strategy_deviation_gains(prof)
+                           if _is_pure_profile(prof)
+                           else mixture_deviation_gains(prof)),
+    'welfare': lambda prof: (pure_social_welfare(prof)
+                             if _is_pure_profile(prof)
+                             else mixed_social_welfare(prof))
+}
 
 _PARSER = argparse.ArgumentParser(add_help=False, description='''Compute regret
 in input game of specified profiles.''')
@@ -142,12 +180,15 @@ _PARSER.add_argument('--output', '-o', metavar='file', default=sys.stdout,
 _PARSER.add_argument('profiles', type=argparse.FileType('r'), help='''File with
 profiles from input games for which regrets should be calculated. This file
 needs to be a json list. of profiles''')
-# _PARSER.add_argument('--sw', action='store_true', help='''Calculate social
-# welfare instead of regret. Use keyword GLOBAL to calculate max social
-# welfare.''')
-# _PARSER.add_argument('--ne', action='store_true', help='''Calculate 'NE regrets'
-# (regret a devitor would experience by switching to each other pure strategy)
-# for each profile instead of the profiles' regrets''')
+_PARSER.add_argument('-t', '--type', metavar='type', default='regret',
+                     choices=_TYPE, help='''What to return. regret: returns the
+                     the regret of the profile; gains: returns a json object of
+                     the deviators gains for every deviation; ne: return the
+                     "nash equilibrium regrets", these are identical to gains;
+                     welfare: returns the social welfare of the
+                     profile. (default: %(default)s)''')
+# _PARSER.add_argument('-m', '--max-welfare', action='store_true', help='''Ignore
+# all other options, and instead return the maximum social welfare''')
 
 
 def command(args, prog, print_help=False):
@@ -157,7 +198,7 @@ def command(args, prog, print_help=False):
         return
     args = _PARSER.parse_args(args)
     game = rsgame.Game.from_json(json.load(args.input))
-    profiles = [prof for prof in json.load(args.profiles)]
+    profiles = json.load(args.profiles)
 
     # Need to differentiate between mixed and pure
     regrets = [mixture_regret(game, prof) for prof in profiles]

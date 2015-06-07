@@ -252,7 +252,10 @@ class EmptyGame(object):
 
 
 def _compute_dev_reps(counts, players, exact=False):
-    """Uses fast floating point math to compute devreps"""
+    """Uses fast floating point math or at least vectorized computation to compute
+    devreps
+
+    """
     # Sets up functions to be exact or approximate
     if exact:
         dtype = object
@@ -356,8 +359,8 @@ class Game(EmptyGame):
     def get_payoff(self, profile, role, strategy, default=None):
         """Returns the payoff for a specific profile, role, and strategy
 
-        If there's no data for the profile, and a default is specified, that is
-        returned instead.
+        If there's no data for the profile, and a non None default is
+        specified, that is returned instead.
 
         """
         profile = self.as_profile(profile)
@@ -409,19 +412,6 @@ class Game(EmptyGame):
             return payoff
         else:
             return dict(zip(payoff, self.strategies))
-
-    def get_pure_social_welfare(self, profile):
-        """Returns the social welfare of a pure strategy profile"""
-        # TODO move to regret
-        indexable = self.as_profile(profile)
-        array = self.as_array(profile, dtype=int)
-        return np.sum(array * self.get_payoffs(indexable, as_array=True))
-
-    def get_mixed_social_welfare(self, mix):
-        """Returns the social welfare of a mixed strategy profile"""
-        # TODO move to regret
-        return self.get_expected_payoff(mix, as_array=True).dot(
-            self.players.values())
 
     def get_max_social_welfare(self):
         """Returns the maximum social welfare over the known profiles"""
@@ -516,8 +506,8 @@ class Game(EmptyGame):
 
 # TODO Sample game is not being refactored until Varsha's changes have been integrated
 #
-# TODO make sure sample game has a method to return payoffs to mean, instead of
-# performing a bootstrap sample.
+# TODO make sure sample game has a method to return payoffs to mean of all
+# observations, instead of performing a bootstrap sample.
 class SampleGame(Game):
     """A Role Symmetric Game that has multiple samples per observation"""
     def __init__(self, players, strategies, payoff_data=()):

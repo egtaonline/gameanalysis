@@ -1,10 +1,8 @@
-# import sys
-# import argparse
-# import json
+"""Utility module that contains code for parsing legacy game formats"""
 from collections import Counter
 
 from gameanalysis import funcs
-
+# FIXME lots of errors here
 
 def _game_from_json(json_):
     """Returns constructor arguments for a game from parsed json"""
@@ -58,6 +56,7 @@ def _old_game_from_json(json_):
     strategies = {r['name']: r['strategy_array'] for r in json_data['roles']}
     roles = list(players.keys())
     profiles = []
+    # TODO Convert this ti just appending
 
     def gen_profiles():
         for prof_dict in json_['profiles']:
