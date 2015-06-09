@@ -54,11 +54,12 @@ class EmptyGame(object):
 
         self._size = funcs.prod(funcs.game_size(self.players[r], len(strats))
                                 for r, strats in self.strategies.items())
-        num_strategies = [len(s) for s in self.strategies.values()]
-        max_strategies = max(num_strategies)
-        # All of the valid strategy positions
-        self._mask = np.array([[True]*ns + [False]*(max_strategies - ns) for
-                                ns in num_strategies])
+        # self._mask specifies the valid strategy positions
+        max_strategies = max([len(s) for s in self.strategies.values()])
+        self._mask = np.zeros((len(self.strategies), max_strategies),
+                             dtype=bool)
+        for r, strats in enumerate(self.strategies.values()):
+            self._mask[r, :len(strats)] = 1
 
     def all_profiles(self):
         """Returns a generator over all profiles"""
