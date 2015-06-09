@@ -6,7 +6,6 @@ import math
 import collections
 import numpy as np
 import scipy.misc as spm
-from collections import Counter
 
 from gameanalysis import gameio, profile, funcs, collect
 
@@ -64,7 +63,7 @@ class EmptyGame(object):
     def all_profiles(self):
         """Returns a generator over all profiles"""
         return map(profile.Profile, itertools.product(*(
-            [(role, Counter(comb)) for comb
+            [(role, collections.Counter(comb)) for comb
              in itertools.combinations_with_replacement(
                  strats, self.players[role])]
             for role, strats in self.strategies.items())))
