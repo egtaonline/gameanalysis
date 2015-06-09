@@ -119,9 +119,7 @@ class EmptyGame(object):
         By definition, an invalid entries are zero.
 
         """
-        # XXX This could be inefficient if supports are small, but the number
-        # of strategies is large.
-        if isinstance(prof, np.ndarray):  # Already an array
+        if isinstance(prof, np.ndarray): # Already an array
             return np.asarray(prof, dtype=dtype)
         array = np.zeros_like(self._mask, dtype=dtype)
         for r, (role, strats) in enumerate(self.strategies.items()):
@@ -163,31 +161,30 @@ class EmptyGame(object):
             return self.as_mixture(mix)
 
     def biased_mixtures(self, bias=.9, as_array=False):
-        """Gives generator of mixtures where in each mixture a single role-strategy is
-        played with bias, and the rest are uniform
+        """Generates mixtures for initializing replicator dynamics.
 
-        Probability for that role's remaining strategies is distributed
-        uniformly, as is probability for all strategies of other roles.
-
-        Returns a list even when a single role & strategy are specified, since
-        the main use case is starting replicator dynamics from several
-        mixtures.
-
+        Gives a generator of all mixtures of the following form: each role has
+        one or zero strategies played with probability bias; the reamaining
+        1-bias probability is distributed uniformly over the remaining S or
+        S-1 strategies.
         """
         assert 0 <= bias <= 1, 'probabilities must be between zero and one'
-        uniform = self.uniform_mixture(as_array=True)
-        for r, (role, strats) in enumerate(self.strategies.items()):
-            if len(strats) == 1:
-                continue
-            for s, strat in enumerate(strats):
-                biased = uniform.copy()
-                biased[r, s] = 0
-                biased[r] /= biased[r].sum() / (1 - bias)
-                biased[r, s] = bias
-                if as_array:
-                    yield biased
-                else:
-                    yield self.as_mixture(biased)
+        num_strategies = self._mask.sum(1)
+        for strats in itertools.product(*map(range, num_strategies + 1)):
+            mix = np.array(self._mask, dtype=float)
+            for r in range(len(self.players)):
+                s = strats[r]
+                ns = num_strategies[r]
+                if s == ns: # uniform
+                    mix[r] /= ns
+                else: # biased
+                    mix[r,:ns] -= bias
+                    mix[r,:ns] /= (ns-1)
+                    mix[r,s] = bias
+            if as_array:
+                yield mix
+            else:
+                yield self.as_mixture(mix)
 
     def pure_mixtures(self, as_array=False):
         """Returns a generator over all mixtures where the probability of playing a

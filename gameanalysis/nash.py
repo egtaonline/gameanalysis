@@ -49,7 +49,6 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
     for i, mix in enumerate(itertools.chain(
             game.pure_mixtures(as_array=True),
             game.biased_mixtures(as_array=True),
-            [game.uniform_mixture(as_array=True)],
             (game.random_mixture(as_array=True)
              for _ in range(random_restarts)))):
         eq = _replicator_dynamics(game, mix, *rd_args, **rd_kwargs)
