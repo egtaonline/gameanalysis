@@ -491,7 +491,8 @@ class Game(EmptyGame):
         return Game(*gameio._game_from_json(json_))
 
 
-# TODO Sample game is not being refactored until Varsha's changes have been integrated
+# TODO Sample game is not being refactored until Varsha's changes have been
+# integrated
 #
 # TODO make sure sample game has a method to return payoffs to mean of all
 # observations, instead of performing a bootstrap sample.
