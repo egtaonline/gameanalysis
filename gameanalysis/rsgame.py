@@ -56,9 +56,9 @@ class EmptyGame(object):
         # self._mask specifies the valid strategy positions
         max_strategies = max([len(s) for s in self.strategies.values()])
         self._mask = np.zeros((len(self.strategies), max_strategies),
-                             dtype=bool)
+                              dtype=bool)
         for r, strats in enumerate(self.strategies.values()):
-            self._mask[r, :len(strats)] = 1
+            self._mask[r, :len(strats)] = True
 
     def all_profiles(self):
         """Returns a generator over all profiles"""
@@ -119,7 +119,7 @@ class EmptyGame(object):
         By definition, an invalid entries are zero.
 
         """
-        if isinstance(prof, np.ndarray): # Already an array
+        if isinstance(prof, np.ndarray):  # Already an array
             return np.asarray(prof, dtype=dtype)
         array = np.zeros_like(self._mask, dtype=dtype)
         for r, (role, strats) in enumerate(self.strategies.items()):
@@ -175,12 +175,12 @@ class EmptyGame(object):
             for r in range(len(self.players)):
                 s = strats[r]
                 ns = num_strategies[r]
-                if s == ns: # uniform
+                if s == ns:  # uniform
                     mix[r] /= ns
-                else: # biased
-                    mix[r,:ns] -= bias
-                    mix[r,:ns] /= (ns-1)
-                    mix[r,s] = bias
+                else:  # biased
+                    mix[r, :ns] -= bias
+                    mix[r, :ns] /= (ns-1)
+                    mix[r, s] = bias
             if as_array:
                 yield mix
             else:

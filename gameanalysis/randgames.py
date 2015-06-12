@@ -551,13 +551,13 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 #     game.values += min_payoff
 
 def _zero_sum_parse(zs_args, **kwargs):
-    assert len(args.arg) == 1, \
+    assert len(zs_args.arg) == 1, \
         'Must specify strategy count for uniform zero sum'
     return zero_sum_game(*map(int, zs_args), **kwargs)
 
 
 def _symmetric_parse(sym_args, **kwargs):
-    assert len(args.arg) == 2, \
+    assert len(sym_args.arg) == 2, \
         'Must specify player and strategy counts for uniform symmetric'
     return symmetric_game(*map(int, sym_args), **kwargs),
 

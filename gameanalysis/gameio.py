@@ -4,6 +4,7 @@ from collections import Counter
 from gameanalysis import funcs
 # FIXME lots of errors here
 
+
 def _game_from_json(json_):
     """Returns constructor arguments for a game from parsed json"""
     if 'players' in json_ and 'strategies' in json_:
@@ -52,11 +53,11 @@ def _new_game_from_json(json_, profile_reader):
 
 
 def _old_game_from_json(json_):
-    players = {r['name']: int(r['count']) for r in json_data['roles']}
-    strategies = {r['name']: r['strategy_array'] for r in json_data['roles']}
+    players = {r['name']: int(r['count']) for r in json_['roles']}
+    strategies = {r['name']: r['strategy_array'] for r in json_['roles']}
     roles = list(players.keys())
     profiles = []
-    # TODO Convert this ti just appending
+    # TODO Convert this to just appending
 
     def gen_profiles():
         for prof_dict in json_['profiles']:

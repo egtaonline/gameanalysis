@@ -210,10 +210,10 @@ _PARSER = argparse.ArgumentParser(add_help=False, description='')
 _PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
                      type=argparse.FileType('r'), help='''Input game file.
                      (default: stdin)''')
-_PARSER.add_argument('--output', '-o', metavar='reduced-file', default=sys.stdout,
-                     type=argparse.FileType('w'), help='''Output equilibria
-                     file. This file will contain a json list of mixed
-                     profiles. (default: stdout)''')
+_PARSER.add_argument('--output', '-o', metavar='reduced-file',
+                     default=sys.stdout, type=argparse.FileType('w'),
+                     help='''Output equilibria file. This file will contain a
+                     json list of mixed profiles. (default: stdout)''')
 _PARSER.add_argument('--type', '-t', choices=_REDUCTIONS, default='dpr',
                      help='''Type of reduction to perform. (default:
                      %(default)s)''')

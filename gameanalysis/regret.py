@@ -161,8 +161,8 @@ _TYPE = {
                            if _is_pure_profile(prof)
                            else mixture_deviation_gains(prof)),
     'ne': lambda prof: (pure_strategy_deviation_gains(prof)
-                           if _is_pure_profile(prof)
-                           else mixture_deviation_gains(prof)),
+                        if _is_pure_profile(prof)
+                        else mixture_deviation_gains(prof)),
     'welfare': lambda prof: (pure_social_welfare(prof)
                              if _is_pure_profile(prof)
                              else mixed_social_welfare(prof))
