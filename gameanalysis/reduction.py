@@ -1,8 +1,4 @@
 """Module for computing player reductions"""
-import sys
-import argparse
-import json
-
 from gameanalysis import rsgame, subgame
 
 
@@ -173,68 +169,3 @@ def twins_reduction(game, _=None):
 #                 full_prof = full_prof_DPR(DPR_prof, r, s, game.players)
 #                 profiles.append(full_prof)
 #     return profiles
-
-##########
-# Parser #
-##########
-
-def _parse_sorted(players, game):
-    """Parser reduction input for roles in sorted order"""
-    assert len(players) == len(game.strategies), \
-        'Must input a reduced count for every role'
-    return dict(zip(game.strategies, map(int, players)))
-
-
-def _parse_inorder(players, game):
-    """Parser input for role number pairs"""
-    assert len(players) == 2 * len(game.strategies), \
-        'Must input a reduced count for every role'
-    parsed = {}
-    for i in range(0, len(players), 2):
-        assert players[i] in game.strategies, \
-            'role "{}" not found in game'.format(players[i])
-        parsed[players[i]] = int(players[i + 1])
-    return parsed
-
-
-_PLAYERS = {
-    True: _parse_sorted,
-    False: _parse_inorder}
-
-_REDUCTIONS = {
-    'dpr': deviation_preserving_reduction,
-    'hr': hierarchical_reduction,
-    'tr': twins_reduction}
-
-_PARSER = argparse.ArgumentParser(add_help=False, description='')
-_PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
-                     type=argparse.FileType('r'), help='''Input game file.
-                     (default: stdin)''')
-_PARSER.add_argument('--output', '-o', metavar='reduced-file',
-                     default=sys.stdout, type=argparse.FileType('w'),
-                     help='''Output equilibria file. This file will contain a
-                     json list of mixed profiles. (default: stdout)''')
-_PARSER.add_argument('--type', '-t', choices=_REDUCTIONS, default='dpr',
-                     help='''Type of reduction to perform. (default:
-                     %(default)s)''')
-_PARSER.add_argument('--sorted-roles', '-s', action='store_true', help='''If
-set, players should be a list of reduced counts for the role names in sorted
-order.''')
-_PARSER.add_argument('players', nargs='*', help='''Number of players in each
-reduced-game role. This should be a list of role then counts e.g. "role1 4
-role2 2"''')
-
-
-def command(args, prog, print_help=False):
-    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
-    if print_help:
-        _PARSER.print_help()
-        return
-    args = _PARSER.parse_args(args)
-    game = rsgame.Game.from_json(json.load(args.input))
-    players = _PLAYERS[args.sorted_roles](args.players, game)
-
-    reduced = _REDUCTIONS[args.type](game, players)
-
-    json.dump(reduced, args.output, default=lambda x: x.to_json())
-    args.output.write('\n')

@@ -1,6 +1,3 @@
-import sys
-import argparse
-import json
 import random
 import itertools
 import numpy as np
@@ -430,7 +427,7 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 # def add_noise(game, model, spread, samples):
 #     """
 #     Generate sample game with random noise added to each payoff.
-    
+
 #     game: a RSG.Game or RSG.SampleGame
 #     model: a 2-parameter function that generates mean-zero noise
 #     spread, samples: the parameters passed to the noise function
@@ -446,12 +443,12 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 #     """
 #     Generate Gaussian mixture noise to add to one payoff in a game.
 
-#     max_stdev: maximum standard deviation for the mixed distributions (also 
+#     max_stdev: maximum standard deviation for the mixed distributions (also
 #                 affects how widely the mixed distributions are spaced)
 #     samples: numer of samples to take of every profile
 #     modes: number of Gaussians to mix
 #     spread_mult: multiplier for the spread of the Gaussians. Distance between
-#                 the mean and the nearest distribution is drawn from 
+#                 the mean and the nearest distribution is drawn from
 #                 N(0,max_stdev*spread_mult).
 #     """
 #     multipliers = arange(float(modes)) - float(modes-1)/2
@@ -469,15 +466,15 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 #     """
 #     Generate Noise from a normal distribution centered up to one stdev from 0.
 
-#     With prob_pos=0.5, this implements the previous buggy output of 
+#     With prob_pos=0.5, this implements the previous buggy output of
 #     bimodal_noise.
 
-#     max_stdev: maximum standard deviation for the mixed distributions (also 
+#     max_stdev: maximum standard deviation for the mixed distributions (also
 #                 affects how widely the mixed distributions are spaced)
 #     samples: numer of samples to take of every profile
 #     prob_pos: the probability that the noise mean for any payoff will be >0.
 #     spread_mult: multiplier for the spread of the Gaussians. Distance between
-#                 the mean and the mean of the distribution is drawn from 
+#                 the mean and the mean of the distribution is drawn from
 #                 N(0,max_stdev*spread_mult).
 #     """
 #     offset = normal(0, max_stdev)*(1 if U(0,1) < prob_pos else -1)*spread_mult
@@ -549,95 +546,3 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 #     game.values *= (max_payoff - min_payoff)
 #     game.values /= (max_val - min_val)
 #     game.values += min_payoff
-
-def _zero_sum_parse(zs_args, **kwargs):
-    assert len(zs_args.arg) == 1, \
-        'Must specify strategy count for uniform zero sum'
-    return zero_sum_game(*map(int, zs_args), **kwargs)
-
-
-def _symmetric_parse(sym_args, **kwargs):
-    assert len(sym_args.arg) == 2, \
-        'Must specify player and strategy counts for uniform symmetric'
-    return symmetric_game(*map(int, sym_args), **kwargs),
-
-
-def _role_symmetric_parse(rs_args, **kwargs):
-    int_args = list(map(int, rs_args))
-    num_roles = int_args[0]
-    assert len(int_args) == 2 * num_roles + 1, \
-        'Must specify a number of players and strategies for each role'
-    num_players = int_args[1:1+num_roles]
-    num_strats = int_args[-num_roles:]
-    return role_symmetric_game(num_roles, num_players, num_strats, **kwargs)
-
-
-_MAPPING = {
-    'uzs': _zero_sum_parse,
-    'usym': _symmetric_parse,
-    'ursym': _role_symmetric_parse
-}
-
-_PARSER = argparse.ArgumentParser(description='Generate random games',
-                                  add_help=False)
-_PARSER.add_argument('type', choices=_MAPPING, help='''Type of random game to
-generate. uzs = uniform zero sum.  usym = uniform symmetric. cg = congestion
-game. pmx = polymatrix game. ind = independent game.''')
-_PARSER.add_argument('arg', nargs='*', default=[],
-                     help='Additional arguments for game generator function.')
-_PARSER.add_argument('--noise', choices=['none', 'normal', 'gauss_mix'],
-                     default='none', help='Noise function.')
-_PARSER.add_argument('--noise_args', nargs='+', default=[],
-                     help='Arguments to be passed to the noise function.')
-_PARSER.add_argument('--output', '-o', metavar='output', default=sys.stdout,
-                     type=argparse.FileType('w'),
-                     help='Output destination; defaults to standard out')
-_PARSER.add_argument('--indent', '-i', metavar='indent', type=int,
-                     default=None,
-                     help='Indent for json output; default = None')
-_PARSER.add_argument('--cool', '-c', action='store_true', help='''Use role and
-strategy names that come from a text file instead of indexed names. This
-produces more "fun" games as thy have more interesting names, but it is harder
-to use in an automated sense because the names can't be predicted.''')
-
-
-def command(args, prog, print_help=False):
-    _PARSER.prog = '{}{}'.format(_PARSER.prog, prog)
-    if print_help:
-        _PARSER.print_help()
-        return
-    args = _PARSER.parse_args(args)
-
-    game = _MAPPING[args.type](args.arg, cool=args.cool)
-    # elif args.type == 'cs':
-    #     game_func = congestion_game
-    #     assert len(args.game_args) == 3, 'game_args must specify player, '+\
-    #                                 'facility, and required facility counts'
-    # elif args.type == 'LEG':
-    #     game_func = local_effect_game
-    #     assert len(args.game_args) == 2, 'game_args must specify player and '+\
-    #                                 'strategy counts'
-    # elif args.type == 'PMX':
-    #     game_func = polymatrix_game
-    #     assert len(args.game_args) == 2, 'game_args must specify player and '+\
-    #                                 'strategy counts'
-    # elif args.type == 'ind':
-    #     game_func = polymatrix_game
-    #     assert len(args.game_args) == 2, 'game_args must specify player and '+\
-    #                                 'strategy counts'
-
-    # if args.noise == 'normal':
-    #     assert len(args.noise_args) == 2, 'noise_args must specify stdev '+\
-    #                                         'and sample count'
-    #     noise_args = [float(args.noise_args[0]), int(args.noise_args[1])]
-    #     games = map(lambda g: normal_noise(g, *noise_args), games)
-    # elif args.noise == 'gauss_mix':
-    #     assert len(args.noise_args) == 3, 'noise_args must specify max '+\
-    #                                 'stdev, sample count, and number of modes'
-    #     noise_args = [float(args.noise_args[0]), int(args.noise_args[1]), \
-    #                     int(args.noise_args[2])]
-    #     games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)
-
-    json.dump(game, args.output, default=lambda x: x.to_json(),
-              indent=args.indent)
-    args.output.write('\n')

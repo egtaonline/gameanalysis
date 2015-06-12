@@ -1,12 +1,10 @@
 """Module for computing nash equilibria"""
 import sys
 import itertools
-import argparse
-import json
 import numpy as np
 import numpy.linalg as linalg
 
-from gameanalysis import regret, rsgame
+from gameanalysis import regret
 
 
 _TINY = np.finfo(float).tiny
@@ -78,75 +76,9 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
         if linalg.norm(mix - old_mix) <= converge_thresh:
             break
         if verbose:
+            # TODO This should probably be switched to a logging utility
             sys.stderr.write('{:d}: mix = {}, regret = {:f}\n'.format(
                 i + 1,
                 mix,
                 regret.mixture_regret(game, mix)))
     return np.maximum(mix, 0)  # Probabilities are occasionally negative
-
-##########
-# Parser #
-##########
-
-_PARSER = argparse.ArgumentParser(add_help=False, description='''Compute nash
-equilibria in a game.''')
-_PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
-                     type=argparse.FileType('r'), help='''Input game file.
-                     (default: stdin)''')
-_PARSER.add_argument('--output', '-o', metavar='eq-file', default=sys.stdout,
-                     type=argparse.FileType('w'), help='''Output equilibria
-                     file. This file will contain a json list of mixed
-                     profiles. (default: stdout)''')
-_PARSER.add_argument('--regret', '-r', metavar='thresh', type=float,
-                     default=1e-3, help='''Max allowed regret for approximate
-                     Nash equilibria; default=1e-3''')
-_PARSER.add_argument('--distance', '-d', metavar='distance', type=float,
-                     default=1e-3, help='''L2-distance threshold to consider
-                     equilibria distinct; default=1e-3''')
-_PARSER.add_argument('--convergence', '-c', metavar='convergence', type=float,
-                     default=1e-8, help='''Replicator dynamics convergence
-                     thrshold; default=1e-8''')
-_PARSER.add_argument('--max-iterations', '-m', metavar='iterations', type=int,
-                     default=10000, help='''Max replicator dynamics iterations;
-                     default=10000''')
-_PARSER.add_argument('--support', '-s', metavar='support', type=float,
-                     default=1e-3, help='''Min probability for a strategy to be
-                     considered in support. default=1e-3''')
-_PARSER.add_argument('--type', '-t', choices=('mixed', 'pure', 'mrp'),
-                     default='mixed', help='''Type of approximate equilibrium to
-                     compute: role-symmetric mixed-strategy Nash, pure-strategy
-                     Nash, or min-regret profile; default=mixed''')
-_PARSER.add_argument('--random-points', '-p', metavar='points', type=int,
-                     default=0, help='''Number of random points from which to
-                     initialize replicator dynamics in addition to the default
-                     set of uniform and heavily-biased mixtures; default=0''')
-_PARSER.add_argument('--one', '-n', action='store_true', help='''Always report
-at least one equilibrium per game. This will return the minimum regret
-equilibrium found, regardless of whether it was below the regret threshold''')
-
-
-def command(args, prog, print_help=False):
-    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
-    if print_help:
-        _PARSER.print_help()
-        return
-    args = _PARSER.parse_args(args)
-    game = rsgame.Game.from_json(json.load(args.input))
-
-    if args.type == 'pure':
-        equilibria = list(pure_nash(game, args.regret))
-        if args.one and not equilibria:
-            equilibria = [min_regret_profile(game)]
-    elif args.type == 'mixed':
-        equilibria = [eq.trim_support(args.support) for eq
-                      in mixed_nash(game, args.regret, args.distance,
-                                    args.random_points, args.one,
-                                    max_iters=args.max_iterations,
-                                    converge_thresh=args.convergence)]
-    elif args.type == 'mrp':
-        equilibria = [min_regret_profile(game)]
-    else:
-        raise ValueError('Unknown command given: {}'.format(args.type))
-
-    json.dump(equilibria, args.output, default=lambda x: x.to_json())
-    args.output.write('\n')

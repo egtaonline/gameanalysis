@@ -1,10 +1,7 @@
 """A module for computing regret and social welfare of profiles"""
-import sys
-import argparse
-import json
 import numpy as np
 
-from gameanalysis import subgame, rsgame
+from gameanalysis import subgame
 
 
 def pure_strategy_deviation_gains(game, prof):
@@ -18,9 +15,9 @@ def pure_strategy_deviation_gains(game, prof):
     return {role:
             {strat:
              {dev: game.get_payoff(
-                 prof.deviate(role, strat, dev, default=np.nan),
-                 role, dev) - payoff
-              for dev in game.strategies[role]}
+                 prof.deviate(role, strat, dev, default=np.nan),  # noqa
+                 role, dev) - payoff  # noqa
+              for dev in game.strategies[role]}  # noqa
              for strat, payoff in strat_payoffs.items()}
             for role, strat_payoffs in game.get_payoffs(prof).items()}
 
@@ -141,67 +138,3 @@ def mixed_social_welfare(game, mix):
 #     role = next(iter(game.strategies))
 #     return {s: regret(game, rsgame.Profile({role:{s:game.players[role]}})) for s \
 #             in game.strategies[role]}
-
-##########
-# Parser #
-##########
-
-def _is_pure_profile(prof):
-    """Returns true of the profile is pure"""
-    # For an asymmetric game, this will always return false, but then it
-    # shouldn't be an issue.
-    return any(sum(strats.values()) > 1.5 for strats in prof.values())
-
-
-_TYPE = {
-    'regret': lambda prof: (pure_strategy_regret(prof)
-                            if _is_pure_profile(prof)
-                            else mixture_regret(prof)),
-    'gains': lambda prof: (pure_strategy_deviation_gains(prof)
-                           if _is_pure_profile(prof)
-                           else mixture_deviation_gains(prof)),
-    'ne': lambda prof: (pure_strategy_deviation_gains(prof)
-                        if _is_pure_profile(prof)
-                        else mixture_deviation_gains(prof)),
-    'welfare': lambda prof: (pure_social_welfare(prof)
-                             if _is_pure_profile(prof)
-                             else mixed_social_welfare(prof))
-}
-
-_PARSER = argparse.ArgumentParser(add_help=False, description='''Compute regret
-in input game of specified profiles.''')
-_PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
-                     type=argparse.FileType('r'), help='''Input game file.
-                     (default: stdin)''')
-_PARSER.add_argument('--output', '-o', metavar='file', default=sys.stdout,
-                     type=argparse.FileType('w'), help='''Output dominance
-                     file. The contents depend on the format specified.
-                     (default: stdout)''')
-_PARSER.add_argument('profiles', type=argparse.FileType('r'), help='''File with
-profiles from input games for which regrets should be calculated. This file
-needs to be a json list. of profiles''')
-_PARSER.add_argument('-t', '--type', metavar='type', default='regret',
-                     choices=_TYPE, help='''What to return. regret: returns the
-                     the regret of the profile; gains: returns a json object of
-                     the deviators gains for every deviation; ne: return the
-                     "nash equilibrium regrets", these are identical to gains;
-                     welfare: returns the social welfare of the
-                     profile. (default: %(default)s)''')
-# _PARSER.add_argument('-m', '--max-welfare', action='store_true', help='''Ignore
-# all other options, and instead return the maximum social welfare''')
-
-
-def command(args, prog, print_help=False):
-    _PARSER.prog = '{} {}'.format(_PARSER.prog, prog)
-    if print_help:
-        _PARSER.print_help()
-        return
-    args = _PARSER.parse_args(args)
-    game = rsgame.Game.from_json(json.load(args.input))
-    profiles = json.load(args.profiles)
-
-    # Need to differentiate between mixed and pure
-    regrets = [mixture_regret(game, prof) for prof in profiles]
-
-    json.dump(regrets, args.output, defaults=lambda x: x.to_json())
-    args.output.write('\n')
