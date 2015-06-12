@@ -57,25 +57,23 @@ def _old_game_from_json(json_):
     strategies = {r['name']: r['strategy_array'] for r in json_['roles']}
     roles = list(players.keys())
     profiles = []
-    # TODO Convert this to just appending
 
-    def gen_profiles():
-        for prof_dict in json_['profiles']:
-            profile = {r: [] for r in roles}
-            counts = {}
-            for role_str in prof_dict['proto_string'].split('; '):
-                role, strategy_str = role_str.split(': ')
-                counts[role] = Counter(strategy_str.split(', '))
-            for role_dict in prof_dict['roles']:
-                role = role_dict['name']
-                role_counts = counts[role]
-                for strat_dict in role_dict['strategies']:
-                    strat = strat_dict['name']
-                    profile[role].append((strat,
-                                          role_counts[strat],
-                                          float(strat_dict['payoff'])))
-        yield profile
-    return (players, strategies, gen_profiles())
+    for prof_dict in json_['profiles']:
+        profile = {r: [] for r in roles}
+        counts = {}
+        for role_str in prof_dict['proto_string'].split('; '):
+            role, strategy_str = role_str.split(': ')
+            counts[role] = Counter(strategy_str.split(', '))
+        for role_dict in prof_dict['roles']:
+            role = role_dict['name']
+            role_counts = counts[role]
+            for strat_dict in role_dict['strategies']:
+                strat = strat_dict['name']
+                profile[role].append((strat,
+                                      role_counts[strat],
+                                      float(strat_dict['payoff'])))
+        profiles.append(profile)
+    return (players, strategies, profiles)
 
 
 def _profile_v2_from_json(prof_json):
@@ -97,9 +95,9 @@ def _profile_v3_from_json(prof_json):
     prof = {}
     for sym_grp in prof_json['symmetry_groups']:
         strat_data = prof.setdefault(sym_grp['role'], [])
-        strat_data.append(PayoffData(sym_grp['strategy'],
-                                     sym_grp['count'],
-                                     sym_grp['payoff']))
+        strat_data.append((sym_grp['strategy'],
+                           sym_grp['count'],
+                           sym_grp['payoff']))
     return prof
 
 
