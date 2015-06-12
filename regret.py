@@ -22,20 +22,22 @@ def _is_pure_profile(prof):
 
 
 _TYPE = {
-    'regret': lambda prof: (regret.pure_strategy_regret(prof)
-                            if _is_pure_profile(prof)
-                            else regret.mixture_regret(prof)),
-    'gains': lambda prof: (regret.pure_strategy_deviation_gains(prof)
-                           if _is_pure_profile(prof)
-                           else regret.mixture_deviation_gains(prof)),
-    'ne': lambda prof: (regret.pure_strategy_deviation_gains(prof)
-                        if _is_pure_profile(prof)
-                        else regret.mixture_deviation_gains(prof)),
-    'welfare': lambda prof: (regret.pure_social_welfare(prof)
-                             if _is_pure_profile(prof)
-                             else regret.mixed_social_welfare(prof))
+    'regret': lambda game, prof: (
+        regret.pure_strategy_regret(game, prof)
+        if _is_pure_profile(prof)
+        else regret.mixture_regret(game, prof)),
+    'gains': lambda game, prof: (
+        regret.pure_strategy_deviation_gains(game, prof)
+        if _is_pure_profile(prof)
+        else regret.mixture_deviation_gains(game, prof)),
+    'welfare': lambda game, prof: (
+        regret.pure_social_welfare(game, prof)
+        if _is_pure_profile(prof)
+        else regret.mixed_social_welfare(game, prof)),
 }
+_TYPE['ne'] = _TYPE['gains']  # These are the same
 
+# TODO Potentially add a switch to force pure or mixed strategy analysis
 _PARSER = argparse.ArgumentParser(description='''Compute regret in input game
 of specified profiles.''')
 _PARSER.add_argument('--input', '-i', metavar='game-file', default=sys.stdin,
@@ -63,9 +65,9 @@ def main():
     args = _PARSER.parse_args()
     game = rsgame.Game.from_json(json.load(args.input))
     profiles = json.load(args.profiles)
+    prof_func = _TYPE[args.type]
 
-    # FIXME Need to differentiate between mixed and pure
-    regrets = [regret.mixture_regret(game, prof) for prof in profiles]
+    regrets = [prof_func(game, prof) for prof in profiles]
 
     json.dump(regrets, args.output, defaults=lambda x: x.to_json())
     args.output.write('\n')
