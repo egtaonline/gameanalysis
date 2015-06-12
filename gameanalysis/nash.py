@@ -10,6 +10,8 @@ from gameanalysis import regret
 _TINY = np.finfo(float).tiny
 
 
+# TODO Maybe have all equilibria methods return regret too. Easier to throw
+# away then to recompute.
 def pure_nash(game, epsilon=0):
     """Returns a generator of all pure-strategy epsilon-Nash equilibria."""
     return (profile for profile in game
@@ -77,7 +79,7 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
             break
         if verbose:
             # TODO This should probably be switched to a logging utility
-            sys.stderr.write('{:d}: mix = {}, regret = {:f}\n'.format(
+            sys.stderr.write('{0:d}: mix = {1}, regret = {2:f}\n'.format(
                 i + 1,
                 mix,
                 regret.mixture_regret(game, mix)))

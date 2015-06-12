@@ -24,6 +24,8 @@ def pure_strategy_deviation_gains(game, prof):
 
 def pure_strategy_regret(game, prof):
     """Returns the regret of a pure strategy profile in a game"""
+    # FIXME This might not return nan even if some data is missing due to the
+    # way python implements max
     return max(max(max(gain for _, gain in dev_gain.items())
                    for _, dev_gain in strat_gain.items())
                for _, strat_gain

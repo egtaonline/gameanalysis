@@ -400,11 +400,32 @@ class Game(EmptyGame):
         else:
             return dict(zip(payoff, self.strategies))
 
-    def get_max_social_welfare(self):
-        """Returns the maximum social welfare over the known profiles"""
-        # This should probably stay here, because it can't be moved without
+    def get_max_social_welfare(self, role=None, as_array=False):
+        """Returns the maximum social welfare over the known profiles.
+
+        :param role: If specified, get maximum welfare for that role
+        :param as_array: If true, the maximum social welfare profile is
+            returned in its array representation
+
+        :returns: Maximum social welfare
+        :returns: Profile with the maximum social welfare
+        """
+        # XXX This should probably stay here, because it can't be moved without
         # exposing underlying structure or making it less efficient
-        return np.sum(self._values * self._counts, (1, 2)).max()
+        if role is not None:
+            role_index = self.role_index[role]
+            counts = self._counts[:, role_index][..., np.newaxis]
+            values = self._values[:, role_index][..., np.newaxis]
+        else:
+            counts = self._counts
+            values = self._values
+
+        welfares = np.sum(values * counts, (1, 2))
+        profile_index = welfares.argmax()
+        profile = self._counts[profile_index]
+        if as_array:
+            profile = self.as_profile(profile)
+        return welfares[profile_index], profile
 
     def expected_values(self, mix, as_array=False):
         """Computes the expected value of each pure strategy played against all

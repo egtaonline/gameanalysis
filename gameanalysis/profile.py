@@ -90,8 +90,8 @@ class Profile(_RoleStratMap):
         return Profile(json_)
 
     def __str__(self):
-        return '; '.join('{}: {}'.format
-                         (role, ', '.join('{:d} {}'.format(count, strat)
+        return '; '.join('{0}: {1}'.format
+                         (role, ', '.join('{0:d} {1}'.format(count, strat)
                                           for strat, count in strats.items()))
                          for role, strats in self.items())
 
