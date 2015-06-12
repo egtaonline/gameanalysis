@@ -299,7 +299,8 @@ class Game(EmptyGame):
         self._strategy_index = {r: {s: i for i, s in enumerate(strats)}
                                 for r, strats in self.strategies.items()}
 
-        payoff_data = list(payoff_data)  # To measure length
+        if not hasattr(payoff_data, "__len__"):
+            payoff_data = list(payoff_data)
         self._profile_map = {}
         self._values = np.zeros((len(payoff_data),) + self._mask.shape)
         self._counts = np.zeros_like(self._values, dtype=int)
