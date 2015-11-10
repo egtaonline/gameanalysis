@@ -4,8 +4,13 @@ Game Analysis
 This is a set of python scripts to manipulate empirical game data.
 
 
-Installation
-------------
+Setup
+-----
+
+You can follow the instructions below for how to setup your environment.
+Alternatively, if you're using ubuntu you should just be able to execute `make
+ubuntu-setup` from this directory to properly setup your environment. You will
+need root privileges to properly setup your environment.
 
 Before this library can be used, you need to install several dependencies.
 
@@ -31,10 +36,21 @@ $ . bin/activate
 Now install any other python requirements.
 
 ```
-$ pip install -r requirements.txt
+$ pip3 install -r requirements.txt
 ```
 
-TODO: At some point run tests to check.
+At this point, you should run the tests to make sure everything was setup properly. Executing `make test` should run all of the tests. If you see something like:
+
+```
+. bin/activate && nosetests test
+....................................................
+----------------------------------------------------------------------
+Ran <xxx> tests in <xxx>s
+
+OK
+```
+
+Then all of the tests passed!
 
 
 Usage
@@ -45,10 +61,20 @@ this library. It can be activated with `. bin/activate` and deactivated with
 `deactivate`.
 
 
+Testing
+-------
+
+All of the tests can be run with `make test`. If you want more fine grained
+control, from within the virtualenv you can run `nosetests
+test.<unit-test-file-name>[:test-method-name]` to execute only a single test
+file, or or only a specific method from within a file. You may also want to add
+the option `--nocapture` to output `sysout` and `syserr`, which are usually
+captured.
+
 Games
 -----
 
-There are three game types EmptyGame, Game, and SampleGame.
+There are three game types: EmptyGame, Game, and SampleGame.
 
 EmptyGame contains several functions that are valid for games without payoff
 data.
@@ -94,3 +120,10 @@ Open Design Questions
 2. How to handle games where data doesn't exist for every role strategy pair, but only
    some agents. Currently any incomplete profile is ignored / errors. There
    might not be an efficient way to handle this case.
+
+To Do
+-----
+1. Have a make target that checks style of all files
+2. Make large tests use a flag that can be passed to nosetests and optionally make
+3. Make sure scripts are automatically run from the virtualenv
+4. Implement SampleGame
