@@ -127,3 +127,5 @@ To Do
 2. Make large tests use a flag that can be passed to nosetests and optionally make
 3. Make sure scripts are automatically run from the virtualenv
 4. Implement SampleGame
+5. Potentially move library into its own repository, and have the run scripts
+   be in a separate repository.
