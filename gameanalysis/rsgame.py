@@ -165,17 +165,24 @@ class EmptyGame(object):
 
         Gives a generator of all mixtures of the following form: each role has
         one or zero strategies played with probability bias; the reamaining
-        1-bias probability is distributed uniformly over the remaining S or
-        S-1 strategies.
-        """
+        1-bias probability is distributed uniformly over the remaining S or S-1
+        strategies."""
         assert 0 <= bias <= 1, 'probabilities must be between zero and one'
         num_strategies = self._mask.sum(1)
-        for strats in itertools.product(*map(range, num_strategies + 1)):
+
+        def possible_strats(num_strat):
+            """Returns a generator of all possible biased strategy indices"""
+            if num_strat == 1:
+                return [None]
+            else:
+                return itertools.chain([None], range(num_strat))
+
+        for strats in itertools.product(*map(possible_strats, num_strategies)):
             mix = np.array(self._mask, dtype=float)
             for r in range(len(self.players)):
                 s = strats[r]
                 ns = num_strategies[r]
-                if s == ns:  # uniform
+                if s is None:  # uniform
                     mix[r] /= ns
                 else:  # biased
                     mix[r, :ns] -= bias

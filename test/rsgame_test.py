@@ -100,7 +100,6 @@ def random_mixture_test(game):
 def biased_mixture_test(game):
     bias = 0.6
     mixes = game.biased_mixtures(as_array=True, bias=bias)
-
     saw_bias = np.zeros_like(game._mask, dtype=bool)
     count = 0
     for mix in mixes:
@@ -108,10 +107,10 @@ def biased_mixture_test(game):
         saw_bias |= mix == bias
 
     num_strats = game._mask.sum(1)
-    assert num_strats[num_strats > 1].sum() == count, \
+    assert np.prod(num_strats[num_strats > 1] + 1) == count, \
         'Didn\'t generate the proper number of mixtures'
     assert np.all(
         saw_bias  # observed a bias
-        | np.logical_not(game._mask)  # couldn't have observed one
-        | (game._mask.sum(1) == 1)[:, np.newaxis]  # Only one strat
+        | (~game._mask)  # couldn't have observed one
+        | (game._mask.sum(1) == 1)[:, np.newaxis]  # Only one strat so can't bias
     ), 'Didn\'t bias every strategy'
