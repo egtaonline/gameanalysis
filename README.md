@@ -21,7 +21,7 @@ Before this library can be used, you need to install several dependencies.
 On ubuntu these dependencies can be installed with:
 
 ```
-$ sudo apt-get install python3 libatlas-base-dev
+$ sudo apt-get install python3 libatlas-base-dev gfortran
 $ sudo pip3 install virtualenv
 ```
 

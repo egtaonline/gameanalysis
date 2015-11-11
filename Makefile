@@ -8,7 +8,7 @@ test:
 	. bin/activate && nosetests test
 
 ubuntu-setup:
-	sudo apt-get install python3 libatlas-base-dev
+	sudo apt-get install python3 libatlas-base-dev gfortran
 	sudo pip3 install virtualenv
 	virtualenv -p python3 .
 	. bin/activate && pip3 install -r requirements.txt
