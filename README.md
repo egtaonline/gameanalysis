@@ -129,3 +129,4 @@ To Do
 4. Implement SampleGame
 5. Potentially move library into its own repository, and have the run scripts
    be in a separate repository.
+6. Change individual commands to one command using argparse subparsers
