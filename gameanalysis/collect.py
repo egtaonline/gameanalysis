@@ -32,10 +32,11 @@ class frozendict(collections.Mapping):
 
     def __hash__(self):
         if self._hash is None:
-            self._hash = 0
-            for pair in self.items():
-                self._hash ^= hash(pair)
+            self._hash = hash(tuple(self.items()))
         return self._hash
+
+    def __eq__(self, other):
+        return all(a == b for a, b in zip(self.items(), other.items()))
 
     def __repr__(self):
         return '{}({{{}}})'.format(

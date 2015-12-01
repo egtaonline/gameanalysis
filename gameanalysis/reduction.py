@@ -4,71 +4,69 @@ from gameanalysis import subgame
 from gameanalysis import profile
 
 
-# FIXME Make HR a class
-def _hr_profiles(game, reduced_players):
-    """Returns a generator over tuples of hr profiles and the corresponding profile
-    for payoff data.
-
-    The profile must be evenly divisible for the reduction.
-
-    """
-    fracts = {role: count // reduced_players[role]
-              for role, count in game.players.items()}
-    for profile in game:
-        if all(all(cnt % fracts[r] == 0 for cnt in ses.values())
-               for r, ses in profile.items()):
-            red_prof = rsgame.PureProfile(
-                (r, [(s, cnt // fracts[r])
-                     for s, cnt in ses.items()])
-                for r, ses in profile.items())
-            yield red_prof, profile
-
-
-def hierarchical_reduction(game, players):
-    """Convert an input game to a reduced game with new players
-
-    This version uses exact math, and so will fail if your player counts are
-    not DPR reducible.
-
-    """
-    profiles = (red_prof.to_input_profile(game.get_payoffs(profile))
-                for red_prof, profile in _hr_profiles(game, players))
-    return rsgame.Game(players, game.strategies, profiles)
-
-
-# def full_prof_sym(HR_profile, N):
-#     """Returns the symmetric full game profile corresponding to the given
-#     symmetric reduced game profile under hierarchical reduction.
-
-#     In the event that N isn't divisible by n, we first assign by rounding
-#     error and break ties in favor of more-played strategies. The final
-#     tie-breaker is alphabetical order.
-
-#     """
-#     if N < 2:
-#         return HR_profile
-#     n = sum(HR_profile.values())
-#     full_profile = {s : (c * N / n) if n > 0 else N for s,c in \
-#                     HR_profile.items()}
-#     if sum(full_profile.values()) == N:
-#         return full_profile
-
-#     #deal with non-divisible strategy counts
-#     rounding_error = {s : float(c * N) / n - full_profile[s] for \
-#                         s,c in HR_profile.items()}
-#     strat_order = sorted(HR_profile.keys())
-#     strat_order.sort(key=HR_profile.get, reverse=True)
-#     strat_order.sort(key=rounding_error.get, reverse=True)
-#     for s in strat_order[:N - sum(full_profile.values())]:
-#         full_profile[s] += 1
-#     return full_profile
-
-
 def _sym_hr_full_prof(hr_profile, full_players, reduced_players):
-    return {s: c * full_players // max(1, reduced_players) for s, c in hr_profile.items()}
+    """Expands symmetric hierarchal profile
+
+    In the event that `full_players` isn't divisible by `reduced_players`, we
+    first assign by rounding error and break ties in favor of more-played
+    strategies. The final tie-breaker is alphabetical order."""
+    full_profile = {s: c * full_players // reduced_players
+        for s, c in hr_profile.items()}
+    unassigned = full_players - sum(full_profile.values())
+    if unassigned == 0:
+        return full_profile
+
+    # Deal with non-divisible strategy counts
+    rounding_error = {s: c * full / n - full_profile[s]
+                      for s, c in hr_profile.items()}
+
+    strat_order = sorted(
+        hr_profile.keys(),
+        # order by rounding error, more played, alphabetical
+        key=lambda k: (-rounding_error[k], -hr_profile[k], k))
+
+    for s in strat_order[:unassigned]:
+        full_profile[s] += 1
+    return full_profile
+
+
+class Hierarchical(object):
+    """Hierarchical reduction"""
+    def __init__(self, full_players, reduced_players):
+        self.full_players = full_players
+        self.reduced_players = reduced_players
+
+    def _hr_profiles(self, game):
+        """Returns a generator over tuples of hr profiles and the corresponding
+        profile for payoff data.
+
+        The profile must be evenly divisible for the reduction."""
+        fracts = {role: count // self.reduced_players[role]
+                  for role, count in self.full_players.items()}
+        for profile in game:
+            if all(all(cnt % fracts[r] == 0 for cnt in ses.values())
+                   for r, ses in profile.items()):
+                red_prof = profile.Profile(
+                    (r, [(s, cnt // fracts[r])
+                         for s, cnt in ses.items()])
+                    for r, ses in profile.items())
+                yield red_prof, profile
+
+    def reduce_game(game):
+        """Convert an input game to a reduced game with new players
+
+        This version uses exact math, and so will fail if your player counts are
+        not DPR reducible.
+
+        """
+        assert game.players == self.full_players, "The games players don't match up with this reduction"
+        profiles = (red_prof.to_input_profile(game.get_payoffs(profile))
+                    for red_prof, profile in self._hr_profiles(game))
+        return rsgame.Game(self.reduced_players, game.strategies, profiles)
 
 
 class DeviationPreserving(object):
+    """Deviation preserving reduction"""
 
     def __init__(self, full_players, reduced_players):
         self.full_players = full_players
@@ -85,7 +83,10 @@ class DeviationPreserving(object):
                     if r == role:
                         opp_prof = dict(strat_counts)
                         opp_prof[strategy] -= 1
-                        opp_prof = _sym_hr_full_prof(opp_prof, self.full_players[r] - 1, self.reduced_players[r] - 1)
+                        opp_prof = _sym_hr_full_prof(
+                            opp_prof,
+                            max(1, self.full_players[r] - 1),
+                            max(1, self.reduced_players[r] - 1))
                         opp_prof[strategy] += 1
 
                     else:

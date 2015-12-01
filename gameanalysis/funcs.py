@@ -3,6 +3,8 @@ import math
 import functools
 import scipy.misc as spm
 
+# FIXME change to utils
+
 
 def prod(collection):
     """Product of all elements in the collection"""
@@ -89,6 +91,17 @@ def _reverse(seq, start, end):
             return
         start += 1
         end -= 1
+
+def compare_by_key(key):
+    def decorator(cls):
+        setattr(cls, '__eq__', lambda self, other: key(self) == key(other))
+        setattr(cls, '__ne__', lambda self, other: key(self) != key(other))
+        setattr(cls, '__lt__', lambda self, other: key(self) <  key(other))
+        setattr(cls, '__le__', lambda self, other: key(self) <= key(other))
+        setattr(cls, '__gt__', lambda self, other: key(self) >  key(other))
+        setattr(cls, '__gw__', lambda self, other: key(self) >= key(other))
+        return cls
+    return decorator
 
 
 def ordered_permutations(seq):

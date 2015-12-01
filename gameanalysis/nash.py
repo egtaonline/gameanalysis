@@ -42,7 +42,7 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
     rd_*:            Extra arguments to pass through to replicator dynamics
 
     """
-    wrap = (lambda x: x) if as_array else game.to_profile
+    wrap = (lambda x: x) if as_array else game.as_mixture
     equilibria = []  # TODO More efficient way to check distinctness
     best = (np.inf, -1, None)  # Best convergence so far
 
@@ -72,8 +72,8 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
     """
     for i in range(max_iters):
         old_mix = mix
-        mix = (game.expected_values(mix) - game.min_payoffs[:, np.newaxis] +
-               _TINY) * mix
+        mix = (game.expected_values(mix, as_array=True)
+               - game.min_payoffs[:, np.newaxis] + _TINY) * mix
         mix = mix / mix.sum(1)[:, np.newaxis]
         if linalg.norm(mix - old_mix) <= converge_thresh:
             break

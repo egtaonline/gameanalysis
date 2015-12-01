@@ -77,11 +77,12 @@ class Profile(_RoleStratMap):
 
         This requires that the payoff map contains data for every role and
         strategy in the profile. An input profile looks like {role: [(strat,
-        count, payoffs)]}, and is necessary to construct a game object.
-
-        """
-        return {role: {(strat, counts, payoff_map[role][strat])
-                       for strat, counts in strats.items()}
+        count, payoffs)]}, and is necessary to construct a game object."""
+        # TODO It's unclear if the dictionary should map to a set or not, or
+        # how deduping should be done. It is clear that that shouldn't be two
+        # entries with the same strategy.
+        return {role: [(strat, counts, payoff_map[role][strat])
+                       for strat, counts in strats.items()]
                 for role, strats in self.items()}
 
     @staticmethod
@@ -99,7 +100,7 @@ class Profile(_RoleStratMap):
         base_dict = {}
         for sym_group in sym_groups:
             base_dict.setdefault(sym_group['role'], {})[sym_group['strategy']] = sym_group['count']
-        return Profile(bas_dict)
+        return Profile(base_dict)
 
     def to_symmetry_groups(self):
         """Convert profile to symmetry groups representation"""

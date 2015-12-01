@@ -4,10 +4,14 @@ with role symmetric games"""
 import itertools
 import math
 import collections
+
 import numpy as np
 import scipy.misc as spm
 
-from gameanalysis import gameio, profile, funcs, collect
+from gameanalysis import gameio
+from gameanalysis import profile
+from gameanalysis import funcs
+from gameanalysis import collect
 
 
 # Raise an error on any funny business

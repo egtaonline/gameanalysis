@@ -6,8 +6,10 @@ analysis tractable.
 """
 import bisect
 import itertools
+import functools
 
 from gameanalysis import rsgame
+from gameanalysis import funcs
 
 
 def pure_subgames(game):
@@ -56,6 +58,7 @@ def _extract_profiles(game, strategies):
                for role, strat_payoffs in payoffs.items()}
 
 
+@funcs.compare_by_key(lambda sub: sub._key())
 class EmptySubgame(rsgame.EmptyGame):
     """A subgame corresponding to an empty game
 
@@ -64,10 +67,13 @@ class EmptySubgame(rsgame.EmptyGame):
 
     This class provides methods that don't require payoff data.
 
+    These are order
+
     """
     def __init__(self, game, strategies):
         super().__init__(game.players, strategies)
         self.full_game = game
+        self._support_set = None
 
     def deviation_profiles(self):
         """Return a generator of every deviation profile, the role, and deviation
@@ -100,6 +106,15 @@ class EmptySubgame(rsgame.EmptyGame):
         strats = dict(self.strategies)
         strats[role] = list(strats[role]) + [strategy]
         return EmptySubgame(self.full_game, strats)
+
+    def support_set(self):
+        if self._support_set is None:
+            self._support_set = support_set(self.strategies)
+        return self._support_set
+
+    def _key(self):
+        """Function that defines how to compare subgames"""
+        return id(self.full_game), self.support_set()
 
 
 def subgame(game, strategies):

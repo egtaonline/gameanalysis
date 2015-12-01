@@ -11,12 +11,12 @@ def pure_strategy_deviation_gains(game, prof):
     must have data.
 
     """
-    prof = game.to_profile(prof)
+    prof = game.as_profile(prof)
     return {role:
             {strat:
              {dev: game.get_payoff(
-                 prof.deviate(role, strat, dev, default=np.nan),  # noqa
-                 role, dev) - payoff  # noqa
+                 prof.deviate(role, strat, dev),
+                 role, dev, default=np.nan) - payoff  # noqa
               for dev in game.strategies[role]}  # noqa
              for strat, payoff in strat_payoffs.items()}
             for role, strat_payoffs in game.get_payoffs(prof).items()}
@@ -34,7 +34,7 @@ def pure_strategy_regret(game, prof):
 
 def _subgame_data(game, mix):
     """Returns true if we have all support data"""
-    sub = subgame.EmptySubgame(game, game.to_profile(mix).support())
+    sub = subgame.EmptySubgame(game, game.as_profile(mix).support())
     return all(prof in game for prof in sub.all_profiles())
 
 
@@ -43,14 +43,14 @@ def _deviation_data(game, mix):
     that role strat
 
     """
-    mix = game.to_profile(mix)
+    mix = game.as_profile(mix)
     support = mix.support()
     has_data = {role: {strat: True for strat in strats}
                 for role, strats in game.strategies.items()}
     sub = subgame.EmptySubgame(game, support)
     for prof, role, dev in sub.deviation_profiles():
         has_data[role][dev] &= prof in game
-    return game.to_array(has_data)
+    return game.as_array(has_data, dtype=bool)
 
 
 def mixture_deviation_gains(game, mix, as_array=False):
@@ -61,8 +61,8 @@ def mixture_deviation_gains(game, mix, as_array=False):
 
     """
     if _subgame_data(game, mix):
-        mix = game.to_array(mix)
-        strategy_evs = game.expected_values(mix)
+        mix = game.as_array(mix)
+        strategy_evs = game.expected_values(mix, as_array=True)
         role_evs = (strategy_evs * mix).sum(1)
         # No data for specific deviations
         # This is set after role_evs to not get invalid data
