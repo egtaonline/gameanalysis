@@ -65,7 +65,7 @@ def hierarchical_reduction(game, players):
 
 
 def _sym_hr_full_prof(hr_profile, full_players, reduced_players):
-    return {s: c * full_players / max(1, reduced_players) for s, c in hr_profile.items()}
+    return {s: c * full_players // max(1, reduced_players) for s, c in hr_profile.items()}
 
 
 class DeviationPreserving(object):
@@ -85,7 +85,7 @@ class DeviationPreserving(object):
                     if r == role:
                         opp_prof = dict(strat_counts)
                         opp_prof[strategy] -= 1
-                        opp_prof = _sym_hr_full_prof(opp_prof, self.full_players[r], self.reduced_players[r] - 1)
+                        opp_prof = _sym_hr_full_prof(opp_prof, self.full_players[r] - 1, self.reduced_players[r] - 1)
                         opp_prof[strategy] += 1
 
                     else:
@@ -120,10 +120,10 @@ class DeviationPreserving(object):
                     # The inner loop needs to be a list, because it's evaluation
                     # depends on the current value of r, and therefore can't be
                     # lazily evaluated.
-                    red_prof = rsgame.PureProfile(
-                        (r, [(s, (cnt // r_fracts[r]) +
-                              (1 if r == role and s == strat else 0))
-                             for s, cnt in ses.items()])
+                    red_prof = profile.Profile(
+                        (r, {s: (cnt // r_fracts[r]) +
+                              (1 if r == role and s == strat else 0)
+                             for s, cnt in ses.items()})
                         for r, ses in prof_copy.items())
                     yield red_prof, role, strat
 
@@ -147,8 +147,7 @@ class DeviationPreserving(object):
         profile_map = {}
         for prof in game:
             payoffs = game.get_payoffs(prof)
-            for red_prof, role, strat in self._profile_contributions(
-                    prof, self.full_players, self.reduced_players):
+            for red_prof, role, strat in self._profile_contributions(prof):
                 (profile_map.setdefault(red_prof, {})
                  .setdefault(role, {})
                  .setdefault(strat, [])
