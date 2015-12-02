@@ -1,9 +1,9 @@
 """This module contains data structures and accompanying methods for working
 with role symmetric games"""
-
 import itertools
 import math
 import collections
+import warnings
 
 import numpy as np
 import scipy.misc as spm
@@ -321,6 +321,11 @@ class Game(EmptyGame):
                                    for role, dats in profile_data.items())
             assert prof not in self._profile_map, \
                 'Duplicate profile {}'.format(prof)
+            if any(p is None for _, _, p in profile_data.values()):
+                warnings.warn('Encountered null payoff data in profile: {0}'
+                    .format(prof))
+                continue  # Invalid data, but can continue
+
             self._profile_map[prof] = p
 
             for r, role in enumerate(self.strategies):
