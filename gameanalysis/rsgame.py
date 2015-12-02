@@ -10,7 +10,7 @@ import scipy.misc as spm
 
 from gameanalysis import gameio
 from gameanalysis import profile
-from gameanalysis import funcs
+from gameanalysis import utils
 from gameanalysis import collect
 
 
@@ -55,7 +55,7 @@ class EmptyGame(object):
         self.strategies = collect.frozendict((r, frozenset(s))
                                              for r, s in strategies.items())
 
-        self._size = funcs.prod(funcs.game_size(self.players[r], len(strats))
+        self._size = utils.prod(utils.game_size(self.players[r], len(strats))
                                 for r, strats in self.strategies.items())
         # self._mask specifies the valid strategy positions
         max_strategies = max([len(s) for s in self.strategies.values()])

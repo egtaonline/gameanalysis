@@ -1,17 +1,21 @@
 help:
 	@echo "usage: make <tag>"
 	@echo
-	@echo "setup - get environment ready to run"
-	@echo "test  - run all of the tests"
-	@echo "check - check code for style"
-	@echo "todo  - list all XXX, TODO and FIXME flags"
+	@echo "setup    - get environment ready to run"
+	@echo "test     - runs the quick tests"
+	@echo "test-big - runs all of the tests (may fail on some computers)"
+	@echo "check    - check code for style"
+	@echo "todo     - list all XXX, TODO and FIXME flags"
 	@echo "ubuntu-setup - install necessary packages on ubuntu and setup (requires root)"
 
 test:
-	. bin/activate && nosetests test
+	bin/nosetests --rednose test
+
+test-big: export BIG_TESTS = ON
+test-big: test
 
 check:
-	./bin/flake8 gameanalysis
+	bin/flake8 gameanalysis
 
 todo:
 	grep -nrIF -e TODO -e XXX -e FIXME * --exclude-dir=lib --exclude-from=Makefile --color=always

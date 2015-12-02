@@ -1,10 +1,11 @@
+import os
 import random
 import math
 import numpy as np
 
-from gameanalysis import randgames, funcs
-import test
-from test import utils
+from gameanalysis import randgames
+from gameanalysis import utils
+from test import testutils
 
 TINY = np.finfo(float).tiny
 EPS = 5 * np.finfo(float).eps
@@ -32,8 +33,8 @@ def generate_games():
     for game in SMALL_GAMES:
         yield game
 
-    if test._CONFIG['big_tests']:  # Big Games
-        # First is the limit of approximate dev reps
+    if os.getenv('BIG_TESTS', None) == 'ON':  # Big Games
+        # First is the limit of approximate dev reps on x64
         yield [randgames.symmetric_game(170, 2, lambda: 0)]
         yield [randgames.symmetric_game(1000, 2, lambda: 0)]
         yield [randgames.symmetric_game(5, 40, lambda: 0)]
@@ -62,7 +63,7 @@ def exact_dev_reps(game):
     strat_counts = list(game.players.values())
     fcount = [math.factorial(x) for x in strat_counts]
     for dev_prof, count_prof in zip(dev_reps, counts):
-        total = funcs.prod(fc // funcs.prod(math.factorial(x) for x in cs)
+        total = utils.prod(fc // utils.prod(math.factorial(x) for x in cs)
                            for fc, cs in zip(fcount, count_prof))
         for dev_role, counts_role, strat_count \
                 in zip(dev_prof, count_prof, strat_counts):
@@ -71,7 +72,7 @@ def exact_dev_reps(game):
     return dev_reps
 
 
-@utils.apply(generate_games())
+@testutils.apply(generate_games())
 def devreps_approx_test(game):
     approx = approx_dev_reps(game)
     exact = exact_dev_reps(game)
@@ -80,7 +81,7 @@ def devreps_approx_test(game):
         'dev reps were not close enough'
 
 
-@utils.apply(generate_games())
+@testutils.apply(generate_games())
 def uniform_mixture_test(game):
     mix = game.uniform_mixture(as_array=True)
     # Check that it's a proper mixture
@@ -90,13 +91,13 @@ def uniform_mixture_test(game):
     assert np.allclose(np.diff(masked), 0), 'Uniform mixture wasn\'t uniform'
 
 
-@utils.apply(generate_games())
+@testutils.apply(generate_games())
 def random_mixture_test(game):
     mix = game.random_mixture(as_array=True)
     assert np.allclose(mix.sum(1), 1), 'Random mixture wasn\'t a mixture'
 
 
-@utils.apply(generate_games())
+@testutils.apply(generate_games())
 def biased_mixture_test(game):
     bias = 0.6
     mixes = game.biased_mixtures(as_array=True, bias=bias)

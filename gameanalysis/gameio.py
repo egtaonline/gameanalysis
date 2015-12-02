@@ -1,7 +1,7 @@
 """Utility module that contains code for parsing legacy game formats"""
 from collections import Counter
 
-from gameanalysis import funcs
+from gameanalysis import utils
 # FIXME lots of errors here
 
 
@@ -23,7 +23,7 @@ def _game_from_json(json_):
     elif 'strategies' in json_['roles'][0]:
         return _new_game_from_json(json_, _profile_v2_from_json)
     else:
-        raise IOError(funcs.one_line('invalid game JSON: {}'.format(json_),
+        raise IOError(utils.one_line('invalid game JSON: {}'.format(json_),
                                      71))
 
 

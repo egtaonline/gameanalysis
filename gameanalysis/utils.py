@@ -3,8 +3,6 @@ import math
 import functools
 import scipy.misc as spm
 
-# FIXME change to utils
-
 
 def prod(collection):
     """Product of all elements in the collection"""

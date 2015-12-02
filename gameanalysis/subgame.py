@@ -8,7 +8,7 @@ import bisect
 import itertools
 
 from gameanalysis import rsgame
-from gameanalysis import funcs
+from gameanalysis import utils
 
 
 def pure_subgames(game):
@@ -57,7 +57,7 @@ def _extract_profiles(game, strategies):
                for role, strat_payoffs in payoffs.items()}
 
 
-@funcs.compare_by_key(lambda sub: sub._key())
+@utils.compare_by_key(lambda sub: sub._key())
 class EmptySubgame(rsgame.EmptyGame):
     """A subgame corresponding to an empty game
 

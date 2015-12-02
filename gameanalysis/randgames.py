@@ -7,7 +7,7 @@ import numpy as np
 import numpy.random as r
 
 from gameanalysis import rsgame
-from gameanalysis import funcs
+from gameanalysis import utils
 
 
 # import GameIO as IO
@@ -99,7 +99,7 @@ def _compact_payoffs(game):
                      # strategies in a given role, e.g. if two players play s1
                      # and one plays s2, this iterates over all possible ways
                      # that could be expressed in an asymmetric game.
-                     funcs.ordered_permutations(itertools.chain.from_iterable(
+                     utils.ordered_permutations(itertools.chain.from_iterable(
                          # This iterates over the strategy counts, and
                          # duplicates strategy indices and payoffs based on the
                          # strategy counts.
@@ -207,7 +207,7 @@ def covariant_game(num_players, num_strategies, mean_dist=lambda: 0, var=1,
         covar.fill(covar_dist())
         np.fill_diagonal(covar, var)
         payoffs = r.multivariate_normal(mean, covar)
-        profile_data.append({role: [(funcs.only(strats), 1, [payoffs[i]])]
+        profile_data.append({role: [(utils.only(strats), 1, [payoffs[i]])]
                              for i, (role, strats) in enumerate(prof.items())})
     return rsgame.Game(game.players, game.strategies, profile_data)
 
@@ -225,8 +225,8 @@ def zero_sum_game(num_strategies, distribution=lambda: r.uniform(-1, 1),
     role1, role2 = game.strategies
     profile_data = []
     for prof in game.all_profiles():
-        row_strat = funcs.only(prof[role1])
-        col_strat = funcs.only(prof[role2])
+        row_strat = utils.only(prof[role1])
+        col_strat = utils.only(prof[role2])
         row_payoff = distribution()
         profile_data.append({
             role1: [(row_strat, 1, [row_payoff])],
@@ -256,7 +256,7 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3,
 
     """
     game = _gen_rs_game(1, 2, 2, cool=cool)
-    role, strats = funcs.only(game.strategies.item())
+    role, strats = utils.only(game.strategies.item())
     strats = list(strats)
 
     payoffs = sorted(distribution(4))
@@ -337,7 +337,7 @@ def local_effect_game(num_players, num_strategies, cool=False):
 
     """
     game = _gen_rs_game(1, num_players, num_strategies)
-    role, strategies = funcs.only(game.strategies.items())
+    role, strategies = utils.only(game.strategies.items())
     strategies = list(strategies)
     smap = _index(strategies)
 
