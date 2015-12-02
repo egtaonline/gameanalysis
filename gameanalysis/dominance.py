@@ -102,7 +102,7 @@ def _undominated(game, prof, conditional=1, weak=False):
               or (gain == 0 and not weak)  # Tie counts for strict
               or (conditional and np.isnan(gain))  # Missing data
               or (conditional > 1 and prof.deviate(dev, strat) not in game)}
-             for strat, dev_gains in strat_grains.items()}  # noqa
+             for strat, dev_gains in strat_gains.items()}  # noqa
             for role, strat_gains in gains.items()}
 
 

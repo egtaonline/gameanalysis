@@ -1,6 +1,4 @@
 """Module for doing player reduction on games"""
-import sys
-import argparse
 import json
 
 from gameanalysis import reduction

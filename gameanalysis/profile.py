@@ -1,5 +1,6 @@
 """Methods for interacting with mappings from role to strategy to value"""
 import collections
+import itertools
 import numpy as np
 
 from gameanalysis import collect

@@ -17,7 +17,7 @@ def _sym_hr_full_prof(hr_profile, full_players, reduced_players):
         return full_profile
 
     # Deal with non-divisible strategy counts
-    rounding_error = {s: c * full / n - full_profile[s]
+    rounding_error = {s: c * full_players / reduced_players - full_profile[s]
                       for s, c in hr_profile.items()}
 
     strat_order = sorted(
@@ -43,23 +43,24 @@ class Hierarchical(object):
         The profile must be evenly divisible for the reduction."""
         fracts = {role: count // self.reduced_players[role]
                   for role, count in self.full_players.items()}
-        for profile in game:
+        for prof in game:
             if all(all(cnt % fracts[r] == 0 for cnt in ses.values())
-                   for r, ses in profile.items()):
+                   for r, ses in prof.items()):
                 red_prof = profile.Profile(
                     (r, [(s, cnt // fracts[r])
                          for s, cnt in ses.items()])
-                    for r, ses in profile.items())
-                yield red_prof, profile
+                    for r, ses in prof.items())
+                yield red_prof, prof
 
-    def reduce_game(game):
+    def reduce_game(self, game):
         """Convert an input game to a reduced game with new players
 
         This version uses exact math, and so will fail if your player counts are
         not DPR reducible.
 
         """
-        assert game.players == self.full_players, "The games players don't match up with this reduction"
+        assert game.players == self.full_players, \
+            "The games players don't match up with this reduction"
         profiles = (red_prof.to_input_profile(game.get_payoffs(profile))
                     for red_prof, profile in self._hr_profiles(game))
         return rsgame.Game(self.reduced_players, game.strategies, profiles)

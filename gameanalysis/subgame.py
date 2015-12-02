@@ -6,7 +6,6 @@ analysis tractable.
 """
 import bisect
 import itertools
-import functools
 
 from gameanalysis import rsgame
 from gameanalysis import funcs

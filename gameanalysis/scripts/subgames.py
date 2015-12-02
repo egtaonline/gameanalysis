@@ -1,5 +1,4 @@
 """Script for extracting and finding subgames"""
-import sys
 import argparse
 import json
 

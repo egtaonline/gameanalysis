@@ -1,6 +1,4 @@
 """Module for finding nash equilibria"""
-import sys
-import argparse
 import json
 
 from gameanalysis import rsgame

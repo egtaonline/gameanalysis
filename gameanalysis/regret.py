@@ -15,7 +15,7 @@ def pure_strategy_deviation_gains(game, prof):
     return {role:
             {strat:
              {dev: game.get_payoff(
-                 prof.deviate(role, strat, dev),
+                 prof.deviate(role, strat, dev),  # noqa
                  role, dev, default=np.nan) - payoff  # noqa
               for dev in game.strategies[role]}  # noqa
              for strat, payoff in strat_payoffs.items()}
