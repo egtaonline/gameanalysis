@@ -404,7 +404,7 @@ class Game(EmptyGame):
         If as_array, then an array in role order is returned.
 
         """
-        mix = self.as_mixture(mix)
+        mix = self.as_array(mix)
         payoff = (mix * self.expected_values(mix, as_array=True)).sum(1)
         if as_array:
             return payoff

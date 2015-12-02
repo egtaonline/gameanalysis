@@ -95,7 +95,7 @@ def pure_social_welfare(game, profile):
 def mixed_social_welfare(game, mix):
     """Returns the social welfare of a mixed strategy profile"""
     return game.get_expected_payoff(mix, as_array=True).dot(
-        game.players.values())
+        np.fromiter(game.players.values(), int))
 
 
 # def neighbors(game, p, *args, **kwargs):
