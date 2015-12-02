@@ -1,6 +1,4 @@
 """Module for converting old data into new format"""
-import sys
-import argparse
 import json
 
 from gameanalysis import rsgame

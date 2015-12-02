@@ -1,5 +1,4 @@
 """Script for calculating regrets, deviations gains, and social welfare"""
-import sys
 import argparse
 import json
 

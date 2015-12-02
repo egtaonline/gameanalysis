@@ -1,6 +1,4 @@
 """Module for creating random games"""
-import sys
-import argparse
 import json
 
 from gameanalysis import randgames
