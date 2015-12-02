@@ -321,7 +321,8 @@ class Game(EmptyGame):
                                    for role, dats in profile_data.items())
             assert prof not in self._profile_map, \
                 'Duplicate profile {}'.format(prof)
-            if any(p is None for _, _, p in profile_data.values()):
+            if any(any(p is None for _, _, p in dat)
+                   for dat in profile_data.values()):
                 warnings.warn('Encountered null payoff data in profile: {0}'
                     .format(prof))
                 continue  # Invalid data, but can continue
