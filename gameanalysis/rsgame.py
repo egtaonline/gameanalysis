@@ -494,6 +494,10 @@ class Game(EmptyGame):
         """
         return self.get_payoffs(profile)
 
+    def __len__(self):
+        """Number of profiles"""
+        return len(self._profile_map)
+
     def __repr__(self):
         return '{}, {:d} / {:d}>'.format(
             super().__repr__()[:-1],

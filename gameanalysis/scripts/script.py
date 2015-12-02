@@ -6,6 +6,7 @@ from gameanalysis.scripts import reduction
 from gameanalysis.scripts import subgames
 from gameanalysis.scripts import randgames
 from gameanalysis.scripts import regret
+from gameanalysis.scripts import dominance
 
 _PARSER = argparse.ArgumentParser(prog='ga', description="""Command line access
 to the game analysis toolkit""")
@@ -39,6 +40,7 @@ _SUBCOMMANDS = {
     'red': reduction,
     'sub': subgames,
     'reg': regret,
+    'dom': dominance,
     'rand': randgames,
     'help': help
 }

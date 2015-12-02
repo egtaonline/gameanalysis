@@ -45,7 +45,7 @@ def _best_responses(game, prof):
     strategies without data so they may be a better response or not.
 
     """
-    prof = game.to_profile(prof)
+    prof = game.as_profile(prof)
     gains = regret.pure_strategy_deviation_gains(game, prof)
     responses = {}
 
@@ -117,8 +117,8 @@ def pure_strategy_dominance(game, conditional=1, weak=False):
         2: extra-conservative conditional dominance
 
     """
-    dominated_strategies = {role: {st: set(strats) - st for st in strats}
-                            for role, strats in game.strategies}
+    dominated_strategies = {role: {st: set(strats) - {st} for st in strats}
+                            for role, strats in game.strategies.items()}
     for prof in game:
         undominated = _undominated(game, prof, conditional, weak)
         for role, strats in undominated.items():
@@ -128,5 +128,5 @@ def pure_strategy_dominance(game, conditional=1, weak=False):
                for strats in dominated_strategies.values()):
             break  # No domination
 
-    return {role: {strat for strat, dom in strats if dom}
+    return {role: {strat for strat, dom in strats.items() if dom}
             for role, strats in dominated_strategies.items()}
