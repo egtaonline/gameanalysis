@@ -4,6 +4,7 @@ import argparse
 from gameanalysis.scripts import nash
 from gameanalysis.scripts import reduction
 from gameanalysis.scripts import subgames
+from gameanalysis.scripts import randgames
 
 _PARSER = argparse.ArgumentParser(prog='ga', description="""Command line access
 to the game analysis toolkit""")
@@ -36,6 +37,7 @@ _SUBCOMMANDS = {
     'nash': nash,
     'red': reduction,
     'sub': subgames,
+    'rand': randgames,
     'help': help
 }
 

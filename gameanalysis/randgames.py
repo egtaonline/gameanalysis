@@ -1,10 +1,14 @@
 import random
 import itertools
-import numpy as np
-import numpy.random as r
+from os import path
 from collections import Counter
 
-from gameanalysis import rsgame, funcs
+import numpy as np
+import numpy.random as r
+
+from gameanalysis import rsgame
+from gameanalysis import funcs
+
 
 # import GameIO as IO
 
@@ -18,8 +22,9 @@ from gameanalysis import rsgame, funcs
 # from numpy import array, arange, zeros, fill_diagonal, cumsum
 
 # Populate word list for generating better names
-_WORD_LIST_FILE = '.wordlist.txt'
+_WORD_LIST_FILE = path.join(path.dirname(path.dirname(__file__)), '.wordlist.txt')
 _WORD_LIST = []
+
 try:
     with open(_WORD_LIST_FILE) as f:
         for word in f:
@@ -53,9 +58,9 @@ def _random_strings(number, prefix='x', padding=None, cool=False):
 def _compact_payoffs(game):
     """Given a game returns a compact representation of the payoffs
 
-    In this case compact means that they're in one ndarray. This
-    representation is inefficient for almost everything by an independent game
-    with full data.
+    In this case compact means that they're in one ndarray. This representation
+    is inefficient for almost everything but an independent game with full
+    data.
 
     Parameters
     ----------
