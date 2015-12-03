@@ -11,16 +11,17 @@ from gameanalysis.scripts import convert
 
 
 _PARSER = argparse.ArgumentParser(prog='ga', description="""Command line access
-to the game analysis toolkit""")
+                                  to the game analysis toolkit""")
 _PARSER.add_argument('--input', '-i', metavar='<input-file>',
-        default=sys.stdin, type=argparse.FileType('r'), help="""Input file for
-        script.  (default: stdin)""")
+                     default=sys.stdin, type=argparse.FileType('r'),
+                     help="""Input file for script.  (default: stdin)""")
 _PARSER.add_argument('--output', '-o', metavar='<output-file>',
-        default=sys.stdout, type=argparse.FileType('w'), help="""Output file
-        for script. (default: stdout)""")
+                     default=sys.stdout, type=argparse.FileType('w'),
+                     help="""Output file for script. (default: stdout)""")
 _SUBPARSERS = _PARSER.add_subparsers(title='Subcommands', dest='command',
-        help="""The specific aspect of the toolkit to interact with. See each
-        possible command for help.""")
+                                     help="""The specific aspect of the toolkit
+                                     to interact with. See each possible
+                                     command for help.""")
 _SUBPARSERS.required = True
 
 
@@ -29,7 +30,7 @@ class help(object):
     @staticmethod
     def update_parser(parser):
         parser.add_argument('subcommand', metavar='<command>', help="""Command
-                to get help on""")
+                            to get help on""")
 
     @staticmethod
     def main(args):
@@ -47,6 +48,7 @@ _SUBCOMMANDS = {
     'conv': convert,
     'help': help
 }
+
 
 def main():
     for name, module in _SUBCOMMANDS.items():

@@ -33,19 +33,19 @@ _TYPE['ne'] = _TYPE['gains']  # These are the same
 
 def update_parser(parser):
     # TODO Potentially add a switch to force pure or mixed strategy analysis
-    parser.description="""Compute regret in input game of specified
-    profiles."""
+    parser.description = """Compute regret in input game of specified
+profiles."""
     parser.add_argument('profiles', metavar='<profile-file>',
-            type=argparse.FileType('r'), help="""File with profiles from input
-            games for which regrets should be calculated. This file needs to be
-            a json list of profiles""")
+                        type=argparse.FileType('r'), help="""File with profiles
+                        from input games for which regrets should be
+                        calculated. This file needs to be a json list of
+                        profiles""")
     parser.add_argument('-t', '--type', metavar='type', default='regret',
-                         choices=_TYPE, help="""What to return. regret: returns the
-                         the regret of the profile; gains: returns a json object of
-                         the deviators gains for every deviation; ne: return the
-                         "nash equilibrium regrets", these are identical to gains;
-                         welfare: returns the social welfare of the
-                         profile. (default: %(default)s)""")
+                        choices=_TYPE, help="""What to return. regret: returns
+the the regret of the profile; gains: returns a json object of the deviators
+gains for every deviation; ne: return the "nash equilibrium regrets", these are
+                        identical to gains; welfare: returns the social welfare
+                        of the profile. (default: %(default)s)""")
     # parser.add_argument('-m', '--max-welfare', action='store_true',
     # help="""Ignore all other options, and instead return the maximum social
     # welfare""")

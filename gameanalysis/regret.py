@@ -115,7 +115,7 @@ def mixed_social_welfare(game, mix):
 #         return list(chain(*[profile_neighbors(game, profile, role, s, \
 #                 deviation) for s in profile[role]]))
 #     if deviation is None:
-#         return list(chain(*[profile_neighbors(game, profile, role, strategy, \
+#         return list(chain(*[profile_neighbors(game, profile, role, strategy, \ # noqa
 #                 d) for d in set(game.strategies[role]) - {strategy}]))
 #     return [profile.deviate(role, strategy, deviation)]
 
@@ -138,5 +138,5 @@ def mixed_social_welfare(game, mix):
 # def symmetric_profile_regrets(game):
 #     assert game.is_symmetric(), 'Game must be symmetric'
 #     role = next(iter(game.strategies))
-#     return {s: regret(game, rsgame.Profile({role:{s:game.players[role]}})) for s \
+#     return {s: regret(game, rsgame.Profile({role:{s:game.players[role]}})) for s \ # noqa
 #             in game.strategies[role]}

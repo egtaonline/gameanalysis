@@ -94,19 +94,20 @@ class Profile(_RoleStratMap):
     @staticmethod
     def from_symmetry_groups(sym_groups):
         """Load a profile from a symmetry group representation
-        
+
         A symmetry group representation is:
         [{role: <role>, strategy: <strategy>, count: <count>}].
         """
         base_dict = {}
         for sym_group in sym_groups:
-            base_dict.setdefault(sym_group['role'], {})[sym_group['strategy']] = sym_group['count']
+            strats = base_dict.setdefault(sym_group['role'], {})
+            strats[sym_group['strategy']] = sym_group['count']
         return Profile(base_dict)
 
     def to_symmetry_groups(self):
         """Convert profile to symmetry groups representation"""
         return list(itertools.chain.from_iterable(
-            ({'role':r, 'strategy':s, 'count':c} for s, c in cs.iteritems())
+            ({'role': r, 'strategy': s, 'count': c} for s, c in cs.iteritems())
             for r, cs in self.iteritems()))
 
     def __str__(self):

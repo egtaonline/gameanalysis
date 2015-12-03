@@ -31,42 +31,45 @@ def _parse_index_spec(game, spec):
 
 def update_parser(parser):
     parser.description = """Extract subgames and optionally detects all
-    complete subgames. All subgame specifications will be concatentated,
-    resulting in a list of subgames."""
-    parser.add_argument('--no-extract', '-n', action='store_true', help="""Don't
-    extract full subgame data, just print the specifications of the subgames. This
-    is mainly only useful with the detect option.""")
+complete subgames. All subgame specifications will be concatentated, resulting
+in a list of subgames."""
+    parser.add_argument('--no-extract', '-n', action='store_true',
+                        help="""Don't extract full subgame data, just print the
+                        specifications of the subgames. This is mainly only
+                        useful with the detect option.""")
 
     sub_group = parser.add_argument_group(title='subgame specifications',
-            description="""These are all of the ways to specify subgames to
-            extract. All of these specifications are concatentated together
-            before being output.""")
+                                          description="""These are all of the
+                                          ways to specify subgames to extract.
+                                          All of these specifications are
+                                          concatentated together before being
+                                          output.""")
     sub_group.add_argument('--detect', '-d', action='store_true', help="""Run
-    clique finding to detect maximally complete subgames.""")
+                           clique finding to detect maximally complete
+                           subgames.""")
     sub_group.add_argument('--subgame-file', '-f', metavar='<file>',
-            default=[], type=argparse.FileType('r'), action='append', help="""A
-            file that contains a list of subgames. The same format that can be
-            output by this script with the no-extract option. This can be
-            specified multiple times.""")
+                           default=[], type=argparse.FileType('r'),
+                           action='append', help="""A file that contains a list
+                           of subgames. The same format that can be output by
+                           this script with the no-extract option. This can be
+                           specified multiple times.""")
     sub_group.add_argument('--text-spec', '-t', nargs='+',
-            metavar='<role-strat>', default=[], action='append',
-            help="""Specify a subgame as a list of roles and strategies. To
-            specify the subgame where role0 has strategies strat0 and strat2
-            and role1 has strategy strat1 enter "role0 strat0 strat2 role1
-            strat1". This option is ambiguous if strategies share names with
-            roles. For unambiguous specification, use index specification. This
-            can be entered several times in order to specify several
-            subgames.""")
+                           metavar='<role-strat>', default=[], action='append',
+                           help="""Specify a subgame as a list of roles and
+strategies. To specify the subgame where role0 has strategies strat0 and strat2
+and role1 has strategy strat1 enter "role0 strat0 strat2 role1 strat1". This
+option is ambiguous if strategies share names with roles. For unambiguous
+specification, use index specification. This can be entered several times in
+                           order to specify several subgames.""")
     sub_group.add_argument('--index-spec', '-s', type=int, nargs='+',
-            default=[], metavar='<strat-index>', action='append',
-            help="""Specify a subgame with a list of strategy indices. A
-            strategy is specified by its zero-indexed position in a list of all
-            strategies sorted alphabetically by role and sub-sorted
-            alphabetically by strategy name. For example if role1 has
-            strategies s1, s2, and s3 and role2 has strategies s4 and s5, then
-            the subgame with all but the last strategy for each role is
-            extracted by "0 1 3". This can be specified multiple times for
-            several subgames.""")
+                           default=[], metavar='<strat-index>',
+                           action='append', help="""Specify a subgame with a
+list of strategy indices. A strategy is specified by its zero-indexed position
+in a list of all strategies sorted alphabetically by role and sub-sorted
+alphabetically by strategy name. For example if role1 has strategies s1, s2,
+and s3 and role2 has strategies s4 and s5, then the subgame with all but the
+last strategy for each role is extracted by "0 1 3". This can be specified
+                           multiple times for several subgames.""")
 
 
 def main(args):

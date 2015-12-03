@@ -324,7 +324,7 @@ class Game(EmptyGame):
             if any(any(p is None for _, _, p in dat)
                    for dat in profile_data.values()):
                 warnings.warn('Encountered null payoff data in profile: {0}'
-                    .format(prof))
+                              .format(prof))
                 continue  # Invalid data, but can continue
 
             self._profile_map[prof] = p
@@ -575,7 +575,7 @@ class SampleGame(Game):
 
 #     def resample(self, pair="game"):
 #         """
-#         Overwrites self.values with a bootstrap resample of self.sample_values.
+#         Overwrites self.values with a bootstrap resample of self.sample_values. # noqa
 
 #         pair = payoff: resample all payoff observations independently
 #         pair = profile: resample paired profile observations
@@ -589,7 +589,7 @@ class SampleGame(Game):
 #                     len(p[0,0])) / len(p[0,0]))), self.sample_values)
 #         elif pair == "game":#TODO: handle ragged arrays
 #             if isinstance(self.sample_values, list):
-#                 self.sample_values = np.array(self.sample_values, dtype=float)
+#                 self.sample_values = np.array(self.sample_values, dtype=float) # noqa
 #             s = self.sample_values.shape[3]
 #             self.values = np.average(self.sample_values, 3, weights= \
 #                     np.random.multinomial(s, np.ones(s)/s))
@@ -600,7 +600,7 @@ class SampleGame(Game):
 #             self.makeArrays()
 #             vals = self.sample_values.reshape([prod(self.values.shape), \
 #                                                 self.max_samples])
-#             self.values = np.array(map(choice, vals)).reshape(self.values.shape)
+#             self.values = np.array(map(choice, vals)).reshape(self.values.shape) # noqa
 #         else:
 #             self.values = np.array([[[choice(s) for s in r] for r in p] for \
 #                                 p in self.sample_values])
@@ -643,7 +643,7 @@ class SampleGame(Game):
 #     #                     s = self.index(role, strat)
 #     #                     sym_groups.append({"role":role, "strategy":strat, \
 #     #                             "count":self.counts[p][r,s], \
-#     #                             "payoff":float(self.sample_values[p][r,s,i])})
+#     #                             "payoff":float(self.sample_values[p][r,s,i])}) # noqa
 #     #             obs["observations"].append({"symmetry_groups":sym_groups})
 #     #         game_dict["profiles"].append(obs)
 #     #     return game_dict

@@ -17,12 +17,13 @@ from gameanalysis import utils
 # from functools import partial
 # from itertools import combinations
 # from bisect import bisect
-# from numpy.random import uniform as U, normal, multivariate_normal, beta, gumbel
+# from numpy.random import uniform as U, normal, multivariate_normal, beta, gumbel # noqa
 # from random import choice
 # from numpy import array, arange, zeros, fill_diagonal, cumsum
 
 # Populate word list for generating better names
-_WORD_LIST_FILE = path.join(path.dirname(path.dirname(__file__)), '.wordlist.txt')
+_WORD_LIST_FILE = path.join(path.dirname(path.dirname(__file__)),
+                            '.wordlist.txt')
 _WORD_LIST = []
 
 try:
@@ -106,8 +107,8 @@ def _compact_payoffs(game):
                          itertools.repeat((i, v), c) for i, (c, v)
                          in enumerate(zip(p, pay))))
                      for p, pay in zip(profile, payoff)]))
-        for inds, utils in perms:
-            payoffs[inds] = utils
+        for indices, utilities in perms:
+            payoffs[indices] = utilities
     return payoffs, strategies
 
 
@@ -439,8 +440,8 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 #     """
 #     sg = SampleGame(game.roles, game.players, game.strategies)
 #     for prof in game.knownProfiles():
-#         sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) + \
-#                 model(spread, samples)) for s in prof[r]] for r in game.roles})
+#         sg.addProfile({r:[PayoffData(s, prof[r][s], game.getPayoff(prof,r,s) + \ # noqa
+#                 model(spread, samples)) for s in prof[r]] for r in game.roles}) # noqa
 #     return sg
 
 
@@ -459,7 +460,7 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 #     multipliers = arange(float(modes)) - float(modes-1)/2
 #     offset = normal(0, max_stdev * spread_mult)
 #     stdev = beta(2,1) * max_stdev
-#     return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)]
+#     return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)] # noqa
 
 
 # eq_var_normal_noise = partial(normal, 0)
@@ -469,7 +470,7 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 
 # def nonzero_gaussian_noise(max_stdev, samples, prob_pos=0.5, spread_mult=1):
 #     """
-#     Generate Noise from a normal distribution centered up to one stdev from 0.
+#     Generate Noise from a normal distribution centered up to one stdev from 0. # noqa
 
 #     With prob_pos=0.5, this implements the previous buggy output of
 #     bimodal_noise.
@@ -482,7 +483,7 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 #                 the mean and the mean of the distribution is drawn from
 #                 N(0,max_stdev*spread_mult).
 #     """
-#     offset = normal(0, max_stdev)*(1 if U(0,1) < prob_pos else -1)*spread_mult
+#     offset = normal(0, max_stdev)*(1 if U(0,1) < prob_pos else -1)*spread_mult # noqa
 #     stdev = beta(2,1) * max_stdev
 #     return normal(offset, stdev, samples)
 

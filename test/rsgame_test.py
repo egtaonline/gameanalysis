@@ -1,5 +1,4 @@
 import os
-import random
 import math
 import numpy as np
 
@@ -113,5 +112,5 @@ def biased_mixture_test(game):
     assert np.all(
         saw_bias  # observed a bias
         | (~game._mask)  # couldn't have observed one
-        | (game._mask.sum(1) == 1)[:, np.newaxis]  # Only one strat so can't bias
+        | (game._mask.sum(1) == 1)[:, np.newaxis]  # Only one strat so no bias
     ), 'Didn\'t bias every strategy'

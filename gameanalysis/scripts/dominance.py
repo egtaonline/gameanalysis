@@ -18,32 +18,34 @@ _MISSING = {
 
 
 def update_parser(parser):
-    parser.description="""Compute dominated strategies, or subgames with only
-    undominated strategies."""
+    parser.description = """Compute dominated strategies, or subgames with only
+undominated strategies."""
     parser.add_argument('--format', '-f', choices=('game', 'strategies'),
-            default='game', help="""Output formats: game = outputs a JSON
-            representation of the game after IEDS; strategies = outputs a
-            mapping of roles to eliminated strategies.  (default:
-            %(default)s)""")
+                        default='game', help="""Output formats: game = outputs
+                        a JSON representation of the game after IEDS;
+                        strategies = outputs a mapping of roles to eliminated
+                        strategies.  (default: %(default)s)""")
     parser.add_argument('--criterion', '-c', default='psd', choices=_CRITERIA,
-            help="""Dominance criterion: psd = pure-strategy dominance; nbr =
-            never-best-response. (default: %(default)s)""")
+                        help="""Dominance criterion: psd = pure-strategy
+                        dominance; nbr = never-best-response. (default:
+                        %(default)s)""")
     parser.add_argument('--missing', '-m', choices=_MISSING, default='cond',
-            help="""Method to handle missing data: uncond = unconditional
-            dominance; cond = conditional dominance; conservative =
-            conservative. (default: %(default)s)""")
+                        help="""Method to handle missing data: uncond =
+                        unconditional dominance; cond = conditional dominance;
+                        conservative = conservative. (default: %(default)s)""")
     parser.add_argument('--weak', '-w', action='store_true', help="""If set,
-    strategies are eliminated even if they are only weakly dominated.""")
+                        strategies are eliminated even if they are only weakly
+                        dominated.""")
 
 
 def main(args):
     game = rsgame.Game.from_json(json.load(args.input))
     sub = dominance.iterated_elimination(game, _CRITERIA[args.criterion],
-            conditional=_MISSING[args.missing])
+                                         conditional=_MISSING[args.missing])
 
     if args.format == 'strategies':
         sub = {role: sorted(strats.difference(sub.strategies[role]))
-                   for role, strats in game.strategies.items()}
+               for role, strats in game.strategies.items()}
 
     json.dump(sub, args.output, default=lambda x: x.to_json())
     args.output.write('\n')

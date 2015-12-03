@@ -1,5 +1,6 @@
 import functools
 
+
 def repeat(count=1):
     '''Decorator that allows you to run a test multiple times'''
     def wrap(test):

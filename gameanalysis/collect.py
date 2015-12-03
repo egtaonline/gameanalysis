@@ -121,7 +121,7 @@ class frozendict(collections.Mapping):
 #                 string += r + ": ("
 #                 for j, s in enumerate(self.game.strategies[r]):
 #                     if self[i, j] > 0:
-#                         string += s + ":" + str(round(100*self[i, j], 1)) + "%, "
+#                         string += s + ":" + str(round(100*self[i, j], 1)) + "%, " # noqa
 #                         string = string[:-2] + "); "
 #                 return string[:-2] + "}"
 #         except AttributeError:

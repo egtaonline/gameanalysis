@@ -15,7 +15,8 @@ test-big: export BIG_TESTS = ON
 test-big: test
 
 check:
-	bin/flake8 gameanalysis
+	# Eventually remove these exclusions
+	bin/flake8 gameanalysis test --exclude Bootstrap.py,Sequential.py
 
 todo:
 	grep -nrIF -e TODO -e XXX -e FIXME * --exclude-dir=lib --exclude-from=Makefile --color=always

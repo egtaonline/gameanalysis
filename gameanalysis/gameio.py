@@ -178,7 +178,7 @@ def _samples_profile_v4_from_json(prof_json):
 
 
 # def _nfg_payoffs(game, prof):
-#     return ' '.join(str(game.get_payoff(prof, role, next(iter(strats.keys()))))
+#     return ' '.join(str(game.get_payoff(prof, role, next(iter(strats.keys())))) # noqa
 #                     for role, strats in prof.items())
 
 

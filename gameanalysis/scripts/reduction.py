@@ -40,21 +40,25 @@ _REDUCTIONS = {
 def update_parser(parser):
     parser.description = """Create reduced game files from input game files."""
     parser.add_argument('--type', '-t', choices=_REDUCTIONS, default='dpr',
-            help="""Type of reduction to perform. (default: %(default)s)""")
+                        help="""Type of reduction to perform. (default:
+                        %(default)s)""")
     parser.add_argument('--sorted-roles', '-s', action='store_true', help="""If
-    set, players should be a list of reduced counts for the role names in
-    sorted order.""")
+                        set, players should be a list of reduced counts for the
+                        role names in sorted order.""")
     parser.add_argument('players', nargs='*', metavar='<role-or-count>',
-    help="""Number of players in each reduced-game role. This should be a list
-    of role then counts e.g. 'role1 4 role2 2'""")
+                        help="""Number of players in each reduced-game role.
+                        This should be a list of role then counts e.g. 'role1 4
+                        role2 2'""")
 
 
 def main(args):
     game = rsgame.Game.from_json(json.load(args.input))
-    reduced_players = (None if not args.players
-            else _PLAYERS[args.sorted_roles](args.players, game))
+    reduced_players = (
+        None if not args.players
+        else _PLAYERS[args.sorted_roles](args.players, game))
 
-    reduced = _REDUCTIONS[args.type](game.players, reduced_players).reduce_game(game)
+    reduced = _REDUCTIONS[args.type](game.players, reduced_players)\
+        .reduce_game(game)
 
     json.dump(reduced, args.output, default=lambda x: x.to_json())
     args.output.write('\n')

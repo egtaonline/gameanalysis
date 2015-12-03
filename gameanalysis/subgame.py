@@ -165,7 +165,7 @@ def subgame(game, strategies):
 # def add_subgame_profile(game, subgame, prof):
 #     if isinstance(game, SampleGame):
 #         subgame.addProfile({role:[PayoffData(strat, prof[role][strat], \
-#                 game.sample_values[game[prof]][game.index(role), game.index( \
+#                 game.sample_values[game[prof]][game.index(role), game.index( \ # noqa
 #                 role, strat)]) for strat in prof[role]] for role in prof})
 #     else:
 #         subgame.addProfile({role:[PayoffData(strat, prof[role][strat], \
