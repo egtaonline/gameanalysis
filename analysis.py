@@ -222,7 +222,7 @@ class subgame(containers.frozendict):
 
         Throws an error if their roles don't match
 
-        '''
+t@github.com:egtaonline/GameAnalysis.git        '''
         return self >= other_subgame
 
     def asset(self):
@@ -236,22 +236,26 @@ class subgame(containers.frozendict):
 
     def __le__(self, other):
         '''is subgame'''
-        assert self.keys() == other.keys(), 'subgames must have the same roles'
+        assert self.keys() == other.keys(), \
+            'subgames must have the same roles: {s} versus {o}'.format(s=self, o=other)
         return all(s <= other[r] for r, s in self.iteritems())
 
     def __ge__(self, other):
         '''is supergame'''
-        assert self.keys() == other.keys(), 'subgames must have the same roles'
+        assert self.keys() == other.keys(), \
+            'subgames must have the same roles: {s} versus {o}'.format(s=self, o=other)
         return all(s >= other[r] for r, s in self.iteritems())
 
     def __lt__(self, other):
         '''is strict subgame'''
-        assert self.keys() == other.keys(), 'subgames must have the same roles'
+        assert self.keys() == other.keys(), \
+            'subgames must have the same roles: {s} versus {o}'.format(s=self, o=other)
         return all(s < other[r] for r, s in self.iteritems())
 
     def __gt__(self, other):
         '''is strict supergame'''
-        assert self.keys() == other.keys(), 'subgames must have the same roles'
+        assert self.keys() == other.keys(), \
+            'subgames must have the same roles: {s} versus {o}'.format(s=self, o=other)
         return all(s > other[r] for r, s in self.iteritems())
 
     def __repr__(self):
