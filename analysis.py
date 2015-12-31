@@ -172,7 +172,7 @@ class subgame(containers.frozendict):
 
     def __init__(self, *args, **kwargs):
         temp = dict(*args, **kwargs)
-        super(subgame, self).__init__((r, frozenset(s)) for r, s in temp.iteritems())
+        super(subgame, self).__init__((r, frozenset(sorted(temp[r]))) for r in sorted(temp))
 
     def pure_subgames(self):
         '''Returns an iterator of all pure subgames'''
