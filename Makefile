@@ -22,12 +22,12 @@ todo:
 	grep -nrIF -e TODO -e XXX -e FIXME * --exclude-dir=lib --exclude-from=Makefile --color=always
 
 setup:
-	virtualenv -p python3 .
+	virtualenv -p python3.5 .
 	bin/pip3 install -U pip
 	bin/pip3 install -r requirements.txt
 
 ubuntu-requirements:
-	sudo apt-get install python3 libatlas-base-dev gfortran
+	sudo apt-get install python3.5 libatlas-base-dev gfortran
 	sudo pip3 install virtualenv
 
 ubuntu-setup: ubuntu-requirements setup
