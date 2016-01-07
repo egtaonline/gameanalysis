@@ -15,32 +15,31 @@ def _is_pure_profile(prof):
 
 
 _TYPE = {
-    'regret': lambda game, prof: (
-        regret.pure_strategy_regret(game, prof)
+    'payoffs': lambda game, prof: (
+        game.get_payoffs(prof)
         if _is_pure_profile(prof)
-        else regret.mixture_regret(game, prof)),
-    'gains': lambda game, prof: (
-        regret.pure_strategy_deviation_gains(game, prof)
+        else game.get_expected_payoff(prof)),
+    'welfare': lambda game, prof: (
+        regret.pure_social_welfare(game, prof)
         if _is_pure_profile(prof)
-        else regret.mixture_deviation_gains(game, prof)),
+        else regret.mixed_social_welfare(game, prof)),
 }
-_TYPE['ne'] = _TYPE['gains']  # These are the same
 
 
 def update_parser(parser):
     # TODO Potentially add a switch to force pure or mixed strategy analysis
-    parser.description = """Compute regret in input game of specified
-profiles."""
+    parser.description = """Compute payoff relative information in input game
+of specified profiles."""
     parser.add_argument('profiles', metavar='<profile-file>',
                         type=argparse.FileType('r'), help="""File with profiles
-                        from input games for which regrets should be
+                        from input games for which payoffs should be
                         calculated. This file needs to be a json list of
                         profiles""")
-    parser.add_argument('-t', '--type', metavar='type', default='regret',
-                        choices=_TYPE, help="""What to return. regret: returns
-the the regret of the profile; gains: returns a json object of the deviators
-gains for every deviation; ne: return the "nash equilibrium regrets", these are
-                        identical to gains. (default: %(default)s)""")
+    parser.add_argument('-t', '--type', metavar='type', default='payoffs',
+                        choices=_TYPE, help="""What to return. payoffs: returns
+the payoffs of every role, and for pure profiles strategy, for each profile;
+                        welfare: returns the social welfare of the profile.
+                        (default: %(default)s)""")
     # parser.add_argument('-m', '--max-welfare', action='store_true',
     # help="""Ignore all other options, and instead return the maximum social
     # welfare""")

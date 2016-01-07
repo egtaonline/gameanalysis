@@ -1,2 +1,2 @@
 #!/bin/bash
-"$(dirname "$0")/bin/python3.4" -m gameanalysis.scripts.script "$@"
+"$(dirname "$0")/bin/python3.5" -m gameanalysis.scripts.script "$@"

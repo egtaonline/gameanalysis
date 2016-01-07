@@ -415,7 +415,7 @@ class Game(EmptyGame):
         if as_array:
             return payoff
         else:
-            return dict(zip(payoff, self.strategies))
+            return dict(zip(self.strategies, payoff))
 
     def get_max_social_welfare(self, role=None, as_array=False):
         """Returns the maximum social welfare over the known profiles.

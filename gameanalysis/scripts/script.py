@@ -8,6 +8,7 @@ from gameanalysis.scripts import randgames
 from gameanalysis.scripts import regret
 from gameanalysis.scripts import dominance
 from gameanalysis.scripts import convert
+from gameanalysis.scripts import payoff
 
 
 _PARSER = argparse.ArgumentParser(prog='ga', description="""Command line access
@@ -46,7 +47,8 @@ _SUBCOMMANDS = {
     'dom': dominance,
     'rand': randgames,
     'conv': convert,
-    'help': help
+    'pay': payoff,
+    'help': help,
 }
 
 
