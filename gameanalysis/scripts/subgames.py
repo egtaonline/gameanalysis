@@ -7,17 +7,17 @@ from gameanalysis import subgame
 
 
 def _parse_text_spec(game, spec):
-    subgame = {}
+    subg = {}
     current_role = '<undefined role>'
     for role_strat in spec:
         if role_strat in game.strategies:
             current_role = role_strat
         elif role_strat in game.strategies[current_role]:
-            subgame.setdefault(current_role, set()).add(role_strat)
+            subg.setdefault(current_role, set()).add(role_strat)
         else:
             raise ValueError('{0} was not a role or a strategy in role {1}'
                              .format(role_strat, current_role))
-    return subgame.EmptySubgame(game, subgame)
+    return subgame.EmptySubgame(game, subg)
 
 
 def _parse_index_spec(game, spec):
