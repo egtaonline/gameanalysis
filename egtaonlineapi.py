@@ -132,7 +132,7 @@ class egtaonline(object):
         true_data = {'auth_token': self.auth}
         true_data.update(data)
         true_data = _encode_data(true_data)
-        url = 'http://%s/api/v3/%s' % (self.domain, api)
+        url = 'https://%s/api/v3/%s' % (self.domain, api)
         self.log.info('%s request to %s with data %s', verb, url, true_data)
         return requests.request(verb, url, data=true_data)
 
@@ -294,7 +294,7 @@ class egtaonline(object):
             # This call breaks convention because the api is broken, so we use
             # a different api.
             resp = requests.get(
-                'http://egtaonline.eecs.umich.edu/games/%d.json' % game_name,
+                'https://egtaonline.eecs.umich.edu/games/%d.json' % game_name,
                 data={'granularity': granularity, 'auth_token': self.auth})
             resp.raise_for_status()
             return (json.loads(json.loads(resp.text))
