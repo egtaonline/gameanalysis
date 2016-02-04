@@ -303,6 +303,13 @@ class Game(EmptyGame):
         The minimum payoff a role can ever have.
 
     """
+    # There are several private members of a game.
+    # _role_index : maps role string to its index in arrays
+    # _strategy_index : maps a role and strategy string to the strategies index
+    # _profile_map : maps static profiles to their index in the values array
+    # _values : An array of mean payoff data indexed by [profile, role,
+    #           strategy] all as indices
+
     def __init__(self, players, strategies, payoff_data):
         super().__init__(players, strategies)
 
@@ -347,10 +354,13 @@ class Game(EmptyGame):
 
     def _compute_min_payoffs(self):
         """Assigns _min_payoffs to the minimum payoff for every role"""
-        # TODO Remove filled? There should be no mask
-        self.min_payoffs = (np.ma.masked_array(self._values,
-                                               self._counts == 0)
-                            .min((0, 2)).filled(0))
+        if (not self._values.size):
+            self.min_payoffs = np.empty([self._mask.shape[0]])
+            self.min_payoffs.fill(np.nan)
+        else:
+            self.min_payoffs = (np.ma.masked_array(self._values,
+                                                   self._counts == 0)
+                                .min((0, 2)).filled(np.nan))
 
     def data_profiles(self):
         """Returns an iterator over all profiles with data
