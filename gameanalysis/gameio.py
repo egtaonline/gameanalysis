@@ -42,38 +42,40 @@ def _roles_from_json(json_):
     roles = json_['roles']
     players = {r['name']: int(r['count']) for r in roles}
     strategies = {r['name']: r['strategies'] for r in roles}
-    return (players, strategies, ())
+    return (players, strategies)
 
 
 def _new_game_from_json(json_, profile_reader):
     """Interprets a new style game"""
     players, strategies, _ = _roles_from_json(json_)
-    return (players, strategies,
-            (profile_reader(prof) for prof in json_['profiles']))
+    return (players,
+            strategies,
+            (profile_reader(prof) for prof in json_['profiles']),
+            len(json_['profiles']))
 
 
 def _old_game_from_json(json_):
     players = {r['name']: int(r['count']) for r in json_['roles']}
     strategies = {r['name']: r['strategy_array'] for r in json_['roles']}
     roles = list(players.keys())
-    profiles = []
 
-    for prof_dict in json_['profiles']:
-        profile = {r: [] for r in roles}
-        counts = {}
-        for role_str in prof_dict['proto_string'].split('; '):
-            role, strategy_str = role_str.split(': ')
-            counts[role] = Counter(strategy_str.split(', '))
-        for role_dict in prof_dict['roles']:
-            role = role_dict['name']
-            role_counts = counts[role]
-            for strat_dict in role_dict['strategies']:
-                strat = strat_dict['name']
-                profile[role].append((strat,
-                                      role_counts[strat],
-                                      float(strat_dict['payoff'])))
-        profiles.append(profile)
-    return (players, strategies, profiles)
+    def profiles():
+        for prof_dict in json_['profiles']:
+            profile = {r: [] for r in roles}
+            counts = {}
+            for role_str in prof_dict['proto_string'].split('; '):
+                role, strategy_str = role_str.split(': ')
+                counts[role] = Counter(strategy_str.split(', '))
+            for role_dict in prof_dict['roles']:
+                role = role_dict['name']
+                role_counts = counts[role]
+                for strat_dict in role_dict['strategies']:
+                    strat = strat_dict['name']
+                    profile[role].append((strat,
+                                          role_counts[strat],
+                                          float(strat_dict['payoff'])))
+            yield profile
+    return (players, strategies, profiles(), len(json_['profiles']))
 
 
 def _profile_v2_from_json(prof_json):

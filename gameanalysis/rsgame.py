@@ -50,7 +50,7 @@ class EmptyGame(object):
         array representation. Note that this can be different than the order of
         the object that is passed in.
     """
-    def __init__(self, players, strategies, _=None):
+    def __init__(self, players, strategies, _=None, __=None):
         self.players = collect.frozendict(players)
         self.strategies = collect.frozendict((r, frozenset(s))
                                              for r, s in strategies.items())
@@ -310,17 +310,19 @@ class Game(EmptyGame):
     # _values : An array of mean payoff data indexed by [profile, role,
     #           strategy] all as indices
 
-    def __init__(self, players, strategies, payoff_data):
+    def __init__(self, players, strategies, payoff_data=(), length=None):
         super().__init__(players, strategies)
 
         self._role_index = {r: i for i, r in enumerate(self.strategies.keys())}
         self._strategy_index = {r: {s: i for i, s in enumerate(strats)}
                                 for r, strats in self.strategies.items()}
 
-        if not hasattr(payoff_data, "__len__"):
-            payoff_data = list(payoff_data)
+        if length is None:
+            if not hasattr(payoff_data, "__len__"):
+                payoff_data = list(payoff_data)
+            length = len(payoff_data)
         self._profile_map = {}
-        self._values = np.zeros((len(payoff_data),) + self._mask.shape)
+        self._values = np.zeros((length,) + self._mask.shape)
         self._counts = np.zeros_like(self._values, dtype=int)
 
         for p, profile_data in enumerate(payoff_data):
