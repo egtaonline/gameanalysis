@@ -42,7 +42,7 @@ def _roles_from_json(json_):
     roles = json_['roles']
     players = {r['name']: int(r['count']) for r in roles}
     strategies = {r['name']: r['strategies'] for r in roles}
-    return (players, strategies)
+    return (players, strategies, ())
 
 
 def _new_game_from_json(json_, profile_reader):
