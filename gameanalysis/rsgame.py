@@ -25,6 +25,9 @@ _TINY = np.finfo(float).tiny
 # TODO allow all profile / mix functions to take either style of profile, and
 # convert to the appropriate one.
 
+# TODO Make sure dictionary style objects use python objects (int, float) and
+# not numpy types
+
 
 class EmptyGame(object):
     """Role-symmetric game representation
@@ -535,7 +538,8 @@ class Game(EmptyGame):
                 'strategies': {r: list(s) for r, s in self.strategies.items()},
                 'profiles': [
                     {role:
-                     [(strat, count, payoffs[role][strat])
+                     # XXX Casts are necessary conversion from numpy types
+                     [(strat, int(count), float(payoffs[role][strat]))
                       for strat, count in strats.items()]
                      for role, strats in prof.items()}
                     for prof, payoffs in self.payoffs()]}
@@ -722,7 +726,9 @@ class SampleGame(Game):
                 'strategies': {r: list(s) for r, s in self.strategies.items()},
                 'profiles': [
                     {role:
-                     [(strat, count, payoffs[role][strat])
+                     # XXX Conversion necessary because of numpy types
+                     [(strat, int(count),
+                       [float(p) for p in payoffs[role][strat]])
                       for strat, count in strats.items()]
                      for role, strats in prof.items()}
                     for prof, payoffs in self.sample_payoffs()]}
