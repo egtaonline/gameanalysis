@@ -19,7 +19,7 @@ check:
 	bin/flake8 gameanalysis test --exclude Bootstrap.py,Sequential.py
 
 todo:
-	grep -nrIF -e TODO -e XXX -e FIXME * --exclude-dir=lib --exclude-from=Makefile --color=always
+	grep -nrIF -e TODO -e XXX -e FIXME * --exclude-dir=lib --exclude=Makefile --color=always
 
 setup:
 	virtualenv -p python3.5 .
