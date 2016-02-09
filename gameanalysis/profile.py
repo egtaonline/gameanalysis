@@ -104,17 +104,30 @@ class Profile(_RoleStratMap):
             strats[sym_group['strategy']] = sym_group['count']
         return Profile(base_dict)
 
+    @staticmethod
+    def from_profile_string(prof_str):
+        """Load a profile from a profile string representation"""
+        return Profile(((role,
+                         ((strat, int(count)) for count, strat
+                          in (y.split(' ', 1) for y in rest.split(', '))))  # noqa
+                        for role, rest
+                        in (x.split(': ', 1) for x in prof_str.split('; '))))
+
     def to_symmetry_groups(self):
         """Convert profile to symmetry groups representation"""
         return list(itertools.chain.from_iterable(
             ({'role': r, 'strategy': s, 'count': c} for s, c in cs.iteritems())
             for r, cs in self.iteritems()))
 
-    def __str__(self):
+    def to_profile_string(self):
+        """Convert a profile to its egta string representation"""
         return '; '.join('{0}: {1}'.format
                          (role, ', '.join('{0:d} {1}'.format(count, strat)
                                           for strat, count in strats.items()))
                          for role, strats in self.items())
+
+    def __str__(self):
+        return self.to_profile_string()
 
 
 class Mixture(_RoleStratMap):
