@@ -76,24 +76,20 @@ Games
 
 There are three game types: EmptyGame, Game, and SampleGame.
 
-EmptyGame contains several functions that are valid for games without payoff
-data.
+EmptyGame contains several functions that are valid for games without payoff data.
 
-Game is a potentially sparse mapping from role symmetric profiles to
-payoffs. It behaves mostly like a python dictionary from profiles to payoff
-dictionaries.
+Game is a potentially sparse mapping from role symmetric profiles to payoffs.
+It behaves mostly like a python dictionary from profiles to payoff dictionaries.
 
-SampleGame retains payoff data for every observation. This allows it to
-resample the payoff data for every individual profile.
+SampleGame retains payoff data for every observation.
+This allows it to resample the payoff data for every individual profile.
 
 
 Profiles
 --------
 
-Profiles and Mixtures have a dictionary representation and a corresponding
-array representation that is only valid for the existing game object as it
-depends on the order that strategy names were hashed. The existence of array
-versions is for efficiency of many operations.
+Profiles and Mixtures have a dictionary representation and a corresponding array representation that is only valid for the existing game object as it depends on the order that strategy names were hashed.
+The existence of array versions is for efficiency of many internal operations.
 
 
 Style Guidelines
@@ -115,18 +111,17 @@ Generally follow PEP8 standard.
 Open Design Questions
 ---------------------
 
-1. Whether to include version numbers or descriptions on profiles / mixtures or
-   keep them a raw description.
-2. How to handle games where data doesn't exist for every role strategy pair, but only
-   some agents. Currently any incomplete profile is ignored / errors. There
-   might not be an efficient way to handle this case.
+1. Whether to include version numbers or descriptions on profiles / mixtures or keep them a raw description.
+2. How to handle games where data doesn't exist for every role strategy pair, but only some agents.
+   Currently any incomplete profile is ignored / errors.
+   There might not be an efficient way to handle this case.
 
 To Do
 -----
+
 1. Have a make target that checks style of all files
 2. Make large tests use a flag that can be passed to nosetests and optionally make
-3. Make sure scripts are automatically run from the virtualenv
-4. Implement SampleGame
-5. Potentially move library into its own repository, and have the run scripts
-   be in a separate repository.
-6. Change individual commands to one command using argparse subparsers
+3. Potentially move library into its own repository, and have the run scripts be in a separate repository.
+4. Allow casting games down or up in scope EmptyGame -> Game -> SampleGame.
+   Currently not possible to save a SampleGame as a Game
+

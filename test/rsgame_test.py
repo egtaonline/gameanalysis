@@ -84,16 +84,16 @@ def devreps_approx_test(game):
 def uniform_mixture_test(game):
     mix = game.uniform_mixture(as_array=True)
     # Check that it's a proper mixture
-    assert np.allclose(mix.sum(1), 1), 'Uniform mixture wasn\'t a mixture'
+    assert np.allclose(mix.sum(1), 1), "Uniform mixture wasn't a mixture"
     # Check that they're all the same
     masked = np.ma.masked_array(mix, mix == 0)
-    assert np.allclose(np.diff(masked), 0), 'Uniform mixture wasn\'t uniform'
+    assert np.allclose(np.diff(masked), 0), "Uniform mixture wasn't uniform"
 
 
 @testutils.apply(generate_games())
 def random_mixture_test(game):
     mix = game.random_mixture(as_array=True)
-    assert np.allclose(mix.sum(1), 1), 'Random mixture wasn\'t a mixture'
+    assert np.allclose(mix.sum(1), 1), "Random mixture wasn't a mixture"
 
 
 @testutils.apply(generate_games())

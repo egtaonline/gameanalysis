@@ -252,6 +252,7 @@ class EmptyGame(object):
             )).expandtabs(4)
 
 
+# TODO Make this member function with try catch embedded like min payoff
 def _compute_dev_reps(counts, players, exact=False):
     """Uses fast floating point math or at least vectorized computation to compute
     devreps
@@ -517,16 +518,16 @@ class Game(EmptyGame):
         return len(self._profile_map)
 
     def __repr__(self):
-        return '{}, {:d} / {:d}>'.format(
-            super().__repr__()[:-1],
-            len(self._profile_map),
-            self._size)
+        return '{old}, {data:d} / {total:d}>'.format(
+            old=super().__repr__()[:-1],
+            data=len(self._profile_map),
+            total=self._size)
 
     def __str__(self):
-        return '{}payoff data for {:d} out of {:d} profiles'.format(
-            super().__str__(),
-            len(self._profile_map),
-            self._size)
+        return ('{old}payoff data for {data:d} out of {total:d} '
+                'profiles').format(
+                    old=super().__str__(), data=len(self._profile_map),
+                    total=self._size)
 
     def to_json(self):
         """Convert to json according to the egta-online v3 default game spec"""
@@ -534,10 +535,10 @@ class Game(EmptyGame):
                 'strategies': {r: list(s) for r, s in self.strategies.items()},
                 'profiles': [
                     {role:
-                     [(strat, count, [self.get_payoff(prof, role, strat)])
+                     [(strat, count, payoffs[role][strat])
                       for strat, count in strats.items()]
                      for role, strats in prof.items()}
-                    for prof in self._profile_map]}
+                    for prof, payoffs in self.payoffs()]}
 
     @staticmethod
     def from_json(json_):
@@ -545,124 +546,188 @@ class Game(EmptyGame):
         return Game(*gameio._game_from_json(json_))
 
 
-# TODO Sample game is not being refactored until Varsha's changes have been
-# integrated
-#
-# TODO make sure sample game has a method to return payoffs to mean of all
-# observations, instead of performing a bootstrap sample.
 class SampleGame(Game):
     """A Role Symmetric Game that has multiple samples per observation"""
-    def __init__(self, players, strategies, payoff_data=()):
-        super().__init(players, strategies, payoff_data)
-#         self.sample_values = []
-#         self.min_samples = np.inf
-#         self.max_samples = 0
+    def __init__(self, players, strategies, payoff_data=(), length=None):
+        # Copy to list if necessary
+        if not hasattr(payoff_data, "__len__"):
+            payoff_data = list(payoff_data)
+        # Super constructor
+        super().__init__(players, strategies, payoff_data, length)
 
-#     def addProfile(self, role_payoffs):
-#         Game.addProfile(self, role_payoffs)
-#         self.addSamples(role_payoffs)
+        new_locations = []
+        sample_values = {}
 
-#     def addSamples(self, role_payoffs):
-#         samples = map(list, self.zeros())
-#         for r, role in enumerate(self.roles):
-#             played = []
-#             for strat, count, values in role_payoffs[role]:
-#                 s = self.index(role, strat)
-#                 samples[r][s] = values
-#                 self.min_samples = min(self.min_samples, len(values))
-#                 self.max_samples = max(self.max_samples, len(values))
-#                 played.append(strat)
-#             for strat in set(self.strategies[role]) - set(played):
-#                 s = self.index(role, strat)
-#                 p = self.index(role, played[0])
-#                 samples[r][s] = [0]*len(samples[r][p])
-#             for s in range(self.numStrategies[r], self.maxStrategies):
-#                 p = self.index(role, played[0])
-#                 samples[r][s] = [0]*len(samples[r][p])
-#         self.sample_values.append(np.array(samples))
+        for p, profile_data in enumerate(payoff_data):
+            num_samples = min(min(len(payoffs) if hasattr(payoffs, "__len__")
+                                  else 1
+                                  for _, __, payoffs in sym_grps)
+                              for sym_grps in profile_data.values())
+            values = np.zeros((1,) + self._mask.shape + (num_samples,))
 
-#     def getPayoffData(self, profile, role, strategy):
-#         v = self.sample_values[self[profile]]
-#         return v[self.index(role), self.index(role,strategy)]
+            for r, role in enumerate(self.strategies):
+                for strategy, count, payoffs in profile_data[role]:
+                    if not hasattr(payoffs, "__len__"):
+                        payoffs = [payoffs]
+                    if len(payoffs) > num_samples:
+                        warnings.warn("Truncating observation data")
+                    s = self._strategy_index[role][strategy]
+                    values[0, r, s] = payoffs[:num_samples]
 
-#     def resample(self, pair="game"):
-#         """
-#         Overwrites self.values with a bootstrap resample of self.sample_values. # noqa
+            value_list = sample_values.setdefault(num_samples, [])
+            new_locations.append((num_samples, len(value_list)))
+            value_list.append(values)
 
-#         pair = payoff: resample all payoff observations independently
-#         pair = profile: resample paired profile observations
-#         pair = game: resample paired game observations
-#         """
-#         if pair == "payoff":
-#             raise NotImplementedError("TODO")
-#         elif pair == "profile":
-#             self.values = map(lambda p: np.average(p, 2, weights= \
-#                     np.random.multinomial(len(p[0,0]), np.ones( \
-#                     len(p[0,0])) / len(p[0,0]))), self.sample_values)
-#         elif pair == "game":#TODO: handle ragged arrays
-#             if isinstance(self.sample_values, list):
-#                 self.sample_values = np.array(self.sample_values, dtype=float) # noqa
-#             s = self.sample_values.shape[3]
-#             self.values = np.average(self.sample_values, 3, weights= \
-#                     np.random.multinomial(s, np.ones(s)/s))
+        profiles_before = 0
+        sample_to_profiles_before = {}
+        sample_to_bucket = {}
+        self._sample_values = []
+        for i, (samps, values) in enumerate(sorted(sample_values.items())):
+            sample_to_bucket[samps] = i
+            sample_to_profiles_before[samps] = profiles_before
+            self._sample_values.append(np.concatenate(values))
+            profiles_before += len(values)
 
-#     def singleSample(self):
-#         """Makes self.values be a single sample from each sample set."""
-#         if self.max_samples == self.min_samples:
-#             self.makeArrays()
-#             vals = self.sample_values.reshape([prod(self.values.shape), \
-#                                                 self.max_samples])
-#             self.values = np.array(map(choice, vals)).reshape(self.values.shape) # noqa
-#         else:
-#             self.values = np.array([[[choice(s) for s in r] for r in p] for \
-#                                 p in self.sample_values])
-#         return self
+        self._sample_profile_map = {
+            prof: (sample_to_bucket[new_locations[index][0]],
+                   new_locations[index][1])
+            for prof, index in self._profile_map.items()}
 
-#     def reset(self):  #TODO: handle ragged arrays
-#         self.values = map(lambda p: np.average(p,2), self.sample_values)
+        perm = [sample_to_profiles_before[samps] + samps_idx
+                for samps, samps_idx in new_locations]
 
-#     def toJSON(self):
-#         """
-#         Convert to JSON according to the EGTA-online v3 default game spec.
-#         """
-#         game_dict = {}
-#         game_dict["players"] = self.players
-#         game_dict["strategies"] = self.strategies
-#         game_dict["profiles"] = []
-#         for prof in self:
-#             game_dict["profiles"].append({role:[(strat, prof[role][strat], \
-#                     list(self.sample_values[self[prof]][self.index(role), \
-#                     self.index(role, strat)])) for strat in prof[role]] for \
-#                     role in prof})
-#         return game_dict
+        self._values[perm] = self._values.copy()
+        self._counts[perm] = self._counts.copy()
+        self._profile_map = {prof: perm[index] for prof, index
+                             in self._profile_map.items()}
 
-#     # def to_TB_JSON(self):
-#     #     """
-#     #     Convert to JSON according to the EGTA-online v3 sample-game spec.
-#     #     """
-#     #     game_dict = {}
-#     #     game_dict["roles"] = [{"name":role, "count":self.players[role], \
-#     #                 "strategies": list(self.strategies[role])} for role \
-#     #                 in self.roles]
-#     #     game_dict["profiles"] = []
-#     #     for prof in self:
-#     #         p = self[prof]
-#     #         obs = {"observations":[]}
-#     #         for i in range(self.sample_values[self[prof]].shape[2]):
-#     #             sym_groups = []
-#     #             for r, role in enumerate(self.roles):
-#     #                 for strat in prof[role]:
-#     #                     s = self.index(role, strat)
-#     #                     sym_groups.append({"role":role, "strategy":strat, \
-#     #                             "count":self.counts[p][r,s], \
-#     #                             "payoff":float(self.sample_values[p][r,s,i])}) # noqa
-#     #             obs["observations"].append({"symmetry_groups":sym_groups})
-#     #         game_dict["profiles"].append(obs)
-#     #     return game_dict
+    def _sample_payoff_dict(self, counts, payoffs):
+        """Returns sample payoff array as dict"""
+        return {role:
+                {strat: list(payoffs) for strat, payoffs in strats.items()}
+                for role, strats
+                in self._payoff_dict(counts, payoffs).items()}
 
-#     def __repr__(self):
-#         if self.min_samples < self.max_samples:
-#             return Game.__repr__(self) + "\n" + str(self.min_samples) + \
-#                 "-" + str(self.max_samples) + " samples per profile"
-#         return Game.__repr__(self) + "\n" + str(self.max_samples) + \
-#             " samples per profile"
+    def get_sample_payoffs(self, profile, as_array=False):
+        """Returns a dictionary mapping roles to strategies to payoffs"""
+        prof = self.as_profile(profile)
+        bucket, index = self._sample_profile_map[prof]
+        payoffs = self._sample_values[bucket][index]
+        if as_array:
+            return payoffs
+        counts = self._counts[self._profile_map[prof]]
+        return self._sample_payoff_dict(counts, payoffs)
+
+    def sample_payoffs(self, as_array=False):
+        """Returns a generator of tuples of (profile, sample_payoffs)
+
+        If as_array is True, they are given in their array representation
+        """
+        iterable = zip(self._counts,
+                       itertools.chain.from_iterable(self._sample_values))
+        if as_array:
+            return iterable
+        else:
+            return ((self.as_profile(counts),
+                     self._sample_payoff_dict(counts, payoffs))
+                    for counts, payoffs in iterable)
+
+    def remean(self):
+        """Overwrite payoff values with mean
+
+        This uses the mean of the stored observations, which may be fewer than
+        the original amount. Calling this on a newly created game may change
+        the results."""
+        offset = 0
+        for obs in self._sample_values:
+            num_profiles = obs.shape[0]
+            self._values[offset:offset + num_profiles] = obs.mean(3)
+            offset += num_profiles
+
+    def resample(self, num_resamples=None, independent_profile=False,
+                 independent_role=False, independent_strategy=False):
+        """Overwrite payoff values with a bootstrap resample
+
+        Keyword Arguments
+        -----------------
+        num_resamples:        The number of resamples to take for each realized
+                              payoff. By default this is equal to the number of
+                              observations for that profile.
+        independent_profile:  Sample each profile independently. In general,
+                              only profiles with a different number of
+                              observations will be resampled independently.
+                              (default: False)
+        independent_role:     Sample each role independently. Within a profile,
+                              the payoffs for each role will be drawn
+                              independently. (default: False)
+        independent_strategy: Sample each strategy independently. Within a
+                              profile, the payoffs for each strategy will be
+                              drawn independently. (default: False)
+
+        Each of the `independent_` arguments will increase the time to do a
+        resample. `independent_strategy` doesn't make any particular sense.
+        """
+        switches = (independent_profile, independent_role,
+                    independent_strategy)
+        offset = 0
+        for obs in self._sample_values:
+            num_samples = obs.shape[3]
+            num_obs_resamples = (num_samples if num_resamples is None
+                                 else num_resamples)
+            num_profiles = obs.shape[0]
+            shape = [dim if switch else 1
+                     for dim, switch in zip(obs.shape, switches)]
+            sample = np.random.multinomial(
+                num_obs_resamples, [1/num_samples]*num_samples, shape)
+            self._values[offset:offset + num_profiles] = \
+                (obs * sample).mean(3) * (num_samples / num_obs_resamples)
+            offset += num_profiles
+
+    def single_sample(self, independent_profile=False, independent_role=False,
+                      independent_strategy=False):
+        """Overwrite payoff values with a single sample
+
+        Keyword arguments function the same as they do for resample.
+        """
+        self.resample(num_resamples=1, independent_profile=independent_profile,
+                      independent_role=independent_role,
+                      independent_strategy=independent_strategy)
+
+    def __repr__(self):
+        if len(self._sample_values) == 1:
+            return '{old}, {samples:d}>'.format(
+                old=super().__repr__()[:-1],
+                samples=self._sample_values[0].shape[3])
+        else:
+            return '{old}, {min_samples:d} - {max_samples:d}>'.format(
+                old=super().__repr__()[:-1],
+                min_samples=self._sample_values[0].shape[3],
+                max_samples=self._sample_values[-1].shape[3])
+
+    def __str__(self):
+        if len(self._sample_values) == 1:
+            return '{old}\n{samples:d} observations per profile'.format(
+                old=super().__str__(),
+                samples=self._sample_values[0].shape[3])
+        else:
+            return ('{old}\n{min_samples:d} to {max_samples:d} observations '
+                    'per profile').format(
+                        old=super().__str__(),
+                        min_samples=self._sample_values[0].shape[3],
+                        max_samples=self._sample_values[-1].shape[3])
+
+    def to_json(self):
+        """Convert to json according to the egta-online v3 default game spec"""
+        return {'players': dict(self.players),
+                'strategies': {r: list(s) for r, s in self.strategies.items()},
+                'profiles': [
+                    {role:
+                     [(strat, count, payoffs[role][strat])
+                      for strat, count in strats.items()]
+                     for role, strats in prof.items()}
+                    for prof, payoffs in self.sample_payoffs()]}
+
+    @staticmethod
+    def from_json(json_):
+        """Load a profile from its json representation"""
+        return SampleGame(*gameio._game_from_json(json_))
