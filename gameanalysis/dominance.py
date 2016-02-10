@@ -4,17 +4,6 @@ import numpy as np
 
 from gameanalysis import regret, subgame
 
-# TODO: I dislike the way that the missing data handling is specified. (0, 1,
-# 2) that are also used as boolean values. It also seems like some of these
-# functions could be more efficient.
-
-# TODO subgame.subgame duplicates all of the data in the game, but
-# most of these functions only rely on the profile map. It'd be much faster to
-# just scan the map once and filter out the invalid profiles. This game copy
-# that just references the full game would be much faster, but lacks some of
-# the functionality. I'm not sure what the best way to handle this is, but it
-# would make this significantly more performant.
-
 
 def iterated_elimination(game, criterion, *args, **kwargs):
     """Iterated elimination of dominated strategies

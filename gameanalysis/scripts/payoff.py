@@ -27,7 +27,6 @@ _TYPE = {
 
 
 def update_parser(parser):
-    # TODO Potentially add a switch to force pure or mixed strategy analysis
     parser.description = """Compute payoff relative information in input game
 of specified profiles."""
     parser.add_argument('profiles', metavar='<profile-file>',
@@ -37,12 +36,9 @@ of specified profiles."""
                         profiles""")
     parser.add_argument('-t', '--type', metavar='type', default='payoffs',
                         choices=_TYPE, help="""What to return. payoffs: returns
-the payoffs of every role, and for pure profiles strategy, for each profile;
-                        welfare: returns the social welfare of the profile.
-                        (default: %(default)s)""")
-    # parser.add_argument('-m', '--max-welfare', action='store_true',
-    # help="""Ignore all other options, and instead return the maximum social
-    # welfare""")
+                        the payoffs of every role, and for pure profiles
+                        strategy, for each profile; welfare: returns the social
+                        welfare of the profile.  (default: %(default)s)""")
 
 
 def main(args):

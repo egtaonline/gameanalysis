@@ -1,15 +1,10 @@
 """Methods for interacting with mappings from role to strategy to value"""
 import collections
 import itertools
+
 import numpy as np
 
 from gameanalysis import collect
-
-
-class Support(collect.frozendict):
-    """A static assignment of roles to strategies"""
-    # TODO implement
-    pass
 
 
 class _RoleStratMap(collect.frozendict):
@@ -19,15 +14,6 @@ class _RoleStratMap(collect.frozendict):
     def __init__(self, *args, **kwargs):
         super().__init__(((r, collect.frozendict(p)) for r, p
                           in dict(*args, **kwargs).items()))
-
-    def support(self):
-        """Returns the support of this mixed profile
-
-        The support is a dict mapping roles to strategies.
-
-        """
-        # TODO make this a support object
-        return {role: set(strats) for role, strats in self.items()}
 
     def to_json(self):
         """Return a representation that is json serializable"""
@@ -79,9 +65,6 @@ class Profile(_RoleStratMap):
         This requires that the payoff map contains data for every role and
         strategy in the profile. An input profile looks like {role: [(strat,
         count, payoffs)]}, and is necessary to construct a game object."""
-        # TODO It's unclear if the dictionary should map to a set or not, or
-        # how deduping should be done. It is clear that that shouldn't be two
-        # entries with the same strategy.
         return {role: [(strat, counts, payoff_map[role][strat])
                        for strat, counts in strats.items()]
                 for role, strats in self.items()}

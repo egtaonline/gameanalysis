@@ -2,7 +2,6 @@
 from collections import Counter
 
 from gameanalysis import utils
-# FIXME lots of errors here
 
 
 def _game_from_json(json_):
@@ -161,7 +160,6 @@ def _samples_profile_v4_from_json(prof_json):
 #     return harray(probs)
 
 
-# FIXME These methods most likely don't work
 # def to_nfg_asym(game, output):
 #     output.write('NFG 1 R "asymmetric"\n{ ')
 #     output.write(' '.join(('"' + str(r) + '"' for r in game.roles)))

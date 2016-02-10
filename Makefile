@@ -23,7 +23,7 @@ todo:
 
 setup:
 	virtualenv -p python3.5 .
-	bin/pip3 install -U pip
+	bin/pip3 install -U pip --ignore-installed
 	bin/pip3 install -r requirements.txt
 
 ubuntu-requirements:

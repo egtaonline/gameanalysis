@@ -34,20 +34,20 @@ def pure_strategy_regret(game, prof):
 
 def _subgame_data(game, mix):
     """Returns true if we have all support data"""
-    sub = subgame.EmptySubgame(game, game.as_profile(mix).support())
+    # This call is a little bastardized, but as_mixture also works as mapping
+    # from roles to strategies
+    sub = subgame.EmptySubgame(game, game.as_mixture(mix))
     return all(prof in game for prof in sub.all_profiles())
 
 
 def _deviation_data(game, mix):
     """Returns a boolean array where True means we have data on mix deviations to
-    that role strat
-
-    """
-    mix = game.as_profile(mix)
-    support = mix.support()
+    that role strat"""
+    # This call is a little bastardized, but as_mixture also works as mapping
+    # from roles to strategies
+    sub = subgame.EmptySubgame(game, game.as_mixture(mix))
     has_data = {role: {strat: True for strat in strats}
                 for role, strats in game.strategies.items()}
-    sub = subgame.EmptySubgame(game, support)
     for prof, role, dev in sub.deviation_profiles():
         has_data[role][dev] &= prof in game
     return game.as_array(has_data, dtype=bool)
@@ -57,9 +57,7 @@ def mixture_deviation_gains(game, mix, as_array=False):
     """Returns all the gains from deviation from a mixed strategy
 
     Return type is a dict mapping role to deviation to gain. This is equivalent
-    to what is sometimes called equilibrium regret.
-
-    """
+    to what is sometimes called equilibrium regret."""
     if _subgame_data(game, mix):
         mix = game.as_array(mix)
         strategy_evs = game.expected_values(mix, as_array=True)

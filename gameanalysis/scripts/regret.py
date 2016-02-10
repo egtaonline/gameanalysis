@@ -28,7 +28,6 @@ _TYPE['ne'] = _TYPE['gains']  # These are the same
 
 
 def update_parser(parser):
-    # TODO Potentially add a switch to force pure or mixed strategy analysis
     parser.description = """Compute regret in input game of specified
 profiles."""
     parser.add_argument('profiles', metavar='<profile-file>',
@@ -38,12 +37,10 @@ profiles."""
                         profiles""")
     parser.add_argument('-t', '--type', metavar='type', default='regret',
                         choices=_TYPE, help="""What to return. regret: returns
-the the regret of the profile; gains: returns a json object of the deviators
-gains for every deviation; ne: return the "nash equilibrium regrets", these are
+                        the the regret of the profile; gains: returns a json
+                        object of the deviators gains for every deviation; ne:
+                        return the "nash equilibrium regrets", these are
                         identical to gains. (default: %(default)s)""")
-    # parser.add_argument('-m', '--max-welfare', action='store_true',
-    # help="""Ignore all other options, and instead return the maximum social
-    # welfare""")
 
 
 def main(args):

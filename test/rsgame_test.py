@@ -1,5 +1,6 @@
-import os
 import math
+import os
+
 import numpy as np
 
 from gameanalysis import randgames
@@ -10,21 +11,24 @@ TINY = np.finfo(float).tiny
 EPS = 5 * np.finfo(float).eps
 
 # The lambda: 0 means that the payoffs are all zero, since they don't matter
-SMALL_GAMES = [
-    [randgames.symmetric_game(2, 2, lambda: 0)],
-    [randgames.symmetric_game(2, 5, lambda: 0)],
-    [randgames.symmetric_game(5, 2, lambda: 0)],
-    [randgames.symmetric_game(5, 5, lambda: 0)],
-    [randgames.independent_game(2, 2, lambda: 0)],
-    [randgames.independent_game(2, 5, lambda: 0)],
-    [randgames.independent_game(5, 2, lambda: 0)],
-    [randgames.independent_game(5, 5, lambda: 0)],
-    [randgames.role_symmetric_game(2, [1, 2], [2, 1], lambda: 0)],
-    [randgames.role_symmetric_game(2, 2, 2, lambda: 0)],
-    [randgames.role_symmetric_game(2, 2, 5, lambda: 0)],
-    [randgames.role_symmetric_game(2, 5, 2, lambda: 0)],
-    [randgames.role_symmetric_game(2, 5, 5, lambda: 0)]
-]
+SMALL_GAMES = [(x,) for x in [
+    randgames.symmetric_game(2, 2),
+    randgames.symmetric_game(2, 5),
+    randgames.symmetric_game(5, 2),
+    randgames.symmetric_game(5, 5),
+    randgames.independent_game(2, 2),
+    randgames.independent_game(2, 5),
+    randgames.independent_game(5, 2),
+    randgames.independent_game(5, 5),
+    randgames.role_symmetric_game(2, [1, 2], [2, 1]),
+    randgames.role_symmetric_game(2, 2, 2),
+    randgames.role_symmetric_game(2, 2, 5),
+    randgames.role_symmetric_game(2, 5, 2),
+    randgames.role_symmetric_game(2, 5, 5)
+]]
+
+# FIXME!
+# SMALL_OBSERVATION_GAMES =
 
 
 def generate_games():
@@ -34,15 +38,15 @@ def generate_games():
 
     if os.getenv('BIG_TESTS', None) == 'ON':  # Big Games
         # First is the limit of approximate dev reps on x64
-        yield [randgames.symmetric_game(170, 2, lambda: 0)]
-        yield [randgames.symmetric_game(1000, 2, lambda: 0)]
-        yield [randgames.symmetric_game(5, 40, lambda: 0)]
-        yield [randgames.symmetric_game(3, 160, lambda: 0)]
-        yield [randgames.symmetric_game(50, 2, lambda: 0)]
-        yield [randgames.symmetric_game(20, 5, lambda: 0)]
-        yield [randgames.symmetric_game(90, 5, lambda: 0)]
-        yield [randgames.role_symmetric_game(2, 2, 40, lambda: 0)]
-        yield [randgames.symmetric_game(12, 12, lambda: 0)]
+        yield [randgames.symmetric_game(170, 2)]
+        yield [randgames.symmetric_game(1000, 2)]
+        yield [randgames.symmetric_game(5, 40)]
+        yield [randgames.symmetric_game(3, 160)]
+        yield [randgames.symmetric_game(50, 2)]
+        yield [randgames.symmetric_game(20, 5)]
+        yield [randgames.symmetric_game(90, 5)]
+        yield [randgames.role_symmetric_game(2, 2, 40)]
+        yield [randgames.symmetric_game(12, 12)]
 
 
 def approx_dev_reps(game):

@@ -92,19 +92,26 @@ class DeviationPreserving(object):
                         opp_prof[dev_strategy] += 1
 
                     else:
-                        opp_prof = _sym_hr_full_prof(strat_counts,
-                                                     self.full_players[role],
-                                                     self.reduced_players[role])
+                        opp_prof = _sym_hr_full_prof(
+                            strat_counts, self.full_players[role],
+                            self.reduced_players[role])
 
                     full_profile[role] = opp_prof
                 yield profile.Profile(full_profile)
 
     def _profile_contributions(self, full_profile):
         """Returns a generator of dpr profiles and the role-strategy pair that
-        contributes to it
-
-        """
+        contributes to it"""
         # TODO Right now this is written only for exact DPR
+        assert all(count == 1 or
+                   (count - 1) % (self.reduced_players[role] - 1) == 0
+                   for role, count in self.full_players.items()), \
+            "Currently only exact DPR is implemented"
+        assert len(self.full_players) == 1 or all(
+            count % self.reduced_players[role] == 0 for role, count in
+            self.full_players.items()), \
+            "Currently only exact DPR is implemented"
+
         fracts = {role: count // self.reduced_players[role]
                   for role, count in self.full_players.items()}
         for role, strats in full_profile.items():
@@ -151,9 +158,7 @@ class DeviationPreserving(object):
         assert game.players == self.full_players, \
             ("The games players don't match up with this reduction "
              "Game: {game} Reduction: {reduction}").format(
-                 game=game.players,
-                 reduction=self.full_players
-             )
+                 game=game.players, reduction=self.full_players)
 
         # Map from profile to role to strat to a list of payoffs This allows us
         # to incrementally build DPR profiles as we scan the data The list is

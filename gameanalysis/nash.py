@@ -10,8 +10,6 @@ from gameanalysis import regret
 _TINY = np.finfo(float).tiny
 
 
-# TODO Maybe have all equilibria methods return regret too. Easier to throw
-# away then to recompute.
 def pure_nash(game, epsilon=0):
     """Returns a generator of all pure-strategy epsilon-Nash equilibria."""
     return (profile for profile in game
@@ -43,7 +41,7 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
 
     """
     wrap = (lambda x: x) if as_array else game.as_mixture
-    equilibria = []  # TODO More efficient way to check distinctness
+    equilibria = []
     best = (np.inf, -1, None)  # Best convergence so far
 
     for i, mix in enumerate(itertools.chain(

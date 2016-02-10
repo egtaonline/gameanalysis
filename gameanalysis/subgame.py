@@ -24,11 +24,6 @@ def pure_subgames(game):
           in game.strategies.items())))
 
 
-# TODO This returns a set over the support of a profile that can be useful for
-# making comparisons between supports. This feels like it belongs in a class
-# instead of as a function, but the class would basically have this one
-# function. It could be tied in with EmptySubgame, but that seems verbose and
-# somewhat over designed.
 def support_set(strategies):
     """Takes a support like object and returns a set representing the support
 
