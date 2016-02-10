@@ -1,7 +1,8 @@
 """Module for computing player reductions"""
+from gameanalysis import collect
+from gameanalysis import profile
 from gameanalysis import rsgame
 from gameanalysis import subgame
-from gameanalysis import profile
 
 
 def _sym_hr_full_prof(hr_profile, full_players, reduced_players):
@@ -70,32 +71,32 @@ class DeviationPreserving(object):
     """Deviation preserving reduction"""
 
     def __init__(self, full_players, reduced_players):
-        self.full_players = full_players
-        self.reduced_players = reduced_players
+        self.full_players = collect.frozendict(full_players)
+        self.reduced_players = collect.frozendict(reduced_players)
 
     def expand_profile(self, dpr_profile):
         """Returns the full game profile whose payoff determines that of strat in the
         reduced game profile"""
 
-        for role, strategies in dpr_profile.items():
-            for strategy in strategies:
+        for dev_role, dev_strategies in dpr_profile.items():
+            for dev_strategy in dev_strategies:
                 full_profile = {}
-                for r, strat_counts in dpr_profile.items():
-                    if r == role:
+                for role, strat_counts in dpr_profile.items():
+                    if role == dev_role:
                         opp_prof = dict(strat_counts)
-                        opp_prof[strategy] -= 1
+                        opp_prof[dev_strategy] -= 1
                         opp_prof = _sym_hr_full_prof(
                             opp_prof,
-                            max(1, self.full_players[r] - 1),
-                            max(1, self.reduced_players[r] - 1))
-                        opp_prof[strategy] += 1
+                            self.full_players[role] - 1,
+                            max(1, self.reduced_players[role] - 1))
+                        opp_prof[dev_strategy] += 1
 
                     else:
                         opp_prof = _sym_hr_full_prof(strat_counts,
-                                                     self.full_players[r],
-                                                     self.reduced_players[r])
+                                                     self.full_players[role],
+                                                     self.reduced_players[role])
 
-                    full_profile[r] = opp_prof
+                    full_profile[role] = opp_prof
                 yield profile.Profile(full_profile)
 
     def _profile_contributions(self, full_profile):
@@ -148,7 +149,11 @@ class DeviationPreserving(object):
         with."""
 
         assert game.players == self.full_players, \
-            "The games players don't match up with this reduction"
+            ("The games players don't match up with this reduction "
+             "Game: {game} Reduction: {reduction}").format(
+                 game=game.players,
+                 reduction=self.full_players
+             )
 
         # Map from profile to role to strat to a list of payoffs This allows us
         # to incrementally build DPR profiles as we scan the data The list is
