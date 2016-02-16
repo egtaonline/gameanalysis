@@ -148,6 +148,7 @@ To Do
   This would make calls to dominance on a subgame much faster, but of course, wouldn't work for things like `nash`.
   The best solution is probably making a new class that extends an EmptyGame that has all of the Game methods that don't require scanning over all of the data. This way a reference to the original game can be held without requiring recomputation.
 - Incorporate old tests.
+- Remove np.newaxis in favor of None
 
 Ideas
 -----

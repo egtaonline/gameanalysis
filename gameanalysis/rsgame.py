@@ -46,7 +46,7 @@ class EmptyGame(object):
         array representation. Note that this can be different than the order of
         the object that is passed in.
     """
-    def __init__(self, players, strategies, _=None, __=None):
+    def __init__(self, players, strategies):
         self.players = collect.frozendict(players)
         self.strategies = collect.frozendict((r, frozenset(s))
                                              for r, s in strategies.items())
@@ -280,9 +280,6 @@ class Game(EmptyGame):
         Game, and the order the strategies and roles will be mapped in the
         array representation. Note that this can be different than the order of
         the object that is passed in.
-    min_payoffs : ndarray, shape (num_roles,), dtype float
-        The minimum payoff a role can ever have.
-
     """
     # There are several private members of a game.
     # _role_index : maps role string to its index in arrays
@@ -352,12 +349,22 @@ class Game(EmptyGame):
     def _compute_min_payoffs(self):
         """Assigns _min_payoffs to the minimum payoff for every role"""
         if (not self._values.size):
-            self.min_payoffs = np.empty([self._mask.shape[0]])
-            self.min_payoffs.fill(np.nan)
+            self._min_payoffs = np.empty(self._mask.shape[0])
+            self._min_payoffs.fill(np.nan)
         else:
-            self.min_payoffs = (np.ma.masked_array(self._values,
-                                                   self._counts == 0)
-                                .min((0, 2)).filled(np.nan))
+            self._min_payoffs = (np.ma.masked_array(self._values,
+                                                    self._counts == 0)
+                                 .min((0, 2)).filled(np.nan))
+
+    def min_payoffs(self, as_array=False):
+        """Returns the minimum payoff for each role"""
+        if as_array:
+            view = self._min_payoffs.view()
+            view.setflags(write=False)
+            return view
+        else:
+            return {r: float(m) for r, m
+                    in zip(self.strategies.keys(), self._min_payoffs)}
 
     def data_profiles(self):
         """Returns an iterator over all profiles with data

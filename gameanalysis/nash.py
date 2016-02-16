@@ -71,7 +71,7 @@ def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
     for i in range(max_iters):
         old_mix = mix
         mix = (game.expected_values(mix, as_array=True)
-               - game.min_payoffs[:, np.newaxis] + _TINY) * mix
+               - game.min_payoffs(True)[:, np.newaxis] + _TINY) * mix
         mix = mix / mix.sum(1)[:, np.newaxis]
         if linalg.norm(mix - old_mix) <= converge_thresh:
             break
