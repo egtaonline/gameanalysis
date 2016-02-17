@@ -1,10 +1,10 @@
-"""This module contains data structures and accompanying methods for working
-with role symmetric games"""
+"""Module for Role Symmetric Game data structures"""
 import collections
 import itertools
 import math
 import operator
 import warnings
+from collections import abc
 
 import numpy as np
 import scipy.misc as spm
@@ -15,7 +15,6 @@ from gameanalysis import profile
 from gameanalysis import utils
 
 
-np.seterr(over='raise')  # Raise an error on any funny business
 _exact_factorial = np.vectorize(math.factorial, otypes=[object])
 _TINY = np.finfo(float).tiny
 
@@ -31,7 +30,9 @@ class EmptyGame(object):
     players : {role: count}
         Mapping from roles to number of players per role.
     strategies : {role: {strategy}}
-        Mapping from roles to per-role strategy sets.
+        Mapping from roles to per-role strategy sets. Role order is preserved
+        and copied from this input dictionary. To specify an order use an
+        ordered dictionary.
 
     Members
     -------
@@ -43,22 +44,40 @@ class EmptyGame(object):
         An immutable copy of the input strategies. The iteration order of
         roles, and strategies per role are the cannon iteration order for this
         Game, and the order the strategies and roles will be mapped in the
-        array representation. Note that this can be different than the order of
-        the object that is passed in.
+        array representation.
     """
     def __init__(self, players, strategies):
-        self.players = collect.frozendict(players)
-        self.strategies = collect.frozendict((r, frozenset(s))
-                                             for r, s in strategies.items())
+        assert frozenset(players.keys()) == \
+            frozenset(strategies.keys()), \
+            "Player roles and strategy roles do not agree"
+        assert all(len(strats) == len(frozenset(strats)) for strats
+                   in strategies.values()), "Not all strategies unique"
+
+        self.strategies = collect.fodict((r, tuple(s))
+                                         for r, s in strategies.items())
+        # Ensures players and strategies are in the same order
+        self.players = collect.fodict((r, players[r]) for r
+                                      in self.strategies)
 
         self.size = utils.prod(utils.game_size(self.players[r], len(strats))
                                for r, strats in self.strategies.items())
-        # self._mask specifies the valid strategy positions
+
         max_strategies = max([len(s) for s in self.strategies.values()])
+        # self._mask specifies the valid strategy positions
         self._mask = np.zeros((len(self.strategies), max_strategies),
                               dtype=bool)
         for r, strats in enumerate(self.strategies.values()):
             self._mask[r, :len(strats)] = True
+
+        self._role_index = {r: i for i, r in enumerate(self.strategies.keys())}
+        self._strategy_index = {r: {s: i for i, s in enumerate(strats)}
+                                for r, strats in self.strategies.items()}
+
+    @staticmethod
+    def from_json(json_):
+        """Load a profile from its json representation"""
+        players, strategies, *_ = gameio._game_from_json(json_)
+        return EmptyGame(players, strategies)
 
     def all_profiles(self):
         """Returns a generator over all profiles"""
@@ -68,16 +87,18 @@ class EmptyGame(object):
                  strats, self.players[role])]
             for role, strats in self.strategies.items())))
 
-    def _as_dict(self, array, type):
-        """Converts an array profile representation to a dictionary representation
-
-        """
-        if isinstance(array, collections.Mapping):
-            return array  # Already a profile
-        return {role: {strat: type(count) for strat, count
-                       in zip(strats, counts) if count > 0}
-                for counts, (role, strats)
-                in zip(array, self.strategies.items())}
+    def _as_dict(self, array, dict_type, data_type):
+        """Converts an array profile representation to a dictionary
+        representation"""
+        if isinstance(array, dict_type):
+            return array
+        elif isinstance(array, abc.Mapping):
+            return dict_type(array)
+        else:
+            return dict_type({role: {strat: data_type(count) for strat, count
+                                     in zip(strats, counts) if count > 0}
+                              for counts, (role, strats)
+                              in zip(array, self.strategies.items())})
 
     def as_profile(self, array):
         """Converts an array profile representation into a dictionary representation
@@ -86,12 +107,9 @@ class EmptyGame(object):
         counts.
 
         If a profile is passed in, nothing is changed.
-
         """
-        if isinstance(array, profile.Profile):
-            return array
-        else:
-            return profile.Profile(self._as_dict(array, int))
+        # TODO Assert profile is valid for this game?
+        return self._as_dict(array, profile.Profile, int)
 
     def as_mixture(self, array):
         """Converts an array profile representation into a dictionary representation
@@ -100,12 +118,9 @@ class EmptyGame(object):
         counts.
 
         If a profile is passed in, nothing is changed.
-
         """
-        if isinstance(array, profile.Mixture):
-            return array
-        else:
-            return profile.Mixture(self._as_dict(array, float))
+        # TODO Assert valid mixture? Maybe in Mixture?
+        return self._as_dict(array, profile.Mixture, float)
 
     def as_array(self, prof, dtype=float):
         """Converts a dictionary profile representation into an array representation
@@ -118,6 +133,7 @@ class EmptyGame(object):
         By definition, an invalid entries are zero.
 
         """
+        # TODO Check that profile is a valid profile
         if isinstance(prof, np.ndarray):  # Already an array
             return np.asarray(prof, dtype=dtype)
         array = np.zeros_like(self._mask, dtype=dtype)
@@ -150,9 +166,9 @@ class EmptyGame(object):
         mixtures.
 
         Set as_array to True to return an array representation of the profile.
-
         """
-        mix = np.random.gamma(alpha, size=self._mask.shape) * self._mask
+        mix = np.random.dirichlet([alpha] * self._mask.shape[1],
+                                  self._mask.shape[0]) * self._mask
         mix /= mix.sum(1)[:, np.newaxis]
         if as_array:
             return mix
@@ -165,7 +181,8 @@ class EmptyGame(object):
         Gives a generator of all mixtures of the following form: each role has
         one or zero strategies played with probability bias; the reamaining
         1-bias probability is distributed uniformly over the remaining S or S-1
-        strategies."""
+        strategies.
+        """
         assert 0 <= bias <= 1, 'probabilities must be between zero and one'
         num_strategies = self._mask.sum(1)
 
@@ -178,7 +195,7 @@ class EmptyGame(object):
 
         for strats in itertools.product(*map(possible_strats, num_strategies)):
             mix = np.array(self._mask, dtype=float)
-            for r in range(len(self.players)):
+            for r in range(len(self.strategies)):
                 s = strats[r]
                 ns = num_strategies[r]
                 if s is None:  # uniform
@@ -197,7 +214,6 @@ class EmptyGame(object):
         strategy is either 1 or 0
 
         Set as_array to True to return the mixed profiles in array form.
-
         """
         mixtures = (profile.Mixture(rs) for rs in itertools.product(
             *([(r, {s: 1}) for s in sorted(ss)] for r, ss
@@ -225,13 +241,7 @@ class EmptyGame(object):
     def to_json(self):
         """Convert to a json serializable format"""
         return {'players': dict(self.players),
-                'strategies': {r: list(s) for r, s in self.strategies.items()}}
-
-    @staticmethod
-    def from_json(json_):
-        """Load a profile from its json representation"""
-        params = gameio._game_from_json(json_)
-        return EmptyGame(*params[:2])
+                'strategies': dict(self.strategies.items())}
 
     def __repr__(self):
         return '<{}: {}, {}>'.format(
@@ -260,73 +270,151 @@ class EmptyGame(object):
 class Game(EmptyGame):
     """Role-symmetric game representation
 
-    Parameters
-    ----------
-    players : {role: count}
-        Mapping from roles to number of players per role.
-    strategies : {role: {strategy}}
-        Mapping from roles to per-role strategy sets.
-    payoff_data : [{role: [(strat, count, [payoff])]}]
-        Collection of data objects mapping roles to collections of (strategy,
-        count, value) tuples.
+    This constructor uses knowledge about the internal representation to
+    efficiently generate games. Generally one will want to use one of the
+    constructor methods prefixed with "from" e.g. `from_payoff_format` or
+    `from_json`.
 
     Members
     -------
-    players : {role: count}
-        An immutable copy of the input players.
-    strategies : {role: {strategy}}
-        An immutable copy of the input strategies. The iteration order of
-        roles, and strategies per role are the cannon iteration order for this
-        Game, and the order the strategies and roles will be mapped in the
-        array representation. Note that this can be different than the order of
-        the object that is passed in.
+    same as EmptyGame
     """
     # There are several private members of a game.
-    # _role_index : maps role string to its index in arrays
-    # _strategy_index : maps a role and strategy string to the strategies index
     # _profile_map : maps static profiles to their index in the values array
     # _values : An array of mean payoff data indexed by [profile, role,
     #           strategy] all as indices
 
-    def __init__(self, players, strategies, payoff_data=(), length=None):
+    # TODO have escape for error checking
+    # TODO better messages for asserts
+    def __init__(self, players, strategies, counts, values):
         super().__init__(players, strategies)
 
-        self._role_index = {r: i for i, r in enumerate(self.strategies.keys())}
-        self._strategy_index = {r: {s: i for i, s in enumerate(strats)}
-                                for r, strats in self.strategies.items()}
+        assert counts.shape[1:] == self._mask.shape, \
+            "counts must have proper shape"
+        assert values.shape[1:] == self._mask.shape, \
+            "values must have proper shape : expected {} but was {}".format(
+                self._mask.shape, values.shape[1:])
+        assert counts.shape[0] == values.shape[0], \
+            "counts and values must match in dim 0"
+        assert np.issubdtype(counts.dtype, int), \
+            "counts must contain integers"
+        assert (counts >= 0).all(), \
+            "counts was not non negative"
+        role_count = np.fromiter(self.players.values(), int, len(self.players))
+        assert (counts.sum(2) == role_count).all(), \
+            "not all counts equaled player total"
+        assert (counts * ~self._mask == 0).all(), \
+            "some invalid counts were nonzero"
+        assert (values * ~self._mask == 0).all(), \
+            "some invalid values were nonzero"
+
+        self._counts = counts
+        self._values = values
+        self._profile_map = {self.as_profile(c): i for i, c
+                             in enumerate(counts)}
+
+        assert len(self._profile_map) == counts.shape[0], \
+            """There was at least one duplicate profile"""
+
+        self._compute_dev_reps()
+        self._compute_min_payoffs()
+
+    @staticmethod
+    def from_payoff_format(players, strategies, payoff_data, length=None):
+        """Create game from generic payoff format
+
+        Strategies and roles are sorted
+
+        Parameters
+        ----------
+        players : {role: count}
+            Mapping from roles to number of players per role.
+        strategies : {role: {strategy}}
+            Mapping from roles to per-role strategy sets.
+        payoff_data : ({role: [(strat, count, [payoff])]})
+            Collection of data objects mapping roles to collections of
+            (strategy, count, value) tuples.
+        length : int
+            The total number of payoffs. This can make constructing the final
+            game more efficient if known, which it usually is.
+        """
+        # When loaded in this form we sort roles and strategies
+        sorted_strategies = collections.OrderedDict(sorted(
+            (r, sorted(s)) for r, s in strategies.items()))
+        game = EmptyGame(players, sorted_strategies)
 
         if length is None:
-            if not hasattr(payoff_data, "__len__"):
+            if not isinstance(payoff_data, abc.Sized):
+                warnings.warn('Copying profile data, this usually indicates '
+                              'something went wrong')
                 payoff_data = list(payoff_data)
             length = len(payoff_data)
-        self._profile_map = {}
-        self._values = np.zeros((length,) + self._mask.shape)
-        self._counts = np.zeros_like(self._values, dtype=int)
+        counts = np.zeros((length,) + game._mask.shape, dtype=int)
+        values = np.zeros((length,) + game._mask.shape)
 
-        for p, profile_data in enumerate(payoff_data):
-            prof = profile.Profile((role, {s: c for s, c, _ in dats})
-                                   for role, dats in profile_data.items())
-            assert prof not in self._profile_map, \
-                'Duplicate profile {}'.format(prof)
-            if any(any(p is None for _, _, p in dat)
+        p = 0
+        for profile_data in payoff_data:
+            prof = profile.Profile.from_input_profile(profile_data)
+            if any(any(p is None or len(p) == 0 for _, _, p in dat)
                    for dat in profile_data.values()):
                 warnings.warn('Encountered null payoff data in profile: {0}'
                               .format(prof))
                 continue  # Invalid data, but can continue
 
-            self._profile_map[prof] = p
-
-            for r, role in enumerate(self.strategies):
+            for r, role in enumerate(game.strategies):
                 for strategy, count, payoffs in profile_data[role]:
-                    s = self._strategy_index[role][strategy]
-                    assert self._counts[p, r, s] == 0, (
+                    s = game._strategy_index[role][strategy]
+                    assert counts[p, r, s] == 0, (
                         'Duplicate role strategy pair ({}, {})'
                         .format(role, strategy))
-                    self._values[p, r, s] = np.average(payoffs)
-                    self._counts[p, r, s] = count
+                    values[p, r, s] = np.average(payoffs)
+                    counts[p, r, s] = count
 
-        self._compute_dev_reps()
-        self._compute_min_payoffs()
+            p += 1  # profile added
+
+        # The slice at the end truncates any null data
+        return Game(game.players, game.strategies, counts[:p, ...],
+                    values[:p, ...])
+
+    @staticmethod
+    def from_json(json_):
+        """Load a profile from its json representation"""
+        players, strategies, payoff_data, *length = \
+            gameio._game_from_json(json_)
+        return Game.from_payoff_format(players, strategies, payoff_data,
+                                       *length)
+
+    @staticmethod
+    def from_matrix(strategies, matrix):
+        """FIXME"""
+        # Verify everything makes sense
+        assert all(len(s) == d for s, d
+                   in zip(strategies.values(), matrix.shape)), \
+            "number of strategies did not match matrix shape"
+        assert matrix.shape[-1] == len(matrix.shape) - 1, \
+            "matrix shape is inconsistent with a matrix game"
+
+        # Calculate necessary information
+        num_roles = matrix.shape[-1]
+        max_strat = max(matrix.shape[:-1])
+        mask_size = max_strat * num_roles
+        num_profs = utils.prod(matrix.shape[:-1])
+
+        # These are the indices of non zero payoffs
+        indices = np.fromiter(
+            itertools.chain.from_iterable(
+                (p * mask_size + r * max_strat + s for r, s in enumerate(sts))
+                for p, sts in enumerate(itertools.product(
+                    *map(range, matrix.shape[:-1])))),
+            int, num_profs * num_roles)
+
+        # Use indices to create counts and values
+        counts = np.zeros([num_profs, num_roles, max_strat], dtype=int)
+        values = np.zeros([num_profs, num_roles, max_strat])
+        counts.ravel()[indices] = 1
+        values.ravel()[indices] = matrix.ravel()
+
+        return Game({r: 1 for r in strategies}, strategies, counts, values)
 
     def _compute_dev_reps(self, dtype=float, factorial=spm.factorial,
                           div=operator.truediv):
@@ -334,17 +422,28 @@ class Game(EmptyGame):
 
         Uses fast floating point math or at least vectorized computation to
         compute devreps"""
-        try:  # Use approximate unless it overflows
-            strat_counts = np.fromiter(self.players.values(), dtype,
-                                       len(self.players))
-            player_factorial = factorial(self._counts).prod(2)
-            totals = np.prod(div(factorial(strat_counts), player_factorial), 1)
-            dev_reps = div(totals[:, np.newaxis, np.newaxis] *
-                           self._counts, strat_counts[:, np.newaxis])
-            self._dev_reps = dev_reps
-        except FloatingPointError:
-            # Tweaks computation to be exact
-            self._compute_dev_reps(object, _exact_factorial, operator.floordiv)
+        with warnings.catch_warnings():
+            if dtype == float:  # approximate setting
+                warnings.filterwarnings('error')  # Raise exception on warnings
+
+            try:  # Use approximate unless it overflows
+                strat_counts = np.empty(len(self.players), dtype=dtype)
+                for i, c in enumerate(self.players.values()):
+                    strat_counts[i] = c
+                player_factorial = factorial(self._counts).prod(2)
+                totals = np.prod(div(factorial(strat_counts),
+                                     player_factorial), axis=1)
+                self._dev_reps = div(
+                    totals[:, np.newaxis, np.newaxis] *
+                    self._counts, strat_counts[:, np.newaxis]).astype(float)
+
+            except Exception as e:
+                # Tweaks computation to be exact
+                if dtype == float:
+                    self._compute_dev_reps(object, _exact_factorial,
+                                           operator.floordiv)
+                else:
+                    raise e
 
     def _compute_min_payoffs(self):
         """Assigns _min_payoffs to the minimum payoff for every role"""
@@ -370,7 +469,6 @@ class Game(EmptyGame):
         """Returns an iterator over all profiles with data
 
         Note: this returns profiles in a different order than payoffs
-
         """
         return self._profile_map.keys()
 
@@ -379,7 +477,6 @@ class Game(EmptyGame):
 
         If there's no data for the profile, and a non None default is
         specified, that is returned instead.
-
         """
         profile = self.as_profile(profile)
         if default is not None and profile not in self:
@@ -416,7 +513,6 @@ class Game(EmptyGame):
         """Returns a dict of the expected payoff of a mixed strategy to each role
 
         If as_array, then an array in role order is returned.
-
         """
         mix = self.as_array(mix)
         payoff = (mix * self.expected_values(mix, as_array=True)).sum(1)
@@ -437,9 +533,14 @@ class Game(EmptyGame):
         """
         # This should probably stay here, because it can't be moved without
         # exposing underlying structure of _counts and _values or making it
-        # less efficient
+        # less efficient. see mixture_deviation_gains
+
+        # If no data, return none
+        if not self._values.size:
+            return np.nan, None
+
         if role is not None:
-            role_index = self.role_index[role]
+            role_index = self._role_index[role]
             counts = self._counts[:, role_index][..., np.newaxis]
             values = self._values[:, role_index][..., np.newaxis]
         else:
@@ -457,16 +558,29 @@ class Game(EmptyGame):
     def expected_values(self, mix, as_array=False):
         """Computes the expected value of each pure strategy played against all
         opponents playing mix.
-
         """
+        # FIXME returns a number for deviations with unknown data, this should
+        # probably be repalced with NaN but that will have repercussions
+
         # The first use of 'tiny' makes 0^0=1.
         # The second use of 'tiny' makes 0/0=0.
+
+        # Determine if we have all data
         mix = self.as_array(mix)
-        old = np.seterr(under='ignore')  # ignore underflow
-        weights = (((mix + _TINY)**self._counts).prod((1, 2))[:, None, None]
-                   * self._dev_reps / (mix + _TINY))
-        values = np.sum(self._values * weights, 0)
-        np.seterr(**old)  # Go back to old settings
+        num_profiles = (~(self._counts * (mix == 0)).any((1, 2))).sum()
+        total_profiles = EmptyGame(self.players, self.as_mixture(mix)).size
+
+        if num_profiles == total_profiles:
+            # FIXME put this in with block
+            old = np.seterr(under='ignore')  # ignore underflow
+            weights = (((mix + _TINY) ** self._counts)
+                       .prod((1, 2))[:, None, None]
+                       * self._dev_reps / (mix + _TINY))
+            values = np.sum(self._values * weights, 0)
+            np.seterr(**old)  # Go back to old settings
+        else:
+            values = np.empty_like(self._mask, dtype=float)
+            values.fill(np.nan)
         if as_array:
             return values
         else:
@@ -484,23 +598,12 @@ class Game(EmptyGame):
         profile_sums = np.sum(self._counts * self._values, (1, 2))
         return np.allclose(profile_sums, np.mean(profile_sums))
 
-    def items(self, as_array=False):
-        """Identical to payoffs
-
-        Returns an iterable of tuples of (profile, payoffs). This is to make a
-        Game behave like a dictionary from profiles to payoff dictionaries.
-
-        If as_array is True, they are given in their array representation
-
-        """
-        return self.payoffs(as_array=as_array)
-
     def __contains__(self, profile):
         """Returns true if data for that profile exists"""
         return profile in self._profile_map
 
     def __iter__(self):
-        """Basically identical to an iterator over data_profiles"""
+        """Iterator over data_profiles"""
         return iter(self.data_profiles())
 
     def __getitem__(self, profile):
@@ -533,66 +636,135 @@ class Game(EmptyGame):
                 'profiles': [prof.to_input_profile(payoffs)
                              for prof, payoffs in self.payoffs()]}
 
+
+# Make sample game take similar arguments to Game
+class SampleGame(Game):
+    """A Role Symmetric Game that has multiple samples per observation
+
+    TODO
+    """
+
+    def __init__(self, players, strategies, counts, sample_values):
+        if sample_values:
+            values = np.concatenate([x.mean(3) for x in sample_values])
+        else:
+            values = np.empty((0,) + counts.shape[1:])
+        super().__init__(players, strategies, counts, values)
+
+        self._sample_values = sample_values
+
+        assert len(set(x.shape[1:3] for x in sample_values)) <= 1, \
+            "Not all sample values shapes compatible"
+
+        lens = np.fromiter(itertools.chain([0], (x.shape[0] for x
+                                                 in sample_values)),
+                           int, len(sample_values) + 1).cumsum()
+
+        if len(sample_values) == 1:
+            assert (sample_values[0] * (counts[..., None] == 0) == 0).all(), \
+                "some sample payoffs were nonzero for invalid payoffs"
+        elif len(sample_values) > 1:
+            assert all((samp * (count[..., None] == 0) == 0).all()
+                       for count, samp
+                       in zip(np.split(counts, lens[1:-1]), sample_values)), \
+                "some sample payoffs were nonzero for invalid payoffs"
+
+        buckets = ((prof, ind, np.searchsorted(lens, ind, side='right') - 1)
+                   for prof, ind in self._profile_map.items())
+        self._sample_profile_map = {prof: (bucket, index - lens[bucket])
+                                    for prof, index, bucket in buckets}
+
+    @staticmethod
+    def from_payoff_format(players, strategies, payoff_data, length=None):
+        """TODO"""
+        # When loaded in this form we sort roles and strategies
+        sorted_strategies = collections.OrderedDict(sorted(
+            (r, sorted(s)) for r, s in strategies.items()))
+        game = EmptyGame(players, sorted_strategies)
+
+        # {sample_count : ([counts], [sample_values])}
+        sample_map = {}
+
+        for profile_data in payoff_data:
+            num_samples = min(min(len(payoffs) for _, __, payoffs in sym_grps)
+                              for sym_grps in profile_data.values())
+            counts = np.zeros((1,) + game._mask.shape, dtype=int)
+            values = np.zeros((1,) + game._mask.shape + (num_samples,))
+
+            for r, role in enumerate(game.strategies):
+                for strategy, count, payoffs in profile_data[role]:
+                    if len(payoffs) > num_samples:
+                        warnings.warn("Truncating observation data")
+                    s = game._strategy_index[role][strategy]
+                    counts[0, r, s] = count
+                    values[0, r, s] = payoffs[:num_samples]
+
+            count_list, value_list = sample_map.setdefault(num_samples,
+                                                           ([], []))
+            count_list.append(counts)
+            value_list.append(values)
+
+        # Join data together
+        if sample_map:
+            counts = np.vstack(itertools.chain.from_iterable(
+                x[0] for x in sample_map.values()))
+            sample_values = [np.vstack(x[1]) for x in sample_map.values()]
+        else:  # No data
+            counts = np.empty((0,) + game._mask.shape, dtype=int)
+            sample_values = np.empty((0,) + game._mask.shape + (0,))
+
+        return SampleGame(game.players, game.strategies, counts, sample_values)
+
     @staticmethod
     def from_json(json_):
         """Load a profile from its json representation"""
-        return Game(*gameio._game_from_json(json_))
+        players, strategies, payoff_data, *length = \
+            gameio._game_from_json(json_)
+        return SampleGame.from_payoff_format(players, strategies, payoff_data,
+                                             *length)
 
+    @staticmethod
+    def from_matrix(strategies, matrix):
+        """FIXME"""
+        # Verify everything makes sense
+        assert all(len(s) == d for s, d
+                   in zip(strategies.values(), matrix.shape)), \
+            "number of strategies did not match matrix shape"
+        assert matrix.shape[-2] == len(matrix.shape) - 2, \
+            "matrix shape is inconsistent with a matrix game"
 
-class SampleGame(Game):
-    """A Role Symmetric Game that has multiple samples per observation"""
-    def __init__(self, players, strategies, payoff_data=(), length=None):
-        # Copy to list if necessary
-        if not hasattr(payoff_data, "__len__"):
-            payoff_data = list(payoff_data)
-        # Super constructor
-        super().__init__(players, strategies, payoff_data, length)
+        # Calculate necessary information
+        num_samples = matrix.shape[-1]
+        num_roles = matrix.shape[-2]
+        strat_counts = matrix.shape[:-2]
+        max_strat = max(strat_counts)
+        mask_size = max_strat * num_roles
+        num_profs = utils.prod(strat_counts)
 
-        new_locations = []
-        sample_values = {}
+        # These are the indices of non zero payoffs
+        indices = np.fromiter(
+            itertools.chain.from_iterable(
+                (p * mask_size + r * max_strat + s for r, s in enumerate(sts))
+                for p, sts in enumerate(itertools.product(
+                    *map(range, strat_counts)))),
+            int, num_profs * num_roles)
 
-        for p, profile_data in enumerate(payoff_data):
-            num_samples = min(min(len(payoffs) if hasattr(payoffs, "__len__")
-                                  else 1
-                                  for _, __, payoffs in sym_grps)
-                              for sym_grps in profile_data.values())
-            values = np.zeros((1,) + self._mask.shape + (num_samples,))
+        # Use indices to create counts and values
+        counts = np.zeros([num_profs, num_roles, max_strat], dtype=int)
+        sample_vals = np.zeros([num_profs, num_roles, max_strat, num_samples])
+        counts.ravel()[indices] = 1
+        sample_vals.reshape([-1, num_samples])[indices] = \
+            matrix.reshape([-1, num_samples])
 
-            for r, role in enumerate(self.strategies):
-                for strategy, count, payoffs in profile_data[role]:
-                    if not hasattr(payoffs, "__len__"):
-                        payoffs = [payoffs]
-                    if len(payoffs) > num_samples:
-                        warnings.warn("Truncating observation data")
-                    s = self._strategy_index[role][strategy]
-                    values[0, r, s] = payoffs[:num_samples]
+        return SampleGame({r: 1 for r in strategies}, strategies, counts,
+                          [sample_vals])
 
-            value_list = sample_values.setdefault(num_samples, [])
-            new_locations.append((num_samples, len(value_list)))
-            value_list.append(values)
-
-        profiles_before = 0
-        sample_to_profiles_before = {}
-        sample_to_bucket = {}
-        self._sample_values = []
-        for i, (samps, values) in enumerate(sorted(sample_values.items())):
-            sample_to_bucket[samps] = i
-            sample_to_profiles_before[samps] = profiles_before
-            self._sample_values.append(np.concatenate(values))
-            profiles_before += len(values)
-
-        self._sample_profile_map = {
-            prof: (sample_to_bucket[new_locations[index][0]],
-                   new_locations[index][1])
-            for prof, index in self._profile_map.items()}
-
-        perm = [sample_to_profiles_before[samps] + samps_idx
-                for samps, samps_idx in new_locations]
-
-        self._values[perm] = self._values.copy()
-        self._counts[perm] = self._counts.copy()
-        self._profile_map = {prof: perm[index] for prof, index
-                             in self._profile_map.items()}
+    def num_samples(self):
+        """Get the different sample numbers"""
+        if len(self) > 0:
+            return {v.shape[3] for v in self._sample_values}
+        else:
+            return {0}
 
     def get_sample_payoffs(self, profile, as_array=False):
         """Returns a dictionary mapping roles to strategies to payoffs"""
@@ -621,11 +793,7 @@ class SampleGame(Game):
                     for counts, payoffs in iterable)
 
     def remean(self):
-        """Overwrite payoff values with mean
-
-        This uses the mean of the stored observations, which may be fewer than
-        the original amount. Calling this on a newly created game may change
-        the results."""
+        """Overwrite payoff values with mean payoff"""
         offset = 0
         for obs in self._sample_values:
             num_profiles = obs.shape[0]
@@ -671,38 +839,30 @@ class SampleGame(Game):
                 (obs * sample).mean(3) * (num_samples / num_obs_resamples)
             offset += num_profiles
 
-    def single_sample(self, independent_profile=False, independent_role=False,
-                      independent_strategy=False):
-        """Overwrite payoff values with a single sample
-
-        Keyword arguments function the same as they do for resample.
-        """
-        self.resample(num_resamples=1, independent_profile=independent_profile,
-                      independent_role=independent_role,
-                      independent_strategy=independent_strategy)
-
     def __repr__(self):
-        if len(self._sample_values) == 1:
+        samples = self.num_samples()
+        if len(samples) == 1:
             return '{old}, {samples:d}>'.format(
                 old=super().__repr__()[:-1],
-                samples=self._sample_values[0].shape[3])
+                samples=next(iter(samples)))
         else:
             return '{old}, {min_samples:d} - {max_samples:d}>'.format(
                 old=super().__repr__()[:-1],
-                min_samples=self._sample_values[0].shape[3],
-                max_samples=self._sample_values[-1].shape[3])
+                min_samples=min(samples),
+                max_samples=max(samples))
 
     def __str__(self):
-        if len(self._sample_values) == 1:
+        samples = self.num_samples()
+        if len(samples) == 1:
             return '{old}\n{samples:d} observations per profile'.format(
                 old=super().__str__(),
-                samples=self._sample_values[0].shape[3])
+                samples=next(iter(samples)))
         else:
             return ('{old}\n{min_samples:d} to {max_samples:d} observations '
                     'per profile').format(
                         old=super().__str__(),
-                        min_samples=self._sample_values[0].shape[3],
-                        max_samples=self._sample_values[-1].shape[3])
+                        min_samples=min(samples),
+                        max_samples=max(samples))
 
     def to_json(self):
         """Convert to json according to the egta-online v3 default game spec"""
@@ -710,8 +870,3 @@ class SampleGame(Game):
                 'strategies': {r: list(s) for r, s in self.strategies.items()},
                 'profiles': [prof.to_input_profile(payoffs)
                              for prof, payoffs in self.sample_payoffs()]}
-
-    @staticmethod
-    def from_json(json_):
-        """Load a profile from its json representation"""
-        return SampleGame(*gameio._game_from_json(json_))

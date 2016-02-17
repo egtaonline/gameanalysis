@@ -1,5 +1,6 @@
 """Utility module that contains code for parsing legacy game formats"""
-from collections import Counter
+import collections
+from collections import abc
 
 from gameanalysis import utils
 
@@ -31,9 +32,18 @@ def _ga_game_from_json(json_):
     starting is proper output
 
     """
+    profiles = json_.get('profiles', ())
+
+    # Fix shorthand payoffs
+    for profile in profiles:
+        for role, sym_grps in profile.items():
+            for sym_grp in sym_grps:
+                if not isinstance(sym_grp[2], abc.Sized):
+                    sym_grp[2] = [sym_grp[2]]
+
     return (json_['players'],
             json_['strategies'],
-            json_.get('profiles', ()))
+            profiles)
 
 
 def _roles_from_json(json_):
@@ -64,7 +74,7 @@ def _old_game_from_json(json_):
             counts = {}
             for role_str in prof_dict['proto_string'].split('; '):
                 role, strategy_str = role_str.split(': ')
-                counts[role] = Counter(strategy_str.split(', '))
+                counts[role] = collections.Counter(strategy_str.split(', '))
             for role_dict in prof_dict['roles']:
                 role = role_dict['name']
                 role_counts = counts[role]
@@ -72,7 +82,7 @@ def _old_game_from_json(json_):
                     strat = strat_dict['name']
                     profile[role].append((strat,
                                           role_counts[strat],
-                                          float(strat_dict['payoff'])))
+                                          [float(strat_dict['payoff'])]))
             yield profile
     return (players, strategies, profiles(), len(json_['profiles']))
 
@@ -86,7 +96,7 @@ def _profile_v2_from_json(prof_json):
         for strat_dict in role_dict['strategies']:
             profile_data.append((strat_dict['name'],
                                  int(strat_dict['count']),
-                                 float(strat_dict['payoff'])))
+                                 [float(strat_dict['payoff'])]))
         profile[role] = profile_data
     return profile
 
@@ -96,9 +106,12 @@ def _profile_v3_from_json(prof_json):
     prof = {}
     for sym_grp in prof_json['symmetry_groups']:
         strat_data = prof.setdefault(sym_grp['role'], [])
+        payoff = sym_grp['payoff']
+        if not isinstance(payoff, abc.Sized):
+            payoff = [payoff]
         strat_data.append((sym_grp['strategy'],
                            sym_grp['count'],
-                           sym_grp['payoff']))
+                           payoff))
     return prof
 
 

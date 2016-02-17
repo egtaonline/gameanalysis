@@ -10,7 +10,8 @@ def _sym_hr_full_prof(hr_profile, full_players, reduced_players):
 
     In the event that `full_players` isn't divisible by `reduced_players`, we
     first assign by rounding error and break ties in favor of more-played
-    strategies. The final tie-breaker is alphabetical order."""
+    strategies. The final tie-breaker is alphabetical order.
+    """
     full_profile = {s: c * full_players // reduced_players
                     for s, c in hr_profile.items()}
     unassigned = full_players - sum(full_profile.values())
@@ -34,8 +35,8 @@ def _sym_hr_full_prof(hr_profile, full_players, reduced_players):
 class Hierarchical(object):
     """Hierarchical reduction"""
     def __init__(self, full_players, reduced_players):
-        self.full_players = full_players
-        self.reduced_players = reduced_players
+        self.full_players = collect.frozendict(full_players)
+        self.reduced_players = collect.frozendict(reduced_players)
 
     def _hr_profiles(self, game):
         """Returns a generator over tuples of hr profiles and the corresponding
@@ -62,9 +63,12 @@ class Hierarchical(object):
         """
         assert game.players == self.full_players, \
             "The games players don't match up with this reduction"
-        profiles = (red_prof.to_input_profile(game.get_payoffs(profile))
-                    for red_prof, profile in self._hr_profiles(game))
-        return rsgame.Game(self.reduced_players, game.strategies, profiles)
+        # XXX Would need to be converted into a list anyways, so we just get it
+        # out of the way.
+        profiles = [red_prof.to_input_profile(game.get_payoffs(profile))
+                    for red_prof, profile in self._hr_profiles(game)]
+        return rsgame.Game.from_payoff_format(self.reduced_players,
+                                              game.strategies, profiles)
 
 
 class DeviationPreserving(object):
@@ -103,6 +107,7 @@ class DeviationPreserving(object):
         """Returns a generator of dpr profiles and the role-strategy pair that
         contributes to it"""
         # TODO Right now this is written only for exact DPR
+        # TODO This also means that "close" profiles don't count at all
         assert all(count == 1 or
                    (count - 1) % (self.reduced_players[role] - 1) == 0
                    for role, count in self.full_players.items()), \
@@ -153,7 +158,10 @@ class DeviationPreserving(object):
         This version uses exact math, and so will fail if your player counts
         are not DPR reducible. It also means the minimum number of players to
         reduce a role to is 2, unless the role only has one player to begin
-        with."""
+        with.
+        """
+        # FIXME handle SampleGames
+        # TODO Do this with arrays
 
         assert game.players == self.full_players, \
             ("The games players don't match up with this reduction "
@@ -173,12 +181,15 @@ class DeviationPreserving(object):
                  .setdefault(strat, [])
                  .append(payoffs[role][strat]))
 
-        profiles = (prof.to_input_profile(payoff_map)
+        # XXX This could be a generator, but it'd be turned into a list
+        # anyways. Better to make this explicit.
+        profiles = [prof.to_input_profile(payoff_map)
                     for prof, payoff_map in profile_map.items()
                     if (subgame.support_set(payoff_map)
-                        == subgame.support_set(prof)))
+                        == subgame.support_set(prof))]
 
-        return rsgame.Game(self.reduced_players, game.strategies, profiles)
+        return rsgame.Game.from_payoff_format(self.reduced_players,
+                                              game.strategies, profiles)
 
 
 class Twins(DeviationPreserving):
@@ -189,6 +200,7 @@ class Twins(DeviationPreserving):
 
 class Identity(object):
     """Identity reduction (lack of reduction)"""
+
     def expand_profile(self, reduced_profile):
         """Returns full game profiles that contribute to reduced profile"""
         yield reduced_profile

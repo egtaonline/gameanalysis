@@ -32,14 +32,6 @@ def pure_strategy_regret(game, prof):
                in pure_strategy_deviation_gains(game, prof).items())
 
 
-def _subgame_data(game, mix):
-    """Returns true if we have all support data"""
-    # This call is a little bastardized, but as_mixture also works as mapping
-    # from roles to strategies
-    sub = subgame.EmptySubgame(game, game.as_mixture(mix))
-    return all(prof in game for prof in sub.all_profiles())
-
-
 def _deviation_data(game, mix):
     """Returns a boolean array where True means we have data on mix deviations to
     that role strat"""
@@ -58,17 +50,12 @@ def mixture_deviation_gains(game, mix, as_array=False):
 
     Return type is a dict mapping role to deviation to gain. This is equivalent
     to what is sometimes called equilibrium regret."""
-    if _subgame_data(game, mix):
-        mix = game.as_array(mix)
-        strategy_evs = game.expected_values(mix, as_array=True)
-        role_evs = (strategy_evs * mix).sum(1)
-        # No data for specific deviations
-        # This is set after role_evs to not get invalid data
-        strategy_evs[~_deviation_data(game, mix) & game._mask] = np.nan
-        gains = strategy_evs - role_evs[:, np.newaxis]
-    else:  # No necessary data
-        gains = np.empty_like(game._mask)
-        gains.fill(np.nan)
+    mix = game.as_array(mix, float)
+    strategy_evs = game.expected_values(mix, as_array=True)
+    role_evs = (strategy_evs * mix).sum(1)
+    # No data for specific deviations
+    strategy_evs[~_deviation_data(game, mix) & game._mask] = np.nan
+    gains = strategy_evs - role_evs[:, np.newaxis]
 
     if as_array:
         gains[~game._mask] = 0
@@ -92,8 +79,8 @@ def pure_social_welfare(game, profile):
 
 def mixed_social_welfare(game, mix):
     """Returns the social welfare of a mixed strategy profile"""
-    return game.get_expected_payoff(mix, as_array=True).dot(
-        np.fromiter(game.players.values(), int))
+    counts = np.fromiter(game.players.values(), int, len(game.players))
+    return game.get_expected_payoff(mix, as_array=True).dot(counts)
 
 
 # def neighbors(game, p, *args, **kwargs):

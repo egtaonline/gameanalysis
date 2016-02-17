@@ -7,6 +7,9 @@ analysis tractable.
 import bisect
 import itertools
 
+import numpy as np
+
+from gameanalysis import collect
 from gameanalysis import rsgame
 from gameanalysis import utils
 
@@ -40,7 +43,6 @@ def support_set(strategies):
 def _extract_profiles(game, strategies):
     """Given a game and a reduced set of strategies, create a general profile
     structure to feed into a game initialization
-
     """
     subgame_set = support_set(strategies)
     for prof in game:
@@ -78,7 +80,7 @@ class EmptySubgame(rsgame.EmptyGame):
             nd_players[role] -= 1
             nd_game = rsgame.EmptyGame(nd_players, self.strategies)
             for prof in nd_game.all_profiles():
-                for dev in self.full_game.strategies[role] - strats:
+                for dev in set(self.full_game.strategies[role]) - set(strats):
                     yield prof.add(role, dev), role, dev
 
     def additional_strategy_profiles(self, role, strat):
@@ -113,8 +115,27 @@ class EmptySubgame(rsgame.EmptyGame):
 
 def subgame(game, strategies):
     """Returns a new game that only has data for profiles in strategies"""
-    return rsgame.Game(game.players, strategies,
-                       _extract_profiles(game, strategies))
+    # FIXME Add support for sample game (shouldn't be hard)
+    strat_set = {role: {strat: True for strat in strats}
+                 for role, strats in strategies.items()}
+    new_strats = collect.fodict(
+        (role, tuple(strat for strat in strats if strat in strat_set[role]))
+        for role, strats in game.strategies.items())
+    desired_mask = rsgame.EmptyGame(game.players, new_strats)._mask
+
+    strat_mask = game.as_array(strat_set, bool)
+    prof_mask = ~(game._counts * ~strat_mask).any((1, 2))
+    num_profs = prof_mask.sum()
+
+    new_counts = np.zeros((num_profs,) + desired_mask.shape, dtype=int)
+    new_values = np.zeros((num_profs,) + desired_mask.shape)
+
+    new_counts.reshape([num_profs, -1])[:, desired_mask.ravel()] = \
+        game._counts[prof_mask].reshape([num_profs, -1])[:, strat_mask.ravel()]
+    new_values.reshape([num_profs, -1])[:, desired_mask.ravel()] = \
+        game._values[prof_mask].reshape([num_profs, -1])[:, strat_mask.ravel()]
+
+    return rsgame.Game(game.players, new_strats, new_counts, new_values)
 
 
 # def translate(arr, source_game, target_game):
@@ -200,6 +221,7 @@ def maximal_subgames(game):
     queue = [sub for sub in pure_subgames(game)
              if all(p in game for p in sub.all_profiles())]
     # Bisect strategies
+    # FIXME change bisect to numpy ans search sorted
     bsts = {role: tuple(sorted(ses)) for role, ses in game.strategies.items()}
     maximals = []
     while queue:

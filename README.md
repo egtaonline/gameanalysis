@@ -64,12 +64,9 @@ this library. It can be activated with `. bin/activate` and deactivated with
 Testing
 -------
 
-All of the tests can be run with `make test`. If you want more fine grained
-control, from within the virtualenv you can run `nosetests
-test.<unit-test-file-name>[:test-method-name]` to execute only a single test
-file, or or only a specific method from within a file. You may also want to add
-the option `--nocapture` to output `sysout` and `syserr`, which are usually
-captured.
+All of the tests can be run with `make test`.
+If you want more fine grained control, from within the virtualenv you can run `nosetests test.<unit-test-file-name>[:test-method-name]` to execute only a single test file, or or only a specific method from within a file.
+You may also want to add the option `--nocapture` or `-s` to output `sysout` and `syserr`, which are usually captured.
 
 Games
 -----
@@ -119,6 +116,9 @@ Open Design Questions
 To Do
 -----
 
+- Better name for counts and values (array profiles, array payoffs?).
+  Also expose them in the api and set them to read only.
+- Test that everything still passes with different dictionary orderings
 - Make Game constructors take almost raw data so that random game can be constructed more efficiently.
   There should also be constructors taking the general sparse text format.
 - Make large tests use a flag that can be passed to nosetests and optionally make
@@ -149,6 +149,9 @@ To Do
   The best solution is probably making a new class that extends an EmptyGame that has all of the Game methods that don't require scanning over all of the data. This way a reference to the original game can be held without requiring recomputation.
 - Incorporate old tests.
 - Remove np.newaxis in favor of None
+- The way a lot of functions handle missing data is not tested very well.
+- Low support in a mixture could cause a lot of headaches. Maybe make truncation default?
+  Or a global setting somewhere?
 
 Ideas
 -----

@@ -1,6 +1,7 @@
 """Methods for interacting with mappings from role to strategy to value"""
 import collections
 import itertools
+from collections import abc
 
 import numpy as np
 
@@ -65,7 +66,13 @@ class Profile(_RoleStratMap):
         This requires that the payoff map contains data for every role and
         strategy in the profile. An input profile looks like {role: [(strat,
         count, payoffs)]}, and is necessary to construct a game object."""
-        return {role: [(strat, counts, payoff_map[role][strat])
+        def wrap(x):
+            if isinstance(x, abc.Sized):
+                return x
+            else:
+                return [x]
+
+        return {role: [(strat, counts, wrap(payoff_map[role][strat]))
                        for strat, counts in strats.items()]
                 for role, strats in self.items()}
 
@@ -86,6 +93,11 @@ class Profile(_RoleStratMap):
             strats = base_dict.setdefault(sym_group['role'], {})
             strats[sym_group['strategy']] = sym_group['count']
         return Profile(base_dict)
+
+    @staticmethod
+    def from_input_profile(input_prof):
+        return Profile((role, {s: c for s, c, _ in dats})
+                       for role, dats in input_prof.items())
 
     @staticmethod
     def from_profile_string(prof_str):
