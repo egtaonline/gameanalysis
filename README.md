@@ -119,12 +119,8 @@ To Do
 - Better name for counts and values (array profiles, array payoffs?).
   Also expose them in the api and set them to read only.
 - Test that everything still passes with different dictionary orderings
-- Make Game constructors take almost raw data so that random game can be constructed more efficiently.
-  There should also be constructors taking the general sparse text format.
-- Make large tests use a flag that can be passed to nosetests and optionally make
 - Allow casting games down or up in scope EmptyGame -> Game -> SampleGame.
   Currently not possible to save a SampleGame as a Game
-- In rsgame, make `min_payoffs` a hidden member
 - In rsgame, make `min_payoffs` and `dev_reps` lazily computed attributes.
   Python allows members to actually be get functions, which can lazily compute something the first time they're referenced.
 - Mixed nash currently keeps a list of all equilibria, and upon finding a new one, iterates through the entire list to determine if any is sufficiently close to the one just found.
@@ -136,25 +132,17 @@ To Do
   It can be useful for making comparisons between supports, e.g. `support_set(x) < support_set(y)` will tell if the support if x is dominated by the support of y.
   This feels like it belongs in a dedicated class instead of as a function, but the class would basically have this one function.
   This function also works for anything that's a mapping of roles to strategies, which means it applies more generally than any specific class.
-- `SampleGame` make a copy of the input data before calling the super constructor.
-  This could probably be avoided, but it would likely require `SampleGame` initializing `Game` values itself.
-  That might be a good thing, because currently the payoffs can change between creating a `SampleGame` and calling `remean`, which is very strange behavior.
+  Potentially this should just be in `rsgame`.
+  It seems like making more of the functions work arbitrarily well on duck-typed things (i.e. mapping of strings to a collection of strings).
 - Fix the rest of `gameio`.
 - Make sure `nash.pure_strategy_regret` properly returns nan if there is missing data.
 - Change conditional in `dominance`, which indicates how to treat missing data to an enum or at least a string
 - Some functions in `dominance` could probably be more efficient.
-- `subgame.subgame` duplicates all of the data in the game, but most of the functions in dominance only rely on the profile map and the strategy sets.
-  It'd be much faster to just make a `ShallowSubgame` that points to the original game with updated information.
-  This would make calls to dominance on a subgame much faster, but of course, wouldn't work for things like `nash`.
-  The best solution is probably making a new class that extends an EmptyGame that has all of the Game methods that don't require scanning over all of the data. This way a reference to the original game can be held without requiring recomputation.
 - Incorporate old tests.
 - Remove np.newaxis in favor of None
 - The way a lot of functions handle missing data is not tested very well.
 - Low support in a mixture could cause a lot of headaches. Maybe make truncation default?
   Or a global setting somewhere?
-
-Ideas
------
-
+- Integrate read the docs with numpy docstyle extension and github travis-ci for testing etc.
 - Make nash equilibria methods also return equilibria regret if it's computed.
   Regret is easier to throw away than recalculate.
