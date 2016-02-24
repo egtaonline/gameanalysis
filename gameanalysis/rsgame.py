@@ -51,7 +51,8 @@ class EmptyGame(object):
             frozenset(strategies.keys()), \
             "Player roles and strategy roles do not agree"
         assert all(len(strats) == len(frozenset(strats)) for strats
-                   in strategies.values()), "Not all strategies unique"
+                   in strategies.values()), \
+            "Not all strategies are unique: {0}".format(strategies)
 
         self.strategies = collect.fodict((r, tuple(s))
                                          for r, s in strategies.items())
@@ -290,14 +291,16 @@ class Game(EmptyGame):
         super().__init__(players, strategies)
 
         assert counts.shape[1:] == self._mask.shape, \
-            "counts must have proper shape"
+            "counts must have proper shape : expected {1} but was {0}".format(
+                counts.shape[1:], self._mask.shape)
         assert values.shape[1:] == self._mask.shape, \
-            "values must have proper shape : expected {} but was {}".format(
+            "values must have proper shape : expected {0} but was {1}".format(
                 self._mask.shape, values.shape[1:])
         assert counts.shape[0] == values.shape[0], \
-            "counts and values must match in dim 0"
+            "counts and values must match in dim 0 : counts {0}, values {1}"\
+            .format(counts.shape, values.shape)
         assert np.issubdtype(counts.dtype, int), \
-            "counts must contain integers"
+            "counts must contain integers : dtype {0}".format(counts.dtype)
         assert (counts >= 0).all(), \
             "counts was not non negative"
         role_count = np.fromiter(self.players.values(), int, len(self.players))
