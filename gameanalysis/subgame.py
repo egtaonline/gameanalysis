@@ -98,10 +98,16 @@ class EmptySubgame(rsgame.EmptyGame):
         return (p.add(role, strat) for p in new_game.all_profiles())
 
     def add_strategy(self, role, strategy):
-        """Returns a subgame with the additional strategy"""
-        strats = dict(self.strategies)
-        strats[role] = list(strats[role]) + [strategy]
-        return EmptySubgame(self.full_game, strats)
+        """Returns a subgame with the additional strategy
+        
+        If strategy is already in subgame, returns the same subgame
+        """
+        if strategy in self.strategies[role]:
+            return self
+        else:
+            strats = dict(self.strategies)
+            strats[role] = tuple(strats[role]) + (strategy,)
+            return EmptySubgame(self.full_game, strats)
 
     def support_set(self):
         if self._support_set is None:
