@@ -7,8 +7,8 @@ from gameanalysis import subgame
 
 
 def _parse_text_spec(game, spec):
-    subg = {}
     current_role = '<undefined role>'
+    subg = {}
     for role_strat in spec:
         if role_strat in game.strategies:
             current_role = role_strat
@@ -17,7 +17,7 @@ def _parse_text_spec(game, spec):
         else:
             raise ValueError('{0} was not a role or a strategy in role {1}'
                              .format(role_strat, current_role))
-    return subgame.EmptySubgame(game, subg)
+    return {role: list(strats) for role, strats in subg.items()}
 
 
 def _parse_index_spec(game, spec):
@@ -26,7 +26,7 @@ def _parse_index_spec(game, spec):
     for index in spec:
         role, strat = index_list[index]
         subg.setdefault(role, set()).add(strat)
-    return subgame.EmptySubgame(game, subg)
+    return {role: list(strats) for role, strats in subg.items()}
 
 
 def update_parser(parser):
@@ -50,9 +50,9 @@ in a list of subgames."""
     sub_group.add_argument('--subgame-file', '-f', metavar='<file>',
                            default=[], type=argparse.FileType('r'),
                            action='append', help="""A file that contains a list
-                           of subgames. The same format that can be output by
-                           this script with the no-extract option. This can be
-                           specified multiple times.""")
+of subgames. A subgame is simply a mapping of roles to strategies i.e. "{r:
+["s1", "s2"]}". This is the same format that can be output by this script with
+the no-extract option. This can be specified multiple times.""")
     sub_group.add_argument('--text-spec', '-t', nargs='+',
                            metavar='<role-strat>', default=[], action='append',
                            help="""Specify a subgame as a list of roles and
@@ -78,17 +78,17 @@ def main(args):
     # Collect all subgames
     subgames = []
     if args.detect:
-        subgames.extend(subgame.maximal_subgames(game))
+        subgames.extend(dict(sub.strategies) for sub
+                        in subgame.maximal_subgames(game))
     for sub_file in args.subgame_file:
         # This actually adds EmptyGames instead of EmptySubgames, but for our
         # use they'll function the same.
-        subgames.extend(rsgame.EmptyGame.from_json(sub)
-                        for sub in json.load(sub_file))
+        subgames.extend(json.load(sub_file))
     subgames.extend(_parse_text_spec(game, spec) for spec in args.text_spec)
     subgames.extend(_parse_index_spec(game, spec) for spec in args.index_spec)
 
     if not args.no_extract:
-        subgames = [subgame.subgame(game, sub.strategies) for sub in subgames]
+        subgames = [subgame.subgame(game, sub) for sub in subgames]
 
     json.dump(subgames, args.output, default=lambda x: x.to_json())
     args.output.write('\n')
