@@ -144,19 +144,44 @@ class EmptyGame(object):
                     array[r, s] = prof[role][strategy]
         return array
 
+    def _role_mixtures_to_mixtures(self, role_mixtures, as_array=False):
+        """Turn a list of role mixtures to actual mixtures
+
+        Arguments
+        ---------
+        role_mixtures : [ndarray (xi, s)]
+            A list of mixtures by role. s is the max number of strategies for
+            any role. xi is any length for that role. The length of the list
+            should be equal to the number of roles.
+        """
+        post_product = utils.prod(m.shape[0] for m in role_mixtures)
+        pre_product = 1
+        expanded = []
+        for mix in role_mixtures:
+            post_product /= mix.shape[0]
+            expanded.append(np.tile(np.repeat(mix, pre_product, 0),
+                                    (post_product, 1))[:, None])
+            pre_product *= mix.shape[0]
+
+        mixtures = np.hstack(expanded)
+        if as_array:
+            return mixtures
+        else:
+            return map(self.as_mixture, mixtures)
+
     def uniform_mixture(self, as_array=False):
         """Returns a uniform mixed profile
 
         Set as_array to True to return the array representation of the profile.
 
         """
-        mix = self._mask / self._mask.sum(1)[:, np.newaxis]
+        mix = self._mask / self._mask.sum(1)[:, None]
         if as_array:
             return mix
         else:
             return self.as_mixture(mix)
 
-    def random_mixture(self, alpha=1, as_array=False):
+    def random_mixtures(self, num=1, alpha=1, as_array=False):
         """Return a random mixed profile
 
         Mixed profiles are sampled from a dirichlet distribution with parameter
@@ -168,61 +193,89 @@ class EmptyGame(object):
 
         Set as_array to True to return an array representation of the profile.
         """
-        mix = np.random.dirichlet([alpha] * self._mask.shape[1],
-                                  self._mask.shape[0]) * self._mask
-        mix /= mix.sum(1)[:, np.newaxis]
+        mixtures = (np.random.gamma(alpha, 1, (num,) + self._mask.shape) *
+                    self._mask)
+        mixtures /= mixtures.sum(2)[..., None]
         if as_array:
-            return mix
+            return mixtures
         else:
-            return self.as_mixture(mix)
+            return map(self.as_mixture, mixtures)
 
     def biased_mixtures(self, bias=.9, as_array=False):
-        """Generates mixtures for initializing replicator dynamics.
+        """Generates mixtures biased towards one strategy for each role
 
         Gives a generator of all mixtures of the following form: each role has
-        one or zero strategies played with probability bias; the reamaining
-        1-bias probability is distributed uniformly over the remaining S or S-1
-        strategies.
+        one strategy played with probability bias; the reamaining 1-bias
+        probability is distributed uniformly over the remaining S or S-1
+        strategies. If there's only one strategy, it is played with probability
+        1.
         """
-        assert 0 <= bias <= 1, 'probabilities must be between zero and one'
-        num_strategies = self._mask.sum(1)
+        assert 0 <= bias <= 1, "probabilities must be between zero and one"
 
-        def possible_strats(num_strat):
-            """Returns a generator of all possible biased strategy indices"""
-            if num_strat == 1:
-                return [None]
+        role_mixtures = []
+        for strats in self.strategies.values():
+            num_strats = len(strats)
+            mix = np.zeros((num_strats, self._mask.shape[1]))
+            if num_strats == 1:
+                mix[0, 0] = 1
             else:
-                return itertools.chain([None], range(num_strat))
+                view = mix[:, :num_strats]
+                view.fill((1 - bias)/(num_strats - 1))
+                np.fill_diagonal(view, bias)
+            role_mixtures.append(mix)
+        return self._role_mixtures_to_mixtures(role_mixtures, as_array)
 
-        for strats in itertools.product(*map(possible_strats, num_strategies)):
-            mix = np.array(self._mask, dtype=float)
-            for r in range(len(self.strategies)):
-                s = strats[r]
-                ns = num_strategies[r]
-                if s is None:  # uniform
-                    mix[r] /= ns
-                else:  # biased
-                    mix[r, :ns] -= bias
-                    mix[r, :ns] /= (ns-1)
-                    mix[r, s] = bias
-            if as_array:
-                yield mix
-            else:
-                yield self.as_mixture(mix)
+    def role_biased_mixtures(self, bias=0.9, as_array=False):
+        """Generates mixtures where one role-strategy is played with bias
+
+        If no roles have more than one strategy (a degenerate game), then this
+        returns nothing.
+        """
+        assert 0 <= bias <= 1, "probabilities must be between zero and one"
+
+        num = sum(len(s) for s in self.strategies.values() if len(s) > 1)
+        mixes = np.repeat(self.uniform_mixture(as_array=True)[None], num, 0)
+        offset = 0
+        for r, strats in enumerate(self.strategies.values()):
+            num_strats = len(strats)
+            if num_strats == 1:
+                continue
+            view = mixes[offset:offset+num_strats, r, :num_strats]
+            view.fill((1 - bias)/(num_strats - 1))
+            np.fill_diagonal(view, bias)
+            offset += num_strats
+
+        if as_array:
+            return mixes
+        else:
+            return map(self.as_mixture, mixes)
 
     def pure_mixtures(self, as_array=False):
         """Returns a generator over all mixtures where the probability of playing a
-        strategy is either 1 or 0
+        strategy is either 1 or 0.
 
         Set as_array to True to return the mixed profiles in array form.
         """
-        mixtures = (profile.Mixture(rs) for rs in itertools.product(
-            *([(r, {s: 1}) for s in sorted(ss)] for r, ss
-              in self.strategies.items())))
-        if as_array:
-            return (self.as_array(mix) for mix in mixtures)
-        else:
-            return mixtures
+        return self.biased_mixtures(1, as_array)
+
+    def grid_mixtures(self, num_points, as_array=False):
+        """Returns all of the mixtures in a grid with n points
+
+        Arguments
+        ---------
+        num_points : int > 1
+            The number of points to have along one dimensions
+        """
+        role_mixtures = []
+        max_strats = self._mask.shape[1]
+        for strats in self.strategies.values():
+            num_strats = len(strats)
+            grid = _simplex_points(num_strats, num_points)
+            role_mixtures.append(np.hstack([
+                grid,
+                np.zeros((grid.shape[0], max_strats - num_strats))]))
+
+        return self._role_mixtures_to_mixtures(role_mixtures, as_array)
 
     def is_symmetric(self):
         """Returns true if this game is symmetric"""
@@ -873,3 +926,42 @@ class SampleGame(Game):
                 'strategies': {r: list(s) for r, s in self.strategies.items()},
                 'profiles': [prof.to_input_profile(payoffs)
                              for prof, payoffs in self.sample_payoffs()]}
+
+
+def _simplex_points(dims, points):
+    """Compute a grid of points on a simplex
+
+    Arguments
+    ---------
+    dims : int
+        The dimension of the simplex to compute the grid over.
+    points : int
+        The number of discrete points to have along one dimension.
+
+    Returns
+    -------
+    grid : ndarray (nCr(dims, points - 1), dims)
+        An ndarray of all of the grid points on the simplex.
+
+    Examples
+    --------
+    _simple_points(2, 3)
+    [[0, 1],
+     [0.5, 0.5],
+     [1, 0]]
+    """
+    assert points >= 2, "must have at least two points along one dimensions"""
+
+    # TODO this computation is pretty inefficient
+    points -= 1
+    num = spm.comb(dims, points, repetition=True, exact=True)
+    grid = np.zeros((num, dims))
+    indices = itertools.chain.from_iterable(
+        ((i, j, c / points) for j, c in counts.items())
+        for i, counts
+        in enumerate(map(collections.Counter,
+                         itertools.combinations_with_replacement(
+                             range(dims), points))))
+    for i, j, n in indices:
+        grid[i, j] = n
+    return grid

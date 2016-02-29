@@ -17,13 +17,16 @@ creates a json file of the results."""
     parser.add_argument('--convergence', '-c', metavar='<convergence>',
                         type=float, default=1e-8, help="""Replicator dynamics
                         convergence thrshold; default=1e-8""")
-    parser.add_argument('--max-iterations', '-m', metavar='<iterations>',
+    parser.add_argument('--max-iterations', '-x', metavar='<iterations>',
                         type=int, default=10000, help="""Max replicator
                         dynamics iterations; default=10000""")
     parser.add_argument('--support', '-s', metavar='<support>', type=float,
                         default=1e-3, help="""Min probability for a strategy to
                         be considered in support. default=1e-3""")
-    parser.add_argument('--type', '-t', choices=('mixed', 'pure', 'mrp'),
+    parser.add_argument('--type', '-t', choices=('mixed', 'pure',
+                                                 'min-reg-prof',
+                                                 'min-reg-grid',
+                                                 'min-reg-rand'),
                         default='mixed', help="""Type of approximate
                         equilibrium to compute: role-symmetric mixed-strategy
                         Nash, pure-strategy Nash, or min-regret profile;
@@ -37,6 +40,18 @@ creates a json file of the results."""
                         report at least one equilibrium per game. This will
                         return the minimum regret equilibrium found, regardless
                         of whether it was below the regret threshold""")
+    parser.add_argument('--verbose', '-v', action='store_true', help="""Add the
+                        verbose flag to replicator dynamics when finding a
+                        mixed nash equilibrium""")
+    parser.add_argument('--grid-points', '-g', metavar='<num-grid-points>',
+                        type=int, default=3, help="""Number of grid points to
+                        use per dimension on the grid search of mixed
+                        strategies. 2 is the same as only searching pure
+                        profiles. (default: %(default)d)""")
+    parser.add_argument('--random-mixtures', '-m', metavar='<num-mixtures>',
+                        type=int, default=20, help="""Number of random mixtures
+                        to use when finding the minimum regret random profile.
+                        (default: %(default)d)""")
 
 
 def main(args):
@@ -51,9 +66,16 @@ def main(args):
                       in nash.mixed_nash(game, args.regret, args.distance,
                                          args.random_points, args.one,
                                          max_iters=args.max_iterations,
-                                         converge_thresh=args.convergence)]
-    elif args.type == 'mrp':
+                                         converge_thresh=args.convergence,
+                                         verbose=args.verbose)]
+    elif args.type == 'min-reg-prof':
         equilibria = [nash.min_regret_profile(game)]
+    elif args.type == 'min-reg-grid':
+        equilibria = [nash.min_regret_grid_mixture(
+            game, args.grid_points).trim_support(args.support)]
+    elif args.type == 'min-reg-rand':
+        equilibria = [nash.min_regret_rand_mixture(
+            game, args.random_mixtures).trim_support(args.support)]
     else:
         raise ValueError('Unknown command given: {0}'.format(args.type))
 

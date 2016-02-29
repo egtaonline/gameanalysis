@@ -99,7 +99,7 @@ class EmptySubgame(rsgame.EmptyGame):
 
     def add_strategy(self, role, strategy):
         """Returns a subgame with the additional strategy
-        
+
         If strategy is already in subgame, returns the same subgame
         """
         if strategy in self.strategies[role]:

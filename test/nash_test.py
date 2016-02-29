@@ -5,6 +5,7 @@ import numpy as np
 
 from gameanalysis import nash
 from gameanalysis import randgames
+from gameanalysis import regret
 from gameanalysis import rsgame
 from test import testutils
 
@@ -81,6 +82,21 @@ def minreg_roshambo_test():
     eqm = nash.min_regret_profile(ROSHAMBO)
     assert 2 == next(iter(next(iter(eqm.values())).values())), \
         "min regret profile was not rr, pp, or ss"
+
+
+def minreg_grid_roshambo_test():
+    eqm = nash.min_regret_grid_mixture(ROSHAMBO, 3)  # Not enough for eq
+    assert abs(regret.mixture_regret(ROSHAMBO, eqm) - .5) < 1e-7, \
+        "min regret grid didn't find [.5, .5, 0] profile with regret .5"
+    eqm = nash.min_regret_grid_mixture(ROSHAMBO, 4)  # hit eqa perfectly
+    assert abs(regret.mixture_regret(ROSHAMBO, eqm) - 0) < 1e-7, \
+        "min regret grid didn't find equilibrium"
+
+
+def minreg_rand_roshambo_test():
+    eqm = nash.min_regret_rand_mixture(ROSHAMBO, 20)
+    assert regret.mixture_regret(ROSHAMBO, eqm) < 2 + 1e-7, \
+        "Found a mixture with greater than maximum regret"
 
 
 def mixed_roshambo_test():

@@ -71,8 +71,7 @@ def nonzero_profile_welfare_test():
 @testutils.apply(zip(range(6)), repeat=20)
 def two_player_zero_sum_mixed_wellfare_test(strategies):
     game = randgames.zero_sum_game(6)
-    for _ in range(20):
-        prof = game.random_mixture()
+    for prof in game.random_mixtures(20):
         assert abs(regret.mixed_social_welfare(game, prof)) < 1e-5, \
             "zero sum profile wasn't zero sum"
 

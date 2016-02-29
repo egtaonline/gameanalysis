@@ -4,8 +4,9 @@ import os
 import random
 import warnings
 
-from nose import tools
 import numpy as np
+import scipy.misc as spm
+from nose import tools
 
 from gameanalysis import profile
 from gameanalysis import randgames
@@ -133,6 +134,7 @@ def empty_game_function_test(roles, players, strategies):
         "as_array twice did not return an array"
 
     # Assert that mixture calculations do the right thing
+    # Uniform
     mix = game.uniform_mixture(as_array=True)
     assert np.allclose(mix.sum(1), 1), "uniform mixture wasn't a mixture"
     masked = np.ma.masked_array(mix, mix == 0)
@@ -151,36 +153,59 @@ def empty_game_function_test(roles, players, strategies):
                for strats in mix.values()), \
         "uniform mixture wasn't uniform"
 
-    mix = game.random_mixture(as_array=True)
-    assert np.allclose(mix.sum(1), 1), "random mixture wasn't a mixture"
+    # Random
+    mixes = game.random_mixtures(20, as_array=True)
+    assert np.allclose(mixes.sum(2), 1), "random mixtures weren't mixtures"
 
-    mix = game.random_mixture(as_array=False)
+    mix = next(game.random_mixtures(as_array=False))
     assert all(abs(sum(strats.values()) - 1) < EPS
                for strats in mix.values()), \
         "random mixture wasn't a mixture"
 
+    # Biased
     bias = 0.6
-    mixes = game.biased_mixtures(as_array=True, bias=bias)
-    saw_bias = np.zeros_like(game._mask, dtype=bool)
-    count = 0
-    for mix in mixes:
-        count += 1
-        saw_bias |= mix == bias
+    mixes = game.biased_mixtures(bias, as_array=True)
+    num_strats = np.fromiter(map(len, game.strategies.values()), int,
+                             len(game.players))
+    assert np.prod(num_strats[num_strats > 1]) == mixes.shape[0], \
+        "Didn't generate the proper number of biased mixtures"
+    saw_bias = (mixes == bias).any(0)
+    saw_all_biases = ((saw_bias | ~game._mask).all(1)
+                      | (num_strats == 1)).all()
+    assert saw_all_biases, "Didn't bias every strategy"
+    assert np.allclose(mixes.sum(2), 1), "biased mixtures weren't mixtures"
 
-    num_strats = game._mask.sum(1)
-    assert np.prod(num_strats[num_strats > 1] + 1) == count, \
-        'Didn\'t generate the proper number of mixtures'
-    assert np.all(
-        saw_bias  # observed a bias
-        | (~game._mask)  # couldn't have observed one
-        | (game._mask.sum(1) == 1)[:, None]  # Only one strat so no bias
-    ), 'Didn\'t bias every strategy'
-
-    mixes = game.biased_mixtures(as_array=False, bias=bias)
+    mixes = game.biased_mixtures(bias, as_array=False)
     for _ in mixes:
         # TODO Do more than just call this method
         pass
 
+    # Role Biased
+    mixes = game.role_biased_mixtures(bias, as_array=True)
+    assert num_strats[num_strats > 1].sum() == mixes.shape[0], \
+        "Didn't generate the proper number of role biased mixtures"
+    saw_bias = (mixes == bias).any(0)
+    saw_all_biases = ((saw_bias | ~game._mask).all(1)
+                      | (num_strats == 1)).all()
+    assert saw_all_biases, "Didn't bias every strategy"
+    assert np.allclose(mixes.sum(2), 1), "biased mixtures weren't mixtures"
+
+    mixes = game.role_biased_mixtures(bias, as_array=False)
+    for _ in mixes:
+        # TODO Do more than just call this method
+        pass
+
+    # Grid
+    points = 3
+    mixes = game.grid_mixtures(points, as_array=True)
+    expected_num = utils.prod(spm.comb(len(s), points - 1,
+                                       repetition=True, exact=True)
+                              for s in game.strategies.values())
+    assert expected_num == mixes.shape[0], \
+        "didn't create the right number of grid mixtures"
+    assert np.allclose(mixes.sum(2), 1), "grid mixtures weren't mixtures"
+
+    # Pure
     mixes = game.pure_mixtures(as_array=True)
     for mix in mixes:
         assert np.allclose(mix.sum(1), 1), "pure mixtures weren't mixtures"
@@ -233,7 +258,7 @@ def game_function_test(game):
         "game not complete or data_profiles missing data"
 
     # Test expected payoff
-    mix = game.random_mixture()
+    mix = next(game.random_mixtures())
     assert not any(map(math.isnan, game.get_expected_payoff(mix).values())), \
         "some dict expected payoffs were nan"
     assert not np.isnan(game.get_expected_payoff(mix, as_array=True)).any(), \
@@ -291,7 +316,7 @@ def empty_full_game_test(roles, players, strategies):
         "returned payoffs"
 
     # Test expected payoff
-    mix = game.random_mixture()
+    mix = next(game.random_mixtures())
     assert all(map(math.isnan, game.get_expected_payoff(mix).values())), \
         "not all expected payoffs were nan"
     assert all(all(map(math.isnan, strats.values()))
