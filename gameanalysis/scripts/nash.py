@@ -31,15 +31,19 @@ creates a json file of the results."""
                         equilibrium to compute: role-symmetric mixed-strategy
                         Nash, pure-strategy Nash, or min-regret profile;
                         default=mixed""")
-    parser.add_argument('--random-points', '-p', metavar='<num-points>',
-                        type=int, default=0, help="""Number of random points
-                        from which to initialize replicator dynamics in
-                        addition to the default set of uniform and
-                        heavily-biased mixtures; default=0""")
+    parser.add_argument('--random-points', metavar='<num-points>', type=int,
+                        default=0, help="""Number of random points from which
+                        to initialize replicator dynamics in addition to the
+                        default set of uniform and heavily-biased mixtures;
+                        default=0""")
     parser.add_argument('--one', '-n', action='store_true', help="""Always
                         report at least one equilibrium per game. This will
                         return the minimum regret equilibrium found, regardless
                         of whether it was below the regret threshold""")
+    parser.add_argument('--processes', '-p', type=int,
+                        metavar='<num-processes>', default=None, help="""The
+                        number of processes to use when finding a mixed nahs
+                        using replicator dynamics.  (default: num-cores)""")
     parser.add_argument('--verbose', '-v', action='store_true', help="""Add the
                         verbose flag to replicator dynamics when finding a
                         mixed nash equilibrium""")
@@ -64,7 +68,9 @@ def main(args):
     elif args.type == 'mixed':
         equilibria = [eq.trim_support(args.support) for eq
                       in nash.mixed_nash(game, args.regret, args.distance,
-                                         args.random_points, args.one,
+                                         args.random_points,
+                                         at_least_one=args.one,
+                                         processes=args.processes,
                                          max_iters=args.max_iterations,
                                          converge_thresh=args.convergence,
                                          verbose=args.verbose)]

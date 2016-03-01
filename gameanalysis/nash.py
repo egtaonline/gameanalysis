@@ -1,8 +1,10 @@
 """Module for computing nash equilibria"""
-import sys
 import itertools
+import multiprocessing
+import sys
+
 import numpy as np
-import numpy.linalg as linalg
+from numpy import linalg
 
 from gameanalysis import regret
 
@@ -10,9 +12,10 @@ from gameanalysis import regret
 _TINY = np.finfo(float).tiny
 
 
-def pure_nash(game, epsilon=0):
+def pure_nash(game, epsilon=0, as_array=False):
     """Returns a generator of all pure-strategy epsilon-Nash equilibria."""
-    return (profile for profile in game
+    wrap = (lambda p: game.as_array(p, int)) if as_array else (lambda p: p)
+    return (wrap(profile) for profile in game
             if regret.pure_strategy_regret(game, profile) <= epsilon)
 
 
@@ -55,7 +58,8 @@ def min_regret_rand_mixture(game, mixtures):
 
 
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
-               at_least_one=False, as_array=False, *rd_args, **rd_kwargs):
+               processes=None, at_least_one=False, as_array=False, *rd_args,
+               **rd_kwargs):
     """Finds role-symmetric, mixed Nash equilibria using replicator dynamics
 
     Returns a generator of mixed profiles
@@ -74,43 +78,53 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
     equilibria = []
     best = (np.inf, -1, None)  # Best convergence so far
 
-    # TODO parallelize this loop
-    for i, mix in enumerate(itertools.chain(
-            game.pure_mixtures(as_array=True),
-            game.biased_mixtures(as_array=True),
-            game.role_biased_mixtures(as_array=True),
-            [game.uniform_mixture(as_array=True)],
-            game.random_mixtures(random_restarts, as_array=True))):
-        eq = _replicator_dynamics(game, mix, *rd_args, **rd_kwargs)
-        reg = regret.mixture_regret(game, eq)
-        if (reg <= regret_thresh and all(linalg.norm(e - eq, 2) >= dist_thresh
-                                         for e in equilibria)):
-            equilibria.append(eq)
-            yield wrap(eq)
-        best = min(best, (reg, i, eq))
-    if at_least_one and not equilibria:
-        yield wrap(best[2])
+    initial_points = itertools.chain(
+        game.pure_mixtures(as_array=True),
+        game.biased_mixtures(as_array=True),
+        game.role_biased_mixtures(as_array=True),
+        [game.uniform_mixture(as_array=True)],
+        game.random_mixtures(random_restarts, as_array=True))
+
+    par_func = _ReplicatorDynamics(game, *rd_args, **rd_kwargs)
+    with multiprocessing.Pool(processes) as pool:
+        for i, eq in enumerate(pool.imap_unordered(par_func, initial_points)):
+            reg = regret.mixture_regret(game, eq)
+            if (reg <= regret_thresh and
+                    all(linalg.norm(e - eq, 2) >= dist_thresh
+                        for e in equilibria)):
+                equilibria.append(eq)
+                yield wrap(eq)
+            best = min(best, (reg, i, eq))
+        if at_least_one and not equilibria:
+            yield wrap(best[2])
 
 
-def _replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
-                         verbose=False):
+class _ReplicatorDynamics(object):
     """Replicator dynamics
 
     This will run at most max_iters of replicators dynamics and return unless
     the difference between successive mixtures is less than converge_thresh.
-
+    This is an object to support pickling.
     """
-    for i in range(max_iters):
-        old_mix = mix
-        mix = (game.expected_values(mix, as_array=True)
-               - game.min_payoffs(True)[:, np.newaxis] + _TINY) * mix
-        mix = mix / mix.sum(1, keepdims=True)
-        if linalg.norm(mix - old_mix) <= converge_thresh:
-            break
-        if verbose:
-            # TODO This should probably be switched to a logging utility
-            sys.stderr.write('{0:d}: mix = {1}, regret = {2:f}\n'.format(
-                i + 1,
-                mix,
-                regret.mixture_regret(game, mix)))
-    return np.maximum(mix, 0)  # Probabilities are occasionally negative
+    def __init__(self, game, max_iters=10000, converge_thresh=1e-8,
+                 verbose=False):
+        self.game = game
+        self.max_iters = max_iters
+        self.converge_thresh = converge_thresh
+        self.verbose = verbose
+
+    def __call__(self, mix):
+        for i in range(self.max_iters):
+            old_mix = mix
+            mix = (self.game.expected_values(mix, as_array=True)
+                   - self.game.min_payoffs(True)[:, None] + _TINY) * mix
+            mix = mix / mix.sum(1, keepdims=True)
+            if linalg.norm(mix - old_mix) <= self.converge_thresh:
+                break
+            if self.verbose:
+                # TODO This should probably be switched to a logging utility
+                sys.stderr.write('{0:d}: mix = {1}, regret = {2:f}\n'.format(
+                    i + 1,
+                    mix,
+                    regret.mixture_regret(self.game, mix)))
+        return np.maximum(mix, 0)  # Probabilities are occasionally negative
