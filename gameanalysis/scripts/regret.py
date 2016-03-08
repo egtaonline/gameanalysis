@@ -1,6 +1,7 @@
 """Script for calculating regrets, deviations gains, and social welfare"""
 import argparse
 import json
+from collections import abc
 
 from gameanalysis import regret
 from gameanalysis import rsgame
@@ -46,6 +47,8 @@ profiles."""
 def main(args):
     game = rsgame.Game.from_json(json.load(args.input))
     profiles = json.load(args.profiles)
+    if isinstance(profiles, abc.Mapping):
+        profiles = [profiles]
     prof_func = _TYPE[args.type]
 
     regrets = [prof_func(game, prof) for prof in profiles]

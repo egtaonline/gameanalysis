@@ -59,6 +59,23 @@ class Profile(_RoleStratMap):
             role_copy.pop(strategy)
         return Profile(copy)
 
+    def is_valid(self, players, strategies):
+        """Determines if a profile is valid
+
+        Arguments
+        ---------
+        players : {role: int}
+            Mapping of role to count playing role.
+        strategies : {role: [strat]}
+            Mapping of role to valid strategies.
+        """
+        for role, strat_counts in self.items():
+            if players[role] != sum(strat_counts.values()):
+                return False
+            if not strat_counts.keys() <= set(strategies[role]):
+                return False
+        return True
+
     def to_input_profile(self, payoff_map):
         """Given a payoff map, which maps role to strategy to payoffs, return an input
         profile for game construction
@@ -149,6 +166,24 @@ class Mixture(_RoleStratMap):
                 yield role, {strat: p / total_prob for strat, p in new_strats}
         return Mixture(process_roles())
 
+    def is_valid(self, strategies, tolerance=1e-3):
+        """Determines if a profile is valid
+
+        Arguments
+        ---------
+        strategies : {role: [strat]}
+            Mapping of role to valid strategies.
+        tolerance : float
+            Tolerance for considering a valid mixure. The sum of all
+            probabilities for a role must be within `tolerance` of 1.
+        """
+        for role, strat_counts in self.items():
+            if abs(1 - sum(strat_counts.values())) > tolerance:
+                return False
+            if not strat_counts.keys() <= set(strategies[role]):
+                return False
+        return True
+
     @staticmethod
     def from_json(json_):
         """Load a profile from its json representation"""
@@ -160,3 +195,15 @@ def trim_mixture_array_support(mixture, supp_thresh=1e-3):
     mixture *= mixture >= supp_thresh
     mixture /= mixture.sum(1)[:, np.newaxis]
     return mixture
+
+
+def verify_array_profile(prof, aplayers, astrategies):
+    return (astrategies.shape == prof.shape and
+            np.all(prof * ~astrategies == 0) and
+            np.all(aplayers == prof.sum(1)))
+
+
+def verify_array_mixture(mix, astrategies):
+    return (astrategies.shape == mix.shape and
+            np.all(mix * ~astrategies == 0) and
+            np.allclose(mix.sum(1), 1))

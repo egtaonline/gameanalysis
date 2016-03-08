@@ -1,7 +1,7 @@
 """Module for creating random games"""
 import json
 
-from gameanalysis import randgames
+from gameanalysis import gamegen
 
 
 class ZeroSum(object):
@@ -15,7 +15,7 @@ class ZeroSum(object):
 
     @staticmethod
     def create(args):
-        return randgames.zero_sum_game(args.num_strats, cool=args.cool)
+        return gamegen.zero_sum_game(args.num_strats, cool=args.cool)
 
 
 class Symmetric(object):
@@ -29,8 +29,8 @@ class Symmetric(object):
 
     @staticmethod
     def create(args):
-        return randgames.symmetric_game(args.num_players, args.num_strats,
-                                        cool=args.cool)
+        return gamegen.symmetric_game(args.num_players, args.num_strats,
+                                      cool=args.cool)
 
 
 class RoleSymmetric(object):
@@ -47,10 +47,10 @@ strategies for a role, specified as many times as there are roles. e.g. "1 4 3
     def create(args):
         assert len(args.pands) % 2 == 0, \
             'Must specify matching sets of players and strategies'
-        return randgames.role_symmetric_game(len(args.pands) // 2,
-                                             args.pands[::2],
-                                             args.pands[1::2],
-                                             cool=args.cool)
+        return gamegen.role_symmetric_game(len(args.pands) // 2,
+                                           args.pands[::2],
+                                           args.pands[1::2],
+                                           cool=args.cool)
 
 
 _GAME_TYPES = {

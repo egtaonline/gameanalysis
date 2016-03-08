@@ -1,138 +1,144 @@
-import sys
-from unittest import mock
+import itertools
+import math
 
 import numpy as np
+from nose import tools
 
 from gameanalysis import nash
-from gameanalysis import randgames
+from gameanalysis import gamegen
 from gameanalysis import regret
 from gameanalysis import rsgame
 from test import testutils
 
 
-ROSHAMBO = rsgame.Game.from_payoff_format(
-    {'a': 2},
-    {'a': ['r', 'p', 's']},
-    [
-        {'a': [('r', 2, [0])]},
-        {'a': [('p', 2, [0])]},
-        {'a': [('s', 2, [0])]},
-        {'a': [('r', 1, [1]), ('s', 1, [-1])]},
-        {'a': [('s', 1, [1]), ('p', 1, [-1])]},
-        {'a': [('p', 1, [1]), ('r', 1, [-1])]},
-    ]
-)
-
-HARD = rsgame.Game.from_payoff_format(
-    {'a': 2},
-    {'a': ['r', 'p', 's', ':(']},
-    [
-        {'a': [('r', 2, [0])]},
-        {'a': [('p', 2, [0])]},
-        {'a': [('s', 2, [0])]},
-        {'a': [(':(', 2, [0])]},
-        {'a': [('r', 1, [1]), ('s', 1, [-1])]},
-        {'a': [('s', 1, [1]), ('p', 1, [-1])]},
-        {'a': [('p', 1, [1]), ('r', 1, [-1])]},
-        {'a': [('r', 1, [1]), (':(', 1, [-1])]},
-        {'a': [('p', 1, [1]), (':(', 1, [-1])]},
-        {'a': [('s', 1, [1]), (':(', 1, [-1])]},
-    ]
-)
+METHODS = [('optimize', {}), ('replicator', {})]
+ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
+    itertools.combinations(METHODS, i)
+    for i in range(1, len(METHODS) + 1))))
 
 
 @testutils.apply(repeat=20)
 def pure_prisoners_dilemma_test():
-    game = randgames.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
+    game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
     eqa = list(nash.pure_nash(game, as_array=True))
 
     assert len(eqa) == 1, "didn't find exactly one equilibria in pd"
-    expected = np.array([[0, 2]])
+    expected = np.array([0, 2])
     assert np.all(expected == eqa[0]), \
         "didn't find pd equilibrium"
 
 
-@testutils.apply(repeat=20)
-def mixed_prisoners_dilemma_test():
-    game = randgames.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
-    eqa = list(nash.mixed_nash(game, as_array=True))
+@testutils.apply(zip(ALL_METHODS), repeat=20)
+def mixed_prisoners_dilemma_test(methods):
+    game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
+    eqa = list(nash.mixed_nash(game, dist_thresh=5e-2, as_array=True,
+                               **methods))
 
-    assert len(eqa) == 1, "didn't find exactly one equilibria in pd"
-    expected = np.array([[0., 1.]])
-    assert np.allclose(eqa[0], expected), \
+    assert len(eqa) >= 1, \
+        "didn't find at least one equilibria in pd {}".format(eqa)
+    assert all(regret.mixture_regret(game, eqm) < 1e-3 for eqm in eqa), \
+        "returned equilibria with high regret"
+    expected = [0., 1.]
+    assert any(np.allclose(eqm, expected) for eqm in eqa), \
         "didn't find pd equilibrium"
 
 
+@testutils.apply(itertools.product(ALL_METHODS, (p/10 for p in range(11))))
+def mixed_known_eq_test(methods, eq_prob):
+    game = gamegen.sym_2p2s_known_eq(eq_prob)
+    eqa = list(nash.mixed_nash(game, as_array=True, **methods))
+    assert len(eqa) >= 1, "didn't find equilibrium"
+    expected = [eq_prob, 1 - eq_prob]
+    assert any(np.allclose(eqm, expected) for eqm in eqa), \
+        "didn't find correct equilibrium {} instead of {}".format(
+            eqa, expected)
+
+
+@testutils.apply(zip(p/10 for p in range(11)))
+def optimization_stable_point_test(eq_prob):
+    game = gamegen.sym_2p2s_known_eq(eq_prob)
+    opt = nash.RegretOptimizer(game)
+    val, grad = opt.grad(np.array([eq_prob, 1 - eq_prob]))
+    assert np.isclose(val, 0), \
+        "value at equilibrium was not close to zero: {}".format(val)
+    assert np.allclose(grad, 0), \
+        "grad at equilibrium was not close to zero: {}".format(grad)
+
+
 def pure_roshambo_test():
-    eqa = list(nash.pure_nash(ROSHAMBO))
+    game = gamegen.rock_paper_scissors()
+    eqa = list(nash.pure_nash(game))
     assert len(eqa) == 0, "found a pure equilibrium in roshambo"
-    eqa = list(nash.pure_nash(ROSHAMBO, 1))
+    eqa = list(nash.pure_nash(game, 1))
     assert len(eqa) == 3, \
         "didn't find low regret ties in roshambo"
-    eqa = list(nash.pure_nash(ROSHAMBO, 2))
-    assert len(eqa) == ROSHAMBO.size, \
+    eqa = list(nash.pure_nash(game, 2))
+    assert len(eqa) == game.size, \
         "found profiles with more than 2 regret in roshambo"
 
 
 def minreg_roshambo_test():
-    eqm = nash.min_regret_profile(ROSHAMBO)
+    game = gamegen.rock_paper_scissors()
+    eqm = nash.min_regret_profile(game)
     assert 2 == next(iter(next(iter(eqm.values())).values())), \
         "min regret profile was not rr, pp, or ss"
 
 
 def minreg_grid_roshambo_test():
-    eqm = nash.min_regret_grid_mixture(ROSHAMBO, 3)  # Not enough for eq
-    assert abs(regret.mixture_regret(ROSHAMBO, eqm) - .5) < 1e-7, \
+    game = gamegen.rock_paper_scissors()
+    eqm = nash.min_regret_grid_mixture(game, 3)  # Not enough for eq
+    assert abs(regret.mixture_regret(game, eqm) - .5) < 1e-7, \
         "min regret grid didn't find [.5, .5, 0] profile with regret .5"
-    eqm = nash.min_regret_grid_mixture(ROSHAMBO, 4)  # hit eqa perfectly
-    assert abs(regret.mixture_regret(ROSHAMBO, eqm) - 0) < 1e-7, \
+    eqm = nash.min_regret_grid_mixture(game, 4)  # hit eqa perfectly
+    assert abs(regret.mixture_regret(game, eqm) - 0) < 1e-7, \
         "min regret grid didn't find equilibrium"
 
 
 def minreg_rand_roshambo_test():
-    eqm = nash.min_regret_rand_mixture(ROSHAMBO, 20)
-    assert regret.mixture_regret(ROSHAMBO, eqm) < 2 + 1e-7, \
+    game = gamegen.rock_paper_scissors()
+    eqm = nash.min_regret_rand_mixture(game, 20)
+    assert regret.mixture_regret(game, eqm) < 2 + 1e-7, \
         "Found a mixture with greater than maximum regret"
 
 
-def mixed_roshambo_test():
-    eqa = list(nash.mixed_nash(ROSHAMBO))
+@testutils.apply(zip(ALL_METHODS))
+def mixed_roshambo_test(methods):
+    game = gamegen.rock_paper_scissors()
+    eqa = list(nash.mixed_nash(game, dist_thresh=1e-2, **methods))
     assert len(eqa) == 1, "didn't find right number of equilibria in roshambo"
-    assert np.allclose(np.array([[1/3]*3]), ROSHAMBO.as_array(eqa[0])), \
+    assert np.allclose(1/3, game.as_mixture(eqa[0], as_array=True)), \
         "roshambo equilibria wasn't uniform"
 
 
 def at_least_one_test():
-    eqa = list(nash.mixed_nash(HARD, max_iters=1))
+    # Equilibrium of game is not at a starting point for equilibria finding
+    game = gamegen.sym_2p2s_known_eq(1/math.sqrt(2))
+    # Don't converge
+    opts = {'max_iters': 0}
+    eqa = list(nash.mixed_nash(game, replicator=opts))
     assert len(eqa) == 0, "found an equilibrium normally"
-    eqa = list(nash.mixed_nash(HARD, max_iters=1, at_least_one=True))
+    eqa = list(nash.mixed_nash(game, replicator=opts, at_least_one=True))
     assert len(eqa) == 1, "at_least_one didn't return anything"
 
 
-@mock.patch.object(sys, 'stderr')
-def mixed_verbose_test(mock):
-    # Loop necessary to execute function due to yield
-    assert not mock.write.called, "wrote to err before call"
-    for _ in nash.mixed_nash(HARD):
-        pass
-    assert not mock.write.called, "wrote to err without verbose"
-    for _ in nash.mixed_nash(HARD, verbose=True):
-        pass
-    # FIXME the patch stops stderr from being written, but for some reason
-    # doesn't register as being called, for unknown reasons. Maybe it's copied
-    # to subprocesses instead of passed by reference, so the one in this
-    # process is never called.
-
-
-@testutils.apply([
-    (1, 1, [1]),
-    (1, 2, [2]),
-    (2, 1, [1, 1]),
-    (2, 2, [2, 2]),
-    (3, 4, [4, 4, 4]),
-    (2, [1, 3], [1, 3]),
-])
-def mixed_nash_test(players, strategies, exp_strats):
-    game = randgames.independent_game(players, strategies)
-    eqa = list(nash.mixed_nash(game, at_least_one=True, max_iters=100))
+@testutils.apply(zip(
+    ALL_METHODS,
+    [
+        (1, 1, [1]),
+        (1, 2, [2]),
+        (2, 1, [1, 1]),
+        (2, 2, [2, 2]),
+        (3, 4, [4, 4, 4]),
+        (2, [1, 3], [1, 3]),
+    ]))
+def mixed_nash_test(methods, game_def):
+    players, strategies, exp_strats = game_def
+    game = gamegen.independent_game(players, strategies)
+    eqa = list(nash.mixed_nash(game, at_least_one=True, **methods))
     assert eqa, "Didn't find an equilibria with at_least_one on"
+
+
+@tools.raises(ValueError)
+def empty_game_test():
+    game = rsgame.Game.from_game(gamegen.empty_role_symmetric_game(1, 2, 3))
+    nash.min_regret_profile(game)

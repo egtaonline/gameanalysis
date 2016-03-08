@@ -1,25 +1,28 @@
 import itertools
 
+from gameanalysis import gamegen
 from gameanalysis import profile
 from gameanalysis import reduction
-from gameanalysis import randgames
 from test import testutils
 
 
-@testutils.apply([
-    (1, [1], [1], [1]),
-    (1, [2], [1], [2]),
-    (1, [3], [1], [2]),
-    (1, [1], [2], [1]),
-    (2, [1, 2], [2, 1], [1, 2]),
-    (2, [1, 4], [2, 1], [1, 2]),
-    (2, [4, 9], [3, 2], [2, 3]),
-])
+@testutils.apply(itertools.product(
+    [0, 0.6, 1],
+    [
+        (1, [1], [1], [1]),
+        (1, [2], [1], [2]),
+        (1, [3], [1], [2]),
+        (1, [1], [2], [1]),
+        (2, [1, 2], [2, 1], [1, 2]),
+        (2, [1, 4], [2, 1], [1, 2]),
+        (2, [4, 9], [3, 2], [2, 3]),
+    ]))
 # Simple test of DPR
-# FIXME Test this with non complete games
-def drp_test(roles: int, players, strategies, red_players):
+def dpr_test(keep_prob, game_desc):
+    roles, players, strategies, red_players = game_desc
     # Create game and reduction
-    game = randgames.role_symmetric_game(roles, players, strategies)
+    game = gamegen.role_symmetric_game(roles, players, strategies)
+    game = gamegen.drop_profiles(game, keep_prob)
     red_players = {r: p for r, p in zip(game.players, red_players)}
     red = reduction.DeviationPreserving(game.players, red_players)
 
@@ -44,20 +47,23 @@ def drp_test(roles: int, players, strategies, red_players):
         "full game did not have data for all profiles required of reduced"
 
 
-@testutils.apply([
-    (1, [1], [1]),
-    (1, [2], [1]),
-    (1, [3], [1]),
-    (1, [1], [2]),
-    (2, [1, 2], [2, 1]),
-    (2, [1, 4], [2, 1]),
-    (2, [4, 8], [3, 2]),
-])
+@testutils.apply(itertools.product(
+    [0, 0.6, 1],
+    [
+        (1, [1], [1]),
+        (1, [2], [1]),
+        (1, [3], [1]),
+        (1, [1], [2]),
+        (2, [1, 2], [2, 1]),
+        (2, [1, 4], [2, 1]),
+        (2, [4, 8], [3, 2]),
+    ]))
 # Simple test of Twins Reduction
-# FIXME Test this with non complete games
-def twins_test(roles, players, strategies):
+def twins_test(keep_prob, game_desc):
+    roles, players, strategies = game_desc
     # Create game and reduction
-    game = randgames.role_symmetric_game(roles, players, strategies)
+    game = gamegen.role_symmetric_game(roles, players, strategies)
+    game = gamegen.drop_profiles(game, keep_prob)
     red = reduction.Twins(game.players)
 
     # Try to reduce game
@@ -81,20 +87,23 @@ def twins_test(roles, players, strategies):
         "full game did not have data for all profiles required of reduced"
 
 
-@testutils.apply([
-    (1, [1], [1], [1]),
-    (1, [2], [1], [2]),
-    (1, [4], [1], [2]),
-    (1, [1], [2], [1]),
-    (2, [1, 2], [2, 1], [1, 2]),
-    (2, [1, 4], [2, 1], [1, 2]),
-    (2, [4, 9], [3, 2], [2, 3]),
-])
+@testutils.apply(itertools.product(
+    [0, 0.6, 1],
+    [
+        (1, [1], [1], [1]),
+        (1, [2], [1], [2]),
+        (1, [4], [1], [2]),
+        (1, [1], [2], [1]),
+        (2, [1, 2], [2, 1], [1, 2]),
+        (2, [1, 4], [2, 1], [1, 2]),
+        (2, [4, 9], [3, 2], [2, 3]),
+    ]))
 # Simple test of Hierarchical
-# FIXME Test this with non complete games
-def hierarchical_test(roles, players, strategies, red_players):
+def hierarchical_test(keep_prob, game_desc):
+    roles, players, strategies, red_players = game_desc
     # Create game and reduction
-    game = randgames.role_symmetric_game(roles, players, strategies)
+    game = gamegen.role_symmetric_game(roles, players, strategies)
+    game = gamegen.drop_profiles(game, keep_prob)
     red_players = {r: p for r, p in zip(game.players, red_players)}
     red = reduction.Hierarchical(game.players, red_players)
 
@@ -102,20 +111,23 @@ def hierarchical_test(roles, players, strategies, red_players):
     red.reduce_game(game)
 
 
-@testutils.apply([
-    (1, [1], [1]),
-    (1, [2], [1]),
-    (1, [3], [1]),
-    (1, [1], [2]),
-    (2, [1, 2], [2, 1]),
-    (2, [1, 4], [2, 1]),
-    (2, [4, 9], [3, 2]),
-])
-# Simple test of DPR
-# FIXME Test this with non complete games
-def identity_test(roles, players, strategies):
+@testutils.apply(itertools.product(
+    [0, 0.6, 1],
+    [
+        (1, [1], [1]),
+        (1, [2], [1]),
+        (1, [3], [1]),
+        (1, [1], [2]),
+        (2, [1, 2], [2, 1]),
+        (2, [1, 4], [2, 1]),
+        (2, [4, 9], [3, 2]),
+    ]))
+# Simple test of identity reduction
+def identity_test(keep_prob, game_desc):
+    roles, players, strategies = game_desc
     # Create game and reduction
-    game = randgames.role_symmetric_game(roles, players, strategies)
+    game = gamegen.role_symmetric_game(roles, players, strategies)
+    game = gamegen.drop_profiles(game, keep_prob)
     red = reduction.Identity()
 
     # Try to reduce game

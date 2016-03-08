@@ -1,7 +1,7 @@
 """A module for computing regret and social welfare of profiles"""
-import numpy as np
+import math
 
-from gameanalysis import subgame
+import numpy as np
 
 
 def pure_strategy_deviation_gains(game, prof):
@@ -9,7 +9,6 @@ def pure_strategy_deviation_gains(game, prof):
 
     The nested dict maps role to strategy to deviation to gain. The profile
     must have data.
-
     """
     prof = game.as_profile(prof)
     return {role:
@@ -24,25 +23,15 @@ def pure_strategy_deviation_gains(game, prof):
 
 def pure_strategy_regret(game, prof):
     """Returns the regret of a pure strategy profile in a game"""
-    # FIXME This might not return nan even if some data is missing due to the
-    # way python implements max
-    return max(max(max(gain for _, gain in dev_gain.items())
-                   for _, dev_gain in strat_gain.items())
-               for _, strat_gain
-               in pure_strategy_deviation_gains(game, prof).items())
-
-
-def _deviation_data(game, mix):
-    """Returns a boolean array where True means we have data on mix deviations to
-    that role strat"""
-    # This call is a little bastardized, but as_mixture also works as mapping
-    # from roles to strategies
-    sub = subgame.EmptySubgame(game, game.as_mixture(mix))
-    has_data = {role: {strat: True for strat in strats}
-                for role, strats in game.strategies.items()}
-    for prof, role, dev in sub.deviation_profiles():
-        has_data[role][dev] &= prof in game
-    return game.as_array(has_data, dtype=bool)
+    gains = pure_strategy_deviation_gains(game, prof)
+    if any(any(any(math.isnan(gain) for gain in dev_gain.values())
+               for dev_gain in strat_gain.values())
+           for strat_gain in gains.values()):
+        return float('nan')
+    else:
+        return max(max(max(gain for gain in dev_gain.values())
+                       for dev_gain in strat_gain.values())
+                   for strat_gain in gains.values())
 
 
 def mixture_deviation_gains(game, mix, as_array=False):
@@ -50,19 +39,19 @@ def mixture_deviation_gains(game, mix, as_array=False):
 
     Return type is a dict mapping role to deviation to gain. This is equivalent
     to what is sometimes called equilibrium regret."""
-    mix = game.as_array(mix, float)
-    strategy_evs = game.expected_values(mix, as_array=True)
-    role_evs = (strategy_evs * mix).sum(1)
-    # No data for specific deviations
-    strategy_evs[~_deviation_data(game, mix) & game._mask] = np.nan
-    gains = strategy_evs - role_evs[:, np.newaxis]
+    mix = game.as_mixture(mix, as_array=True)
+    strategy_evs = game.deviation_payoffs(mix, as_array=True)
+    # strategy_evs is nan where there's no data, however, if it's not played in
+    # the mix, it doesn't effect the role_evs
+    masked = strategy_evs.copy()
+    masked[mix == 0] = 0
+    role_evs = game.role_reduce(masked * mix, keepdims=True)
+    gains = strategy_evs - role_evs
 
     if as_array:
-        gains[~game._mask] = 0
         return gains
     else:
-        return {role: {strat: gains[r, s] for s, strat in enumerate(strats)}
-                for r, (role, strats) in enumerate(game.strategies.items())}
+        return game.as_dict(gains, filter_zeros=False)
 
 
 def mixture_regret(game, mix):
@@ -72,15 +61,13 @@ def mixture_regret(game, mix):
 
 def pure_social_welfare(game, profile):
     """Returns the social welfare of a pure strategy profile in game"""
-    indexable = game.as_profile(profile)
-    array = game.as_array(profile, dtype=int)
-    return np.sum(array * game.get_payoffs(indexable, as_array=True))
+    profile = game.as_profile(profile, as_array=True)
+    return np.sum(profile * game.get_payoffs(profile, as_array=True))
 
 
 def mixed_social_welfare(game, mix):
     """Returns the social welfare of a mixed strategy profile"""
-    counts = np.fromiter(game.players.values(), int, len(game.players))
-    return game.get_expected_payoff(mix, as_array=True).dot(counts)
+    return game.get_expected_payoff(mix, as_array=True).dot(game.aplayers)
 
 
 # def neighbors(game, p, *args, **kwargs):

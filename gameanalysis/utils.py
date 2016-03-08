@@ -1,6 +1,8 @@
-import operator
-import math
 import functools
+import math
+import operator
+
+import numpy as np
 import scipy.misc as spm
 
 
@@ -11,14 +13,12 @@ def prod(collection):
 
 def game_size(n, s, exact=True):
     """Number of profiles in a symmetric game with n players and s strategies
-
     """
     return spm.comb(n+s-1, n, exact=exact)
 
 
 def profile_repetitions(p):
     """Number of normal form profiles that correspond to a role-symmetric profile
-
     """
     return prod(math.factorial(sum(row)) // prod(map(math.factorial, row))
                 for row in p)
@@ -28,7 +28,6 @@ def only(iterable):
     """Return the only element of an iterable
 
     Throws a value error if the iterable doesn't contain only one element
-
     """
     try:
         it = iter(iterable)
@@ -43,19 +42,9 @@ def only(iterable):
     except StopIteration:
         raise ValueError('Input was empty')
 
-# def mean(numbers):
-#     """Arithmetic mean"""
-#     n = 0
-#     mean = 0.0
-#     for x in numbers:
-#         n += 1
-#         mean += (x - mean)/n
-#     return mean
-
 
 def one_line(string, line_width=80):
     """If string s is longer than line width, cut it off and append "..."
-
     """
     string = string.replace('\n', '')
     if len(string) > line_width:
@@ -116,7 +105,6 @@ def ordered_permutations(seq):
     http://blog.bjrn.se/2008/04/lexicographic-permutations-using.html
     And this stack overflow post:
     https://stackoverflow.com/questions/6534430/why-does-pythons-itertools-permutations-contain-duplicates-when-the-original
-
     """
     seq = sorted(seq)
     if not seq:
@@ -141,3 +129,78 @@ def ordered_permutations(seq):
                 break
             if next == first:
                 return
+
+
+def acomb(n, k):
+    """Compute an array of all n choose k options with repeats
+
+    The result will be an array shape (m, n) where m is n choose k with
+    repetitions. Each row is a unique way to allocate k ones to m bins.
+    """
+    # This uses dynamic programming to compute everything
+    num = spm.comb(n, k, repetition=True, exact=True)
+    grid = np.zeros((num, n), dtype=int)
+
+    memoized = np.empty((n - 1, k), dtype=object)
+
+    # TODO this recusrion breaks if asking for numbers that are too large, but
+    # the order to fill n and k is predictable, it may be better to to use a
+    # for loop.
+    def fill_region(n, k, region):
+        if n == 1:
+            region[0, 0] = k
+            return
+        elif k == 0:
+            region.fill(0)
+            return
+        saved = memoized[n - 2, k - 1]
+        if saved is not None:
+            np.copyto(region, saved)
+            return
+        memoized[n - 2, k - 1] = region
+        o = 0
+        for ki in range(k, -1, -1):
+            n_ = n - 1
+            k_ = k - ki
+            m = spm.comb(n_, k_, repetition=True, exact=True)
+            region[o:o+m, 0] = ki
+            fill_region(n_, k_, region[o:o+m, 1:])
+            o += m
+
+    fill_region(n, k, grid)
+    return grid
+
+
+def acartesian2(*arrays):
+    """Array cartesian product in 2d
+
+    Produces a new ndarray that has the cartesian product of every row in the
+    input arrays. The number of columns is the sum of the number of columns in
+    each input. The number of rows is the product of the number of rows in each
+    input.
+
+    Arguments
+    ---------
+    *arrays : [ndarray (xi, s)]
+    """
+    rows = prod(a.shape[0] for a in arrays)
+    columns = sum(a.shape[1] for a in arrays)
+    dtype = arrays[0].dtype  # should always have at least one role
+    assert all(a.dtype == dtype for a in arrays), \
+        "all arrays must have the same dtype"
+
+    result = np.zeros((rows, columns), dtype)
+    pre_row = 1
+    post_row = rows
+    pre_column = 0
+    for array in arrays:
+        length, width = array.shape
+        post_row /= length
+        post_column = pre_column + width
+        view = result[:, pre_column:post_column]
+        view.shape = (pre_row, -1, post_row, width)
+        np.copyto(view, array[:, None])
+        pre_row *= length
+        pre_column = post_column
+
+    return result

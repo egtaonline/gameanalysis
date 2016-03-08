@@ -63,8 +63,8 @@ class Hierarchical(object):
         """
         assert game.players == self.full_players, \
             "The games players don't match up with this reduction"
-        # XXX Would need to be converted into a list anyways, so we just get it
-        # out of the way.
+        # Would need to be converted into a list anyways, so we just get it
+        # out of the way. This prevents warning
         profiles = [red_prof.to_input_profile(game.get_payoffs(profile))
                     for red_prof, profile in self._hr_profiles(game)]
         return rsgame.Game.from_payoff_format(self.reduced_players,
@@ -160,9 +160,7 @@ class DeviationPreserving(object):
         reduce a role to is 2, unless the role only has one player to begin
         with.
         """
-        # FIXME handle SampleGames
-        # TODO Do this with arrays
-
+        # TODO handle SampleGames
         assert game.players == self.full_players, \
             ("The games players don't match up with this reduction "
              "Game: {game} Reduction: {reduction}").format(
@@ -181,8 +179,8 @@ class DeviationPreserving(object):
                  .setdefault(strat, [])
                  .append(payoffs[role][strat]))
 
-        # XXX This could be a generator, but it'd be turned into a list
-        # anyways. Better to make this explicit.
+        # This could be a generator, but it'd be turned into a list anyways.
+        # Better to make this explicit.
         profiles = [prof.to_input_profile(payoff_map)
                     for prof, payoff_map in profile_map.items()
                     if (subgame.support_set(payoff_map)

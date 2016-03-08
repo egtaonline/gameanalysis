@@ -13,14 +13,13 @@ help:
 	@echo "update-requirements - update requirements.txt with current pip packages"
 
 test:
-	bin/nosetests $(NOSEFLAGS) test
+	bin/nosetests $(NOSEFLAGS) test$(tests)
 
 test-big: export BIG_TESTS = ON
 test-big: test
 
 coverage: NOSEFLAGS += --with-coverage --cover-package gameanalysis
 coverage: test
-	rm .coverage
 
 check:
 	# TODO Eventually remove these exclusions

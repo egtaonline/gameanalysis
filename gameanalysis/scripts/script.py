@@ -4,7 +4,7 @@ import argparse
 from gameanalysis.scripts import nash
 from gameanalysis.scripts import reduction
 from gameanalysis.scripts import subgames
-from gameanalysis.scripts import randgames
+from gameanalysis.scripts import gamegen
 from gameanalysis.scripts import regret
 from gameanalysis.scripts import dominance
 from gameanalysis.scripts import convert
@@ -45,7 +45,7 @@ _SUBCOMMANDS = {
     'sub': subgames,
     'reg': regret,
     'dom': dominance,
-    'rand': randgames,
+    'gen': gamegen,
     'conv': convert,
     'pay': payoff,
     'help': help,
