@@ -113,22 +113,12 @@ def subgame(game, strategies):
     new_strats = collect.fodict(
         (role, tuple(strat for strat in strats if strat in strat_set[role]))
         for role, strats in game.strategies.items())
-    desired_mask = rsgame.EmptyGame(game.players, new_strats).strategies(
-        as_array=True)
 
     strat_mask = game.as_array(strat_set, bool)
-    prof_mask = ~(game.profiles(True) * ~strat_mask).any((1, 2))
-    num_profs = prof_mask.sum()
+    prof_mask = ~np.any(game.profiles(True) * ~strat_mask, 1)
 
-    new_counts = np.zeros((num_profs,) + desired_mask.shape, dtype=int)
-    new_values = np.zeros((num_profs,) + desired_mask.shape)
-
-    new_counts.reshape([num_profs, -1])[:, desired_mask.ravel()] = \
-        game.profiles(True)[prof_mask]\
-        .reshape([num_profs, -1])[:, strat_mask.ravel()]
-    new_values.reshape([num_profs, -1])[:, desired_mask.ravel()] = \
-        game.payoffs(True)[prof_mask]\
-        .reshape([num_profs, -1])[:, strat_mask.ravel()]
+    new_counts = game.profiles(True)[prof_mask][:, strat_mask]
+    new_values = game.payoffs(True)[prof_mask][:, strat_mask]
 
     return rsgame.Game(game.players, new_strats, new_counts, new_values)
 
