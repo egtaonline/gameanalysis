@@ -44,9 +44,6 @@ creates a json file of the results."""
                         metavar='<num-processes>', default=None, help="""The
                         number of processes to use when finding a mixed nahs
                         using replicator dynamics.  (default: num-cores)""")
-    parser.add_argument('--verbose', '-v', action='store_true', help="""Add the
-                        verbose flag to replicator dynamics when finding a
-                        mixed nash equilibrium""")
     parser.add_argument('--grid-points', '-g', metavar='<num-grid-points>',
                         type=int, default=3, help="""Number of grid points to
                         use per dimension on the grid search of mixed
@@ -71,9 +68,11 @@ def main(args):
                                          args.random_points,
                                          at_least_one=args.one,
                                          processes=args.processes,
-                                         max_iters=args.max_iterations,
-                                         converge_thresh=args.convergence,
-                                         verbose=args.verbose)]
+                                         replicator={
+                                             'max_iters': args.max_iterations,
+                                             'converge_thresh': args.convergence
+                                         },
+                                         optimize={})]
     elif args.type == 'min-reg-prof':
         equilibria = [nash.min_regret_profile(game)]
     elif args.type == 'min-reg-grid':
