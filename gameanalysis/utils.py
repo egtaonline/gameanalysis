@@ -1,5 +1,4 @@
 import functools
-import math
 import operator
 
 import numpy as np
@@ -15,13 +14,6 @@ def game_size(n, s, exact=True):
     """Number of profiles in a symmetric game with n players and s strategies
     """
     return spm.comb(n+s-1, n, exact=exact)
-
-
-def profile_repetitions(p):
-    """Number of normal form profiles that correspond to a role-symmetric profile
-    """
-    return prod(math.factorial(sum(row)) // prod(map(math.factorial, row))
-                for row in p)
 
 
 def only(iterable):
@@ -46,9 +38,9 @@ def only(iterable):
 def one_line(string, line_width=80):
     """If string s is longer than line width, cut it off and append "..."
     """
-    string = string.replace('\n', '')
+    string = string.replace('\n', ' ')
     if len(string) > line_width:
-        return string[:3*line_width/4] + "..." + string[-line_width/4+3:]
+        return string[:3*line_width//4] + "..." + string[-line_width//4+3:]
     return string
 
 
@@ -204,3 +196,11 @@ def acartesian2(*arrays):
         pre_column = post_column
 
     return result
+
+
+def simplex_project(array):
+    """Return the projection onto the simplex"""
+    sort = -np.sort(-array)
+    rho = (1 - sort.cumsum()) / np.arange(1, sort.size + 1)
+    lam = rho[np.nonzero(rho + sort > 0)[0][-1]]
+    return np.maximum(array + lam, 0)

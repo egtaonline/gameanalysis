@@ -128,8 +128,8 @@ class Profile(_RoleStratMap):
     def to_symmetry_groups(self):
         """Convert profile to symmetry groups representation"""
         return list(itertools.chain.from_iterable(
-            ({'role': r, 'strategy': s, 'count': c} for s, c in cs.iteritems())
-            for r, cs in self.iteritems()))
+            ({'role': r, 'strategy': s, 'count': c} for s, c in cs.items())
+            for r, cs in self.items()))
 
     def to_profile_string(self):
         """Convert a profile to its egta string representation"""
@@ -190,20 +190,29 @@ class Mixture(_RoleStratMap):
         return Mixture(json_)
 
 
-def trim_mixture_array_support(mixture, supp_thresh=1e-3):
-    """Trims strategies played less than supp_thresh from the support"""
-    mixture *= mixture >= supp_thresh
-    mixture /= mixture.sum(1)[:, np.newaxis]
-    return mixture
+def simplex_project(game, mixture):
+    """Project an invalid mixture array onto the simplex"""
+    # This is a variant on the algorithm in utils, but works for the staggered
+    # mixture arrays that we use.
+    sort = -mixture
+    maxes = game.role_reduce(sort, ufunc=np.maximum)
+    mins = game.role_reduce(sort, ufunc=np.minimum)
+    offsets = np.concatenate(([0], np.cumsum(maxes[:-1] - mins[1:]))).repeat(
+        game.astrategies)
+    sort += offsets
+    sort.sort()
+    sort -= offsets
+    sort *= -1
 
+    inds = game.astrategies.cumsum()
+    cum = sort.copy()
+    cum[inds[:-1]] -= game.role_reduce(sort)[:-1]
+    ones = np.ones_like(cum)
+    ones[inds[:-1]] -= game.astrategies[:-1]
+    rho = (1 - cum.cumsum()) / ones.cumsum()
 
-def verify_array_profile(prof, aplayers, astrategies):
-    return (astrategies.shape == prof.shape and
-            np.all(prof * ~astrategies == 0) and
-            np.all(aplayers == prof.sum(1)))
-
-
-def verify_array_mixture(mix, astrategies):
-    return (astrategies.shape == mix.shape and
-            np.all(mix * ~astrategies == 0) and
-            np.allclose(mix.sum(1), 1))
+    max_inds = (np.diff(np.insert(rho + sort > 0, inds,
+                                  False)).nonzero()[0][::2] -
+                np.arange(game.astrategies.size))
+    lam = rho[max_inds].repeat(game.astrategies)
+    return np.maximum(mixture + lam, 0)

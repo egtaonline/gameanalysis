@@ -237,11 +237,25 @@ def empty_game_function_test(roles, players, strategies):
 # Test that game functions work
 def game_function_test(game):
     # Check that min payoffs are actually minimum
+    mask = game.profiles(as_array=True) > 0
+
     min_payoffs = game.min_payoffs()
-    assert all(all(all(min_payoffs[role] - EPS < p for p in pay.values())
+    assert all(all(all(min_payoffs[role] <= p for p in pay.values())
                    for role, pay in payoff.items())
                for payoff in game.payoffs()), \
         "not all payoffs less than min payoffs"
+    min_payoffs = game.min_payoffs(as_array=True).repeat(game.astrategies)
+    assert np.all((game.payoffs(as_array=True) >= min_payoffs)[mask]), \
+        "not all payoffs less than min payoffs"
+
+    max_payoffs = game.max_payoffs()
+    assert all(all(all(max_payoffs[role] >= p for p in pay.values())
+                   for role, pay in payoff.items())
+               for payoff in game.payoffs()), \
+        "not all payoffs greater than max payoffs"
+    max_payoffs = game.max_payoffs(as_array=True).repeat(game.astrategies)
+    assert np.all((game.payoffs(as_array=True) <= max_payoffs)[mask]), \
+        "not all payoffs greater than max payoffs"
 
     # Test profile methods
     prof_count = 0
@@ -569,3 +583,28 @@ def as_mixture_test():
 @tools.raises(ValueError)
 def from_game_failure_test():
     rsgame.Game.from_game(None)
+
+
+@testutils.apply([
+    (1, 1, 1),
+    (1, 1, 2),
+    (1, 2, 1),
+    (1, 2, 2),
+    (2, 1, 1),
+    (2, 1, 2),
+    (2, 2, 1),
+    (2, 2, 2),
+    (2, [1, 2], 2),
+    (2, 2, [1, 2]),
+    (2, [1, 2], [1, 2]),
+    (2, [3, 4], [2, 3]),
+])
+def normalize_test(roles, players, strategies):
+    game = gamegen.role_symmetric_game(roles, players, strategies)
+    game2 = game.normalize()
+    assert np.allclose(game2.min_payoffs(as_array=True), 0), \
+        "normalized min payoffs weren't close to 0"
+    # Max payoff could be 0 if there's only one payoff for a given role
+    assert np.all(np.isclose(game2.max_payoffs(True), 0)
+                  | np.isclose(game2.max_payoffs(True), 1)), \
+        "max payoffs weren't 0 or 1"

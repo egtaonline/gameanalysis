@@ -142,9 +142,10 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, random_restarts=0,
 # Everything but init is called on pickled object in another process, so it
 # will not be included in coverage.
 class RegretOptimizer(object):
-    def __init__(self, game, gtol=1e-10):
-        self.game = game
+    def __init__(self, game, gtol=1e-8):
+        self.game = game.normalize()
         self.gtol = gtol
+        self.penalty = 1
 
     def grad(self, mix):  # pragma: no cover
         dev_pay, dev_jac = self.game.deviation_payoffs(mix, verify=False,
@@ -164,25 +165,33 @@ class RegretOptimizer(object):
                         self.game.role_reduce(dev_jac * mix, 1, keepdims=True))
         grad = np.sum(gains[None] * product_rule, 1)
 
-        penalty = 0.5 * (np.sum(np.minimum(mix, 0) ** 2) +
-                         np.sum((1 - self.game.role_reduce(mix)) ** 2))
-        penalty_grad = (np.minimum(mix, 0) +
-                        self.game.role_reduce(mix, keepdims=True) - 1)
+        penalty = self.penalty * 0.5 * (
+            np.sum(np.minimum(mix, 0) ** 2) +
+            np.sum((1 - self.game.role_reduce(mix)) ** 2))
+        penalty_grad = self.penalty * (
+            np.minimum(mix, 0) + self.game.role_reduce(mix, keepdims=True) - 1)
 
         return obj + penalty, grad + penalty_grad
 
     def __call__(self, mix):  # pragma: no cover
-        result = optimize.minimize(self.grad, mix, method='CG', jac=True,
-                                   options={'gtol': self.gtol})
-        result = np.maximum(result.x, 0)
+        self.penalty = 1  # reset
 
-        # Sometimes convergence fails to find a feasible solution
-        support_sum = self.game.role_reduce(result, keepdims=True)
-        if np.any(np.isclose(support_sum, 0)):
-            return mix
-        else:
-            result /= support_sum
-            return result
+        result = None
+        closeness = 1
+        while closeness > 1e-3 and self.penalty <= (1 << 10):
+            # First get an unconstrained result from the optimization
+            opt = optimize.minimize(self.grad, mix, method='CG', jac=True,
+                                    options={'gtol': self.gtol})
+            mix = opt.x
+            # Project it onto the simplex
+            result = self.game.simplex_project(mix)
+            # Maximum projection error over roles
+            closeness = math.sqrt(self.game.role_reduce((mix - result) ** 2)
+                                  .max())
+            # Increase constraint penalty
+            self.penalty *= 2
+
+        return result
 
 
 class ReplicatorDynamics(object):
@@ -208,5 +217,4 @@ class ReplicatorDynamics(object):
                 break
 
         # Probabilities are occasionally negative
-        mix = np.maximum(mix, 0)
-        return mix
+        return self.game.simplex_project(mix)

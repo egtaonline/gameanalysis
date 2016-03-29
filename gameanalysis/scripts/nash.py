@@ -63,15 +63,16 @@ def main(args):
         if args.one and not equilibria:
             equilibria = [nash.min_regret_profile(game)]
     elif args.type == 'mixed':
+        rep_args = {
+            'max_iters': args.max_iterations,
+            'converge_thresh': args.convergence
+        }
         equilibria = [eq.trim_support(args.support) for eq
                       in nash.mixed_nash(game, args.regret, args.distance,
                                          args.random_points,
                                          at_least_one=args.one,
                                          processes=args.processes,
-                                         replicator={
-                                             'max_iters': args.max_iterations,
-                                             'converge_thresh': args.convergence
-                                         },
+                                         replicator=rep_args,
                                          optimize={})]
     elif args.type == 'min-reg-prof':
         equilibria = [nash.min_regret_profile(game)]

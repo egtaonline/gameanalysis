@@ -163,6 +163,10 @@ class EmptyGame(object):
         return ((self.num_role_strats,) == mix.shape and
                 np.allclose(self.role_reduce(mix), 1))
 
+    def simplex_project(self, mixture):
+        """Project an invalid mixture array onto the simplex"""
+        return profile.simplex_project(self, mixture)
+
     def all_profiles(self, as_array=False):
         """Returns a generator over all profiles"""
         role_arrays = [utils.acomb(n_strats, players) for n_strats, players
@@ -613,6 +617,7 @@ class Game(EmptyGame):
         view = self._apayoffs.view()
         self._apayoffs.setflags(write=False)
         self._min_payoffs = None
+        self._max_payoffs = None
         return view
 
     @property
@@ -648,6 +653,24 @@ class Game(EmptyGame):
         else:
             return {r: float(m) for r, m
                     in zip(self.strategies.keys(), self._min_payoffs)}
+
+    def max_payoffs(self, as_array=False):
+        """Returns the maximum payoff for each role"""
+        if self._max_payoffs is None:
+            if not len(self):
+                self._max_payoffs = np.empty(self.astrategies.shape)
+                self._max_payoffs.fill(np.nan)
+            else:
+                masked = np.ma.masked_array(self._apayoffs,
+                                            self._aprofiles == 0)
+                self._max_payoffs = np.maximum.reduceat(
+                    masked.max(0), self._at_indices).filled(np.nan)
+            self._max_payoffs.setflags(write=False)
+        if as_array or as_array is None:
+            return self._max_payoffs.view()
+        else:
+            return {r: float(m) for r, m
+                    in zip(self.strategies.keys(), self._max_payoffs)}
 
     def profiles(self, as_array=False):
         """Returns all of the profiles with data"""
@@ -833,6 +856,19 @@ class Game(EmptyGame):
         """Returns true if this game is constant sum"""
         profile_sums = np.sum(self._aprofiles * self._apayoffs, 1)
         return np.allclose(profile_sums, profile_sums[0])
+
+    def normalize(self):
+        """Returns a new game where each role has normalized payoffs"""
+        new_payoffs = self._apayoffs.copy()
+        if len(self) > 0:
+            new_payoffs -= self.min_payoffs(True).repeat(self.astrategies)
+            scale = self.max_payoffs(True) - self.min_payoffs(True)
+            # If there's only one value in a role, then just set to 0
+            scale[scale == 0] = 1
+            new_payoffs /= np.repeat(scale, self.astrategies)
+            new_payoffs[self._aprofiles == 0] = 0
+        return Game(self.players, self.strategies, self._aprofiles,
+                    new_payoffs)
 
     def __contains__(self, profile):
         """Returns true if data for that profile exists"""

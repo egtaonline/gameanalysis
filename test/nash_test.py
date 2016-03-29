@@ -1,11 +1,12 @@
 import itertools
+import json
 import math
 
 import numpy as np
 from nose import tools
 
-from gameanalysis import nash
 from gameanalysis import gamegen
+from gameanalysis import nash
 from gameanalysis import regret
 from gameanalysis import rsgame
 from test import testutils
@@ -142,3 +143,23 @@ def mixed_nash_test(methods, game_def):
 def empty_game_test():
     game = rsgame.Game.from_game(gamegen.empty_role_symmetric_game(1, 2, 3))
     nash.min_regret_profile(game)
+
+
+def hard_nash_test():
+    with open('test/hard_nash_game_1.json') as f:
+        game = rsgame.Game.from_json(json.load(f))
+    eqa = nash.mixed_nash(game, as_array=True)
+    expected = game.as_array({
+        'background': {
+            'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
+            0.5407460907477768,
+            'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9':
+            0.45925390925222315
+        },
+        'hft': {
+            'trend:trendLength_5_profitDemanded_50_expiration_50': 1.0
+        }
+    }, float)
+    assert any(np.allclose(game.trim_mixture_array_support(eqm), expected)
+               for eqm in eqa), \
+        "Didn't find equilibrium in known hard instance"
