@@ -90,8 +90,10 @@ class EmptyGame(object):
         self._at_indices = np.hstack(([0], self.astrategies[:-1].cumsum()))
         self._at_indices.setflags(write=False)
         # Total number of profiles this game can have
-        self.size = utils.prod(utils.game_size(self.players[r], len(strats))
-                               for r, strats in self.strategies.items())
+        # This is approximate, but for the sizes of games we can handle
+        # dev_reps, this is still accurate.
+        self.size = round(utils.game_size(
+            self.aplayers, self.astrategies, exact=False).prod())
 
         # A mapping of role to index
         self._role_index = {r: i for i, r in enumerate(self.strategies)}
@@ -771,8 +773,8 @@ class Game(EmptyGame):
             return (float(welfares[profile_index]),
                     self.as_profile(profile, verify=False))
 
-    def deviation_payoffs(self, mix, verify=True, jacobian=False,
-                          as_array=False):
+    def deviation_payoffs(self, mix, verify=True, assume_complete=False,
+                          jacobian=False, as_array=False):
         """Computes the expected value of each pure strategy played against all
         opponents playing mix.
 
@@ -794,17 +796,26 @@ class Game(EmptyGame):
         nan_mask = np.empty_like(mix, dtype=bool)
 
         # Fill out mask where we don't have data
-        if self.is_complete():
+        if self.is_complete() or assume_complete:
             nan_mask.fill(False)
         elif len(self) == 0:
             nan_mask.fill(True)
         else:
+            # These calculations are approximate, but for games we can do
+            # anything with, the size is bounded, and so numeric methods are
+            # actually exact.
             support = mix > 0
+            strats = self.role_reduce(support)
             devs = self._aprofiles[:, ~support]
-            num_needed = EmptyGame(self.players, self.as_mixture(mix)).size
+            num_supp = round(utils.game_size(self.aplayers, strats,
+                                             exact=False).prod())
+            dev_players = self.aplayers - np.eye(self.aplayers.size)
+            role_num_dev = np.rint(utils.game_size(
+                dev_players, strats, exact=False).prod(1)).astype(int)
+            num_dev = role_num_dev.repeat(self.astrategies)[~support]
 
-            nan_mask[support] = np.all(devs == 0, 1).sum() < num_needed
-            nan_mask[~support] = devs[devs.sum(1) == 1].sum(0) < num_needed
+            nan_mask[support] = np.all(devs == 0, 1).sum() < num_supp
+            nan_mask[~support] = devs[devs.sum(1) == 1].sum(0) < num_dev
 
         # Compute values
         if not nan_mask.all():

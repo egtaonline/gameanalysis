@@ -13,7 +13,10 @@ def prod(collection):
 def game_size(n, s, exact=True):
     """Number of profiles in a symmetric game with n players and s strategies
     """
-    return spm.comb(n+s-1, n, exact=exact)
+    if exact:
+        return spm.comb(n+s-1, n, exact=True)
+    else:
+        return np.rint(spm.comb(n+s-1, n, exact=False)).astype(int)
 
 
 def only(iterable):

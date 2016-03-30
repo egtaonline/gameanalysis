@@ -34,13 +34,14 @@ def pure_strategy_regret(game, prof):
                    for strat_gain in gains.values())
 
 
-def mixture_deviation_gains(game, mix, as_array=False):
+def mixture_deviation_gains(game, mix, assume_complete=False, as_array=False):
     """Returns all the gains from deviation from a mixed strategy
 
     Return type is a dict mapping role to deviation to gain. This is equivalent
     to what is sometimes called equilibrium regret."""
     mix = game.as_mixture(mix, as_array=True)
-    strategy_evs = game.deviation_payoffs(mix, as_array=True)
+    strategy_evs = game.deviation_payoffs(mix, assume_complete=assume_complete,
+                                          as_array=True)
     # strategy_evs is nan where there's no data, however, if it's not played in
     # the mix, it doesn't effect the role_evs
     masked = strategy_evs.copy()

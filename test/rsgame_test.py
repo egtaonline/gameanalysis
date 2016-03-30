@@ -1,6 +1,5 @@
 import itertools
 import math
-import os
 import random
 import warnings
 from collections import abc
@@ -17,41 +16,6 @@ from test import testutils
 
 TINY = np.finfo(float).tiny
 EPS = 5 * np.finfo(float).eps
-
-# The lambda: 0 means that the payoffs are all zero, since they don't matter
-SMALL_GAMES = [
-    gamegen.symmetric_game(2, 2),
-    gamegen.symmetric_game(2, 5),
-    gamegen.symmetric_game(5, 2),
-    gamegen.symmetric_game(5, 5),
-    gamegen.independent_game(2, 2),
-    gamegen.independent_game(2, 5),
-    gamegen.independent_game(5, 2),
-    gamegen.independent_game(5, 5),
-    gamegen.role_symmetric_game(2, [1, 2], [2, 1]),
-    gamegen.role_symmetric_game(2, 2, 2),
-    gamegen.role_symmetric_game(2, 2, 5),
-    gamegen.role_symmetric_game(2, 5, 2),
-    gamegen.role_symmetric_game(2, 5, 5),
-    gamegen.symmetric_game(170, 2),  # approximate devreps
-    gamegen.symmetric_game(180, 2),  # actual devreps
-]
-
-
-def generate_games(allow_big=False):
-    """Returns a generator for game testing"""
-    for game in SMALL_GAMES:
-        yield game
-
-    if allow_big and os.getenv('BIG_TESTS') == 'ON':  # Big Games
-        yield gamegen.symmetric_game(1000, 2)
-        yield gamegen.symmetric_game(5, 40)
-        yield gamegen.symmetric_game(3, 160)
-        yield gamegen.symmetric_game(50, 2)
-        yield gamegen.symmetric_game(20, 5)
-        yield gamegen.symmetric_game(90, 5)
-        yield gamegen.role_symmetric_game(2, 2, 40)
-        yield gamegen.symmetric_game(12, 12)
 
 
 def exact_dev_reps(game):
@@ -72,8 +36,10 @@ def exact_dev_reps(game):
     return dev_reps
 
 
-@testutils.apply(zip(generate_games(True)))
-def devreps_approx_test(game):
+@testutils.apply(testutils.game_sizes(allow_big=True))
+def devreps_approx_test(roles, players, strategies):
+    game = gamegen.role_symmetric_game(roles, players, strategies,
+                                       distribution=np.zeros)
     approx = game._dev_reps
     exact = exact_dev_reps(game)
     diff = ((approx - exact) / (exact + TINY)).astype(float)
@@ -81,25 +47,24 @@ def devreps_approx_test(game):
         "dev reps were not close enough ({})".format(diff)
 
 
-@testutils.apply([
-    (1, 1, 1),
-    (1, 1, 2),
-    (1, 2, 1),
-    (1, 2, 2),
-    (2, 1, 1),
-    (2, 1, 2),
-    (2, 2, 1),
-    (2, 2, 2),
-    (2, [1, 2], 2),
-    (2, 2, [1, 2]),
-    (2, [1, 2], [1, 2]),
-    (2, [3, 4], [2, 3]),
-])
+# Test that game size approximation is exact
+@testutils.apply(testutils.game_sizes(allow_big=True))
+def game_size_test(roles, players, strategies):
+    game = gamegen.empty_role_symmetric_game(roles, players, strategies)
+    exact_size = utils.prod(utils.game_size(n, s) for n, s
+                            in zip(game.aplayers, game.astrategies))
+    assert game.size == exact_size, \
+        "approximate game size did not equal exact game size"
+
+
 # Test that all functions work on an EmptyGame
+@testutils.apply(testutils.game_sizes())
 def empty_game_function_test(roles, players, strategies):
     game = gamegen.empty_role_symmetric_game(roles, players, strategies)
     assert game.players is not None, "players was None"
+    assert game.aplayers is not None, "aplayers was None"
     assert game.strategies is not None, "strategies was None"
+    assert game.astrategies is not None, "astrategies was None"
     assert game.size is not None, "size was None"
 
     # Test that all profiles returns the correct number of things
@@ -233,12 +198,14 @@ def empty_game_function_test(roles, players, strategies):
     assert repr(game) is not None, "game repr was None"
 
 
-@testutils.apply(zip(generate_games()))
 # Test that game functions work
-def game_function_test(game):
-    # Check that min payoffs are actually minimum
+@testutils.apply(testutils.game_sizes())
+def game_function_test(roles, players, strategies):
+    game = gamegen.role_symmetric_game(roles, players, strategies)
+
     mask = game.profiles(as_array=True) > 0
 
+    # Check that min payoffs are actually minimum
     min_payoffs = game.min_payoffs()
     assert all(all(all(min_payoffs[role] <= p for p in pay.values())
                    for role, pay in payoff.items())
@@ -300,21 +267,8 @@ def game_function_test(game):
     iter(game)
 
 
-@testutils.apply([
-    (1, 1, 1),
-    (1, 1, 2),
-    (1, 2, 1),
-    (1, 2, 2),
-    (2, 1, 1),
-    (2, 1, 2),
-    (2, 2, 1),
-    (2, 2, 2),
-    (2, [1, 2], 2),
-    (2, 2, [1, 2]),
-    (2, [1, 2], [1, 2]),
-    (2, [3, 4], [2, 3]),
-])
 # Test that a Game with no data can still be created
+@testutils.apply(testutils.game_sizes())
 def empty_full_game_test(roles, players, strategies):
     empty_game = gamegen.empty_role_symmetric_game(roles, players,
                                                    strategies)
@@ -349,9 +303,10 @@ def empty_full_game_test(roles, players, strategies):
     repr(game)
 
 
-@testutils.apply(zip(generate_games(), itertools.cycle([1, 2, 5, 10])))
-# Test that game functions work
-def sample_game_function_test(game, samples):
+# Test that sample game functions work
+@testutils.apply(zip(testutils.game_sizes(), itertools.cycle([1, 2, 5, 10])))
+def sample_game_function_test(game_size, samples):
+    game = gamegen.role_symmetric_game(*game_size)
     game = gamegen.add_noise(game, samples)
 
     for prof in game.profiles():
@@ -396,21 +351,8 @@ def sample_game_resample_test():
         "remeaning didn't reset minimum payoffs properly"
 
 
-@testutils.apply([
-    (1, 1, 1),
-    (1, 1, 2),
-    (1, 2, 1),
-    (1, 2, 2),
-    (2, 1, 1),
-    (2, 1, 2),
-    (2, 2, 1),
-    (2, 2, 2),
-    (2, [1, 2], 2),
-    (2, 2, [1, 2]),
-    (2, [1, 2], [1, 2]),
-    (2, [3, 4], [2, 3]),
-])
 # Test that a Game with no data can still be created
+@testutils.apply(testutils.game_sizes())
 def empty_sample_game_test(roles, players, strategies):
     empty_game = gamegen.empty_role_symmetric_game(roles, players,
                                                    strategies)
@@ -470,18 +412,7 @@ def copy_test():
 
 
 # Test that sample game from matrix creates a game
-@testutils.apply([
-    (1, 1, 1),
-    (1, 1, 3),
-    (1, 2, 1),
-    (1, 2, 5),
-    (2, 1, 1),
-    (2, 1, 4),
-    (2, 2, 1),
-    (2, 2, 2),
-    (3, 4, 1),
-    (3, 4, 2),
-], repeat=20)
+@testutils.apply(testutils.game_sizes(only_ints=True), repeat=20)
 def sample_game_from_matrix_test(players, strategies, samples):
     matrix = np.random.random([strategies] * players + [players, samples])
     strats = {str(r): [str(s) for s in range(strategies)]
@@ -585,20 +516,8 @@ def from_game_failure_test():
     rsgame.Game.from_game(None)
 
 
-@testutils.apply([
-    (1, 1, 1),
-    (1, 1, 2),
-    (1, 2, 1),
-    (1, 2, 2),
-    (2, 1, 1),
-    (2, 1, 2),
-    (2, 2, 1),
-    (2, 2, 2),
-    (2, [1, 2], 2),
-    (2, 2, [1, 2]),
-    (2, [1, 2], [1, 2]),
-    (2, [3, 4], [2, 3]),
-])
+# Test that normalization works properly
+@testutils.apply(testutils.game_sizes())
 def normalize_test(roles, players, strategies):
     game = gamegen.role_symmetric_game(roles, players, strategies)
     game2 = game.normalize()

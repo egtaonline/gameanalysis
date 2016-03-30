@@ -50,7 +50,7 @@ def mixed_known_eq_test(methods, eq_prob):
     eqa = list(nash.mixed_nash(game, as_array=True, **methods))
     assert len(eqa) >= 1, "didn't find equilibrium"
     expected = [eq_prob, 1 - eq_prob]
-    assert any(np.allclose(eqm, expected, atol=1e-4) for eqm in eqa), \
+    assert any(np.allclose(eqm, expected, atol=1e-3) for eqm in eqa), \
         "didn't find correct equilibrium {} instead of {}".format(
             eqa, expected)
 

@@ -40,7 +40,8 @@ def mixed_incomplete_data_test():
     expected_gains = np.array([0.0, 2.4])
     assert np.allclose(dg, expected_gains), \
         "mixture gains wrong {} instead of {}".format(dg, expected_gains)
-    dg = regret.mixture_deviation_gains(game, game.uniform_mixture(), True)
+    dg = regret.mixture_deviation_gains(game, game.uniform_mixture(),
+                                        as_array=True)
     assert np.isnan(dg).all(), "had data for mixture without data"
 
 
@@ -93,3 +94,27 @@ def nonzero_mixed_welfare_test():
     assert abs(6 - regret.mixed_social_welfare(
         game, {'a': {'s': 1}, 'b': {'s': 1}})) < 1e-5, \
         "Didn't properly sum welfare"
+
+
+@testutils.apply([
+    (1, 1, 1),
+    (1, 1, 2),
+    (1, 2, 1),
+    (1, 2, 2),
+    (2, 1, 1),
+    (2, 1, 2),
+    (2, 2, 1),
+    (2, 2, 2),
+    (2, [1, 2], 2),
+    (2, 2, [1, 2]),
+    (2, [1, 2], [1, 2]),
+    (2, [3, 4], [2, 3]),
+])
+# Test that for complete games, there are never any nan deviations.
+def nan_deviations_test(roles, players, strategies):
+    game = gamegen.role_symmetric_game(roles, players, strategies)
+    for mix in game.random_mixtures(20, 0.05, as_array=True):
+        mix = game.trim_mixture_array_support(mix)
+        gains = regret.mixture_deviation_gains(game, mix, as_array=True)
+        assert not np.isnan(gains).any(), \
+            "deviation gains in complete game were nan"
