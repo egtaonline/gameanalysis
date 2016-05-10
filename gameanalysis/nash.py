@@ -148,6 +148,9 @@ class RegretOptimizer(object):
         self.penalty = 1
 
     def grad(self, mix):  # pragma: no cover
+        # We assume that the initial point is in a constant sum subspace, and
+        # so project the gradient so that any gradient step maintains that
+        # constant step. Thus, sum to 1 is not one of the penalty terms
         dev_pay, dev_jac = self.game.deviation_payoffs(mix, verify=False,
                                                        jacobian=True)
         gains = np.maximum(dev_pay - self.game.role_reduce(mix * dev_pay,
@@ -165,13 +168,15 @@ class RegretOptimizer(object):
                         self.game.role_reduce(dev_jac * mix, 1, keepdims=True))
         grad = np.sum(gains[None] * product_rule, 1)
 
-        penalty = self.penalty * 0.5 * (
-            np.sum(np.minimum(mix, 0) ** 2) +
-            np.sum((1 - self.game.role_reduce(mix)) ** 2))
-        penalty_grad = self.penalty * (
-            np.minimum(mix, 0) + self.game.role_reduce(mix, keepdims=True) - 1)
+        # Penalty terms for obj and gradient
+        obj += self.penalty * 0.5 * np.sum(np.minimum(mix, 0) ** 2)
+        grad += self.penalty * np.minimum(mix, 0)
 
-        return obj + penalty, grad + penalty_grad
+        # Project grad so steps stay in the appropriate space
+        grad -= np.repeat(self.game.role_reduce(grad) / self.game.astrategies,
+                          self.game.astrategies)
+
+        return obj, grad
 
     def __call__(self, mix):  # pragma: no cover
         self.penalty = 1  # reset
