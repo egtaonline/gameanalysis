@@ -163,6 +163,6 @@ def hard_nash_test():
             'trend:trendLength_5_profitDemanded_50_expiration_50': 1.0
         }
     }, float)
-    assert any(np.allclose(game.trim_mixture_array_support(eqm), expected)
-               for eqm in eqa), \
+    assert any(np.allclose(game.trim_mixture_array_support(eqm), expected,
+                atol=1e-4, rtol=1e-4) for eqm in eqa), \
         "Didn't find equilibrium in known hard instance"
