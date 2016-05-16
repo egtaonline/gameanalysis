@@ -5,6 +5,7 @@ analysis tractable.
 
 """
 import bisect
+import collections
 import itertools
 
 import numpy as np
@@ -53,7 +54,9 @@ class EmptySubgame(rsgame.EmptyGame):
 
     """
     def __init__(self, game, strategies):
-        super().__init__(game.players, strategies)
+        super().__init__(game.players,
+                         collections.OrderedDict((r, strategies[r])
+                                                 for r in game.players))
         self.full_game = game
         self._support_set = None
 
