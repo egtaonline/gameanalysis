@@ -70,6 +70,12 @@ class Hierarchical(object):
         return rsgame.Game.from_payoff_format(self.reduced_players,
                                               game.strategies, profiles)
 
+    def __repr__(self):
+        return '{name}({arg1}, {arg2})'.format(
+            name=self.__class__.__name__,
+            arg1=self.full_players,
+            arg2=self.reduced_players)
+
 
 class DeviationPreserving(object):
     """Deviation preserving reduction"""
@@ -189,11 +195,22 @@ class DeviationPreserving(object):
         return rsgame.Game.from_payoff_format(self.reduced_players,
                                               game.strategies, profiles)
 
+    def __repr__(self):
+        return '{name}({arg1}, {arg2})'.format(
+            name=self.__class__.__name__,
+            arg1=self.full_players,
+            arg2=self.reduced_players)
+
 
 class Twins(DeviationPreserving):
     def __init__(self, full_players):
         super().__init__(full_players,
                          {r: min(2, p) for r, p in full_players.items()})
+
+    def __repr__(self):
+        return '{name}({arg1})'.format(
+            name=self.__class__.__name__,
+            arg1=self.full_players)
 
 
 class Identity(object):
@@ -210,3 +227,6 @@ class Identity(object):
     def reduce_game(self, game):
         """Convert an input game to a reduced game with new players"""
         return game
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
