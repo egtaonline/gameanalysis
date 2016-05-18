@@ -18,6 +18,13 @@
 /share
 /pip-selfcheck.json
 
+# LaTeX #
+#########
+*.aux
+*.log
+*.pdf
+*.out
+
 # Misc #
 ########
 .DS_Store

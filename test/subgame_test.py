@@ -1,4 +1,7 @@
+import random
+
 from gameanalysis import gamegen
+from gameanalysis import reduction
 from gameanalysis import subgame
 
 from test import testutils
@@ -59,3 +62,29 @@ def executing_maximal_subgames_test(prob):
     game = gamegen.drop_profiles(game, prob)
     subs = list(subgame.maximal_subgames(game))
     assert subs is not None
+
+
+@testutils.apply(testutils.game_sizes(), repeat=20)
+def deviation_profile_count_test(roles, players, strategies):
+    game = gamegen.empty_role_symmetric_game(roles, players, strategies)
+    sub_strats = {r: random.sample(s, 1 + random.randrange(0, len(s)))
+                  for r, s in game.strategies.items()}
+    sub = subgame.EmptySubgame(game, sub_strats)
+
+    num_devs = sum(1 for _ in sub.deviation_profiles())
+    assert type(sub.num_deviation_profiles()) == int, \
+        "num_deviation_profiles didn't return an int {}".format(sub_strats)
+    assert num_devs == sub.num_deviation_profiles(), \
+        "num_deviation_profiles didn't return correct number {}".format(
+            sub_strats)
+
+    full_players = {r: c ** 2 for r, c in game.players.items()}
+    red = reduction.DeviationPreserving(full_players, game.players)
+    num_dpr_devs = sum(sum(1 for _ in red.expand_profile(p[0]))
+                       for p in sub.deviation_profiles())
+    assert type(sub.num_dpr_deviation_profiles()) == int, \
+        "num_dpr_deviation_profiles didn't return an int {}".format(
+            sub_strats)
+    assert num_dpr_devs == sub.num_dpr_deviation_profiles(), \
+        "num_dpr_deviation_profiles didn't return correct number {}".format(
+            sub_strats)

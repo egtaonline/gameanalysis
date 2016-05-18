@@ -6,9 +6,11 @@ analysis tractable.
 """
 import bisect
 import collections
+import functools
 import itertools
 
 import numpy as np
+import scipy.misc as spm
 
 from gameanalysis import collect
 from gameanalysis import rsgame
@@ -60,9 +62,40 @@ class EmptySubgame(rsgame.EmptyGame):
         self.full_game = game
         self._support_set = None
 
+    @functools.lru_cache()
+    def num_deviation_profiles(self):
+        """Returns the number of deviation profiles
+
+        This is a closed form way to compute
+        len(list(sub.deviation_profiles())).
+        """
+        top = self.aplayers + self.astrategies - 1 - np.eye(self.num_roles)
+        bottom = self.aplayers - np.eye(self.num_roles)
+        return round(float(np.sum(spm.comb(top, bottom).prod(1)
+                                  * (self.full_game.astrategies
+                                     - self.astrategies))))
+
+    @functools.lru_cache()
+    def num_dpr_deviation_profiles(self):
+        """Returns the number of dpr deviation profiles
+
+        This is a closed form way to compute
+        len(list(itertools.chain.from_iterable(map(red.expand_profile, (x[0]
+        for x in sub.deviation_profiles())))))
+
+        For just the number of profiles needed for the deviator payoff, use
+        num_deviation_profiles, as they are equivalent.
+        """
+        offset = np.eye(self.num_roles) + np.eye(self.num_roles)[:, None]
+        temp = spm.comb(self.aplayers + self.astrategies - 1 - offset,
+                        self.aplayers - offset).prod(2)
+        non_deviators = round(float(np.sum(np.sum(temp * self.astrategies, 1)
+                                           * (self.full_game.astrategies
+                                              - self.astrategies))))
+        return non_deviators + self.num_deviation_profiles()
+
     def deviation_profiles(self):
         """Return a generator of every deviation profile, the role, and deviation
-
         """
         for role, strats in self.strategies.items():
             nd_players = dict(self.players)
@@ -75,7 +108,6 @@ class EmptySubgame(rsgame.EmptyGame):
     def additional_strategy_profiles(self, role, strat):
         """Returns a generator of all additional profiles that exist in the subgame
         with strat
-
         """
         # This uses the observation that the added profiles are all of the
         # profiles of the new subgame with one less player in role, and then

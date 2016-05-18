@@ -40,7 +40,7 @@ def mixed_prisoners_dilemma_test(methods):
     assert all(regret.mixture_regret(game, eqm) < 1e-3 for eqm in eqa), \
         "returned equilibria with high regret"
     expected = [0., 1.]
-    assert any(np.allclose(eqm, expected, atol=1e-4, rtol=1e-4)
+    assert any(np.allclose(eqm, expected, atol=1e-3, rtol=1e-3)
                for eqm in eqa), \
         "didn't find pd equilibrium {}".format(eqa)
 
@@ -164,5 +164,5 @@ def hard_nash_test():
         }
     }, float)
     assert any(np.allclose(game.trim_mixture_array_support(eqm), expected,
-                atol=1e-4, rtol=1e-4) for eqm in eqa), \
+               atol=1e-4, rtol=1e-4) for eqm in eqa), \
         "Didn't find equilibrium in known hard instance"

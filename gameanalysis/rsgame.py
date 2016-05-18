@@ -29,11 +29,13 @@ raveled into the 1d array. Most methods can return both versions, but usually
 the array representation is more efficient.
 """
 import collections
+import functools
 import itertools
 import warnings
 from collections import abc
 
 import numpy as np
+import scipy.misc as spm
 import scipy.special as sps
 
 from gameanalysis import collect
@@ -84,6 +86,8 @@ class EmptyGame(object):
             (len(s) for s in self.strategies.values()),
             int, len(self.strategies))
         self.astrategies.setflags(write=False)
+        # The total number of roles
+        self.num_roles = self.astrategies.size
         # The total number of strategies over roles
         self.num_role_strats = self.astrategies.sum()
         # Array necessary for doing reduce operations over role
@@ -92,8 +96,7 @@ class EmptyGame(object):
         # Total number of profiles this game can have
         # This is approximate, but for the sizes of games we can handle
         # dev_reps, this is still accurate.
-        self.size = round(utils.game_size(
-            self.aplayers, self.astrategies, exact=False).prod())
+        self.size = self.num_full_game_profiles()
 
         # A mapping of role to index
         self._role_index = {r: i for i, r in enumerate(self.strategies)}
@@ -116,6 +119,44 @@ class EmptyGame(object):
         """Load a profile from its json representation"""
         players, strategies, *_ = gameio._game_from_json(json_)
         return EmptyGame.from_payoff_format(players, strategies)
+
+    @functools.lru_cache()
+    def num_full_game_profiles(self):
+        """Returns the number of payoff values stored in the full game"""
+        return round(float(spm.comb(self.aplayers + self.astrategies - 1,
+                                    self.aplayers).prod()))
+
+    @functools.lru_cache()
+    def num_full_game_payoffs(self):
+        """Returns the number of payoffs in all profiles"""
+        top = self.aplayers + self.astrategies - 1 - np.eye(self.num_roles)
+        bottom = self.aplayers - np.eye(self.num_roles)
+        return round(float(np.sum(spm.comb(top, bottom).prod(1)
+                                  * self.astrategies)))
+
+    @functools.lru_cache()
+    def num_full_game_dpr_profiles(self):
+        """Returns the number of unique dpr profiles required for the full game
+
+        This calculation is exponential in the number of roles.
+        """
+        # Get all combinations of "pure" roles and then filter by ones with
+        # support at least 2. Thus, 0, 1, and 2 can be safely ignored
+        pure = (np.arange(3, 2 ** self.num_roles)[:, None]
+                & (2 ** np.arange(self.num_roles))).astype(bool)
+        cards = pure.sum(1)
+        pure = pure[cards > 1]
+        cards = cards[cards > 1] - 1
+        # For each combination of pure roles, compute the number of profiles
+        # conditioned on those roles being pure, then multiply them by the
+        # cardinality of the pure roles.
+        pure_counts = np.prod(self.astrategies * pure + ~pure, 1)
+        top = (self.aplayers + self.astrategies - 1) * ~pure
+        bottom = self.aplayers * ~pure
+        unpure_counts = np.prod(spm.comb(top, bottom)
+                                - self.astrategies * ~pure, 1)
+        overcount = round(float(np.sum(cards * pure_counts * unpure_counts)))
+        return self.num_full_game_payoffs() - overcount
 
     def role_reduce(self, array, axis=0, ufunc=np.add, keepdims=False):
         """Reduce an array over roles
@@ -387,7 +428,7 @@ class EmptyGame(object):
 
     def is_symmetric(self):
         """Returns true if this game is symmetric"""
-        return self.astrategies.size == 1
+        return self.num_roles == 1
 
     def is_asymmetric(self):
         """Returns true if this game is asymmetric"""
@@ -809,7 +850,7 @@ class Game(EmptyGame):
             devs = self._aprofiles[:, ~support]
             num_supp = round(utils.game_size(self.aplayers, strats,
                                              exact=False).prod())
-            dev_players = self.aplayers - np.eye(self.aplayers.size)
+            dev_players = self.aplayers - np.eye(self.num_roles)
             role_num_dev = np.rint(utils.game_size(
                 dev_players, strats, exact=False).prod(1)).astype(int)
             num_dev = role_num_dev.repeat(self.astrategies)[~support]

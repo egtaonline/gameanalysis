@@ -10,6 +10,7 @@ from nose import tools
 
 from gameanalysis import gamegen
 from gameanalysis import profile
+from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import utils
 from test import testutils
@@ -527,3 +528,37 @@ def normalize_test(roles, players, strategies):
     assert np.all(np.isclose(game2.max_payoffs(True), 0)
                   | np.isclose(game2.max_payoffs(True), 1)), \
         "max payoffs weren't 0 or 1"
+
+
+@testutils.apply(testutils.game_sizes())
+def profile_count_test(roles, players, strategies):
+    game = gamegen.empty_role_symmetric_game(roles, players, strategies)
+
+    num_profiles = game.all_profiles(as_array=True).shape[0]
+    assert type(game.num_full_game_profiles()) == int, \
+        "num_full_game_profiles didn't return an int"
+    assert num_profiles == game.num_full_game_profiles(), \
+        "num_full_game_profiles didn't return the correct number"
+
+    num_payoffs = np.sum(game.all_profiles(as_array=True) > 0)
+    assert type(game.num_full_game_payoffs()) == int, \
+        "num_full_game_payoffs didn't return an int"
+    assert num_payoffs == game.num_full_game_payoffs(), \
+        "num_full_game_payoffs didn't return the correct number"
+
+    full_players = {r: c ** 2 for r, c in game.players.items()}
+    red = reduction.DeviationPreserving(full_players, game.players)
+
+    num_nu_dpr_profiles = sum(1 for _ in itertools.chain.from_iterable(map(
+        red.expand_profile, game.all_profiles())))
+    assert num_nu_dpr_profiles == game.num_full_game_payoffs(), \
+        ("num_full_game_payoffs was not equal to the number of nonunique"
+         "dpr profiles. This error is stange as it shouldn't happen. "
+         "It likely mean an error in dpr")
+
+    num_dpr_profiles = len(set(itertools.chain.from_iterable(map(
+        red.expand_profile, game.all_profiles()))))
+    assert type(game.num_full_game_dpr_profiles()) == int, \
+        "num_full_game_dpr_profiles was not an int"
+    assert num_dpr_profiles == game.num_full_game_dpr_profiles(), \
+        "num_full_game_dpr_profiles did not return the correct number"

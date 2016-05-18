@@ -33,6 +33,7 @@ def game_sizes(allow_big=False, only_ints=False):
     yield 2, 2, 5
     yield 2, 5, 2
     yield 2, 5, 5
+    yield 3, 3, 3
     yield 1, 170, 2
     yield 1, 180, 2
 
@@ -41,6 +42,7 @@ def game_sizes(allow_big=False, only_ints=False):
         yield 2, [1, 2], [2, 1]
         yield 2, 2, [1, 2]
         yield 2, [3, 4], [2, 3]
+        yield 3, [2, 3, 4], [4, 3, 2]
 
     if allow_big and os.getenv('BIG_TESTS') == 'ON':  # Big Games
         yield 1, 1000, 2

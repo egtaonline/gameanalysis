@@ -1,0 +1,39 @@
+\documentclass{article}
+
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{Number of profiles for different types of schedulers}
+\author{Erik Brinkman\\\texttt{\href{mailto:erik.brinkman@umich.edu}{erik.brinkman@umich.edu}}}
+\maketitle
+
+Independent of scheduler type, there are a few important quantities for describing the number of profiles of a specific scheduler.
+$\mathcal R$, the set of roles in the game.
+$n_r > 0$, the reduced number of players in role $r$.
+$s_r > 0$, the number of strategies in fully explored set for role $r$.
+$d_r \ge 0$, the number of deviating strategies for role $r$.
+
+For normal games, and games with a hierarchical reduction, the closed form is relatively simple.
+\begin{equation*}
+    \prod_{r \in \mathcal R} {n_r + s_r - 1 \choose n_r} + \sum_{r \in \mathcal R} d_r \prod_{\rho \in \mathcal R} {n_\rho + s_\rho - 1 - \mathbb{I}(r = \rho) \choose n_\rho - \mathbb{I}(r = \rho)}
+\end{equation*}
+where $\mathbb{I}$ is the indicator function, one when true, zero when false. The first term is the number of profiles in the ``full'' game, and the second term is the number of profiles for the deviations.
+
+For deviation preserving reduction games, the form is a little more complicated.
+\begin{equation*}
+    \begin{split}
+        & \sum_{r \in \mathcal R} s_r \prod_{\rho \in \mathcal R} {n_\rho + s_\rho - 1 - \mathbb{I}(r = \rho) \choose n_\rho - \mathbb{I}(r = \rho)} \\
+        & - \sum_{\mathcal P \in \mathbb P(\mathcal R) \setminus \varnothing} \left[ |\mathcal P| - 1 \right] \prod_{r \in \mathcal P} s_r \prod_{r \in \mathcal R \setminus \mathcal P} \left[ {n_r + s_r - 1 \choose n_r} - s_r \right] \\
+        & + \sum_{r \in \mathcal R} d_r \prod_{\rho \in \mathcal R} {n_\rho + s_\rho - 1 - \mathbb{I}(r = \rho) \choose n_\rho - \mathbb{I}(r = \rho)} \\
+        & + \sum_{r \in \mathcal R} d_r \sum_{\rho \in \mathcal R} s_\rho \prod_{o \in \mathcal R} {n_o + s_o - 1 - \mathbb{I}(r = o) - \mathbb{I}(\rho = o) \choose n_o - \mathbb{I}(r = o) - \mathbb{I}(\rho = o)}
+    \end{split}
+\end{equation*}
+The first term is the number of payoffs in the full game, which is a slight overestimate of the DPR profiles.
+The second term is the amount of overestimate correcting the number of full game profiles.
+The third term is the number of profiles for the deviators' payoffs.
+The last term is the number of profiles for the non-deviators' payoffs when there is a deviator.
+Note, that for $|\mathcal R|$ items in the second term have $|P| = 1$, and so are multiplied by 0 and can be omitted when actually computing the summation.
+
+\end{document}
