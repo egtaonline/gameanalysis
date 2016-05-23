@@ -1,35 +1,90 @@
 """Module for computing player reductions"""
+import itertools
+
+import numpy as np
+
 from gameanalysis import collect
 from gameanalysis import profile
 from gameanalysis import rsgame
-from gameanalysis import subgame
 
 
-def _sym_hr_full_prof(hr_profile, full_players, reduced_players):
-    """Expands symmetric hierarchal profile
+# TODO A lot of these methods use dictionaries which is fine for a single
+# profile, but there are likely vectorized routines that will work faster for
+# large groups of profiles.
+
+
+def _expand_sym_profile(profile, full_players, reduced_players):
+    """Expands symmetric hierarchical profile
 
     In the event that `full_players` isn't divisible by `reduced_players`, we
     first assign by rounding error and break ties in favor of more-played
     strategies. The final tie-breaker is alphabetical order.
     """
-    full_profile = {s: c * full_players // reduced_players
-                    for s, c in hr_profile.items()}
-    unassigned = full_players - sum(full_profile.values())
+    strats, players = zip(*sorted(profile.items()))
+    expanded_players = _expand_sym_array_profile(np.array(players, dtype=int),
+                                                 full_players, reduced_players)
+    return dict(zip(strats, map(int, expanded_players)))
+
+
+def _expand_sym_array_profile(profile, full_players, reduced_players):
+    """Expands an array profile, order of strategies must be sorted
+
+    In the event that `full_players` isn't divisible by `reduced_players`, we
+    first assign by rounding error and break ties in favor of more-played
+    strategies. The final tie-breaker is alphabetical order."""
+    assert profile.sum() == reduced_players
+    # Maximum prevents divide by zero error; equivalent to + eps
+    expand_prof = profile * full_players // np.maximum(reduced_players, 1)
+    unassigned = full_players - expand_prof.sum()
     if unassigned == 0:
-        return full_profile
+        return expand_prof
 
-    # Deal with non-divisible strategy counts
-    rounding_error = {s: c * full_players / reduced_players - full_profile[s]
-                      for s, c in hr_profile.items()}
+    error = profile * full_players / reduced_players - expand_prof
+    inds = np.lexsort((np.arange(profile.size), -profile, -error))
+    expand_prof[inds[:unassigned]] += 1
+    return expand_prof
 
-    strat_order = sorted(
-        hr_profile.keys(),
-        # order by rounding error, more played, alphabetical
-        key=lambda k: (-rounding_error[k], -hr_profile[k], k))
 
-    for s in strat_order[:unassigned]:
-        full_profile[s] += 1
-    return full_profile
+def _reduce_sym_profile(profile, full_players, reduced_players):
+    """Reduce a symmetric hierarchical profile
+
+    This returns none if there is no profile, and the reduced profile
+    otherwise. This maintains the invariant that _reduce_sym_prof .
+    _expand_sym_prof is the identity. The reverse is also the identity if a
+    reduced profile exists."""
+    strats, players = zip(*sorted(profile.items()))
+    reduced_players = _reduce_sym_array_profile(np.array(players, dtype=int),
+                                                full_players, reduced_players)
+    return (dict(zip(strats, map(int, reduced_players)))
+            if reduced_players is not None else None)
+
+
+def _reduce_sym_array_profile(profile, full_players, reduced_players):
+    """Same as reduce sym array profile but for arrays"""
+    assert profile.sum() == full_players
+    red_prof = np.ceil(profile * reduced_players / full_players).astype(int)
+    overassigned = red_prof.sum() - reduced_players
+    if overassigned == 0:
+        return (red_prof if np.all(profile == _expand_sym_array_profile(
+            red_prof, full_players, reduced_players)) else None)
+
+    alternate = np.ceil((profile - 1) * reduced_players / full_players)\
+        .astype(int)
+
+    # TODO this is expensive, iterating through all combinations. Potentially
+    # there's a way to do a sort to see if one such assignment exists?
+    diff = np.nonzero(alternate != red_prof)[0]
+    for inds in itertools.combinations(diff, overassigned):
+        possibility = profile.copy()
+        possibility[list(inds)] -= 1
+        possibility = np.ceil(possibility * reduced_players / full_players)\
+            .astype(int)
+        expanded = _expand_sym_array_profile(possibility, full_players,
+                                             reduced_players)
+        if np.all(profile == expanded):
+            return possibility
+
+    return None
 
 
 class Hierarchical(object):
@@ -83,11 +138,18 @@ class DeviationPreserving(object):
     def __init__(self, full_players, reduced_players):
         self.full_players = collect.frozendict(full_players)
         self.reduced_players = collect.frozendict(reduced_players)
+        assert all(c > 0 for c in self.reduced_players.values()), \
+            "All counts must be greater than zero"
+        assert all(self.full_players[r] >= c for r, c
+                   in self.reduced_players.items()), \
+            "Can't reduce to a greater number of players"
+        assert all(self.full_players[r] == 1 or c > 1 for r, c
+                   in self.reduced_players.items()), \
+            "Can't dpr to 1 unless that's the full player count"
 
     def expand_profile(self, dpr_profile):
         """Returns the full game profile whose payoff determines that of strat in the
         reduced game profile"""
-
         for dev_role, dev_strategies in dpr_profile.items():
             for dev_strategy in dev_strategies:
                 full_profile = {}
@@ -95,62 +157,50 @@ class DeviationPreserving(object):
                     if role == dev_role:
                         opp_prof = dict(strat_counts)
                         opp_prof[dev_strategy] -= 1
-                        opp_prof = _sym_hr_full_prof(
+                        opp_prof = _expand_sym_profile(
                             opp_prof,
                             self.full_players[role] - 1,
-                            max(1, self.reduced_players[role] - 1))
+                            self.reduced_players[role] - 1)
                         opp_prof[dev_strategy] += 1
 
                     else:
-                        opp_prof = _sym_hr_full_prof(
+                        opp_prof = _expand_sym_profile(
                             strat_counts, self.full_players[role],
                             self.reduced_players[role])
 
                     full_profile[role] = opp_prof
                 yield profile.Profile(full_profile)
 
-    def _profile_contributions(self, full_profile):
+    def _profile_contributions(self, full_prof):
         """Returns a generator of dpr profiles and the role-strategy pair that
         contributes to it"""
-        # TODO Right now this is written only for exact DPR
-        # TODO This also means that "close" profiles don't count at all
-        assert all(count == 1 or
-                   (count - 1) % (self.reduced_players[role] - 1) == 0
-                   for role, count in self.full_players.items()), \
-            "Currently only exact DPR is implemented"
-        assert len(self.full_players) == 1 or all(
-            count % self.reduced_players[role] == 0 for role, count in
-            self.full_players.items()), \
-            "Currently only exact DPR is implemented"
+        # TODO This can be made more efficient because it will never return 2
+        # or more profiles unless they are "pure"
+        hierarchical_prof = {
+            role: _reduce_sym_profile(prof, self.full_players[role],
+                                      self.reduced_players[role])
+            for role, prof in full_prof.items()}
 
-        fracts = {role: count // self.reduced_players[role]
-                  for role, count in self.full_players.items()}
-        for role, strats in full_profile.items():
-            r_fracts = dict(fracts)
-            # The conditional fixed the case when one player is reduced down to
-            # one player, but it does not support reducing n > 1 players down
-            # to 1, which requires a hierarchical reduction.
-            r_fracts[role] = (
-                1 if self.full_players[role] == self.reduced_players[role] == 1
-                else ((self.full_players[role] - 1)
-                      // (self.reduced_players[role] - 1)))
+        for role, strats in full_prof.items():
+            full = self.full_players[role] - 1
+            red = self.reduced_players[role] - 1
 
-            for strat in strats:
-                prof_copy = dict(full_profile)
-                prof_copy[role] = dict(strats)
-                prof_copy[role][strat] -= 1
+            if red == 0:
+                # One player in role
+                if all(p is not None for p in hierarchical_prof.values()):
+                    strat = next(iter(strats))
+                    yield profile.Profile(hierarchical_prof), role, strat
 
-                if all(all(cnt % r_fracts[r] == 0 for cnt in ses.values())
-                       for r, ses in prof_copy.items()):
-                    # The inner loop needs to be a list, because it's
-                    # evaluation depends on the current value of r, and
-                    # therefore can't be lazily evaluated.
-                    red_prof = profile.Profile(
-                        (r, {s: (cnt // r_fracts[r]) +
-                             (1 if r == role and s == strat else 0)
-                             for s, cnt in ses.items()})
-                        for r, ses in prof_copy.items())
-                    yield red_prof, role, strat
+            else:
+                for strat in strats:
+                    toreduce = dict(strats)
+                    toreduce[strat] -= 1
+                    reduced = _reduce_sym_profile(toreduce, full, red)
+                    prof = hierarchical_prof.copy()
+                    prof[role] = reduced
+                    if all(p is not None for p in prof.values()):
+                        reduced[strat] += 1
+                        yield profile.Profile(prof), role, strat
 
     def reduce_profile(self, full_profile):
         """Returns dpr profiles that contribute to the full profile
@@ -189,8 +239,8 @@ class DeviationPreserving(object):
         # Better to make this explicit.
         profiles = [prof.to_input_profile(payoff_map)
                     for prof, payoff_map in profile_map.items()
-                    if (subgame.support_set(payoff_map)
-                        == subgame.support_set(prof))]
+                    if (profile.support_set(payoff_map)
+                        == profile.support_set(prof))]
 
         return rsgame.Game.from_payoff_format(self.reduced_players,
                                               game.strategies, profiles)

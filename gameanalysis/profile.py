@@ -216,3 +216,16 @@ def simplex_project(game, mixture):
                 np.arange(game.astrategies.size))
     lam = rho[max_inds].repeat(game.astrategies)
     return np.maximum(mixture + lam, 0)
+
+
+def support_set(strategies):
+    """Takes a support like object and returns a set representing the support
+
+    A support like object is a dict mapping role to an iterable of
+    strategies. This includes cases when the iterable of strategies is another
+    mapping type to any sort of information, e.g. a profile. The support set is
+    simply a set of (role, strategy) that have support in this profile type.
+
+    """
+    return frozenset(itertools.chain.from_iterable(
+        ((r, s) for s in ses) for r, ses in strategies.items()))

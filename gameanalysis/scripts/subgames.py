@@ -2,6 +2,7 @@
 import argparse
 import json
 
+from gameanalysis import profile
 from gameanalysis import rsgame
 from gameanalysis import subgame
 
@@ -21,7 +22,7 @@ def _parse_text_spec(game, spec):
 
 
 def _parse_index_spec(game, spec):
-    index_list = sorted(subgame.support_set(game.strategies))
+    index_list = sorted(profile.support_set(game.strategies))
     subg = {}
     for index in spec:
         role, strat = index_list[index]

@@ -13,6 +13,7 @@ import numpy as np
 import scipy.misc as spm
 
 from gameanalysis import collect
+from gameanalysis import profile
 from gameanalysis import rsgame
 from gameanalysis import utils
 
@@ -28,19 +29,6 @@ def pure_subgames(game):
     return (EmptySubgame(game, dict(rs)) for rs in itertools.product(
         *([(r, {s}) for s in sorted(ss)] for r, ss
           in game.strategies.items())))
-
-
-def support_set(strategies):
-    """Takes a support like object and returns a set representing the support
-
-    A support like object is a dict mapping role to an iterable of
-    strategies. This includes cases when the iterable of strategies is another
-    mapping type to any sort of information, e.g. a profile. The support set is
-    simply a set of (role, strategy) that have support in this profile type.
-
-    """
-    return frozenset(itertools.chain.from_iterable(
-        ((r, s) for s in ses) for r, ses in strategies.items()))
 
 
 @utils.compare_by_key(lambda sub: sub._key())
@@ -132,7 +120,7 @@ class EmptySubgame(rsgame.EmptyGame):
 
     def support_set(self):
         if self._support_set is None:
-            self._support_set = support_set(self.strategies)
+            self._support_set = profile.support_set(self.strategies)
         return self._support_set
 
     def _key(self):
@@ -257,7 +245,7 @@ def maximal_subgames(game):
         # always find the largest subset first, but subsequent 'maximal'
         # subsets may actually be subsets of previous maximal subsets.
         if maximal:
-            as_set = support_set(sub.strategies)
+            as_set = profile.support_set(sub.strategies)
             if not any(as_set.issubset(max_sub) for max_sub in maximals):
                 maximals.append(as_set)
                 yield sub
