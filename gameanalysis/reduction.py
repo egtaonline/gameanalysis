@@ -1,6 +1,4 @@
 """Module for computing player reductions"""
-import itertools
-
 import numpy as np
 
 from gameanalysis import collect
@@ -64,27 +62,53 @@ def _reduce_sym_array_profile(profile, full_players, reduced_players):
     assert profile.sum() == full_players
     red_prof = np.ceil(profile * reduced_players / full_players).astype(int)
     overassigned = red_prof.sum() - reduced_players
-    if overassigned == 0:
-        return (red_prof if np.all(profile == _expand_sym_array_profile(
-            red_prof, full_players, reduced_players)) else None)
 
+    # See if standard rounding works
+    if overassigned == 0:
+        expanded = _expand_sym_array_profile(red_prof, full_players,
+                                             reduced_players)
+        return red_prof if np.all(profile == expanded) else None
+
+    # Rounding doesn't work, so we need to try and find a consistent set of
+    # strategies that we added a tie breaker to in order to in order to get the
+    # reduction
+
+    # What if every strategy was tie broken
     alternate = np.ceil((profile - 1) * reduced_players / full_players)\
         .astype(int)
 
-    # TODO this is expensive, iterating through all combinations. Potentially
-    # there's a way to do a sort to see if one such assignment exists?
+    # The strategies that could have been tie broken
     diff = np.nonzero(alternate != red_prof)[0]
-    for inds in itertools.combinations(diff, overassigned):
-        possibility = profile.copy()
-        possibility[list(inds)] -= 1
-        possibility = np.ceil(possibility * reduced_players / full_players)\
-            .astype(int)
-        expanded = _expand_sym_array_profile(possibility, full_players,
-                                             reduced_players)
-        if np.all(profile == expanded):
-            return possibility
 
-    return None
+    if diff.size < overassigned:
+        # Clearly impossible
+        return None
+
+    # Here we create a vector of all of the untiebroken strategies, and the
+    # strategies that might have been tie broken. We analyze the sorting
+    # criteria for expanding the profile, and see if a consistent selection of
+    # tie broken strategies exists.
+    error = np.concatenate([
+        red_prof * full_players / reduced_players - profile,
+        alternate[diff] * full_players / reduced_players - profile[diff] + 1])
+    key = (np.concatenate((np.arange(red_prof.size), diff)),
+           -np.concatenate((red_prof, alternate[diff])),
+           -error)
+    lexinds = np.lexsort(key)
+    # True are tie broken strategies
+    group = (lexinds // red_prof.size).astype(bool)
+    # These are the strategy indexes
+    indexes = lexinds % red_prof.size
+    incrimented = np.nonzero(group)[0][:overassigned]
+    # These are the indexes that could be tie broken
+    inc_inds = diff[indexes[incrimented]]
+    start = incrimented[-1] + 1
+    # This checks that inc_inds is a valid selection
+    valid = (np.setdiff1d(indexes[start:][~group[start:]], inc_inds, True).size
+             == red_prof.size - overassigned)
+    red_prof[inc_inds] = alternate[inc_inds]
+
+    return red_prof if valid else None
 
 
 class Hierarchical(object):

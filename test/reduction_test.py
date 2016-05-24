@@ -1,4 +1,5 @@
 import itertools
+import os
 import random
 
 from gameanalysis import gamegen
@@ -224,7 +225,10 @@ def approximate_dpr_reduce_game_test():
     (2, [1, 2], [2, 1]),
     (2, [1, 4], [2, 1]),
     (2, [4, 9], [3, 2]),
-], repeat=20)
+] + ([
+    (3, 3, 3),
+    (3, [3, 4, 9], [4, 3, 2]),
+] if os.getenv('BIG_TESTS') == 'ON' else []), repeat=20)
 def random_approximate_dpr_test(roles, players, strategies):
     """Test approximate dpr preserves completeness on random games"""
     game = gamegen.role_symmetric_game(roles, players, strategies)
