@@ -83,13 +83,7 @@ class Profile(_RoleStratMap):
         This requires that the payoff map contains data for every role and
         strategy in the profile. An input profile looks like {role: [(strat,
         count, payoffs)]}, and is necessary to construct a game object."""
-        def wrap(x):
-            if isinstance(x, abc.Sized):
-                return x
-            else:
-                return [x]
-
-        return {role: [(strat, counts, wrap(payoff_map[role][strat]))
+        return {role: [(strat, counts, payoff_map[role][strat])
                        for strat, counts in strats.items()]
                 for role, strats in self.items()}
 

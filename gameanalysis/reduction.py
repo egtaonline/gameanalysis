@@ -144,10 +144,17 @@ class Hierarchical(object):
             "The games players don't match up with this reduction"
         # Would need to be converted into a list anyways, so we just get it
         # out of the way. This prevents warning
-        profiles = [red_prof.to_input_profile(game.get_payoffs(profile))
-                    for red_prof, profile in self._hr_profiles(game)]
-        return rsgame.Game.from_payoff_format(self.reduced_players,
-                                              game.strategies, profiles)
+        profiles = []
+        for prof, payoffs in game.sample_profile_payoffs():
+            red_prof = {role: _reduce_sym_profile(strats,
+                                                  self.full_players[role],
+                                                  self.reduced_players[role])
+                        for role, strats in prof.items()}
+            if not any(strats is None for strats in red_prof.values()):
+                profiles.append(profile.Profile(red_prof)
+                                .to_input_profile(payoffs))
+        return game.from_payoff_format(self.reduced_players,
+                                       game.strategies, profiles)
 
     def __repr__(self):
         return '{name}({arg1}, {arg2})'.format(
@@ -240,7 +247,6 @@ class DeviationPreserving(object):
         reduce a role to is 2, unless the role only has one player to begin
         with.
         """
-        # TODO handle SampleGames
         assert game.players == self.full_players, \
             ("The games players don't match up with this reduction "
              "Game: {game} Reduction: {reduction}").format(
@@ -251,13 +257,12 @@ class DeviationPreserving(object):
         # so we can keep multiple observations, but it's not clear how well we
         # can take advantage of this.
         profile_map = {}
-        for prof in game:
-            payoffs = game.get_payoffs(prof)
+        for prof, payoffs in game.sample_profile_payoffs():
             for red_prof, role, strat in self._profile_contributions(prof):
                 (profile_map.setdefault(red_prof, {})
                  .setdefault(role, {})
                  .setdefault(strat, [])
-                 .append(payoffs[role][strat]))
+                 .extend(payoffs[role][strat]))
 
         # This could be a generator, but it'd be turned into a list anyways.
         # Better to make this explicit.
@@ -266,8 +271,9 @@ class DeviationPreserving(object):
                     if (profile.support_set(payoff_map)
                         == profile.support_set(prof))]
 
-        return rsgame.Game.from_payoff_format(self.reduced_players,
-                                              game.strategies, profiles)
+        # Return type is the same type as the original game
+        return game.from_payoff_format(self.reduced_players,
+                                       game.strategies, profiles)
 
     def __repr__(self):
         return '{name}({arg1}, {arg2})'.format(

@@ -149,8 +149,8 @@ def _samples_profile_v4_from_json(prof_json):
             payoffs = strat_counts.setdefault((strat, count), [])
             payoffs.append(payoff)
 
-    return {role: {(strat, count, payoff) for (strat, count), payoff
-                   in strats.items()}
+    return {role: [(strat, count, payoff) for (strat, count), payoff
+                   in strats.items()]
             for role, strats in prof.items()}
 
 

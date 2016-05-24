@@ -735,11 +735,25 @@ class Game(EmptyGame):
         """Returns tuples of profiles and payoffs"""
         iterable = zip(self._aprofiles, self._apayoffs)
         if as_array or as_array is None:
+            # TODO maybe this should be a structured array
             return iterable
         else:
             return ((self.as_profile(prof, verify=False),
                      self._payoff_dict(prof, payoffs))
                     for prof, payoffs in iterable)
+
+    def sample_profile_payoffs(self, as_array=False):
+        """Returns tuples of profiles and payoffs
+
+        Payoffs are in list format even though there is only one """
+        iterable = zip(self._aprofiles, self._apayoffs[..., None])
+        if as_array or as_array is None:
+            return iterable
+        else:
+            return ((self.as_profile(counts, verify=False),
+                     self._payoff_dict(counts, payoffs,
+                                       lambda l: list(map(float, l))))
+                    for counts, payoffs in iterable)
 
     def get_payoffs(self, profile, as_array=False):
         """Returns a dictionary mapping roles to strategies to payoff"""
@@ -1037,7 +1051,7 @@ class SampleGame(Game):
                         warnings.warn("Truncating observation data")
 
                     aprofile[i] = count
-                    apayoffs[i] = np.average(payoffs)
+                    apayoffs[i] = payoffs[:num_samples]
 
             lst_profs, lst_pays = sample_map.setdefault(num_samples, ([], []))
             lst_profs.append(aprofile[None])
