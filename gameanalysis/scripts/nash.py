@@ -5,7 +5,7 @@ from gameanalysis import rsgame
 from gameanalysis import nash
 
 
-def update_parser(parser):
+def update_parser(parser, base):
     parser.description = """Computes Nash equilibria from the input file and
 creates a json file of the results."""
     parser.add_argument('--regret', '-r', metavar='<thresh>', type=float,

@@ -26,7 +26,7 @@ _TYPE = {
 }
 
 
-def update_parser(parser):
+def update_parser(parser, base):
     parser.description = """Compute payoff relative information in input game
 of specified profiles."""
     parser.add_argument('profiles', metavar='<profile-file>',

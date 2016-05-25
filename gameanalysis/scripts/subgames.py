@@ -30,7 +30,7 @@ def _parse_index_spec(game, spec):
     return {role: list(strats) for role, strats in subg.items()}
 
 
-def update_parser(parser):
+def update_parser(parser, base):
     parser.description = """Extract subgames and optionally detects all
 complete subgames. All subgame specifications will be concatentated, resulting
 in a list of subgames."""

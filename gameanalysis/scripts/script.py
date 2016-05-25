@@ -11,14 +11,17 @@ from gameanalysis.scripts import convert
 from gameanalysis.scripts import payoff
 
 
-_PARSER = argparse.ArgumentParser(prog='ga', description="""Command line access
+_BASE = argparse.ArgumentParser(add_help=False)
+_BASE_GROUP = _BASE.add_argument_group('game analysis arguments')
+_BASE_GROUP.add_argument('--input', '-i', metavar='<input-file>',
+                         default=sys.stdin, type=argparse.FileType('r'),
+                         help="""Input file for script.  (default: stdin)""")
+_BASE_GROUP.add_argument('--output', '-o', metavar='<output-file>',
+                         default=sys.stdout, type=argparse.FileType('w'),
+                         help="""Output file for script. (default: stdout)""")
+
+_PARSER = argparse.ArgumentParser(prog='ga', parents=[_BASE], description="""Command line access
                                   to the game analysis toolkit""")
-_PARSER.add_argument('--input', '-i', metavar='<input-file>',
-                     default=sys.stdin, type=argparse.FileType('r'),
-                     help="""Input file for script.  (default: stdin)""")
-_PARSER.add_argument('--output', '-o', metavar='<output-file>',
-                     default=sys.stdout, type=argparse.FileType('w'),
-                     help="""Output file for script. (default: stdout)""")
 _SUBPARSERS = _PARSER.add_subparsers(title='Subcommands', dest='command',
                                      help="""The specific aspect of the toolkit
                                      to interact with. See each possible
@@ -29,7 +32,7 @@ _SUBPARSERS.required = True
 class help(object):
 
     @staticmethod
-    def update_parser(parser):
+    def update_parser(parser, base):
         parser.add_argument('subcommand', metavar='command', nargs='?',
                             help="""Command to get help on""")
 
@@ -57,8 +60,8 @@ _SUBCOMMANDS = {
 
 def main():
     for name, module in _SUBCOMMANDS.items():
-        parser = _SUBPARSERS.add_parser(name)
-        module.update_parser(parser)
+        parser = _SUBPARSERS.add_parser(name, parents=[_BASE])
+        module.update_parser(parser, _BASE)
 
     args = _PARSER.parse_args()
     _SUBCOMMANDS[args.command].main(args)

@@ -28,7 +28,7 @@ _TYPE = {
 _TYPE['ne'] = _TYPE['gains']  # These are the same
 
 
-def update_parser(parser):
+def update_parser(parser, base):
     parser.description = """Compute regret in input game of specified
 profiles."""
     parser.add_argument('profiles', metavar='<profile-file>',

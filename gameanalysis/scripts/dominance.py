@@ -17,7 +17,7 @@ _MISSING = {
 }
 
 
-def update_parser(parser):
+def update_parser(parser, base):
     parser.description = """Compute dominated strategies, or subgames with only
 undominated strategies."""
     parser.add_argument('--format', '-f', choices=('game', 'strategies'),

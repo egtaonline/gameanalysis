@@ -3,7 +3,6 @@ import numpy as np
 
 from gameanalysis import collect
 from gameanalysis import profile
-from gameanalysis import rsgame
 
 
 # TODO A lot of these methods use dictionaries which is fine for a single

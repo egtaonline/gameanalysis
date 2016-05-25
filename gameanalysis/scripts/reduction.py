@@ -37,7 +37,7 @@ _REDUCTIONS = {
 }
 
 
-def update_parser(parser):
+def update_parser(parser, base):
     parser.description = """Create reduced game files from input game files."""
     parser.add_argument('--type', '-t', choices=_REDUCTIONS, default='dpr',
                         help="""Type of reduction to perform. (default:

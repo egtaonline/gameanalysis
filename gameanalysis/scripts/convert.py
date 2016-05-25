@@ -9,7 +9,7 @@ _OUTPUT_TYPE = {
 }
 
 
-def update_parser(parser):
+def update_parser(parser, base):
     parser.description = """Converts between game data formats. Currently this
 is only useful for modernizing old game json formats."""
     parser.add_argument('--format', '-f', choices=_OUTPUT_TYPE, default='json',

@@ -1,5 +1,7 @@
 """Module for creating random games"""
+import argparse
 import json
+import sys
 
 from gameanalysis import gamegen
 
@@ -56,40 +58,62 @@ strategies for a role, specified as many times as there are roles. e.g. "1 4 3
 _GAME_TYPES = {
     'uzs': ZeroSum,
     'usym': Symmetric,
-    'ursym': RoleSymmetric
+    'ursym': RoleSymmetric,
 }
 
 
-def update_parser(parser):
+def update_parser(parser, base):
+    sub_base = argparse.ArgumentParser(add_help=False, parents=[base])
+    base_group = sub_base.add_argument_group('game gen arguments')
+    base_group.add_argument('--noise', choices=('none', 'normal', 'gauss_mix'),
+                            default='none', help="""Noise function. (default:
+                            %(default)s)""")
+    base_group.add_argument('--noise_args', nargs='+', default=[],
+                            metavar='<arg>', help="""Arguments to be passed to
+                            the noise function.""")
+    base_group.add_argument('--cool', '-c', action='store_true', help="""Use
+                            role and strategy names that come from a text file
+                            instead of indexed names.  This produces more "fun"
+                            games as thy have more interesting names, but it is
+                            harder to use in an automated sense because the
+                            names can't be predicted.""")
+    base_group.add_argument('--normalize', '-n', action='store_true',
+                            help="""Normalize the game payoffs so that the
+                            minimum payoff is 0 and the maximum payoff is 1""")
+
     parser.description = """Generate random games. Input is unused"""
-    parser.add_argument('--noise', choices=('none', 'normal', 'gauss_mix'),
-                        default='none', help="""Noise function. (default:
-                        %(default)s)""")
-    parser.add_argument('--noise_args', nargs='+', default=[], metavar='<arg>',
-                        help="""Arguments to be passed to the noise
-                        function.""")
-    parser.add_argument('--cool', '-c', action='store_true', help="""Use role
-                        and strategy names that come from a text file instead
-                        of indexed names. This produces more "fun" games as thy
-                        have more interesting names, but it is harder to use in
-                        an automated sense because the names can't be
-                        predicted.""")
-    parser.add_argument('--normalize', '-n', action='store_true',
-                        help="""Normalize the game payoffs so that the minimum
-                        payoff is 0 and the maximum payoff is 1""")
 
     subcommands = parser.add_subparsers(title='Generator types', dest='type',
                                         help="""The game generation function to
                                         use.""")
     subcommands.required = True
 
+    class Help(object):
+
+        @staticmethod
+        def update_parser(parser):
+            parser.add_argument('gametype', metavar='game-type', nargs='?',
+                                help="""Game type to get help on""")
+
+        @staticmethod
+        def create(args):
+            if args.gametype is None:
+                game = parser
+            else:
+                game = subcommands.choices[args.gametype]
+            game.print_help()
+            sys.exit(0)
+
+    _GAME_TYPES['help'] = Help
+
     for name, cls in _GAME_TYPES.items():
-        sub_parser = subcommands.add_parser(name)
+        sub_parser = subcommands.add_parser(name, parents=[sub_base])
         cls.update_parser(sub_parser)
 
 
 def main(args):
     game = _GAME_TYPES[args.type].create(args)
+
     if args.normalize:
         game = game.normalize()
 

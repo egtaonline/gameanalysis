@@ -1,7 +1,6 @@
 """Methods for interacting with mappings from role to strategy to value"""
 import collections
 import itertools
-from collections import abc
 
 import numpy as np
 
