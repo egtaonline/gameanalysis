@@ -20,7 +20,7 @@ ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
 
 @testutils.apply(repeat=20)
 def pure_prisoners_dilemma_test():
-    game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
+    game = gamegen.sym_2p2s_game(2, 0, 3, 1).normalize()  # prisoners dilemma
     eqa = list(nash.pure_nash(game, as_array=True))
 
     assert len(eqa) == 1, "didn't find exactly one equilibria in pd"
@@ -31,7 +31,7 @@ def pure_prisoners_dilemma_test():
 
 @testutils.apply(zip(ALL_METHODS), repeat=20)
 def mixed_prisoners_dilemma_test(methods):
-    game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
+    game = gamegen.sym_2p2s_game(2, 0, 3, 1).normalize()  # prisoners dilemma
     eqa = list(nash.mixed_nash(game, dist_thresh=5e-2, as_array=True,
                                processes=1, **methods))
 

@@ -10,7 +10,7 @@ Setup
 You can follow the instructions below for how to setup your environment.
 Alternatively, if you're using ubuntu you should just be able to execute `make
 ubuntu-setup` from this directory to properly setup your environment. You will
-need root privileges to properly setup your environment.
+need root privileges to execute this script.
 
 Before this library can be used, you need to install several dependencies.
 
@@ -25,32 +25,27 @@ $ sudo apt-get install python3 libatlas-base-dev gfortran
 $ sudo pip3 install virtualenv
 ```
 
-From here, setup virtualenv in this directory, and activate it.
+On mac, similar programs should be able to be installed with [`brew`](brew.sh).
+From here, setup virtualenv in this directory, and activate it with
 
 ```
-$ cd this/directory
-$ virtualenv -p python3 .
-$ . bin/activate
+make setup
 ```
 
-Now install any other python requirements.
+At this point, you should run the tests to make sure everything was setup properly.
+Executing `make test` should run all of the tests. If you see something like:
 
 ```
-$ pip3 install -r requirements.txt
-```
+bin/nosetests --rednose test
+.............................................................................
 
-At this point, you should run the tests to make sure everything was setup properly. Executing `make test` should run all of the tests. If you see something like:
-
-```
-. bin/activate && nosetests test
-....................................................
-----------------------------------------------------------------------
-Ran <xxx> tests in <xxx>s
-
-OK
+3221 tests run in 139.4 seconds (3221 tests passed)
 ```
 
 Then all of the tests passed!
+If you get failures with finding equilibria, it's probably fine.
+Those tests can fail occasionally due to the random initialization.
+Note, this may take a while to run.
 
 
 Usage
@@ -67,6 +62,25 @@ Testing
 All of the tests can be run with `make test`.
 If you want more fine grained control, you can run `bin/nosetests test.<unit-test-file-name>[:test-method-name]` to execute only a single test file, or or only a specific method from within a file.
 You may also want to add the option `--nocapture` or `-s` to output `sysout` and `syserr`, which are usually captured.
+Additionally, `make coverage` will run all of the tests and output a report on the coverage, which will look something like:
+
+```
+Name                        Stmts   Miss  Cover   Missing
+---------------------------------------------------------
+gameanalysis.py                 0      0   100%
+gameanalysis/collect.py        73      0   100%
+gameanalysis/gamegen.py       164      0   100%
+gameanalysis/gameio.py         98     77    21%   12-26, 51-54, 59-60, 67-87, 92-101, 106-115, 120-131, 138-152
+gameanalysis/nash.py           44      0   100%
+gameanalysis/profile.py       100      0   100%
+gameanalysis/reduction.py     128      0   100%
+gameanalysis/regret.py         27      0   100%
+gameanalysis/rsgame.py        506      0   100%
+gameanalysis/subgame.py        78      0   100%
+gameanalysis/utils.py         122      0   100%
+---------------------------------------------------------
+TOTAL                        1340     77    94%
+```
 
 
 Games
@@ -153,3 +167,6 @@ To Do
   Regret is easier to throw away than recalculate.
 - Remove static constructors for games, and instead have the constructor choose
   the appropriate one based on type info of passed arguments.
+- Get parallel testing working.
+  Rednose, which isn't that necessary, seems ti interfere with the parallel module.
+  It also seems like generator tests may not be run.
