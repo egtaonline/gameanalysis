@@ -36,12 +36,11 @@ profiles."""
                         from input games for which regrets should be
                         calculated. This file needs to be a json list of
                         profiles""")
-    parser.add_argument('-t', '--type', metavar='type', default='regret',
-                        choices=_TYPE, help="""What to return. regret: returns
-                        the the regret of the profile; gains: returns a json
-                        object of the deviators gains for every deviation; ne:
-                        return the "nash equilibrium regrets", these are
-                        identical to gains. (default: %(default)s)""")
+    parser.add_argument('-t', '--type', default='regret', choices=_TYPE,
+                        help="""What to return. regret: returns the the regret
+of the profile; gains: returns a json object of the deviators gains for every
+deviation; ne: return the "nash equilibrium regrets", these are identical to
+                        gains. (default: %(default)s)""")
 
 
 def main(args):

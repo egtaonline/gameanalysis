@@ -1,14 +1,16 @@
-import sys
 import argparse
+import collections
+import sys
 
-from gameanalysis.scripts import nash
-from gameanalysis.scripts import reduction
-from gameanalysis.scripts import subgames
-from gameanalysis.scripts import gamegen
-from gameanalysis.scripts import regret
-from gameanalysis.scripts import dominance
+from gameanalysis.scripts import bootstrap
 from gameanalysis.scripts import convert
+from gameanalysis.scripts import dominance
+from gameanalysis.scripts import gamegen
+from gameanalysis.scripts import nash
 from gameanalysis.scripts import payoff
+from gameanalysis.scripts import reduction
+from gameanalysis.scripts import regret
+from gameanalysis.scripts import subgames
 
 
 _BASE = argparse.ArgumentParser(add_help=False)
@@ -24,8 +26,12 @@ _PARSER = argparse.ArgumentParser(prog='ga', parents=[_BASE], description="""Com
                                   to the game analysis toolkit""")
 _SUBPARSERS = _PARSER.add_subparsers(title='Subcommands', dest='command',
                                      help="""The specific aspect of the toolkit
-                                     to interact with. See each possible
-                                     command for help.""")
+to interact with. See each possible command for details. boot - bootstrap, conv
+- game conversion, dom - strategy dominance, gen - generate games, nash -
+                                     compute nash equilibria, pay - compute
+                                     profile payoffs, red - reduce games, reg -
+                                     compute profile regret, sub - compute
+                                     subgames, help - get help on commands.""")
 _SUBPARSERS.required = True
 
 
@@ -45,17 +51,18 @@ class help(object):
         parser.print_help()
 
 
-_SUBCOMMANDS = {
-    'nash': nash,
-    'red': reduction,
-    'sub': subgames,
-    'reg': regret,
-    'dom': dominance,
-    'gen': gamegen,
-    'conv': convert,
-    'pay': payoff,
-    'help': help,
-}
+_SUBCOMMANDS = collections.OrderedDict([
+    ('boot', bootstrap),
+    ('conv', convert),
+    ('dom', dominance),
+    ('gen', gamegen),
+    ('nash', nash),
+    ('pay', payoff),
+    ('red', reduction),
+    ('reg', regret),
+    ('sub', subgames),
+    ('help', help),
+])
 
 
 def main():
