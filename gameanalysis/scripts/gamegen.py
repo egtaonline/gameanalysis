@@ -74,6 +74,9 @@ def update_parser(parser):
                         have more interesting names, but it is harder to use in
                         an automated sense because the names can't be
                         predicted.""")
+    parser.add_argument('--normalize', '-n', action='store_true',
+                        help="""Normalize the game payoffs so that the minimum
+                        payoff is 0 and the maximum payoff is 1""")
 
     subcommands = parser.add_subparsers(title='Generator types', dest='type',
                                         help="""The game generation function to
@@ -87,6 +90,8 @@ def update_parser(parser):
 
 def main(args):
     game = _GAME_TYPES[args.type].create(args)
+    if args.normalize:
+        game = game.normalize()
 
     # elif args.type == 'cs':
     #     game_func = congestion_game
