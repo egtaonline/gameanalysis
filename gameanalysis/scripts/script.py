@@ -30,12 +30,15 @@ class help(object):
 
     @staticmethod
     def update_parser(parser):
-        parser.add_argument('subcommand', metavar='<command>', help="""Command
-                            to get help on""")
+        parser.add_argument('subcommand', metavar='command', nargs='?',
+                            help="""Command to get help on""")
 
     @staticmethod
     def main(args):
-        parser = _SUBPARSERS.choices[args.subcommand]
+        if args.subcommand is None:
+            parser = _PARSER
+        else:
+            parser = _SUBPARSERS.choices[args.subcommand]
         parser.print_help()
 
 
