@@ -13,6 +13,7 @@ help:
 	@echo "update-requirements - update requirements.txt with current pip packages"
 
 test:
+	rm -f .coverage
 	bin/nosetests $(NOSEFLAGS) test$(tests)
 
 test-big: export BIG_TESTS = ON

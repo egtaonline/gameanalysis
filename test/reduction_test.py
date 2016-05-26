@@ -49,6 +49,13 @@ def dpr_test(keep_prob, game_desc):
         "full game did not have data for all profiles required of reduced"
 
 
+def dpr_repr_test():
+    red = reduction.DeviationPreserving({'r': 4}, {'r': 2})
+    repr_str = ("DeviationPreserving"
+                "(frozendict({'r': 4}), frozendict({'r': 2}))")
+    assert repr(red) == repr_str
+
+
 @testutils.apply(itertools.product(
     [0, 0.6, 1],
     [
@@ -89,6 +96,12 @@ def twins_test(keep_prob, game_desc):
         "full game did not have data for all profiles required of reduced"
 
 
+def twins_repr_test():
+    red = reduction.Twins({'r': 4})
+    repr_str = "Twins(frozendict({'r': 4}))"
+    assert repr(red) == repr_str
+
+
 @testutils.apply(itertools.product(
     [0, 0.6, 1],
     [
@@ -111,6 +124,12 @@ def hierarchical_test(keep_prob, game_desc):
 
     # Try to reduce game
     red.reduce_game(game)
+
+
+def heirerchical_repr_test():
+    red = reduction.Hierarchical({'r': 4}, {'r': 2})
+    repr_str = "Hierarchical(frozendict({'r': 4}), frozendict({'r': 2}))"
+    assert repr(red) == repr_str
 
 
 @testutils.apply(itertools.product(
@@ -146,6 +165,10 @@ def identity_test(keep_prob, game_desc):
     assert set(game) == reduced_full_profiles, \
         "full game did not match reduced game"
 
+
+def identity_repr_test():
+    red = reduction.Identity()
+    assert repr(red) == "Identity()"
 
 def sym_expand_tie_breaking_test():
     """Test that standard expansion breaks ties appropriately"""

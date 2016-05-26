@@ -116,21 +116,11 @@ class Hierarchical(object):
         self.full_players = collect.frozendict(full_players)
         self.reduced_players = collect.frozendict(reduced_players)
 
-    def _hr_profiles(self, game):
-        """Returns a generator over tuples of hr profiles and the corresponding
-        profile for payoff data.
-
-        The profile must be evenly divisible for the reduction."""
-        fracts = {role: count // self.reduced_players[role]
-                  for role, count in self.full_players.items()}
-        for prof in game:
-            if all(all(cnt % fracts[r] == 0 for cnt in ses.values())
-                   for r, ses in prof.items()):
-                red_prof = profile.Profile(
-                    (r, [(s, cnt // fracts[r])
-                         for s, cnt in ses.items()])
-                    for r, ses in prof.items())
-                yield red_prof, prof
+        assert all(c > 0 for c in self.reduced_players.values()), \
+            "All counts must be greater than zero"
+        assert all(self.full_players[r] >= c for r, c
+                   in self.reduced_players.items()), \
+            "Can't reduce to a greater number of players"
 
     def reduce_game(self, game):
         """Convert an input game to a reduced game with new players
@@ -168,6 +158,7 @@ class DeviationPreserving(object):
     def __init__(self, full_players, reduced_players):
         self.full_players = collect.frozendict(full_players)
         self.reduced_players = collect.frozendict(reduced_players)
+
         assert all(c > 0 for c in self.reduced_players.values()), \
             "All counts must be greater than zero"
         assert all(self.full_players[r] >= c for r, c
