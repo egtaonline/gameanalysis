@@ -1,9 +1,13 @@
 """Module for creating random games"""
 import argparse
+import collections
 import json
 import sys
 
+import numpy.random as rand
+
 from gameanalysis import gamegen
+from gameanalysis import rsgame
 
 
 class ZeroSum(object):
@@ -55,22 +59,82 @@ strategies for a role, specified as many times as there are roles. e.g. "1 4 3
                                            cool=args.cool)
 
 
-_GAME_TYPES = {
-    'uzs': ZeroSum,
-    'usym': Symmetric,
-    'ursym': RoleSymmetric,
-}
+class ExperimentNoise(object):
+
+    def uniform(max_width):
+        def actual(shape):
+            num_payoffs, num_samples = shape
+            width = rand.uniform(0, max_width, num_payoffs)
+            return rand.uniform(-width, width, (num_samples, num_payoffs)).T
+        return actual
+
+    def gaussian(max_width):
+        def actual(shape):
+            num_payoffs, num_samples = shape
+            width = rand.uniform(0, max_width, num_payoffs)
+            return rand.normal(0, width, (num_samples, num_payoffs)).T
+        return actual
+
+    def bimodal_gaussian(max_width):
+        def actual(shape):
+            num_payoffs, num_samples = shape
+            width = rand.uniform(0, max_width, num_payoffs)
+            spread = rand.normal(0, max_width, num_payoffs)
+            means = ((rand.rand(num_payoffs) < .5) * 2 - 1) * spread
+            return rand.normal(means, width, (num_samples, num_payoffs)).T
+        return actual
+
+    def gumbel(max_width):
+        def actual(shape):
+            num_payoffs, num_samples = shape
+            width = rand.uniform(0, max_width, num_payoffs)
+            return rand.gumbel(0, width, (num_samples, num_payoffs)).T
+        return actual
+
+    distributions = {
+        'uniform': uniform,
+        'gaussian': gaussian,
+        'bimodal': bimodal_gaussian,
+        'gumbel': gumbel,
+    }
+
+    @staticmethod
+    def update_parser(parser):
+        parser.description = """Add noise to an existing game"""
+        parser.add_argument('distribution',
+                            choices=ExperimentNoise.distributions, help="""The
+distribution to sample from. uniform: the width corresponds to the half width
+of the sampled value. gaussian: the width corresponds to the standard
+                            deviation. bimodal: gaussian mixture where the
+                            means are N(0, max-width) apart.  gumbel: the width
+                            corresponds to the shape parameter.""")
+        parser.add_argument('max_width', metavar='<max-width>', type=float,
+                            help="""The max width for the distribution. For
+                            each payoff the width is drawn uniformly from [0,
+                            max-width], and then the noise is drawn from
+                            distribution parameterized by width.""")
+        parser.add_argument('num_samples', metavar='<num-samples>', type=int,
+                            help="""The number of samples to draw for every
+                            payoff.""")
+
+    @staticmethod
+    def create(args):
+        game = rsgame.Game.from_json(json.load(args.input))
+        dist = ExperimentNoise.distributions[args.distribution](args.max_width)
+        return gamegen.add_noise(game, args.num_samples, dist)
+
+
+_GAME_TYPES = collections.OrderedDict([
+    ('uzs', ZeroSum),
+    ('usym', Symmetric),
+    ('ursym', RoleSymmetric),
+    ('noise', ExperimentNoise),
+])
 
 
 def update_parser(parser, base):
     sub_base = argparse.ArgumentParser(add_help=False, parents=[base])
     base_group = sub_base.add_argument_group('game gen arguments')
-    base_group.add_argument('--noise', choices=('none', 'normal', 'gauss_mix'),
-                            default='none', help="""Noise function. (default:
-                            %(default)s)""")
-    base_group.add_argument('--noise_args', nargs='+', default=[],
-                            metavar='<arg>', help="""Arguments to be passed to
-                            the noise function.""")
     base_group.add_argument('--cool', '-c', action='store_true', help="""Use
                             role and strategy names that come from a text file
                             instead of indexed names.  This produces more "fun"
