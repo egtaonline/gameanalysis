@@ -187,6 +187,7 @@ def simplex_project(game, mixture):
     """Project an invalid mixture array onto the simplex"""
     # This is a variant on the algorithm in utils, but works for the staggered
     # mixture arrays that we use.
+    mixture = game.as_array(mixture, float)
     sort = -mixture
     maxes = game.role_reduce(sort, ufunc=np.maximum)
     mins = game.role_reduce(sort, ufunc=np.minimum)
