@@ -7,7 +7,8 @@ from gameanalysis import profile
 
 # TODO A lot of these methods use dictionaries which is fine for a single
 # profile, but there are likely vectorized routines that will work faster for
-# large groups of profiles.
+# large groups of profiles. A game object may need to be passed into for
+# efficient array representations.
 
 
 def _expand_sym_profile(profile, full_players, reduced_players):

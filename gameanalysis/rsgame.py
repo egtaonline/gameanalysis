@@ -35,6 +35,7 @@ import warnings
 from collections import abc
 
 import numpy as np
+import numpy.random as rand
 import scipy.misc as spm
 import scipy.special as sps
 
@@ -327,6 +328,17 @@ class EmptyGame(object):
         mix = 1 / self.astrategies.repeat(self.astrategies)
         return self.as_mixture(mix, as_array=as_array, verify=False)
 
+    def random_profiles(self, mixture, num_samples=1, as_array=False):
+        """Sample pure profiles from a mixture"""
+        mixture = self.as_array(mixture, float)
+        role_samples = [rand.multinomial(n, probs, num_samples) for n, probs
+                        in zip(self.aplayers, self.role_split(mixture))]
+        profiles = np.concatenate(role_samples, 1)
+        if as_array or as_array is None:
+            return profiles
+        else:
+            return (self.as_profile(p, verify=False) for p in profiles)
+
     def random_mixtures(self, num=1, alpha=1, as_array=False):
         """Return a random mixed profile
 
@@ -339,7 +351,7 @@ class EmptyGame(object):
 
         Set as_array to True to return an array representation of the profile.
         """
-        mixtures = np.random.gamma(alpha, 1, (num, self.num_role_strats))
+        mixtures = rand.gamma(alpha, 1, (num, self.num_role_strats))
         mixtures /= self.role_reduce(mixtures, axis=1, keepdims=True)
         if as_array or as_array is None:
             return mixtures
@@ -1194,7 +1206,7 @@ class SampleGame(Game):
             end = begin + obs.shape[0]
             shape = [dim if switch else 1
                      for dim, switch in zip(obs.shape, switches)]
-            sample = np.random.multinomial(
+            sample = rand.multinomial(
                 num_obs_resamples, [1/num_samples]*num_samples, shape)
             payoffs[begin:end] = ((obs * sample).mean(3) *
                                   (num_samples / num_obs_resamples))
