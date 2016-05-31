@@ -26,11 +26,17 @@ creates a json file of the results."""
     parser.add_argument('--type', '-t', choices=('mixed', 'pure',
                                                  'min-reg-prof',
                                                  'min-reg-grid',
-                                                 'min-reg-rand'),
+                                                 'min-reg-rand',
+                                                 'rand'),
                         default='mixed', help="""Type of approximate
-                        equilibrium to compute: role-symmetric mixed-strategy
-                        Nash, pure-strategy Nash, or min-regret profile;
-                        default=mixed""")
+                        equilibrium to compute: mixed - role-symmetric mixed-strategy
+                        Nash, pure - pure-strategy Nash, min-reg-prof - minimum
+                        regret profile, min-reg-grid - minimum regret mixture
+                        over a grid search with `grid-points` points along each
+                        dimension, min-reg-rand - minimum regret mixture over
+                        `random-mixtures` number of random mixtures, rand -
+                        simply returns `random-mixtures` number of random
+                        mixtures. (default %(default)s)""")
     parser.add_argument('--random-points', metavar='<num-points>', type=int,
                         default=0, help="""Number of random points from which
                         to initialize replicator dynamics in addition to the
@@ -82,6 +88,8 @@ def main(args):
     elif args.type == 'min-reg-rand':
         equilibria = [nash.min_regret_rand_mixture(
             game, args.random_mixtures).trim_support(args.support)]
+    elif args.type == 'rand':
+        equilibria = list(game.random_mixtures(args.random_mixtures))
     else:
         raise ValueError('Unknown command given: {0}'.format(args.type))
 
