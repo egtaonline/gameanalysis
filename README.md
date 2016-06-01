@@ -158,7 +158,6 @@ To Do
 - Change conditional in `dominance`, which indicates how to treat missing data to an enum or at least a string
 - Some functions in `dominance` could probably be more efficient.
 - Incorporate old tests.
-- Remove np.newaxis in favor of None
 - The way a lot of functions handle missing data is not tested very well.
 - Low support in a mixture could cause a lot of headaches. Maybe make truncation default?
   Or a global setting somewhere?
@@ -170,3 +169,9 @@ To Do
 - Get parallel testing working.
   Rednose, which isn't that necessary, seems ti interfere with the parallel module.
   It also seems like generator tests may not be run.
+- Replicator dynamics currently has an iteration threshold to terminate at.
+  This general only happens if there's a limit cycle, but could occur for any reason.
+  One possible way to remove this would be to keep a bloom filter of seen mixtures, after k positive results in a row for testing if we've seen a mixture before we then transition into cycle detection where we run two replicator dynamics at the same time, one at double rate.
+  The change will increase computation by 50%, but if we suppress with the bloom filter, that's probably not that bad.
+  We could then remove the max_iters parameter.
+- If things in collect extend dict or OrderedDict (which extends dict) then they'll be default json serializable, which could clean up some code.
