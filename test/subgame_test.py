@@ -1,90 +1,106 @@
-import random
+import numpy as np
+import numpy.random as rand
 
 from gameanalysis import gamegen
 from gameanalysis import reduction
+from gameanalysis import rsgame
 from gameanalysis import subgame
 
 from test import testutils
 
 
-def pure_subgame_test():
-    game = gamegen.empty_role_symmetric_game(2, [3, 4], [3, 2])
-    subgames = list(subgame.pure_subgames(game))
-    assert len(subgames) == len(game.pure_mixtures(as_array=True))
+@testutils.apply(testutils.game_sizes())
+def test_pure_subgame(players, strategies):
+    game = rsgame.BaseGame(players, strategies)
+    subgames = subgame.pure_subgame_masks(game)
+    expectation = game.num_strategies[None].repeat(game.num_roles, 0)
+    np.fill_diagonal(expectation, 1)
+    expectation = game.role_repeat(expectation.prod(1))
+    assert np.all(subgames.sum(0) == expectation)
 
 
-def empty_subgame_test():
-    game = gamegen.empty_role_symmetric_game(2, [3, 4], [3, 2])
-    subg = subgame.EmptySubgame(game, {'r0': ['s0', 's2'], 'r1': ['s1']})
-    devs = len(list(subg.deviation_profiles()))
-    assert devs == 7, "didn't generate the right number of deviating profiles"
-    adds = len(list(subg.additional_strategy_profiles('r0', 's1')))
+def test_subgame():
+    game = rsgame.BaseGame([3, 4], [3, 2])
+    subg = np.asarray([1, 0, 1, 0, 1], bool)
+    devs = subgame.deviation_profiles(game, subg)
+    assert devs.shape[0] == 7, \
+        "didn't generate the right number of deviating profiles"
+    adds = subgame.additional_strategy_profiles(game, subg, 1).shape[0]
     assert adds == 6, \
         "didn't generate the right number of additional profiles"
-    subg2 = subg.add_strategy('r0', 's1')
-    assert subg2.size == adds + subg.size, \
+    subg2 = subg.copy()
+    subg2[1] = True
+    assert (subgame.subgame(game, subg2).num_all_profiles ==
+            adds + subgame.subgame(game, subg).num_all_profiles), \
         "additional profiles didn't return the proper amount"
-    assert subg2.support_set() > subg.support_set(), \
-        "adding a strategy didn't create a larger subgame"
-    assert subg2 > subg, \
-        "adding a strategy didn't create a larger subgame"
+
+    serial = gamegen.game_serializer(game)
+    sub_serial = subgame.subserializer(serial, subg)
+    assert (subgame.subgame(game, subg).num_role_strats ==
+            sub_serial.num_role_strats)
 
 
-def add_existing_strategy_test():
-    game = gamegen.empty_role_symmetric_game(2, [3, 4], [3, 2])
-    subg = subgame.EmptySubgame(game, {'r0': ['s0', 's2'], 'r1': ['s1']})
-    subg2 = subg.add_strategy('r0', 's0')
-    assert subg == subg2, \
-        "adding strategy in support didn't return same subgame"
-
-
-def subgame_test():
-    game = gamegen.role_symmetric_game(2, [3, 4], [3, 2])
-    strategies = {'r0': ['s0', 's2'], 'r1': ['s1']}
-    subg = subgame.subgame(game, strategies)
-    esubg = subgame.EmptySubgame(game, strategies)
-    assert subg.size == esubg.size, \
-        "empty subgame and true subgame had different sizes"
-
-
-def maximal_subgames_test():
-    game = gamegen.role_symmetric_game(2, [3, 4], [3, 2])
-    subs = list(subgame.maximal_subgames(game))
-    assert len(subs) == 1, \
+@testutils.apply(testutils.game_sizes())
+def test_maximal_subgames(players, strategies):
+    game = gamegen.role_symmetric_game(players, strategies)
+    subs = subgame.maximal_subgames(game)
+    assert subs.shape[0] == 1, \
         "found more than maximal subgame in a complete game"
-    assert subs[0] == subgame.EmptySubgame(game, game.strategies), \
+    assert subs.all(), \
         "found subgame wasn't the full one"
 
 
 @testutils.apply(zip([0, 0.1, 0.4, 0.6]))
-def executing_maximal_subgames_test(prob):
-    game = gamegen.role_symmetric_game(2, [3, 4], [3, 2])
+def test_missing_data_maximal_subgames(prob):
+    game = gamegen.role_symmetric_game([3, 4], [3, 2])
     game = gamegen.drop_profiles(game, prob)
-    subs = list(subgame.maximal_subgames(game))
-    assert subs is not None
+    subs = subgame.maximal_subgames(game)
+    assert subs.size == 0 or not subs.all()
+
+
+@testutils.apply(testutils.game_sizes(allow_big=True), repeat=20)
+def test_deviation_profile_count(players, strategies):
+    game = rsgame.BaseGame(players, strategies)
+    sup = (rand.random(game.num_roles) * game.num_strategies).astype(int) + 1
+    inds = np.concatenate([rand.choice(s, x) + o for s, x, o
+                           in zip(game.num_strategies, sup, game.role_starts)])
+    mask = np.zeros(game.num_role_strats, bool)
+    mask[inds] = True
+
+    devs = subgame.deviation_profiles(game, mask)
+    assert devs.shape[0] == subgame.num_deviation_profiles(game, mask), \
+        "num_deviation_profiles didn't return correct number"
+    assert np.sum(devs > 0) == subgame.num_deviation_payoffs(game, mask), \
+        "num_deviation_profiles didn't return correct number"
+
+    red = reduction.DeviationPreserving(
+        game.num_strategies, game.num_players ** 2, game.num_players)
+    dpr_devs = red.expand_profiles(subgame.deviation_profiles(
+        game, mask)).shape[0]
+    num = subgame.num_dpr_deviation_profiles(game, mask)
+    assert dpr_devs == num, \
+        "num_dpr_deviation_profiles didn't return correct number"
 
 
 @testutils.apply(testutils.game_sizes(), repeat=20)
-def deviation_profile_count_test(roles, players, strategies):
-    game = gamegen.empty_role_symmetric_game(roles, players, strategies)
-    sub_strats = {r: random.sample(s, 1 + random.randrange(0, len(s)))
-                  for r, s in game.strategies.items()}
-    sub = subgame.EmptySubgame(game, sub_strats)
+def test_subgame_preserves_completeness(players, strategies):
+    """Test that subgame function preserves completeness"""
+    game = gamegen.role_symmetric_game(players, strategies)
+    assert game.is_complete(), "gamegen didn't create complete game"
 
-    num_devs = sum(1 for _ in sub.deviation_profiles())
-    assert type(sub.num_deviation_profiles()) == int, \
-        "num_deviation_profiles didn't return an int {}".format(sub_strats)
-    assert num_devs == sub.num_deviation_profiles(), \
-        "num_deviation_profiles didn't return correct number {}".format(
-            sub_strats)
+    mask = game.random_profiles(game.uniform_mixture())[0] > 0
 
-    full_players = {r: c ** 2 for r, c in game.players.items()}
-    red = reduction.DeviationPreserving(full_players, game.players)
-    num_dpr_devs = sum(sum(1 for _ in red.expand_profile(p[0]))
-                       for p in sub.deviation_profiles())
-    assert type(sub.num_dpr_deviation_profiles()) == int, \
-        "num_dpr_deviation_profiles didn't return an int {}".format(
-            sub_strats)
-    assert num_dpr_devs == sub.num_dpr_deviation_profiles(), \
-        "num_dpr_deviation_profiles didn't return correct number {}".format(
-            sub_strats)
+    sub_game = subgame.subgame(game, mask)
+    assert sub_game.is_complete(), "subgame didn't preserve game completeness"
+
+    sgame = gamegen.add_noise(game, 1, 3)
+    sub_sgame = subgame.subgame(sgame, mask)
+    assert sub_sgame.is_complete(), \
+        "subgame didn't preserve sample game completeness"
+
+
+def test_translate():
+    prof = np.arange(6) + 1
+    mask = np.array([1, 0, 0, 1, 1, 0, 1, 1, 0, 1], bool)
+    expected = [1, 0, 0, 2, 3, 0, 4, 5, 0, 6]
+    assert np.all(expected == subgame.translate(prof, mask))

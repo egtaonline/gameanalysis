@@ -142,36 +142,8 @@ Open Design Questions
 To Do
 -----
 
-- Many methods don't work for SampleGame
-- Allow casting games down or up in scope EmptyGame -> Game -> SampleGame.
-  Currently not possible to save a SampleGame as a Game
-- Mixed nash currently keeps a list of all equilibria, and upon finding a new one, iterates through the entire list to determine if any is sufficiently close to the one just found.
-  There is probably a faster way to determine uniqueness.
-  This isn't really a bottleneck, so it's not that important to fix.
-- `subgame.supportset` returns a set representing the support of a profile-like (profile, mixtures, subgame definition).
-  It can be useful for making comparisons between supports, e.g. `support_set(x) < support_set(y)` will tell if the support if x is dominated by the support of y.
-  This feels like it belongs in a dedicated class instead of as a function, but the class would basically have this one function.
-  This function also works for anything that's a mapping of roles to strategies, which means it applies more generally than any specific class.
-  Potentially this should just be in `rsgame`.
-  It seems like making more of the functions work arbitrarily well on duck-typed things (i.e. mapping of strings to a collection of strings).
-- Fix the rest of `gameio`.
 - Change conditional in `dominance`, which indicates how to treat missing data to an enum or at least a string
 - Some functions in `dominance` could probably be more efficient.
-- Incorporate old tests.
-- The way a lot of functions handle missing data is not tested very well.
-- Low support in a mixture could cause a lot of headaches. Maybe make truncation default?
-  Or a global setting somewhere?
 - Integrate read the docs with numpy docstyle extension and github travis-ci for testing etc.
-- Make nash equilibria methods also return equilibria regret if it's computed.
-  Regret is easier to throw away than recalculate.
-- Remove static constructors for games, and instead have the constructor choose
-  the appropriate one based on type info of passed arguments.
 - Get parallel testing working.
-  Rednose, which isn't that necessary, seems ti interfere with the parallel module.
-  It also seems like generator tests may not be run.
-- Replicator dynamics currently has an iteration threshold to terminate at.
-  This general only happens if there's a limit cycle, but could occur for any reason.
-  One possible way to remove this would be to keep a bloom filter of seen mixtures, after k positive results in a row for testing if we've seen a mixture before we then transition into cycle detection where we run two replicator dynamics at the same time, one at double rate.
-  The change will increase computation by 50%, but if we suppress with the bloom filter, that's probably not that bad.
-  We could then remove the max_iters parameter.
-- If things in collect extend dict or OrderedDict (which extends dict) then they'll be default json serializable, which could clean up some code.
+- Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pands?

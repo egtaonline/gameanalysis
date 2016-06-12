@@ -1,304 +1,451 @@
 """Module for computing player reductions"""
 import numpy as np
+import numpy.random as rand
 
-from gameanalysis import collect
-from gameanalysis import profile
-
-
-# TODO A lot of these methods use dictionaries which is fine for a single
-# profile, but there are likely vectorized routines that will work faster for
-# large groups of profiles. A game object may need to be passed into for
-# efficient array representations.
+from gameanalysis import rsgame
 
 
-def _expand_sym_profile(prof, full_players, reduced_players):
-    """Expands symmetric hierarchical profile
+def _expand_rsym_profiles(game, profiles, full_players, reduced_players):
+    """Hierarchically expands several role symmetric array profiles
 
     In the event that `full_players` isn't divisible by `reduced_players`, we
     first assign by rounding error and break ties in favor of more-played
-    strategies. The final tie-breaker is alphabetical order.
-    """
-    strats, players = zip(*sorted(prof.items()))
-    expanded_players = _expand_sym_array_profile(np.array(players, dtype=int),
-                                                 full_players, reduced_players)
-    return dict(zip(strats, map(int, expanded_players)))
-
-
-def _expand_sym_array_profile(prof, full_players, reduced_players):
-    """Expands an array profile, order of strategies must be sorted
-
-    In the event that `full_players` isn't divisible by `reduced_players`, we
-    first assign by rounding error and break ties in favor of more-played
-    strategies. The final tie-breaker is alphabetical order."""
-    assert prof.sum() == reduced_players
+    strategies. The final tie-breaker is index / alphabetical order."""
+    assert np.all(game.role_reduce(profiles) == reduced_players), \
+        "Not all profiles were valid {} {}".format(profiles, reduced_players)
+    assert (np.all(full_players >= reduced_players) and
+            np.all((reduced_players > 0) |
+                   ((full_players == 0) & (reduced_players == 0)))), \
+        "not all reductions were valid\nfull: {}\nreduced: {}".format(
+            full_players, reduced_players)
     # Maximum prevents divide by zero error; equivalent to + eps
-    expand_prof = prof * full_players // np.maximum(reduced_players, 1)
-    unassigned = full_players - expand_prof.sum()
-    if unassigned == 0:
-        return expand_prof
+    rep_red_players = game.role_repeat(np.maximum(reduced_players, 1))
+    rep_full_players = game.role_repeat(full_players)
+    num_profs = profiles.shape[0]
+    expand_profs = profiles * rep_full_players // rep_red_players
+    unassigned = full_players - game.role_reduce(expand_profs)
 
-    error = prof * full_players / reduced_players - expand_prof
-    inds = np.lexsort((np.arange(prof.size), -prof, -error))
-    expand_prof[inds[:unassigned]] += 1
-    return expand_prof
+    # Order all possible strategies to find which to increment
+    role_order = np.broadcast_to(game.role_repeat(np.arange(game.num_roles)),
+                                 (num_profs, game.num_role_strats))
+    error = profiles * rep_full_players / rep_red_players - expand_profs
+    alpha_inds = np.arange(game.num_role_strats)
+    alpha_ord = np.broadcast_to(alpha_inds, (num_profs, game.num_role_strats))
+    inds = np.lexsort((alpha_ord, -profiles, -error, role_order), 1)
+
+    # Map them to indices in the expand_profs array, and mask out the first
+    # that are necessary to meet unassigned
+    rectified_inds = (inds + np.arange(num_profs)[:, None] *
+                      game.num_role_strats)
+    ind_mask = (np.arange(game.num_role_strats) <
+                game.role_repeat(game.role_starts + unassigned))
+    expand_profs.flat[rectified_inds[ind_mask]] += 1
+    return expand_profs
 
 
-def _reduce_sym_profile(prof, full_players, reduced_players):
-    """Reduce a symmetric hierarchical profile
+def _reduce_rsym_profiles(game, profiles, full_players, reduced_players):
+    """Hierarchically reduces several role symmetric array profiles
 
-    This returns none if there is no profile, and the reduced profile
-    otherwise. This maintains the invariant that _reduce_sym_prof .
-    _expand_sym_prof is the identity. The reverse is also the identity if a
-    reduced profile exists."""
-    strats, players = zip(*sorted(prof.items()))
-    reduced_players = _reduce_sym_array_profile(np.array(players, dtype=int),
-                                                full_players, reduced_players)
-    return (dict(zip(strats, map(int, reduced_players)))
-            if reduced_players is not None else None)
+    This returns the reduced profiles, and a boolean mask showing which of the
+    input profiles were actually reduced, as they might not all reduce."""
+    assert np.all(game.role_reduce(profiles) == full_players), \
+        "Not all profiles were valid"
+    assert (np.all(full_players >= reduced_players) and
+            np.all((reduced_players > 0) |
+                   ((full_players == 0) & (reduced_players == 0)))), \
+        "not all reductions were valid\nfull: {}\nreduced: {}".format(
+            full_players, reduced_players)
 
-
-def _reduce_sym_array_profile(prof, full_players, reduced_players):
-    """Same as reduce sym array profile but for arrays"""
-    assert prof.sum() == full_players
-    red_prof = np.ceil(prof * reduced_players / full_players).astype(int)
-    overassigned = red_prof.sum() - reduced_players
-
-    # See if standard rounding works
-    if overassigned == 0:
-        expanded = _expand_sym_array_profile(red_prof, full_players,
-                                             reduced_players)
-        return red_prof if np.all(prof == expanded) else None
-
-    # Rounding doesn't work, so we need to try and find a consistent set of
-    # strategies that we added a tie breaker to in order to in order to get the
-    # reduction
+    rep_red_players = game.role_repeat(reduced_players)
+    rep_full_players = game.role_repeat(np.maximum(full_players, 1))
+    red_profs = np.ceil(profiles * rep_red_players /
+                        rep_full_players).astype(int)
+    alternates = np.ceil((profiles - 1) * rep_red_players /
+                         rep_full_players).astype(int)
 
     # What if every strategy was tie broken
-    alternate = np.ceil((prof - 1) * reduced_players / full_players)\
-        .astype(int)
+    overassigned = game.role_reduce(red_profs) - reduced_players
+    # The strategies that could have been tie broken i.e. the profile changed
+    diffs = alternates != red_profs
+    # These are "possible" to reduce
+    reduced = np.all(overassigned <= game.role_reduce(diffs), 1)
 
-    # The strategies that could have been tie broken
-    diff = np.nonzero(alternate != red_prof)[0]
+    # Move everything into reduced space
+    num_reduceable = reduced.sum()
+    profiles = profiles[reduced]
+    red_profs = red_profs[reduced]
+    alternates = alternates[reduced]
+    overassigned = overassigned[reduced]
+    diffs = diffs[reduced]
+    if full_players.ndim > 1:
+        full_players = full_players[reduced]
+    if reduced_players.ndim > 1:
+        reduced_players = reduced_players[reduced]
 
-    if diff.size < overassigned:
-        # Clearly impossible
-        return None
+    # Now we take the hypothetical reduced profiles, and see which ones would
+    # have won the tie breaker
+    role_order = np.broadcast_to(game.role_repeat(np.arange(game.num_roles)),
+                                 (num_reduceable, game.num_role_strats))
+    alpha_inds = np.arange(game.num_role_strats)
+    alpha_ord = np.broadcast_to(alpha_inds,
+                                (num_reduceable, game.num_role_strats))
+    rep_red_players = game.role_repeat(np.maximum(reduced_players, 1))
+    rep_full_players = game.role_repeat(full_players)
+    errors = alternates * rep_full_players / rep_red_players - profiles + 1
+    inds = np.lexsort((alpha_ord, -alternates, -errors, ~diffs, role_order), 1)
 
-    # Here we create a vector of all of the untiebroken strategies, and the
-    # strategies that might have been tie broken. We analyze the sorting
-    # criteria for expanding the profile, and see if a consistent selection of
-    # tie broken strategies exists.
-    error = np.concatenate([
-        red_prof * full_players / reduced_players - prof,
-        alternate[diff] * full_players / reduced_players - prof[diff] + 1])
-    key = (np.concatenate((np.arange(red_prof.size), diff)),
-           -np.concatenate((red_prof, alternate[diff])),
-           -error)
-    lexinds = np.lexsort(key)
-    # True are tie broken strategies
-    group = (lexinds // red_prof.size).astype(bool)
-    # These are the strategy indexes
-    indexes = lexinds % red_prof.size
-    incrimented = np.nonzero(group)[0][:overassigned]
-    # These are the indexes that could be tie broken
-    inc_inds = diff[indexes[incrimented]]
-    start = incrimented[-1] + 1
-    # This checks that inc_inds is a valid selection
-    valid = (np.setdiff1d(indexes[start:][~group[start:]], inc_inds, True).size
-             == red_prof.size - overassigned)
-    red_prof[inc_inds] = alternate[inc_inds]
+    # Same as with expansion, map to new space
+    rectified_inds = (inds + np.arange(num_reduceable)[:, None] *
+                      game.num_role_strats)
+    ind_mask = (np.arange(game.num_role_strats) <
+                game.role_repeat(game.role_starts + overassigned))
+    inc_inds = rectified_inds[ind_mask]
+    red_profs.flat[inc_inds] = alternates.flat[inc_inds]
 
-    return red_prof if valid else None
+    # Our best guesses might not be accurate, so we have to filter out profiles
+    # that don't order correctly
+    expand_profs = _expand_rsym_profiles(game, red_profs, full_players,
+                                         reduced_players)
+    valid = np.all(expand_profs == profiles, 1)
+    reduced[reduced] = valid
+    return red_profs[valid], reduced
 
 
-class Hierarchical(object):
-    """Hierarchical reduction"""
-    def __init__(self, full_players, reduced_players):
-        self.full_players = collect.frozendict(full_players)
-        self.reduced_players = collect.frozendict(reduced_players)
+class Hierarchical():
+    """Hierarchical Reduction
 
-        assert all(c > 0 for c in self.reduced_players.values()), \
+    Either reduced or full players must be specified, the other will be taken
+    from the game.
+    """
+    def __init__(self, num_strats, full_players, reduced_players):
+        self._fgame = rsgame.BaseGame(full_players, num_strats)
+        self._red_players = np.broadcast_to(np.asarray(reduced_players, int),
+                                            self._fgame.num_roles)
+        assert np.all(self._red_players > 0), \
             "All counts must be greater than zero"
-        assert all(self.full_players[r] >= c for r, c
-                   in self.reduced_players.items()), \
-            "Can't reduce to a greater number of players"
+        assert np.all(self._fgame.num_players >= self._red_players), \
+            "All full counts must not be less than reduced counts"
 
     def reduce_game(self, game):
-        """Convert an input game to a reduced game with new players
-
-        This version uses exact math, and so will fail if your player counts
-        are not DPR reducible.
-
-        """
-        assert game.players == self.full_players, \
+        """Convert an input game to a reduced game with new players"""
+        assert (np.all(game.num_players == self._fgame.num_players) and
+                np.all(game.num_strategies == self._fgame.num_strategies)), \
             "The games players don't match up with this reduction"
-        # Would need to be converted into a list anyways, so we just get it
-        # out of the way. This prevents warning
-        profiles = []
-        for prof, payoffs in game.sample_profile_payoffs():
-            red_prof = {role: _reduce_sym_profile(strats,
-                                                  self.full_players[role],
-                                                  self.reduced_players[role])
-                        for role, strats in prof.items()}
-            if not any(strats is None for strats in red_prof.values()):
-                profiles.append(prof.Profile(red_prof)
-                                .to_input_profile(payoffs))
-        return game.from_payoff_format(self.reduced_players,
-                                       game.strategies, profiles)
+
+        if game.num_profiles == 0:
+            return game
+
+        elif isinstance(game, rsgame.SampleGame):
+            sample_payoffs = []
+            profiles = []
+            for profs, pays in zip(
+                    np.split(game.profiles, game.sample_starts[1:]),
+                    game.sample_payoffs):
+                red_profiles, mask = _reduce_rsym_profiles(
+                    self._fgame, profs, self._fgame.num_players,
+                    self._red_players)
+                if mask.any():
+                    profiles.append(red_profiles)
+                    sample_payoffs.append(pays[mask])
+
+            if profiles:
+                profiles = np.concatenate(profiles, 0)
+            else:  # No data
+                profiles = np.empty((0, game.num_role_strats), dtype=int)
+            return rsgame.SampleGame(self._red_players, game.num_strategies,
+                                     profiles, sample_payoffs, verify=False)
+        else:
+            profiles = game.profiles
+            payoffs = game.payoffs
+            red_profiles, mask = _reduce_rsym_profiles(
+                self._fgame, profiles, self._fgame.num_players,
+                self._red_players)
+
+            return rsgame.Game(self._red_players, game.num_strategies,
+                               red_profiles, payoffs[mask], verify=False)
+
+    def reduce_profiles(self, profiles):
+        """Reduce a set of profiles"""
+        return _reduce_rsym_profiles(
+            self._fgame, np.asarray(profiles, int), self._fgame.num_players,
+            self._red_players)[0]
+
+    def expand_profiles(self, profiles):
+        """Expand a set of profiles"""
+        return _expand_rsym_profiles(self._fgame, np.asarray(profiles, int),
+                                     self._fgame.num_players,
+                                     self._red_players)
 
     def __repr__(self):
-        return '{name}({arg1}, {arg2})'.format(
-            name=self.__class__.__name__,
-            arg1=self.full_players,
-            arg2=self.reduced_players)
+        return '{}({}, {}, {})'.format(
+            self.__class__.__name__,
+            self._fgame.num_strategies,
+            self._fgame.num_players,
+            self._red_players)
 
 
-class DeviationPreserving(object):
-    """Deviation preserving reduction"""
+class DeviationPreserving():
+    """Deviation Preserving Reduction
 
-    def __init__(self, full_players, reduced_players):
-        self.full_players = collect.frozendict(full_players)
-        self.reduced_players = collect.frozendict(reduced_players)
+    Either reduced or full players must be specified, the other will be taken
+    from the game."""
 
-        assert all(c > 0 for c in self.reduced_players.values()), \
-            "All counts must be greater than zero"
-        assert all(self.full_players[r] >= c for r, c
-                   in self.reduced_players.items()), \
-            "Can't reduce to a greater number of players"
-        assert all(self.full_players[r] == 1 or c > 1 for r, c
-                   in self.reduced_players.items()), \
-            "Can't dpr to 1 unless that's the full player count"
+    def __init__(self, num_strats, full_players, reduced_players):
+        self._fgame = rsgame.BaseGame(full_players, num_strats)
+        self._rgame = rsgame.BaseGame(reduced_players, num_strats)
+        assert np.all(self._fgame.num_players >= self._rgame.num_players), \
+            "All full counts must not be less than reduced counts"
 
-    def expand_profile(self, dpr_prof):
-        """Returns an iterator over full game profiles whose payoffs determines
-        those of the reduced game profile."""
-        for role, strategies in dpr_prof.items():
-            for strat in strategies:
-                yield self.full_prof(dpr_prof, role, strat)
+    def _devs(self, players, num_profs):
+        """Return an array of the player counts after deviation"""
+        return np.tile(self._fgame.role_repeat(
+            players - np.eye(self._fgame.num_roles, dtype=int), 0),
+            (num_profs, 1))
 
-    def full_prof(self, dpr_prof, dev_role, dev_strat):
-        """Returns the full game profile whose payoff determines that of
-        the given role and strategy in the reduced game profile."""
-        full_profile = {}
-        for role, strat_counts in dpr_prof.items():
-            if role == dev_role:
-                opp_prof = dict(strat_counts)
-                opp_prof[dev_strat] -= 1
-                opp_prof = _expand_sym_profile(
-                    opp_prof,
-                    self.full_players[role] - 1,
-                    self.reduced_players[role] - 1)
-                opp_prof[dev_strat] += 1
+    def expand_profiles(self, profiles, return_contributions=False):
+        """Expand a set of profiles
 
-            else:
-                opp_prof = _expand_sym_profile(
-                    strat_counts, self.full_players[role],
-                    self.reduced_players[role])
+        If `return_contributions` then a boolean array of matching shape is
+        returned indicating the payoffs that are needed for the initial
+        profiles."""
+        profiles = np.asarray(profiles, int)
+        num_profs = profiles.shape[0]
+        dev_profs = np.reshape(profiles[:, None] -
+                               np.eye(self._fgame.num_role_strats, dtype=int),
+                               (-1, self._fgame.num_role_strats))
+        dev_full_players = self._devs(self._fgame.num_players, num_profs)
+        dev_red_players = self._devs(self._rgame.num_players, num_profs)
 
-            full_profile[role] = opp_prof
-        return profile.Profile(full_profile)
+        mask = ~np.any(dev_profs < 0, 1)
+        devs = np.eye(self._fgame.num_role_strats, dtype=bool)[None]\
+            .repeat(num_profs, 0)\
+            .reshape((-1, self._fgame.num_role_strats))[mask]
+        dev_full_profs = _expand_rsym_profiles(
+            self._fgame, dev_profs[mask], dev_full_players[mask],
+            dev_red_players[mask]) + devs
+        ids = self._fgame.profile_id(dev_full_profs)
+        if not return_contributions:
+            return dev_full_profs[np.unique(ids, return_index=True)[1]]
+        else:
+            order = np.argsort(ids)
+            sids = ids[order]
+            mask = np.insert(np.diff(sids) != 0, 0, True)
+            profs = dev_full_profs[order[mask]]
+            ored_devs = np.bitwise_or.reduceat(devs[order],
+                                               mask.nonzero()[0], 0)
+            return profs, ored_devs
 
-    def _profile_contributions(self, full_prof):
-        """Returns a generator of dpr profiles and the role-strategy pair that
-        contributes to it"""
-        # TODO This can be made more efficient because it will never return 2
-        # or more profiles unless they are "pure"
-        hierarchical_prof = {
-            role: _reduce_sym_profile(prof, self.full_players[role],
-                                      self.reduced_players[role])
-            for role, prof in full_prof.items()}
+    def reduce_profiles(self, profiles, return_contributions=False):
+        """Reduces a set of profiles
 
-        for role, strats in full_prof.items():
-            full = self.full_players[role] - 1
-            red = self.reduced_players[role] - 1
+        If `return_contributions` returns ancillary information.
 
-            if red == 0:
-                # One player in role
-                if all(p is not None for p in hierarchical_prof.values()):
-                    strat = next(iter(strats))
-                    yield profile.Profile(hierarchical_prof), role, strat
-
-            else:
-                for strat in strats:
-                    toreduce = dict(strats)
-                    toreduce[strat] -= 1
-                    reduced = _reduce_sym_profile(toreduce, full, red)
-                    prof = hierarchical_prof.copy()
-                    prof[role] = reduced
-                    if all(p is not None for p in prof.values()):
-                        reduced[strat] += 1
-                        yield profile.Profile(prof), role, strat
-
-    def reduce_profile(self, full_profile):
-        """Returns dpr profiles that contribute to the full profile
-
-        Return is in the form of a generator"""
-        return (p[0] for p in self._profile_contributions(full_profile))
+        Returns
+        -------
+        red_profs
+            The reduced profiles
+        red_inds
+            Index in red_profs for each payoff value that was reduced.
+        full_inds
+            Index into profiles for each payoff value that was reduced.
+        strat_inds
+            Index into a profile for the index of each payoff.  Parallel with
+            red_inds and full_inds.
+        """
+        profiles = np.asarray(profiles, int)
+        num_profs = profiles.shape[0]
+        dev_profs = np.reshape(profiles[:, None] -
+                               np.eye(self._fgame.num_role_strats, dtype=int),
+                               (-1, self._fgame.num_role_strats))
+        dev_full_players = self._devs(self._fgame.num_players, num_profs)
+        dev_red_players = self._devs(self._rgame.num_players, num_profs)
+        mask = ~np.any(dev_profs < 0, 1)
+        red_profs, reduced = _reduce_rsym_profiles(
+            self._fgame, dev_profs[mask], dev_full_players[mask],
+            dev_red_players[mask])
+        devs = np.eye(self._fgame.num_role_strats, dtype=int)[None]\
+            .repeat(num_profs, 0)\
+            .reshape((-1, self._fgame.num_role_strats))[mask][reduced]
+        red_profs += devs
+        _, uniq_inds, red_inds = np.unique(self._rgame.profile_id(red_profs),
+                                           return_index=True,
+                                           return_inverse=True)
+        red_profs = red_profs[uniq_inds]
+        if not return_contributions:
+            return red_profs
+        else:
+            full_inds = np.arange(num_profs)[:, None].repeat(
+                self._fgame.num_role_strats, 1).flat[mask][reduced]
+            strat_inds = devs.nonzero()[1]
+            return red_profs, red_inds, full_inds, strat_inds
 
     def reduce_game(self, game):
-        """Convert an input game to a reduced game with new players
+        """Convert an input game to a reduced game with new players"""
+        assert (np.all(game.num_players == self._fgame.num_players) and
+                np.all(game.num_strategies == self._fgame.num_strategies)), \
+            "The games players don't match up with this reduction"
 
-        This version uses exact math, and so will fail if your player counts
-        are not DPR reducible. It also means the minimum number of players to
-        reduce a role to is 2, unless the role only has one player to begin
-        with.
-        """
-        assert game.players == self.full_players, \
-            ("The games players don't match up with this reduction "
-             "Game: {game} Reduction: {reduction}").format(
-                 game=game.players, reduction=self.full_players)
+        if game.num_profiles == 0:
+            return game
 
-        # Map from profile to role to strat to a list of payoffs This allows us
-        # to incrementally build DPR profiles as we scan the data The list is
-        # so we can keep multiple observations, but it's not clear how well we
-        # can take advantage of this.
-        profile_map = {}
-        for prof, payoffs in game.sample_profile_payoffs():
-            for red_prof, role, strat in self._profile_contributions(prof):
-                (profile_map.setdefault(red_prof, {})
-                 .setdefault(role, {})
-                 .setdefault(strat, [])
-                 .extend(payoffs[role][strat]))
+        elif isinstance(game, rsgame.SampleGame):
+            # Reduce profiles
+            red_profiles, red_inds, full_inds, strat_inds = \
+                self.reduce_profiles(game.profiles, True)
+            if red_profiles.size == 0:
+                return rsgame.SampleGame(rsgame.BaseGame(game))
 
-        # This could be a generator, but it'd be turned into a list anyways.
-        # Better to make this explicit.
-        profiles = [prof.to_input_profile(payoff_map)
-                    for prof, payoff_map in profile_map.items()
-                    if (profile.support_set(payoff_map)
-                        == profile.support_set(prof))]
+            # Count the number of payoffs for every profile
+            counts = game.num_samples.repeat(game.num_sample_profs)[full_inds]
+            rprof_index = red_inds * game.num_role_strats + strat_inds
+            pay_counts = np.bincount(rprof_index, counts, red_profiles.size)\
+                .astype(int).reshape(red_profiles.shape)
+            # Minimum valid counts for every profile
+            obs_counts = np.ma.masked_array(pay_counts, red_profiles == 0)\
+                .min(1).filled(0)
+            # Number of profiles with zero samples
+            num_zeros = np.sum(obs_counts == 0)
+            # Permutation of red_profiles so that number of samples are in
+            # order
+            perm = np.argsort(obs_counts)
+            new_profiles = red_profiles[perm[num_zeros:]]
+            obs_counts = obs_counts[perm[num_zeros:]]
+            sample_sizes, num_sample_profs = np.unique(obs_counts,
+                                                       return_counts=True)
+            iperm = np.empty(perm.size, int)
+            iperm[perm] = np.arange(perm.size)
+            red_inds = iperm[red_inds]
+            # All of the payoffs that are still valid
+            mask = red_inds >= num_zeros
+            red_inds = red_inds[mask] - num_zeros
+            full_inds = full_inds[mask]
+            strat_inds = strat_inds[mask]
+            obs_counts = obs_counts[red_inds]
 
-        # Return type is the same type as the original game
-        return game.from_payoff_format(self.reduced_players,
-                                       game.strategies, profiles)
+            # Iterate through payoff data and create arrays of the index in the
+            # profile array, and the payoffs from sample payoffs
+            payoff_indices = [([], []) for _ in range(sample_sizes.size)]
+            size_map = dict(zip(sample_sizes, payoff_indices))
+
+            parts = np.sum(full_inds < game.sample_starts[1:, None], 1)
+            spay_inds = full_inds - game.sample_starts.repeat(np.diff(
+                np.concatenate([[0], parts, [full_inds.size]])))
+            prof_inds = red_inds * game.num_role_strats + strat_inds
+            for pays, pr_inds, sp_inds, s_inds, o_counts in zip(
+                    game.sample_payoffs, np.split(prof_inds, parts),
+                    np.split(spay_inds, parts), np.split(strat_inds, parts),
+                    np.split(obs_counts, parts)):
+                uo_counts = np.unique(o_counts)
+                num_obs = pays.shape[2]
+                for ssize, mask in zip(uo_counts,
+                                       o_counts == uo_counts[:, None]):
+                    num = mask.sum()
+                    spi = np.broadcast_to(sp_inds[mask, None], (num, num_obs))
+                    si = np.broadcast_to(s_inds[mask, None], (num, num_obs))
+                    samp_inds = np.broadcast_to(np.arange(num_obs),
+                                                (num, num_obs))
+                    pinds = np.broadcast_to(pr_inds[mask, None],
+                                            (num, num_obs)).flat
+                    spays = pays[spi.flat, si.flat, samp_inds.flat]
+                    plist, splist = size_map[ssize]
+                    plist.append(pinds)
+                    splist.append(spays)
+
+            offsets = np.insert(num_sample_profs[:-1].cumsum() *
+                                game.num_role_strats, 0, 0)
+            sample_payoffs = []
+            for (prof_list, payoff_list), num_samples, offset in zip(
+                    payoff_indices, sample_sizes, offsets):
+                prof_inds = np.concatenate(prof_list) - offset
+                payoffs = np.concatenate(payoff_list)
+                # Permute data to drop unbiasedly
+                perm = rand.permutation(payoffs.size)
+                prof_inds = prof_inds[perm]
+                # We now need to filter out all samples beyond num_samples for
+                # each profile. This is done useing sorting and some array
+                # tricks
+                # The fact that this sort is not stable could add some bias,
+                # but that seems unlikely given that we already do a uniform
+                # shuffle
+                order = np.argsort(prof_inds)
+                prof_inds = prof_inds[order]
+                starts = np.concatenate(
+                    [[0], np.diff(prof_inds).nonzero()[0] + 1])
+                selected = starts[:, None] + np.arange(num_samples)
+                payoff_inds = prof_inds[selected] * num_samples
+                payoff_inds.shape = (-1, num_samples)
+                payoff_inds += np.arange(num_samples)
+                payoffs = payoffs[perm][order][selected]
+                num_profiles = prof_inds[-1] // game.num_role_strats + 1
+                # With all payoffs and indices, put together sample payoffs
+                # array
+                sample_pays = np.bincount(
+                    payoff_inds.flat, payoffs.flat,
+                    num_profiles * game.num_role_strats * num_samples)\
+                    .reshape(num_profiles, game.num_role_strats, num_samples)
+                sample_payoffs.append(sample_pays)
+
+            return rsgame.SampleGame(self._rgame.num_players,
+                                     game.num_strategies, new_profiles,
+                                     sample_payoffs)
+        else:
+            full_profiles = game.profiles
+            full_payoffs = game.payoffs
+            red_profiles, red_inds, full_inds, strat_inds = \
+                self.reduce_profiles(full_profiles, True)
+
+            if red_profiles.size == 0:
+                return rsgame.Game(self._rgame.num_players,
+                                   game.num_strategies)
+
+            cum_inds = red_inds * game.num_role_strats + strat_inds
+            payoff_vals = full_payoffs[full_inds, strat_inds]
+            red_payoffs = np.bincount(
+                cum_inds, payoff_vals, red_profiles.size).reshape(
+                    red_profiles.shape)
+            red_payoff_counts = np.bincount(
+                cum_inds, minlength=red_profiles.size).reshape(
+                    red_profiles.shape)
+            mask = red_payoff_counts > 1
+            red_payoffs[mask] /= red_payoff_counts[mask]
+            complete_mask = np.all((red_profiles > 0) ==
+                                   (red_payoff_counts > 0), 1)
+            return rsgame.Game(self._rgame.num_players, game.num_strategies,
+                               red_profiles[complete_mask],
+                               red_payoffs[complete_mask], verify=False)
 
     def __repr__(self):
-        return '{name}({arg1}, {arg2})'.format(
-            name=self.__class__.__name__,
-            arg1=self.full_players,
-            arg2=self.reduced_players)
+        return '{}({}, {}, {})'.format(
+            self.__class__.__name__,
+            self._fgame.num_strategies,
+            self._fgame.num_players,
+            self._rgame.num_players)
 
 
 class Twins(DeviationPreserving):
-    def __init__(self, full_players):
-        super().__init__(full_players,
-                         {r: min(2, p) for r, p in full_players.items()})
+    """Twins Reduction
+
+    Same as Deviation Preserving, but where the reduced players are two."""
+    def __init__(self, num_strats, full_players):
+        super().__init__(num_strats, full_players, np.minimum(2, full_players))
 
     def __repr__(self):
-        return '{name}({arg1})'.format(
-            name=self.__class__.__name__,
-            arg1=self.full_players)
+        return '{}({}, {})'.format(
+            self.__class__.__name__,
+            self._fgame.num_strategies,
+            self._fgame.num_players)
 
 
-class Identity(object):
+class Identity():
     """Identity reduction (lack of reduction)"""
 
-    def expand_profile(self, reduced_profile):
+    def expand_profiles(self, profiles):
         """Returns full game profiles that contribute to reduced profile"""
-        yield reduced_profile
+        return profiles
 
-    def reduce_profile(self, full_profile):
+    def reduce_profiles(self, profiles):
         """Returns reduced profiles that contribute to the full profile"""
-        yield full_profile
+        return profiles
 
     def reduce_game(self, game):
         """Convert an input game to a reduced game with new players"""

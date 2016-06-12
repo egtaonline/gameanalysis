@@ -1,23 +1,25 @@
 import functools
 import operator
+import warnings
 
 import numpy as np
 import scipy.misc as spm
 
-_TINY = np.finfo(float).tiny
 
 def prod(collection):
     """Product of all elements in the collection"""
     return functools.reduce(operator.mul, collection)
 
 
-def game_size(n, s, exact=True):
-    """Number of profiles in a symmetric game with n players and s strategies
-    """
+def game_size(players, strategies, exact=False):
+    """Number of profiles in a symmetric game with players and strategies"""
     if exact:
-        return spm.comb(n+s-1, n, exact=True)
+        return spm.comb(players+strategies-1, players, exact=True)
     else:
-        return np.rint(spm.comb(n+s-1, n, exact=False)).astype(int)
+        sizes = spm.comb(players+strategies-1, players,
+                         exact=False).astype(int)
+        assert np.all(sizes >= 0), "Overflow on game size"
+        return sizes
 
 
 def only(iterable):
@@ -77,6 +79,7 @@ def _reverse(seq, start, end):
 
 
 def compare_by_key(key):
+    """Decorator that adds object comparison via a key function"""
     def decorator(cls):
         setattr(cls, '__eq__', lambda self, other: key(self) == key(other))
         setattr(cls, '__ne__', lambda self, other: key(self) != key(other))
@@ -139,9 +142,9 @@ def acomb(n, k):
 
     memoized = np.empty((n - 1, k), dtype=object)
 
-    # TODO this recusrion breaks if asking for numbers that are too large, but
-    # the order to fill n and k is predictable, it may be better to to use a
-    # for loop.
+    # This recursion breaks if asking for numbers that are too large (stack
+    # overflow), but the order to fill n and k is predictable, it may be better
+    # to to use a for loop.
     def fill_region(n, k, region):
         if n == 1:
             region[0, 0] = k
@@ -191,7 +194,7 @@ def acartesian2(*arrays):
     pre_column = 0
     for array in arrays:
         length, width = array.shape
-        post_row /= length
+        post_row //= length
         post_column = pre_column + width
         view = result[:, pre_column:post_column]
         view.shape = (pre_row, -1, post_row, width)
@@ -204,9 +207,13 @@ def acartesian2(*arrays):
 
 def simplex_project(array):
     """Return the projection onto the simplex"""
+    size = array.shape[-1]
     sort = -np.sort(-array)
-    rho = (1 - sort.cumsum()) / np.arange(1, sort.size + 1)
-    lam = rho[np.nonzero(rho + sort > 0)[0][-1]]
+    rho = (1 - sort.cumsum(-1)) / np.arange(1, size + 1)
+    inds = size - 1 - np.argmax((rho + sort > 0)[..., ::-1], -1)
+    rho.shape = (-1, size)
+    lam = rho[np.arange(rho.shape[0]), inds.flat]
+    lam.shape = array.shape[:-1] + (1,)
     return np.maximum(array + lam, 0)
 
 
@@ -229,11 +236,81 @@ def multinomial_mode(p, n):
             f[a] -= 1
             q[a] = (1 - f[a]) / (k[a] + 1)
     elif n0 > n:
-        q = f / (k + _TINY)
-        for _ in range(n, n0):
-            a = q.argmin()
-            k[a] -= 1
-            f[a] += 1
-            q[a] = f[a] / k[a]
+        with np.errstate(divide='ignore'):
+            q = f / k
+            for _ in range(n, n0):
+                a = q.argmin()
+                k[a] -= 1
+                f[a] += 1
+                q[a] = f[a] / k[a]
     return k
 
+
+def deprecated(func):
+    """Decorator which marks functions as deprecated"""
+
+    @functools.wraps(func)
+    def deprecation_wrapper(*args, **kwargs):
+        warnings.warn("Call to deprecated function {}.".format(func.__name__),
+                      category=DeprecationWarning, stacklevel=2)
+        return func(*args, **kwargs)
+
+    return deprecation_wrapper
+
+
+def axis_to_elem(array, axis=-1):
+    """Converts an axis of an array into a unique element
+
+    In general, this returns a copy of the array, unless the data is
+    contiguous. This usually requires that the last axis is the one being
+    merged.
+
+    Parameters
+    ----------
+    array : ndarray
+        The array to convert an axis to a view.
+    axis : int, optional
+        The axis to convert into a single element. Defaults to the last axis.
+    """
+    # ascontiguousarray will make a copy of necessary
+    axis_at_end = np.ascontiguousarray(np.rollaxis(array, axis, array.ndim))
+    new_shape = axis_at_end.shape
+    elems = axis_at_end.view(np.dtype((np.void, array.itemsize *
+                                       new_shape[-1])))
+    elems.shape = new_shape[:-1]
+    return elems
+
+
+def elem_to_axis(array, dtype, axis=-1):
+    """Converts and array of axis elements back to an axis"""
+    return np.rollaxis(array.view(dtype).reshape(array.shape + (-1,)),
+                       -1, axis)
+
+
+def unique_axis(array, axis=-1, **kwargs):
+    """Find unique axis elements
+
+    Parameters
+    ----------
+    array : ndarray
+        The array to find unique axis elements of
+    axis : int, optional
+        The axis to find unique elements of. Defaults to the last axis.
+    **kwargs : flags
+        The flags to pass to numpys unique function
+
+    Returns
+    -------
+    uniques : ndarray
+        The unique axes as rows of a two dimensional array.
+    *args :
+        Any other results of the unique functions due to flags
+    """
+    axis_length = array.shape[axis]
+    elems = axis_to_elem(array, axis)
+    results = np.unique(elems, **kwargs)
+    if isinstance(results, tuple):
+        return ((results[0].view(array.dtype).reshape((-1, axis_length)),) +
+                results[1:])
+    else:
+        return results.view(array.dtype).reshape((-1, axis_length))

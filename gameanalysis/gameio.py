@@ -1,8 +1,315 @@
 """Utility module that contains code for parsing legacy game formats"""
 import collections
+import itertools
+import warnings
 from collections import abc
 
+import numpy as np
+
+from gameanalysis import rsgame
 from gameanalysis import utils
+
+
+class GameSerializer(object):
+    """An object with utilities for serializing a game with names"""
+    def __init__(self, *args):
+        if len(args) == 1:
+            role_strats = sorted(args[0].items())
+            self.role_names = tuple(r for r, _ in role_strats)
+            self.strat_names = tuple(tuple(sorted(s)) for _, s in role_strats)
+        elif len(args) == 2:
+            self.role_names = tuple(args[0])
+            self.strat_names = tuple(map(tuple, args[1]))
+            if any(any(a > b for a, b in zip(s[:-1], s[1:]))
+                   for s in self.strat_names):
+                warnings.warn("If strategies aren't sorted, some functions "
+                              "won't work as intended")
+        self.num_strategies = np.fromiter(map(len, self.strat_names), int,
+                                          len(self.role_names))
+        self.num_roles = self.num_strategies.size
+        self.num_role_strats = self.num_strategies.sum()
+        self._split_inds = self.num_strategies[:-1].cumsum()
+        self._role_index = {r: i for i, r in enumerate(self.role_names)}
+        role_strats = itertools.chain.from_iterable(
+            ((r, s) for s in strats) for r, strats
+            in zip(self.role_names, self.strat_names))
+        self._role_strat_index = {(r, s): i for i, (r, s)
+                                  in enumerate(role_strats)}
+
+    def role_split(self, array, axis=-1):
+        return np.split(array, self._split_inds, axis)
+
+    def role_index(self, role):
+        """Return the index of a role"""
+        return self._role_index[role]
+
+    def role_strat_index(self, role, strat):
+        """Return the index of a role strat pair"""
+        return self._role_strat_index[(role, strat)]
+
+    def to_prof_json(self, prof):
+        """Convert a profile to json"""
+        return {role: {strat: count.item() for strat, count
+                       in zip(strats, counts)
+                       if count > 0}
+                for counts, role, strats
+                in zip(self.role_split(prof),
+                       self.role_names, self.strat_names)}
+
+    def to_prof_symgrp(self, prof):
+        """Convert a profile to a symmetry group"""
+        return list(itertools.chain.from_iterable(
+            (
+                {'role': role, 'strategy': strat, 'count': int(count)}
+                for strat, count in zip(strats, counts))
+            for role, strats, counts
+            in zip(self.role_names, self.strat_names,
+                   self.role_split(prof))))
+
+    def to_prof_string(self, prof):
+        """Convert a profile to a string"""
+        return '; '.join(
+            '{}: {}'.format(role, ', '.join(
+                '{:d} {}'.format(count, strat)
+                for strat, count in zip(strats, counts)))
+            for role, strats, counts
+            in zip(self.role_names, self.strat_names,
+                   self.role_split(prof)))
+
+    def from_prof(self, prof):
+        """Read a profile from an auto-detected format"""
+        if isinstance(prof, str):
+            return self.from_prof_string(prof)
+        elif isinstance(prof, abc.Mapping):
+            return self.from_prof_json(prof)
+        elif isinstance(prof, abc.Iterable):
+            return self.from_prof_symgrp(prof)
+        else:
+            raise ValueError('Unrecognized auto style for input: {}'
+                             .format(prof))
+
+    def from_prof_json(self, dictionary):
+        """Read a profile from json"""
+        prof = [False] * self.num_role_strats
+        for role, strats in dictionary.items():
+            for strat, count in strats.items():
+                prof[self._role_strat_index[(role, strat)]] = count
+        return np.array(prof)
+
+    def from_prof_symgrp(self, symgrps):
+        """Read a profile from symmetry groups"""
+        prof = np.zeros(self.num_role_strats, int)
+        for sym_group in symgrps:
+            role = sym_group['role']
+            strat = sym_group['strategy']
+            count = sym_group['count']
+            prof[self._role_strat_index[(role, strat)]] = count
+        return prof
+
+    def from_prof_string(self, prof_string):
+        """Read a profile from a string"""
+        prof = np.zeros(self.num_role_strats, int)
+        for role_str in prof_string.split('; '):
+            role, strats = role_str.split(': ', 1)
+            for strat_str in strats.split(', '):
+                count, strat = strat_str.split(' ', 1)
+                prof[self._role_strat_index[(role, strat)]] = count
+        return prof
+
+    def to_role_json(self, role_info):
+        """Format role data as json"""
+        return {role: info.item() for role, info
+                in zip(self.role_names, role_info)}
+
+    def to_payoff_json(self, profile, payoffs):
+        """Format a profile and payoffs as json"""
+        return {role: {strat: pay for strat, pay, count
+                       in zip(strats, pays, counts) if count > 0}
+                for role, strats, pays, counts
+                in zip(self.role_names, self.strat_names,
+                       self.role_split(payoffs),
+                       self.role_split(profile))}
+
+    def to_deviation_payoff_json(self, profile, payoffs):
+        """Format a profile and deviation payoffs as json"""
+        supp = profile > 0
+        role_supp = np.add.reduceat(supp, np.insert(self._split_inds, 0, 0))
+        splits = np.repeat(self.num_strategies - 1, role_supp)[:-1].cumsum()
+        return {r: {s: {d: p.item() for p, d
+                        in zip(dps, (d for d in ses if d != s))}  # noqa
+                    for dps, s in zip(np.split(ps, sp.sum()),
+                                      (s for s, m in zip(ses, sp) if m))}  # noqa
+                for r, ses, ps, sp in zip(self.role_names, self.strat_names,
+                                          np.split(payoffs, splits),
+                                          self.role_split(supp))}
+
+    def to_json(self, game):
+        """Convert to a json serializable format"""
+        assert np.all(self.num_strategies == game.num_strategies), \
+            "Number of strategies per role didn't match"
+        json = {'players': dict(zip(self.role_names,
+                                    map(int, game.num_players))),
+                'strategies': dict(zip(self.role_names, self.strat_names))}
+
+        if isinstance(game, rsgame.SampleGame):
+            json['profiles'] = [
+                {
+                    role: [(strat, int(count), list(map(float, pay)))
+                           for strat, count, pay
+                           in zip(strats, counts, pays)
+                           if count > 0]
+                    for counts, pays, role, strats
+                    in zip(self.role_split(prof),
+                           self.role_split(payoffs, 0),
+                           self.role_names,
+                           self.strat_names)}
+                for prof, payoffs
+                in zip(game.profiles,
+                       itertools.chain.from_iterable(game.sample_payoffs))]
+
+        elif isinstance(game, rsgame.Game):
+            json['profiles'] = [
+                {
+                    role: [(strat, int(count), float(pay))
+                           for strat, count, pay
+                           in zip(strats, counts, pays)
+                           if count > 0]
+                    for counts, pays, role, strats
+                    in zip(self.role_split(prof),
+                           self.role_split(payoffs),
+                           self.role_names,
+                           self.strat_names)}
+                for prof, payoffs in zip(game.profiles, game.payoffs)]
+
+        return json
+
+    def to_str(self, game):
+        strg = ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}\n'
+                .format(
+                    self.__class__.__name__,
+                    ', '.join(self.role_names),
+                    '\n\t\t'.join(
+                        '{:d}x {}'.format(count, role)
+                        for role, count
+                        in sorted(zip(self.role_names, game.num_players))),
+                    '\n\t\t'.join(
+                        '{}:\n\t\t\t{}'.format(role, '\n\t\t\t'.join(strats))
+                        for role, strats
+                        in sorted(zip(self.role_names, self.strat_names)))
+                )).expandtabs(4)
+        if isinstance(game, rsgame.Game):
+            strg += ('payoff data for {data:d} out of {total:d} '
+                     'profiles').format(data=game.num_profiles,
+                                        total=game.num_all_profiles)
+        if isinstance(game, rsgame.SampleGame):
+            samples = game.num_samples
+            if samples.size == 0:
+                sample_str = '\nno observations'
+            elif samples.size == 1:
+                sample_str = '\n{:d} observations per profile'.format(
+                    samples[0])
+            else:
+                sample_str = '\n{:d} to {:d} observations per profile'.format(
+                    samples.min(), samples.max())
+            strg += sample_str
+
+        return strg
+
+
+def read_base_game(json):
+    players, strats, _, _ = _game_from_json(json)
+    conv = GameSerializer(strats)
+    num_players = np.fromiter((players[r] for r in conv.role_names), int,
+                              conv.num_roles)
+    return rsgame.BaseGame(num_players, conv.num_strategies), conv
+
+
+def read_game(json):
+    """Constructor for Game"""
+    # From json
+    players, strats, payoff_data, num_profs = _game_from_json(json)
+    conv = GameSerializer(strats)
+    num_players = np.fromiter((players[r] for r in conv.role_names), int,
+                              conv.num_roles)
+
+    profiles = np.zeros((num_profs, conv.num_role_strats), int)
+    payoffs = np.zeros((num_profs, conv.num_role_strats), float)
+
+    p = 0  # profile index
+    for profile_data in payoff_data:
+        if any(any(len(p[2]) == 0 or any(x is None for x in p[2])
+                   for p in sym_grp) for sym_grp in profile_data.values()):
+            warnings.warn('Encountered null payoff data in profile: {}'
+                          .format(profile_data))
+            continue  # Invalid data, but can continue
+
+        for role, strategy_data in profile_data.items():
+            for strategy, count, pays in strategy_data:
+                i = conv.role_strat_index(role, strategy)
+                assert profiles[p, i] == 0, (
+                    'Duplicate role strategy pair ({}, {})'
+                    .format(role, strategy))
+                profiles[p, i] = count
+                payoffs[p, i] = np.average(pays)
+
+        p += 1  # profile added
+
+    # The slice at the end truncates any null data
+    return (rsgame.Game(num_players, conv.num_strategies, profiles, payoffs),
+            conv)
+
+
+def read_sample_game(json):
+    # From json
+    players, strats, payoff_data, num_profs = _game_from_json(json)
+    conv = GameSerializer(strats)
+    num_players = np.fromiter((players[r] for r in conv.role_names), int,
+                              conv.num_roles)
+
+    sample_map = {}
+    for profile_data in payoff_data:
+        if any(any(p is None or len(p) == 0 for _, __, p in sym_grps)
+               for sym_grps in profile_data.values()):
+            warnings.warn('Encountered null payoff data in profile: {}'
+                          .format(profile_data))
+            continue  # Invalid data, but can continue
+
+        num_samples = min(min(len(payoffs[2]) for payoffs in sym_grps)
+                          for sym_grps in profile_data.values())
+        profile = np.zeros(conv.num_role_strats, dtype=int)
+        spayoffs = np.zeros((conv.num_role_strats, num_samples))
+
+        for role, strategy_data in profile_data.items():
+            for strategy, count, payoffs in strategy_data:
+                i = conv.role_strat_index(role, strategy)
+                assert profile[i] == 0, (
+                    'Duplicate role strategy pair ({}, {})'
+                    .format(role, strategy))
+                if len(payoffs) > num_samples:
+                    warnings.warn("Truncating observation data")
+
+                profile[i] = count
+                spayoffs[i] = payoffs[:num_samples]
+
+        lst_profs, lst_pays = sample_map.setdefault(num_samples, ([], []))
+        lst_profs.append(profile[None])
+        lst_pays.append(spayoffs[None])
+
+    # Join data together
+    profs = []
+    for prof, _ in sample_map.values():
+        profs.extend(profs)
+    if profs:
+        profiles = np.concatenate(profs)
+        sample_payoffs = [np.concatenate(p) for _, p
+                          in sample_map.values() if p]
+    else:  # No data
+        profiles = np.empty((0, conv.num_role_strats), dtype=int)
+        sample_payoffs = []
+
+    # The slice at the end truncates any null data
+    return (rsgame.SampleGame(num_players, conv.num_strategies, profiles,
+                              sample_payoffs), conv)
 
 
 def _game_from_json(json_):
@@ -43,7 +350,8 @@ def _ga_game_from_json(json_):
 
     return (json_['players'],
             json_['strategies'],
-            profiles)
+            profiles,
+            len(profiles))
 
 
 def _roles_from_json(json_):
@@ -51,7 +359,7 @@ def _roles_from_json(json_):
     roles = json_['roles']
     players = {r['name']: int(r['count']) for r in roles}
     strategies = {r['name']: r['strategies'] for r in roles}
-    return (players, strategies, ())
+    return (players, strategies, (), 0)
 
 
 def _new_game_from_json(json_, profile_reader):
@@ -154,25 +462,6 @@ def _samples_profile_v4_from_json(prof_json):
             for role, strats in prof.items()}
 
 
-# def read_GA_profile(profileJSON):
-#     try:
-#         return Profile(profileJSON['data'])
-#     except KeyError:
-#         return Profile(profileJSON)
-
-
-# def read_NE(data):
-#     prob_strs = data.split(',')[1:]
-#     probs = []
-#     for s in prob_strs:
-#         try:
-#             num, denom = s.split('/')
-#             probs.append(float(num) / float(denom))
-#         except ValueError:
-#             probs.append(float(s))
-#     return harray(probs)
-
-
 # def to_nfg_asym(game, output):
 #     output.write('NFG 1 R "asymmetric"\n{ ')
 #     output.write(' '.join(('"' + str(r) + '"' for r in game.roles)))
@@ -193,13 +482,3 @@ def _samples_profile_v4_from_json(prof_json):
 # def _nfg_payoffs(game, prof):
 #     return ' '.join(str(game.get_payoff(prof, role, next(iter(strats.keys())))) # noqa
 #                     for role, strats in prof.items())
-
-
-# def _increment_profile(game, prof):
-#     for role in game.roles:
-#         strat = prof[role].keys()[0]
-#         i = game.index(role, strat)
-#         if i < game.numStrategies[game.index(role)] - 1:
-#             return prof.deviate(role, strat, game.strategies[role][i+1])
-#         prof = prof.deviate(role, strat, game.strategies[role][0])
-#     return prof

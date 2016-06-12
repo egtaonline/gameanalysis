@@ -1,74 +1,76 @@
 """A module for computing regret and social welfare of profiles"""
-import math
-
 import numpy as np
 
 
 def pure_strategy_deviation_gains(game, prof):
-    """Returns a nested dict containing all of the gains from deviation
+    """Returns the pure strategy deviations gains
 
-    The nested dict maps role to strategy to deviation to gain. The profile
-    must have data.
-    """
-    prof = game.as_profile(prof)
-    return {role:
-            {strat:
-             {dev: game.get_payoff(
-                 prof.deviate(role, strat, dev),  # noqa
-                 role, dev, default=np.nan) - payoff  # noqa
-              for dev in game.strategies[role]}  # noqa
-             for strat, payoff in strat_payoffs.items()}
-            for role, strat_payoffs in game.get_payoffs(prof).items()}
+    The result is a compact array of deviation gains. Each element corresponds
+    to the deviation from strategy i to strategy j ordered by (i, j) for all
+    valid deviations."""
+    prof = np.asarray(prof, int)
+    supp = prof > 0
+    num_supp = game.role_reduce(supp)
+    from_inds = np.arange(game.num_role_strats)[supp]
+    reps = game.num_strategies[game.role_index[from_inds]]
+    num_devs = np.sum(num_supp * (game.num_strategies - 1))
+
+    to_inds = np.ones(reps.sum(), int)
+    to_inds[0] = 0
+    to_inds[reps[:-1].cumsum()] -= reps[:-1]
+    role_inds = (num_supp * game.num_strategies)[:-1].cumsum()
+    to_inds[role_inds] += game.num_strategies[:-1]
+    to_inds = to_inds.cumsum()
+    to_inds = to_inds[to_inds != from_inds.repeat(reps)]
+    from_inds = from_inds.repeat(reps - 1)
+
+    pays = game.get_payoffs(prof, np.nan)[from_inds]
+    dev_profs = prof[None].repeat(num_devs, 0)
+    dev_profs[np.arange(num_devs), from_inds] -= 1
+    dev_profs[np.arange(num_devs), to_inds] += 1
+    dev_pays = np.array([game.get_payoffs(dprof, np.nan)[to]
+                         for dprof, to in zip(dev_profs, to_inds)])
+    return dev_pays - pays
 
 
 def pure_strategy_regret(game, prof):
-    """Returns the regret of a pure strategy profile in a game"""
-    gains = pure_strategy_deviation_gains(game, prof)
-    if any(any(any(math.isnan(gain) for gain in dev_gain.values())
-               for dev_gain in strat_gain.values())
-           for strat_gain in gains.values()):
-        return float('nan')
-    else:
-        return max(max(max(gain for gain in dev_gain.values())
-                       for dev_gain in strat_gain.values())
-                   for strat_gain in gains.values())
+    """Returns the regret of a pure strategy profile
+
+    If prof has more than one dimension, the last dimension is taken as a set
+    of profiles and returned as a new array."""
+    prof = np.asarray(prof, int)
+    return max(pure_strategy_deviation_gains(game, prof).max(), 0)
 
 
-def mixture_deviation_gains(game, mix, assume_complete=False, as_array=False):
+def mixture_deviation_gains(game, mix, assume_complete=False):
     """Returns all the gains from deviation from a mixed strategy
 
-    Return type is a dict mapping role to deviation to gain. This is equivalent
-    to what is sometimes called equilibrium regret."""
-    mix = game.as_mixture(mix, as_array=True)
-    strategy_evs = game.deviation_payoffs(mix, assume_complete=assume_complete,
-                                          as_array=True)
+    The result is ordered by role, then strategy."""
+    mix = np.asarray(mix, float)
+    strategy_evs = game.deviation_payoffs(mix, assume_complete=assume_complete)
     # strategy_evs is nan where there's no data, however, if it's not played in
     # the mix, it doesn't effect the role_evs
     masked = strategy_evs.copy()
     masked[mix == 0] = 0
     role_evs = game.role_reduce(masked * mix, keepdims=True)
-    gains = strategy_evs - role_evs
-
-    if as_array:
-        return gains
-    else:
-        return game.as_dict(gains, filter_zeros=False)
+    return strategy_evs - role_evs
 
 
 def mixture_regret(game, mix):
     """Return the regret of a mixture profile"""
-    return mixture_deviation_gains(game, mix, as_array=True).max()
+    mix = np.asarray(mix, float)
+    return mixture_deviation_gains(game, mix).max()
 
 
 def pure_social_welfare(game, profile):
     """Returns the social welfare of a pure strategy profile in game"""
-    profile = game.as_profile(profile, as_array=True)
-    return np.sum(profile * game.get_payoffs(profile, as_array=True))
+    profile = np.asarray(profile, int)
+    return game.get_payoffs(profile, np.nan).dot(profile)
 
 
 def mixed_social_welfare(game, mix):
     """Returns the social welfare of a mixed strategy profile"""
-    return game.get_expected_payoff(mix, as_array=True).dot(game.aplayers)
+    return game.get_expected_payoffs(mix).dot(game.num_players)
 
 
 # def neighbors(game, p, *args, **kwargs):

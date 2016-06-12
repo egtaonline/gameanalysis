@@ -3,9 +3,10 @@ import json
 import math
 
 import numpy as np
-from nose import tools
+import pytest
 
 from gameanalysis import gamegen
+from gameanalysis import gameio
 from gameanalysis import nash
 from gameanalysis import regret
 from gameanalysis import rsgame
@@ -19,84 +20,82 @@ ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
 
 
 @testutils.apply(repeat=20)
-def pure_prisoners_dilemma_test():
-    game = gamegen.sym_2p2s_game(2, 0, 3, 1).normalize()  # prisoners dilemma
-    eqa = list(nash.pure_nash(game, as_array=True))
+def test_pure_prisoners_dilemma():
+    game = gamegen.prisoners_dilemma()
+    eqa = nash.pure_nash(game)
 
-    assert len(eqa) == 1, "didn't find exactly one equilibria in pd"
-    expected = np.array([0, 2])
-    assert np.all(expected == eqa[0]), \
+    assert eqa.shape[0] == 1, "didn't find exactly one equilibria in pd"
+    expected = [0, 2]
+    assert np.all(expected == eqa), \
         "didn't find pd equilibrium"
 
 
 @testutils.apply(zip(ALL_METHODS), repeat=20)
-def mixed_prisoners_dilemma_test(methods):
-    game = gamegen.sym_2p2s_game(2, 0, 3, 1).normalize()  # prisoners dilemma
-    eqa = list(nash.mixed_nash(game, dist_thresh=5e-2, as_array=True,
-                               processes=1, **methods))
+def test_mixed_prisoners_dilemma(methods):
+    game = gamegen.prisoners_dilemma()
+    eqa = nash.mixed_nash(game, dist_thresh=1e-3, processes=1, **methods)
 
-    assert len(eqa) >= 1, \
+    assert eqa.shape[0] >= 1, \
         "didn't find at least one equilibria in pd {}".format(eqa)
     assert all(regret.mixture_regret(game, eqm) < 1e-3 for eqm in eqa), \
         "returned equilibria with high regret"
-    expected = [0., 1.]
-    assert any(np.allclose(eqm, expected, atol=1e-3, rtol=1e-3)
-               for eqm in eqa), \
+    expected = [0, 1]
+    assert np.isclose(eqa, expected, atol=1e-3, rtol=1e-3).all(1).any(), \
         "didn't find pd equilibrium {}".format(eqa)
 
 
 @testutils.apply(itertools.product(ALL_METHODS, (p/10 for p in range(11))))
-def mixed_known_eq_test(methods, eq_prob):
+def test_mixed_known_eq(methods, eq_prob):
     game = gamegen.sym_2p2s_known_eq(eq_prob)
-    eqa = list(nash.mixed_nash(game, as_array=True, processes=1, **methods))
-    assert len(eqa) >= 1, "didn't find equilibrium"
+    eqa = nash.mixed_nash(game, processes=1, **methods)
+    assert eqa.shape[0] >= 1, "didn't find equilibrium"
     expected = [eq_prob, 1 - eq_prob]
-    assert any(np.allclose(eqm, expected, atol=1e-3) for eqm in eqa), \
+    assert np.isclose(eqa, expected, atol=1e-3, rtol=1e-3).all(1).any(), \
         "didn't find correct equilibrium {} instead of {}".format(
             eqa, expected)
 
 
 @testutils.apply(zip(p/10 for p in range(11)))
-def optimization_stable_point_test(eq_prob):
+def test_optimization_stable_point(eq_prob):
     game = gamegen.sym_2p2s_known_eq(eq_prob)
     opt = nash.RegretOptimizer(game)
-    val, grad = opt.grad(np.array([eq_prob, 1 - eq_prob]))
+    val, grad = opt.grad(np.array([eq_prob, 1 - eq_prob]), 1)
     assert np.isclose(val, 0), \
         "value at equilibrium was not close to zero: {}".format(val)
     assert np.allclose(grad, 0), \
         "grad at equilibrium was not close to zero: {}".format(grad)
 
 
-def pure_roshambo_test():
+def test_pure_roshambo():
     game = gamegen.rock_paper_scissors()
-    eqa = list(nash.pure_nash(game))
-    assert len(eqa) == 0, "found a pure equilibrium in roshambo"
-    eqa = list(nash.pure_nash(game, 1))
-    assert len(eqa) == 3, \
+    eqa = nash.pure_nash(game)
+    assert eqa.size == 0, "found a pure equilibrium in roshambo"
+    eqa = nash.pure_nash(game, 1)
+    assert eqa.shape[0] == 3, \
         "didn't find low regret ties in roshambo"
-    eqa = list(nash.pure_nash(game, 2))
-    assert len(eqa) == game.size, \
+    eqa = nash.pure_nash(game, 2)
+    assert eqa.shape[0] == game.num_all_profiles, \
         "found profiles with more than 2 regret in roshambo"
 
 
-def minreg_roshambo_test():
+def test_minreg_roshambo():
     game = gamegen.rock_paper_scissors()
     eqm = nash.min_regret_profile(game)
-    assert 2 == next(iter(next(iter(eqm.values())).values())), \
+    assert np.all(np.sort(eqm) == [0, 0, 2]), \
         "min regret profile was not rr, pp, or ss"
 
 
-def minreg_grid_roshambo_test():
+def test_minreg_grid_roshambo():
     game = gamegen.rock_paper_scissors()
     eqm = nash.min_regret_grid_mixture(game, 3)  # Not enough for eq
-    assert abs(regret.mixture_regret(game, eqm) - .5) < 1e-7, \
+    assert np.isclose(regret.mixture_regret(game, eqm), .5), \
         "min regret grid didn't find [.5, .5, 0] profile with regret .5"
     eqm = nash.min_regret_grid_mixture(game, 4)  # hit eqa perfectly
-    assert abs(regret.mixture_regret(game, eqm) - 0) < 1e-7, \
+    assert np.isclose(regret.mixture_regret(game, eqm), 0), \
         "min regret grid didn't find equilibrium"
 
 
-def minreg_rand_roshambo_test():
+def test_minreg_rand_roshambo():
     game = gamegen.rock_paper_scissors()
     eqm = nash.min_regret_rand_mixture(game, 20)
     assert regret.mixture_regret(game, eqm) < 2 + 1e-7, \
@@ -104,55 +103,54 @@ def minreg_rand_roshambo_test():
 
 
 @testutils.apply(zip(ALL_METHODS))
-def mixed_roshambo_test(methods):
+def test_mixed_roshambo(methods):
     game = gamegen.rock_paper_scissors()
-    eqa = list(nash.mixed_nash(game, dist_thresh=1e-2, processes=1, **methods))
-    assert len(eqa) == 1, "didn't find right number of equilibria in roshambo"
-    assert np.allclose(1/3, game.as_mixture(eqa[0], as_array=True)), \
+    eqa = nash.mixed_nash(game, dist_thresh=1e-2, processes=1, **methods)
+    assert eqa.shape[0] == 1, \
+        "didn't find right number of equilibria in roshambo"
+    assert np.allclose(1/3, eqa), \
         "roshambo equilibria wasn't uniform"
 
 
-def at_least_one_test():
+def test_at_least_one():
     # Equilibrium of game is not at a starting point for equilibria finding
     game = gamegen.sym_2p2s_known_eq(1/math.sqrt(2))
     # Don't converge
     opts = {'max_iters': 0}
-    eqa = list(nash.mixed_nash(game, processes=1, replicator=opts))
-    assert len(eqa) == 0, "found an equilibrium normally"
-    eqa = list(nash.mixed_nash(game, replicator=opts, processes=1,
-                               at_least_one=True))
-    assert len(eqa) == 1, "at_least_one didn't return anything"
+    eqa = nash.mixed_nash(game, processes=1, replicator=opts)
+    assert eqa.size == 0, "found an equilibrium normally"
+    eqa = nash.mixed_nash(game, replicator=opts, processes=1,
+                          at_least_one=True)
+    assert eqa.shape[0] == 1, "at_least_one didn't return anything"
 
 
 @testutils.apply(zip(
     ALL_METHODS,
     [
-        (1, 1, [1]),
-        (1, 2, [2]),
-        (2, 1, [1, 1]),
-        (2, 2, [2, 2]),
-        (3, 4, [4, 4, 4]),
-        (2, [1, 3], [1, 3]),
+        [1],
+        [2],
+        [1, 1],
+        [2, 2],
+        [4, 4, 4],
+        [1, 3],
     ]))
-def mixed_nash_test(methods, game_def):
-    players, strategies, exp_strats = game_def
-    game = gamegen.independent_game(players, strategies)
-    eqa = list(nash.mixed_nash(game, at_least_one=True, processes=1,
-                               **methods))
-    assert eqa, "Didn't find an equilibria with at_least_one on"
+def test_mixed_nash(methods, strategies):
+    game = gamegen.role_symmetric_game(1, strategies)
+    eqa = nash.mixed_nash(game, at_least_one=True, processes=1, **methods)
+    assert eqa.size > 0, "Didn't find an equilibria with at_least_one on"
 
 
-@tools.raises(ValueError)
-def empty_game_test():
-    game = rsgame.Game.from_game(gamegen.empty_role_symmetric_game(1, 2, 3))
-    nash.min_regret_profile(game)
+def test_empty_game():
+    game = rsgame.Game(2, 3)
+    with pytest.raises(ValueError):
+        nash.min_regret_profile(game)
 
 
-def hard_nash_test():
+def test_hard_nash():
     with open('test/hard_nash_game_1.json') as f:
-        game = rsgame.Game.from_json(json.load(f))
-    eqa = nash.mixed_nash(game, as_array=True, processes=1)
-    expected = game.as_array({
+        game, conv = gameio.read_game(json.load(f))
+    eqa = nash.mixed_nash(game)
+    expected = conv.from_prof_json({
         'background': {
             'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
             0.5407460907477768,
@@ -162,7 +160,7 @@ def hard_nash_test():
         'hft': {
             'trend:trendLength_5_profitDemanded_50_expiration_50': 1.0
         }
-    }, float)
-    assert any(np.allclose(game.trim_mixture_array_support(eqm), expected,
-               atol=1e-4, rtol=1e-4) for eqm in eqa), \
+    })
+    assert np.isclose(game.trim_mixture_support(eqa), expected,
+                      atol=1e-4, rtol=1e-4).all(1).any(), \
         "Didn't find equilibrium in known hard instance"

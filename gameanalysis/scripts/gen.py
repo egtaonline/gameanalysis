@@ -1,16 +1,19 @@
-"""Module for creating random games"""
+"""create random games"""
 import argparse
 import collections
 import json
 import sys
+from os import path
 
 import numpy.random as rand
 
+from gameanalysis import gameio
 from gameanalysis import gamegen
-from gameanalysis import rsgame
 
 
 class ZeroSum(object):
+    """two player zero sum game"""
+
     @staticmethod
     def update_parser(parser):
         parser.description = """A two player zero sum game with uniform
@@ -21,25 +24,14 @@ class ZeroSum(object):
 
     @staticmethod
     def create(args):
-        return gamegen.zero_sum_game(args.num_strats, cool=args.cool)
-
-
-class Symmetric(object):
-    @staticmethod
-    def update_parser(parser):
-        parser.description = """A uniform symmetric game"""
-        parser.add_argument('num_players', metavar='<num-players>', type=int,
-                            help="""The number of players""")
-        parser.add_argument('num_strats', metavar='<num-strategies>', type=int,
-                            help="""The number of strategies""")
-
-    @staticmethod
-    def create(args):
-        return gamegen.symmetric_game(args.num_players, args.num_strats,
-                                      cool=args.cool)
+        game = gamegen.two_player_zero_sum_game(args.num_strats)
+        serial = gamegen.game_serializer(game)
+        return game, serial
 
 
 class RoleSymmetric(object):
+    """independent uniform role symmetric game"""
+
     @staticmethod
     def update_parser(parser):
         parser.description = """A role symmetric game"""
@@ -53,13 +45,14 @@ strategies for a role, specified as many times as there are roles. e.g. "1 4 3
     def create(args):
         assert len(args.pands) % 2 == 0, \
             'Must specify matching sets of players and strategies'
-        return gamegen.role_symmetric_game(len(args.pands) // 2,
-                                           args.pands[::2],
-                                           args.pands[1::2],
-                                           cool=args.cool)
+        game = gamegen.role_symmetric_game(args.pands[::2],
+                                           args.pands[1::2])
+        serial = gamegen.game_serializer(game)
+        return game, serial
 
 
 class ExperimentNoise(object):
+    """add experimental noise to a given game"""
 
     def uniform(max_width):
         def actual(shape):
@@ -101,6 +94,9 @@ class ExperimentNoise(object):
     @staticmethod
     def update_parser(parser):
         parser.description = """Add noise to an existing game"""
+        parser.add_argument('--input', '-i', metavar='<input-file>',
+                            default=sys.stdin, type=argparse.FileType('r'),
+                            help="""Input file for script. (default: stdin)""")
         parser.add_argument('distribution',
                             choices=ExperimentNoise.distributions, help="""The
 distribution to sample from. uniform: the width corresponds to the half width
@@ -119,67 +115,67 @@ of the sampled value. gaussian: the width corresponds to the standard
 
     @staticmethod
     def create(args):
-        game = rsgame.Game.from_json(json.load(args.input))
+        game, serial = gameio.read_game(json.load(args.input))
         dist = ExperimentNoise.distributions[args.distribution](args.max_width)
-        return gamegen.add_noise(game, args.num_samples, dist)
+        return gamegen.add_noise(game, args.num_samples, noise=dist), serial
 
 
-_GAME_TYPES = collections.OrderedDict([
+class Help(object):
+    """get help on a generation function"""
+
+    @staticmethod
+    def update_parser(parser):
+        parser.add_argument('gametype', metavar='game-type', nargs='?',
+                            help="""Game type to get help on""")
+
+    @staticmethod
+    def create(args):
+        if args.gametype is None:
+            game = PARSER
+        else:
+            game = SUBCOMMANDS.choices[args.gametype]
+        game.print_help()
+        sys.exit(0)
+
+
+GAME_TYPES = collections.OrderedDict([
     ('uzs', ZeroSum),
-    ('usym', Symmetric),
     ('ursym', RoleSymmetric),
     ('noise', ExperimentNoise),
+    ('help', Help),
 ])
 
 
-def update_parser(parser, base):
-    sub_base = argparse.ArgumentParser(add_help=False, parents=[base])
-    base_group = sub_base.add_argument_group('game gen arguments')
-    base_group.add_argument('--cool', '-c', action='store_true', help="""Use
-                            role and strategy names that come from a text file
-                            instead of indexed names.  This produces more "fun"
-                            games as thy have more interesting names, but it is
-                            harder to use in an automated sense because the
-                            names can't be predicted.""")
-    base_group.add_argument('--normalize', '-n', action='store_true',
-                            help="""Normalize the game payoffs so that the
-                            minimum payoff is 0 and the maximum payoff is 1""")
+TYPE_HELP = ' '.join('`{}` - {}.'.format(t, m.__doc__)
+                     for t, m in GAME_TYPES.items())
+PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]
+BASE = argparse.ArgumentParser(prog='ga ' + PACKAGE, add_help=False)
+BASE.add_argument('--output', '-o', metavar='<output-file>',
+                  default=sys.stdout, type=argparse.FileType('w'),
+                  help="""Output file for script. (default: stdout)""")
+BASE.add_argument('--normalize', '-n', action='store_true', help="""Normalize
+                  the game payoffs so that the minimum payoff is 0 and the
+                  maximum payoff is 1""")
+PARSER = argparse.ArgumentParser(prog='ga ' + PACKAGE, parents=[BASE],
+                                 description="""Generate random games. Input is
+                                 unused""")
+SUBCOMMANDS = PARSER.add_subparsers(title='Generator types', dest='type',
+                                    metavar='<game-type>', help="""The game
+                                    generation function to use. Options are:
+                                    """ + TYPE_HELP)
+SUBCOMMANDS.required = True
 
-    parser.description = """Generate random games. Input is unused"""
-
-    subcommands = parser.add_subparsers(title='Generator types', dest='type',
-                                        help="""The game generation function to
-                                        use.""")
-    subcommands.required = True
-
-    class Help(object):
-
-        @staticmethod
-        def update_parser(parser):
-            parser.add_argument('gametype', metavar='game-type', nargs='?',
-                                help="""Game type to get help on""")
-
-        @staticmethod
-        def create(args):
-            if args.gametype is None:
-                game = parser
-            else:
-                game = subcommands.choices[args.gametype]
-            game.print_help()
-            sys.exit(0)
-
-    _GAME_TYPES['help'] = Help
-
-    for name, cls in _GAME_TYPES.items():
-        sub_parser = subcommands.add_parser(name, parents=[sub_base])
-        cls.update_parser(sub_parser)
+for name, cls in GAME_TYPES.items():
+    SUB_PARSER = SUBCOMMANDS.add_parser(name, parents=[BASE])
+    cls.update_parser(SUB_PARSER)
 
 
-def main(args):
-    game = _GAME_TYPES[args.type].create(args)
+def main():
+    args = PARSER.parse_args()
+    game, serial = GAME_TYPES[args.type].create(args)
 
     if args.normalize:
-        game = game.normalize()
+        game = gamegen.normalize(game)
 
     # elif args.type == 'cs':
     #     game_func = congestion_game
@@ -210,5 +206,9 @@ def main(args):
     #                     int(args.noise_args[2])]
     #     games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)
 
-    json.dump(game, args.output, default=lambda x: x.to_json())
+    json.dump(serial.to_json(game), args.output)
     args.output.write('\n')
+
+
+if __name__ == '__main__':
+    main()

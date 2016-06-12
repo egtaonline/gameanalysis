@@ -1,13 +1,14 @@
-"""Script for calculating regrets, deviations gains, and social welfare"""
+"""calculate bootstrap bounds"""
 import argparse
 import collections
 import json
 import sys
-from collections import abc
+from os import path
+
+import numpy as np
 
 from gameanalysis import bootstrap
-from gameanalysis import regret
-from gameanalysis import rsgame
+from gameanalysis import gameio
 
 
 class SampleGameBootstrap(object):
@@ -40,8 +41,9 @@ object of the deviators gains for every deviation; ne: return the "nash
 
     @staticmethod
     def run(args):
-        game = rsgame.SampleGame.from_json(json.load(args.input))
-        profiles = json.load(args.profiles)
+        game, serial = gameio.read_sample_game(json.load(args.input))
+        profiles = np.concatenate([serial.from_prof_json(p)[None] for p
+                                   in json.load(args.profiles)])
         func = SampleGameBootstrap.choices[args.type]
         results = func(game, profiles, args.num_bootstraps, args.percentiles,
                        args.processes)
@@ -52,6 +54,18 @@ object of the deviators gains for every deviation; ne: return the "nash
 bootstrap_types = collections.OrderedDict([
     ('sample', SampleGameBootstrap),
 ])
+
+PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]
+PARSER = argparse.ArgumentParser(prog='ga ' + PACKAGE, description="""Converts
+                                 between game data formats. Currently this is
+                                 only useful for modernizing old game json
+                                 formats.""")
+PARSER.add_argument('--input', '-i', metavar='<input-file>', default=sys.stdin,
+                    type=argparse.FileType('r'), help="""Input file for script.
+                    (default: stdin)""")
+PARSER.add_argument('--output', '-o', metavar='<output-file>',
+                    default=sys.stdout, type=argparse.FileType('w'),
+                    help="""Output file for script. (default: stdout)""")
 
 
 def update_parser(parser, base):
@@ -80,8 +94,9 @@ there will be some error due to linear interpolation between points. (default:
 
         @staticmethod
         def update_parser(parser):
-            parser.add_argument('boottype', metavar='bootstrap-type', nargs='?',
-                                help="""Bootstrap type to get help on""")
+            parser.add_argument('boottype', metavar='bootstrap-type',
+                                nargs='?', help="""Bootstrap type to get help
+                                on""")
 
         @staticmethod
         def run(args):
@@ -99,5 +114,11 @@ there will be some error due to linear interpolation between points. (default:
         cls.update_parser(sub_parser)
 
 
-def main(args):
+def main():
+    args = PARSER.parse_args()
     bootstrap_types[args.boot].run(args)
+
+
+if __name__ == '__main__':
+    print('bootstrap is not currently working', file=sys.stderr)
+    sys.exit(1)

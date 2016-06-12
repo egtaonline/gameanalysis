@@ -1,8 +1,11 @@
 # Python #
 ##########
 *.pyc
-/.coverage
 *.ipynb*
+/.coverage
+/.coverage.*
+/.cache
+/test/.cache
 
 # Editors #
 ###########

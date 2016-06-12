@@ -1,162 +1,19 @@
-import collections
 import itertools
-import random
-from collections import abc
-from os import path
+import math
 
 import numpy as np
 import numpy.random as rand
 import scipy.misc as scm
 
-from gameanalysis import collect
-from gameanalysis import rsgame
 from gameanalysis import utils
-
-
-# Populate word list for generating better names
-_WORD_LIST_FILE = path.join(path.dirname(path.dirname(__file__)),
-                            '.wordlist.txt')
-_WORD_LIST = []
-
-try:
-    with open(_WORD_LIST_FILE) as f:
-        for word in f:
-            _WORD_LIST.append(word[:-1])
-except OSError:  # Something bad happened
-    pass
+from gameanalysis import gameio
+from gameanalysis import rsgame
 
 default_distribution = lambda shape=None: rand.uniform(-1, 1, shape)
 
 
-def _as_list(item, length):
-    """Makes sure item is a length list"""
-    if isinstance(item, abc.Sequence):
-        assert len(item) == length, "List was not the proper length"
-    else:
-        item = [item] * length
-    return item
-
-
-def _random_strings(number, prefix='x', padding=None, cool=False):
-    """Generate random strings without repetition
-
-    Parameters
-    ----------
-    prefix : str
-        The prefix to put before the numbers.
-    padding : int
-        The amount to pad numbers so that the lexicographically sort. If None,
-        they are padded to fit all of the numbers.
-    cool : bool
-        If true, numbers and prefixes are omitted, and instead words are
-        sampled from a list of dictionary words read in.
-    """
-    if cool and _WORD_LIST:
-        return random.sample(_WORD_LIST, number)
-    else:
-        if padding is None:
-            padding = len(str(number - 1))
-        return ('{}{:0{}d}'.format(prefix, i, padding) for i in range(number))
-
-
-def _compact_payoffs(game):
-    """Given a game returns a compact representation of the payoffs
-
-    In this case compact means that they're in one ndarray. This representation
-    is inefficient for almost everything but an independent game with full
-    data.
-
-    Parameters
-    ----------
-    game : rsgame.Game
-        The game to generate a compact payoff matrix for
-
-    Returns
-    -------
-    payoffs : ndarray; shape (s1, s2, ..., sn, n)
-        payoffs[s1, s2, ..., sn, j] is the payoff to player j when player 1
-        plays s1, player 2 plays s2, etc. n is the total number of players.
-
-    strategies : [(role, [strat])]
-        The first list indexes the players, and the second indexes the
-        strategies for that player.
-    """
-    # TODO could probably be done better with array profiles, but it's unclear.
-    # np.lexsort(-profs.T[::-1]) will get the proper ordering of the profiles
-    # for assignment into a matrix. However, the expansion from one array
-    # profile to all expanded profiles is not easy, and maybe not worth
-    # constructing?
-    strategies = list(itertools.chain.from_iterable(
-        itertools.repeat((role, list(strats)), game.players[role])
-        for role, strats in game.strategies.items()))
-
-    payoffs = np.empty([len(s) for _, s in strategies] + [len(strategies)])
-    for profile, payoff in game.profile_payoffs(as_array=True):
-        # This generator expression takes a role symmetric profile with payoffs
-        # and generates tuples of strategy indexes and payoffs for every player
-        # when that player plays the given strategy.
-
-        # The first line takes results in the form:
-        # (((r1i1, r1p1), (r1i2, r1p2)), ((r1i1, r2p1),)) that is grouped by
-        # role, then by player in the role, then grouped strategy index and
-        # payoff, and turns it into a single tuple of indices and payoffs.
-        perms = (zip(*itertools.chain.from_iterable(sp))
-                 # This product is over roles
-                 for sp in itertools.product(*[
-                     # This computes all of the ordered permutations of
-                     # strategies in a given role, e.g. if two players play s1
-                     # and one plays s2, this iterates over all possible ways
-                     # that could be expressed in an asymmetric game.
-                     utils.ordered_permutations(itertools.chain.from_iterable(
-                         # This iterates over the strategy counts, and
-                         # duplicates strategy indices and payoffs based on the
-                         # strategy counts.
-                         itertools.repeat((i, v), c) for i, (c, v)
-                         in enumerate(zip(p, pay))))
-                     for p, pay in zip(game.role_split(profile),
-                                       game.role_split(payoff))]))
-        for indices, utilities in perms:
-            payoffs[indices] = utilities
-    return payoffs, strategies
-
-
-def drop_profiles(game, prob: float, independent=True):
-    if independent:
-        selection = rand.random(len(game)) < prob
-    else:
-        selection = rand.choice(np.arange(len(game)), round(len(game) * prob),
-                                replace=False)
-
-    new_profiles = game.profiles(as_array=True)[selection]
-    new_payoffs = game.payoffs(as_array=True)[selection]
-    return rsgame.Game(game.players, game.strategies, new_profiles,
-                       new_payoffs)
-
-
-def empty_role_symmetric_game(num_roles: int, num_players, num_strategies,
-                              cool=False):
-    """Create an empty role symmetric game"""
-    assert num_roles > 0, "Number of roles must be greater than 0"
-    num_players = _as_list(num_players, num_roles)
-    num_strategies = _as_list(num_strategies, num_roles)
-
-    assert all(p > 0 for p in num_players), \
-        "number of players must be greater than zero"
-    assert all(s > 0 for s in num_strategies), \
-        "number of strategies must be greater than zero"
-
-    # This list is necessary to maintain consistent order.
-    roles = list(_random_strings(num_roles, prefix='r', cool=cool))
-    strategies = collections.OrderedDict(
-        (role, list(_random_strings(num_strat, prefix='s', cool=cool)))
-        for role, num_strat
-        in zip(roles, num_strategies))
-    players = dict(zip(roles, num_players))
-    return rsgame.EmptyGame(players, strategies)
-
-
-def role_symmetric_game(num_roles, num_players, num_strategies,
-                        distribution=default_distribution, cool=False):
+def role_symmetric_game(num_players, num_strategies,
+                        distribution=default_distribution):
     """Generate a random role symmetric game
 
     Parameters
@@ -169,26 +26,18 @@ def role_symmetric_game(num_roles, num_players, num_strategies,
     num_strategies : int or [int], len == num_roles
         The number of strategies, same for each role if a scalar, or a list,
         one for each role.
-    distribution : () -> float
-        Payoff distribution. Calling should result in a scalar payoff.
-        (default: default_distribution)
-    cool : bool
-        Whether to generate word-like role and strategy strings. These will be
-        random, and hence unpredictable, whereas standard role and strategy
-        names are predictable. (default: False)
+    distribution : (shape) -> ndarray (shape)
+        Payoff distribution.
     """
-    game = empty_role_symmetric_game(num_roles, num_players, num_strategies,
-                                     cool)
-    aprofiles = game.all_profiles(as_array=True)
-    mask = aprofiles > 0
-    apayoffs = np.zeros(aprofiles.shape)
-    apayoffs[mask] = distribution(mask.sum())
-
-    return rsgame.Game(game.players, game.strategies, aprofiles, apayoffs)
+    game = rsgame.BaseGame(num_players, num_strategies)
+    profiles = game.all_profiles()
+    mask = profiles > 0
+    payoffs = np.zeros(profiles.shape)
+    payoffs[mask] = distribution(mask.sum())
+    return rsgame.Game(game, profiles, payoffs)
 
 
-def independent_game(num_players, num_strategies,
-                     distribution=default_distribution, cool=False):
+def independent_game(num_strategies, distribution=default_distribution):
     """Generate a random independent (asymmetric) game
 
     All payoffs are generated independently from distribution.
@@ -204,30 +53,12 @@ def independent_game(num_players, num_strategies,
         The distribution to sample payoffs from. Must take a single shape
         argument and return an ndarray of iid values with that shape.
     """
-    # Correct inputs
-    num_strategies = _as_list(num_strategies, num_players)
-    shape = num_strategies + [num_players]
-
-    # Generate names
-    roles = _random_strings(num_players, prefix='r', cool=cool)
-    strategies = collect.fodict(
-        (role, tuple(_random_strings(num_strat, prefix='s', cool=cool)))
-        for role, num_strat
-        in zip(roles, shape))
-
-    return rsgame.Game.from_matrix(strategies, distribution(shape))
+    return role_symmetric_game(1, num_strategies, distribution)
 
 
-def symmetric_game(num_players, num_strategies,
-                   distribution=default_distribution, cool=False):
-    """Generate a random symmetric game"""
-    return role_symmetric_game(1, num_players, num_strategies, distribution,
-                               cool)
-
-
-def covariant_game(num_players, num_strategies, mean_dist=lambda shape:
-                   np.zeros(shape), var_dist=lambda shape: np.ones(shape),
-                   covar_dist=default_distribution, cool=False):
+def covariant_game(num_strategies, mean_dist=lambda shape: np.zeros(shape),
+                   var_dist=lambda shape: np.ones(shape),
+                   covar_dist=default_distribution):
     """Generate a covariant game
 
     Covariant games are asymmetric games where payoff values for each profile
@@ -250,7 +81,8 @@ def covariant_game(num_players, num_strategies, mean_dist=lambda shape:
         entries for each profile is drawn. (default: uniform [-1, 1])
     """
     # Create sampling distributions and sample from them
-    num_strategies = _as_list(num_strategies, num_players)
+    num_strategies = list(num_strategies)
+    num_players = len(num_strategies)
     shape = num_strategies + [num_players]
     var = covar_dist(shape + [num_players])
     diag = var.diagonal(0, num_players, num_players + 1)
@@ -263,37 +95,19 @@ def covariant_game(num_players, num_strategies, mean_dist=lambda shape:
     payoffs = rand.normal(size=shape)
     payoffs = (payoffs[..., None] * (np.sqrt(s)[..., None] * v)).sum(-2)
     payoffs += mean_dist(shape)
-
-    # Generate names
-    roles = _random_strings(num_players, prefix='r', cool=cool)
-    strategies = collect.fodict(
-        (role, tuple(_random_strings(num_strat, prefix='s', cool=cool)))
-        for role, num_strat
-        in zip(roles, num_strategies))
-
-    return rsgame.Game.from_matrix(strategies, payoffs)
+    return rsgame.Game(payoffs)
 
 
-def zero_sum_game(num_strategies, distribution=default_distribution,
-                  cool=False):
+def two_player_zero_sum_game(num_strategies,
+                             distribution=default_distribution):
     """Generate a two-player, zero-sum game"""
     # Generate player 1 payoffs
-    num_strategies = _as_list(num_strategies, 2)
-    p1_payoffs = distribution(num_strategies)
-
-    # Generate names
-    roles = _random_strings(2, prefix='r', cool=cool)
-    strategies = collect.fodict(
-        (role, tuple(_random_strings(num_strat, prefix='s', cool=cool)))
-        for role, num_strat
-        in zip(roles, num_strategies))
-
-    return rsgame.Game.from_matrix(strategies,
-                                   np.dstack([p1_payoffs, -p1_payoffs]))
+    num_strategies = np.broadcast_to(num_strategies, 2)
+    p1_payoffs = distribution(num_strategies)[..., None]
+    return rsgame.Game(np.concatenate([p1_payoffs, -p1_payoffs], -1))
 
 
-def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution,
-                  cool=False):
+def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
     """Create a symmetric 2-player 2-strategy game of the specified form.
 
     Four payoff values get drawn from U(min_val, max_val), and then are
@@ -313,41 +127,29 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution,
     # Generate payoffs
     payoffs = distribution(4)
     payoffs.sort()
-    counts = np.array([[2, 0],
-                       [1, 1],
-                       [0, 2]])
-    values = np.array([[payoffs[a], 0],
-                       [payoffs[b], payoffs[c]],
-                       [0, payoffs[d]]])
-
-    # Generate names
-    role = next(_random_strings(1, prefix='r', cool=cool))
-    strategies = list(_random_strings(2, prefix='s', cool=cool))
-
-    return rsgame.Game({role: 2}, {role: strategies}, counts, values)
+    counts = [[2, 0], [1, 1], [0, 2]]
+    values = [[payoffs[a], 0], [payoffs[b], payoffs[c]], [0, payoffs[d]]]
+    return rsgame.Game([2], [2], counts, values)
 
 
-def sym_2p2s_known_eq(eq_prob, cool=False):
+def prisoners_dilemma(distribution=default_distribution):
+    """Return a random prisoners dilemma game"""
+    return normalize(sym_2p2s_game(2, 0, 3, 1, distribution))
+
+
+def sym_2p2s_known_eq(eq_prob):
     """Generate a symmetric 2-player 2-strategy game
 
     This game has a single mixed equilibrium where strategy one is played with
     probability eq_prob.
     """
-    profiles = np.array([[2, 0],
-                         [1, 1],
-                         [0, 2]])
-    payoffs = np.array([[0, 0],
-                        [eq_prob, 1 - eq_prob],
-                        [0, 0]])
-
-    # Generate names
-    role = next(_random_strings(1, prefix='r', cool=cool))
-    strategies = list(_random_strings(2, prefix='s', cool=cool))
-
-    return rsgame.Game({role: 2}, {role: strategies}, profiles, payoffs)
+    profiles = [[2, 0], [1, 1], [0, 2]]
+    payoffs = [[0, 0], [eq_prob, 1 - eq_prob], [0, 0]]
+    return rsgame.Game([2], [2], profiles, payoffs)
 
 
-def congestion_game(num_players, num_facilities, num_required, cool=False):
+def congestion_game(num_players, num_facilities, num_required,
+                    return_serial=False):
     """Generates a random congestion game with num_players players and nCr(f, r)
     strategies
 
@@ -380,26 +182,25 @@ def congestion_game(num_players, num_facilities, num_required, cool=False):
     values[:, 2] *= -1              # quadratic
 
     # Compute array version of all payoffs
-    counts = (empty_role_symmetric_game(1, num_players, num_strats)
-              .all_profiles(as_array=True))
+    base = rsgame.BaseGame([num_players], [num_strats])
+    profiles = base.all_profiles()
 
     # Compute usage of every facility and then payoff
-    strat_usage = counts[..., None] * strat_mask
+    strat_usage = profiles[..., None] * strat_mask
     usage = strat_usage.sum(1)
     fac_payoffs = (usage[..., None] ** np.arange(3) * values).sum(2)
     payoffs = (strat_usage * fac_payoffs[:, None, :]).sum(2)
 
-    # Generate names for everything
-    role = next(_random_strings(num_strats, cool=cool)) if cool else 'all'
-    strategies = (list(_random_strings(num_strats, cool=cool)) if cool
-                  else ['_'.join(str(s) for s in strat)
-                        for strat in strat_list])
+    game = rsgame.Game([num_players], [num_strats], profiles, payoffs)
+    if not return_serial:
+        return game
+    else:
+        strat_names = ['_'.join(str(s) for s in strat) for strat in strat_list]
+        serial = gameio.GameSerializer(['all'], [strat_names])
+        return game, serial
 
-    return rsgame.Game({role: num_players}, {role: strategies}, counts,
-                       payoffs)
 
-
-def local_effect_game(num_players, num_strategies, cool=False):
+def local_effect_game(num_players, num_strategies):
     """Generates random congestion games with num_players (N) players and
     num_strategies (S) strategies.
 
@@ -444,26 +245,15 @@ def local_effect_game(num_players, num_strategies, cool=False):
     np.fill_diagonal(local_effects[..., 2], 0)
 
     # Compute all profiles and payoffs
-    counts = (empty_role_symmetric_game(1, num_players, num_strategies)
-              .all_profiles(as_array=True))
-    payoffs = (local_effects * counts[..., None, None] ** np.arange(3))\
-        .sum((1, 3)) * (counts > 0)
-
-    # Compute string names of things
-    role = next(_random_strings(1, prefix='r', cool=cool))
-    strategies = list(_random_strings(num_strategies, prefix='s', cool=cool))
-
-    return rsgame.Game({role: num_players}, {role: strategies}, counts,
-                       payoffs)
+    base = rsgame.BaseGame([num_players], [num_strategies])
+    profiles = base.all_profiles()
+    payoffs = (local_effects * profiles[..., None, None] ** np.arange(3))\
+        .sum((1, 3)) * (profiles > 0)
+    return rsgame.Game(base, profiles, payoffs)
 
 
-# TODO make more efficient i.e. don't loop through all player combinations in
-# python
-# TODO make matrix game generate the compact form instead of calling the
-# function on it...
-# TODO allow variable number of strategies
 def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
-                    players_per_matrix=2, cool=False):
+                    players_per_matrix=2):
     """Creates a polymatrix game using the specified k-player matrix game function.
 
     Each player's payoff in each profile is a sum over independent games played
@@ -472,7 +262,7 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
 
     players_per_matrix: k
     matrix_game:        a function of two arguments (player_per_matrix,
-                        num_strategies) that returns 2-player,
+                        num_strategies)
                         num_strategies-strategy games.
 
     Note: The actual roles and strategies of matrix game are ignored.
@@ -480,61 +270,248 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
     payoffs = np.zeros([num_strategies] * num_players + [num_players])
     for players in itertools.combinations(range(num_players),
                                           players_per_matrix):
-        subgame = matrix_game(players_per_matrix, num_strategies)
-        sub_payoffs, _ = _compact_payoffs(subgame)
+        sub_payoffs = _compact_payoffs(matrix_game([num_strategies] *
+                                                   players_per_matrix))
         new_shape = np.array([1] * num_players + [players_per_matrix])
         new_shape[list(players)] = num_strategies
         payoffs[..., list(players)] += sub_payoffs.reshape(new_shape)
 
-    # Generate names
-    roles = _random_strings(num_players, prefix='r', cool=cool)
-    strategies = collect.fodict(
-        (role, tuple(_random_strings(num_strategies, prefix='s', cool=cool)))
-        for role in roles)
-
-    return rsgame.Game.from_matrix(strategies, payoffs)
+    return rsgame.Game(payoffs)
 
 
-def rock_paper_scissors():
-    players = {'all': 2}
-    strategies = {'all': ['rock', 'paper', 'scissors']}
-    profiles = np.array([[2, 0, 0],
-                         [1, 1, 0],
-                         [1, 0, 1],
-                         [0, 2, 0],
-                         [0, 1, 1],
-                         [0, 0, 2]])
-    payoffs = np.array([[0., 0., 0.],
-                        [-1., 1., 0.],
-                        [1., 0., -1.],
-                        [0., 0., 0.],
-                        [0., -1., 1.],
-                        [0., 0., 0.]])
-    return rsgame.Game(players, strategies, profiles, payoffs)
+def _compact_payoffs(game):
+    """Given a game returns a compact representation of the payoffs
+
+    In this case compact means that they're in one ndarray. This representation
+    is inefficient for almost everything but an independent game with full
+    data.
+
+    Parameters
+    ----------
+    game : rsgame.Game
+        The game to generate a compact payoff matrix for
+
+    Returns
+    -------
+    payoffs : ndarray; shape (s1, s2, ..., sn, n)
+        payoffs[s1, s2, ..., sn, j] is the payoff to player j when player 1
+        plays s1, player 2 plays s2, etc. n is the total number of players.
+    """
+    payoffs = np.empty(list(game.num_strategies) + [game.num_roles])
+    for profile, payoff in zip(game.profiles, game.payoffs):
+        # This generator expression takes a role symmetric profile with payoffs
+        # and generates tuples of strategy indexes and payoffs for every player
+        # when that player plays the given strategy.
+
+        # The first line takes results in the form:
+        # (((r1i1, r1p1), (r1i2, r1p2)), ((r1i1, r2p1),)) that is grouped by
+        # role, then by player in the role, then grouped strategy index and
+        # payoff, and turns it into a single tuple of indices and payoffs.
+        perms = (zip(*itertools.chain.from_iterable(sp))
+                 # This product is over roles
+                 for sp in itertools.product(*[
+                     # This computes all of the ordered permutations of
+                     # strategies in a given role, e.g. if two players play s1
+                     # and one plays s2, this iterates over all possible ways
+                     # that could be expressed in an asymmetric game.
+                     utils.ordered_permutations(itertools.chain.from_iterable(
+                         # This iterates over the strategy counts, and
+                         # duplicates strategy indices and payoffs based on the
+                         # strategy counts.
+                         itertools.repeat((i, v), c) for i, (c, v)
+                         in enumerate(zip(p, pay))))
+                     for p, pay in zip(game.role_split(profile),
+                                       game.role_split(payoff))]))
+        for indices, utilities in perms:
+            payoffs[indices] = utilities
+    return payoffs
 
 
-def add_noise(game, num_samples, noise=default_distribution):
+def rock_paper_scissors(win=1, loss=-1, return_serial=False):
+    """Return an instance of rock paper scissors"""
+    assert win > 0 and loss < 0
+    profiles = [[2, 0, 0],
+                [1, 1, 0],
+                [1, 0, 1],
+                [0, 2, 0],
+                [0, 1, 1],
+                [0, 0, 2]]
+    payoffs = [[0., 0., 0.],
+               [loss, win, 0.],
+               [win, 0., loss],
+               [0., 0., 0.],
+               [0., loss, win],
+               [0., 0., 0.]]
+    game = rsgame.Game([2], [3], profiles, payoffs)
+    if not return_serial:
+        return game
+    else:
+        serial = gameio.GameSerializer(['all'],
+                                       [['rock', 'paper', 'scissors']])
+        return game, serial
+
+
+def travellers_dilemma(players=2, max_value=100):
+    """Return an instance of travellers dilemma
+
+    Strategies range from 2 to max_value, thus there will be max_value - 1
+    strategies."""
+    assert players > 1, "players must be more than one"
+    assert max_value > 2, "max value must be more than 2"
+    game = rsgame.BaseGame([players], [max_value - 1])
+    profiles = game.all_profiles()
+    payoffs = np.zeros(profiles.shape)
+    mins = np.argmax(profiles, -1)
+    mask = profiles > 0
+    payoffs[mask] = mins.repeat(mask.sum(-1))
+    rows = np.arange(profiles.shape[0])
+    ties = profiles[rows, mins] > 1
+    lowest_pays = mins + 4
+    lowest_pays[ties] -= 2
+    payoffs[rows, mins] = lowest_pays
+    return rsgame.Game(game, profiles, payoffs)
+
+
+def normalize(game, new_min=0, new_max=1):
+    """Return a normalized game"""
+    profiles = game.profiles
+    scale = game.role_repeat(game.max_payoffs() - game.min_payoffs())
+    offset = game.role_repeat(game.min_payoffs())
+    payoffs = (game.payoffs - offset) / scale * (new_max - new_min) + new_min
+    payoffs *= profiles > 0
+    return rsgame.Game(game, profiles, payoffs)
+
+
+def drop_profiles(game, prob, independent=True):
+    """Drop profiles from a game
+
+    If independent then each profile has prob of being removed, if not
+    independent, then `num_profiles * prob` profiles will be kept."""
+    if independent:
+        selection = rand.random(game.num_profiles) < prob
+    else:
+        inds = rand.choice(np.arange(game.num_profiles),
+                           round(game.num_profiles * prob), replace=False)
+        selection = np.zeros(game.num_profiles, bool)
+        selection[inds] = True
+
+    if isinstance(game, rsgame.SampleGame):
+        new_profiles = game.profiles[selection]
+        new_sample_payoffs = [
+            payoffs[mask] for payoffs, mask
+            in zip(game.sample_payoffs,
+                   np.split(selection, game.sample_starts[1:]))
+            if np.any(mask)]
+        return rsgame.SampleGame(game, new_profiles, new_sample_payoffs,
+                                 verify=False)
+    else:
+        new_profiles = game.profiles[selection]
+        new_payoffs = game.payoffs[selection]
+        return rsgame.Game(game, new_profiles, new_payoffs, verify=False)
+
+
+def drop_samples(game, prob):
+    """Drop samples from a sample game
+
+    Samples are dropped independently with probability prob."""
+    sample_map = {}
+    for prof, pays in zip(np.split(game.profiles, game.sample_starts[1:]),
+                          game.sample_payoffs):
+        num_profiles, _, num_samples = pays.shape
+        perm = rand.permutation(num_profiles)
+        prof = prof[perm]
+        pays = pays[perm]
+        new_samples, counts = np.unique(
+            rand.binomial(num_samples, prob, num_profiles), return_counts=True)
+        splits = counts[:-1].cumsum()
+        for num, prof_samp, pay_samp in zip(
+                new_samples, np.split(prof, splits), np.split(pays, splits)):
+            if num == 0:
+                continue
+            prof, pays = sample_map.setdefault(num, ([], []))
+            prof.append(prof_samp)
+            pays.append(pay_samp[..., :num])
+
+    if sample_map:
+        profiles = np.concatenate(list(itertools.chain.from_iterable(
+            x[0] for x in sample_map.values())), 0)
+        sample_payoffs = tuple(np.concatenate(x[1]) for x
+                               in sample_map.values())
+    else:  # No data
+        profiles = np.empty((0, game.num_role_strats), dtype=int)
+        sample_payoffs = []
+
+    return rsgame.SampleGame(game, profiles, sample_payoffs, verify=False)
+
+
+def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
     """Generate sample game by adding noise to game payoffs
 
     Arguments
     ---------
-    game:        A Game or SampleGame (only current payoffs are used)
-    num_samples: The number of observations to create per profile
-    noise:       A noise generating function. The function should take a single
-                 shape parameter, and return a number of samples equal to
-                 shape. In order to preserve mixed equilibria, noise should
-                 also be zero mean (aka unbiased)
+    game : Game
+        A Game or SampleGame (only current payoffs are used)
+    min_samples : int
+        The minimum number of observations to create per profile
+    max_samples : int
+        The maximum number of observations to create per profile. If None, it's
+        the same as min_samples.
+    noise : shape -> ndarray
+        A noise generating function. The function should take a single shape
+        parameter, and return a number of samples equal to shape. In order to
+        preserve mixed equilibria, noise should also be zero mean (aka
+        unbiased)
     """
-    aprofiles = game.profiles(as_array=True)
-    apayoffs = game.payoffs(as_array=True)
-    mask = aprofiles > 0
-    sample_payoffs = np.zeros(apayoffs.shape + (num_samples,))
-    pview = sample_payoffs.view()
-    pview.shape = (-1, num_samples)
-    pview[mask.ravel()] = apayoffs[mask, None] + noise((mask.sum(),
-                                                        num_samples))
-    return rsgame.SampleGame(game.players, game.strategies, aprofiles,
-                             [sample_payoffs])
+    if game.num_profiles == 0:
+        return rsgame.SampleGame(game)
+
+    perm = rand.permutation(game.num_profiles)
+    profiles = game.profiles[perm]
+    payoffs = game.payoffs[perm]
+    if max_samples is None:
+        max_samples = min_samples
+    assert 0 <= min_samples <= max_samples, "invalid sample numbers"
+    max_samples += 1
+    num_values = max_samples - min_samples
+    samples = rand.multinomial(profiles.shape[0],
+                               np.ones(num_values) / num_values)
+    mask = samples > 0
+    observations = np.arange(min_samples, max_samples)[mask]
+    splits = samples[mask][:-1].cumsum()
+
+    sample_payoffs = []
+    new_profiles = []
+    for num, prof, pay in zip(observations, np.split(profiles, splits),
+                              np.split(payoffs, splits)):
+        if num == 0:
+            continue
+        mask = prof > 0
+        spay = np.zeros(pay.shape + (num,))
+        pview = spay.view()
+        pview.shape = (-1, num)
+        pview[mask.ravel()] = pay[mask, None] + noise((mask.sum(), num))
+
+        new_profiles.append(prof)
+        sample_payoffs.append(spay)
+
+    if new_profiles:
+        new_profiles = np.concatenate(new_profiles)
+    else:  # No data
+        new_profiles = np.empty((0, game.num_role_strats), dtype=int)
+    return rsgame.SampleGame(game, new_profiles, sample_payoffs, verify=False)
+
+
+def _names(prefix, num):
+    """Returns a lsit of names for roles or strategies"""
+    padding = int(math.log10(max(num - 1, 1))) + 1
+    return ['{}{:0{:d}d}'.format(prefix, i, padding) for i in range(num)]
+
+
+def game_serializer(game):
+    role_names = _names('r', game.num_roles)
+    strat_names = [_names('s', s) for s in game.num_strategies]
+    return gameio.GameSerializer(role_names, strat_names)
+
 
 # def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=2):
 #     """

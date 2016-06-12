@@ -1,54 +1,39 @@
 """Module for Role Symmetric Game data structures
 
 There are three types of games:
-    EmptyGames  - Have no data but do contain convenience methods for working
-                  with games in general
-    Games       - Contain payoff data at a profile level, but that data can be
-                  sparse
-    SampleGames - Contain several samples of payoffs for every profile
+    BaseGame   - Have no data but do contain convenience methods for working
+                 with games in general. This should be extended by every object
+                 that can function as a game.
+    Game       - Contains payoff data at a profile level, but that data can be
+                 sparse.
+    SampleGame - Contain several samples of payoffs for every profile. Access
+                 to the sample data is relatively limited and intended mostly
+                 for other functions that operate on the entire game at once.
 
-There are several ways to instantiate a game:
-    Constructor        - The most efficient, but requires knowledge of the
-                         internal representation and can result in errors if
-                         created improperly
-    from_payoff_format - The standard way to represent and store games, see the
-                         specific constructors. This method is not
-                         significantly sparse or efficient. This input method
-                         also makes sure that the role and strategy order is
-                         lexicographical.
-    from_json          - Similar to from_payoff_format, but can take the python
-                         parsed version of game data.
+Everything internally is represented as an array. Most methods will take any
+dimensional array as input, treating the last axis as a profile  / payoff /
+etc, and treating all other axes as multiple data points, but this isn't
+universal.
 
-A fundamental object to operating with games is the profile. A profile is a
-mapping of role strategy pairs a number of agents playing that strategy, or to
-probability of playing that strategy. There are two general forms: the nice
-human readable form which looks like a nested dictionary, and has convenience
-methods if converted to a Profile or Mixture object (see profile), and the
-array version, which is a 1d ndarray with corresponding numbers that are
-raveled into the 1d array. Most methods can return both versions, but usually
-the array representation is more efficient.
-"""
-import collections
+Most game objects have attributes that start with num, these will always be an
+attribute or a property, not a method, so to get the number of profiles, it's
+just `num_profiles` not `num_profiles()`. These will also only be numbers,
+either a single int, or an array of them depending on the attribute."""
 import functools
-import itertools
-import warnings
-from collections import abc
 
 import numpy as np
 import numpy.random as rand
 import scipy.misc as spm
 import scipy.special as sps
 
-from gameanalysis import collect
-from gameanalysis import gameio
-from gameanalysis import profile
+from gameanalysis import subgame
 from gameanalysis import utils
 
 
 _TINY = np.finfo(float).tiny
 
 
-class EmptyGame(object):
+class BaseGame(object):
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
@@ -56,111 +41,117 @@ class EmptyGame(object):
 
     Parameters
     ----------
-    players : {role: count}
-        Mapping from roles to number of players per role.
-    strategies : {role: {strategy}}
-        Mapping from roles to per-role strategy sets. Role order is preserved
-        and copied from this input dictionary. To specify an order use an
-        ordered dictionary.
+    game : BaseGame
+        Copies info from game. Useful to keep convenience methods of game
+        without attached data.
+
+    Parameters
+    ----------
+    num_players : int or [int] or ndarray
+        The number of players in each role in order. This will be broadcast to
+        match the size of `num_strategies`.
+    num_strategies : int or [int] or ndarray
+        The number of strategies in each role in order. This will be broadcast
+        to match the size of `num_players`.
     """
-    def __init__(self, players, strategies):
-        assert frozenset(players.keys()) == \
-            frozenset(strategies.keys()), \
-            "Player roles and strategy roles do not agree"
-        assert all(len(strats) == len(frozenset(strats)) for strats
-                   in strategies.values()), \
-            "Not all strategies are unique: {0}".format(strategies)
+    def __init__(self, *args):
+        if len(args) == 1:
+            # From Game
+            num_players = args[0].num_players
+            num_strategies = args[0].num_strategies
+        elif len(args) == 2:
+            # Default constructor
+            num_players = args[0]
+            num_strategies = args[1]
+        else:
+            raise ValueError('Invalid constructor arguments')
 
-        # Dictionary of all strategies
-        self.strategies = collect.fodict((r, tuple(s))
-                                         for r, s in strategies.items())
-        # Dictionary of all players i.e. number of players per role
-        # Ensures players and strategies are in the same order
-        self.players = collect.fodict((r, players[r]) for r
-                                      in self.strategies)
-        # Array of all role counts in order
-        self.aplayers = np.fromiter(self.players.values(), int,
-                                    len(self.players))
-        self.aplayers.setflags(write=False)
-        # Array of the number of strategies per role in order
-        self.astrategies = np.fromiter(
-            (len(s) for s in self.strategies.values()),
-            int, len(self.strategies))
-        self.astrategies.setflags(write=False)
-        # The total number of roles
-        self.num_roles = self.astrategies.size
-        # The total number of strategies over roles
-        self.num_role_strats = self.astrategies.sum()
-        # Array necessary for doing reduce operations over role
-        self._at_indices = np.hstack(([0], self.astrategies[:-1].cumsum()))
-        self._at_indices.setflags(write=False)
-        # Total number of profiles this game can have
-        # This is approximate, but for the sizes of games we can handle
-        # dev_reps, this is still accurate.
-        self.size = self.num_full_game_profiles()
+        num_players = np.asarray(num_players, int)
+        num_strategies = np.asarray(num_strategies, int)
+        self.num_roles = max(num_players.size, num_strategies.size)
+        self.num_players = np.broadcast_to(num_players, self.num_roles)
+        self.num_strategies = np.broadcast_to(num_strategies, self.num_roles)
+        self.num_role_strats = self.num_strategies.sum()
+        self.role_starts = np.insert(self.num_strategies[:-1].cumsum(), 0, 0)
+        self.role_index = self.role_repeat(np.arange(self.num_roles))
+        self.num_strategies.setflags(write=False)
+        self.num_players.setflags(write=False)
+        self.role_starts.setflags(write=False)
+        self.role_index.setflags(write=False)
 
-        # A mapping of role to index
-        self._role_index = {r: i for i, r in enumerate(self.strategies)}
-        # A mapping from a tuple of role, strategy to it's index in an array
-        # profile
-        self._role_strat_index = {
-            (r, s): i for i, (r, s)
-            in enumerate(itertools.chain.from_iterable(
-                ((r, s) for s in strats)
-                for r, strats in self.strategies.items()))}
+        assert np.all(self.num_players >= 0)
+        assert np.all(self.num_strategies > 0)
 
-    @staticmethod
-    def from_payoff_format(players, strategies):
-        sorted_strategies = collections.OrderedDict(sorted(
-            (r, sorted(s)) for r, s in strategies.items()))
-        return EmptyGame(players, sorted_strategies)
+    # Functions that need to be overridden for all game functionality
 
-    @staticmethod
-    def from_json(json_):
-        """Load a profile from its json representation"""
-        players, strategies, *_ = gameio._game_from_json(json_)
-        return EmptyGame.from_payoff_format(players, strategies)
+    def min_payoffs(self):
+        """Returns the minimum payoff for each role"""
+        raise NotImplementedError('This must be overridden in deriving class')
 
+    def max_payoffs(self):
+        """Returns the maximum payoff for each role"""
+        raise NotImplementedError('This must be overridden in deriving class')
+
+    def deviation_payoffs(self, mix, assume_complete=False, jacobian=False):
+        """Returns the payoff for deviating to each role from mixture
+
+        If assume_complete, then expensive checks for missing data won't be
+        made. If jacobian, a tuple is returned, where the second value is the
+        jacobian with respect to the mixture."""
+        raise NotImplementedError('This must be overridden in deriving class')
+
+    # Provided functionality
+
+    @property
     @functools.lru_cache()
-    def num_full_game_profiles(self):
-        """Returns the number of payoff values stored in the full game"""
-        return round(float(spm.comb(self.aplayers + self.astrategies - 1,
-                                    self.aplayers).prod()))
+    def role_sizes(self):
+        """The number of profiles in each role (independent of others)"""
+        return utils.game_size(self.num_players, self.num_strategies)
 
+    @property
     @functools.lru_cache()
-    def num_full_game_payoffs(self):
-        """Returns the number of payoffs in all profiles"""
-        top = self.aplayers + self.astrategies - 1 - np.eye(self.num_roles)
-        bottom = self.aplayers - np.eye(self.num_roles)
-        return round(float(np.sum(spm.comb(top, bottom).prod(1)
-                                  * self.astrategies)))
+    def num_all_profiles(self):
+        """The total number of profiles in the game
 
+        Not just the ones with data."""
+        return self.role_sizes.prod()
+
+    @property
     @functools.lru_cache()
-    def num_full_game_dpr_profiles(self):
-        """Returns the number of unique dpr profiles required for the full game
+    def num_all_payoffs(self):
+        """The number of payoffs in all profiles"""
+        dev_players = self.num_players - np.eye(self.num_roles, dtype=int)
+        return np.sum(utils.game_size(dev_players, self.num_strategies)
+                      .prod(1) * self.num_strategies)
 
-        This calculation is exponential in the number of roles.
+    @property
+    @functools.lru_cache()
+    def num_all_dpr_profiles(self):
+        """The number of unique dpr profiles
+
+        This calculation takes time exponential in the number of roles.
         """
         # Get all combinations of "pure" roles and then filter by ones with
         # support at least 2. Thus, 0, 1, and 2 can be safely ignored
-        pure = (np.arange(3, 2 ** self.num_roles)[:, None]
-                & (2 ** np.arange(self.num_roles))).astype(bool)
+        pure = (np.arange(3, 1 << self.num_roles)[:, None] &
+                (1 << np.arange(self.num_roles))).astype(bool)
         cards = pure.sum(1)
         pure = pure[cards > 1]
         cards = cards[cards > 1] - 1
         # For each combination of pure roles, compute the number of profiles
         # conditioned on those roles being pure, then multiply them by the
         # cardinality of the pure roles.
-        pure_counts = np.prod(self.astrategies * pure + ~pure, 1)
-        top = (self.aplayers + self.astrategies - 1) * ~pure
-        bottom = self.aplayers * ~pure
-        unpure_counts = np.prod(spm.comb(top, bottom)
-                                - self.astrategies * ~pure, 1)
-        overcount = round(float(np.sum(cards * pure_counts * unpure_counts)))
-        return self.num_full_game_payoffs() - overcount
+        pure_counts = np.prod(self.num_strategies * pure + ~pure, 1)
+        unpure_counts = np.prod((utils.game_size(self.num_players,
+                                                 self.num_strategies) -
+                                 self.num_strategies) * ~pure + pure, 1)
+        overcount = np.sum(cards * pure_counts * unpure_counts)
+        return self.num_all_payoffs - overcount
 
-    def role_reduce(self, array, axis=0, ufunc=np.add, keepdims=False):
+    def role_reduce(self, array, axis=-1, ufunc=np.add, keepdims=False):
         """Reduce an array over roles
+
+        Use this to sum the payoffs by role for a payoff array, etc.
 
         Parameters
         ----------
@@ -173,13 +164,13 @@ class EmptyGame(object):
         keepdims : bool
             If true, the shape of array will be unchanged
         """
-        red = ufunc.reduceat(array, self._at_indices, axis)
+        red = ufunc.reduceat(array, self.role_starts, axis)
         if keepdims:
-            return red.repeat(self.astrategies, axis)
+            return self.role_repeat(red, axis)
         else:
             return red
 
-    def role_split(self, array, axis=0):
+    def role_split(self, array, axis=-1):
         """Split an array by roles
 
         Parameters
@@ -189,167 +180,111 @@ class EmptyGame(object):
         axis : int
             The axis to split along
         """
-        return np.split(array, self._at_indices[1:])
+        return np.split(array, self.role_starts[1:], axis)
 
-    @property
-    def _at_ranges(self):
-        """Gives (start, stop) pairs for slicing by role."""
-        return list(zip(self._at_indices, list(self._at_indices[1:]) +
-                        [self.num_role_strats]))
+    def role_repeat(self, array, axis=-1):
+        """Repeat an array by role
 
+        Takes an array of shape num_roles and turns it into shape
+        num_role_strats so that the arrays can interract."""
+        return array.repeat(self.num_strategies, axis)
 
-    def trim_mixture_array_support(self, mixture, supp_thresh=1e-3):
+    def profile_id(self, profiles):
+        """Return a unique integer representing a profile"""
+        profiles = -np.asarray(profiles, int)
+        profiles[..., self.role_starts] += self.num_players
+        profiles = profiles.cumsum(-1)
+        rev_arange = -np.ones(self.num_role_strats, int)
+        rev_arange[self.role_starts] += self.num_strategies
+        rev_arange = rev_arange.cumsum()
+        base = np.insert(self.role_sizes[:-1].cumprod(), 0, 1)
+        base = np.concatenate([[1], self.role_sizes[:-1].cumprod()])
+        return self.role_reduce(spm.comb(profiles + rev_arange - 1, rev_arange)
+                                .astype(int)).dot(base)
+
+    def get_expected_payoffs(self, mix, deviations=None):
+        """Returns the payoff of each role under mixture
+
+        If the payoffs for deviating from `mix` is already known, that an be
+        passed in to save computation."""
+        mix = np.asarray(mix, float)
+        if deviations is None:
+            deviations = self.deviation_payoffs(mix)
+        deviations[mix == 0] = 0  # Don't care about that missing data
+        return self.role_reduce(mix * deviations)
+
+    def trim_mixture_support(self, mixture, supp_thresh=1e-3):
         """Trims strategies played less than supp_thresh from the support"""
         mixture *= mixture >= supp_thresh
         mixture /= self.role_reduce(mixture, keepdims=True)
         return mixture
 
-    def verify_array_profile(self, prof):
-        """Verify that an array profile is valid for game"""
-        return ((self.num_role_strats,) == prof.shape and
-                np.all(self.aplayers == self.role_reduce(prof)))
+    def verify_profile(self, prof, axis=-1):
+        """Verify that a profile is valid for game"""
+        return np.all(self.num_players == self.role_reduce(prof, axis), axis)
 
-    def verify_array_mixture(self, mix):
-        """Verify that an array mixture is valid for game"""
-        return ((self.num_role_strats,) == mix.shape and
-                np.allclose(self.role_reduce(mix), 1))
+    def verify_mixture(self, mix, axis=-1):
+        """Verify that a mixture is valid for game"""
+        return np.all(np.isclose(self.role_reduce(mix, axis), 1), axis)
 
     def simplex_project(self, mixture):
         """Project an invalid mixture array onto the simplex"""
-        return profile.simplex_project(self, mixture)
+        return np.concatenate(list(map(utils.simplex_project,
+                                       self.role_split(mixture))), -1)
 
-    def all_profiles(self, as_array=False):
-        """Returns a generator over all profiles"""
+    def all_profiles(self):
+        """Return all profiles"""
         role_arrays = [utils.acomb(n_strats, players) for n_strats, players
-                       in zip(self.astrategies, self.aplayers)]
-        profiles = utils.acartesian2(*role_arrays)
-        if as_array or as_array is None:
-            return profiles
-        else:
-            return (self.as_profile(p, verify=False) for p in profiles)
+                       in zip(self.num_strategies, self.num_players)]
+        return utils.acartesian2(*role_arrays)
 
-    def as_dict(self, array, data_type=float, dict_type=dict,
-                filter_zeros=True):
-        """Converts to dictionary profile representation
+    def pure_profiles(self):
+        """Return all pure profiles
 
-        Parameters
-        ----------
-        array : ndarray or Mapping
-            The input to convert.
-        data_type : type
-            The type to convert the data stored for each role and strategy to.
-        dict_type : type
-            The type of the global returned dictionary. Common types are dict,
-            Profile, Mixture.
-        filter_zeros : bool
-            Whether to remove entries whose value is zero.
-        """
-        if isinstance(array, dict_type):
-            return array
-        elif isinstance(array, abc.Mapping):
-            return dict_type(array)
-        elif isinstance(array, (np.ndarray, abc.Sequence)):
-            array = np.asarray(array)
-            assert array.shape == (self.num_role_strats,), \
-                "Invalid shape for conversion to dict {} instead of {}"\
-                .format(array.shape, (self.num_role_strats,))
-            return dict_type({role: {strat: data_type(count) for strat, count
-                                     in zip(strats, counts)
-                                     if not filter_zeros or count > 0}
-                              for counts, (role, strats)
-                              in zip(self.role_split(array),
-                                     self.strategies.items())})
-        else:
-            raise ValueError("Unknown instance for conversion to dict {}"
-                             .format(array))
+        A pure profile is a profile where only one strategy is played per
+        role."""
+        role_profiles = [num_play * np.eye(num_strats, dtype=int)
+                         for num_play, num_strats
+                         in zip(self.num_players, self.num_strategies)]
+        return utils.acartesian2(*role_profiles)
 
-    def as_array(self, prof, dtype):
-        """Converts a dictionary representation into an array representation
+    def uniform_mixture(self):
+        """Returns a uniform mixed profile"""
+        return 1 / self.num_strategies.repeat(self.num_strategies)
 
-        The array representation is an array of roles with shape
-        (num_role_strats,), where the mapping is defined by the order in the
-        strategies dictionary.
+    def random_profiles(self, mixture, num_samples=1):
+        """Sample profiles from a mixture"""
+        role_samples = [rand.multinomial(n, probs, num_samples) for n, probs
+                        in zip(self.num_players, self.role_split(mixture))]
+        return np.concatenate(role_samples, 1)
 
-        If an array is passed in, nothing is changed.
-        """
-        if isinstance(prof, (np.ndarray, abc.Sequence)):  # Already an array
-            return np.asarray(prof, dtype=dtype)
-        array = np.zeros(self.num_role_strats, dtype=dtype)
-        for role, strats in prof.items():
-            for strat, value in strats.items():
-                array[self._role_strat_index[(role, strat)]] = value
-        return array
+    def random_dev_profiles(self, mixture, num_samples=1):
+        """Return partial profiles where dev player is missing
 
-    def as_profile(self, prof, as_array=False, verify=True):
-        """Converts an array profile representation into a dictionary representation
+        Resulting shape of profiles is (num_samples, num_roles,
+        num_role_strats). The first dimension is the sample, the next is the
+        deviating role, leaving the last dimension for the partial profile."""
+        dev_players = self.num_players - np.eye(self.num_roles, dtype=int)
+        profs = np.empty((num_samples, self.num_roles, self.num_role_strats),
+                         int)
+        for i, (players, strats) in enumerate(zip(dev_players,
+                                                  self.num_strategies)):
+            base = BaseGame(players, self.num_strategies)
+            profs[:, i] = base.random_profiles(mixture, num_samples)
+        return profs
 
-        The dictionary representation is a mapping from roles to strategies to
-        counts.
+    def random_deviator_profiles(self, mixture, num_samples=1):
+        """Return a profiles where one player is deviating from mix
 
-        If a profile is passed in, nothing is changed.
-        """
-        if as_array is None:
-            return prof
+        Resulting shape of profiles is (num_samples, num_role_strats,
+        num_role_strats). The first dimension is the sample, the next is the
+        deviating strategy, leaving the last dimension for the actual
+        profile."""
+        devs = self.random_dev_profiles(mixture, num_samples)
+        return (self.role_repeat(devs, 1) + np.eye(self.num_role_strats,
+                                                   dtype=int))
 
-        elif as_array:
-            prof = self.as_array(prof, int)
-            assert not verify or self.verify_array_profile(prof), \
-                "input was not a valid profile {}".format(prof)
-            return prof
-
-        else:
-            prof = self.as_dict(prof, int, profile.Profile, True)
-            assert not verify or prof.is_valid(self.players, self.strategies), \
-                "invalid profile {}".format(prof)
-            return prof
-
-    def as_mixture(self, mix, as_array=False, verify=True):
-        """Converts an array profile representation into a dictionary representation
-
-        The dictionary representation is a mapping from roles to strategies to
-        counts.
-
-        If a profile is passed in, nothing is changed.
-        """
-        if as_array is None:
-            return mix
-
-        elif as_array:
-            mix = self.as_array(mix, float)
-            assert not verify or self.verify_array_mixture(mix), \
-                "input was not a valid mixture".format(mix)
-            return mix
-
-        else:
-            mix = self.as_dict(mix, float, profile.Mixture, True)
-            assert not verify or mix.is_valid(self.strategies), \
-                "invalid mixture {}".format(mix)
-            return mix
-
-    def uniform_mixture(self, as_array=False):
-        """Returns a uniform mixed profile
-
-        Set as_array to True to return the array representation of the profile.
-
-        """
-        mix = 1 / self.astrategies.repeat(self.astrategies)
-        return self.as_mixture(mix, as_array=as_array, verify=False)
-
-    def random_profiles(self, mixture, num_samples=1, as_array=False,
-                        dev_role_index=None):
-        """Sample pure profiles from a mixture"""
-        mixture = self.as_array(mixture, float)
-        role_samples = [rand.multinomial(n if r == dev_role_index else n-1,
-                        probs, num_samples) for n, probs, r in 
-                        zip(self.aplayers, self.role_split(mixture), 
-                            range(self.num_roles))]
-        profiles = np.concatenate(role_samples, 1)
-        if as_array or as_array is None:
-            return profiles
-        else:
-            return (self.as_profile(p, verify=False) for p in profiles)
-
-    def random_mixtures(self, num=1, alpha=1, as_array=False):
+    def random_mixtures(self, num_samples=1, alpha=1):
         """Return a random mixed profile
 
         Mixed profiles are sampled from a dirichlet distribution with parameter
@@ -357,30 +292,22 @@ class EmptyGame(object):
         the simplex for each role. alpha \in (0, 1) is baised towards high
         entropy mixtures, i.e. mixtures where one strategy is played in
         majority. alpha \in (1, oo) is baised towards low entropy (uniform)
-        mixtures.
-
-        Set as_array to True to return an array representation of the profile.
-        """
-        mixtures = rand.gamma(alpha, 1, (num, self.num_role_strats))
+        mixtures."""
+        mixtures = rand.gamma(alpha, 1, (num_samples, self.num_role_strats))
         mixtures /= self.role_reduce(mixtures, axis=1, keepdims=True)
-        if as_array or as_array is None:
-            return mixtures
-        else:
-            return (self.as_mixture(m, verify=False) for m in mixtures)
+        return mixtures
 
-    def biased_mixtures(self, bias=.9, as_array=False):
+    def biased_mixtures(self, bias=.9):
         """Generates mixtures biased towards one strategy for each role
 
-        Gives a generator of all mixtures of the following form: each role has
-        one strategy played with probability bias; the reamaining 1-bias
-        probability is distributed uniformly over the remaining S or S-1
+        Each role has one strategy played with probability bias; the reamaining
+        1-bias probability is distributed uniformly over the remaining S or S-1
         strategies. If there's only one strategy, it is played with probability
-        1.
-        """
+        1."""
         assert 0 <= bias <= 1, "probabilities must be between zero and one"
 
         role_mixtures = []
-        for num_strats in self.astrategies:
+        for num_strats in self.num_strategies:
             if num_strats == 1:
                 mix = np.ones((1, 1))
             else:
@@ -389,25 +316,20 @@ class EmptyGame(object):
                 np.fill_diagonal(mix, bias)
             role_mixtures.append(mix)
 
-        mixtures = utils.acartesian2(*role_mixtures)
-        if as_array or as_array is None:
-            return mixtures
-        else:
-            return (self.as_mixture(m, verify=False) for m in mixtures)
+        return utils.acartesian2(*role_mixtures)
 
-    def role_biased_mixtures(self, bias=0.9, as_array=False):
+    def role_biased_mixtures(self, bias=0.9):
         """Generates mixtures where one role-strategy is played with bias
 
         If no roles have more than one strategy (a degenerate game), then this
-        returns nothing.
-        """
+        returns nothing."""
         assert 0 <= bias <= 1, "probabilities must be between zero and one"
 
-        num = self.astrategies[self.astrategies > 1].sum()
-        mixes = self.uniform_mixture(as_array=True)[None].repeat(num, 0)
+        num = self.num_strategies[self.num_strategies > 1].sum()
+        mixes = self.uniform_mixture()[None].repeat(num, 0)
         prof_offset = 0
         strat_offset = 0
-        for num_strats in self.astrategies:
+        for num_strats in self.num_strategies:
             if num_strats > 1:
                 view = mixes[prof_offset:prof_offset+num_strats,
                              strat_offset:strat_offset+num_strats]
@@ -415,21 +337,13 @@ class EmptyGame(object):
                 np.fill_diagonal(view, bias)
                 prof_offset += num_strats
             strat_offset += num_strats
+        return mixes
 
-        if as_array or as_array is None:
-            return mixes
-        else:
-            return (self.as_mixture(m, verify=False) for m in mixes)
+    def pure_mixtures(self):
+        """Returns all mixtures where the probability is either 1 or 0."""
+        return self.biased_mixtures(bias=1)
 
-    def pure_mixtures(self, as_array=False):
-        """Returns a generator over all mixtures where the probability of playing a
-        strategy is either 1 or 0.
-
-        Set as_array to True to return the mixed profiles in array form.
-        """
-        return self.biased_mixtures(bias=1, as_array=as_array)
-
-    def grid_mixtures(self, num_points, as_array=False):
+    def grid_mixtures(self, num_points):
         """Returns all of the mixtures in a grid with n points
 
         Arguments
@@ -440,61 +354,45 @@ class EmptyGame(object):
         assert num_points > 1, "Must have at least two points on a dimensions"
         role_mixtures = [utils.acomb(num_strats, num_points - 1) /
                          (num_points - 1)
-                         for num_strats in self.astrategies]
-        mixtures = utils.acartesian2(*role_mixtures)
+                         for num_strats in self.num_strategies]
+        return utils.acartesian2(*role_mixtures)
 
-        if as_array or as_array is None:
-            return mixtures
-        else:
-            return (self.as_mixture(m, verify=False) for m in mixtures)
-
-    def max_prob_prof(self, mix, as_array=False):
+    def max_prob_prof(self, mix):
         """Returns the pure strategy profile with highest probability."""
-        mix = self.as_array(mix, dtype=float)
-        prof = np.zeros_like(mix, dtype=int)
-        for r in range(self.num_roles):
-            start = self._at_indices[r]
-            if r < self.num_roles - 1:
-                stop = self._at_indices[r+1]
-            else:
-                stop = mix.size
-            prof[start:stop] = utils.multinomial_mode(mix[start:stop],
-                                                      self.aplayers[r])
-        if as_array or as_array is None:
-            return prof
-        else:
-            return self.as_profile(prof, verify=False)
+        mix = np.asarray(mix, float)
+        return np.concatenate(
+            [utils.multinomial_mode(m, p) for m, p
+             in zip(self.role_split(mix), self.num_players)], -1)
 
-    def nearby_profs(self, prof, num_devs, as_array=False):
-        """Returns profiles reachable by at most num_devs deviations.
-        
-        NOTE: this is the bottleneck for gpgame.neighbor_EVs. It seems like
-        there should be some clever way to speed it up.
-        """
-        prof = self.as_profile(prof, verify=True)
-        profs = {prof}
-        frontier = {prof}
-        for _ in range(num_devs):
-            devs = {r:set() for r in self.strategies}
-            for prof in frontier:
-                for role in prof:
-                    for strat in prof[role]:
-                        devs[role].add(prof.remove(role, strat))
-            frontier = set()
-            for role in devs:
-                for dev in devs[role]:
-                    for strat in self.strategies[role]:
-                        prof = dev.add(role, strat)
-                        if prof not in profs:
-                            profs.add(prof)
-                            frontier.add(prof)
-            if len(frontier) == 0:
-                break
-        if not as_array or as_array is None:
-            return profs
-        else:
-            return [self.as_array(p, dtype=int) for p in profs]
+    def nearby_profs(self, prof, num_devs):
+        """Returns profiles reachable by at most num_devs deviations"""
+        # XXX this is the bottleneck for gpgame.neighbor_EVs. It seems like
+        # there should be some clever way to speed it up.
+        assert num_devs >= 0
+        dev_players = utils.acomb(self.num_roles, num_devs)
+        mask = np.all(dev_players <= self.num_players, 1)
+        dev_players = dev_players[mask]
+        supp = prof > 0
+        sub = subgame.subgame(BaseGame(self), supp)
 
+        profs = [prof[None]]
+        for players in dev_players:
+            to_dev_profs = BaseGame(
+                players, self.num_strategies).all_profiles()
+            from_dev_profs = subgame.translate(
+                BaseGame(players, sub.num_strategies).all_profiles(), supp)
+            before_devs = prof - from_dev_profs
+            before_devs = before_devs[np.all(before_devs >= 0, 1)]
+            uniq = np.unique(self.profile_id(before_devs),
+                             return_index=True)[1]
+            before_devs = before_devs[uniq]
+            nearby = before_devs[:, None] + to_dev_profs
+            nearby.shape = (-1, self.num_role_strats)
+            uniq = np.unique(self.profile_id(nearby), return_index=True)[1]
+            profs.append(nearby[uniq])
+        profs = np.concatenate(profs)
+        uniq = np.unique(self.profile_id(profs), return_index=True)[1]
+        return profs[uniq]
 
     def is_symmetric(self):
         """Returns true if this game is symmetric"""
@@ -502,428 +400,260 @@ class EmptyGame(object):
 
     def is_asymmetric(self):
         """Returns true if this game is asymmetric"""
-        return np.all(self.aplayers == 1)
-
-    def _payoff_dict(self, aprofile, apayoffs, conv=float):
-        """Merges a value/payoff array and a counts array into a payoff dict"""
-        return {role: {strat: conv(payoff) for strat, count, payoff
-                       in zip(strats, s_profile, s_payoffs) if count > 0}
-                for (role, strats), s_profile, s_payoffs
-                in zip(self.strategies.items(),
-                       self.role_split(aprofile),
-                       self.role_split(apayoffs))}
-
-    def to_json(self):
-        """Convert to a json serializable format"""
-        return {'players': dict(self.players),
-                'strategies': dict(self.strategies)}
+        return np.all(self.num_players == 1)
 
     def __repr__(self):
-        return '<{}: {}, {}>'.format(
+        return '{}({}, {})'.format(
             self.__class__.__name__,
-            dict(self.players),
-            {r: set(ses) for r, ses in self.strategies.items()})
-
-    def __str__(self):
-        return (('{}:\n\t'
-                 'Roles: {}\n\t'
-                 'Players:\n\t\t{}\n\t'
-                 'Strategies:\n\t\t{}\n').format(
-                     self.__class__.__name__,
-                     ', '.join(self.strategies),
-                     '\n\t\t'.join('{:d}x {}'.format(count, role)
-                                   for role, count
-                                   in sorted(self.players.items())),
-                     '\n\t\t'.join('{}:\n\t\t\t{}'.format(
-                         role,
-                         '\n\t\t\t'.join(strats))
-                         for role, strats
-                         in sorted(self.strategies.items()))
-            )).expandtabs(4)
+            self.num_players,
+            self.num_strategies)
 
 
-class Game(EmptyGame):
+class Game(BaseGame):
     """Role-symmetric game representation
 
-    This constructor uses knowledge about the internal representation to
-    efficiently generate games. Generally one will want to use one of the
-    constructor methods prefixed with "from" e.g. `from_payoff_format` or
-    `from_json`.
+    This representation uses a sparse mapping from profiles to payoffs for role
+    symmetric games. There are several variants on constructors that are all
+    valid, and use combinations of various inputs:
 
     Parameters
     ----------
-    players : {role: count}
-        Number of players per role
-    strategies : {role: [strategies]}
-        Strategies available for each role. The order of iteration for the
-        roles and strategies must align with aprofiles and apayoffs. Since
-        dictionaries don't provide consistent iteration order, and OrderedDict,
-        or fodict will need to be used.
-    aprofiles : ndarray, shape (num_profiles, num_role_strats)
-        A description of the profiles. A parallel array with apayoffs.
-    apayoffs : ndarray, shape (num_profiles, num_role_strats)
-        The payoffs for each role strat per profile. A parallel array with
-        aprofiles.
-    verify : bool
-        If true, this will perform expensive checks to make sure input is
-        valid. Note, not everything can be checked, e.g. permutation of
-        strategies or roles, and some things that are cheap will always be
-        checked.
+    game : BaseGame
+        Game to copy information out of. This will copy as much information out
+        of the game as possible.
+    profiles : ndarray-like, optional
+        The profiles for the game, if unspecified, this will try to be grabbed
+        from `game`. Must be specified with payoffs.
+    payoffs : ndarray-like, optional
+        The payoffs for the game, if unspecified, payoffs will try to be
+        grabbed from `game`. Must be specified with profiles.
+
+    Parameters
+    ----------
+    num_players : int or [int] or ndarray
+        The number of players per role. See BaseGame.
+    num_strategies : int or [int] or ndarray
+        The number of strategies per role. See BaseGame.
+    profiles : ndarray-like, optional
+        The profiles for the game, if unspecified, game will be empty. Must be
+        specified with payoffs.
+    payoffs : ndarray-like, optional
+        The payoffs for the game, if unspecified, game will be empty. Must be
+        specified with profiles.
+
+    Parameters
+    ----------
+    matrix : ndarray-like
+        The matrix of payoffs for an asymmetric game. The last axis is the
+        payoffs for each player, the first axes are the strategies for each
+        player. matrix.shape[:-1] must correspond to the number of strategies
+        for each player. matrix.ndim - 1 must equal matrix.shape[-1].
     """
-    def __init__(self, players, strategies, aprofiles, apayoffs, verify=True):
-        super().__init__(players, strategies)
+    def __init__(self, *args, verify=True):
+        if len(args) == 1 and isinstance(args[0], Game):
+            # From Game
+            game = args[0]
+            num_players = game.num_players
+            num_strategies = game.num_strategies
+            profiles = game.profiles.copy()
+            payoffs = game.payoffs.copy()
+            verify = False
+        elif len(args) == 1 and isinstance(args[0], BaseGame):
+            # From BaseGame
+            game = args[0]
+            num_players = game.num_players
+            num_strategies = game.num_strategies
+            profiles = np.empty((0, game.num_role_strats), int)
+            payoffs = np.empty((0, game.num_role_strats))
+            verify = False
+        elif len(args) == 1:
+            # Matrix constructor
+            matrix = np.asarray(args[0], float)
+            assert matrix.shape[-1] == matrix.ndim - 1, \
+                "matrix shape is inconsistent with a matrix game {}".format(
+                    matrix.shape)
+            num_players = np.ones(matrix.shape[-1], int)
+            num_strategies = np.array(matrix.shape[:-1], int)
+            profiles = utils.acartesian2(*[np.eye(s, dtype=int)
+                                           for s in num_strategies])
+            payoffs = np.zeros(profiles.shape, float)
+            payoffs[profiles > 0] = matrix.flat
+            verify = False
+        elif len(args) == 2:
+            # Empty game
+            num_players, num_strategies, = args
+            num_role_strats = BaseGame(num_players,
+                                       num_strategies).num_role_strats
+            profiles = np.empty((0, num_role_strats), int)
+            payoffs = np.empty((0, num_role_strats), float)
+        elif len(args) == 3:
+            # Copy base from game
+            num_players = args[0].num_players
+            num_strategies = args[0].num_strategies
+            profiles, payoffs = args[1:]
+        elif len(args) == 4:
+            # Specify everything
+            num_players, num_strategies, profiles, payoffs = args
+        else:
+            raise ValueError('Invalid constructor arguments')
 
-        assert aprofiles.shape == apayoffs.shape, \
-            "aprofiles and apayoffs must be the same shape : aprofiles {0}, apayoffs {1}"\
-            .format(aprofiles.shape, apayoffs.shape)
-        expected_shape = (aprofiles.shape[0], self.num_role_strats)
-        assert aprofiles.shape == expected_shape, \
-            "aprofiles must have proper shape : expected {0} but was {1}"\
-            .format(expected_shape, aprofiles.shape)
-        assert np.issubdtype(aprofiles.dtype, int), \
-            "aprofiles must contain integers : dtype {0}".format(
-                aprofiles.dtype)
-        if verify:
-            assert np.all(aprofiles >= 0), \
-                "aprofiles was not non negative {} {}".format(
-                    np.any(aprofiles < 0, 1).nonzero(),
-                    aprofiles[aprofiles < 0])
-            assert np.all(self.role_reduce(aprofiles, axis=1) ==
-                          self.aplayers), \
-                "not all aprofiles equaled player total {} {}".format(
-                    np.any(self.role_reduce(aprofiles, axis=1) ==
-                           self.aplayers, 1).nonzero(),
-                    aprofiles[np.any(self.role_reduce(aprofiles, axis=1) ==
-                                     self.aplayers, 1)])
-            assert np.all(apayoffs * (aprofiles == 0) == 0), \
-                ("there were nonzero payoffs for strategies without players"
-                 " {} {} {}").format(
-                     np.any(apayoffs * (aprofiles == 0) != 0, 1).nonzero(),
-                     aprofiles[np.any(apayoffs * (aprofiles == 0) != 0, 1)],
-                     apayoffs[np.any(apayoffs * (aprofiles == 0) != 0, 1)])
+        super().__init__(num_players, num_strategies)
+        profiles = np.asarray(profiles, int)
+        payoffs = np.asarray(payoffs)
 
-        self._aprofiles = aprofiles
-        self._aprofiles.setflags(write=False)
-        self._apayoffs = apayoffs
-        self._apayoffs.setflags(write=False)
-        self._aprofile_map = {collect.frozenarray(aprof): apay for aprof, apay
-                              in self.profile_payoffs(as_array=True)}
-        self._dev_reps_ = None
+        assert profiles.shape == payoffs.shape, \
+            "profiles and payoffs must be the same shape : profiles {0}, payoffs {1}"\
+            .format(profiles.shape, payoffs.shape)
+        expected_shape = (profiles.shape[0], self.num_role_strats)
+        assert profiles.shape == expected_shape, \
+            "profiles must have proper shape : expected {0} but was {1}"\
+            .format(expected_shape, profiles.shape)
+        assert np.issubdtype(profiles.dtype, int), \
+            "profiles must contain integers : dtype {0}".format(
+                profiles.dtype)
+        assert not verify or np.all(profiles >= 0), \
+            "profiles was not non negative {} {}".format(
+                np.any(profiles < 0, 1).nonzero(),
+                profiles[profiles < 0])
+        assert not verify or np.all(self.role_reduce(profiles, axis=1) ==
+                                    self.num_players), \
+            "not all profiles equaled player total {} {}".format(
+                np.any(self.role_reduce(profiles, axis=1) ==
+                       self.num_players, 1).nonzero(),
+                profiles[np.any(self.role_reduce(profiles, axis=1) ==
+                                self.num_players, 1)])
+        assert not verify or np.all(payoffs * (profiles == 0) == 0), \
+            ("there were nonzero payoffs for strategies without players"
+             " {} {} {}").format(
+                 np.any(payoffs * (profiles == 0) != 0, 1).nonzero(),
+                 profiles[np.any(payoffs * (profiles == 0) != 0, 1)],
+                 payoffs[np.any(payoffs * (profiles == 0) != 0, 1)])
+
+        self.profiles = profiles
+        self.profiles.setflags(write=False)
+        self.payoffs = payoffs
+        self.payoffs.setflags(write=False)
+        self._profile_id_map = dict(zip(self.profile_id(self.profiles),
+                                        self.payoffs))
+        self.num_profiles = profiles.shape[0]
         self._writeable_payoffs()  # Reset
 
-        assert len(self._aprofile_map) == len(aprofiles), \
-            """There was at least one duplicate profile"""
+        # compute log dev reps
+        player_factorial = np.sum(sps.gammaln(self.profiles + 1), 1)
+        totals = (np.sum(sps.gammaln(self.num_players + 1)) -
+                  player_factorial)
+        with np.errstate(divide='ignore'):
+            self._dev_reps = (totals[:, None] + np.log(self.profiles) -
+                              self.role_repeat(np.log(self.num_players)))
+        self._dev_reps.setflags(write=False)
 
-    @staticmethod
-    def from_payoff_format(players, strategies, payoff_data, length=None):
-        """Create game from generic payoff format
-
-        Strategies and roles are sorted for their order in the game.
-
-        Parameters
-        ----------
-        players : {role: count}
-            Mapping from roles to number of players per role.
-        strategies : {role: {strategy}}
-            Mapping from roles to per-role strategy sets.
-        payoff_data : ({role: [(strat, count, [payoff])]})
-            Collection of data objects mapping roles to collections of
-            (strategy, count, value) tuples.
-        length : int
-            The total number of payoffs. This can make constructing the final
-            game more efficient if known, which it usually is. If unknown, and
-            payoff_data doesn't have a len, then the payoff data is first
-            copied into a list.
-        """
-        # When loaded in this form we sort roles and strategies
-        game = EmptyGame.from_payoff_format(players, strategies)
-
-        if length is None:
-            if not isinstance(payoff_data, abc.Sized):
-                warnings.warn('Copying profile data, this usually indicates '
-                              'something went wrong')
-                payoff_data = list(payoff_data)
-            length = len(payoff_data)
-        aprofiles = np.zeros((length, game.num_role_strats), dtype=int)
-        apayoffs = np.zeros((length, game.num_role_strats))
-
-        p = 0
-        for profile_data in payoff_data:
-            if any(any(p is None or len(p) == 0 for _, _, p in sym_grp)
-                   for sym_grp in profile_data.values()):
-                prof = profile.Profile.from_input_profile(profile_data)
-                warnings.warn('Encountered null payoff data in profile: {0}'
-                              .format(prof))
-                continue  # Invalid data, but can continue
-
-            for role, strategy_data in profile_data.items():
-                for strategy, count, payoffs in strategy_data:
-                    i = game._role_strat_index[(role, strategy)]
-                    assert aprofiles[p, i] == 0, (
-                        'Duplicate role strategy pair ({}, {})'
-                        .format(role, strategy))
-                    aprofiles[p, i] = count
-                    apayoffs[p, i] = np.average(payoffs)
-
-            p += 1  # profile added
-
-        # The slice at the end truncates any null data
-        return Game(game.players, game.strategies, aprofiles[:p, :],
-                    apayoffs[:p, :])
-
-    @staticmethod
-    def from_json(json_):
-        """Load a profile from its json representation"""
-        players, strategies, payoff_data, *length = \
-            gameio._game_from_json(json_)
-        return Game.from_payoff_format(players, strategies, payoff_data,
-                                       *length)
-
-    @staticmethod
-    def from_matrix(strategies, matrix):
-        """Create an asymmetric game from a payoff matrix
-
-        Parameters
-        ----------
-        strategies : {role: [strategy]}
-            The ordered strategies per role as in the standard input format.
-        matrix : ndarray, shape (num_strats_1, ..., num_strats_n, n)
-            The payoff matrix, the first n dimensions corespond to the
-            strategies of the n players, the last is the payoff for each of the
-            n players.
-        """
-        # Verify everything makes sense
-        assert all(len(s) == d for s, d
-                   in zip(strategies.values(), matrix.shape)), \
-            "number of strategies did not match matrix shape"
-        assert matrix.shape[-1] == len(matrix.shape) - 1, \
-            "matrix shape is inconsistent with a matrix game {}".format(
-                matrix.shape)
-
-        aprofiles = utils.acartesian2(*[np.eye(s, dtype=int)
-                                        for s in matrix.shape[:-1]])
-        apayoffs = np.zeros(aprofiles.shape)
-        apayoffs[aprofiles > 0] = matrix.flat
-
-        return Game({r: 1 for r in strategies}, strategies, aprofiles,
-                    apayoffs)
-
-    @staticmethod
-    def from_game(game):
-        if not isinstance(game, EmptyGame):
-            raise ValueError("not a valid game")
-        elif not isinstance(game, Game):
-            return Game(game.players, game.strategies,
-                        np.empty((0, game.num_role_strats), dtype=int),
-                        np.empty((0, game.num_role_strats)))
-        else:
-            return Game(game.players, game.strategies,
-                        game.profiles(as_array=True),
-                        game.payoffs(as_array=True))
+        assert len(self._profile_id_map) == self.num_profiles, \
+            "There was at least one duplicate profile"
 
     def _writeable_payoffs(self):
         """Get a writable version of the payoff array
 
         This makes sure that internal bookkeeping is kept up to date
         """
-        self._apayoffs.setflags(write=True)
-        view = self._apayoffs.view()
-        self._apayoffs.setflags(write=False)
+        self.payoffs.setflags(write=True)
+        view = self.payoffs.view()
+        self.payoffs.setflags(write=False)
         self._min_payoffs = None
         self._max_payoffs = None
         return view
 
-    @property
-    def _dev_reps(self):
-        """Get the dev reps
-
-        Lazily computed
-        """
-        if self._dev_reps_ is None:
-            player_factorial = self.role_reduce(
-                sps.gammaln(self._aprofiles + 1), axis=1)
-            totals = np.exp(np.sum(sps.gammaln(self.aplayers + 1) -
-                                   player_factorial, 1))
-            self._dev_reps_ = (totals[:, None] * self._aprofiles /
-                               self.aplayers.repeat(self.astrategies))
-            self._dev_reps_.setflags(write=False)
-        return self._dev_reps_
-
-    def min_payoffs(self, as_array=False):
+    def min_payoffs(self):
         """Returns the minimum payoff for each role"""
         if self._min_payoffs is None:
-            if not len(self):
-                self._min_payoffs = np.empty(self.astrategies.shape)
+            if not self.num_profiles:
+                self._min_payoffs = np.empty(self.num_strategies.shape)
                 self._min_payoffs.fill(np.nan)
             else:
-                masked = np.ma.masked_array(self._apayoffs,
-                                            self._aprofiles == 0)
-                self._min_payoffs = np.minimum.reduceat(
-                    masked.min(0), self._at_indices).filled(np.nan)
+                masked = np.ma.masked_array(self.payoffs, self.profiles == 0)
+                self._min_payoffs = self.role_reduce(
+                    masked.min(0), ufunc=np.minimum).filled(np.nan)
             self._min_payoffs.setflags(write=False)
-        if as_array or as_array is None:
-            return self._min_payoffs.view()
-        else:
-            return {r: float(m) for r, m
-                    in zip(self.strategies.keys(), self._min_payoffs)}
+        return self._min_payoffs.view()
 
-    def max_payoffs(self, as_array=False):
+    def max_payoffs(self):
         """Returns the maximum payoff for each role"""
         if self._max_payoffs is None:
-            if not len(self):
-                self._max_payoffs = np.empty(self.astrategies.shape)
+            if not self.num_profiles:
+                self._max_payoffs = np.empty(self.num_strategies.shape)
                 self._max_payoffs.fill(np.nan)
             else:
-                masked = np.ma.masked_array(self._apayoffs,
-                                            self._aprofiles == 0)
-                self._max_payoffs = np.maximum.reduceat(
-                    masked.max(0), self._at_indices).filled(np.nan)
+                masked = np.ma.masked_array(self.payoffs, self.profiles == 0)
+                self._max_payoffs = self.role_reduce(
+                    masked.max(0), ufunc=np.maximum).filled(np.nan)
             self._max_payoffs.setflags(write=False)
-        if as_array or as_array is None:
-            return self._max_payoffs.view()
-        else:
-            return {r: float(m) for r, m
-                    in zip(self.strategies.keys(), self._max_payoffs)}
+        return self._max_payoffs.view()
 
-    def profiles(self, as_array=False):
-        """Returns all of the profiles with data"""
-        if as_array or as_array is None:
-            return self._aprofiles.view()
-        else:
-            return (self.as_profile(prof, verify=False)
-                    for prof in self._aprofiles)
+    def get_payoffs(self, profile, default=None):
+        """Returns an array of profile payoffs
 
-    def payoffs(self, as_array=False):
-        if as_array or as_array is None:
-            return self._apayoffs.view()
-        else:
-            return (self._payoff_dict(prof, payoffs)
-                    for prof, payoffs
-                    in zip(self._aprofiles, self._apayoffs))
+        if default is not None and game doesn't have profile data, then an
+        array populated by default is returned."""
+        assert self.verify_profile(profile)
+        prof_id = self.profile_id(profile)
+        if (default is not None and prof_id not in self._profile_id_map):
+            ret = np.zeros(self.num_role_strats)
+            ret[profile > 0] = default
+            return ret
+        return self._profile_id_map[prof_id]
 
-    def profile_payoffs(self, as_array=False):
-        """Returns tuples of profiles and payoffs"""
-        iterable = zip(self._aprofiles, self._apayoffs)
-        if as_array or as_array is None:
-            # TODO maybe this should be a structured array
-            return iterable
-        else:
-            return ((self.as_profile(prof, verify=False),
-                     self._payoff_dict(prof, payoffs))
-                    for prof, payoffs in iterable)
-
-    def sample_profile_payoffs(self, as_array=False):
-        """Returns tuples of profiles and payoffs
-
-        Payoffs are in list format even though there is only one """
-        iterable = zip(self._aprofiles, self._apayoffs[..., None])
-        if as_array or as_array is None:
-            return iterable
-        else:
-            return ((self.as_profile(counts, verify=False),
-                     self._payoff_dict(counts, payoffs,
-                                       lambda l: list(map(float, l))))
-                    for counts, payoffs in iterable)
-
-    def get_payoffs(self, profile, as_array=False):
-        """Returns a dictionary mapping roles to strategies to payoff"""
-        profile = self.as_profile(profile, as_array=True)
-        payoffs = self._aprofile_map[collect.frozenarray(profile)]
-        if as_array:
-            return payoffs
-        else:
-            return self._payoff_dict(profile, payoffs)
-
-    def get_payoff(self, profile, role, strategy, default=None):
-        """Returns the payoff for a specific profile, role, and strategy
-
-        If there's no data for the profile, and a non None default is
-        specified, that is returned instead.
-        """
-        profile = collect.frozenarray(self.as_profile(profile, as_array=True))
-        if default is not None and profile not in self:
-            return default
-        payoffs = self._aprofile_map[profile]
-        return payoffs[self._role_strat_index[(role, strategy)]]
-
-    def get_expected_payoff(self, mix, as_array=False):
-        """Returns a dict of the expected payoff of a mixed strategy to each role
-
-        If as_array, then an array in role order is returned.
-        """
-        mix = self.as_mixture(mix, as_array=True)
-        deviations = self.deviation_payoffs(mix, as_array=True)
-        deviations[mix == 0] = 0  # Don't care about that missing data
-        payoff = self.role_reduce(mix * deviations)
-
-        if as_array:
-            return payoff
-        else:
-            return dict(zip(self.strategies, map(float, payoff)))
-
-    def get_max_social_welfare(self, role=None, as_array=False):
+    def get_max_social_welfare(self, role_index=None):
         """Returns the maximum social welfare over the known profiles.
 
-        :param role: If specified, get maximum welfare for that role
-        :param as_array: If true, the maximum social welfare profile is
-            returned in its array representation
-
-        :returns: Maximum social welfare
-        :returns: Profile with the maximum social welfare
-        """
+        If role_index is specified, then max social welfare applies only to the
+        specified role."""
         # This should probably stay here, because it can't be moved without
         # exposing underlying structure of _counts and _values or making it
         # less efficient. see mixture_deviation_gains
 
         # If no data, return none
-        if not len(self):
+        if not self.num_profiles:
             return np.nan, None
 
-        if role is not None:
-            i = self._role_index[role]
-            start = self._at_indices[i]
-            end = start + self.astrategies[i]
-            counts = self._aprofiles[:, start:end]
-            values = self._apayoffs[:, start:end]
+        if role_index is not None:
+            start = self.role_starts[role_index]
+            end = start + self.num_strategies[role_index]
+            profiles = self.profiles[:, start:end]
+            payoffs = self.payoffs[:, start:end]
         else:
-            counts = self._aprofiles
-            values = self._apayoffs
+            profiles = self.profiles
+            payoffs = self.payoffs
 
-        welfares = np.sum(values * counts, 1)
+        welfares = np.sum(payoffs * profiles, 1)
         profile_index = welfares.argmax()
-        profile = self._aprofiles[profile_index]
-        if as_array:
-            return welfares[profile_index], profile
-        else:
-            return (float(welfares[profile_index]),
-                    self.as_profile(profile, verify=False))
+        profile = self.profiles[profile_index]
+        return welfares[profile_index], profile
 
-    def deviation_payoffs(self, mix, verify=True, assume_complete=False,
-                          jacobian=False, as_array=False):
+    def deviation_payoffs(self, mix, assume_complete=False, jacobian=False):
         """Computes the expected value of each pure strategy played against all
         opponents playing mix.
 
         Parameters
         ----------
-        mix : ndarray or Mixture
+        mix : ndarray
             The mix all other players are using
+        assume_complete : bool
+            If true, don't compute missing data and replace with nans. Just
+            return the potentially inaccurate results.
         jacobian : bool
             If true, the second returned argument will be the jacobian of the
             deviation payoffs with respect to the mixture. The first axis is
             the deviating strategy, the second axis is the strategy in the mix
-            the jacobian is taken with respect to. If True, as_array is also
-            True.
-        as_array : bool
-            If True, returns arguments in array form.
+            the jacobian is taken with respect to. The values that are marked
+            nan are not very aggressive, so don't rely on accurate nan values
+            in the jacobian.
         """
-        as_array |= jacobian
-        mix = self.as_mixture(mix, verify=verify, as_array=True)
+        mix = np.asarray(mix, float)
         nan_mask = np.empty_like(mix, dtype=bool)
 
         # Fill out mask where we don't have data
         if self.is_complete() or assume_complete:
             nan_mask.fill(False)
-        elif len(self) == 0:
+        elif self.is_empty():
             nan_mask.fill(True)
         else:
             # These calculations are approximate, but for games we can do
@@ -931,121 +661,70 @@ class Game(EmptyGame):
             # actually exact.
             support = mix > 0
             strats = self.role_reduce(support)
-            devs = self._aprofiles[:, ~support]
-            num_supp = round(utils.game_size(self.aplayers, strats,
-                                             exact=False).prod())
-            dev_players = self.aplayers - np.eye(self.num_roles)
-            role_num_dev = np.rint(utils.game_size(
-                dev_players, strats, exact=False).prod(1)).astype(int)
-            num_dev = role_num_dev.repeat(self.astrategies)[~support]
+            devs = self.profiles[:, ~support]
+            num_supp = utils.game_size(self.num_players, strats).prod()
+            dev_players = self.num_players - np.eye(self.num_roles, dtype=int)
+            role_num_dev = utils.game_size(dev_players, strats).prod(1)
+            num_dev = role_num_dev.repeat(self.num_strategies)[~support]
 
             nan_mask[support] = np.all(devs == 0, 1).sum() < num_supp
             nan_mask[~support] = devs[devs.sum(1) == 1].sum(0) < num_dev
 
         # Compute values
         if not nan_mask.all():
-            with np.errstate(under='ignore'):  # ignore underflow
-                # The first use of 'tiny' makes 0^0=1
-                # The use of 'tiny' makes 0/0=0.
-                prod = np.prod((mix + _TINY) ** self._aprofiles, 1,
-                               keepdims=True)
-                weights = (prod * self._dev_reps / (mix + _TINY))
-                values = np.sum(self._apayoffs * weights, 0)
-
-                if jacobian:
-                    devs = np.eye(self.num_role_strats)
-                    dev_profs = np.maximum(self._aprofiles[..., None] - devs,
-                                           0)
-                    dev_jac = np.sum(self._apayoffs[:, None] *
-                                     self._dev_reps[:, None] *
-                                     dev_profs *
-                                     prod[..., None] /
-                                     (mix * mix[:, None] + _TINY), 0)
+            # _TINY effectively makes 0^0=1 and 0/0=0.
+            log_mix = np.log(mix + _TINY)
+            prof_prob = np.sum(self.profiles * log_mix, 1, keepdims=True)
+            with np.errstate(under='ignore'):
+                # Ignore underflow caused when profile probability is not
+                # representable in floating point.
+                probs = np.exp(prof_prob + self._dev_reps - log_mix)
+            weighted_payoffs = self.payoffs * probs
+            values = np.sum(weighted_payoffs, 0)
 
         else:
             values = np.empty(self.num_role_strats)
-            if jacobian:
-                dev_jac = np.empty((self.num_role_strats,
-                                    self.num_role_strats))
 
-        # Fill in nans
         values[nan_mask] = np.nan
-        if jacobian:
-            dev_jac[nan_mask, nan_mask] = np.nan
 
-        # Output result
-        if as_array:
-            result = values
-        else:
-            result = self.as_dict(values, filter_zeros=False)
+        if not jacobian:
+            return values
 
-        if jacobian:
-            return result, dev_jac
+        if not nan_mask.all():
+            tmix = mix + self.role_repeat(_TINY * self.num_players)
+            product_rule = self.profiles[:, None] / tmix - np.diag(1 / tmix)
+            dev_jac = np.sum(weighted_payoffs[..., None] * product_rule, 0)
         else:
-            return result
+            dev_jac = np.empty((self.num_role_strats, self.num_role_strats))
+
+        dev_jac[nan_mask] = np.nan
+        return values, dev_jac
+
+    def is_empty(self):
+        """Returns true if no profiles have data"""
+        return self.num_profiles == 0
 
     def is_complete(self):
         """Returns true if every profile has data"""
-        return len(self) == self.size
+        return self.num_profiles == self.num_all_profiles
 
     def is_constant_sum(self):
         """Returns true if this game is constant sum"""
-        profile_sums = np.sum(self._aprofiles * self._apayoffs, 1)
-        return np.allclose(profile_sums, profile_sums[0])
-
-    def normalize(self):
-        """Returns a new game where each role has normalized payoffs"""
-        new_payoffs = self._apayoffs.copy()
-        if len(self) > 0:
-            new_payoffs -= self.min_payoffs(True).repeat(self.astrategies)
-            scale = self.max_payoffs(True) - self.min_payoffs(True)
-            # If there's only one value in a role, then just set to 0
-            scale[scale == 0] = 1
-            new_payoffs /= np.repeat(scale, self.astrategies)
-            new_payoffs[self._aprofiles == 0] = 0
-        return Game(self.players, self.strategies, self._aprofiles,
-                    new_payoffs)
+        if self.is_empty():
+            return True
+        else:
+            profile_sums = np.sum(self.profiles * self.payoffs, 1)
+            return np.allclose(profile_sums, profile_sums[0])
 
     def __contains__(self, profile):
         """Returns true if data for that profile exists"""
-        hprof = collect.frozenarray(self.as_profile(profile, as_array=True))
-        return hprof in self._aprofile_map
-
-    def __iter__(self):
-        """Iterator over data_profiles"""
-        return (self.as_profile(prof, verify=False)
-                for prof in self._aprofiles)
-
-    def __getitem__(self, profile):
-        """Identical to get payoffs, makes game behave like a dictionary of profiles to
-        payoffs
-
-        """
-        return self.get_payoffs(profile)
-
-    def __len__(self):
-        """Number of profiles"""
-        return len(self._aprofiles)
+        return self.profile_id(profile) in self._profile_id_map
 
     def __repr__(self):
-        return '{old}, {data:d} / {total:d}>'.format(
+        return '{old}, {data:d} / {total:d})'.format(
             old=super().__repr__()[:-1],
-            data=len(self),
-            total=self.size)
-
-    def __str__(self):
-        return ('{old}payoff data for {data:d} out of {total:d} '
-                'profiles').format(
-                    old=super().__str__(),
-                    data=len(self),
-                    total=self.size)
-
-    def to_json(self):
-        """Convert to json according to the egta-online v3 default game spec"""
-        json = super().to_json()
-        json['profiles'] = [prof.to_input_profile(payoffs)
-                            for prof, payoffs in self.profile_payoffs()]
-        return json
+            data=self.num_profiles,
+            total=self.num_all_profiles)
 
 
 class SampleGame(Game):
@@ -1054,181 +733,148 @@ class SampleGame(Game):
     This behaves the same as a normal Game object, except that it has a
     `resample` method, which will resample the used payoffs from the empirical
     distribution of payoffs, allowing bootstrapping over arbitrary statistics.
+
+    Parameters
+    ----------
+    game : BaseGame
+        Game to copy information out of. This will copy as much information out
+        of the game as possible.
+    profiles : ndarray-like, optional
+        The profiles for the game, if unspecified, this will try to be grabbed
+        from `game`. Must be specified with payoffs.
+    sample_payoffs : [ndarray-like], optional
+        The sample payoffs for the game. Each list is a set of payoff
+        observations grouped by number of observations and parallel with
+        profiles. If unspecified, payoffs will try to be grabbed from `game`.
+        Must be specified with profiles.
+
+    Parameters
+    ----------
+    num_players : int or [int] or ndarray
+        The number of players per role. See BaseGame.
+    num_strategies : int or [int] or ndarray
+        The number of strategies per role. See BaseGame.
+    profiles : ndarray-like, optional
+        The profiles for the game, if unspecified, game will be empty. Must be
+        specified with payoffs.
+    sample_payoffs : [ndarray-like], optional
+        The sample payoffs for the game. Each list is a set of payoff
+        observations grouped by number of observations and parallel with
+        profiles. If unspecified, game will be empty.  Must be specified with
+        profiles.
+
+    Parameters
+    ----------
+    matrix : ndarray-like
+        The matrix of payoffs for an asymmetric game. The last axis is the
+        number of observations for each payoff, the second to last axis is
+        payoffs for each player, the first axes are the strategies for each
+        player. matrix.shape[:-2] must correspond to the number of strategies
+        for each player. matrix.ndim - 2 must equal matrix.shape[-2].
     """
 
-    def __init__(self, players, strategies, aprofiles, sample_apayoffs,
-                 verify=True):
-        # In case an empty list is passed
-        if sample_apayoffs:
-            apayoffs = np.vstack([s.mean(2) for s in sample_apayoffs])
+    def __init__(self, *args, verify=True):
+        if len(args) == 1 and isinstance(args[0], SampleGame):
+            # From SampleGame
+            game = args[0]
+            num_players = game.num_players
+            num_strategies = game.num_strategies
+            profiles = game.profiles.copy()
+            sample_payoffs = [p.copy() for p in game.sample_payoffs]
+            verify = False
+        elif len(args) == 1 and isinstance(args[0], Game):
+            # From Game
+            game = args[0]
+            num_players = game.num_players
+            num_strategies = game.num_strategies
+            profiles = game.profiles.copy()
+            sample_payoffs = [game.payoffs.copy()[..., None]]
+            verify = False
+        elif len(args) == 1 and isinstance(args[0], BaseGame):
+            # From BaseGame
+            game = args[0]
+            num_players = game.num_players
+            num_strategies = game.num_strategies
+            profiles = np.empty((0, game.num_role_strats), int)
+            sample_payoffs = []
+            verify = False
+        elif len(args) == 1:
+            # Matrix constructor
+            matrix = np.asarray(args[0], float)
+            assert matrix.shape[-2] == matrix.ndim - 2, \
+                ("matrix shape is inconsistent with a matrix sample game {}"
+                 .format(matrix.shape))
+            num_players = np.ones(matrix.shape[-2], int)
+            num_strategies = np.array(matrix.shape[:-2], int)
+            num_samples = matrix.shape[-1]
+            profiles = utils.acartesian2(*[np.eye(s, dtype=int)
+                                           for s in num_strategies])
+            payoffs = np.zeros(profiles.shape + (num_samples,))
+            # This next set of steps is a hacky way of avoiding duplicating
+            # mask by num_samples
+            pview = payoffs.view()
+            pview.shape = (-1, num_samples)
+            mask = profiles > 0
+            mask.shape = (-1, 1)
+            mask = np.broadcast_to(mask, (mask.size, num_samples))
+            np.place(pview, mask, matrix.flat)
+            sample_payoffs = [payoffs]
+            verify = False
+        elif len(args) == 2:
+            # Empty game
+            num_players, num_strategies, = args
+            num_role_strats = BaseGame(num_players,
+                                       num_strategies).num_role_strats
+            profiles = np.empty((0, num_role_strats), int)
+            sample_payoffs = []
+        elif len(args) == 3:
+            # Copy base from game
+            num_players = args[0].num_players
+            num_strategies = args[0].num_strategies
+            profiles, sample_payoffs = args[1:]
+        elif len(args) == 4:
+            # Specify everything
+            num_players, num_strategies, profiles, sample_payoffs = args
         else:
-            apayoffs = np.empty((0,) + aprofiles.shape[1:])
+            raise ValueError('Invalid constructor arguments')
 
-        super().__init__(players, strategies, aprofiles, apayoffs, verify)
-
-        self._sample_apayoffs = sample_apayoffs
-        for sapay in sample_apayoffs:
-            sapay.setflags(write=False)
-
-        assert len(set(x.shape[1] for x in sample_apayoffs)) <= 1, \
+        sample_payoffs = tuple(np.asarray(p) for p in sample_payoffs)
+        assert len(set(x.shape[1] for x in sample_payoffs)) <= 1, \
             "Not all sample payoffs shapes compatible"
 
-        lens = np.fromiter(itertools.chain([0], (x.shape[0] for x
-                                                 in sample_apayoffs)),
-                           int, len(sample_apayoffs) + 1).cumsum()
-
-        if len(sample_apayoffs) == 1:
-            assert (sample_apayoffs[0] * (aprofiles[..., None] == 0) == 0).all(), \
-                "some sample payoffs were nonzero for invalid payoffs"
-        elif len(sample_apayoffs) > 1:
-            assert all((samp * (count[..., None] == 0) == 0).all()
-                       for count, samp
-                       in zip(np.split(aprofiles, lens[1:-1]), sample_apayoffs)), \
-                "some sample payoffs were nonzero for invalid payoffs"
-
-        # Lazily computed
-        self._sample_aprofile_map_ = None
-
-    @staticmethod
-    def from_payoff_format(players, strategies, payoff_data, length=None):
-        """Create a sample game from the standard payoff format"""
-        # When loaded in this form we sort roles and strategies
-        game = EmptyGame.from_payoff_format(players, strategies)
-
-        # {sample_count : ([counts], [sample_values])}
-        sample_map = {}
-
-        for profile_data in payoff_data:
-            if any(any(p is None or len(p) == 0 for _, __, p in sym_grps)
-                   for sym_grps in profile_data.values()):
-                prof = profile.Profile.from_input_profile(profile_data)
-                warnings.warn('Encountered null payoff data in profile: {0}'
-                              .format(prof))
-                continue  # Invalid data, but can continue
-
-            num_samples = min(min(len(payoffs) for _, __, payoffs in sym_grps)
-                              for sym_grps in profile_data.values())
-            aprofile = np.zeros(game.num_role_strats, dtype=int)
-            apayoffs = np.zeros((game.num_role_strats, num_samples))
-
-            for role, strategy_data in profile_data.items():
-                for strategy, count, payoffs in strategy_data:
-                    i = game._role_strat_index[(role, strategy)]
-                    assert aprofile[i] == 0, (
-                        'Duplicate role strategy pair ({}, {})'
-                        .format(role, strategy))
-                    if len(payoffs) > num_samples:
-                        warnings.warn("Truncating observation data")
-
-                    aprofile[i] = count
-                    apayoffs[i] = payoffs[:num_samples]
-
-            lst_profs, lst_pays = sample_map.setdefault(num_samples, ([], []))
-            lst_profs.append(aprofile[None])
-            lst_pays.append(apayoffs[None])
-
-        # Join data together
-        if sample_map:
-            aprofiles = np.vstack(itertools.chain.from_iterable(
-                x[0] for x in sample_map.values()))
-            sample_apayoffs = [np.vstack(x[1]) for x in sample_map.values()]
-        else:  # No data
-            aprofiles = np.empty((0, game.num_role_strats), dtype=int)
-            sample_apayoffs = []
-
-        return SampleGame(game.players, game.strategies, aprofiles,
-                          sample_apayoffs)
-
-    @staticmethod
-    def from_json(json_):
-        """Load a profile from its json representation"""
-        players, strategies, payoff_data, *length = \
-            gameio._game_from_json(json_)
-        return SampleGame.from_payoff_format(players, strategies, payoff_data,
-                                             *length)
-
-    @staticmethod
-    def from_matrix(strategies, matrix):
-        """Create a sample game from a payoff matrix
-
-        The payoff matrix has one dimensions for each player, one dimension for
-        the payoffs, and one dimensions for the samples.
-        """
-        # Verify everything makes sense
-        assert all(len(s) == d for s, d
-                   in zip(strategies.values(), matrix.shape)), \
-            "number of strategies did not match matrix shape"
-        assert matrix.shape[-2] == len(matrix.shape) - 2, \
-            "matrix shape is inconsistent with a matrix game"
-
-        num_samples = matrix.shape[-1]
-        aprofiles = utils.acartesian2(*[np.eye(s, dtype=int)
-                                        for s in matrix.shape[:-2]])
-        apayoffs = np.zeros(aprofiles.shape + (num_samples,))
-        # This next set of steps is a hacky way of avoiding duplicating mask by
-        # num_samples
-        pview = apayoffs.view()
-        pview.shape = (-1, num_samples)
-        mask = aprofiles > 0
-        mask.shape = (-1, 1)
-        mask = np.broadcast_to(mask, (mask.size, num_samples))
-        np.place(pview, mask, matrix.flat)
-
-        return SampleGame({r: 1 for r in strategies}, strategies, aprofiles,
-                          [apayoffs])
-
-    @property
-    def _sample_aprofile_map(self):
-        """Get the dev reps
-
-        Lazily computed
-        """
-        if self._sample_aprofile_map_ is None:
-            self._sample_aprofile_map_ = (
-                {collect.frozenarray(aprof): apay
-                 for aprof, apay
-                 in self.sample_profile_payoffs(True)})
-        return self._sample_aprofile_map_
-
-    def num_samples(self):
-        """Get the different sample numbers"""
-        if len(self) > 0:
-            return {v.shape[2] for v in self._sample_apayoffs}
+        # In case an empty list is passed
+        if sample_payoffs:
+            payoffs = np.concatenate([s.mean(2) for s in sample_payoffs])
         else:
-            return {0}
+            payoffs = np.empty((0,) + profiles.shape[1:])
 
-    def get_sample_payoffs(self, profile, as_array=False):
-        """Returns a dictionary mapping roles to strategies to payoffs"""
-        profile = self.as_profile(profile, as_array=True)
-        payoffs = self._sample_aprofile_map[collect.frozenarray(profile)]
-        if as_array:
-            return payoffs
-        return self._payoff_dict(profile, payoffs,
-                                 lambda l: list(map(float, l)))
+        super().__init__(num_players, num_strategies, profiles, payoffs,
+                         verify=verify)
 
-    def sample_profile_payoffs(self, as_array=False):
-        """Returns a generator of tuples of (profile, sample_payoffs)
+        self.sample_payoffs = sample_payoffs
+        for spay in self.sample_payoffs:
+            spay.setflags(write=False)
+        self.num_sample_profs = np.fromiter(
+            (x.shape[0] for x in self.sample_payoffs),
+            int, len(self.sample_payoffs))
+        self.sample_starts = np.insert(self.num_sample_profs.cumsum(),
+                                       0, 0)
+        self.num_samples = np.fromiter(
+            (v.shape[2] for v in self.sample_payoffs),
+            int, len(self.sample_payoffs))
 
-        If as_array is True, they are given in their array representation
-        """
-        iterable = zip(self._aprofiles,
-                       itertools.chain.from_iterable(self._sample_apayoffs))
-        if as_array or as_array is None:
-            return iterable
-        else:
-            return ((self.as_profile(counts, verify=False),
-                     self._payoff_dict(counts, payoffs,
-                                       lambda l: list(map(float, l))))
-                    for counts, payoffs in iterable)
+        assert not self.sample_payoffs or not verify or all(
+            (samp * (count[..., None] == 0) == 0).all() for count, samp
+            in zip(np.split(self.profiles, self.sample_starts[1:]),
+                   self.sample_payoffs)), \
+            "some sample payoffs were nonzero for invalid payoffs"
 
     def remean(self):
         """Overwrite payoff values with mean payoff"""
-        begin = 0
         payoffs = self._writeable_payoffs()
-        for obs in self._sample_apayoffs:
-            end = begin + obs.shape[0]
+        for obs, begin, end in zip(self.sample_payoffs, self.sample_starts,
+                                   self.sample_starts[1:]):
             payoffs[begin:end] = obs.mean(2)
-            begin = end
 
     def resample(self, num_resamples=None, independent_profile=False,
                  independent_role=False, independent_strategy=False):
@@ -1255,49 +901,25 @@ class SampleGame(Game):
         """
         switches = (independent_profile, independent_role,
                     independent_strategy)
-        begin = 0
         payoffs = self._writeable_payoffs()
-        for obs in self._sample_apayoffs:
+        for obs, begin, end in zip(self.sample_payoffs, self.sample_starts,
+                                   self.sample_starts[1:]):
             num_samples = obs.shape[2]
             num_obs_resamples = (num_samples if num_resamples is None
                                  else num_resamples)
-            end = begin + obs.shape[0]
             shape = [dim if switch else 1
                      for dim, switch in zip(obs.shape, switches)]
             sample = rand.multinomial(
                 num_obs_resamples, [1/num_samples]*num_samples, shape)
             payoffs[begin:end] = ((obs * sample).mean(3) *
                                   (num_samples / num_obs_resamples))
-            end = begin
 
     def __repr__(self):
-        samples = self.num_samples()
-        if len(samples) == 1:
-            return '{old}, {samples:d}>'.format(
-                old=super().__repr__()[:-1],
-                samples=next(iter(samples)))
+        samples = self.num_samples
+        if samples.size == 0:
+            sample_str = '0'
+        elif samples.size == 1:
+            sample_str = str(samples[0])
         else:
-            return '{old}, {min_samples:d} - {max_samples:d}>'.format(
-                old=super().__repr__()[:-1],
-                min_samples=min(samples),
-                max_samples=max(samples))
-
-    def __str__(self):
-        samples = self.num_samples()
-        if len(samples) == 1:
-            return '{old}\n{samples:d} observations per profile'.format(
-                old=super().__str__(),
-                samples=next(iter(samples)))
-        else:
-            return ('{old}\n{min_samples:d} to {max_samples:d} observations '
-                    'per profile').format(
-                        old=super().__str__(),
-                        min_samples=min(samples),
-                        max_samples=max(samples))
-
-    def to_json(self):
-        """Convert to json according to the egta-online v3 default game spec"""
-        json = EmptyGame.to_json(self)
-        json['profiles'] = [prof.to_input_profile(payoffs)
-                            for prof, payoffs in self.sample_profile_payoffs()]
-        return json
+            sample_str = '{:d} - {:d}'.format(samples.min(), samples.max())
+        return '{}, {})'.format(super().__repr__()[:-1], sample_str)
