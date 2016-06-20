@@ -15,8 +15,8 @@ class GPGame(rsgame.EmptyGame):
     """
     parameters:
     EV_mode should be one of ['point','sample','neighbor','DPR','full_game']
-    EV_samples controls the number of queries to the GPs made by each call to
-                sample_EVs or neighbor_EVs
+    EV_samples controls the number of queries to the GP for each strategy made
+                by each call to sample_EVs.
     neighbor_devs controls how many profiles are used to compute neighbor_EVs.
                 It gives the number of deviations away from the max-probability
                 profile that should be generated.
@@ -62,6 +62,15 @@ class GPGame(rsgame.EmptyGame):
     def deviation_payoffs(self, mix, *args, **kwds):
         return self.EV_func(mix)
 
+    def point_EVs(self, mix):
+        """Evaluates GPs at the 'profile' corresponding to mixture fractions.
+
+        This is similar to neighbor_EVs with neighbor_devs=0, but without
+        rounding to integer numbers of players.
+        """
+        prof = mix * self.aplayers.repeat(self.astrategies)
+        return np.array([gp.predict([prof])[0] for gp in self.gps])
+
     def sample_EVs(self, mix):
         """Averages GP payoff estimates over profiles sampled from mix.
 
@@ -73,22 +82,15 @@ class GPGame(rsgame.EmptyGame):
         profs = self.random_profiles(mix, self.EV_samples, as_array=True)
         return np.array([gp.predict(profs).mean() for gp in self.gps])
 
-    def point_EVs(self, mix):
-        """Evaluates GPs at the 'profile' corresponding to mixture fractions.
-
-        This is similar to neighbor_EVs with neighbor_devs=0, but without
-        rounding to integer numbers of players.
-        """
-        prof = mix * self.aplayers.repeat(self.astrategies)
-        return np.array([gp.predict([prof])[0] for gp in self.gps])
-
     def neighbor_EVs(self, mix):
         """Evaluates GPs at profiles with the highest probability under mix.
 
         Computes the weighted sum for an exact deviation_payoffs calculation,
         but on a subset of the profiles. Evaluates the GPs at the EV_samples
+        search_kwds["n_jobs"] = cpu_count() # one job per cpu core
         profiles closest to mix. Weights are normalized by the sum of
         probabilities of evaluated profiles.
+
 
         NOTE: this should probably do some caching to speed up Nash computation
         """
@@ -156,4 +158,4 @@ def train_gp(x, y, **search_kwds):
     CV = RandomizedSearchCV(GaussianProcess(**fixed_params), CV_params,
                             error_score=-float("inf"), **search_kwds)
     CV.fit(x, y)
-    return CV
+    return CV.best_estimator_
