@@ -223,3 +223,17 @@ def support_set(strategies):
     """
     return frozenset(itertools.chain.from_iterable(
         ((r, s) for s in ses) for r, ses in strategies.items()))
+
+
+def max_prob_sym_prof(mix, players):
+    """Returns the pure strategy profile with highest probability under mix.
+
+    Assumes that the game is symmetric.
+    Requires an array representation of mix.
+    Returns an array representation of the profile.
+    """
+    frac_prof = mix * players
+    prof = np.array(frac_prof, dtype=int)
+    for _ in range(players - prof.sum()):
+        prof[(frac_prof - prof).argmax()] += 1
+    return prof

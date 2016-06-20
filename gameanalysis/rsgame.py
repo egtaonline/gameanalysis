@@ -438,6 +438,54 @@ class EmptyGame(object):
         else:
             return (self.as_mixture(m, verify=False) for m in mixtures)
 
+    def max_prob_prof(self, mix, as_array=False):
+        """Returns the pure strategy profile with highest probability."""
+        mix = self.as_array(mix, dtype=float)
+        prof = np.zeros_like(mix, dtype=int)
+        for r in range(self.num_roles):
+            start = self._at_indices[r]
+            if r < self.num_roles - 1:
+                stop = self._at_indices[r+1]
+            else:
+                stop = mix.size
+            prof[start:stop] = profile.max_prob_sym_prof(mix[start:stop],
+                                                         self.aplayers[r])
+        if as_array or as_array is None:
+            return prof
+        else:
+            return self.as_profile(prof, verify=False)
+
+    def nearby_profs(self, prof, num_devs, as_array=False):
+        """Returns profiles reachable by at most num_devs deviations.
+        
+        NOTE: this is the bottleneck for gpgame.neighbor_EVs. It seems like
+        there should be some clever way to speed it up.
+        """
+        prof = self.as_profile(prof, verify=True)
+        profs = {prof}
+        frontier = {prof}
+        for _ in range(num_devs):
+            devs = {r:set() for r in self.strategies}
+            for prof in frontier:
+                for role in prof:
+                    for strat in prof[role]:
+                        devs[role].add(prof.remove(role, strat))
+            frontier = set()
+            for role in devs:
+                for dev in devs[role]:
+                    for strat in self.strategies[role]:
+                        prof = dev.add(role, strat)
+                        if prof not in profs:
+                            profs.add(prof)
+                            frontier.add(prof)
+            if len(frontier) == 0:
+                break
+        if not as_array or as_array is None:
+            return profs
+        else:
+            return [self.as_array(p, dtype=int) for p in profs]
+
+
     def is_symmetric(self):
         """Returns true if this game is symmetric"""
         return self.num_roles == 1
@@ -657,7 +705,7 @@ class Game(EmptyGame):
         elif not isinstance(game, Game):
             return Game(game.players, game.strategies,
                         np.empty((0, game.num_role_strats), dtype=int),
-                        np.empty((0, game. num_role_strats)))
+                        np.empty((0, game.num_role_strats)))
         else:
             return Game(game.players, game.strategies,
                         game.profiles(as_array=True),

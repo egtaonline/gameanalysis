@@ -169,29 +169,34 @@ class DeviationPreserving(object):
                    in self.reduced_players.items()), \
             "Can't dpr to 1 unless that's the full player count"
 
-    def expand_profile(self, dpr_profile):
-        """Returns the full game profile whose payoff determines that of strat in the
-        reduced game profile"""
-        for dev_role, dev_strategies in dpr_profile.items():
-            for dev_strategy in dev_strategies:
-                full_profile = {}
-                for role, strat_counts in dpr_profile.items():
-                    if role == dev_role:
-                        opp_prof = dict(strat_counts)
-                        opp_prof[dev_strategy] -= 1
-                        opp_prof = _expand_sym_profile(
-                            opp_prof,
-                            self.full_players[role] - 1,
-                            self.reduced_players[role] - 1)
-                        opp_prof[dev_strategy] += 1
+    def expand_profile(self, dpr_prof):
+        """Returns an iterator over full game profiles whose payoffs determines
+        those of the reduced game profile."""
+        for role, strategies in dpr_prof.items():
+            for strat in strategies:
+                yield profile.Profile(self.full_prof(dpr_prof, role, strat))
 
-                    else:
-                        opp_prof = _expand_sym_profile(
-                            strat_counts, self.full_players[role],
-                            self.reduced_players[role])
+    def full_prof(self, dpr_prof, dev_role, dev_strat):
+        """Returns the full game profile whose payoff determines that of
+        the given role and strategy in the reduced game profile."""
+        full_profile = {}
+        for role, strat_counts in dpr_prof.items():
+            if role == dev_role:
+                opp_prof = dict(strat_counts)
+                opp_prof[dev_strat] -= 1
+                opp_prof = _expand_sym_profile(
+                    opp_prof,
+                    self.full_players[role] - 1,
+                    self.reduced_players[role] - 1)
+                opp_prof[dev_strat] += 1
 
-                    full_profile[role] = opp_prof
-                yield profile.Profile(full_profile)
+            else:
+                opp_prof = _expand_sym_profile(
+                    strat_counts, self.full_players[role],
+                    self.reduced_players[role])
+
+            full_profile[role] = opp_prof
+        return full_profile
 
     def _profile_contributions(self, full_prof):
         """Returns a generator of dpr profiles and the role-strategy pair that
