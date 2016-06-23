@@ -36,19 +36,7 @@ class GPGame(rsgame.EmptyGame):
         self.neighbor_devs = neighbor_devs
 
         # copy game's attributes
-        self.strategies = game.strategies
-        self.players = game.players
-        self.aplayers = game.aplayers
-        self.aplayers.setflags(write=False)        
-        self.astrategies = game.astrategies
-        self.astrategies.setflags(write=False)        
-        self.num_roles = game.num_roles
-        self.num_role_strats = game.num_role_strats
-        self._at_indices = game._at_indices
-        self._at_indices.setflags(write=False)        
-        self.size = game.size
-        self._role_index = game._role_index
-        self._role_strat_index = game._role_strat_index
+        super().__init__(game.players, game.strategies)
         self._min_payoffs = game.min_payoffs(True)
 
         # train GPs for each role/strategy
