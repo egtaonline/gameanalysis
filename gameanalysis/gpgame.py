@@ -48,6 +48,7 @@ class GPGame(rsgame.EmptyGame):
             self.gps.append(train_gp(x, y, n_jobs=CV_jobs, n_iter=CV_iters))
 
     def deviation_payoffs(self, mix, *args, **kwds):
+        mix = self.as_mixture(mix, as_array=True)
         return self.EV_func(mix)
 
     def point_EVs(self, mix):

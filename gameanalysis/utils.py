@@ -4,6 +4,7 @@ import operator
 import numpy as np
 import scipy.misc as spm
 
+_TINY = np.finfo(float).tiny
 
 def prod(collection):
     """Product of all elements in the collection"""
@@ -207,3 +208,32 @@ def simplex_project(array):
     rho = (1 - sort.cumsum()) / np.arange(1, sort.size + 1)
     lam = rho[np.nonzero(rho + sort > 0)[0][-1]]
     return np.maximum(array + lam, 0)
+
+
+def multinomial_mode(p, n):
+    """Compute the mode of n samples from multinomial distribution p.
+
+    algorithm from: Finucan 1964. The mode of a multinomial distribution.
+    notation follows: Gall 2003. Determination of the modes of a Multinomial
+                      distribution.
+    """
+    f = p * (n + p.size/2)
+    k = f.astype(int)
+    f -= k
+    n0 = k.sum()
+    if n0 < n:
+        q = (1 - f) / (k + 1)
+        for _ in range(n0, n):
+            a = q.argmin()
+            k[a] += 1
+            f[a] -= 1
+            q[a] = (1 - f[a]) / (k[a] + 1)
+    elif n0 > n:
+        q = f / (k + _TINY)
+        for _ in range(n, n0):
+            a = q.argmin()
+            k[a] -= 1
+            f[a] += 1
+            q[a] = f[a] / k[a]
+    return k
+

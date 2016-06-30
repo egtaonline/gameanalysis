@@ -448,8 +448,8 @@ class EmptyGame(object):
                 stop = self._at_indices[r+1]
             else:
                 stop = mix.size
-            prof[start:stop] = profile.max_prob_sym_prof(mix[start:stop],
-                                                         self.aplayers[r])
+            prof[start:stop] = utils.multinomial_mode(mix[start:stop],
+                                                      self.aplayers[r])
         if as_array or as_array is None:
             return prof
         else:
