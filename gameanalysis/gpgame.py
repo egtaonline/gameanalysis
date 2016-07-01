@@ -58,7 +58,13 @@ class GPGame(rsgame.EmptyGame):
         rounding to integer numbers of players.
         """
         prof = mix * self.aplayers.repeat(self.astrategies)
-        return np.array([gp.predict([prof])[0] for gp in self.gps])
+        EVs = np.zeros_like(mix)
+        for role_start, role_stop in self._at_ranges:
+            p = np.array(prof)
+            p[role_start:role_stop] -= mix[role_start:role_stop]
+            for i in range(role_start, role_stop):
+                EVs[i] = self.gps[i].predict([p])[0]
+        return EVs
 
     def sample_EVs(self, mix):
         """Averages GP payoff estimates over profiles sampled from mix.
@@ -68,8 +74,13 @@ class GPGame(rsgame.EmptyGame):
         The values returned are averages over payoff estimates at the sampled
         profiles.
         """
-        profs = self.random_profiles(mix, self.EV_samples, as_array=True)
-        return np.array([gp.predict(profs).mean() for gp in self.gps])
+        EVs = np.zeros_like(mix)
+        for r in range(self.num_roles):
+            profs = self.random_profiles(mix, self.EV_samples, True, r)
+            for s in range(self.astrategies[r]):
+                rs = self._at_indices[r] + s
+                EVs[rs] = self.gps[rs].predict(profs).mean()
+        return EVs
 
     def neighbor_EVs(self, mix):
         """Evaluates GPs at profiles with the highest probability under mix.
@@ -79,10 +90,8 @@ class GPGame(rsgame.EmptyGame):
         search_kwds["n_jobs"] = cpu_count() # one job per cpu core
         profiles closest to mix. Weights are normalized by the sum of
         probabilities of evaluated profiles.
-
-
-        NOTE: this should probably do some caching to speed up Nash computation
         """
+        #NOTE: this needs to be updated to use n-1 player profiles, not n
         aprofiles = np.array(self.nearby_profs(self.max_prob_prof(mix, None), 
                                                self.neighbor_devs, True))
         apayoffs = np.array([gp.predict(aprofiles) for gp in self.gps]).T
@@ -100,6 +109,7 @@ class GPGame(rsgame.EmptyGame):
         Uses self.DPR_players to determine number of reduced-game players for
         each role.
         """
+        #NOTE: this needs to be updated to use n-1 player profiles, not n
         if hasattr(self, "_DPR"):
             return self._DPR.deviation_payoffs(mix, as_array=True)
         if isinstance(self.DPR_players, int):
@@ -120,6 +130,7 @@ class GPGame(rsgame.EmptyGame):
 
     def full_game_EVs(self, mix):
         """Fills in every profile in the game to estimate payoffs."""
+        #NOTE: this needs to be updated to use n-1 player profiles, not n
         if hasattr(self, "_full_game"):
             return self._full_game.deviation_payoffs(mix, as_array=True)
         self._full_game = rsgame.Game.from_game(self)

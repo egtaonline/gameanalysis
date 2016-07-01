@@ -191,6 +191,13 @@ class EmptyGame(object):
         """
         return np.split(array, self._at_indices[1:])
 
+    @property
+    def _at_ranges(self):
+        """Gives (start, stop) pairs for slicing by role."""
+        return list(zip(self._at_indices, list(self._at_indices[1:]) +
+                        [self.num_role_strats]))
+
+
     def trim_mixture_array_support(self, mixture, supp_thresh=1e-3):
         """Trims strategies played less than supp_thresh from the support"""
         mixture *= mixture >= supp_thresh
@@ -328,11 +335,14 @@ class EmptyGame(object):
         mix = 1 / self.astrategies.repeat(self.astrategies)
         return self.as_mixture(mix, as_array=as_array, verify=False)
 
-    def random_profiles(self, mixture, num_samples=1, as_array=False):
+    def random_profiles(self, mixture, num_samples=1, as_array=False,
+                        dev_role_index=None):
         """Sample pure profiles from a mixture"""
         mixture = self.as_array(mixture, float)
-        role_samples = [rand.multinomial(n, probs, num_samples) for n, probs
-                        in zip(self.aplayers, self.role_split(mixture))]
+        role_samples = [rand.multinomial(n if r == dev_role_index else n-1,
+                        probs, num_samples) for n, probs, r in 
+                        zip(self.aplayers, self.role_split(mixture), 
+                            range(self.num_roles))]
         profiles = np.concatenate(role_samples, 1)
         if as_array or as_array is None:
             return profiles
