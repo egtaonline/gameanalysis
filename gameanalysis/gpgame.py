@@ -129,13 +129,14 @@ class GPGame(rsgame.EmptyGame):
 
     def full_game_EVs(self, mix):
         """Fills in every profile in the game to estimate payoffs."""
-        #NOTE: this needs to be updated to use n-1 player profiles, not n
         if hasattr(self, "_full_game"):
             return self._full_game.deviation_payoffs(mix, as_array=True)
         self._full_game = rsgame.Game.from_game(self)
         self._full_game._aprofiles = self.all_profiles(as_array=True)
         self._full_game._apayoffs = np.array([gp.predict(
-                self._full_game._aprofiles) for gp in self.gps]).T
+                self._full_game._aprofiles - np.eye(1, self.num_role_strats, 
+                rs)) for rs, gp in enumerate(self.gps)]).T
+        self._full_game._apayoffs[self._full_game._aprofiles == 0] = 0
         return self._full_game.deviation_payoffs(mix, as_array=True)
         
     def min_payoffs(self, as_array=False):
