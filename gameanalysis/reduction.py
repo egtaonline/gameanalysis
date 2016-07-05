@@ -11,70 +11,70 @@ from gameanalysis import profile
 # efficient array representations.
 
 
-def _expand_sym_profile(profile, full_players, reduced_players):
+def _expand_sym_profile(prof, full_players, reduced_players):
     """Expands symmetric hierarchical profile
 
     In the event that `full_players` isn't divisible by `reduced_players`, we
     first assign by rounding error and break ties in favor of more-played
     strategies. The final tie-breaker is alphabetical order.
     """
-    strats, players = zip(*sorted(profile.items()))
+    strats, players = zip(*sorted(prof.items()))
     expanded_players = _expand_sym_array_profile(np.array(players, dtype=int),
                                                  full_players, reduced_players)
     return dict(zip(strats, map(int, expanded_players)))
 
 
-def _expand_sym_array_profile(profile, full_players, reduced_players):
+def _expand_sym_array_profile(prof, full_players, reduced_players):
     """Expands an array profile, order of strategies must be sorted
 
     In the event that `full_players` isn't divisible by `reduced_players`, we
     first assign by rounding error and break ties in favor of more-played
     strategies. The final tie-breaker is alphabetical order."""
-    assert profile.sum() == reduced_players
+    assert prof.sum() == reduced_players
     # Maximum prevents divide by zero error; equivalent to + eps
-    expand_prof = profile * full_players // np.maximum(reduced_players, 1)
+    expand_prof = prof * full_players // np.maximum(reduced_players, 1)
     unassigned = full_players - expand_prof.sum()
     if unassigned == 0:
         return expand_prof
 
-    error = profile * full_players / reduced_players - expand_prof
-    inds = np.lexsort((np.arange(profile.size), -profile, -error))
+    error = prof * full_players / reduced_players - expand_prof
+    inds = np.lexsort((np.arange(prof.size), -prof, -error))
     expand_prof[inds[:unassigned]] += 1
     return expand_prof
 
 
-def _reduce_sym_profile(profile, full_players, reduced_players):
+def _reduce_sym_profile(prof, full_players, reduced_players):
     """Reduce a symmetric hierarchical profile
 
     This returns none if there is no profile, and the reduced profile
     otherwise. This maintains the invariant that _reduce_sym_prof .
     _expand_sym_prof is the identity. The reverse is also the identity if a
     reduced profile exists."""
-    strats, players = zip(*sorted(profile.items()))
+    strats, players = zip(*sorted(prof.items()))
     reduced_players = _reduce_sym_array_profile(np.array(players, dtype=int),
                                                 full_players, reduced_players)
     return (dict(zip(strats, map(int, reduced_players)))
             if reduced_players is not None else None)
 
 
-def _reduce_sym_array_profile(profile, full_players, reduced_players):
+def _reduce_sym_array_profile(prof, full_players, reduced_players):
     """Same as reduce sym array profile but for arrays"""
-    assert profile.sum() == full_players
-    red_prof = np.ceil(profile * reduced_players / full_players).astype(int)
+    assert prof.sum() == full_players
+    red_prof = np.ceil(prof * reduced_players / full_players).astype(int)
     overassigned = red_prof.sum() - reduced_players
 
     # See if standard rounding works
     if overassigned == 0:
         expanded = _expand_sym_array_profile(red_prof, full_players,
                                              reduced_players)
-        return red_prof if np.all(profile == expanded) else None
+        return red_prof if np.all(prof == expanded) else None
 
     # Rounding doesn't work, so we need to try and find a consistent set of
     # strategies that we added a tie breaker to in order to in order to get the
     # reduction
 
     # What if every strategy was tie broken
-    alternate = np.ceil((profile - 1) * reduced_players / full_players)\
+    alternate = np.ceil((prof - 1) * reduced_players / full_players)\
         .astype(int)
 
     # The strategies that could have been tie broken
@@ -89,8 +89,8 @@ def _reduce_sym_array_profile(profile, full_players, reduced_players):
     # criteria for expanding the profile, and see if a consistent selection of
     # tie broken strategies exists.
     error = np.concatenate([
-        red_prof * full_players / reduced_players - profile,
-        alternate[diff] * full_players / reduced_players - profile[diff] + 1])
+        red_prof * full_players / reduced_players - prof,
+        alternate[diff] * full_players / reduced_players - prof[diff] + 1])
     key = (np.concatenate((np.arange(red_prof.size), diff)),
            -np.concatenate((red_prof, alternate[diff])),
            -error)
@@ -141,7 +141,7 @@ class Hierarchical(object):
                                                   self.reduced_players[role])
                         for role, strats in prof.items()}
             if not any(strats is None for strats in red_prof.values()):
-                profiles.append(profile.Profile(red_prof)
+                profiles.append(prof.Profile(red_prof)
                                 .to_input_profile(payoffs))
         return game.from_payoff_format(self.reduced_players,
                                        game.strategies, profiles)
@@ -174,7 +174,7 @@ class DeviationPreserving(object):
         those of the reduced game profile."""
         for role, strategies in dpr_prof.items():
             for strat in strategies:
-                yield profile.Profile(self.full_prof(dpr_prof, role, strat))
+                yield self.full_prof(dpr_prof, role, strat)
 
     def full_prof(self, dpr_prof, dev_role, dev_strat):
         """Returns the full game profile whose payoff determines that of
@@ -196,7 +196,7 @@ class DeviationPreserving(object):
                     self.reduced_players[role])
 
             full_profile[role] = opp_prof
-        return full_profile
+        return profile.Profile(full_profile)
 
     def _profile_contributions(self, full_prof):
         """Returns a generator of dpr profiles and the role-strategy pair that
