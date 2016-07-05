@@ -109,7 +109,6 @@ class GPGame(rsgame.EmptyGame):
         Uses self.DPR_players to determine number of reduced-game players for
         each role.
         """
-        #NOTE: this needs to be updated to use n-1 player profiles, not n
         if hasattr(self, "_DPR"):
             return self._DPR.deviation_payoffs(mix, as_array=True)
         if isinstance(self.DPR_players, int):
@@ -123,8 +122,8 @@ class GPGame(rsgame.EmptyGame):
         for i, prof in enumerate(self._DPR.profiles(as_array=False)):
             for (role, strat), j in self._role_strat_index.items():
                 if strat in prof[role]:
-                    full_prof = self.as_array(DP.full_prof(prof, role, strat),
-                                              dtype=int)
+                    full_prof = self.as_array(DP.full_prof(prof, role,
+                                    strat).remove(role, strat), dtype=int)
                     self._DPR._apayoffs[i,j] = self.gps[j].predict([full_prof])
         return self._DPR.deviation_payoffs(mix, as_array=True)
 
