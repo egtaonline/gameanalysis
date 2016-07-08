@@ -50,6 +50,33 @@ def test_role_symmetric_game(players, strategies):
 
 
 @testutils.apply([
+    ([1], [1]),
+    ([1] * 3, [2] * 3),
+    ([3], [2]),
+    ([2, 2], [3, 3]),
+    ([1, 2], [2, 2]),
+    ([2, 2], [1, 2]),
+    ([1, 2], [1, 2]),
+], repeat=20)
+def test_add_profiles(players, strategies):
+    base = rsgame.BaseGame(players, strategies)
+    game = gamegen.add_profiles(base)
+    assert game.is_complete(), "didn't generate a full game"
+    assert np.all(players == game.num_players), \
+        "didn't generate correct number of strategies"
+    assert np.all(strategies == game.num_strategies), \
+        "didn't generate correct number of strategies"
+
+    game = gamegen.add_profiles(base, prob=0)
+    assert game.is_empty(), "didn't generate a full game"
+
+    game = gamegen.add_profiles(base, prob=0.5)
+
+    game = gamegen.add_profiles(base, prob=0.5, independent=False)
+    assert game.num_profiles == round(game.num_all_profiles / 2)
+
+
+@testutils.apply([
     ([1],),
     ([2],),
     ([1, 1],),

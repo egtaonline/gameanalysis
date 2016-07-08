@@ -382,6 +382,39 @@ def normalize(game, new_min=0, new_max=1):
     return rsgame.Game(game, profiles, payoffs)
 
 
+def add_profiles(game, distribution=default_distribution, prob=1,
+                 independent=True):
+    """Add profiles to a base game
+
+    Parameters
+    ----------
+    distribution : (shape) -> ndarray, optional
+        Distribution function to draw profiles from.
+    prob : float, optional
+        The probability to add a profile from the full game.
+    independent : bool, optional
+        If true then each profile has `prob` probability of being added, else
+        `num_all_profiles * prob` profiles will be kept.
+    """
+    assert 0 <= prob <= 1
+    if prob == 1:
+        selection = slice(None)
+    elif prob == 0:
+        selection = slice(0)
+    elif independent:
+        selection = rand.random(game.num_all_profiles) < prob
+    else:
+        inds = rand.choice(np.arange(game.num_all_profiles),
+                           round(game.num_all_profiles * prob), replace=False)
+        selection = np.zeros(game.num_all_profiles, bool)
+        selection[inds] = True
+    profiles = game.all_profiles()[selection]
+    payoffs = np.zeros(profiles.shape)
+    mask = profiles > 0
+    payoffs[mask].flat = distribution(mask.sum())
+    return rsgame.Game(game, profiles, payoffs, verify=False)
+
+
 def drop_profiles(game, prob, independent=True):
     """Drop profiles from a game
 
