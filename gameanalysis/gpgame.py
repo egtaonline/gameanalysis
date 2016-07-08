@@ -55,7 +55,7 @@ class BaseGPGame(rsgame.BaseGame):
 
     def get_mean_dev_payoffs(self, profiles):
         """Get the mean deviation payoff over role partial profiles
-        
+
         Parameters
         ----------
         profiles : ndarray

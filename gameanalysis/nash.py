@@ -136,21 +136,35 @@ class ReplicatorDynamics(object):
 
     This will run at most max_iters of replicators dynamics and return unless
     the difference between successive mixtures is less than converge_thresh.
-    This is an object to support pickling.
+    This is an object to support pickling. Replicator Dynamics needs minimum
+    and maximum payoffs in order to project successive iterations into the
+    simplex. If these aren't known then they should return inf and -inf
+    respectively. Otherwise they can be conservative bounds.
     """
-    def __init__(self, game, max_iters=10000, converge_thresh=1e-8):
+    def __init__(self, game, max_iters=10000, converge_thresh=1e-8,
+                 slack=1e-3):
         self.game = game
-        self.min = game.role_repeat(game.min_payoffs())
         self.max_iters = max_iters
         self.converge_thresh = converge_thresh
+        self.slack = slack
 
     def __call__(self, mix):  # pragma: no cover
         # FIXME Allow for random convergence, (e.g.) repeatedly below threshold
         # instead of just once
+        minp = self.game.min_payoffs()
+        maxp = self.game.max_payoffs()
+
         for _ in range(self.max_iters):
             old_mix = mix
-            mix = (self.game.deviation_payoffs(mix, assume_complete=True)
-                   - self.min + _TINY) * mix
+            dev_pays = self.game.deviation_payoffs(mix, assume_complete=True)
+            minp = np.minimum(minp, self.game.role_reduce(dev_pays,
+                                                          ufunc=np.minimum))
+            maxp = np.maximum(maxp, self.game.role_reduce(dev_pays,
+                                                          ufunc=np.maximum))
+            slack = self.slack * (maxp - minp)
+            slack[slack == 0] = self.slack
+            offset = self.game.role_repeat(minp - slack)
+            mix = (dev_pays - offset) * mix
             mix /= self.game.role_reduce(mix, keepdims=True)
             if linalg.norm(mix - old_mix) <= self.converge_thresh:
                 break
