@@ -647,6 +647,8 @@ class Game(BaseGame):
             nan are not very aggressive, so don't rely on accurate nan values
             in the jacobian.
         """
+        # TODO It wouldn't be hard to extend this to multiple mixtures, which
+        # would allow array calculation of mixture regret.
         mix = np.asarray(mix, float)
         nan_mask = np.empty_like(mix, dtype=bool)
 

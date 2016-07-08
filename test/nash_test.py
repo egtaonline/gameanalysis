@@ -13,7 +13,7 @@ from gameanalysis import rsgame
 from test import testutils
 
 
-METHODS = [('optimize', {}), ('replicator', {})]
+METHODS = [('optimize', {}), ('replicator', {}), ('replicatorode', {})]
 ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
     itertools.combinations(METHODS, i)
     for i in range(1, len(METHODS) + 1))))

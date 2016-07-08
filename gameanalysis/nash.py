@@ -5,6 +5,7 @@ import multiprocessing
 import numpy as np
 from numpy import linalg
 from scipy import optimize
+from scipy import integrate
 
 from gameanalysis import regret
 
@@ -131,6 +132,45 @@ class RegretOptimizer(object):
         return result
 
 
+class ReplicatorDynamicsOde(object):
+    """A pickleable object to find Nash equilibria
+
+    This method uses ode integration on the replicator dynamics differential
+    equation."""
+    # TODO There are a few different methods and many different options, but
+    # little documentation for these integrators. They should probably be
+    # tested / explored.
+    # http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.integrate.ode.html  # noqa
+    def __init__(self, game, final_time=1000):
+        self.game = game
+        self.final_time = final_time
+
+    def func(self, t, mix):
+        dev_pay = self.game.deviation_payoffs(np.maximum(mix, 0),
+                                              assume_complete=True)
+        return mix * (dev_pay - self.game.role_reduce(mix * dev_pay,
+                                                      keepdims=True))
+
+    def grad(self, t, mix):
+        dev_pay, dev_jac = self.game.deviation_payoffs(
+            np.maximum(mix, 0), jacobian=True, assume_complete=True)
+
+        term1 = np.diag(dev_pay - self.game.role_reduce(mix * dev_pay,
+                                                        keepdims=True))
+        term2 = mix[:, None] * (dev_jac - dev_jac - self.game.role_reduce(
+            mix[:, None] * dev_jac, 0, keepdims=True))
+        return term1 + term2
+
+    def __call__(self, mix):  # pragma: no cover
+        inter = (integrate.ode(self.func, self.grad)
+                 .set_integrator('vode', method='adams', with_jacobian=True)
+                 .set_initial_value(mix, 0))
+        result = inter.integrate(self.final_time)
+        # inter.successful() will tell if it succeeded, but this can fail, and
+        # we'll just discard due to low regret.
+        return self.game.simplex_project(result)
+
+
 class ReplicatorDynamics(object):
     """Replicator dynamics
 
@@ -175,6 +215,7 @@ class ReplicatorDynamics(object):
 
 _AVAILABLE_METHODS = {
     'replicator': ReplicatorDynamics,
+    'replicatorode': ReplicatorDynamicsOde,
     'optimize': RegretOptimizer,
 }
 
@@ -199,7 +240,8 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     processes : int
         Number of processes to use when finding Nash equilibria. If greater
         than one, the game will need to be pickleable.
-    methods : [str] or {str: {...}}, str in {'replicator', 'optimize'}
+    methods : [str] or {str: {...}}, str in {'replicator', 'optimize',
+                                             'replicatorode'}
         The methods to use to converge to an equilibrium. Methods should be an
         iterable of strings. Optionally, it can be a dictionary with extra
         options for each of the methods. If None, defaults to using all
@@ -222,7 +264,7 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         game.role_biased_mixtures(),
         game.random_mixtures(random_restarts)))
 
-    methods = methods or {k: {} for k in _AVAILABLE_METHODS.keys()}
+    methods = methods or dict(optimize=None, replicator=None)
     methods = [_AVAILABLE_METHODS[m](game, **(p or {}))
                for m, p in methods.items()]
 
