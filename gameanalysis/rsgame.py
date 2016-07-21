@@ -267,8 +267,7 @@ class BaseGame(object):
         dev_players = self.num_players - np.eye(self.num_roles, dtype=int)
         profs = np.empty((num_samples, self.num_roles, self.num_role_strats),
                          int)
-        for i, (players, strats) in enumerate(zip(dev_players,
-                                                  self.num_strategies)):
+        for i, players in enumerate(dev_players):
             base = BaseGame(players, self.num_strategies)
             profs[:, i] = base.random_profiles(mixture, num_samples)
         return profs
