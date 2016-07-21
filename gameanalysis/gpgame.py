@@ -123,7 +123,7 @@ class SampleGPGame(BaseGPGame):
         self._num_samples = num_samples
 
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
-        assert not jacobian, "PointGPGame doesn't support jacobian"
+        assert not jacobian, "SampleGPGame doesn't support jacobian"
         profs = self.random_dev_profiles(mix, self._num_samples).swapaxes(0, 1)
         return self.get_mean_dev_payoffs(profs)
 
@@ -145,6 +145,8 @@ class NeighborGPGame(BaseGPGame):
         # TODO this should probably do some caching to speed up Nash
         # computation Could easily use dynamic array to add a bunch of payoffs
         # and profiles only when necessary
+        assert not jacobian, "NeighborGPGame doesn't support jacobian"
+
         profiles = self.nearby_profs(self.max_prob_prof(mix), self._num_devs)
         payoffs = self.get_payoffs(profiles)
 
