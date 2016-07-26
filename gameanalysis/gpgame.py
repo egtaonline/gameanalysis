@@ -8,6 +8,8 @@ from sklearn import grid_search
 
 from gameanalysis import rsgame
 from gameanalysis import reduction
+from gameanalysis import subgame
+from gameanalysis import utils
 
 
 _TINY = np.finfo(float).tiny
@@ -160,6 +162,36 @@ class NeighborGPGame(BaseGPGame):
             log_profs = np.log(profiles)
         probs = np.exp(log_profs + profile_probs - denom)
         return np.sum(payoffs * probs, 0) / probs.sum(0)
+
+    def nearby_profs(self, prof, num_devs):
+        """Returns profiles reachable by at most num_devs deviations"""
+        # XXX this is the bottleneck for gpgame.neighbor_EVs. It seems like
+        # there should be some clever way to speed it up.
+        assert num_devs >= 0
+        dev_players = utils.acomb(self.num_roles, num_devs)
+        mask = np.all(dev_players <= self.num_players, 1)
+        dev_players = dev_players[mask]
+        supp = prof > 0
+        sub = subgame.subgame(rsgame.BaseGame(self), supp)
+
+        profs = [prof[None]]
+        for players in dev_players:
+            to_dev_profs = rsgame.BaseGame(
+                players, self.num_strategies).all_profiles()
+            from_dev_profs = subgame.translate(
+                rsgame.BaseGame(players, sub.num_strategies).all_profiles(), supp)
+            before_devs = prof - from_dev_profs
+            before_devs = before_devs[np.all(before_devs >= 0, 1)]
+            uniq = np.unique(self.profile_id(before_devs),
+                             return_index=True)[1]
+            before_devs = before_devs[uniq]
+            nearby = before_devs[:, None] + to_dev_profs
+            nearby.shape = (-1, self.num_role_strats)
+            uniq = np.unique(self.profile_id(nearby), return_index=True)[1]
+            profs.append(nearby[uniq])
+        profs = np.concatenate(profs)
+        uniq = np.unique(self.profile_id(profs), return_index=True)[1]
+        return profs[uniq]
 
 
 class DprGPGame(BaseGPGame):

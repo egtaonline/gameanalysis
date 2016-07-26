@@ -26,7 +26,6 @@ import numpy.random as rand
 import scipy.misc as spm
 import scipy.special as sps
 
-from gameanalysis import subgame
 from gameanalysis import utils
 
 
@@ -39,20 +38,24 @@ class BaseGame(object):
     This object only contains methods and information about definition of the
     game, and does not contain methods to operate on observation data.
 
-    Parameters
+    Parameters (from game)
     ----------
     game : BaseGame
         Copies info from game. Useful to keep convenience methods of game
         without attached data.
 
-    Parameters
+    Parameters (default constructor)
     ----------
     num_players : int or [int] or ndarray
-        The number of players in each role in order. This will be broadcast to
-        match the size of `num_strategies`.
+        The number of players in each role in order, or the number of players per
+        role if identical (will be broadcast to match the number of roles).
     num_strategies : int or [int] or ndarray
-        The number of strategies in each role in order. This will be broadcast
-        to match the size of `num_players`.
+        The number of strategies in each role in order, or the number of strategies
+        per role if identical (will be broadcast to match the number of roles).
+
+    The number of roles is deduced from the number of entries in num_players and
+    num_strategies. If either is an integer or has length 1, the other is used;
+    if both are integers or have length 1, the game will have one role.
     """
     def __init__(self, *args):
         if len(args) == 1:
@@ -362,36 +365,6 @@ class BaseGame(object):
         return np.concatenate(
             [utils.multinomial_mode(m, p) for m, p
              in zip(self.role_split(mix), self.num_players)], -1)
-
-    def nearby_profs(self, prof, num_devs):
-        """Returns profiles reachable by at most num_devs deviations"""
-        # XXX this is the bottleneck for gpgame.neighbor_EVs. It seems like
-        # there should be some clever way to speed it up.
-        assert num_devs >= 0
-        dev_players = utils.acomb(self.num_roles, num_devs)
-        mask = np.all(dev_players <= self.num_players, 1)
-        dev_players = dev_players[mask]
-        supp = prof > 0
-        sub = subgame.subgame(BaseGame(self), supp)
-
-        profs = [prof[None]]
-        for players in dev_players:
-            to_dev_profs = BaseGame(
-                players, self.num_strategies).all_profiles()
-            from_dev_profs = subgame.translate(
-                BaseGame(players, sub.num_strategies).all_profiles(), supp)
-            before_devs = prof - from_dev_profs
-            before_devs = before_devs[np.all(before_devs >= 0, 1)]
-            uniq = np.unique(self.profile_id(before_devs),
-                             return_index=True)[1]
-            before_devs = before_devs[uniq]
-            nearby = before_devs[:, None] + to_dev_profs
-            nearby.shape = (-1, self.num_role_strats)
-            uniq = np.unique(self.profile_id(nearby), return_index=True)[1]
-            profs.append(nearby[uniq])
-        profs = np.concatenate(profs)
-        uniq = np.unique(self.profile_id(profs), return_index=True)[1]
-        return profs[uniq]
 
     def is_symmetric(self):
         """Returns true if this game is symmetric"""
