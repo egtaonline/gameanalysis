@@ -81,6 +81,8 @@ class BaseGame(object):
         self.num_players.setflags(write=False)
         self.role_starts.setflags(write=False)
         self.role_index.setflags(write=False)
+        self._hash = hash((self.num_strategies.data.tobytes(),
+                           self.num_players.data.tobytes()))
 
         assert np.all(self.num_players >= 0)
         assert np.all(self.num_strategies > 0)
@@ -202,7 +204,8 @@ class BaseGame(object):
         rev_arange = rev_arange.cumsum()
         base = np.insert(self.role_sizes[:-1].cumprod(), 0, 1)
         base = np.concatenate([[1], self.role_sizes[:-1].cumprod()])
-        return self.role_reduce(spm.comb(profiles + rev_arange - 1, rev_arange)
+        return self.role_reduce(np.rint(spm.comb(profiles + rev_arange - 1,
+                                                 rev_arange))
                                 .astype(int)).dot(base)
 
     def get_expected_payoffs(self, mix, deviations=None):
@@ -373,6 +376,9 @@ class BaseGame(object):
     def is_asymmetric(self):
         """Returns true if this game is asymmetric"""
         return np.all(self.num_players == 1)
+
+    def __hash__(self):
+        return self._hash
 
     def __repr__(self):
         return '{}({}, {})'.format(
@@ -567,7 +573,7 @@ class Game(BaseGame):
         array populated by default is returned."""
         assert self.verify_profile(profile)
         prof_id = self.profile_id(profile)
-        if (default is not None and prof_id not in self._profile_id_map):
+        if default is not None and prof_id not in self._profile_id_map:
             ret = np.zeros(self.num_role_strats)
             ret[profile > 0] = default
             return ret

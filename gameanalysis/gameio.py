@@ -11,7 +11,21 @@ from gameanalysis import utils
 
 
 class GameSerializer(object):
-    """An object with utilities for serializing a game with names"""
+    """An object with utilities for serializing a game with names
+
+    Parameters 1
+    ------------
+    strategies : {role: [strategy]}
+        A dictionary mapping role to strategies. The resulting serializer is
+        the sorted version of all inputs.
+
+    Parameters 2
+    ------------
+    role : [role]
+        A list of ordered roles.
+    strategies : [[strategies]]
+        A list of lists of ordered strategies for each role.
+    """
     def __init__(self, *args):
         if len(args) == 1:
             role_strats = sorted(args[0].items())
@@ -35,6 +49,7 @@ class GameSerializer(object):
             in zip(self.role_names, self.strat_names))
         self._role_strat_index = {(r, s): i for i, (r, s)
                                   in enumerate(role_strats)}
+        self._hash = hash((self.role_names, self.strat_names))
 
     def role_split(self, array, axis=-1):
         return np.split(array, self._split_inds, axis)
@@ -45,13 +60,13 @@ class GameSerializer(object):
 
     def role_strat_index(self, role, strat):
         """Return the index of a role strat pair"""
-        return self._role_strat_index[(role, strat)]
+        return self._role_strat_index[role, strat]
 
-    def to_prof_json(self, prof):
+    def to_prof_json(self, prof, filter_zeros=True):
         """Convert a profile to json"""
         return {role: {strat: count.item() for strat, count
                        in zip(strats, counts)
-                       if count > 0}
+                       if not filter_zeros or count > 0}
                 for counts, role, strats
                 in zip(self.role_split(prof),
                        self.role_names, self.strat_names)}
@@ -71,7 +86,7 @@ class GameSerializer(object):
         return '; '.join(
             '{}: {}'.format(role, ', '.join(
                 '{:d} {}'.format(count, strat)
-                for strat, count in zip(strats, counts)))
+                for strat, count in zip(strats, counts) if count > 0))
             for role, strats, counts
             in zip(self.role_names, self.strat_names,
                    self.role_split(prof)))
@@ -93,7 +108,7 @@ class GameSerializer(object):
         prof = [False] * self.num_role_strats
         for role, strats in dictionary.items():
             for strat, count in strats.items():
-                prof[self._role_strat_index[(role, strat)]] = count
+                prof[self._role_strat_index[role, strat]] = count
         return np.array(prof)
 
     def from_prof_symgrp(self, symgrps):
@@ -103,8 +118,18 @@ class GameSerializer(object):
             role = sym_group['role']
             strat = sym_group['strategy']
             count = sym_group['count']
-            prof[self._role_strat_index[(role, strat)]] = count
+            prof[self._role_strat_index[role, strat]] = count
         return prof
+
+    def from_payoff_symgrp(self, symgrps):
+        """Read a set of payoffs from symmetry groups"""
+        payoffs = np.zeros(self.num_role_strats)
+        for sym_group in symgrps:
+            role = sym_group['role']
+            strat = sym_group['strategy']
+            payoff = sym_group['payoff']
+            payoffs[self._role_strat_index[role, strat]] = payoff
+        return payoffs
 
     def from_prof_string(self, prof_string):
         """Read a profile from a string"""
@@ -113,13 +138,19 @@ class GameSerializer(object):
             role, strats = role_str.split(': ', 1)
             for strat_str in strats.split(', '):
                 count, strat = strat_str.split(' ', 1)
-                prof[self._role_strat_index[(role, strat)]] = count
+                prof[self._role_strat_index[role, strat]] = count
         return prof
 
     def to_role_json(self, role_info):
         """Format role data as json"""
         return {role: info.item() for role, info
                 in zip(self.role_names, role_info)}
+
+    def from_role_json(self, role_json):
+        prof = [False] * self.num_roles
+        for role, count in role_json.items():
+            prof[self._role_index[role]] = count
+        return np.array(prof)
 
     def to_payoff_json(self, profile, payoffs):
         """Format a profile and payoffs as json"""
@@ -214,6 +245,9 @@ class GameSerializer(object):
             strg += sample_str
 
         return strg
+
+    def __hash__(self):
+        return self._hash
 
 
 def read_base_game(json):
@@ -364,7 +398,7 @@ def _roles_from_json(json_):
 
 def _new_game_from_json(json_, profile_reader):
     """Interprets a new style game"""
-    players, strategies, _ = _roles_from_json(json_)
+    players, strategies, _, _ = _roles_from_json(json_)
     return (players,
             strategies,
             (profile_reader(prof) for prof in json_['profiles']),
