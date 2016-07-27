@@ -36,7 +36,7 @@ format:
 	bin/autopep8 -ri gameanalysis test
 
 todo:
-	grep -nrIF -e TODO -e XXX -e FIXME . --exclude-dir=lib --exclude=Makefile --color=always
+	grep -nrIF -e TODO -e XXX -e FIXME . --exclude-dir=.git --exclude-dir=lib --exclude=Makefile --color=always
 
 setup:
 	git pull
