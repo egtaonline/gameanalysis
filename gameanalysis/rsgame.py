@@ -39,13 +39,13 @@ class BaseGame(object):
     game, and does not contain methods to operate on observation data.
 
     Parameters (from game)
-    ----------
+    ----------------------
     game : BaseGame
         Copies info from game. Useful to keep convenience methods of game
         without attached data.
 
     Parameters (default constructor)
-    ----------
+    --------------------------------
     num_players : int or [int] or ndarray
         The number of players in each role in order, or the number of players per
         role if identical (will be broadcast to match the number of roles).
