@@ -304,12 +304,13 @@ def unique_axis(array, axis=-1, **kwargs):
 
 class hash_array(object):
     def __init__(self, array):
-        self._array = np.asarray(array)
-        self._hash = hash(self._array.data.tobytes())
+        self.array = np.asarray(array)
+        self.array.setflags(write=False)
+        self._hash = hash(self.array.data.tobytes())
 
     def __hash__(self):
         return self._hash
 
     def __eq__(self, other):
         return (self._hash == other._hash and
-                np.all(self._array == other._array))
+                np.all(self.array == other.array))
