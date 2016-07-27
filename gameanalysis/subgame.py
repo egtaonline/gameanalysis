@@ -3,14 +3,23 @@
 A subgame is a game with a restricted set of strategies that usually make
 analysis tractable. Most representations just use a subgame mask, which is a
 bitmask over included strategies."""
+import functools
+
 import numpy as np
+import numpy.random as rand
 
 from gameanalysis import gameio
 from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-def pure_subgame_masks(game):
+@functools.lru_cache()
+def num_pure_subgames(game):
+    """The number of pure subgames"""
+    return game.num_strategies.prod()
+
+
+def pure_subgames(game):
     """Returns every pure subgame mask in a game
 
     A pure subgame is a subgame where each role only has one strategy. This
@@ -72,31 +81,41 @@ def num_dpr_deviation_profiles(game, subgame_mask):
     return num_deviation_payoffs(game, subgame_mask) - overcount
 
 
-def deviation_profiles(game, subgame_mask):
-    """Return every deviation profile"""
+def deviation_profiles(game, subgame_mask, role_index=None):
+    """Return strict deviation profiles
+
+    Strict means that all returned profiles will have exactly one player where
+    subgame_mask is false, i.e.
+
+    `np.all(np.sum(profiles * ~subgame_mask, 1) == 1)`
+
+    If `role_index` is specified, only profiles for that role will be
+    returned."""
     subgame_mask = np.asarray(subgame_mask, bool)
-    num_supp = game.role_reduce(subgame_mask)
-    num_dev = game.num_strategies - num_supp
-    dev_offsets = np.insert(np.cumsum(num_supp * num_dev), 0, 0)
-    devs = np.zeros((dev_offsets[-1], game.num_role_strats), int)
+    support = game.role_reduce(subgame_mask)
 
-    for mask, ns, nd, so, do in zip(game.role_split(subgame_mask), num_supp,
-                                    num_dev, game.role_starts, dev_offsets):
-        num_strat = mask.size
-        view = devs[do:do + ns * nd,
-                    so:so + num_strat]
-        view.shape = (ns, nd, num_strat)
-        view[..., ~mask] += np.eye(nd, dtype=int)
-        view[..., mask] -= np.eye(ns, dtype=int)[:, None]
+    def dev_profs(players, mask, rs):
+        subg = rsgame.BaseGame(players, support)
+        non_devs = translate(subg.all_profiles(), subgame_mask)
+        ndevs = np.sum(~mask)
+        devs = np.zeros((ndevs, game.num_role_strats), int)
+        devs[:, rs:rs+mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
+        profs = non_devs[:, None] + devs
+        profs.shape = (-1, game.num_role_strats)
+        return profs
 
-    sub = subgame(rsgame.BaseGame(game), subgame_mask)
-    full_profs = np.zeros((sub.num_all_profiles, game.num_role_strats),
-                          int)
-    full_profs[:, subgame_mask] = sub.all_profiles()
-    dev_profs = np.reshape(full_profs[:, None] + devs,
-                           (-1, game.num_role_strats))
-    return utils.unique_axis(
-        dev_profs[np.all(dev_profs[:, subgame_mask] >= 0, 1)])
+    if role_index is None:
+        profs = [dev_profs(players, mask, rs) for players, mask, rs
+                 in zip(game.num_players - np.eye(game.num_roles, dtype=int),
+                        game.role_split(subgame_mask), game.role_starts)]
+        return np.concatenate(profs)
+
+    else:
+        players = game.num_players.copy()
+        players[role_index] -= 1
+        mask = game.role_split(subgame_mask)[role_index]
+        rs = game.role_starts[role_index]
+        return dev_profs(players, mask, rs)
 
 
 def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
@@ -161,6 +180,46 @@ def translate(profiles, subgame_mask):
                          profiles.dtype)
     new_profs[..., subgame_mask] = profiles
     return new_profs
+
+
+@functools.lru_cache()
+def num_all_subgames(game):
+    """Number of unique subgames"""
+    return np.prod(2 ** game.num_strategies - 1)
+
+
+def all_subgames(game):
+    """Return an array of all of the subgames"""
+    return subgame_from_id(game, np.arange(num_all_subgames(game)))
+
+
+def subgame_id(game, subgame_mask):
+    """Return a unique integer representing a subgame"""
+    bits = np.ones(game.num_role_strats, int)
+    bits[0] = 0
+    bits[game.role_starts[1:]] -= game.num_strategies[:-1]
+    bits = 2 ** bits.cumsum()
+    roles = np.insert(np.cumprod(2 ** game.num_strategies[:-1] - 1), 0, 1)
+    return np.sum(roles * (game.role_reduce(subgame_mask * bits) - 1), -1)
+
+
+def subgame_from_id(game, subgame_id):
+    """Return a subgame mask from its unique indicator"""
+    subgame_id = np.asarray(subgame_id)
+    bits = np.ones(game.num_role_strats, int)
+    bits[0] = 0
+    bits[game.role_starts[1:]] -= game.num_strategies[:-1]
+    bits = 2 ** bits.cumsum()
+    roles = 2 ** game.num_strategies - 1
+    rolesc = np.insert(np.cumprod(roles[:-1]), 0, 1)
+    return (game.role_repeat(subgame_id[..., None] // rolesc % roles + 1)
+            // bits % 2).astype(bool)
+
+
+def random_subgames(game, n=1):
+    """Return n random subgames"""
+    ids = rand.randint(num_all_subgames(game), size=n)
+    return subgame_from_id(game, ids)
 
 
 def maximal_subgames(game):
