@@ -16,8 +16,8 @@ def game_size(players, strategies, exact=False):
     if exact:
         return spm.comb(players+strategies-1, players, exact=True)
     else:
-        sizes = spm.comb(players+strategies-1, players,
-                         exact=False).astype(int)
+        sizes = np.rint(spm.comb(players+strategies-1, players,
+                                 exact=False)).astype(int)
         assert np.all(sizes >= 0), "Overflow on game size"
         return sizes
 
