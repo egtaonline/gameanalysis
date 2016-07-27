@@ -36,7 +36,7 @@ REDUCTIONS = {
     'dpr': reduction.DeviationPreserving,
     'hr': reduction.Hierarchical,
     'tr': lambda s, f, r: reduction.Twins(s, f),
-    'idr': lambda s, f, r: reduction.Identity(),
+    'idr': lambda s, f, r: reduction.Identity(s, f),
 }
 
 PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]

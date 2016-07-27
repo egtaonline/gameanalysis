@@ -3,6 +3,7 @@ import numpy as np
 import numpy.random as rand
 
 from gameanalysis import rsgame
+from gameanalysis import subgame
 
 
 def _expand_rsym_profiles(game, profiles, full_players, reduced_players):
@@ -111,31 +112,34 @@ def _reduce_rsym_profiles(game, profiles, full_players, reduced_players):
     return red_profs[valid], reduced
 
 
-class Hierarchical():
+class Hierarchical(object):
     """Hierarchical Reduction
 
     Either reduced or full players must be specified, the other will be taken
     from the game.
     """
     def __init__(self, num_strats, full_players, reduced_players):
+        self.num_strategies = num_strats
+        self.full_players = full_players
+        self.reduced_players = reduced_players
         self._fgame = rsgame.BaseGame(full_players, num_strats)
-        self._red_players = np.broadcast_to(np.asarray(reduced_players, int),
-                                            self._fgame.num_roles)
-        assert np.all(self._red_players > 0), \
-            "All counts must be greater than zero"
-        assert np.all(self._fgame.num_players >= self._red_players), \
+        self._rgame = rsgame.BaseGame(reduced_players, num_strats)
+        assert np.all(self._fgame.num_players >= self._rgame.num_players), \
             "All full counts must not be less than reduced counts"
 
-    def reduce_game(self, game):
-        """Convert an input game to a reduced game with new players"""
+    def reduce_game(self, game, allow_incomplete=False):
+        """Convert an input game to a reduced game with new players
+
+        Allow incomplete is unused for hierarchical reduction."""
         assert (np.all(game.num_players == self._fgame.num_players) and
                 np.all(game.num_strategies == self._fgame.num_strategies)), \
             "The games players don't match up with this reduction"
 
-        if game.num_profiles == 0:
-            return game
+        if isinstance(game, rsgame.SampleGame):
+            if game.num_profiles == 0:
+                return rsgame.SampleGame(self._rgame.num_players,
+                                         game.num_strategies)
 
-        elif isinstance(game, rsgame.SampleGame):
             sample_payoffs = []
             profiles = []
             for profs, pays in zip(
@@ -143,7 +147,7 @@ class Hierarchical():
                     game.sample_payoffs):
                 red_profiles, mask = _reduce_rsym_profiles(
                     self._fgame, profs, self._fgame.num_players,
-                    self._red_players)
+                    self._rgame.num_players)
                 if mask.any():
                     profiles.append(red_profiles)
                     sample_payoffs.append(pays[mask])
@@ -152,45 +156,61 @@ class Hierarchical():
                 profiles = np.concatenate(profiles, 0)
             else:  # No data
                 profiles = np.empty((0, game.num_role_strats), dtype=int)
-            return rsgame.SampleGame(self._red_players, game.num_strategies,
-                                     profiles, sample_payoffs, verify=False)
-        else:
+            return rsgame.SampleGame(self._rgame.num_players,
+                                     game.num_strategies, profiles,
+                                     sample_payoffs, verify=False)
+        elif isinstance(game, rsgame.Game):
+            if game.num_profiles == 0:
+                return rsgame.Game(self._rgame.num_players,
+                                   game.num_strategies)
+
             profiles = game.profiles
             payoffs = game.payoffs
             red_profiles, mask = _reduce_rsym_profiles(
                 self._fgame, profiles, self._fgame.num_players,
-                self._red_players)
+                self._rgame.num_players)
 
-            return rsgame.Game(self._red_players, game.num_strategies,
+            return rsgame.Game(self._rgame.num_players, game.num_strategies,
                                red_profiles, payoffs[mask], verify=False)
+
+        else:
+            return rsgame.BaseGame(self._rgame.num_players,
+                                   game.num_strategies)
 
     def reduce_profiles(self, profiles):
         """Reduce a set of profiles"""
         return _reduce_rsym_profiles(
             self._fgame, np.asarray(profiles, int), self._fgame.num_players,
-            self._red_players)[0]
+            self._rgame.num_players)[0]
 
     def expand_profiles(self, profiles):
         """Expand a set of profiles"""
         return _expand_rsym_profiles(self._fgame, np.asarray(profiles, int),
                                      self._fgame.num_players,
-                                     self._red_players)
+                                     self._rgame.num_players)
+
+    def expand_deviation_profiles(self, subgame_mask, role_index=None):
+        """Expand profiles that contribute to deviation payoffs"""
+        return self.expand_profiles(
+            subgame.deviation_profiles(self._rgame, subgame_mask, role_index))
 
     def __repr__(self):
         return '{}({}, {}, {})'.format(
             self.__class__.__name__,
             self._fgame.num_strategies,
             self._fgame.num_players,
-            self._red_players)
+            self._rgame.num_players)
 
 
-class DeviationPreserving():
+class DeviationPreserving(object):
     """Deviation Preserving Reduction
 
     Either reduced or full players must be specified, the other will be taken
     from the game."""
-
     def __init__(self, num_strats, full_players, reduced_players):
+        self.num_strategies = num_strats
+        self.full_players = full_players
+        self.reduced_players = reduced_players
         self._fgame = rsgame.BaseGame(full_players, num_strats)
         self._rgame = rsgame.BaseGame(reduced_players, num_strats)
         assert np.all(self._fgame.num_players >= self._rgame.num_players), \
@@ -279,30 +299,39 @@ class DeviationPreserving():
             strat_inds = devs.nonzero()[1]
             return red_profs, red_inds, full_inds, strat_inds
 
-    def reduce_game(self, game):
-        """Convert an input game to a reduced game with new players"""
+    def reduce_game(self, game, allow_incomplete=False):
+        """Convert an input game to a reduced game with new players
+
+        If `allow_incomplete` is true, then profiles with incomplete payoff
+        data will still be returned. If game is a SampleGame, then the payoff
+        with the smallest number of nonzero values will be used."""
         assert (np.all(game.num_players == self._fgame.num_players) and
                 np.all(game.num_strategies == self._fgame.num_strategies)), \
             "The games players don't match up with this reduction"
 
-        if game.num_profiles == 0:
-            return game
-
-        elif isinstance(game, rsgame.SampleGame):
+        if isinstance(game, rsgame.SampleGame):
+            if game.num_profiles == 0:
+                return rsgame.SampleGame(self._rgame.num_players,
+                                         game.num_strategies)
             # Reduce profiles
             red_profiles, red_inds, full_inds, strat_inds = \
                 self.reduce_profiles(game.profiles, True)
             if red_profiles.size == 0:
-                return rsgame.SampleGame(rsgame.BaseGame(game))
+                return rsgame.SampleGame(self._rgame.num_players,
+                                         game.num_strategies)
 
             # Count the number of payoffs for every profile
             counts = game.num_samples.repeat(game.num_sample_profs)[full_inds]
             rprof_index = red_inds * game.num_role_strats + strat_inds
-            pay_counts = np.bincount(rprof_index, counts, red_profiles.size)\
-                .astype(int).reshape(red_profiles.shape)
+            pay_counts = np.rint(np.bincount(
+                rprof_index, counts, red_profiles.size)).astype(int)\
+                .reshape(red_profiles.shape)
             # Minimum valid counts for every profile
-            obs_counts = np.ma.masked_array(pay_counts, red_profiles == 0)\
-                .min(1).filled(0)
+            mask = red_profiles == 0
+            if allow_incomplete:
+                # If allow incomplete, then ignore payoffs where count is 0
+                mask |= pay_counts == 0
+            obs_counts = np.ma.masked_array(pay_counts, mask).min(1).filled(0)
             # Number of profiles with zero samples
             num_zeros = np.sum(obs_counts == 0)
             # Permutation of red_profiles so that number of samples are in
@@ -362,7 +391,7 @@ class DeviationPreserving():
                 perm = rand.permutation(payoffs.size)
                 prof_inds = prof_inds[perm]
                 # We now need to filter out all samples beyond num_samples for
-                # each profile. This is done useing sorting and some array
+                # each profile. This is done using sorting and some array
                 # tricks
                 # The fact that this sort is not stable could add some bias,
                 # but that seems unlikely given that we already do a uniform
@@ -388,16 +417,24 @@ class DeviationPreserving():
             return rsgame.SampleGame(self._rgame.num_players,
                                      game.num_strategies, new_profiles,
                                      sample_payoffs)
-        else:
+        elif isinstance(game, rsgame.Game):
+            if game.num_profiles == 0:  # Empty
+                return rsgame.Game(self._rgame.num_players,
+                                   game.num_strategies)
+
+            # Reduce
             full_profiles = game.profiles
             full_payoffs = game.payoffs
             red_profiles, red_inds, full_inds, strat_inds = \
                 self.reduce_profiles(full_profiles, True)
 
-            if red_profiles.size == 0:
+            if red_profiles.size == 0:  # Empty reduction
                 return rsgame.Game(self._rgame.num_players,
                                    game.num_strategies)
 
+            # Build mapping from payoffs to reduced profiles, and use bincount
+            # to count the number of payoffs mapped to a specific location, and
+            # sum the number of payoffs mapped to a specific location
             cum_inds = red_inds * game.num_role_strats + strat_inds
             payoff_vals = full_payoffs[full_inds, strat_inds]
             red_payoffs = np.bincount(
@@ -408,11 +445,53 @@ class DeviationPreserving():
                     red_profiles.shape)
             mask = red_payoff_counts > 1
             red_payoffs[mask] /= red_payoff_counts[mask]
-            complete_mask = np.all((red_profiles > 0) ==
-                                   (red_payoff_counts > 0), 1)
+            if not allow_incomplete:
+                complete_mask = np.all((red_profiles > 0) ==
+                                       (red_payoff_counts > 0), 1)
+                red_profiles = red_profiles[complete_mask]
+                red_payoffs = red_payoffs[complete_mask]
             return rsgame.Game(self._rgame.num_players, game.num_strategies,
-                               red_profiles[complete_mask],
-                               red_payoffs[complete_mask], verify=False)
+                               red_profiles, red_payoffs, verify=False)
+
+        else:
+            return rsgame.BaseGame(self._rgame.num_players,
+                                   game.num_strategies)
+
+    def expand_deviation_profiles(self, subgame_mask, role_index=None):
+        """Expand profiles that contribute to deviation payoffs"""
+        subgame_mask = np.asarray(subgame_mask, bool)
+        rdev = np.eye(self._fgame.num_roles, dtype=int)
+        support = self._fgame.role_reduce(subgame_mask)
+
+        def dev_profs(red_players, full_players, mask, rs):
+            subg = rsgame.BaseGame(red_players, support)
+            sub_profs = subgame.translate(subg.all_profiles(), subgame_mask)
+            non_devs = _expand_rsym_profiles(self._fgame, sub_profs,
+                                             full_players, red_players)
+            ndevs = np.sum(~mask)
+            devs = np.zeros((ndevs, self._fgame.num_role_strats), int)
+            devs[:, rs:rs+mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
+            profs = non_devs[:, None] + devs
+            profs.shape = (-1, self._fgame.num_role_strats)
+            return profs
+
+        if role_index is None:
+            expanded_profs = [dev_profs(red_players, full_players, mask, rs)
+                              for red_players, full_players, mask, rs
+                              in zip(self._rgame.num_players - rdev,
+                                     self._fgame.num_players - rdev,
+                                     self._fgame.role_split(subgame_mask),
+                                     self._fgame.role_starts)]
+            return np.concatenate(expanded_profs)
+
+        else:
+            full_players = self._fgame.num_players.copy()
+            full_players[role_index] -= 1
+            red_players = self._rgame.num_players.copy()
+            red_players[role_index] -= 1
+            mask = self._fgame.role_split(subgame_mask)[role_index]
+            rs = self._fgame.role_starts[role_index]
+            return dev_profs(red_players, full_players, mask, rs)
 
     def __repr__(self):
         return '{}({}, {}, {})'.format(
@@ -436,8 +515,13 @@ class Twins(DeviationPreserving):
             self._fgame.num_players)
 
 
-class Identity():
+class Identity(object):
     """Identity reduction (lack of reduction)"""
+    def __init__(self, num_strats, num_players):
+        self.num_strategies = num_strats
+        self.full_players = num_players
+        self.reduced_players = num_players
+        self._game = rsgame.BaseGame(num_players, num_strats)
 
     def expand_profiles(self, profiles):
         """Returns full game profiles that contribute to reduced profile"""
@@ -447,9 +531,21 @@ class Identity():
         """Returns reduced profiles that contribute to the full profile"""
         return profiles
 
-    def reduce_game(self, game):
-        """Convert an input game to a reduced game with new players"""
+    def reduce_game(self, game, allow_incomplete=False):
+        """Convert an input game to a reduced game with new players
+
+        Allow complete is not used."""
+        assert (np.all(game.num_players == self._game.num_players) and
+                np.all(game.num_strategies == self._game.num_strategies)), \
+            "The games players don't match up with this reduction"
         return game
 
+    def expand_deviation_profiles(self, subgame_mask, role_index=None):
+        """Expand profiles that contribute to deviation payoffs"""
+        return subgame.deviation_profiles(self._game, subgame_mask, role_index)
+
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return '{}({}, {})'.format(
+            self.__class__.__name__,
+            self._game.num_strategies,
+            self._game.num_players)

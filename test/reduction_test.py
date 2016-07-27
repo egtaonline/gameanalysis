@@ -21,8 +21,8 @@ from test import testutils
         ([1, 4], [2, 1], [1, 2]),
         ([4, 9], [3, 2], [2, 3]),
     ]), repeat=10)
-# Simple test of exact DPR
 def test_dpr(keep_prob, game_desc):
+    """Simple test that dpr functions are consistent"""
     players, strategies, red_players = game_desc
     # Create game and reduction
     game = gamegen.role_symmetric_game(players, strategies)
@@ -31,6 +31,7 @@ def test_dpr(keep_prob, game_desc):
     red = reduction.DeviationPreserving(strategies, players, red_players)
 
     # Try to reduce game
+    red.reduce_game(rsgame.BaseGame(game))
     red_game = red.reduce_game(game)
     red_sgame = red.reduce_game(sgame)
 
@@ -77,7 +78,9 @@ def test_empty_dpr_1():
     game = rsgame.Game(6, 2, profiles, payoffs)
     red = reduction.DeviationPreserving([2], [6], [2])
     red_game = red.reduce_game(game)
+    assert np.all(red_game.num_players == [2])
     assert red_game.is_empty()
+    assert isinstance(red_game, rsgame.Game)
 
 
 def test_empty_dpr_2():
@@ -91,7 +94,9 @@ def test_empty_dpr_2():
     game = rsgame.Game(4, 2, profiles, payoffs)
     red = reduction.DeviationPreserving([2], [4], [2])
     red_game = red.reduce_game(game)
+    assert np.all(red_game.num_players == [2])
     assert red_game.is_empty()
+    assert isinstance(red_game, rsgame.Game)
 
 
 def test_empty_sample_dpr_1():
@@ -107,7 +112,9 @@ def test_empty_sample_dpr_1():
     game = rsgame.SampleGame(6, 2, profiles, payoffs)
     red = reduction.DeviationPreserving([2], [6], [2])
     red_game = red.reduce_game(game)
+    assert np.all(red_game.num_players == [2])
     assert red_game.is_empty()
+    assert isinstance(red_game, rsgame.SampleGame)
 
 
 def test_empty_sample_dpr_2():
@@ -123,7 +130,9 @@ def test_empty_sample_dpr_2():
     game = rsgame.SampleGame(4, 2, profiles, payoffs)
     red = reduction.DeviationPreserving([2], [4], [2])
     red_game = red.reduce_game(game)
+    assert np.all(red_game.num_players == [2])
     assert red_game.is_empty()
+    assert isinstance(red_game, rsgame.SampleGame)
 
 
 def test_dpr_repr():
@@ -197,6 +206,7 @@ def test_hierarchical(keep_prob, game_desc):
     red = reduction.Hierarchical(strategies, players, red_players)
 
     # Try to reduce game
+    red.reduce_game(rsgame.BaseGame(game))
     red_game = red.reduce_game(game)
     red_sgame = red.reduce_game(sgame)
 
@@ -240,7 +250,9 @@ def test_empty_sample_hierarchical():
     game = rsgame.SampleGame(4, 2, profiles, payoffs)
     red = reduction.Hierarchical([2], [4], [2])
     red_game = red.reduce_game(game)
+    assert np.all(red_game.num_players == [2])
     assert red_game.is_empty()
+    assert isinstance(red_game, rsgame.SampleGame)
 
 
 def test_hierarchical_repr():
@@ -266,7 +278,7 @@ def test_identity(keep_prob, game_desc):
     # Create game and reduction
     game = gamegen.role_symmetric_game(players, strategies)
     game = gamegen.drop_profiles(game, keep_prob)
-    red = reduction.Identity()
+    red = reduction.Identity(strategies, players)
 
     # Try to reduce game
     red_game = red.reduce_game(game)
@@ -286,8 +298,8 @@ def test_identity(keep_prob, game_desc):
 
 
 def test_identity_repr():
-    red = reduction.Identity()
-    assert repr(red) == "Identity()"
+    red = reduction.Identity([3, 4], [4, 3])
+    assert repr(red) == "Identity([3 4], [4 3])"
 
 
 def test_rsym_expand_tie_breaking():
@@ -497,3 +509,224 @@ def test_random_approximate_dpr(players, strategies):
 
     # Assert that reducing all profiles covers reduced game
     assert red_game.is_complete(), "DPR did not preserve completeness"
+
+
+def test_identity_dev_expansion():
+    """Test that identity dev expansion is correct"""
+    game = rsgame.BaseGame([3, 4], [4, 3])
+    red = reduction.Identity(game.num_strategies, game.num_players)
+    mask = [True, False, True, False, False, True, False]
+    profs = red.expand_deviation_profiles(mask)
+    actual = game.profile_id(profs)
+    expected = game.profile_id([
+        [2, 1, 0, 0, 0, 4, 0],
+        [1, 1, 1, 0, 0, 4, 0],
+        [0, 1, 2, 0, 0, 4, 0],
+        [2, 0, 0, 1, 0, 4, 0],
+        [1, 0, 1, 1, 0, 4, 0],
+        [0, 0, 2, 1, 0, 4, 0],
+        [3, 0, 0, 0, 1, 3, 0],
+        [2, 0, 1, 0, 1, 3, 0],
+        [1, 0, 2, 0, 1, 3, 0],
+        [0, 0, 3, 0, 1, 3, 0],
+        [3, 0, 0, 0, 0, 3, 1],
+        [2, 0, 1, 0, 0, 3, 1],
+        [1, 0, 2, 0, 0, 3, 1],
+        [0, 0, 3, 0, 0, 3, 1],
+    ])
+    assert np.setxor1d(actual, expected).size == 0
+
+    profs = red.expand_deviation_profiles(mask, 0)
+    actual = game.profile_id(profs)
+    expected = game.profile_id([
+        [2, 1, 0, 0, 0, 4, 0],
+        [1, 1, 1, 0, 0, 4, 0],
+        [0, 1, 2, 0, 0, 4, 0],
+        [2, 0, 0, 1, 0, 4, 0],
+        [1, 0, 1, 1, 0, 4, 0],
+        [0, 0, 2, 1, 0, 4, 0],
+    ])
+    assert np.setxor1d(actual, expected).size == 0
+
+
+def test_hierarchical_dev_expansion():
+    """Test that hierarchical dev expansion is correct"""
+    game = rsgame.BaseGame([3, 4], [4, 3])
+    red = reduction.Hierarchical(game.num_strategies, game.num_players ** 2,
+                                 game.num_players)
+    mask = [True, False, True, False, False, True, False]
+    profs = red.expand_deviation_profiles(mask)
+    actual = game.profile_id(profs)
+    expected = game.profile_id([
+        [6, 3, 0, 0, 0, 16, 0],
+        [3, 3, 3, 0, 0, 16, 0],
+        [0, 3, 6, 0, 0, 16, 0],
+        [6, 0, 0, 3, 0, 16, 0],
+        [3, 0, 3, 3, 0, 16, 0],
+        [0, 0, 6, 3, 0, 16, 0],
+        [9, 0, 0, 0, 4, 12, 0],
+        [6, 0, 3, 0, 4, 12, 0],
+        [3, 0, 6, 0, 4, 12, 0],
+        [0, 0, 9, 0, 4, 12, 0],
+        [9, 0, 0, 0, 0, 12, 4],
+        [6, 0, 3, 0, 0, 12, 4],
+        [3, 0, 6, 0, 0, 12, 4],
+        [0, 0, 9, 0, 0, 12, 4],
+    ])
+    assert np.setxor1d(actual, expected).size == 0
+
+    profs = red.expand_deviation_profiles(mask, 0)
+    actual = game.profile_id(profs)
+    expected = game.profile_id([
+        [6, 3, 0, 0, 0, 16, 0],
+        [3, 3, 3, 0, 0, 16, 0],
+        [0, 3, 6, 0, 0, 16, 0],
+        [6, 0, 0, 3, 0, 16, 0],
+        [3, 0, 3, 3, 0, 16, 0],
+        [0, 0, 6, 3, 0, 16, 0],
+    ])
+    assert np.setxor1d(actual, expected).size == 0
+
+
+def test_dpr_dev_expansion():
+    """Test that dpr dev expansion is correct
+
+    Note, this is the only one that has "new" code, so it's the most important
+    to test."""
+    game = rsgame.BaseGame([3, 4], [4, 3])
+    red = reduction.DeviationPreserving(
+        game.num_strategies, game.num_players ** 2, game.num_players)
+    mask = [True, False, True, False, False, True, False]
+    profs = red.expand_deviation_profiles(mask)
+    actual = game.profile_id(profs)
+    expected = game.profile_id([
+        [8, 1, 0, 0, 0, 16, 0],
+        [4, 1, 4, 0, 0, 16, 0],
+        [0, 1, 8, 0, 0, 16, 0],
+        [8, 0, 0, 1, 0, 16, 0],
+        [4, 0, 4, 1, 0, 16, 0],
+        [0, 0, 8, 1, 0, 16, 0],
+        [9, 0, 0, 0, 1, 15, 0],
+        [6, 0, 3, 0, 1, 15, 0],
+        [3, 0, 6, 0, 1, 15, 0],
+        [0, 0, 9, 0, 1, 15, 0],
+        [9, 0, 0, 0, 0, 15, 1],
+        [6, 0, 3, 0, 0, 15, 1],
+        [3, 0, 6, 0, 0, 15, 1],
+        [0, 0, 9, 0, 0, 15, 1],
+    ])
+    assert np.setxor1d(actual, expected).size == 0
+
+    profs = red.expand_deviation_profiles(mask, 0)
+    actual = game.profile_id(profs)
+    expected = game.profile_id([
+        [8, 1, 0, 0, 0, 16, 0],
+        [4, 1, 4, 0, 0, 16, 0],
+        [0, 1, 8, 0, 0, 16, 0],
+        [8, 0, 0, 1, 0, 16, 0],
+        [4, 0, 4, 1, 0, 16, 0],
+        [0, 0, 8, 1, 0, 16, 0],
+    ])
+    assert np.setxor1d(actual, expected).size == 0
+
+
+@testutils.apply(
+    [
+        ([1], [1], [1]),
+        ([2], [1], [2]),
+        ([3], [1], [2]),
+        ([1], [2], [1]),
+        ([1, 2], [2, 1], [1, 2]),
+        ([1, 4], [2, 1], [1, 2]),
+        ([4, 9], [3, 2], [2, 3]),
+    ], repeat=10)
+def test_rand_dpr_dev_expandion(players, strategies, red_players):
+    """Test that dpr devs works for random games"""
+    game = rsgame.BaseGame(players, strategies)
+    red = reduction.DeviationPreserving(strategies, players, red_players)
+    sup = (rand.random(game.num_roles) * game.num_strategies).astype(int) + 1
+    inds = np.concatenate([rand.choice(s, x) + o for s, x, o
+                           in zip(game.num_strategies, sup, game.role_starts)])
+    mask = np.zeros(game.num_role_strats, bool)
+    mask[inds] = True
+    devs = red.expand_deviation_profiles(mask)
+    assert np.all(np.sum(devs * ~mask, 1) == 1)
+
+    for r_ind in range(game.num_roles):
+        r_devs = red.expand_deviation_profiles(mask, r_ind)
+        assert np.all(np.sum(r_devs * ~mask, 1) == 1)
+
+
+def test_dpr_incomplete_profile():
+    """Test that when allow_incomplete, we get appropriate payoffs"""
+    base = rsgame.BaseGame([4, 9], 2)
+    profiles = [[4, 0, 0, 9],
+                [1, 3, 9, 0],
+                [2, 2, 9, 0]]
+    payoffs = [[1, 0, 0, 2],
+               [3, 4, 5, 0],
+               [6, 7, 8, 0]]
+    game = rsgame.Game(base, profiles, payoffs)
+    red = reduction.DeviationPreserving([2, 2], [4, 9], [2, 3])
+    red_game = red.reduce_game(game, True)
+    actual = red_game.get_payoffs([2, 0, 0, 3])
+    assert np.allclose(actual, [1, 0, 0, 2])
+    actual = red_game.get_payoffs([1, 1, 3, 0])
+    assert np.allclose(actual, [3, 0, 8, 0])
+
+
+def test_dpr_sample_incomplete_profile():
+    """Test that when allow_incomplete, we get appropriate payoffs"""
+    base = rsgame.BaseGame([4, 9], 2)
+    profiles = [[4, 0, 0, 9],
+                [1, 3, 9, 0],
+                [2, 2, 9, 0]]
+    sample_payoffs = [
+        [[[1, 2, 3], [0] * 3, [0] * 3, [4, 5, 6]],
+         [[7, 8, 9], [10, 11, 12], [13, 14, 15], [0] * 3]],
+        [[[16, 17], [18, 19], [20, 21], [0] * 2]]]
+    game = rsgame.SampleGame(base, profiles, sample_payoffs)
+    red = reduction.DeviationPreserving([2, 2], [4, 9], [2, 3])
+    red_game = red.reduce_game(game, True)
+    actual = red_game.get_payoffs([2, 0, 0, 3])
+    assert np.allclose(actual, [2, 0, 0, 5])
+    actual = red_game.get_payoffs([1, 1, 3, 0])
+    # This accounts for any combination of two from [7, 8, 9]
+    assert np.isclose(actual[0], [7.5, 8, 8.5]).any()
+    assert np.isclose(actual[2], 20.5)
+    assert np.allclose(actual[[1, 3]], 0)
+
+
+@testutils.apply(itertools.product(
+    [0.6, 0.9, 1],
+    [1, 2, 3],
+    [
+        ([1], [1], [1]),
+        ([2], [1], [2]),
+        ([3], [1], [2]),
+        ([1], [2], [1]),
+        ([1, 2], [2, 1], [1, 2]),
+        ([1, 4], [2, 1], [1, 2]),
+        ([4, 9], [3, 2], [2, 3]),
+    ]), repeat=10)
+def test_rand_dpr_allow_complete(add_prob, num_obs, game_desc):
+    """Test that allow_incomplete works for random games"""
+    # Generate games
+    players, strategies, red_players = game_desc
+    base = rsgame.BaseGame(players, strategies)
+    game = gamegen.add_profiles(base, add_prob)
+    sgame = gamegen.add_noise(game, 1, num_obs)
+    red = reduction.DeviationPreserving(strategies, players, red_players)
+
+    # Try to reduce game
+    red_game = red.reduce_game(game, True)
+    red_sgame = red.reduce_game(sgame, True)
+
+    # Verify that when allow_complete, then reduce returns all profiles
+    reduced_full_profiles = red_game.profile_id(
+        red.reduce_profiles(game.profiles))
+    reduced_profiles = red_game.profile_id(red_game.profiles)
+    assert np.setxor1d(reduced_profiles, reduced_full_profiles).size == 0
+    reduced_sample_profiles = red_game.profile_id(red_sgame.profiles)
+    assert np.setxor1d(reduced_sample_profiles,
+                       reduced_full_profiles).size == 0
