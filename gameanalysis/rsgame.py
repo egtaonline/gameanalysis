@@ -23,7 +23,6 @@ import functools
 
 import numpy as np
 import numpy.random as rand
-import scipy.misc as spm
 import scipy.special as sps
 
 from gameanalysis import utils
@@ -47,15 +46,16 @@ class BaseGame(object):
     Parameters (default constructor)
     --------------------------------
     num_players : int or [int] or ndarray
-        The number of players in each role in order, or the number of players per
-        role if identical (will be broadcast to match the number of roles).
-    num_strategies : int or [int] or ndarray
-        The number of strategies in each role in order, or the number of strategies
+        The number of players in each role in order, or the number of players
         per role if identical (will be broadcast to match the number of roles).
+    num_strategies : int or [int] or ndarray
+        The number of strategies in each role in order, or the number of
+        strategies per role if identical (will be broadcast to match the number
+        of roles).
 
-    The number of roles is deduced from the number of entries in num_players and
-    num_strategies. If either is an integer or has length 1, the other is used;
-    if both are integers or have length 1, the game will have one role.
+    The number of roles is deduced from the number of entries in num_players
+    and num_strategies. If either is an integer or has length 1, the other is
+    used; if both are integers or have length 1, the game will have one role.
     """
     def __init__(self, *args):
         if len(args) == 1:

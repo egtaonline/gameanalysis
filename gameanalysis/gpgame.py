@@ -179,7 +179,8 @@ class NeighborGPGame(BaseGPGame):
             to_dev_profs = rsgame.BaseGame(
                 players, self.num_strategies).all_profiles()
             from_dev_profs = subgame.translate(
-                rsgame.BaseGame(players, sub.num_strategies).all_profiles(), supp)
+                rsgame.BaseGame(players, sub.num_strategies).all_profiles(),
+                supp)
             before_devs = prof - from_dev_profs
             before_devs = before_devs[np.all(before_devs >= 0, 1)]
             before_devs = utils.unique_axis(before_devs)

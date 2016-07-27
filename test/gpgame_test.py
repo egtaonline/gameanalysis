@@ -14,7 +14,8 @@ def test_nearby_profiles(game_params, num_devs):
     # TODO There is probably a better way to test this, but it requires moving
     # nearyby_profs out of a game the requires enough data for x-validation
     base = rsgame.BaseGame(*game_params)
-    game_data = gamegen.add_profiles(base, min(base.num_all_profiles, 3 * base.num_strategies.max()))
+    game_data = gamegen.add_profiles(base, min(base.num_all_profiles,
+                                               3 * base.num_strategies.max()))
     if np.any(np.sum(game_data.profiles > 0, 0) < 3):
         # We need at least 3 profiles per strategy for x-validation
         return

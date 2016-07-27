@@ -1,6 +1,5 @@
 import functools
 import operator
-import warnings
 from collections import abc
 
 import numpy as np
@@ -270,7 +269,8 @@ def axis_to_elem(array, axis=-1):
 
 def elem_to_axis(array, dtype, axis=-1):
     """Converts and array of axis elements back to an axis"""
-    return np.rollaxis(array.view(dtype).reshape(array.shape + (array.itemsize // dtype.itemsize,)),
+    new_shape = array.shape + (array.itemsize // dtype.itemsize,)
+    return np.rollaxis(array.view(dtype).reshape(new_shape),
                        -1, axis)
 
 
@@ -293,7 +293,6 @@ def unique_axis(array, axis=-1, **kwargs):
     *args :
         Any other results of the unique functions due to flags
     """
-    axis_length = array.shape[axis]
     elems = axis_to_elem(array, axis)
     results = np.unique(elems, **kwargs)
     if isinstance(results, tuple):

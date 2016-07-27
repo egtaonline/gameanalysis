@@ -369,7 +369,6 @@ def test_random_identity_rsym():
 
 def test_approximate_dpr_expansion():
     """Test expansion on approximate dpr"""
-    game = rsgame.BaseGame([8, 11], 2)
     red = reduction.DeviationPreserving([2, 2], [8, 11], [3, 4])
     red_prof = [[1, 2, 2, 2]]
     full_profs, contributions = red.expand_profiles(red_prof, True)
@@ -393,7 +392,6 @@ def test_approximate_dpr_expansion():
 
 def test_expansion_contributions():
     """Test expansion on approximate dpr"""
-    game = rsgame.BaseGame([4, 9], 2)
     red = reduction.DeviationPreserving([2, 2], [4, 9], [2, 3])
     red_profs = [
         [2, 0, 0, 3],

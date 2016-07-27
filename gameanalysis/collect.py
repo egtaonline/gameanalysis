@@ -1,4 +1,3 @@
-import functools
 from collections import abc
 
 import numpy as np
