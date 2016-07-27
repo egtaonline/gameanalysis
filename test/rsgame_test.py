@@ -153,8 +153,8 @@ def test_max_prob_prof(players, strategies):
         mask = np.max(probs) - EPS < probs
         max_prob_profs = profiles[mask]
         actual = game.max_prob_prof(mix)
-        assert np.all(np.in1d(game.profile_id(actual),
-                              game.profile_id(max_prob_profs)))
+        assert np.all(np.in1d(utils.axis_to_elem(actual),
+                              utils.axis_to_elem(max_prob_profs)))
 
 
 def test_base_game_invalid_constructor():
@@ -538,3 +538,12 @@ def test_profile_count(players, strategies):
         ("num_all_dpr_profiles did not return the correct number {} "
          "instead of {}").format(game.num_all_dpr_profiles,
                                  num_dpr_profiles)
+
+
+def test_big_game_functions():
+    """Test that everything works when game_size > int max"""
+    base = rsgame.BaseGame([100, 100], [30, 30])
+    game = gamegen.add_profiles(base, 1000)
+    assert game.num_all_profiles > np.iinfo(int).max
+    assert game.num_all_dpr_profiles > np.iinfo(int).max
+    assert np.all(game.profile_id(game.profiles) >= 0)

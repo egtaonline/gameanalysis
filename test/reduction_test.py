@@ -7,6 +7,7 @@ import numpy.random as rand
 from gameanalysis import gamegen
 from gameanalysis import reduction
 from gameanalysis import rsgame
+from gameanalysis import utils
 from test import testutils
 
 
@@ -36,12 +37,12 @@ def test_dpr(keep_prob, game_desc):
     red_sgame = red.reduce_game(sgame)
 
     # Assert that reducing all profiles covers reduced game
-    reduced_full_profiles = red_game.profile_id(
+    reduced_full_profiles = utils.axis_to_elem(
         red.reduce_profiles(game.profiles))
-    reduced_profiles = red_game.profile_id(red_game.profiles)
+    reduced_profiles = utils.axis_to_elem(red_game.profiles)
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
-    reduced_sample_profiles = red_game.profile_id(red_sgame.profiles)
+    reduced_sample_profiles = utils.axis_to_elem(red_sgame.profiles)
     assert np.setdiff1d(reduced_sample_profiles,
                         reduced_full_profiles).size == 0, \
         "reduced sample game contained profiles it shouldn't have"
@@ -51,12 +52,12 @@ def test_dpr(keep_prob, game_desc):
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game
-    full_profiles = game.profile_id(game.profiles)
-    full_reduced_profiles = game.profile_id(
+    full_profiles = utils.axis_to_elem(game.profiles)
+    full_reduced_profiles = utils.axis_to_elem(
         red.expand_profiles(red_game.profiles))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
-    full_reduced_sample_profiles = game.profile_id(
+    full_reduced_sample_profiles = utils.axis_to_elem(
         red.expand_profiles(red_sgame.profiles))
     assert np.setdiff1d(full_reduced_sample_profiles,
                         full_profiles).size == 0, \
@@ -164,16 +165,16 @@ def test_twins(keep_prob, game_desc):
     red_game = red.reduce_game(game)
 
     # Assert that reducing all profiles covers reduced game
-    reduced_full_profiles = red_game.profile_id(
+    reduced_full_profiles = utils.axis_to_elem(
         red.reduce_profiles(game.profiles))
-    reduced_profiles = red_game.profile_id(red_game.profiles)
+    reduced_profiles = utils.axis_to_elem(red_game.profiles)
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game
-    full_profiles = game.profile_id(game.profiles)
-    full_reduced_profiles = game.profile_id(
+    full_profiles = utils.axis_to_elem(game.profiles)
+    full_reduced_profiles = utils.axis_to_elem(
         red.expand_profiles(red_game.profiles))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
@@ -211,24 +212,24 @@ def test_hierarchical(keep_prob, game_desc):
     red_sgame = red.reduce_game(sgame)
 
     # Assert that reducing all profiles covers reduced game
-    reduced_full_profiles = red_game.profile_id(
+    reduced_full_profiles = utils.axis_to_elem(
         red.reduce_profiles(game.profiles))
-    reduced_profiles = red_game.profile_id(red_game.profiles)
+    reduced_profiles = utils.axis_to_elem(red_game.profiles)
     assert np.setxor1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
-    reduced_sample_profiles = red_game.profile_id(red_sgame.profiles)
+    reduced_sample_profiles = utils.axis_to_elem(red_sgame.profiles)
     assert np.setxor1d(reduced_sample_profiles,
                        reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game
-    full_profiles = game.profile_id(game.profiles)
-    full_reduced_profiles = game.profile_id(
+    full_profiles = utils.axis_to_elem(game.profiles)
+    full_reduced_profiles = utils.axis_to_elem(
         red.expand_profiles(red_game.profiles))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
-    full_reduced_sample_profiles = game.profile_id(
+    full_reduced_sample_profiles = utils.axis_to_elem(
         red.expand_profiles(red_sgame.profiles))
     assert np.setdiff1d(full_reduced_sample_profiles,
                         full_profiles).size == 0, \
@@ -284,14 +285,14 @@ def test_identity(keep_prob, game_desc):
     red_game = red.reduce_game(game)
 
     # Assert that reducing all profiles covers reduced game
-    reduced_full_profiles = red_game.profile_id(
+    reduced_full_profiles = utils.axis_to_elem(
         red.reduce_profiles(game.profiles))
-    reduced_profiles = red_game.profile_id(red_game.profiles)
+    reduced_profiles = utils.axis_to_elem(red_game.profiles)
     assert np.setxor1d(reduced_full_profiles, reduced_profiles).size == 0, \
         "reduced game didn't match full game"
 
-    full_profiles = game.profile_id(game.profiles)
-    full_reduced_profiles = game.profile_id(
+    full_profiles = utils.axis_to_elem(game.profiles)
+    full_reduced_profiles = utils.axis_to_elem(
         red.expand_profiles(red_game.profiles))
     assert np.setxor1d(full_profiles, full_reduced_profiles).size == 0, \
         "full game did not match reduced game"
@@ -372,8 +373,8 @@ def test_approximate_dpr_expansion():
     red = reduction.DeviationPreserving([2, 2], [8, 11], [3, 4])
     red_prof = [[1, 2, 2, 2]]
     full_profs, contributions = red.expand_profiles(red_prof, True)
-    profs = game.profile_id(full_profs)
-    expected = game.profile_id([
+    profs = utils.axis_to_elem(full_profs)
+    expected = utils.axis_to_elem([
         [4, 4, 6, 5],
         [1, 7, 6, 5],
         [3, 5, 4, 7],
@@ -398,8 +399,8 @@ def test_expansion_contributions():
         [2, 0, 0, 3],
         [1, 1, 3, 0]]
     full_profs, contributions = red.expand_profiles(red_profs, True)
-    profs = game.profile_id(full_profs)
-    expected = game.profile_id([
+    profs = utils.axis_to_elem(full_profs)
+    expected = utils.axis_to_elem([
         [4, 0, 0, 9],
         [1, 3, 9, 0],
         [3, 1, 9, 0],
@@ -461,10 +462,10 @@ def test_sample_game_payoff():
     red_game = red.reduce_game(game)
 
     prof_map = dict(zip(
-        red_game.profile_id(red_game.profiles),
+        map(utils.hash_array, red_game.profiles),
         itertools.chain.from_iterable(red_game.sample_payoffs)))
 
-    payoffs = prof_map[red_game.profile_id([0, 2, 0, 3])]
+    payoffs = prof_map[utils.hash_array([0, 2, 0, 3])]
     actual = payoffs[1]
     expected = [1, 2, 3, 4]
     assert np.setxor1d(actual, expected).size == 0
@@ -472,7 +473,7 @@ def test_sample_game_payoff():
     expected = [5, 6, 7, 8]
     assert np.setxor1d(actual, expected).size == 0
 
-    payoffs = prof_map[red_game.profile_id([0, 2, 1, 2])]
+    payoffs = prof_map[utils.hash_array([0, 2, 1, 2])]
     actual = payoffs[1]
     expected = [14, 15, 16, 17, 18]
     assert np.setxor1d(actual, expected).size == 3
@@ -517,8 +518,8 @@ def test_identity_dev_expansion():
     red = reduction.Identity(game.num_strategies, game.num_players)
     mask = [True, False, True, False, False, True, False]
     profs = red.expand_deviation_profiles(mask)
-    actual = game.profile_id(profs)
-    expected = game.profile_id([
+    actual = utils.axis_to_elem(profs)
+    expected = utils.axis_to_elem([
         [2, 1, 0, 0, 0, 4, 0],
         [1, 1, 1, 0, 0, 4, 0],
         [0, 1, 2, 0, 0, 4, 0],
@@ -537,8 +538,8 @@ def test_identity_dev_expansion():
     assert np.setxor1d(actual, expected).size == 0
 
     profs = red.expand_deviation_profiles(mask, 0)
-    actual = game.profile_id(profs)
-    expected = game.profile_id([
+    actual = utils.axis_to_elem(profs)
+    expected = utils.axis_to_elem([
         [2, 1, 0, 0, 0, 4, 0],
         [1, 1, 1, 0, 0, 4, 0],
         [0, 1, 2, 0, 0, 4, 0],
@@ -556,8 +557,8 @@ def test_hierarchical_dev_expansion():
                                  game.num_players)
     mask = [True, False, True, False, False, True, False]
     profs = red.expand_deviation_profiles(mask)
-    actual = game.profile_id(profs)
-    expected = game.profile_id([
+    actual = utils.axis_to_elem(profs)
+    expected = utils.axis_to_elem([
         [6, 3, 0, 0, 0, 16, 0],
         [3, 3, 3, 0, 0, 16, 0],
         [0, 3, 6, 0, 0, 16, 0],
@@ -576,8 +577,8 @@ def test_hierarchical_dev_expansion():
     assert np.setxor1d(actual, expected).size == 0
 
     profs = red.expand_deviation_profiles(mask, 0)
-    actual = game.profile_id(profs)
-    expected = game.profile_id([
+    actual = utils.axis_to_elem(profs)
+    expected = utils.axis_to_elem([
         [6, 3, 0, 0, 0, 16, 0],
         [3, 3, 3, 0, 0, 16, 0],
         [0, 3, 6, 0, 0, 16, 0],
@@ -598,8 +599,8 @@ def test_dpr_dev_expansion():
         game.num_strategies, game.num_players ** 2, game.num_players)
     mask = [True, False, True, False, False, True, False]
     profs = red.expand_deviation_profiles(mask)
-    actual = game.profile_id(profs)
-    expected = game.profile_id([
+    actual = utils.axis_to_elem(profs)
+    expected = utils.axis_to_elem([
         [8, 1, 0, 0, 0, 16, 0],
         [4, 1, 4, 0, 0, 16, 0],
         [0, 1, 8, 0, 0, 16, 0],
@@ -618,8 +619,8 @@ def test_dpr_dev_expansion():
     assert np.setxor1d(actual, expected).size == 0
 
     profs = red.expand_deviation_profiles(mask, 0)
-    actual = game.profile_id(profs)
-    expected = game.profile_id([
+    actual = utils.axis_to_elem(profs)
+    expected = utils.axis_to_elem([
         [8, 1, 0, 0, 0, 16, 0],
         [4, 1, 4, 0, 0, 16, 0],
         [0, 1, 8, 0, 0, 16, 0],
@@ -723,10 +724,10 @@ def test_rand_dpr_allow_complete(add_prob, num_obs, game_desc):
     red_sgame = red.reduce_game(sgame, True)
 
     # Verify that when allow_complete, then reduce returns all profiles
-    reduced_full_profiles = red_game.profile_id(
+    reduced_full_profiles = utils.axis_to_elem(
         red.reduce_profiles(game.profiles))
-    reduced_profiles = red_game.profile_id(red_game.profiles)
+    reduced_profiles = utils.axis_to_elem(red_game.profiles)
     assert np.setxor1d(reduced_profiles, reduced_full_profiles).size == 0
-    reduced_sample_profiles = red_game.profile_id(red_sgame.profiles)
+    reduced_sample_profiles = utils.axis_to_elem(red_sgame.profiles)
     assert np.setxor1d(reduced_sample_profiles,
                        reduced_full_profiles).size == 0

@@ -4,6 +4,7 @@ import numpy.random as rand
 
 from gameanalysis import rsgame
 from gameanalysis import subgame
+from gameanalysis import utils
 
 
 def _expand_rsym_profiles(game, profiles, full_players, reduced_players):
@@ -243,13 +244,15 @@ class DeviationPreserving(object):
         dev_full_profs = _expand_rsym_profiles(
             self._fgame, dev_profs[mask], dev_full_players[mask],
             dev_red_players[mask]) + devs
-        ids = self._fgame.profile_id(dev_full_profs)
+        ids = utils.axis_to_elem(dev_full_profs)
         if not return_contributions:
             return dev_full_profs[np.unique(ids, return_index=True)[1]]
         else:
+            # This is more complicated because we need to line up devs for the
+            # same profile se we can "reduceat" to merge them
             order = np.argsort(ids)
             sids = ids[order]
-            mask = np.insert(np.diff(sids) != 0, 0, True)
+            mask = np.insert(sids[1:] != sids[:-1], 0, True)
             profs = dev_full_profs[order[mask]]
             ored_devs = np.bitwise_or.reduceat(devs[order],
                                                mask.nonzero()[0], 0)
@@ -287,10 +290,7 @@ class DeviationPreserving(object):
             .repeat(num_profs, 0)\
             .reshape((-1, self._fgame.num_role_strats))[mask][reduced]
         red_profs += devs
-        _, uniq_inds, red_inds = np.unique(self._rgame.profile_id(red_profs),
-                                           return_index=True,
-                                           return_inverse=True)
-        red_profs = red_profs[uniq_inds]
+        red_profs, red_inds = utils.unique_axis(red_profs, return_inverse=True)
         if not return_contributions:
             return red_profs
         else:
@@ -358,7 +358,7 @@ class DeviationPreserving(object):
 
             parts = np.sum(full_inds < game.sample_starts[1:, None], 1)
             spay_inds = full_inds - game.sample_starts.repeat(np.diff(
-                np.concatenate([[0], parts, [full_inds.size]])))
+                np.insert(parts, [0, parts.size], [0, full_inds.size])))
             prof_inds = red_inds * game.num_role_strats + strat_inds
             for pays, pr_inds, sp_inds, s_inds, o_counts in zip(
                     game.sample_payoffs, np.split(prof_inds, parts),
@@ -398,8 +398,8 @@ class DeviationPreserving(object):
                 # shuffle
                 order = np.argsort(prof_inds)
                 prof_inds = prof_inds[order]
-                starts = np.concatenate(
-                    [[0], np.diff(prof_inds).nonzero()[0] + 1])
+                starts = np.insert(np.nonzero(
+                    prof_inds[1:] != prof_inds[:-1])[0] + 1, 0, 0)
                 selected = starts[:, None] + np.arange(num_samples)
                 payoff_inds = prof_inds[selected] * num_samples
                 payoff_inds.shape = (-1, num_samples)

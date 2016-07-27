@@ -67,13 +67,19 @@ def test_add_profiles(players, strategies):
     assert np.all(strategies == game.num_strategies), \
         "didn't generate correct number of strategies"
 
-    game = gamegen.add_profiles(base, prob=0)
+    game = gamegen.add_profiles(base, 0.0)
     assert game.is_empty(), "didn't generate a full game"
 
-    game = gamegen.add_profiles(base, prob=0.5)
+    game = gamegen.add_profiles(base, 0.5)
 
-    game = gamegen.add_profiles(base, prob=0.5, independent=False)
-    assert game.num_profiles == round(game.num_all_profiles / 2)
+    game = gamegen.add_profiles(base, base.num_all_profiles // 2)
+    assert game.num_profiles == game.num_all_profiles // 2
+
+
+def test_add_profiles_large_game():
+    base = rsgame.BaseGame([100] * 2, 30)
+    game = gamegen.add_profiles(base, 1e-55)
+    assert game.num_profiles == 363
 
 
 @testutils.apply([

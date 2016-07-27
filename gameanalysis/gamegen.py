@@ -3,7 +3,8 @@ import math
 
 import numpy as np
 import numpy.random as rand
-import scipy.misc as scm
+import scipy.misc as spm
+import scipy.special as sps
 
 from gameanalysis import utils
 from gameanalysis import gameio
@@ -166,7 +167,7 @@ def congestion_game(num_players, num_facilities, num_required,
     strat_list = list(itertools.combinations(range(num_facilities),
                                              num_required))
     num_strats = len(strat_list)
-    num_strats = scm.comb(num_facilities, num_required, exact=True)
+    num_strats = spm.comb(num_facilities, num_required, exact=True)
     strat_mask = np.zeros([num_strats, num_facilities], dtype=bool)
     inds = np.fromiter(
         itertools.chain.from_iterable(
@@ -382,33 +383,56 @@ def normalize(game, new_min=0, new_max=1):
     return rsgame.Game(game, profiles, payoffs)
 
 
-def add_profiles(game, prob=1, distribution=default_distribution,
-                 independent=True):
+def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     """Add profiles to a base game
 
     Parameters
     ----------
     distribution : (shape) -> ndarray, optional
         Distribution function to draw profiles from.
-    prob : float, optional
-        The probability to add a profile from the full game.
+    prob_or_count : float or int, optional
+        If a float, the probability to add a profile from the full game. If an
+        int, the number of profiles to add.
     independent : bool, optional
         If true then each profile has `prob` probability of being added, else
         `num_all_profiles * prob` profiles will be kept.
     """
-    assert 0 <= prob <= 1
-    if prob == 1:
-        selection = slice(None)
-    elif prob == 0:
-        selection = slice(0)
-    elif independent:
-        selection = rand.random(game.num_all_profiles) < prob
+    # First turn input into number of profiles to compute
+    num_profs = game.num_all_profiles
+    if isinstance(prob_or_count, float):
+        assert 0 <= prob_or_count <= 1
+        if num_profs <= np.iinfo(int).max:
+            num = rand.binomial(num_profs, prob_or_count)
+        else:
+            num = round(float(num_profs * prob_or_count))
     else:
-        inds = rand.choice(np.arange(game.num_all_profiles),
-                           round(game.num_all_profiles * prob), replace=False)
-        selection = np.zeros(game.num_all_profiles, bool)
-        selection[inds] = True
-    profiles = game.all_profiles()[selection]
+        assert 0 <= prob_or_count <= num_profs
+        num = prob_or_count
+
+    # Generate profiles based number and size of game
+
+    # Ratio of the expected number of profiles we'd have to draw at random to
+    # produce num unique relative to the number of total profiles
+    ratio = sps.digamma(float(num_profs)) - sps.digamma(float(num_profs - num))
+    if num == num_profs:
+        profiles = game.all_profiles()
+    elif num == 0:
+        profiles = np.empty((0, game.num_role_strats), int)
+    elif ratio >= 1:
+        inds = rand.choice(num_profs, num, replace=False)
+        profiles = game.all_profiles()[inds]
+    else:
+        profiles = np.empty((0, game.num_role_strats), int)
+        num_per = max(round(float(ratio * num_profs)), num)  # Max => underflow
+        mix = game.uniform_mixture()
+        while profiles.shape[0] < num:
+            profiles = np.concatenate([profiles,
+                                       game.random_profiles(mix, num_per)])
+            profiles = utils.unique_axis(profiles)
+        inds = rand.choice(profiles.shape[0], num, replace=False)
+        profiles = profiles[inds]
+
+    # Fill out game with profiles
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
     payoffs[mask].flat = distribution(mask.sum())

@@ -182,16 +182,12 @@ class NeighborGPGame(BaseGPGame):
                 rsgame.BaseGame(players, sub.num_strategies).all_profiles(), supp)
             before_devs = prof - from_dev_profs
             before_devs = before_devs[np.all(before_devs >= 0, 1)]
-            uniq = np.unique(self.profile_id(before_devs),
-                             return_index=True)[1]
-            before_devs = before_devs[uniq]
+            before_devs = utils.unique_axis(before_devs)
             nearby = before_devs[:, None] + to_dev_profs
             nearby.shape = (-1, self.num_role_strats)
-            uniq = np.unique(self.profile_id(nearby), return_index=True)[1]
-            profs.append(nearby[uniq])
+            profs.append(utils.unique_axis(nearby))
         profs = np.concatenate(profs)
-        uniq = np.unique(self.profile_id(profs), return_index=True)[1]
-        return profs[uniq]
+        return utils.unique_axis(profs)
 
 
 class DprGPGame(BaseGPGame):

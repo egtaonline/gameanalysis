@@ -203,10 +203,8 @@ class BaseGame(object):
         rev_arange[self.role_starts] += self.num_strategies
         rev_arange = rev_arange.cumsum()
         base = np.insert(self.role_sizes[:-1].cumprod(), 0, 1)
-        base = np.concatenate([[1], self.role_sizes[:-1].cumprod()])
-        return self.role_reduce(np.rint(spm.comb(profiles + rev_arange - 1,
-                                                 rev_arange))
-                                .astype(int)).dot(base)
+        return self.role_reduce(utils.game_size(
+            rev_arange, profiles)).dot(base)
 
     def get_expected_payoffs(self, mix, deviations=None):
         """Returns the payoff of each role under mixture
@@ -427,6 +425,7 @@ class Game(BaseGame):
         player. matrix.shape[:-1] must correspond to the number of strategies
         for each player. matrix.ndim - 1 must equal matrix.shape[-1].
     """
+
     def __init__(self, *args, verify=True):
         if len(args) == 1 and isinstance(args[0], Game):
             # From Game
@@ -511,8 +510,6 @@ class Game(BaseGame):
         self.profiles.setflags(write=False)
         self.payoffs = payoffs
         self.payoffs.setflags(write=False)
-        self._profile_id_map = dict(zip(self.profile_id(self.profiles),
-                                        self.payoffs))
         self.num_profiles = profiles.shape[0]
         self._writeable_payoffs()  # Reset
 
@@ -525,6 +522,8 @@ class Game(BaseGame):
                               self.role_repeat(np.log(self.num_players)))
         self._dev_reps.setflags(write=False)
 
+        self._profile_id_map = dict(zip(map(utils.hash_array, self.profiles),
+                                        self.payoffs))
         assert len(self._profile_id_map) == self.num_profiles, \
             "There was at least one duplicate profile"
 
@@ -571,13 +570,14 @@ class Game(BaseGame):
 
         if default is not None and game doesn't have profile data, then an
         array populated by default is returned."""
+        profile = np.asarray(profile, int)
         assert self.verify_profile(profile)
-        prof_id = self.profile_id(profile)
-        if default is not None and prof_id not in self._profile_id_map:
+        hashed = utils.hash_array(profile)
+        if default is not None and hashed not in self._profile_id_map:
             ret = np.zeros(self.num_role_strats)
             ret[profile > 0] = default
             return ret
-        return self._profile_id_map[prof_id]
+        return self._profile_id_map[hashed]
 
     def get_max_social_welfare(self, role_index=None):
         """Returns the maximum social welfare over the known profiles.
@@ -698,7 +698,7 @@ class Game(BaseGame):
 
     def __contains__(self, profile):
         """Returns true if data for that profile exists"""
-        return self.profile_id(profile) in self._profile_id_map
+        return utils.hash_array(profile) in self._profile_id_map
 
     def __repr__(self):
         return '{old}, {data:d} / {total:d})'.format(

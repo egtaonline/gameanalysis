@@ -1,9 +1,13 @@
 import functools
 import operator
 import warnings
+from collections import abc
 
 import numpy as np
 import scipy.misc as spm
+
+
+_MAX_INT_FLOAT = 2 ** (np.finfo(float).nmant - 1)
 
 
 def prod(collection):
@@ -11,15 +15,22 @@ def prod(collection):
     return functools.reduce(operator.mul, collection)
 
 
-def game_size(players, strategies, exact=False):
-    """Number of profiles in a symmetric game with players and strategies"""
-    if exact:
-        return spm.comb(players+strategies-1, players, exact=True)
+def comb(n, k):
+    res = np.rint(spm.comb(n, k, False)).astype(int)
+    if np.all(res >= 0) and np.all(res < _MAX_INT_FLOAT):
+        return res
+    elif isinstance(n, abc.Iterable) or isinstance(k, abc.Iterable):
+        broad = np.broadcast(np.asarray(n), np.asarray(k))
+        res = np.empty(broad.shape, dtype=object)
+        res.flat = [spm.comb(n_, k_, True) for n_, k_ in broad]
+        return res
     else:
-        sizes = np.rint(spm.comb(players+strategies-1, players,
-                                 exact=False)).astype(int)
-        assert np.all(sizes >= 0), "Overflow on game size"
-        return sizes
+        return spm.comb(n, k, True)
+
+
+def game_size(players, strategies):
+    """Number of profiles in a symmetric game with players and strategies"""
+    return comb(players + strategies - 1, players)
 
 
 def only(iterable):
@@ -76,19 +87,6 @@ def _reverse(seq, start, end):
             return
         start += 1
         end -= 1
-
-
-def compare_by_key(key):
-    """Decorator that adds object comparison via a key function"""
-    def decorator(cls):
-        setattr(cls, '__eq__', lambda self, other: key(self) == key(other))
-        setattr(cls, '__ne__', lambda self, other: key(self) != key(other))
-        setattr(cls, '__le__', lambda self, other: key(self) <= key(other))
-        setattr(cls, '__gw__', lambda self, other: key(self) >= key(other))
-        setattr(cls, '__gt__', lambda self, other: key(self) > key(other))
-        setattr(cls, '__lt__', lambda self, other: key(self) < key(other))
-        return cls
-    return decorator
 
 
 def ordered_permutations(seq):
@@ -246,18 +244,6 @@ def multinomial_mode(p, n):
     return k
 
 
-def deprecated(func):
-    """Decorator which marks functions as deprecated"""
-
-    @functools.wraps(func)
-    def deprecation_wrapper(*args, **kwargs):
-        warnings.warn("Call to deprecated function {}.".format(func.__name__),
-                      category=DeprecationWarning, stacklevel=2)
-        return func(*args, **kwargs)
-
-    return deprecation_wrapper
-
-
 def axis_to_elem(array, axis=-1):
     """Converts an axis of an array into a unique element
 
@@ -272,6 +258,7 @@ def axis_to_elem(array, axis=-1):
     axis : int, optional
         The axis to convert into a single element. Defaults to the last axis.
     """
+    array = np.asarray(array)
     # ascontiguousarray will make a copy of necessary
     axis_at_end = np.ascontiguousarray(np.rollaxis(array, axis, array.ndim))
     new_shape = axis_at_end.shape
@@ -283,7 +270,7 @@ def axis_to_elem(array, axis=-1):
 
 def elem_to_axis(array, dtype, axis=-1):
     """Converts and array of axis elements back to an axis"""
-    return np.rollaxis(array.view(dtype).reshape(array.shape + (-1,)),
+    return np.rollaxis(array.view(dtype).reshape(array.shape + (array.itemsize // dtype.itemsize,)),
                        -1, axis)
 
 
@@ -310,7 +297,20 @@ def unique_axis(array, axis=-1, **kwargs):
     elems = axis_to_elem(array, axis)
     results = np.unique(elems, **kwargs)
     if isinstance(results, tuple):
-        return ((results[0].view(array.dtype).reshape((-1, axis_length)),) +
+        return ((elem_to_axis(results[0], array.dtype, axis),) +
                 results[1:])
     else:
-        return results.view(array.dtype).reshape((-1, axis_length))
+        return elem_to_axis(results, array.dtype, axis)
+
+
+class hash_array(object):
+    def __init__(self, array):
+        self._array = np.asarray(array)
+        self._hash = hash(self._array.data.tobytes())
+
+    def __hash__(self):
+        return self._hash
+
+    def __eq__(self, other):
+        return (self._hash == other._hash and
+                np.all(self._array == other._array))

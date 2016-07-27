@@ -16,12 +16,7 @@ def test_only():
 
 
 def test_game_size():
-    assert utils.game_size(2000, 10, True) == 1442989326579174917694151
-
-
-def test_game_size_fail():
-    with pytest.raises(AssertionError):
-        utils.game_size(2000, 10)
+    assert utils.game_size(2000, 10) == 1442989326579174917694151
 
 
 def test_one_line():
