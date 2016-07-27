@@ -382,7 +382,7 @@ def normalize(game, new_min=0, new_max=1):
     return rsgame.Game(game, profiles, payoffs)
 
 
-def add_profiles(game, distribution=default_distribution, prob=1,
+def add_profiles(game, prob=1, distribution=default_distribution,
                  independent=True):
     """Add profiles to a base game
 
