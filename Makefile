@@ -32,6 +32,9 @@ big: test
 check:
 	bin/flake8 gameanalysis test
 
+format:
+	bin/autopep8 -ri gameanalysis test
+
 todo:
 	grep -nrIF -e TODO -e XXX -e FIXME . --exclude-dir=lib --exclude=Makefile --color=always
 

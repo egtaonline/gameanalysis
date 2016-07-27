@@ -1,9 +1,9 @@
-pytest==2.9.2
-pytest-cov==2.2.1
-pytest-xdist==1.14
+autopep8==1.2.4
 flake8==2.4.0
 ipython==3.1.0
 numpy==1.11.1
-scipy==0.17.1
+pytest-cov==2.2.1
+pytest-xdist==1.14
+pytest==2.9.2
 scikit-learn==0.17.1
-
+scipy==0.17.1
