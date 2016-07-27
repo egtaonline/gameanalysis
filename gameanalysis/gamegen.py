@@ -189,7 +189,7 @@ def congestion_game(num_players, num_facilities, num_required,
     strat_usage = profiles[..., None] * strat_mask
     usage = strat_usage.sum(1)
     fac_payoffs = (usage[..., None] ** np.arange(3) * values).sum(2)
-    payoffs = (strat_usage * fac_payoffs[:, None, :]).sum(2)
+    payoffs = ((strat_usage != 0) * fac_payoffs[:, None, :]).sum(2)
 
     game = rsgame.Game([num_players], [num_strats], profiles, payoffs)
     if not return_serial:
