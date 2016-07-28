@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import numpy.random as rand
 
@@ -41,7 +43,7 @@ def test_subgame():
             sub_serial.num_role_strats)
 
 
-@testutils.apply(testutils.game_sizes())
+@testutils.apply(testutils.game_sizes('small'))
 def test_maximal_subgames(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
     subs = subgame.maximal_subgames(game)
@@ -51,15 +53,33 @@ def test_maximal_subgames(players, strategies):
         "found subgame wasn't the full one"
 
 
-@testutils.apply(zip([0, 0.1, 0.4, 0.6]))
-def test_missing_data_maximal_subgames(prob):
-    game = gamegen.role_symmetric_game([3, 4], [3, 2])
-    game = gamegen.drop_profiles(game, prob)
+@testutils.apply(itertools.product(testutils.game_sizes('small'),
+                                   [0.9, 0.6, 0.4]))
+def test_missing_data_maximal_subgames(game_desc, prob):
+    base = rsgame.BaseGame(*game_desc)
+    game = gamegen.add_profiles(base, prob)
     subs = subgame.maximal_subgames(game)
-    assert subs.size == 0 or not subs.all()
+
+    if subs.size:
+        maximal = np.all(subs <= subs[:, None], -1)
+        np.fill_diagonal(maximal, False)
+        assert not maximal.any(), \
+            "One maximal subgame dominated another"
+
+    for sub in subs:
+        subprofs = subgame.translate(subgame.subgame(base, sub).all_profiles(),
+                                     sub)
+        assert all(p in game for p in subprofs), \
+            "Maximal subgame didn't have all profiles"
+        for dev in np.nonzero(~sub)[0]:
+            devprofs = subgame.additional_strategy_profiles(
+                game, sub, dev)
+            assert not all(p in game for p in devprofs), \
+                "Maximal subgame could be bigger {} {}".format(
+                    dev, sub)
 
 
-@testutils.apply(testutils.game_sizes(allow_big=True), repeat=20)
+@testutils.apply(testutils.game_sizes('big'), repeat=20)
 def test_deviation_profile_count(players, strategies):
     game = rsgame.BaseGame(players, strategies)
     sup = (rand.random(game.num_roles) * game.num_strategies).astype(int) + 1

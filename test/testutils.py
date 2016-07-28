@@ -15,7 +15,7 @@ def apply(inputs=((),), repeat=1):
 
 
 # iterator over a good amount of game sizes
-def game_sizes(allow_big=False):
+def game_sizes(size='medium'):
     yield [1], 1
     yield [1], 2
     yield [2], 1
@@ -25,24 +25,26 @@ def game_sizes(allow_big=False):
     yield [5], 5
     yield 2 * [1], 1
     yield 2 * [1], 2
-    yield 2 * [1], 5
-    yield 5 * [1], 2
-    yield 5 * [1], 5
     yield 2 * [2], 1
     yield 2 * [2], 2
-    yield 2 * [2], 5
-    yield 2 * [5], 2
-    yield 2 * [5], 5
-    yield 3 * [3], 3
-    yield [170], 2
-    yield [180], 2
-    yield [1, 2], 2
-    yield [1, 2], [2, 1]
-    yield 2, [1, 2]
-    yield [3, 4], [2, 3]
-    yield [2, 3, 4], [4, 3, 2]
+    yield 5 * [1], 2
 
-    if allow_big and os.getenv('BIG_TESTS') == 'ON':  # Big Games
+    if size != 'small':
+        yield 2 * [1], 5
+        yield 2 * [2], 5
+        yield 2 * [5], 2
+        yield 2 * [5], 5
+        yield 3 * [3], 3
+        yield 5 * [1], 5
+        yield [170], 2
+        yield [180], 2
+        yield [1, 2], 2
+        yield [1, 2], [2, 1]
+        yield 2, [1, 2]
+        yield [3, 4], [2, 3]
+        yield [2, 3, 4], [4, 3, 2]
+
+    if size == 'big' and os.getenv('BIG_TESTS') == 'ON':  # Big Games
         yield 1000, 2  # pragma: no cover
         yield 5, 40  # pragma: no cover
         yield 3, 160  # pragma: no cover

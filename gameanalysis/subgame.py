@@ -230,10 +230,6 @@ def maximal_subgames(game):
     maximals = []
     while queue:
         sub = queue.pop()
-
-        if any(np.all(sub <= s) for s in maximals):
-            continue
-
         maximal = True
         devs = sub.astype(int)
         devs[game.role_starts[1:]] -= game.role_reduce(sub)[:-1]
@@ -249,7 +245,7 @@ def maximal_subgames(game):
         # This checks that no duplicates are emitted.  This algorithm will
         # always find the largest subset first, but subsequent 'maximal'
         # subsets may actually be subsets of previous maximal subsets.
-        if maximal:
+        if maximal and not any(np.all(sub <= s) for s in maximals):
             maximals.append(sub)
 
-    return np.asarray(maximals)
+    return np.array(maximals)

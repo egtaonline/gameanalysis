@@ -59,7 +59,7 @@ def test_mixture_welfare(players, strategies):
     assert boots.shape == (num_mixes, num_boots)
 
 
-@testutils.apply(testutils.game_sizes())
+@testutils.apply(testutils.game_sizes('small'))
 def test_mixture_regret(players, strategies):
     num_mixes = 5
     num_boots = 200

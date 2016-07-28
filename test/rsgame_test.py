@@ -35,7 +35,7 @@ def exact_dev_reps(game):
     return dev_reps
 
 
-@testutils.apply(testutils.game_sizes(allow_big=True))
+@testutils.apply(testutils.game_sizes('big'))
 def test_devreps_approx(players, strategies):
     base = rsgame.BaseGame(players, strategies)
     profiles = base.all_profiles()

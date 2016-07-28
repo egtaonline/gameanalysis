@@ -1,4 +1,4 @@
-PYTEST_ARGS = -n auto --strict
+PYTEST_ARGS = -n auto --strict --showlocals
 
 help:
 	@echo "usage: make <tag>"
