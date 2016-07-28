@@ -42,7 +42,7 @@ class GameSerializer(object):
                                           len(self.role_names))
         self.num_roles = self.num_strategies.size
         self.num_role_strats = self.num_strategies.sum()
-        self._split_inds = self.num_strategies[:-1].cumsum()
+        self.role_starts = self.num_strategies[:-1].cumsum()
         self._role_index = {r: i for i, r in enumerate(self.role_names)}
         role_strats = itertools.chain.from_iterable(
             ((r, s) for s in strats) for r, strats
@@ -52,11 +52,18 @@ class GameSerializer(object):
         self._hash = hash((self.role_names, self.strat_names))
 
     def role_split(self, array, axis=-1):
-        return np.split(array, self._split_inds, axis)
+        return np.split(array, self.role_starts, axis)
 
     def role_index(self, role):
         """Return the index of a role"""
         return self._role_index[role]
+
+    def strat_name(self, role_strat_index):
+        """Get the strategy name from a full index"""
+        role_index = np.searchsorted(self.role_starts, role_strat_index,
+                                     'right') - 1
+        return self.strat_names[role_index][role_strat_index -
+                                            self.role_starts[role_index]]
 
     def role_strat_index(self, role, strat):
         """Return the index of a role strat pair"""
@@ -90,6 +97,23 @@ class GameSerializer(object):
             for role, strats, counts
             in zip(self.role_names, self.strat_names,
                    self.role_split(prof)))
+
+    def to_prof_printstring(self, prof):
+        """Convert a profile to a printable string"""
+        if issubclass(prof.dtype.type, np.integer):
+            format_strat = lambda s, p: '\t{}: {:d}\n'.format(s, p)
+        elif issubclass(prof.dtype.type, np.float):
+            format_strat = lambda s, p: '\t{}: {:>7.2%}\n'.format(s, p)
+        else:  # boolean
+            format_strat = lambda s, p: '\t{}\n'.format(s)
+
+        return ''.join(
+            '{}:\n{}'.format(role, ''.join(format_strat(s, p)
+                                           for p, s in zip(probs, strats)
+                                           if p > 0))
+            for probs, role, strats
+            in zip(self.role_split(prof), self.role_names, self.strat_names)
+        ).expandtabs(4)
 
     def from_prof(self, prof):
         """Read a profile from an auto-detected format"""
@@ -164,7 +188,7 @@ class GameSerializer(object):
     def to_deviation_payoff_json(self, profile, payoffs):
         """Format a profile and deviation payoffs as json"""
         supp = profile > 0
-        role_supp = np.add.reduceat(supp, np.insert(self._split_inds, 0, 0))
+        role_supp = np.add.reduceat(supp, np.insert(self.role_starts, 0, 0))
         splits = np.repeat(self.num_strategies - 1, role_supp)[:-1].cumsum()
         return {r: {s: {d: p.item() for p, d
                         in zip(dps, (d for d in ses if d != s))}  # noqa
@@ -217,7 +241,7 @@ class GameSerializer(object):
     def to_str(self, game):
         strg = ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}\n'
                 .format(
-                    self.__class__.__name__,
+                    game.__class__.__name__,
                     ', '.join(self.role_names),
                     '\n\t\t'.join(
                         '{:d}x {}'.format(count, role)
