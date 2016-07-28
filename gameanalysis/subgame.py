@@ -225,7 +225,7 @@ def random_subgames(game, n=1):
 def maximal_subgames(game):
     """Returns all maximally complete subgame masks"""
     # invariant that we have data for every subgame in queue
-    pure_profs = game.pure_profiles()
+    pure_profs = game.pure_profiles()[::-1]
     queue = [p > 0 for p in pure_profs if p in game]
     maximals = []
     while queue:
