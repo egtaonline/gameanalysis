@@ -225,19 +225,19 @@ def random_subgames(game, n=1):
 def maximal_subgames(game):
     """Returns all maximally complete subgame masks"""
     # invariant that we have data for every subgame in queue
-    pure_profs = game.pure_profiles()[::-1]
+    pure_profs = game.pure_profiles()
     queue = [p > 0 for p in pure_profs if p in game]
     maximals = []
     while queue:
         sub = queue.pop()
 
-        if any(np.all(s >= sub) for s in maximals):
+        if any(np.all(sub <= s) for s in maximals):
             continue
 
         maximal = True
         devs = sub.astype(int)
         devs[game.role_starts[1:]] -= game.role_reduce(sub)[:-1]
-        devs = np.nonzero((devs.cumsum() > 0) & ~sub)[0]
+        devs = np.nonzero((devs.cumsum() > 0) & ~sub)[0][::-1]
         for dev_ind in devs:
             profs = additional_strategy_profiles(game, sub, dev_ind)
             if all(p in game for p in profs):
