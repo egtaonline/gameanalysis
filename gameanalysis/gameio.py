@@ -100,9 +100,9 @@ class GameSerializer(object):
 
     def to_prof_printstring(self, prof):
         """Convert a profile to a printable string"""
-        if issubclass(prof.dtype.type, np.integer):
+        if np.issubdtype(prof.dtype, int):
             format_strat = lambda s, p: '\t{}: {:d}\n'.format(s, p)
-        elif issubclass(prof.dtype.type, np.float):
+        elif np.issubdtype(prof.dtype, float):
             format_strat = lambda s, p: '\t{}: {:>7.2%}\n'.format(s, p)
         else:  # boolean
             format_strat = lambda s, p: '\t{}\n'.format(s)
@@ -113,6 +113,7 @@ class GameSerializer(object):
                                            if p > 0))
             for probs, role, strats
             in zip(self.role_split(prof), self.role_names, self.strat_names)
+            if probs.any()
         ).expandtabs(4)
 
     def from_prof(self, prof):
