@@ -70,4 +70,8 @@ parallel --joblog - <<< "
     '$GA' sub -nd -i '$GAME' -o /dev/null
     '$GA' sub < '$GAME' -f <(echo '[{\"background\": [\"markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9\"], \"hft\": [\"noop\"]}]') > /dev/null
     '$GA' sub -n -t background markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9 hft -s 0 3 4 < '$GAME' > /dev/null
+
+    # Analysis tests
+    '$GA' analyze < '$GAME' > /dev/null
+    '$GA' analyze -i '$GAME' -o /dev/null --subgames --dominance --dpr background 6 hft 1 -p1 --dist-thresh 1e-3 -r 1e-3 -t 1e-3 --rand-restarts 0 -m 10000 -c 1e-8
     " | grep -vE $'^([^\t]*\t){6}0'
