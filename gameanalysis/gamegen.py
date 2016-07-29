@@ -435,7 +435,7 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     # Fill out game with profiles
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
-    payoffs[mask].flat = distribution(mask.sum())
+    payoffs[mask] = distribution(mask.sum())
     return rsgame.Game(game, profiles, payoffs, verify=False)
 
 
