@@ -24,11 +24,11 @@ def pure_strategy_deviation_gains(game, prof):
     to_inds = to_inds[to_inds != from_inds.repeat(reps)]
     from_inds = from_inds.repeat(reps - 1)
 
-    pays = game.get_payoffs(prof, np.nan)[from_inds]
+    pays = game.get_payoffs(prof)[from_inds]
     dev_profs = prof[None].repeat(num_devs, 0)
     dev_profs[np.arange(num_devs), from_inds] -= 1
     dev_profs[np.arange(num_devs), to_inds] += 1
-    dev_pays = np.array([game.get_payoffs(dprof, np.nan)[to]
+    dev_pays = np.array([game.get_payoffs(dprof)[to]
                          for dprof, to in zip(dev_profs, to_inds)])
     return dev_pays - pays
 
@@ -65,7 +65,7 @@ def mixture_regret(game, mix):
 def pure_social_welfare(game, profile):
     """Returns the social welfare of a pure strategy profile in game"""
     profile = np.asarray(profile, int)
-    return game.get_payoffs(profile, np.nan).dot(profile)
+    return game.get_payoffs(profile).dot(profile)
 
 
 def mixed_social_welfare(game, mix):

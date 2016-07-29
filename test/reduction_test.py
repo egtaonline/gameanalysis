@@ -671,7 +671,7 @@ def test_dpr_incomplete_profile():
     actual = red_game.get_payoffs([2, 0, 0, 3])
     assert np.allclose(actual, [1, 0, 0, 2])
     actual = red_game.get_payoffs([1, 1, 3, 0])
-    assert np.allclose(actual, [3, 0, 8, 0])
+    assert np.allclose(actual, [3, np.nan, 8, 0], equal_nan=True)
 
 
 def test_dpr_sample_incomplete_profile():
@@ -693,7 +693,8 @@ def test_dpr_sample_incomplete_profile():
     # This accounts for any combination of two from [7, 8, 9]
     assert np.isclose(actual[0], [7.5, 8, 8.5]).any()
     assert np.isclose(actual[2], 20.5)
-    assert np.allclose(actual[[1, 3]], 0)
+    assert np.isnan(actual[1])
+    assert actual[3] == 0
 
 
 @testutils.apply(itertools.product(
@@ -708,7 +709,7 @@ def test_dpr_sample_incomplete_profile():
         ([1, 4], [2, 1], [1, 2]),
         ([4, 9], [3, 2], [2, 3]),
     ]), repeat=10)
-def test_rand_dpr_allow_complete(add_prob, num_obs, game_desc):
+def test_rand_dpr_allow_incomplete(add_prob, num_obs, game_desc):
     """Test that allow_incomplete works for random games"""
     # Generate games
     players, strategies, red_players = game_desc
@@ -721,7 +722,7 @@ def test_rand_dpr_allow_complete(add_prob, num_obs, game_desc):
     red_game = red.reduce_game(game, True)
     red_sgame = red.reduce_game(sgame, True)
 
-    # Verify that when allow_complete, then reduce returns all profiles
+    # Verify that when allow_incomplete, then reduce returns all profiles
     reduced_full_profiles = utils.axis_to_elem(
         red.reduce_profiles(game.profiles))
     reduced_profiles = utils.axis_to_elem(red_game.profiles)
@@ -729,3 +730,12 @@ def test_rand_dpr_allow_complete(add_prob, num_obs, game_desc):
     reduced_sample_profiles = utils.axis_to_elem(red_sgame.profiles)
     assert np.setxor1d(reduced_sample_profiles,
                        reduced_full_profiles).size == 0
+
+    redord = np.argsort(reduced_profiles)
+    redsord = np.argsort(reduced_sample_profiles)
+    assert np.all(np.isnan(red_game.payoffs[redord]) ==
+                  np.isnan(red_sgame.payoffs[redsord])), \
+        "sample game and game didn't have same nan payoffs"
+    assert all(np.all(np.isnan(p).any(-1) == np.isnan(p).all(-1)) for p
+               in red_sgame.sample_payoffs), \
+        "some sample payoffs had partial nans"

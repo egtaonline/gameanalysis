@@ -184,3 +184,20 @@ def test_random_subgames(players, strategies):
     rand_subgames2 = subgame.subgame_from_id(
         game, subgame.subgame_id(game, rand_subgames))
     assert np.all(rand_subgames == rand_subgames2)
+
+
+def test_maximal_subgames_partial_profiles():
+    """Test that maximal subgames properly handles partial profiles"""
+    profiles = [[2, 0],
+                [1, 1],
+                [0, 2]]
+    payoffs = [[1, 0],
+               [np.nan, 2],
+               [0, 3]]
+    game = rsgame.Game([2], [2], profiles, payoffs)
+    subs = subgame.maximal_subgames(game)
+    expected = utils.axis_to_elem(np.array([
+        [True, False],
+        [False, True]]))
+    assert np.setxor1d(utils.axis_to_elem(subs), expected).size == 0, \
+        "Didn't produce both pure subgames"

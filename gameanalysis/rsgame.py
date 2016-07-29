@@ -225,7 +225,9 @@ class BaseGame(object):
 
     def verify_profile(self, prof, axis=-1):
         """Verify that a profile is valid for game"""
-        return np.all(self.num_players == self.role_reduce(prof, axis), axis)
+        prof = np.asarray(prof, int)
+        return (prof.shape[axis] == self.num_role_strats and
+                np.all(self.num_players == self.role_reduce(prof, axis), axis))
 
     def verify_mixture(self, mix, axis=-1):
         """Verify that a mixture is valid for game"""
@@ -390,10 +392,14 @@ class Game(BaseGame):
 
     This representation uses a sparse mapping from profiles to payoffs for role
     symmetric games. There are several variants on constructors that are all
-    valid, and use combinations of various inputs:
+    valid, and use combinations of various inputs, listed below. Payoffs for
+    specific players in a profile can be nan to indicate they are missing. The
+    profiles will not be listed in `num_complete_profiles` or counted as `in` the game,
+    but their data can be accessed via `get_payoffs`, and they will be used for
+    calculating deviation payoffs if possible.
 
-    Parameters
-    ----------
+    Parameters (from game)
+    ----------------------
     game : BaseGame
         Game to copy information out of. This will copy as much information out
         of the game as possible.
@@ -404,8 +410,8 @@ class Game(BaseGame):
         The payoffs for the game, if unspecified, payoffs will try to be
         grabbed from `game`. Must be specified with profiles.
 
-    Parameters
-    ----------
+    Parameters (from game description)
+    ----------------------------------
     num_players : int or [int] or ndarray
         The number of players per role. See BaseGame.
     num_strategies : int or [int] or ndarray
@@ -417,8 +423,8 @@ class Game(BaseGame):
         The payoffs for the game, if unspecified, game will be empty. Must be
         specified with profiles.
 
-    Parameters
-    ----------
+    Parameters (from asymmetric game)
+    ---------------------------------
     matrix : ndarray-like
         The matrix of payoffs for an asymmetric game. The last axis is the
         payoffs for each player, the first axes are the strategies for each
@@ -499,12 +505,8 @@ class Game(BaseGame):
                        self.num_players, 1).nonzero(),
                 profiles[np.any(self.role_reduce(profiles, axis=1) ==
                                 self.num_players, 1)])
-        assert not verify or np.all(payoffs * (profiles == 0) == 0), \
-            ("there were nonzero payoffs for strategies without players"
-             " {} {} {}").format(
-                 np.any(payoffs * (profiles == 0) != 0, 1).nonzero(),
-                 profiles[np.any(payoffs * (profiles == 0) != 0, 1)],
-                 payoffs[np.any(payoffs * (profiles == 0) != 0, 1)])
+        assert not verify or np.all(payoffs[profiles == 0] == 0), \
+            "there were nonzero payoffs for strategies without players"
 
         self.profiles = profiles
         self.profiles.setflags(write=False)
@@ -522,8 +524,16 @@ class Game(BaseGame):
                               self.role_repeat(np.log(self.num_players)))
         self._dev_reps.setflags(write=False)
 
+        # Add profile lookup
         self._profile_id_map = dict(zip(map(utils.hash_array, self.profiles),
                                         self.payoffs))
+        if np.isnan(self.payoffs).any():
+            self._complete_profiles = frozenset(
+                prof for prof, pay in self._profile_id_map.items()
+                if not np.isnan(pay).any())
+        else:
+            self._complete_profiles = self._profile_id_map
+        self.num_complete_profiles = len(self._complete_profiles)
         assert len(self._profile_id_map) == self.num_profiles, \
             "There was at least one duplicate profile"
 
@@ -565,7 +575,7 @@ class Game(BaseGame):
             self._max_payoffs.setflags(write=False)
         return self._max_payoffs.view()
 
-    def get_payoffs(self, profile, default=None):
+    def get_payoffs(self, profile):
         """Returns an array of profile payoffs
 
         if default is not None and game doesn't have profile data, then an
@@ -573,11 +583,12 @@ class Game(BaseGame):
         profile = np.asarray(profile, int)
         assert self.verify_profile(profile)
         hashed = utils.hash_array(profile)
-        if default is not None and hashed not in self._profile_id_map:
-            ret = np.zeros(self.num_role_strats)
-            ret[profile > 0] = default
-            return ret
-        return self._profile_id_map[hashed]
+        if hashed not in self._profile_id_map:
+            pay = np.zeros(self.num_role_strats)
+            pay[profile > 0] = np.nan
+            return pay
+        else:
+            return self._profile_id_map[hashed]
 
     def get_max_social_welfare(self, role_index=None):
         """Returns the maximum social welfare over the known profiles.
@@ -659,7 +670,9 @@ class Game(BaseGame):
                 # Ignore underflow caused when profile probability is not
                 # representable in floating point.
                 probs = np.exp(prof_prob + self._dev_reps - log_mix)
-            weighted_payoffs = self.payoffs * probs
+            zero_prob = self.role_repeat(_TINY * self.num_players)
+            weighted_payoffs = probs * np.where(probs > zero_prob,
+                                                self.payoffs, 0)
             values = np.sum(weighted_payoffs, 0)
 
         else:
@@ -697,8 +710,11 @@ class Game(BaseGame):
             return np.allclose(profile_sums, profile_sums[0])
 
     def __contains__(self, profile):
-        """Returns true if data for that profile exists"""
-        return utils.hash_array(profile) in self._profile_id_map
+        """Returns true if all data for that profile exists"""
+        # TODO This may be slow. Potentially we should just keep a set of all
+        # the ones with complete data...
+        return (utils.hash_array(np.asarray(profile, int))
+                in self._complete_profiles)
 
     def __repr__(self):
         return '{old}, {data:d} / {total:d})'.format(
@@ -844,7 +860,8 @@ class SampleGame(Game):
             int, len(self.sample_payoffs))
 
         assert not self.sample_payoffs or not verify or all(
-            (samp * (count[..., None] == 0) == 0).all() for count, samp
+            (samp[np.broadcast_to(count[..., None], samp.shape) == 0] == 0)
+            .all() for count, samp
             in zip(np.split(self.profiles, self.sample_starts[1:]),
                    self.sample_payoffs)), \
             "some sample payoffs were nonzero for invalid payoffs"

@@ -7,6 +7,9 @@ from gameanalysis import subgame
 from gameanalysis import utils
 
 
+# TODO Make reductions handle partial profiles
+
+
 def _expand_rsym_profiles(game, profiles, full_players, reduced_players):
     """Hierarchically expands several role symmetric array profiles
 
@@ -412,6 +415,13 @@ class DeviationPreserving(object):
                     payoff_inds.flat, payoffs.flat,
                     num_profiles * game.num_role_strats * num_samples)\
                     .reshape(num_profiles, game.num_role_strats, num_samples)
+                if allow_incomplete:
+                    prof_offset = offset // game.num_role_strats
+                    unknown = new_profiles[prof_offset:prof_offset +
+                                           num_profiles, :, None] > 0
+                    unknown.flat[prof_inds] = False
+                    unknown = np.broadcast_to(unknown, sample_pays.shape)
+                    sample_pays[unknown] = np.nan
                 sample_payoffs.append(sample_pays)
 
             return rsgame.SampleGame(self._rgame.num_players,
@@ -450,6 +460,9 @@ class DeviationPreserving(object):
                                        (red_payoff_counts > 0), 1)
                 red_profiles = red_profiles[complete_mask]
                 red_payoffs = red_payoffs[complete_mask]
+            else:
+                unknown = (red_profiles > 0) & (red_payoff_counts == 0)
+                red_payoffs[unknown] = np.nan
             return rsgame.Game(self._rgame.num_players, game.num_strategies,
                                red_profiles, red_payoffs, verify=False)
 
