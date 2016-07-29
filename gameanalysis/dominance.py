@@ -37,15 +37,33 @@ def _gains(game):
     return gains, supports
 
 
+def _reduceat(ufunc, a, indices, axis=0, dtype=None, out=None):
+    """Fix for the way reduceat handles empty slices"""
+    if dtype is None:
+        dtype = a.dtype
+    if out is None:
+        new_shape = list(a.shape)
+        new_shape[axis] = indices.size
+        out = np.empty(new_shape, dtype)
+    out.fill(ufunc.identity)
+    valid = np.diff(np.insert(indices, indices.size, a.shape[axis])) > 0
+    index = [slice(None)] * out.ndim
+    index[axis] = valid
+    out[index] = ufunc.reduceat(a, indices[valid], axis)
+    return out
+
+
 def _weak_dominance(gains, supports, num_strats, conditional):
     """Returns the strategies that are weakly dominated"""
     sizes = np.repeat(num_strats - 1, num_strats)
     offsets = np.insert(sizes[:-1].cumsum(), 0, 0)
     with np.errstate(invalid='ignore'):  # nans
-        dominated = gains >= 0  # == 0 will include strategies not in support
-    if conditional:
-        dominated |= np.isnan(gains)
-    return np.logical_or.reduceat(dominated.all(0), offsets)
+        dominated = (gains >= 0) & np.repeat(supports, sizes, -1)
+    not_dominates = dominated | np.repeat(~supports, sizes, -1)
+    if not conditional:
+        not_dominates |= np.isnan(gains)
+    return _reduceat(np.logical_or, dominated.any(0) & not_dominates.all(0),
+                     offsets)
 
 
 def _strict_dominance(gains, supports, num_strats, conditional):
@@ -53,10 +71,12 @@ def _strict_dominance(gains, supports, num_strats, conditional):
     sizes = np.repeat(num_strats - 1, num_strats)
     offsets = np.insert(sizes[:-1].cumsum(), 0, 0)
     with np.errstate(invalid='ignore'):  # nans
-        dominated = (gains > 0) | np.repeat(~supports, sizes, -1)
-    if conditional:
-        dominated |= np.isnan(gains)
-    return np.logical_or.reduceat(dominated.all(0), offsets)
+        dominated = gains > 0
+    not_dominates = dominated | np.repeat(~supports, sizes, -1)
+    if not conditional:
+        not_dominates |= np.isnan(gains)
+    return _reduceat(np.logical_or, dominated.any(0) & not_dominates.all(0),
+                     offsets)
 
 
 def _never_best_response(gains, supports, num_strats, conditional):
@@ -71,7 +91,7 @@ def _never_best_response(gains, supports, num_strats, conditional):
                  np.insert(num_strats[:-1].cumsum(), 0, 0).repeat(num_strats))
     self_gains = np.insert(gains, self_inds, 0, -1)
 
-    # fmax isngores nans when possible
+    # fmax ignores nans when possible
     best_gains = np.fmax.reduceat(self_gains, self_offsets, -1)\
         .repeat(self_sizes, -1)
     best_resps = (best_gains == self_gains) & supports.repeat(self_sizes, -1)
