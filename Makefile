@@ -24,6 +24,7 @@ ifdef file
 	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis.$(file) --cov test.$(file)_test --cov-report term-missing
 else
 	bin/py.test test $(PYTEST_ARGS) --cov gameanalysis --cov test --cov-report term-missing
+	test/command_line_test.sh
 endif
 
 big: export BIG_TESTS=ON
