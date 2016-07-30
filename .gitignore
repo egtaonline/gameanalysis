@@ -13,14 +13,16 @@
 *~
 \#*\#
 
-# Virtual Env #
-###############
+# Venv #
+########
 /bin
 /include
 /lib
+/lib64
 /man
 /share
 /pip-selfcheck.json
+/pyvenv.cfg
 
 # LaTeX #
 #########
