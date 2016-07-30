@@ -246,12 +246,34 @@ def test_game_function(players, strategies):
         "some array expected values were nan"
 
     # Max social welfare
-    assert game.get_max_social_welfare() is not None
-    for role_index in range(game.num_roles):
-        assert game.get_max_social_welfare(role_index) is not None
+    welfare, profile = game.get_max_social_welfare()
+    assert not np.isnan(welfare)
+    assert profile is not None
+    for welfare, profile in zip(*game.get_max_social_welfare(True)):
+        assert not np.isnan(welfare)
+        assert profile is not None
 
     # Test that various methods can be called
     assert repr(game) is not None
+
+
+def test_partial_profile_game():
+    """Test that game are correct when profiles have incomplete data"""
+    profiles = [[2, 0, 2, 0],
+                [1, 1, 2, 0],
+                [1, 1, 1, 1]]
+    payoffs = [[np.nan, 0, 5, 0],  # Max role 2
+               [2, 3, np.nan, 0],  # Max role 1
+               [1, 1, 1, 1]]       # Max total
+    game = rsgame.Game([2, 2], [2, 2], profiles, payoffs)
+    welfare, profile = game.get_max_social_welfare()
+    assert welfare == 4
+    assert np.all(profile == [1, 1, 1, 1])
+    welfares, profiles = game.get_max_social_welfare(True)
+    assert np.allclose(welfares, [5, 10])
+    expected = [[1, 1, 2, 0],
+                [2, 0, 2, 0]]
+    assert np.all(profiles == expected)
 
 
 # Test that a Game with no data can still be created
@@ -278,8 +300,12 @@ def test_empty_full_game(players, strategies):
         "not all expected values were nan"
 
     # Max social welfare
-    assert (np.nan, None) == game.get_max_social_welfare(), \
-        "Didn't return an empty welfare"
+    welfare, profile = game.get_max_social_welfare()
+    assert np.isnan(welfare)
+    assert profile is None
+    for welfare, profile in zip(*game.get_max_social_welfare(True)):
+        assert np.isnan(welfare)
+        assert profile is None
 
     # Default payoff
     for prof in game.all_profiles():

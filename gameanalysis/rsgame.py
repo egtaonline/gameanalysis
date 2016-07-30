@@ -394,9 +394,9 @@ class Game(BaseGame):
     symmetric games. There are several variants on constructors that are all
     valid, and use combinations of various inputs, listed below. Payoffs for
     specific players in a profile can be nan to indicate they are missing. The
-    profiles will not be listed in `num_complete_profiles` or counted as `in` the game,
-    but their data can be accessed via `get_payoffs`, and they will be used for
-    calculating deviation payoffs if possible.
+    profiles will not be listed in `num_complete_profiles` or counted as `in`
+    the game, but their data can be accessed via `get_payoffs`, and they will
+    be used for calculating deviation payoffs if possible.
 
     Parameters (from game)
     ----------------------
@@ -590,32 +590,31 @@ class Game(BaseGame):
         else:
             return self._profile_id_map[hashed]
 
-    def get_max_social_welfare(self, role_index=None):
+    def get_max_social_welfare(self, by_role=False):
         """Returns the maximum social welfare over the known profiles.
 
-        If role_index is specified, then max social welfare applies only to the
-        specified role."""
-        # This should probably stay here, because it can't be moved without
-        # exposing underlying structure of _counts and _values or making it
-        # less efficient. see mixture_deviation_gains
+        If by_role is specified, then max social welfare applies to each role
+        independently."""
+        if by_role:
+            if self.num_profiles:
+                welfares = self.role_reduce(self.profiles * self.payoffs)
+                prof_inds = np.nanargmax(welfares, 0)
+                return (welfares[prof_inds, np.arange(self.num_roles)],
+                        self.profiles[prof_inds])
+            else:
+                welfares = np.empty(self.num_roles)
+                welfares.fill(np.nan)
+                profiles = np.empty(self.num_roles, dtype=object)
+                profiles.fill(None)
+                return welfares, profiles
 
-        # If no data, return none
-        if not self.num_profiles:
-            return np.nan, None
-
-        if role_index is not None:
-            start = self.role_starts[role_index]
-            end = start + self.num_strategies[role_index]
-            profiles = self.profiles[:, start:end]
-            payoffs = self.payoffs[:, start:end]
         else:
-            profiles = self.profiles
-            payoffs = self.payoffs
-
-        welfares = np.sum(payoffs * profiles, 1)
-        profile_index = welfares.argmax()
-        profile = self.profiles[profile_index]
-        return welfares[profile_index], profile
+            if self.num_profiles:
+                welfares = np.sum(self.profiles * self.payoffs, 1)
+                prof_ind = np.nanargmax(welfares)
+                return welfares[prof_ind], self.profiles[prof_ind]
+            else:
+                return np.nan, None
 
     def deviation_payoffs(self, mix, assume_complete=False, jacobian=False):
         """Computes the expected value of each pure strategy played against all
