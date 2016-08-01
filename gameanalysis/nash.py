@@ -249,8 +249,6 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     at_least_one : bool
         Returns the minimum regret mixture found by replicator dynamics if no
         equilibria were within the regret threshold
-    as_array : bool
-        If true returns equilibria in array form.
 
     Returns
     -------
