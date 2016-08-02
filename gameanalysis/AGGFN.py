@@ -43,14 +43,15 @@ class Sym_AGG_FNA(rsgame.BaseGame):
         super().__init__(num_players, num_strategies)
         self.action_weights = np.array(action_weights, dtype=float)
         self.function_inputs = np.array(function_inputs, dtype=bool)
-        self.configs = np.arange(num_players)[:,None]
-        self.dev_reps = comb(num_players - 1, self.configs)
-        self.log_dev_reps = gammaln(num_players) - gammaln(self.configs + 1) - \
-                            gammaln(num_players - self.configs)
+        self.configs = np.arange(num_players+1)[:,None]
+        self.log_dev_reps = gammaln(num_players) - gammaln(self.configs[1:]) - \
+                            gammaln(num_players - self.configs[:-1])
         self.func_table = np.array([f(self.configs[:,0]) for f in
-                                    node_functions], dtype=float)
-        self.num_funcs = self.func_table.shape[0]
+                                    node_functions], dtype=float).T
+        self.num_funcs = self.func_table.shape[1]
         self.num_nodes = self.num_funcs + self.num_strategies[0]
+        self._min_payoffs = None
+        self._max_payoffs = None
 
 
     @staticmethod
@@ -69,21 +70,52 @@ class Sym_AGG_FNA(rsgame.BaseGame):
 
 
     def min_payoffs(self):
+        """Returns a lower bound on the payoffs."""
+        if self._min_payoffs is None:
+            minima = np.zeros([self.num_strategies[0], self.num_nodes])
+            minima[:,-self.num_funcs:] = self.func_table.min(0)
+            minima[self.action_weights <= 0] = 0
+
+            maxima = np.zeros(minima.shape)
+            maxima[:,-self.num_funcs:] = self.func_table.max(0)
+            maxima[self.action_weights >= 0] = 0
+
+            self._min_payoffs = ((minima + maxima) *
+                                 self.action_weights).sum(1).min(keepdims=True)
+            self._min_payoffs.setflags(write=False)
+        return self._min_payoffs.view()
+
+
+    def max_payoffs(self):
+        """Returns an upper bound on the payoffs."""
+        if self._min_payoffs is None:
+            minima = np.zeros([self.num_strategies[0], self.num_nodes])
+            minima[:,-self.num_funcs:] = self.func_table.min(0)
+            minima[self.action_weights >= 0] = 0
+
+            maxima = np.zeros(minima.shape)
+            maxima[:,-self.num_funcs:] = self.func_table.max(0)
+            maxima[self.action_weights <= 0] = 0
+
+            self._max_payoffs = ((minima + maxima) *
+                                 self.action_weights).sum(1).min(keepdims=True)
+            self._max_payoffs.setflags(write=False)
+        return self._max_payoffs.view()
+
+
+    def payoff_bounds(self):
         """
-        Find a lower bound of the payoffs
+        Find a lower and upper bounds of the payoffs
         """
-        minima = np.zeros(self.num_strategies[0] + self.num_funcs)
-        minima[-self.num_funcs:] = self.func_table.min(1)
-        minima = minima[:,None].repeat(self.num_strategies[0], 1)
+        minima = np.zeros([self.num_strategies[0], self.num_nodes])
+        minima[:,-self.num_funcs:] = self.func_table.min(0)
         minima[self.action_weights <= 0] = 0
 
-        maxima = np.empty(self.num_strategies[0] + self.num_funcs)
-        maxima.fill(self.num_players[0])
-        maxima[-self.num_funcs:] = self.func_table.max(1)
-        maxima = maxima[:,None].repeat(self.num_strategies[0], 1)
+        maxima = np.zeros(minima.shape)
+        maxima[:,-self.num_funcs:] = self.func_table.max(0)
         maxima[self.action_weights >= 0] = 0
 
-        return ((minima + maxima) * self.action_weights).sum(0).min(keepdims=True)
+        return ((minima+maxima)*self.action_weights).sum(1).min(keepdims=True)
 
 
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
@@ -93,14 +125,24 @@ class Sym_AGG_FNA(rsgame.BaseGame):
         func_node_probs[np.logical_not(self.function_inputs)] = 0
         func_node_probs = func_node_probs.sum(0)
 
-        act_conf_probs = np.exp(self.log_dev_reps + np.log(mix+_TINY) * self.configs +
-                                np.log(1-mix+_TINY) * (self.num_players-1-self.configs))
-        func_conf_probs = np.exp(self.log_dev_reps + np.log(func_node_probs + _TINY) *
-                                 self.configs + np.log(1 - func_node_probs + _TINY) *
-                                 (self.num_players - 1 - self.configs))
-        act_EVs = (act_conf_probs * self.configs).sum(0)
-        func_EVs = (func_conf_probs * self.func_table.T).sum(0)
-        return (self.action_weights * np.append(act_EVs, func_EVs)).sum(1)
+        act_conf_probs = np.exp(np.log(mix + _TINY) * self.configs[:-1] +
+                  np.log(1 - mix + _TINY) * (self.num_players -
+                  self.configs[1:]) + self.log_dev_reps)
+        func_conf_probs = np.exp(np.log(func_node_probs + _TINY) *
+                  self.configs[:-1] + np.log(1 - func_node_probs + _TINY) *
+                  (self.num_players - self.configs[1:]))
+
+        EVs = np.empty(self.num_strategies)
+        for s in range(self.num_strategies[0]):
+            action_outputs = self.configs[:-1].repeat(self.num_strategies, 1)
+            action_outputs[:,s] += 1
+            function_outputs = np.array(self.func_table[:-1])
+            function_outputs[:,self.function_inputs[s]] = \
+                            self.func_table[1:,self.function_inputs[s]]
+            node_EVs = np.append((act_conf_probs * action_outputs).sum(0),
+                                 (func_conf_probs * function_outputs).sum(0))
+            EVs[s] = np.dot(node_EVs, self.action_weights[s])
+        return EVs
 
 
     def to_json(self):
