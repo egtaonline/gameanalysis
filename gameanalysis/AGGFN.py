@@ -103,21 +103,6 @@ class Sym_AGG_FNA(rsgame.BaseGame):
         return self._max_payoffs.view()
 
 
-    def payoff_bounds(self):
-        """
-        Find a lower and upper bounds of the payoffs
-        """
-        minima = np.zeros([self.num_strategies[0], self.num_nodes])
-        minima[:,-self.num_funcs:] = self.func_table.min(0)
-        minima[self.action_weights <= 0] = 0
-
-        maxima = np.zeros(minima.shape)
-        maxima[:,-self.num_funcs:] = self.func_table.max(0)
-        maxima[self.action_weights >= 0] = 0
-
-        return ((minima+maxima)*self.action_weights).sum(1).min(keepdims=True)
-
-
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
         # TODO To add jacobian support.
         assert not jacobian, "Sym_AGG_FNA doesn't support jacobian"
