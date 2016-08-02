@@ -88,7 +88,7 @@ class Sym_AGG_FNA(rsgame.BaseGame):
 
     def max_payoffs(self):
         """Returns an upper bound on the payoffs."""
-        if self._min_payoffs is None:
+        if self._max_payoffs is None:
             minima = np.zeros([self.num_strategies[0], self.num_nodes])
             minima[:,-self.num_funcs:] = self.func_table.min(0)
             minima[self.action_weights >= 0] = 0
