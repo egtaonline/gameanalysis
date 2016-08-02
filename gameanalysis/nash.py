@@ -174,7 +174,7 @@ class ReplicatorDynamicsOde(object):
 class ReplicatorDynamics(object):
     """Replicator dynamics
 
-    This will run at most max_iters of replicators dynamics and return unless
+    This will run at most max_iters of replicator dynamics and return unless
     the difference between successive mixtures is less than converge_thresh.
     This is an object to support pickling. Replicator Dynamics needs minimum
     and maximum payoffs in order to project successive iterations into the
@@ -246,6 +246,7 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         iterable of strings. Optionally, it can be a dictionary with extra
         options for each of the methods. If None, defaults to using all
         methods.
+        EXAMPLE: nash.mixed_nash(game, replicator={})
     at_least_one : bool
         Returns the minimum regret mixture found by replicator dynamics if no
         equilibria were within the regret threshold
