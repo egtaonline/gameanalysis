@@ -116,7 +116,7 @@ class Sym_AGG_FNA(rsgame.BaseGame):
             maxima[self.action_weights <= 0] = 0
 
             self._max_payoffs = ((minima + maxima) *
-                                 self.action_weights).sum(1).min(keepdims=True)
+                                 self.action_weights).sum(1).max(keepdims=True)
             self._max_payoffs.setflags(write=False)
         return self._max_payoffs.view()
 
