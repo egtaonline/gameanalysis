@@ -40,7 +40,6 @@ todo:
 	grep -nrIF -e TODO -e XXX -e FIXME . --exclude-dir=.git --exclude-dir=lib --exclude=Makefile --color=always
 
 setup:
-	git pull
 	pyvenv .
 	bin/pip3 install -U pip
 	bin/pip3 install -r requirements.txt
