@@ -30,8 +30,10 @@ class Sym_AGG_FNA(rsgame.BaseGame):
             function_inputs: boolean matrix with |node_functions| rows and num_strategies
                     columns. Each entry specifies whether the action node (column) is an
                     input to the function node (row).
-            node_functions: list of activation functions for each function node. These
-                    functions must work correctly when applied to a vector of inputs.
+            node_functions: Activation functions for each function node.
+                    This can either be a list of python functions that work
+                    correctly when applied to a vector of inputs, or an array
+                    already storing the correct tabular representation.
         Class Variables
         ---------------
             self.action_weights
@@ -46,8 +48,11 @@ class Sym_AGG_FNA(rsgame.BaseGame):
         self.configs = np.arange(num_players+1)[:,None]
         self.log_dev_reps = gammaln(num_players) - gammaln(self.configs[1:]) - \
                             gammaln(num_players - self.configs[:-1])
-        self.func_table = np.array([f(self.configs[:,0]) for f in
-                                    node_functions], dtype=float).T
+        if isinstance(node_functions, np.ndarray): # already a table
+            self.func_table = node_functions
+        else: # list of python functions, need to be applied to configurations
+            self.func_table = np.array([f(self.configs[:,0]) for f in
+                                        node_functions], dtype=float).T
         self.num_funcs = self.func_table.shape[1]
         self.num_nodes = self.num_funcs + self.num_strategies[0]
         self._min_payoffs = None
@@ -60,13 +65,26 @@ class Sym_AGG_FNA(rsgame.BaseGame):
         Build a game from the information stored in a dictionary in the json
         format
         """
-        raise NotImplementedError("not yet compatible with array implementation.")
-        return Sym_AGG_FNA(json_['players'],
-                           json_['strategies'],
-                           json_['function_nodes'],
-                           json_['action_graph'],
-                           json_['utilities'],
-                           json_['functions'])
+        num_players = json_["num_players"]
+        strategy_names = sorted(json_["strategy_names"])
+        num_strats = len(strategy_names)
+        function_names = sorted(json_["function_names"])
+        num_funcs = len(function_names)
+        functions = np.array([json_["function_tables"][f] for
+                              f in function_names]).T
+
+        action_weights = np.empty([num_strats, num_strats + num_funcs],
+                                  dtype=float)
+        function_inputs = np.zeros([num_strats, num_funcs], dtype=bool)
+
+        for s,strat in enumerate(strategy_names):
+            for n,node in enumerate(strategy_names + function_names):
+                action_weights[s][n] = json_["action_weights"][strat].get(node,0)
+            for f,func in enumerate(function_names):
+                if strat in json_["function_inputs"][func]:
+                    function_inputs[s][f] = True
+        return Sym_AGG_FNA(num_players, num_strats, action_weights,
+                           function_inputs, functions)
 
 
     def min_payoffs(self):
