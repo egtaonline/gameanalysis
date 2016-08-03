@@ -236,7 +236,6 @@ def sample_regret(game, mixture_payoffs, deviation_payoffs, num_resamples,
     samples = rand.multinomial(num_samples,
                                np.ones(num_samples) / num_samples,
                                num_resamples) / num_samples
-    print(samples.shape, deviation_payoffs.shape, mixture_payoffs.shape)
     dev_samples = game.role_reduce(samples.dot(deviation_payoffs),
                                    ufunc=np.maximum)
     mix_samples = samples.dot(mixture_payoffs)
