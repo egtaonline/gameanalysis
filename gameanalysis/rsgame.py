@@ -240,7 +240,8 @@ class BaseGame(object):
 
     def all_profiles(self):
         """Return all profiles"""
-        role_arrays = [utils.acomb(n_strats, players) for n_strats, players
+        role_arrays = [utils.acomb(n_strats, players, True)
+                       for n_strats, players
                        in zip(self.num_strategies, self.num_players)]
         return utils.acartesian2(*role_arrays)
 
@@ -357,7 +358,7 @@ class BaseGame(object):
             The number of points to have along one dimensions
         """
         assert num_points > 1, "Must have at least two points on a dimensions"
-        role_mixtures = [utils.acomb(num_strats, num_points - 1) /
+        role_mixtures = [utils.acomb(num_strats, num_points - 1, True) /
                          (num_points - 1)
                          for num_strats in self.num_strategies]
         return utils.acartesian2(*role_mixtures)

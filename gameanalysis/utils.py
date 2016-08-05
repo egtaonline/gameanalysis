@@ -127,17 +127,23 @@ def ordered_permutations(seq):
                 return
 
 
-def acomb(n, k):
-    """Compute an array of all n choose k options with repeats
+def acomb(n, k, repetition=False):
+    """Compute an array of all n choose k options
 
-    The result will be an array shape (m, n) where m is n choose k with
-    repetitions. Each row is a unique way to allocate k ones to m bins.
-    """
+    The result will be an array shape (m, n) where m is n choose k optionally
+    with repetitions."""
+    if repetition:
+        return _acombr(n, k)
+    else:
+        return _acomb(n, k)
+
+
+def _acombr(n, k):
+    """Combinations with repetitions"""
     # This uses dynamic programming to compute everything
     num = spm.comb(n, k, repetition=True, exact=True)
     grid = np.zeros((num, n), dtype=int)
-
-    memoized = np.empty((n - 1, k), dtype=object)
+    memoized = {}
 
     # This recursion breaks if asking for numbers that are too large (stack
     # overflow), but the order to fill n and k is predictable, it may be better
@@ -149,11 +155,10 @@ def acomb(n, k):
         elif k == 0:
             region.fill(0)
             return
-        saved = memoized[n - 2, k - 1]
-        if saved is not None:
-            np.copyto(region, saved)
+        if (n, k) in memoized:
+            np.copyto(region, memoized[n, k])
             return
-        memoized[n - 2, k - 1] = region
+        memoized[n, k] = region
         o = 0
         for ki in range(k, -1, -1):
             n_ = n - 1
@@ -162,6 +167,42 @@ def acomb(n, k):
             region[o:o+m, 0] = ki
             fill_region(n_, k_, region[o:o+m, 1:])
             o += m
+
+    fill_region(n, k, grid)
+    return grid
+
+
+def _acomb(n, k):
+    """Combinations"""
+    if k == 0:
+        return np.zeros((1, n), bool)
+
+    # This uses dynamic programming to compute everything
+    num = spm.comb(n, k, exact=True)
+    grid = np.empty((num, n), dtype=bool)
+    memoized = {}
+
+    # This recursion breaks if asking for numbers that are too large (stack
+    # overflow), but the order to fill n and k is predictable, it may be better
+    # to to use a for loop.
+    def fill_region(n, k, region):
+        if n <= k:
+            region.fill(True)
+            return
+        elif k == 1:
+            region.fill(False)
+            np.fill_diagonal(region, True)
+            return
+        if (n, k) in memoized:
+            np.copyto(region, memoized[n, k])
+            return
+
+        memoized[n, k] = region
+        trues = spm.comb(n - 1, k - 1, exact=True)
+        region[:trues, 0] = True
+        fill_region(n - 1, k - 1, region[:trues, 1:])
+        region[trues:, 0] = False
+        fill_region(n - 1, k, region[trues:, 1:])
 
     fill_region(n, k, grid)
     return grid

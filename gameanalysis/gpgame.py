@@ -169,7 +169,7 @@ class NeighborGPGame(BaseGPGame):
         # XXX this is the bottleneck for gpgame.neighbor_EVs. It seems like
         # there should be some clever way to speed it up.
         assert num_devs >= 0
-        dev_players = utils.acomb(self.num_roles, num_devs)
+        dev_players = utils.acomb(self.num_roles, num_devs, True)
         mask = np.all(dev_players <= self.num_players, 1)
         dev_players = dev_players[mask]
         supp = prof > 0

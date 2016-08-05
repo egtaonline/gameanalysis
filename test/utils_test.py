@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import pytest
 
@@ -58,3 +60,28 @@ def test_simplex_project():
     res = utils.simplex_project(np.array([-0.1, 0.8]))
     assert np.allclose(res, [0.05, 0.95]), \
         "simplex project didn't return correct result"
+
+
+def test_acomb():
+    actual = utils.acomb(5, 0)
+    assert actual.shape == (1, 5)
+    assert not actual.any()
+
+    actual = utils.acomb(5, 5)
+    assert actual.shape == (1, 5)
+    assert actual.all()
+
+    actual = utils.acomb(6, 4)
+    expected = np.zeros_like(actual)
+    for i, inds in enumerate(itertools.combinations(range(6), 4)):
+        expected[i, inds] = True
+    assert np.setxor1d(utils.axis_to_elem(actual),
+                       utils.axis_to_elem(expected)).size == 0
+
+    actual = utils.acomb(6, 4, True)
+    expected = np.zeros_like(actual)
+    for i, inds in enumerate(map(list, itertools.combinations_with_replacement(
+            range(6), 4))):
+        np.add.at(expected[i], inds, 1)
+    assert np.setxor1d(utils.axis_to_elem(actual),
+                       utils.axis_to_elem(expected)).size == 0
