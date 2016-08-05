@@ -3,12 +3,12 @@ import math
 
 import numpy as np
 import numpy.random as rand
-import scipy.misc as spm
 import scipy.special as sps
 
-from gameanalysis import utils
+from gameanalysis import congestion
 from gameanalysis import gameio
 from gameanalysis import rsgame
+from gameanalysis import utils
 
 default_distribution = lambda shape=None: rand.uniform(-1, 1, shape)
 
@@ -163,42 +163,11 @@ def congestion_game(num_players, num_facilities, num_required,
     -linear congestion cost ~ U[-num_required, 0]
     -quadratic congestion cost ~ U[-1, 0]
     """
-    # Generate strategies mask
-    strat_list = list(itertools.combinations(range(num_facilities),
-                                             num_required))
-    num_strats = len(strat_list)
-    num_strats = spm.comb(num_facilities, num_required, exact=True)
-    strat_mask = np.zeros([num_strats, num_facilities], dtype=bool)
-    inds = np.fromiter(
-        itertools.chain.from_iterable(
-            (row * num_facilities + f for f in facs) for row, facs
-            in enumerate(strat_list)),
-        int, num_strats * num_required)
-    strat_mask.ravel()[inds] = True
-
-    # Generate value for congestions
-    values = rand.random((num_facilities, 3))
-    values[:, 0] *= num_facilities  # constant
-    values[:, 1] *= -num_required   # linear
-    values[:, 2] *= -1              # quadratic
-
-    # Compute array version of all payoffs
-    base = rsgame.BaseGame([num_players], [num_strats])
-    profiles = base.all_profiles()
-
-    # Compute usage of every facility and then payoff
-    strat_usage = profiles[..., None] * strat_mask
-    usage = strat_usage.sum(1)
-    fac_payoffs = (usage[..., None] ** np.arange(3) * values).sum(2)
-    payoffs = ((strat_usage != 0) * fac_payoffs[:, None, :]).sum(2)
-
-    game = rsgame.Game([num_players], [num_strats], profiles, payoffs)
-    if not return_serial:
-        return game
+    game = congestion.CongestionGame(num_players, num_facilities, num_required)
+    if return_serial:
+        return game.to_game(), game.gen_serializer()
     else:
-        strat_names = ['_'.join(str(s) for s in strat) for strat in strat_list]
-        serial = gameio.GameSerializer(['all'], [strat_names])
-        return game, serial
+        return game.to_game()
 
 
 def local_effect_game(num_players, num_strategies):
