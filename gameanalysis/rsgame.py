@@ -637,7 +637,8 @@ class Game(BaseGame):
             in the jacobian.
         """
         # TODO It wouldn't be hard to extend this to multiple mixtures, which
-        # would allow array calculation of mixture regret.
+        # would allow array calculation of mixture regret. Support would have
+        # to be iterative though.
         mix = np.asarray(mix, float)
         nan_mask = np.empty_like(mix, dtype=bool)
 
@@ -684,7 +685,7 @@ class Game(BaseGame):
             return values
 
         if not nan_mask.all():
-            tmix = mix + self.role_repeat(_TINY * self.num_players)
+            tmix = mix + zero_prob
             product_rule = self.profiles[:, None] / tmix - np.diag(1 / tmix)
             dev_jac = np.sum(weighted_payoffs[..., None] * product_rule, 0)
         else:
