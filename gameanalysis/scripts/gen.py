@@ -51,6 +51,29 @@ strategies for a role, specified as many times as there are roles. e.g. "1 4 3
         return game, serial
 
 
+class Congestion(object):
+    """congestion game"""
+
+    @staticmethod
+    def update_parser(parser):
+        parser.description = """A congestion game"""
+        parser.add_argument('num_players', metavar='<num-players>', type=int,
+                            help="""The number of players in the congestion
+                            game.""")
+        parser.add_argument('num_facilities', metavar='<num-facilities>',
+                            type=int, help="""The number of facilities in the
+                            congestion game.""")
+        parser.add_argument('num_required', metavar='<num-required>', type=int,
+                            help="""The number of facilities a player has to
+                            occupy in the congestion game.""")
+
+    @staticmethod
+    def create(args):
+        game, serial = gamegen.congestion_game(
+            args.num_players, args.num_facilities, args.num_required, True)
+        return game, serial
+
+
 class ExperimentNoise(object):
     """add experimental noise to a given game"""
 
@@ -141,6 +164,7 @@ class Help(object):
 GAME_TYPES = collections.OrderedDict([
     ('uzs', ZeroSum),
     ('ursym', RoleSymmetric),
+    ('congest', Congestion),
     ('noise', ExperimentNoise),
     ('help', Help),
 ])
