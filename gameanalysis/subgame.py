@@ -35,6 +35,7 @@ def num_deviation_profiles(game, subgame_mask):
     subgame_mask).shape[0]`.
     """
     subgame_mask = np.asarray(subgame_mask, bool)
+    assert game.num_role_strats == subgame_mask.size
     num_strategies = game.role_reduce(subgame_mask)
     num_devs = game.num_strategies - num_strategies
     dev_players = game.num_players - np.eye(game.num_roles, dtype=int)
@@ -48,6 +49,7 @@ def num_deviation_payoffs(game, subgame_mask):
     This is a closed form way to compute `np.sum(deviation_profiles(game,
     subgame_mask) > 0)`."""
     subgame_mask = np.asarray(subgame_mask, bool)
+    assert game.num_role_strats == subgame_mask.size
     num_strategies = game.role_reduce(subgame_mask)
     num_devs = game.num_strategies - num_strategies
     dev_players = (game.num_players - np.eye(game.num_roles, dtype=int) -
@@ -60,6 +62,7 @@ def num_deviation_payoffs(game, subgame_mask):
 def num_dpr_deviation_profiles(game, subgame_mask):
     """Returns the number of dpr deviation profiles"""
     subgame_mask = np.asarray(subgame_mask, bool)
+    assert game.num_role_strats == subgame_mask.size
     num_strategies = game.role_reduce(subgame_mask)
     num_devs = game.num_strategies - num_strategies
 
@@ -92,6 +95,7 @@ def deviation_profiles(game, subgame_mask, role_index=None):
     If `role_index` is specified, only profiles for that role will be
     returned."""
     subgame_mask = np.asarray(subgame_mask, bool)
+    assert game.num_role_strats == subgame_mask.size
     support = game.role_reduce(subgame_mask)
 
     def dev_profs(players, mask, rs):
@@ -124,6 +128,7 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
     # profiles of the new subgame with one less player in role, and then
     # where that last player always plays strat
     subgame_mask = np.asarray(subgame_mask, bool)
+    assert game.num_role_strats == subgame_mask.size
     new_players = game.num_players.copy()
     new_players[game.role_index[role_strat_ind]] -= 1
     base = rsgame.BaseGame(new_players, game.num_strategies)
@@ -139,6 +144,7 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
 def subgame(game, subgame_mask):
     """Returns a new game that only has data for profiles in subgame_mask"""
     subgame_mask = np.asarray(subgame_mask, bool)
+    assert game.num_role_strats == subgame_mask.size
     num_strats = game.role_reduce(subgame_mask)
     assert np.all(num_strats > 0), \
         "Not all roles have at least one strategy"
