@@ -103,7 +103,7 @@ def main():
                            for eq in candidates):
                     candidates.append(eqm)
         else:
-            noeq_subgames.append(subg)
+            noeq_subgames.append(submask)
 
     equilibria = []
     unconfirmed = []
