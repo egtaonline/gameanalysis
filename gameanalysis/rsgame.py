@@ -499,12 +499,12 @@ class Game(BaseGame):
             "profiles was not non negative {} {}".format(
                 np.any(profiles < 0, 1).nonzero(),
                 profiles[profiles < 0])
-        assert not verify or np.all(self.role_reduce(profiles, axis=1) ==
+        assert not verify or np.all(self.role_reduce(profiles) ==
                                     self.num_players), \
             "not all profiles equaled player total {} {}".format(
-                np.any(self.role_reduce(profiles, axis=1) ==
+                np.any(self.role_reduce(profiles) ==
                        self.num_players, 1).nonzero(),
-                profiles[np.any(self.role_reduce(profiles, axis=1) ==
+                profiles[np.any(self.role_reduce(profiles) ==
                                 self.num_players, 1)])
         assert not verify or np.all(payoffs[profiles == 0] == 0), \
             "there were nonzero payoffs for strategies without players"
