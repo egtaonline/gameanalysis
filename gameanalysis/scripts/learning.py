@@ -4,15 +4,9 @@ import json
 import sys
 from os import path
 
-import numpy as np
-from numpy import linalg
-
-from gameanalysis import dominance
 from gameanalysis import gameio
 from gameanalysis import nash
-from gameanalysis import reduction
 from gameanalysis import regret
-from gameanalysis import subgame
 from gameanalysis import gpgame
 
 
@@ -51,7 +45,8 @@ PARSER.add_argument('--processes', '-p', metavar='<num-procs>', type=int,
                     help="""Number of processes to use to run nash finding.
                     (default: number of cores)""")
 
-def main():  # noqa
+
+def main():
     args = PARSER.parse_args()
     game, serial = gameio.read_game(json.load(args.input))
 
@@ -64,38 +59,14 @@ def main():  # noqa
             'max_iters': args.max_iters,
             'converge_thresh': args.converge_thresh}}
 
-    mixed_equilibria = nash.mixed_nash(lgame, regret_thresh=args.regret_thresh,
-            dist_thresh=args.dist_thresh, processes=args.processes, at_least_one=True, **methods)
+    mixed_equilibria = game.trim_mixture_support(
+        nash.mixed_nash(lgame, regret_thresh=args.regret_thresh,
+                        dist_thresh=args.dist_thresh, processes=args.processes,
+                        at_least_one=True, **methods),
+        args.supp_thresh)
 
-    candidates = []
-    if mixed_equilibria.size:
-        for eqm in mixed_equilibria:
-            if not any(linalg.norm(eqm - eq) < args.dist_thresh for eq in candidates):
-                candidates.append(eqm)
-
-    equilibria = []
-    unconfirmed = []
-    for eqm in candidates:
-        support = eqm > 0
-        gains = regret.mixture_deviation_gains(lgame, eqm)
-        role_gains = lgame.role_reduce(gains, ufunc=np.fmax)
-        if np.any(role_gains > args.regret_thresh):
-            # There are deviations, did we explore them?
-            dev_inds = ([np.argmax(gs == mg) for gs, mg
-                         in zip(lgame.role_split(gains), role_gains)] +
-                        lgame.role_starts)[role_gains > args.regret_thresh]
-            for dind in dev_inds:
-                devsupp = support.copy()
-                devsupp[dind] = True
-                if not np.all(devsupp <= subgames, -1).any():
-                    unexplored.append((devsupp, dind, gains[dind], eqm))
-
-        elif np.any(np.isnan(gains)):
-            unconfirmed.append((eqm, np.nanmax(gains)))
-
-        else:
-            equilibria.append((eqm, np.max(gains)))
-
+    equilibria = [(eqm, regret.mixture_regret(lgame, eqm))
+                  for eqm in mixed_equilibria]
 
     # Output game
     args.output.write('Game Learning\n')
@@ -127,7 +98,7 @@ def main():  # noqa
     # Output Equilibria
     args.output.write('Equilibria\n')
     args.output.write('----------\n')
-    
+
     if equilibria:
         args.output.write('Found {:d} equilibri{}\n\n'.format(
             len(equilibria), 'um' if len(equilibria) == 1 else 'a'))
@@ -138,8 +109,6 @@ def main():  # noqa
     else:
         args.output.write('Found no equilibria\n\n')
     args.output.write('\n')
-    
-
 
     # Output json data
     args.output.write('Json Data\n')
@@ -148,7 +117,6 @@ def main():  # noqa
         'equilibria': [serial.to_prof_json(eqm) for eqm, _ in equilibria]}
     json.dump(json_data, args.output)
     args.output.write('\n')
-
 
 
 if __name__ == '__main__':
