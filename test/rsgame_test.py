@@ -590,3 +590,15 @@ def test_nan_mask_for_dev_payoffs():
 
     devs = game.deviation_payoffs([1, 0, 0, 0], assume_complete=True)
     assert np.allclose(devs, [1, 2, np.nan, 0], equal_nan=True)
+
+
+def test_nan_payoffs_for_dev_payoffs():
+    profiles = [[3, 0, 3, 0],
+                [2, 1, 3, 0],
+                [3, 0, 2, 1]]
+    payoffs = [[1, 0, 2, 0],
+               [np.nan, 3, np.nan, 0],
+               [np.nan, 0, np.nan, 4]]
+    game = rsgame.Game([3, 3], [2, 2], profiles, payoffs)
+    devs = game.deviation_payoffs([1, 0, 1, 0])
+    assert np.allclose(devs, [1, 3, 2, 4])

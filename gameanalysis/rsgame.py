@@ -671,7 +671,7 @@ class Game(BaseGame):
                 # Ignore underflow caused when profile probability is not
                 # representable in floating point.
                 probs = np.exp(prof_prob + self._dev_reps - log_mix)
-            zero_prob = self.role_repeat(_TINY * self.num_players)
+            zero_prob = self.role_repeat(_TINY * (self.num_players + 1))
             weighted_payoffs = probs * np.where(probs > zero_prob,
                                                 self.payoffs, 0)
             values = np.sum(weighted_payoffs, 0)
