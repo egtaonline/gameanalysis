@@ -357,7 +357,7 @@ def read_sample_game(json):
     # Join data together
     profs = []
     for prof, _ in sample_map.values():
-        profs.extend(profs)
+        profs.extend(prof)
     if profs:
         profiles = np.concatenate(profs)
         sample_payoffs = [np.concatenate(p) for _, p
