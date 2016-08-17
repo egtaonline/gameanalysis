@@ -206,16 +206,31 @@ class BaseGame(object):
         return self.role_reduce(utils.game_size(
             rev_arange, profiles)).dot(base)
 
-    def get_expected_payoffs(self, mix, deviations=None):
+    def get_expected_payoffs(self, mix, assume_complete=False, jacobian=False,
+                             deviations=None):
         """Returns the payoff of each role under mixture
 
         If the payoffs for deviating from `mix` is already known, that an be
         passed in to save computation."""
         mix = np.asarray(mix, float)
-        if deviations is None:
-            deviations = self.deviation_payoffs(mix)
-        deviations[mix == 0] = 0  # Don't care about that missing data
-        return self.role_reduce(mix * deviations)
+        if jacobian:
+            if deviations is None:
+                deviations, dev_jac = self.deviation_payoffs(
+                    mix, assume_complete=assume_complete, jacobian=True)
+            else:
+                deviations, dev_jac = deviations
+            deviations[mix < _TINY] = 0  # Don't care about that missing data
+            dev_jac[mix < _TINY] = 0  # Don't care about that missing data
+            expected_payoffs = self.role_reduce(mix * deviations)
+            jac = self.role_reduce(mix[:, None] * dev_jac, 0) + deviations
+            return expected_payoffs, jac
+
+        else:
+            if deviations is None:
+                deviations = self.deviation_payoffs(
+                    mix, assume_complete=assume_complete)
+            deviations[mix < _TINY] = 0  # Don't care about that missing data
+            return self.role_reduce(mix * deviations)
 
     def trim_mixture_support(self, mixture, supp_thresh=1e-3):
         """Trims strategies played less than supp_thresh from the support"""
@@ -591,6 +606,7 @@ class Game(BaseGame):
         else:
             return self._profile_id_map[hashed]
 
+    # TODO Move to regret?
     def get_max_social_welfare(self, by_role=False):
         """Returns the maximum social welfare over the known profiles.
 

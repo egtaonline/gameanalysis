@@ -240,10 +240,23 @@ def test_game_function(players, strategies):
 
     # Test expected payoff
     mix = game.random_mixtures()[0]
-    assert not np.isnan(game.get_expected_payoffs(mix)).any(), \
-        "some array expected payoffs were nan"
-    assert not np.isnan(game.deviation_payoffs(mix)).any(), \
-        "some array expected values were nan"
+
+    dev1 = game.deviation_payoffs(mix)
+    dev2, dev_jac = game.deviation_payoffs(mix, jacobian=True)
+    assert not np.isnan(dev1).any()
+    assert not np.isnan(dev_jac).any()
+    assert np.allclose(dev1, dev2)
+
+    pay1 = game.get_expected_payoffs(mix)
+    pay2 = game.get_expected_payoffs(mix, deviations=dev1)
+    pay3, jac1 = game.get_expected_payoffs(mix, jacobian=True)
+    pay4, jac2 = game.get_expected_payoffs(
+        mix, deviations=(dev1, dev_jac), jacobian=True)
+    assert not np.isnan(pay1).any()
+    assert (np.allclose(pay1, pay2) and np.allclose(pay1, pay3) and
+            np.allclose(pay1, pay4))
+    assert not np.isnan(jac1).any()
+    assert np.allclose(jac1, jac2)
 
     # Max social welfare
     welfare, profile = game.get_max_social_welfare()
@@ -602,3 +615,18 @@ def test_nan_payoffs_for_dev_payoffs():
     game = rsgame.Game([3, 3], [2, 2], profiles, payoffs)
     devs = game.deviation_payoffs([1, 0, 1, 0])
     assert np.allclose(devs, [1, 3, 2, 4])
+
+
+def test_expected_payoffs_jac():
+    profiles = [[2, 0],
+                [1, 1],
+                [0, 2]]
+    payoffs = [[1, 0],
+               [3, 3],
+               [0, 1]]
+    game = rsgame.Game(2, 2, profiles, payoffs)
+    ep, ep_jac = game.get_expected_payoffs([.5, .5], jacobian=True)
+    ep_jac -= ep_jac.sum() / 2  # project on simplex
+    assert np.allclose(ep, 2)
+    assert np.allclose(ep_jac, 0), \
+        "maximum surplus should have 0 jacobian"

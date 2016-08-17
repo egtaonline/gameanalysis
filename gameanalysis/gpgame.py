@@ -45,6 +45,10 @@ class BaseGPGame(rsgame.BaseGame):
                 self._gps.append(_train_gp(gp_profs, gp_pays, n_jobs=cv_jobs,
                                            n_iter=cv_iters))
 
+    def is_complete(self):
+        # GP Games are always complete
+        return True
+
     def get_payoffs(self, profiles):
         """Get the payoffs for a set of profiles"""
         payoffs = np.zeros(profiles.shape)

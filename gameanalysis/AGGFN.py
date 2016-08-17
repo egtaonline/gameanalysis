@@ -120,6 +120,9 @@ class Sym_AGG_FNA(rsgame.BaseGame):
             self._max_payoffs.setflags(write=False)
         return self._max_payoffs.view()
 
+    def is_complete(self):
+        # Action graph games are always complete
+        return True
 
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
         # TODO To add jacobian support.

@@ -6,7 +6,9 @@ import numpy as np
 import scipy.misc as spm
 
 
+_TINY = np.finfo(float).tiny
 _MAX_INT_FLOAT = 2 ** (np.finfo(float).nmant - 1)
+_SIMPLEX_BIG = 1 / np.finfo(float).resolution
 
 
 def prod(collection):
@@ -245,6 +247,11 @@ def acartesian2(*arrays):
 
 def simplex_project(array):
     """Return the projection onto the simplex"""
+    array = np.asarray(array, float)
+    # This fails for really large values, so we normalize the array so the
+    # largest element has absolute value at most _SIMPLEX_BIG
+    array *= np.minimum(_SIMPLEX_BIG / (_TINY + np.abs(array.max(-1))),
+                        1)[..., None]
     size = array.shape[-1]
     sort = -np.sort(-array)
     rho = (1 - sort.cumsum(-1)) / np.arange(1, size + 1)

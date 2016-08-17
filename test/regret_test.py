@@ -105,3 +105,34 @@ def test_nan_deviations(players, strategies):
         gains = regret.mixture_deviation_gains(game, mix)
         assert not np.isnan(gains).any(), \
             "deviation gains in complete game were nan"
+
+
+def test_max_mixed_profile():
+    profiles = [[2, 0],
+                [1, 1],
+                [0, 2]]
+    payoffs = [[1, 0],
+               [3, 3],
+               [0, 1]]
+    game = rsgame.Game(2, 2, profiles, payoffs)
+    mix1 = regret.max_mixed_social_welfare(game, processes=1)[1]
+    mix2 = regret.max_mixed_social_welfare(game)[1]
+    assert np.allclose(mix1, [0.5, 0.5])
+    assert np.allclose(mix2, [0.5, 0.5])
+
+
+def test_max_pure_profile():
+    profiles = [[2, 0],
+                [1, 1],
+                [0, 2]]
+    payoffs = [[3, 0],
+               [4, 4],
+               [0, 1]]
+    game = rsgame.Game(2, 2, profiles, payoffs)
+    prof = regret.max_pure_social_welfare(game)[1]
+    assert np.all(prof == [2, 0])
+
+    game = rsgame.Game(rsgame.BaseGame(2, 2))
+    sw, prof = regret.max_pure_social_welfare(game)
+    assert np.isnan(sw)
+    assert prof is None

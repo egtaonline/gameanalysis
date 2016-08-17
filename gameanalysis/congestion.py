@@ -49,6 +49,10 @@ class CongestionGame(rsgame.BaseGame):
         self._max_payoffs.shape = (1,)
         self._max_payoffs.setflags(write=False)
 
+    def is_complete(self):
+        """Congestion games are always complete"""
+        return True
+
     def min_payoffs(self):
         return self._min_payoffs
 

@@ -1,5 +1,9 @@
 """A module for computing regret and social welfare of profiles"""
+import itertools
+import multiprocessing
+
 import numpy as np
+from scipy import optimize
 
 
 def pure_strategy_deviation_gains(game, prof):
@@ -71,6 +75,133 @@ def pure_social_welfare(game, profile):
 def mixed_social_welfare(game, mix):
     """Returns the social welfare of a mixed strategy profile"""
     return game.get_expected_payoffs(mix).dot(game.num_players)
+
+
+class SocialWelfareOptimizer(object):
+    """A pickleable object to find Nash equilibria
+
+    This method uses constrained convex optimization to to attempt to solve a
+    proxy for the nonconvex regret minimization."""
+    def __init__(self, game, gtol=1e-8):
+        self.game = game
+        self.scale = game.max_payoffs() - game.min_payoffs()
+        self.scale[self.scale == 0] = 1  # In case payoffs are the same
+        self.offset = game.min_payoffs()
+        self.gtol = gtol
+
+    def obj_func(self, mix, penalty):
+        # We assume that the initial point is in a constant sum subspace, and
+        # so project the gradient so that any gradient step maintains that
+        # constant step. Thus, sum to 1 is not one of the penalty terms
+
+        # Because deviation payoffs uses log space, we max with 0 just for the
+        # payoff calculation
+        ep, ep_jac = self.game.get_expected_payoffs(
+            np.maximum(0, mix), assume_complete=True, jacobian=True)
+        # Normalize so payoffs are effectively in [0, 1]
+        ep = (ep - self.offset) / self.scale
+        ep_jac /= self.scale[:, None]
+
+        # Compute normalized negative walfare (minimization)
+        welfare = -self.game.num_players.dot(ep)
+        dwelfare = -self.game.num_players.dot(ep_jac)
+
+        # Add penalty for negative mixtures
+        welfare += penalty * np.sum(np.minimum(mix, 0) ** 2) / 2
+        dwelfare += penalty * np.minimum(mix, 0)
+
+        # Project grad so steps stay in the simplex (more or less)
+        dwelfare -= self.game.role_repeat(self.game.role_reduce(dwelfare) /
+                                          self.game.num_strategies)
+        return welfare, dwelfare
+
+    def __call__(self, mix):
+        # Pass in lambda, and make penalty not a member
+
+        result = None
+        penalty = np.sum(self.game.num_players)
+        for _ in range(30):
+            # First get an unconstrained result from the optimization
+            with np.errstate(over='raise', invalid='raise'):
+                try:
+                    opt = optimize.minimize(
+                        lambda m: self.obj_func(m, penalty), mix, method='CG',
+                        jac=True, options={'gtol': self.gtol})
+                except FloatingPointError:  # pragma: no cover
+                    penalty *= 2
+                    continue
+
+            mix = opt.x
+            # Project it onto the simplex, it might not be due to the penalty
+            result = self.game.simplex_project(mix)
+            if np.allclose(mix, result):
+                break
+            # Increase constraint penalty
+            penalty *= 2
+
+        return result
+
+
+def max_mixed_social_welfare(game, grid_points=2, random_restarts=0,
+                             processes=None, **swopt_args):
+    """Returns the maximum role symmetric mixed social welfare profile
+
+    Arguments
+    ---------
+    grid_points : int > 1
+        The number of grid points to use for mixture seeds. two implies just
+        pure mixtures, more will be denser, but scales exponentially with the
+        dimension.
+    random_restarts : int
+        The number of random initializations.
+    processes : int
+        Number of processes to use when finding Nash equilibria. If greater
+        than one, the game will need to be pickleable.
+    """
+    # XXX The code for this in game is rather complicated because of its
+    # generality. This might be faster if that were not the case.
+    assert game.is_complete(), \
+        "Max welfare finding only works on complete games"""
+
+    initial_points = itertools.chain(
+        [game.uniform_mixture()],
+        game.grid_mixtures(grid_points),
+        game.biased_mixtures(),
+        game.role_biased_mixtures(),
+        game.random_mixtures(random_restarts))
+
+    best = [-np.inf, None]  # Need a pointer for closure
+
+    def process(mix):
+        welfare = mixed_social_welfare(game, mix)
+        if welfare > best[0]:
+            best[0] = welfare
+            best[1] = mix
+
+    opt = SocialWelfareOptimizer(game, **swopt_args)
+    if processes == 1:
+        for mix in initial_points:
+            process(opt(mix))
+    else:
+        with multiprocessing.Pool(processes) as pool:
+            for mix in pool.imap_unordered(opt, initial_points):
+                process(mix)
+
+    return tuple(best)
+
+
+def max_pure_social_welfare(game):
+    """Get the max social welfare pure profile
+
+    Returns a tuple of the max welfare and the corresponding profile"""
+    mask = np.sum(game.profiles > 0, 1) == game.num_roles
+    if mask.any():
+        profiles = game.profiles[mask]
+        welfares = np.sum(profiles * game.payoffs[mask], 1)
+        prof_ind = np.nanargmax(welfares)
+        return welfares[prof_ind], profiles[prof_ind]
+    else:
+        return np.nan, None
 
 
 # def neighbors(game, p, *args, **kwargs):

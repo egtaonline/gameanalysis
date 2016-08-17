@@ -110,7 +110,7 @@ class RegretOptimizer(object):
 
         return obj, grad
 
-    def __call__(self, mix):  # pragma: no cover
+    def __call__(self, mix):
         # Pass in lambda, and make penalty not a member
 
         result = None
@@ -123,7 +123,6 @@ class RegretOptimizer(object):
             mix = opt.x
             # Project it onto the simplex, it might not be due to the penalty
             result = self.game.simplex_project(mix)
-            # Maximum average projection error over roles
             if np.allclose(mix, result):
                 break
             # Increase constraint penalty
@@ -256,6 +255,8 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     eqm : (Mixture)
         A generator over low regret mixtures
     """
+    assert game.is_complete(), "Nash finding only works on complete games"""
+
     initial_points = list(itertools.chain(
         [game.uniform_mixture()],
         game.grid_mixtures(grid_points),
