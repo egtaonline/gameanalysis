@@ -13,7 +13,8 @@ from gameanalysis import gameio
 PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]
 PARSER = argparse.ArgumentParser(prog='ga ' + PACKAGE, description="""Compute
                                  bootstrap statistics using samples from a
-                                 mixture.""")
+                                 mixture. Return type is a dictionary that maps
+                                 percentiles to values.""")
 PARSER.add_argument('--input', '-i', metavar='<input-file>', default=sys.stdin,
                     type=argparse.FileType('r'), help="""Input data to run
                     bootstrap on. Input should be a json list of surpluses
@@ -43,6 +44,9 @@ samples to acquire. More samples takes longer, but in general the percentiles
 requested should be a multiple of this number minus 1, otherwise there will be
                     some error due to linear interpolation between points.
                     (default: %(default)s)""")
+PARSER.add_argument('--mean', '-m', action='store_true', help="""In addition to
+                    bootstrap confidence intervals, also return the mean value.
+                    This is in the dictionary with key 'mean'.""")
 
 
 def load_devs(game, serial, data):
@@ -65,6 +69,10 @@ def main():
         expect = game.role_reduce(devs * mix)
         result = bootstrap.sample_regret(game, expect, devs,
                                          args.num_bootstraps, args.percentiles)
+        if args.mean:
+            mdevs = devs.mean(0)
+            mexpect = game.role_reduce(mdevs * mix, keepdims=True)
+            mean = np.max(mdevs - mexpect)
 
     elif args.dev_surplus is not None:
         game, serial = gameio.read_base_game(json.load(args.dev_surplus[0]))
@@ -73,11 +81,23 @@ def main():
         surpluses = np.sum(devs * mix * game.role_repeat(game.num_players), 1)
         result = bootstrap.mean(surpluses, args.num_bootstraps,
                                 args.percentiles)
+        if args.mean:
+            mean = surpluses.mean()
 
     else:
+        data = np.asarray(data, float)
         result = bootstrap.mean(data, args.num_bootstraps, args.percentiles)
+        if args.mean:
+            mean = data.mean()
 
-    json.dump(result.tolist(), args.output)
+    if args.percentiles is None:
+        args.percentiles = np.linspace(0, 100, args.num_bootstraps)
+    jresult = {str(p).rstrip('0').rstrip('.'): v.item()
+               for p, v in zip(args.percentiles, result)}
+    if args.mean:
+        jresult['mean'] = mean
+
+    json.dump(jresult, args.output)
     args.output.write('\n')
 
 

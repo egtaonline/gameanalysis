@@ -8,18 +8,22 @@ import numpy as np
 
 from gameanalysis import bootstrap
 from gameanalysis import gameio
+from gameanalysis import regret
 
 
 CHOICES = {
-    'regret': bootstrap.mixture_regret,
-    'surplus': bootstrap.mixture_welfare,
+    'regret': (bootstrap.mixture_regret, regret.mixture_regret),
+    'surplus': (bootstrap.mixture_welfare, regret.mixed_social_welfare),
 }
 
 PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]
 PARSER = argparse.ArgumentParser(prog='ga ' + PACKAGE, description="""Compute
                                  bootstrap statistics using a sample game with
                                  data for every profile in the support of the
-                                 subgame and potentially deviations.""")
+                                 subgame and potentially deviations. The return
+                                 value is a list with an entry for each mixture
+                                 in order. Each element is a dictionary mapping
+                                 percentile to value.""")
 PARSER.add_argument('--input', '-i', metavar='<input-file>', default=sys.stdin,
                     type=argparse.FileType('r'), help="""Input sample game to
                     run bootstrap on.  (default: stdin)""")
@@ -47,6 +51,9 @@ samples to acquire. More samples takes longer, but in general the percentiles
 requested should be a multiple of this number minus 1, otherwise there will be
                     some error due to linear interpolation between points.
                     (default: %(default)s)""")
+PARSER.add_argument('--mean', '-m', action='store_true', help="""Also compute
+                    the mean statistic and return it as well. This will be in
+                    each dictionary with the key 'mean'.""")
 
 
 def main():
@@ -54,9 +61,20 @@ def main():
     game, serial = gameio.read_sample_game(json.load(args.input))
     profiles = np.concatenate([serial.from_prof_json(p)[None] for p
                                in json.load(args.profiles)])
-    results = CHOICES[args.type](game, profiles, args.num_bootstraps,
-                                 args.percentiles, args.processes)
-    json.dump(results.tolist(), args.output)
+    bootf, meanf = CHOICES[args.type]
+    results = bootf(game, profiles, args.num_bootstraps, args.percentiles,
+                    args.processes)
+    if args.percentiles is None:
+        args.percentiles = np.linspace(0, 100, args.num_bootstraps)
+    percentile_strings = [str(p).rstrip('0').rstrip('.')
+                          for p in args.percentiles]
+    jresults = [{p: v.item() for p, v in zip(percentile_strings, boots)}
+                for boots in results]
+    if args.mean:
+        for jres, mix in zip(jresults, profiles):
+            jres['mean'] = meanf(game, mix)
+
+    json.dump(jresults, args.output)
     args.output.write('\n')
 
 
