@@ -42,7 +42,7 @@ class GameSerializer(object):
                                           len(self.role_names))
         self.num_roles = self.num_strategies.size
         self.num_role_strats = self.num_strategies.sum()
-        self.role_starts = self.num_strategies[:-1].cumsum()
+        self.role_starts = np.insert(self.num_strategies[:-1].cumsum(), 0, 0)
         self._role_index = {r: i for i, r in enumerate(self.role_names)}
         role_strats = itertools.chain.from_iterable(
             ((r, s) for s in strats) for r, strats
@@ -52,7 +52,7 @@ class GameSerializer(object):
         self._hash = hash((self.role_names, self.strat_names))
 
     def role_split(self, array, axis=-1):
-        return np.split(array, self.role_starts, axis)
+        return np.split(array, self.role_starts[1:], axis)
 
     def role_index(self, role):
         """Return the index of a role"""
