@@ -189,7 +189,7 @@ class GameSerializer(object):
     def to_deviation_payoff_json(self, profile, payoffs):
         """Format a profile and deviation payoffs as json"""
         supp = profile > 0
-        role_supp = np.add.reduceat(supp, np.insert(self.role_starts, 0, 0))
+        role_supp = np.add.reduceat(supp, self.role_starts)
         splits = np.repeat(self.num_strategies - 1, role_supp)[:-1].cumsum()
         return {r: {s: {d: p.item() for p, d
                         in zip(dps, (d for d in ses if d != s))}  # noqa
