@@ -7,45 +7,38 @@ This is a set of python scripts to manipulate empirical game data.
 Setup
 -----
 
-You can follow the instructions below for how to setup your environment.
-Alternatively, if you're using ubuntu you should just be able to execute `make
-ubuntu-setup` from this directory to properly setup your environment. You will
-need root privileges to execute this script.
-
-Before this library can be used, you need to install several dependencies.
+To use this script, you need to install the following dependencies:
 
 1. Python 3
 2. BLAS/LAPACK
-3. virtualenv
+3. A fortran compiler
+4. Make
 
-On ubuntu these dependencies can be installed with:
+### Ubuntu
 
-```
-$ sudo apt-get install python3 libatlas-base-dev gfortran
-$ sudo pip3 install virtualenv
-```
-
-On mac, similar programs should be able to be installed with [`brew`](brew.sh).
-From here, setup virtualenv in this directory, and activate it with
+These dependencies can be met with
 
 ```
-make setup
+$ sudo apt install python3 libatlas-base-dev gfortran python3-venv
 ```
 
-At this point, you should run the tests to make sure everything was setup properly.
-Executing `make test` should run all of the tests. If you see something like:
+or `make ubuntut-requirements`
+
+### Mac
+
+On mac you can install these easily with [homebrew](http://brew.sh/).
+
+TODO add actual setup commands
+
+### Final setup
+
+After all of the dependencies are met, executing
 
 ```
-bin/nosetests --rednose test
-.............................................................................
-
-3221 tests run in 139.4 seconds (3221 tests passed)
+$ make setup
 ```
 
-Then all of the tests passed!
-If you get failures with finding equilibria, it's probably fine.
-Those tests can fail occasionally due to the random initialization.
-Note, this may take a while to run.
+will complete the setup.
 
 
 Usage
@@ -53,45 +46,26 @@ Usage
 
 `ga` is the game analysis command line tool.
 `./ga --help` will reveal all of the available options.
-If the root of this project is on your python path (done manually, with the virtual env active, or when executing anything in `bin`), then you also import individual packages from `gameanalysis`.
+If the root of this project is on your python path (done manually, with the venv active, or when executing anything in `bin`), then you also import individual packages from `gameanalysis`.
 
 
 Testing
 -------
 
 All of the tests can be run with `make test`.
-If you want more fine grained control, you can run `bin/nosetests test.<unit-test-file-name>[:test-method-name]` to execute only a single test file, or or only a specific method from within a file.
-You may also want to add the option `--nocapture` or `-s` to output `sysout` and `syserr`, which are usually captured.
-Additionally, `make coverage` will run all of the tests and output a report on the coverage, which will look something like:
-
-```
-Name                        Stmts   Miss  Cover   Missing
----------------------------------------------------------
-gameanalysis.py                 0      0   100%
-gameanalysis/collect.py        73      0   100%
-gameanalysis/gamegen.py       164      0   100%
-gameanalysis/gameio.py         98     77    21%   12-26, 51-54, 59-60, 67-87, 92-101, 106-115, 120-131, 138-152
-gameanalysis/nash.py           44      0   100%
-gameanalysis/profile.py       100      0   100%
-gameanalysis/reduction.py     128      0   100%
-gameanalysis/regret.py         27      0   100%
-gameanalysis/rsgame.py        506      0   100%
-gameanalysis/subgame.py        78      0   100%
-gameanalysis/utils.py         122      0   100%
----------------------------------------------------------
-TOTAL                        1340     77    94%
-```
+If you want more fine grained control, you can run `make test file=<file>` to execute tests for a single file in game analysis e.g. `make test file=rsgame`.
+Additionally, `make coverage` and `make coverage file=<file>` will run all of the tests and output a report on the coverage.
 
 
 Games
 -----
 
-There are three game types: EmptyGame, Game, and SampleGame.
+There are three game types: BaseGame, Game, and SampleGame.
 
-EmptyGame contains several functions that are valid for games without payoff data.
+BaseGame contains several functions that are valid for games without payoff data, and has the general structure that arbitrary game-like objects should inherit from.
 
 Game is a potentially sparse mapping from role symmetric profiles to payoffs.
-It behaves mostly like a python dictionary from profiles to payoff dictionaries.
+It provides methods to quickly calculate mixture deviation gains, necessary for computing nash equilibria.
 
 SampleGame retains payoff data for every observation.
 This allows it to resample the payoff data for every individual profile.
@@ -100,8 +74,7 @@ This allows it to resample the payoff data for every individual profile.
 Profiles
 --------
 
-Profiles and Mixtures have a dictionary representation and a corresponding array representation that is only valid for the existing game object as it depends on the order that strategy names were hashed.
-The existence of array versions is for efficiency of many internal operations.
+Internally this library uses arrays to store game profiles, and doesn't care about the names attached to a role or strategy, only their index. For consistence of lexicographic tie-breaking, roles and strategies are indexed in lexicographic order when serializing a named game into an internal array representation.
 
 
 Style Guidelines
