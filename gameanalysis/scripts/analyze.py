@@ -112,7 +112,12 @@ def main():
         support = eqm > 0
         gains = regret.mixture_deviation_gains(redgame, eqm)
         role_gains = redgame.role_reduce(gains, ufunc=np.fmax)
-        if np.any(role_gains > args.regret_thresh):
+
+        if np.isnan(gains).any():
+            # Not fully explored
+            unconfirmed.append((eqm, np.nanmax(gains)))
+
+        elif np.any(role_gains > args.regret_thresh):
             # There are deviations, did we explore them?
             dev_inds = ([np.argmax(gs == mg) for gs, mg
                          in zip(redgame.role_split(gains), role_gains)] +
@@ -123,10 +128,8 @@ def main():
                 if not np.all(devsupp <= subgames, -1).any():
                     unexplored.append((devsupp, dind, gains[dind], eqm))
 
-        elif np.any(np.isnan(gains)):
-            unconfirmed.append((eqm, np.nanmax(gains)))
-
         else:
+            # Equilibrium!
             equilibria.append((eqm, np.max(gains)))
 
     # Output Game
