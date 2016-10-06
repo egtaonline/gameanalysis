@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 from gameanalysis import gameio
-from test import testutils
 
 EMPTY_GAME_JSON = {
     'players': {
@@ -80,17 +79,20 @@ SAMPLE_GAME_JSON = {
 }
 
 
-@testutils.apply(zip([EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON]))
+@pytest.mark.parametrize('json_',
+                         [EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON])
 def test_base_game_from_json(json_):
     gameio.read_base_game(json_)
 
 
-@testutils.apply(zip([EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON]))
+@pytest.mark.parametrize('json_',
+                         [EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON])
 def test_game_from_json(json_):
     gameio.read_game(json_)
 
 
-@testutils.apply(zip([EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON]))
+@pytest.mark.parametrize('json_',
+                         [EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON])
 def test_sample_game_from_json(json_):
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore',
@@ -98,8 +100,8 @@ def test_sample_game_from_json(json_):
         gameio.read_sample_game(json_)
 
 
-@testutils.apply(repeat=20)
-def test_sorted_strategy():
+@pytest.mark.parametrize('_', range(20))
+def test_sorted_strategy(_):
     with open('test/hard_nash_game_1.json') as f:
         _, conv = gameio.read_game(json.load(f))
     assert all(a < b for a, b in zip(conv.role_names[:-1],

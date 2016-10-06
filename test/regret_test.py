@@ -1,13 +1,13 @@
 import numpy as np
+import pytest
 
 from gameanalysis import gamegen
 from gameanalysis import regret
 from gameanalysis import rsgame
-from test import testutils
 
 
-@testutils.apply(repeat=20)
-def test_pure_prisoners_dilemma():
+@pytest.mark.parametrize('_', range(20))
+def test_pure_prisoners_dilemma(_):
     game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
     eqm = [0, 2]
 
@@ -15,8 +15,8 @@ def test_pure_prisoners_dilemma():
         "Known equilibrium was not zero regret"
 
 
-@testutils.apply(repeat=20)
-def test_mixed_prisoners_dilemma():
+@pytest.mark.parametrize('_', range(20))
+def test_mixed_prisoners_dilemma(_):
     game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
     eqm = [0, 1]
 
@@ -55,7 +55,7 @@ def test_pure_incomplete_data():
     assert np.isnan(reg), "regret of missing profile not nan"
 
 
-@testutils.apply(zip(range(1, 7)), repeat=20)
+@pytest.mark.parametrize('strategies', list(range(1, 7)) * 20)
 def test_two_player_zero_sum_pure_wellfare(strategies):
     game = gamegen.two_player_zero_sum_game(strategies)
     for prof in game.profiles:
@@ -69,7 +69,7 @@ def test_nonzero_profile_welfare():
         "Didn't properly sum welfare"
 
 
-@testutils.apply(zip(range(1, 7)), repeat=20)
+@pytest.mark.parametrize('strategies', list(range(1, 7)) * 20)
 def test_two_player_zero_sum_mixed_wellfare(strategies):
     game = gamegen.two_player_zero_sum_game(strategies)
     for prof in game.random_mixtures(20):
@@ -83,7 +83,7 @@ def test_nonzero_mixed_welfare():
         "Didn't properly sum welfare"
 
 
-@testutils.apply([
+@pytest.mark.parametrize('players,strategies', [
     ([1], 1),
     ([1], 2),
     ([2], 1),

@@ -1,19 +1,18 @@
 import numpy as np
+import pytest
 
 from gameanalysis import nash
 from gameanalysis import congestion
 
-from test import testutils
 
-
-@testutils.apply([
+@pytest.mark.parametrize('players,facilities,required', [
     (1, 1, 1),
     (2, 2, 1),
     (2, 2, 2),
     (2, 3, 2),
     (3, 4, 2),
     (5, 6, 4),
-], repeat=20)
+] * 20)
 def test_deviation_payoffs(players, facilities, required):
     """Test that deviation payoff formulation is accurate"""
     cgame = congestion.CongestionGame(players, facilities, required)
@@ -32,8 +31,8 @@ def test_deviation_payoffs(players, facilities, required):
         assert np.allclose(jac, tjac)
 
 
-@testutils.apply(repeat=20)
-def test_jacobian_zeros():
+@pytest.mark.parametrize('_', range(20))
+def test_jacobian_zeros(_):
     """Test that jacobian has appropriate zeros"""
     cgame = congestion.CongestionGame(3, 3, 1)
     _, jac = cgame.deviation_payoffs(cgame.random_mixtures()[0], jacobian=True)
@@ -50,14 +49,14 @@ def test_jacobian_zeros():
          "zeros")
 
 
-@testutils.apply([
+@pytest.mark.parametrize('players,facilities,required', [
     (1, 1, 1),
     (2, 2, 1),
     (2, 2, 2),
     (2, 3, 2),
     (3, 4, 2),
     (5, 6, 4),
-], repeat=2)
+] * 2)
 def test_nash_finding(players, facilities, required):
     """Test that nash works on congestion games"""
     cgame = congestion.CongestionGame(players, facilities, required)

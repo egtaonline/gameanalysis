@@ -4,7 +4,7 @@ import numpy as np
 import scipy.special as sps
 from scipy import stats
 from sklearn import gaussian_process
-from sklearn import grid_search
+from sklearn import model_selection
 
 from gameanalysis import rsgame
 from gameanalysis import reduction
@@ -82,17 +82,15 @@ class BaseGPGame(rsgame.BaseGame):
         return self._max_payoffs.view()
 
 
-_CV_PARAMS = {'nugget': stats.powerlaw(.05, loc=1e-12, scale=10),
-              'theta0': stats.powerlaw(.2, loc=1e-3, scale=50)}
-_FIXED_PARAMS = {'storage_mode': 'light'}
+_CV_PARAMS = {'alpha': stats.powerlaw(.2, loc=1e-3, scale=50)}
 
 
 def _train_gp(x, y, **search_kwds):
     if 'n_jobs' in search_kwds and search_kwds['n_jobs'] < 1:
         # one job per cpu core
         search_kwds['n_jobs'] = multiprocessing.cpu_count()
-    cv = grid_search.RandomizedSearchCV(
-        gaussian_process.GaussianProcess(**_FIXED_PARAMS),
+    cv = model_selection.RandomizedSearchCV(
+        gaussian_process.GaussianProcessRegressor(),
         _CV_PARAMS, error_score=-np.inf, **search_kwds)
     cv.fit(x, y)
     return cv.best_estimator_

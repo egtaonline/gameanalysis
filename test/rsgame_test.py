@@ -1,5 +1,6 @@
 import itertools
 import math
+import os
 
 import numpy as np
 import numpy.random as rand
@@ -11,10 +12,46 @@ from gameanalysis import gamegen
 from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import utils
-from test import testutils
 
 TINY = np.finfo(float).tiny
 EPS = 5 * np.finfo(float).eps
+GAMES = [
+    ([1], 1),
+    ([1], 2),
+    ([2], 1),
+    ([2], 2),
+    ([2], 5),
+    ([5], 2),
+    ([5], 5),
+    (2 * [1], 1),
+    (2 * [1], 2),
+    (2 * [2], 1),
+    (2 * [2], 2),
+    (5 * [1], 2),
+    (2 * [1], 5),
+    (2 * [2], 5),
+    (2 * [5], 2),
+    (2 * [5], 5),
+    (3 * [3], 3),
+    (5 * [1], 5),
+    ([170], 2),
+    ([180], 2),
+    ([1, 2], 2),
+    ([1, 2], [2, 1]),
+    (2, [1, 2]),
+    ([3, 4], [2, 3]),
+    ([2, 3, 4], [4, 3, 2]),
+]
+BIG_GAMES = GAMES + ([] if os.getenv('BIG_TESTS') != 'ON' else [
+    (1000, 2),
+    (5, 40),
+    (3, 160),
+    (50, 2),
+    (20, 5),
+    (90, 5),
+    ([2] * 2, 40),
+    (12, 12),
+])
 
 
 def exact_dev_reps(game):
@@ -35,7 +72,7 @@ def exact_dev_reps(game):
     return dev_reps
 
 
-@testutils.apply(testutils.game_sizes('big'))
+@pytest.mark.parametrize('players,strategies', BIG_GAMES)
 def test_devreps_approx(players, strategies):
     base = rsgame.BaseGame(players, strategies)
     profiles = base.all_profiles()
@@ -48,7 +85,7 @@ def test_devreps_approx(players, strategies):
 
 
 # Test that all functions work on an BaseGame
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_base_game_function(players, strategies):
     game = rsgame.BaseGame(players, strategies)
     assert game.num_players is not None, "num players was None"
@@ -107,7 +144,8 @@ def test_base_game_function(players, strategies):
 
     # Role Biased
     mixes = game.role_biased_mixtures(bias)
-    assert game.num_strategies[game.num_strategies > 1].sum() == mixes.shape[0], \
+    assert (game.num_strategies[game.num_strategies > 1].sum()
+            == mixes.shape[0]), \
         "Didn't generate the proper number of role biased mixtures"
     saw_bias = (mixes == bias).any(0)
     saw_all_biases = (game.role_reduce(saw_bias, ufunc=np.logical_and)
@@ -142,7 +180,7 @@ def test_base_game_function(players, strategies):
     assert repr(game) is not None, "game repr was None"
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_max_prob_prof(players, strategies):
     game = rsgame.BaseGame(players, strategies)
     profiles = game.all_profiles()
@@ -194,7 +232,7 @@ def test_verify_mixture_profile():
     assert np.all(game.verify_profile(random_profs))
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_simplex_project(players, strategies):
     game = rsgame.BaseGame(players, strategies)
     for non_mixture in rand.uniform(-1, 1, (100, game.num_role_strats)):
@@ -209,7 +247,7 @@ def test_symmetric():
 
 
 # Test that game functions work
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_game_function(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
 
@@ -290,7 +328,7 @@ def test_partial_profile_game():
 
 
 # Test that a Game with no data can still be created
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_empty_full_game(players, strategies):
     game = rsgame.Game(players, strategies)
 
@@ -405,7 +443,8 @@ def test_constant_sum():
 
 
 # Test that sample game functions work
-@testutils.apply(zip(testutils.game_sizes(), itertools.cycle([1, 2, 5, 10])))
+@pytest.mark.parametrize('game_size,samples',
+                         zip(GAMES, itertools.cycle([1, 2, 5, 10])))
 def test_sample_game_function(game_size, samples):
     base = gamegen.role_symmetric_game(*game_size)
     game = gamegen.add_noise(base, 1, samples)
@@ -472,7 +511,7 @@ def test_sample_game_resample():
 
 
 # Test that a Game with no data can still be created
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_empty_sample_game(players, strategies):
     base = rsgame.BaseGame(players, strategies)
     profiles = np.empty([0, base.num_role_strats], dtype=int)
@@ -493,14 +532,14 @@ def test_sample_game_invalid_constructor():
 
 
 # Test that sample game from matrix creates a game
-@testutils.apply([
+@pytest.mark.parametrize('players,strategies,samples', [
     (1, 1, 1),
     (1, 2, 1),
     (1, 1, 2),
     (2, 1, 2),
     (2, 2, 2),
     (3, 2, 4),
-], repeat=20)
+] * 20)
 def test_sample_game_from_matrix(players, strategies, samples):
     matrix = np.random.random([strategies] * players + [players, samples])
     game = rsgame.SampleGame(matrix)
@@ -559,7 +598,7 @@ def test_trim_mixture_support():
             trimmed)
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_profile_count(players, strategies):
     game = rsgame.BaseGame(players, strategies)
 

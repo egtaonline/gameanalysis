@@ -101,11 +101,14 @@ class GameSerializer(object):
     def to_prof_printstring(self, prof):
         """Convert a profile to a printable string"""
         if np.issubdtype(prof.dtype, int):
-            format_strat = lambda s, p: '\t{}: {:d}\n'.format(s, p)
+            def format_strat(s, p):
+                return '\t{}: {:d}\n'.format(s, p)
         elif np.issubdtype(prof.dtype, float):
-            format_strat = lambda s, p: '\t{}: {:>7.2%}\n'.format(s, p)
+            def format_strat(s, p):
+                return '\t{}: {:>7.2%}\n'.format(s, p)
         else:  # boolean
-            format_strat = lambda s, p: '\t{}\n'.format(s)
+            def format_strat(s, p):
+                return '\t{}\n'.format(s)
 
         return ''.join(
             '{}:\n{}'.format(role, ''.join(format_strat(s, p)

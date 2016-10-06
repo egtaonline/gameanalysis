@@ -10,7 +10,9 @@ from gameanalysis import gameio
 from gameanalysis import rsgame
 from gameanalysis import utils
 
-default_distribution = lambda shape=None: rand.uniform(-1, 1, shape)
+
+def default_distribution(shape=None):
+    return rand.uniform(-1, 1, shape)
 
 
 def role_symmetric_game(num_players, num_strategies,
@@ -578,7 +580,7 @@ def width_bimodal_old(scale=1):
 
 
 def width_uniform(max_width, num_profiles, num_samples):
-    """Uniform width distribution 
+    """Uniform width distribution
 
     Generates halfwidths in U[0, max_width]
     """
@@ -621,8 +623,9 @@ def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
     """
     spayoffs = game.payoffs[..., None].repeat(num_samples, -1)
     mask = game.profiles > 0
-    samples = noise(max_width, maxk.sum(), num_samples)
-    spayoffs[np.broadcast_to(mask[..., None], mask.shape + (num_samples,))] += samples.flat
+    samples = noise(max_width, mask.sum(), num_samples)
+    expand_mask = np.broadcast_to(mask[..., None], mask.shape + (num_samples,))
+    spayoffs[expand_mask] += samples.flat
     return rsgame.SampleGame(game, game.profiles, [spayoffs])
 
 

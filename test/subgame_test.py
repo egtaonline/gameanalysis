@@ -1,7 +1,8 @@
-import itertools
+import os
 
 import numpy as np
 import numpy.random as rand
+import pytest
 
 from gameanalysis import gamegen
 from gameanalysis import reduction
@@ -9,10 +10,48 @@ from gameanalysis import rsgame
 from gameanalysis import subgame
 from gameanalysis import utils
 
-from test import testutils
+SMALL_GAMES = [
+    ([1], 1),
+    ([1], 2),
+    ([2], 1),
+    ([2], 2),
+    ([2], 5),
+    ([5], 2),
+    ([5], 5),
+    (2 * [1], 1),
+    (2 * [1], 2),
+    (2 * [2], 1),
+    (2 * [2], 2),
+    (5 * [1], 2),
+]
+GAMES = SMALL_GAMES + [
+    (2 * [1], 5),
+    (2 * [2], 5),
+    (2 * [5], 2),
+    (2 * [5], 5),
+    (3 * [3], 3),
+    (5 * [1], 5),
+    ([170], 2),
+    ([180], 2),
+    ([1, 2], 2),
+    ([1, 2], [2, 1]),
+    (2, [1, 2]),
+    ([3, 4], [2, 3]),
+    ([2, 3, 4], [4, 3, 2]),
+]
+BIG_GAMES = GAMES + ([] if os.getenv('BIG_TESTS') != 'ON' else [
+    (1000, 2),
+    (5, 40),
+    (3, 160),
+    (50, 2),
+    (20, 5),
+    (90, 5),
+    ([2] * 2, 40),
+    (12, 12),
+])
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_pure_subgame(players, strategies):
     game = rsgame.BaseGame(players, strategies)
     subgames = subgame.pure_subgames(game)
@@ -43,7 +82,7 @@ def test_subgame():
             sub_serial.num_role_strats)
 
 
-@testutils.apply(testutils.game_sizes('small'))
+@pytest.mark.parametrize('players,strategies', SMALL_GAMES)
 def test_maximal_subgames(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
     subs = subgame.maximal_subgames(game)
@@ -53,8 +92,8 @@ def test_maximal_subgames(players, strategies):
         "found subgame wasn't the full one"
 
 
-@testutils.apply(itertools.product(testutils.game_sizes('small'),
-                                   [0.9, 0.6, 0.4]))
+@pytest.mark.parametrize('game_desc', SMALL_GAMES)
+@pytest.mark.parametrize('prob', [0.9, 0.6, 0.4])
 def test_missing_data_maximal_subgames(game_desc, prob):
     base = rsgame.BaseGame(*game_desc)
     game = gamegen.add_profiles(base, prob)
@@ -79,7 +118,7 @@ def test_missing_data_maximal_subgames(game_desc, prob):
                     dev, sub)
 
 
-@testutils.apply(testutils.game_sizes('big'), repeat=20)
+@pytest.mark.parametrize('players,strategies', BIG_GAMES * 20)
 def test_deviation_profile_count(players, strategies):
     game = rsgame.BaseGame(players, strategies)
     sup = (rand.random(game.num_roles) * game.num_strategies).astype(int) + 1
@@ -111,7 +150,7 @@ def test_deviation_profile_count(players, strategies):
         "num_dpr_deviation_profiles didn't return correct number"
 
 
-@testutils.apply(testutils.game_sizes(), repeat=20)
+@pytest.mark.parametrize('players,strategies', GAMES * 20)
 def test_subgame_preserves_completeness(players, strategies):
     """Test that subgame function preserves completeness"""
     game = gamegen.role_symmetric_game(players, strategies)
@@ -145,7 +184,7 @@ def test_num_subgames():
     assert actual == 105
 
 
-@testutils.apply([
+@pytest.mark.parametrize('players,strategies', [
     ([1], [1]),
     ([1] * 3, [2] * 3),
     ([3], [2]),
@@ -173,7 +212,7 @@ def test_all_subgames(players, strategies):
     assert np.all(all_subgames == all_subgames2)
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_random_subgames(players, strategies):
     game = rsgame.BaseGame(players, strategies)
     rand_subgames = subgame.random_subgames(game, 30)

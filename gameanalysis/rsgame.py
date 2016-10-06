@@ -501,8 +501,8 @@ class Game(BaseGame):
         payoffs = np.asarray(payoffs)
 
         assert profiles.shape == payoffs.shape, \
-            "profiles and payoffs must be the same shape : profiles {0}, payoffs {1}"\
-            .format(profiles.shape, payoffs.shape)
+            ("profiles and payoffs must be the same shape : "
+             "profiles {0}, payoffs {1}").format(profiles.shape, payoffs.shape)
         expected_shape = (profiles.shape[0], self.num_role_strats)
         assert profiles.shape == expected_shape, \
             "profiles must have proper shape : expected {0} but was {1}"\

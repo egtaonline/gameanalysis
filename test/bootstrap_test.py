@@ -1,9 +1,39 @@
 import numpy as np
 import numpy.random as rand
+import pytest
 
 from gameanalysis import bootstrap
 from gameanalysis import gamegen
-from test import testutils
+
+SMALL_GAMES = [
+    ([1], 1),
+    ([1], 2),
+    ([2], 1),
+    ([2], 2),
+    ([2], 5),
+    ([5], 2),
+    ([5], 5),
+    (2 * [1], 1),
+    (2 * [1], 2),
+    (2 * [2], 1),
+    (2 * [2], 2),
+    (5 * [1], 2),
+]
+GAMES = SMALL_GAMES + [
+    (2 * [1], 5),
+    (2 * [2], 5),
+    (2 * [5], 2),
+    (2 * [5], 5),
+    (3 * [3], 3),
+    (5 * [1], 5),
+    ([170], 2),
+    ([180], 2),
+    ([1, 2], 2),
+    ([1, 2], [2, 1]),
+    (2, [1, 2]),
+    ([3, 4], [2, 3]),
+    ([2, 3, 4], [4, 3, 2]),
+]
 
 
 def test_mean():
@@ -21,7 +51,7 @@ def test_mean():
     assert np.all(perc_boots <= max_val)
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_sample_regret(players, strategies):
     n = 100
     game = gamegen.role_symmetric_game(players, strategies)
@@ -48,7 +78,7 @@ def test_sample_regret(players, strategies):
     assert np.all(perc_boots >= 0)
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_mixture_welfare(players, strategies):
     num_mixes = 5
     num_boots = 200
@@ -59,7 +89,7 @@ def test_mixture_welfare(players, strategies):
     assert boots.shape == (num_mixes, num_boots)
 
 
-@testutils.apply(testutils.game_sizes('small'))
+@pytest.mark.parametrize('players,strategies', SMALL_GAMES)
 def test_mixture_regret(players, strategies):
     num_mixes = 5
     num_boots = 200
@@ -76,7 +106,7 @@ def test_mixture_regret(players, strategies):
     assert np.all(perc_boots >= 0)
 
 
-@testutils.apply(testutils.game_sizes())
+@pytest.mark.parametrize('players,strategies', GAMES)
 def test_mixture_regret_single_mix(players, strategies):
     num_boots = 200
     game = gamegen.add_noise(gamegen.role_symmetric_game(players, strategies),

@@ -3,25 +3,24 @@ import os
 
 import numpy as np
 import numpy.random as rand
+import pytest
 
 from gameanalysis import gamegen
 from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import utils
-from test import testutils
 
 
-@testutils.apply(itertools.product(
-    [0.6, 0.9, 1],
-    [
-        ([1], [1], [1]),
-        ([2], [1], [2]),
-        ([3], [1], [2]),
-        ([1], [2], [1]),
-        ([1, 2], [2, 1], [1, 2]),
-        ([1, 4], [2, 1], [1, 2]),
-        ([4, 9], [3, 2], [2, 3]),
-    ]), repeat=10)
+@pytest.mark.parametrize('keep_prob', [0.6, 0.9, 1] * 10)
+@pytest.mark.parametrize('game_desc', [
+    ([1], [1], [1]),
+    ([2], [1], [2]),
+    ([3], [1], [2]),
+    ([1], [2], [1]),
+    ([1, 2], [2, 1], [1, 2]),
+    ([1, 4], [2, 1], [1, 2]),
+    ([4, 9], [3, 2], [2, 3]),
+])
 def test_dpr(keep_prob, game_desc):
     """Simple test that dpr functions are consistent"""
     players, strategies, red_players = game_desc
@@ -142,17 +141,16 @@ def test_dpr_repr():
     assert red == repr_str
 
 
-@testutils.apply(itertools.product(
-    [0.6, 0.9, 1],
-    [
-        ([1], [1]),
-        ([2], [1]),
-        ([3], [1]),
-        ([1], [2]),
-        ([1, 2], [2, 1]),
-        ([1, 4], [2, 1]),
-        ([4, 8], [3, 2]),
-    ]), repeat=10)
+@pytest.mark.parametrize('keep_prob', [0.6, 0.9, 1] * 10)
+@pytest.mark.parametrize('game_desc', [
+    ([1], [1]),
+    ([2], [1]),
+    ([3], [1]),
+    ([1], [2]),
+    ([1, 2], [2, 1]),
+    ([1, 4], [2, 1]),
+    ([4, 8], [3, 2]),
+])
 # Simple test of Twins Reduction
 def test_twins(keep_prob, game_desc):
     players, strategies = game_desc
@@ -186,17 +184,16 @@ def test_twins_repr():
     assert red == repr_str
 
 
-@testutils.apply(itertools.product(
-    [0.6, 0.9, 1],
-    [
-        ([1], [1], [1]),
-        ([2], [1], [2]),
-        ([4], [1], [2]),
-        ([1], [2], [1]),
-        ([1, 2], [2, 1], [1, 2]),
-        ([1, 4], [2, 1], [1, 2]),
-        ([4, 9], [3, 2], [2, 3]),
-    ]), repeat=10)
+@pytest.mark.parametrize('keep_prob', [0.6, 0.9, 1] * 10)
+@pytest.mark.parametrize('game_desc', [
+    ([1], [1], [1]),
+    ([2], [1], [2]),
+    ([4], [1], [2]),
+    ([1], [2], [1]),
+    ([1, 2], [2, 1], [1, 2]),
+    ([1, 4], [2, 1], [1, 2]),
+    ([4, 9], [3, 2], [2, 3]),
+])
 # Simple test of Hierarchical
 def test_hierarchical(keep_prob, game_desc):
     players, strategies, red_players = game_desc
@@ -262,17 +259,16 @@ def test_hierarchical_repr():
     assert red == repr_str
 
 
-@testutils.apply(itertools.product(
-    [0, 0.6, 1],
-    [
-        ([1], [1]),
-        ([2], [1]),
-        ([3], [1]),
-        ([1], [2]),
-        ([1, 2], [2, 1]),
-        ([1, 4], [2, 1]),
-        ([4, 9], [3, 2]),
-    ]))
+@pytest.mark.parametrize('keep_prob', [0, 0.6, 1])
+@pytest.mark.parametrize('game_desc', [
+    ([1], [1]),
+    ([2], [1]),
+    ([3], [1]),
+    ([1], [2]),
+    ([1, 2], [2, 1]),
+    ([1, 4], [2, 1]),
+    ([4, 9], [3, 2]),
+])
 # Simple test of identity reduction
 def test_identity(keep_prob, game_desc):
     players, strategies = game_desc
@@ -344,8 +340,8 @@ def test_rsym_reduce_tie_breaking():
         "Didn't tie break on strategy name if all else same"
 
 
-@testutils.apply(repeat=1000)
-def test_random_identity_rsym():
+@pytest.mark.parametrize('_', range(1000))
+def test_random_identity_rsym(_):
     num_strats = rand.randint(2, 20)
     profile = rand.randint(20, size=num_strats)[None]
     reduced_players = profile.sum()
@@ -483,7 +479,7 @@ def test_sample_game_payoff():
     assert np.setxor1d(actual, expected).size == 1
 
 
-@testutils.apply([
+@pytest.mark.parametrize('players,strategies', [
     ([1], [1]),
     ([2], [1]),
     ([3], [1]),
@@ -491,10 +487,10 @@ def test_sample_game_payoff():
     ([1, 2], [2, 1]),
     ([1, 4], [2, 1]),
     ([4, 9], [3, 2]),
-] + ([
+] * 20 + ([
     ([3] * 3, [3] * 3),
     ([3, 4, 9], [4, 3, 2]),
-] if os.getenv('BIG_TESTS') == 'ON' else []), repeat=20)
+] if os.getenv('BIG_TESTS') == 'ON' else []) * 20)
 def test_random_approximate_dpr(players, strategies):
     """Test approximate dpr preserves completeness on random games"""
     game = gamegen.role_symmetric_game(players, strategies)
@@ -629,16 +625,15 @@ def test_dpr_dev_expansion():
     assert np.setxor1d(actual, expected).size == 0
 
 
-@testutils.apply(
-    [
-        ([1], [1], [1]),
-        ([2], [1], [2]),
-        ([3], [1], [2]),
-        ([1], [2], [1]),
-        ([1, 2], [2, 1], [1, 2]),
-        ([1, 4], [2, 1], [1, 2]),
-        ([4, 9], [3, 2], [2, 3]),
-    ], repeat=10)
+@pytest.mark.parametrize('players,strategies,red_players', [
+    ([1], [1], [1]),
+    ([2], [1], [2]),
+    ([3], [1], [2]),
+    ([1], [2], [1]),
+    ([1, 2], [2, 1], [1, 2]),
+    ([1, 4], [2, 1], [1, 2]),
+    ([4, 9], [3, 2], [2, 3]),
+] * 10)
 def test_rand_dpr_dev_expandion(players, strategies, red_players):
     """Test that dpr devs works for random games"""
     game = rsgame.BaseGame(players, strategies)
@@ -697,18 +692,17 @@ def test_dpr_sample_incomplete_profile():
     assert actual[3] == 0
 
 
-@testutils.apply(itertools.product(
-    [0.6, 0.9, 1],
-    [1, 2, 3],
-    [
-        ([1], [1], [1]),
-        ([2], [1], [2]),
-        ([3], [1], [2]),
-        ([1], [2], [1]),
-        ([1, 2], [2, 1], [1, 2]),
-        ([1, 4], [2, 1], [1, 2]),
-        ([4, 9], [3, 2], [2, 3]),
-    ]), repeat=10)
+@pytest.mark.parametrize('add_prob', [0.6, 0.9, 1] * 10)
+@pytest.mark.parametrize('num_obs', [1, 2, 3])
+@pytest.mark.parametrize('game_desc', [
+    ([1], [1], [1]),
+    ([2], [1], [2]),
+    ([3], [1], [2]),
+    ([1], [2], [1]),
+    ([1, 2], [2, 1], [1, 2]),
+    ([1, 4], [2, 1], [1, 2]),
+    ([4, 9], [3, 2], [2, 3]),
+])
 def test_rand_dpr_allow_incomplete(add_prob, num_obs, game_desc):
     """Test that allow_incomplete works for random games"""
     # Generate games

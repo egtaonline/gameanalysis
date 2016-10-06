@@ -1,15 +1,41 @@
-import itertools
-
 import numpy as np
+import pytest
 
 from gameanalysis import gamegen
 from gameanalysis import gpgame
 from gameanalysis import rsgame
 
-from test import testutils
+GAMES = [
+    ([1], 1),
+    ([1], 2),
+    ([2], 1),
+    ([2], 2),
+    ([2], 5),
+    ([5], 2),
+    ([5], 5),
+    (2 * [1], 1),
+    (2 * [1], 2),
+    (2 * [2], 1),
+    (2 * [2], 2),
+    (5 * [1], 2),
+    (2 * [1], 5),
+    (2 * [2], 5),
+    (2 * [5], 2),
+    (2 * [5], 5),
+    (3 * [3], 3),
+    (5 * [1], 5),
+    ([170], 2),
+    ([180], 2),
+    ([1, 2], 2),
+    ([1, 2], [2, 1]),
+    (2, [1, 2]),
+    ([3, 4], [2, 3]),
+    ([2, 3, 4], [4, 3, 2]),
+]
 
 
-@testutils.apply(itertools.product(testutils.game_sizes(), range(5)))
+@pytest.mark.parametrize('game_params', GAMES)
+@pytest.mark.parametrize('num_devs', range(5))
 def test_nearby_profiles(game_params, num_devs):
     # TODO There is probably a better way to test this, but it requires moving
     # nearyby_profs out of a game the requires enough data for x-validation
@@ -40,6 +66,7 @@ def test_basic_functions():
     mix = game.random_mixtures()[0]
     assert np.all(gpbase.min_payoffs() == game.min_payoffs())
     assert np.all(gpbase.max_payoffs() == game.max_payoffs())
+    assert gpbase.is_complete()
 
     gppoint = gpgame.PointGPGame(gpbase)
     gppoint.deviation_payoffs(mix)
