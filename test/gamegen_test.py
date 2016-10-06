@@ -335,3 +335,34 @@ def test_travellers_dilemma():
     assert np.all(9 == game.num_strategies), \
         "didn't generate correct number of strategies"
     assert game.num_profiles == 45
+
+
+FUNCTIONS = [
+    gamegen.width_gaussian,
+    gamegen.width_gaussian_old(),
+    gamegen.width_gaussian_old(0.1),
+    gamegen.width_bimodal,
+    gamegen.width_bimodal_old(),
+    gamegen.width_bimodal_old(0.1),
+    gamegen.width_uniform,
+    gamegen.width_gumbel,
+]
+
+
+@pytest.mark.parametrize('max_width', [0.1, 1])
+@pytest.mark.parametrize('num_profiles', [1, 10, 100])
+@pytest.mark.parametrize('num_samples', [1, 10, 100])
+@pytest.mark.parametrize('func', FUNCTIONS)
+def test_width_distribution(max_width, num_profiles, num_samples, func):
+    samples = func(max_width, num_profiles, num_samples)
+    assert samples.shape == (num_profiles, num_samples)
+
+
+@pytest.mark.parametrize('max_width', [0.1, 1])
+@pytest.mark.parametrize('game_desc', [([2], [3]), ([2, 3], [3, 2])])
+@pytest.mark.parametrize('num_samples', [1, 10, 100])
+@pytest.mark.parametrize('func', FUNCTIONS)
+def test_add_width(game_desc, max_width, num_samples, func):
+    game = gamegen.role_symmetric_game(*game_desc)
+    sgame = gamegen.add_noise_width(game, num_samples, max_width, func)
+    assert np.all(sgame.num_samples == num_samples)

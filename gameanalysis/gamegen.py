@@ -527,6 +527,105 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
     return rsgame.SampleGame(game, new_profiles, sample_payoffs, verify=False)
 
 
+def width_gaussian(max_width, num_profiles, num_samples):
+    """Gaussian width distribution
+
+    This returns standard deviations from U[0, max_width].
+    """
+    widths = rand.uniform(0, max_width, num_profiles)
+    return rand.normal(0, widths, (num_samples, num_profiles)).T
+
+
+def width_gaussian_old(scale=1):
+    """Old gaussian width distribution
+
+    This returns a valid distribution, taking a scale parameter to correct for
+    the scale invariance of guassian variance.
+    """
+    def width_gaussian(max_width, num_profiles, num_samples):
+        widths = rand.uniform(0, max_width, num_profiles)
+        return rand.normal(0, np.sqrt(widths) * scale,
+                           (num_samples, num_profiles)).T
+    return width_gaussian
+
+
+def width_bimodal(max_width, num_profiles, num_samples):
+    """Bimodal width distribution
+
+    This returns standard deviations from U[0, max_width] and half spreads from
+    N[0, sqrt(max_width)].
+    """
+    sdevs = rand.uniform(0, max_width, num_profiles)
+    spreads = rand.normal(0, max_width, num_profiles)
+    draws = rand.normal(spreads, sdevs, (num_samples, num_profiles)).T
+    draws *= (rand.random(draws.shape) < .5) * 2 - 1
+    return draws
+
+
+def width_bimodal_old(scale=1):
+    """Old bimodal width distribution
+
+    This returns a valid distribution, taking a scale parameter to correct for
+    the scale invariance of guassian variance.
+    """
+    def width_bimodal(max_width, num_profiles, num_samples):
+        variances = np.sqrt(rand.uniform(0, max_width, num_profiles)) * scale
+        spreads = rand.normal(0, np.sqrt(max_width) * scale, num_profiles)
+        draws = rand.normal(spreads, variances, (num_samples, num_profiles)).T
+        draws *= (rand.random(draws.shape) < .5) * 2 - 1
+        return draws
+    return width_bimodal
+
+
+def width_uniform(max_width, num_profiles, num_samples):
+    """Uniform width distribution 
+
+    Generates halfwidths in U[0, max_width]
+    """
+    halfwidths = rand.uniform(0, max_width, num_profiles)
+    return rand.uniform(-halfwidths, halfwidths, (num_samples, num_profiles)).T
+
+
+def width_gumbel(max_width, num_profiles, num_samples):
+    """Gumbel width distribution
+
+    Generates scales in U[0, max_width]
+    """
+    scales = rand.uniform(0, max_width, num_profiles)
+    return rand.gumbel(0, scales, (num_samples, num_profiles)).T
+
+
+def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
+    """Create sample game where each profile has different noise level
+
+    Parameters
+    ----------
+    game : Game
+        The game to generate samples from. These samples are additive noise to
+        standard payoff values.
+    num_samples : int
+        The number of samples to generate for each profile.
+    max_width : float
+        A parameter describing how much noise to generate. Larger max_width
+        generates more noise.
+    noise : (float, int, int) -> ndarray (optional)
+        The noise generating function to use. The function must take three
+        parameters: the max_width, the number of profiles, and the number of
+        samples, and return an ndarray of the additive noise for each profile
+        (shape: (num_profiles, num_samples)). The max_width should be used to
+        generate sufficient statistics for each profile, and then each sample
+        per profile should come from a distribution derived from those. For
+        this to be accurate, this distribution should have expectation 0.
+        Several default versions are specified in gamegen, and they're all
+        prefixed with `width_`. By default, this uses `width_gaussian`.
+    """
+    spayoffs = game.payoffs[..., None].repeat(num_samples, -1)
+    mask = game.profiles > 0
+    samples = noise(max_width, maxk.sum(), num_samples)
+    spayoffs[np.broadcast_to(mask[..., None], mask.shape + (num_samples,))] += samples.flat
+    return rsgame.SampleGame(game, game.profiles, [spayoffs])
+
+
 def _names(prefix, num):
     """Returns a lsit of names for roles or strategies"""
     padding = int(math.log10(max(num - 1, 1))) + 1
