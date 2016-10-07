@@ -669,3 +669,38 @@ def test_expected_payoffs_jac():
     assert np.allclose(ep, 2)
     assert np.allclose(ep_jac, 0), \
         "maximum surplus should have 0 jacobian"
+
+
+@pytest.mark.parametrize('p', [2, 5, 10, 100])
+def test_deviation_nans(p):
+    profiles = [[p,     0, 0, 0, 1],
+                [p - 1, 1, 0, 0, 1],
+                [p - 1, 0, 1, 0, 1],
+                [p - 1, 0, 0, 1, 1]]
+    payoffs = [[1,      0, 0, 0, 2],
+               [np.nan, 3, 0, 0, np.nan],
+               [np.nan, 0, 4, 0, np.nan],
+               [np.nan, 0, 0, 5, np.nan]]
+    game = rsgame.Game([p, 1], [4, 1], profiles, payoffs)
+    mix = np.array([1, 0, 0, 0, 1])
+    pays = game.deviation_payoffs(mix)
+    assert not np.isnan(pays).any()
+
+
+@pytest.mark.parametrize('p', [2, 5, 10, 100])
+@pytest.mark.parametrize('q', [2, 5, 10, 100])
+def test_deviation_nans_2(p, q):
+    profiles = [[p,     0, 0, 0, q,     0],
+                [p - 1, 1, 0, 0, q,     0],
+                [p - 1, 0, 1, 0, q,     0],
+                [p - 1, 0, 0, 1, q,     0],
+                [p,     0, 0, 0, q - 1, 1]]
+    payoffs = [[1,      0, 0, 0, 2,      0],
+               [np.nan, 3, 0, 0, np.nan, 0],
+               [np.nan, 0, 4, 0, np.nan, 0],
+               [np.nan, 0, 0, 5, np.nan, 0],
+               [6,      0, 0, 0, np.nan, 7]]
+    game = rsgame.Game([p, q], [4, 2], profiles, payoffs)
+    mix = np.array([1, 0, 0, 0, 1, 0])
+    pays = game.deviation_payoffs(mix)
+    assert not np.isnan(pays).any()
