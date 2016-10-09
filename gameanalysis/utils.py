@@ -265,9 +265,12 @@ def simplex_project(array):
 def multinomial_mode(p, n):
     """Compute the mode of n samples from multinomial distribution p.
 
+    Notes
+    -----
     algorithm from: Finucan 1964. The mode of a multinomial distribution.
+
     notation follows: Gall 2003. Determination of the modes of a Multinomial
-                      distribution.
+    distribution.
     """
     f = p * (n + p.size/2)
     k = f.astype(int)

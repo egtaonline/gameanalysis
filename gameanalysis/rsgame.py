@@ -20,6 +20,7 @@ attribute or a property, not a method, so to get the number of profiles, it's
 just `num_profiles` not `num_profiles()`. These will also only be numbers,
 either a single int, or an array of them depending on the attribute."""
 import functools
+import itertools
 
 import numpy as np
 import numpy.random as rand
@@ -37,21 +38,22 @@ class BaseGame(object):
     This object only contains methods and information about definition of the
     game, and does not contain methods to operate on observation data.
 
-    Parameters (from game)
-    ----------------------
+    Parameters
+    ----------
     game : BaseGame
         Copies info from game. Useful to keep convenience methods of game
-        without attached data.
+        without attached data. This argument should be by itself.
 
-    Parameters (default constructor)
-    --------------------------------
+    Parameters
+    ----------
     num_players : int or [int] or ndarray
         The number of players in each role in order, or the number of players
         per role if identical (will be broadcast to match the number of roles).
+        This should be included with ``num_strategies``.
     num_strategies : int or [int] or ndarray
         The number of strategies in each role in order, or the number of
         strategies per role if identical (will be broadcast to match the number
-        of roles).
+        of roles). This should be included with ``num_players``.
 
     The number of roles is deduced from the number of entries in num_players
     and num_strategies. If either is an integer or has length 1, the other is
@@ -396,11 +398,35 @@ class BaseGame(object):
     def __hash__(self):
         return self._hash
 
+    def __eq__(self, other):
+        return (np.all(self.num_strategies == other.num_strategies) and
+                np.all(self.num_players == other.num_players))
+
     def __repr__(self):
         return '{}({}, {})'.format(
             self.__class__.__name__,
             self.num_players,
             self.num_strategies)
+
+    def to_json(self, serial):
+        return dict(
+            players=dict(zip(serial.role_names, map(int, self.num_players))),
+            strategies=dict(zip(serial.role_names, serial.strat_names)))
+
+    def to_str(self, serial):
+        return ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}'
+                .format(
+                    self.__class__.__name__,
+                    ', '.join(serial.role_names),
+                    '\n\t\t'.join(
+                        '{:d}x {}'.format(count, role)
+                        for role, count
+                        in sorted(zip(serial.role_names, self.num_players))),
+                    '\n\t\t'.join(
+                        '{}:\n\t\t\t{}'.format(role, '\n\t\t\t'.join(strats))
+                        for role, strats
+                        in sorted(zip(serial.role_names, serial.strat_names)))
+                )).expandtabs(4)
 
 
 class Game(BaseGame):
@@ -414,11 +440,12 @@ class Game(BaseGame):
     the game, but their data can be accessed via `get_payoffs`, and they will
     be used for calculating deviation payoffs if possible.
 
-    Parameters (from game)
-    ----------------------
+    Parameters
+    ----------
     game : BaseGame
         Game to copy information out of. This will copy as much information out
-        of the game as possible.
+        of the game as possible. This can optionally be specified with
+        ``profiles`` and ``payoffs``.
     profiles : ndarray-like, optional
         The profiles for the game, if unspecified, this will try to be grabbed
         from `game`. Must be specified with payoffs.
@@ -426,10 +453,12 @@ class Game(BaseGame):
         The payoffs for the game, if unspecified, payoffs will try to be
         grabbed from `game`. Must be specified with profiles.
 
-    Parameters (from game description)
-    ----------------------------------
+    Parameters
+    ----------
     num_players : int or [int] or ndarray
-        The number of players per role. See BaseGame.
+        The number of players per role. See BaseGame. This must be specified
+        with ``num_strategies``, and optionally with ``profiles`` and
+        ``payoffs``.
     num_strategies : int or [int] or ndarray
         The number of strategies per role. See BaseGame.
     profiles : ndarray-like, optional
@@ -439,13 +468,14 @@ class Game(BaseGame):
         The payoffs for the game, if unspecified, game will be empty. Must be
         specified with profiles.
 
-    Parameters (from asymmetric game)
-    ---------------------------------
+    Parameters
+    ----------
     matrix : ndarray-like
         The matrix of payoffs for an asymmetric game. The last axis is the
         payoffs for each player, the first axes are the strategies for each
         player. matrix.shape[:-1] must correspond to the number of strategies
-        for each player. matrix.ndim - 1 must equal matrix.shape[-1].
+        for each player. matrix.ndim - 1 must equal matrix.shape[-1]. This must
+        be specified by itself.
     """
 
     def __init__(self, *args, verify=True):
@@ -739,6 +769,28 @@ class Game(BaseGame):
             data=self.num_profiles,
             total=self.num_all_profiles)
 
+    def to_json(self, serial):
+        json_ = super().to_json(serial)
+        json_['profiles'] = [
+            {
+                role: [[strat, int(count), float(pay)]
+                       for strat, count, pay
+                       in zip(strats, counts, pays)
+                       if count > 0]
+                for counts, pays, role, strats
+                in zip(self.role_split(prof),
+                       self.role_split(payoffs),
+                       serial.role_names,
+                       serial.strat_names)}
+            for prof, payoffs in zip(self.profiles, self.payoffs)]
+        return json_
+
+    def to_str(self, serial):
+        return ('{base}\npayoff data for {data:d} out of {total:d} '
+                'profiles').format(base=super().to_str(serial),
+                                   data=self.num_profiles,
+                                   total=self.num_all_profiles)
+
 
 class SampleGame(Game):
     """A Role Symmetric Game that has multiple samples per observation
@@ -937,3 +989,33 @@ class SampleGame(Game):
         else:
             sample_str = '{:d} - {:d}'.format(samples.min(), samples.max())
         return '{}, {})'.format(super().__repr__()[:-1], sample_str)
+
+    def to_json(self, serial):
+        json_ = BaseGame.to_json(self, serial)
+        json_['profiles'] = [
+            {
+                role: [[strat, int(count), list(map(float, pay))]
+                       for strat, count, pay
+                       in zip(strats, counts, pays)
+                       if count > 0]
+                for counts, pays, role, strats
+                in zip(self.role_split(prof),
+                       self.role_split(payoffs, 0),
+                       serial.role_names,
+                       serial.strat_names)}
+            for prof, payoffs
+            in zip(self.profiles,
+                   itertools.chain.from_iterable(self.sample_payoffs))]
+        return json_
+
+    def to_str(self, serial):
+        str_ = super().to_str(serial)
+        samples = self.num_samples
+        if samples.size == 0:
+            return str_ + '\nno observations'
+        elif samples.size == 1:
+            return '{}\n{:d} observation{} per profile'.format(
+                str_, samples[0], '' if samples[0] == 1 else 's')
+        else:
+            return '{}\n{:d} to {:d} observations per profile'.format(
+                str_, samples.min(), samples.max())

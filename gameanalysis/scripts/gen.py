@@ -71,7 +71,7 @@ class Congestion(object):
     def create(args):
         game, serial = gamegen.congestion_game(
             args.num_players, args.num_facilities, args.num_required, True)
-        return game, serial
+        return game.to_game(), serial
 
 
 class ExperimentNoise(object):
@@ -230,7 +230,7 @@ def main():
     #                     int(args.noise_args[2])]
     #     games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)
 
-    json.dump(serial.to_json(game), args.output)
+    json.dump(game.to_json(serial), args.output)
     args.output.write('\n')
 
 

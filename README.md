@@ -1,44 +1,45 @@
 Game Analysis
 =============
 
-This is a set of python scripts to manipulate empirical game data.
+[![Build Status](https://travis-ci.org/egtaonline/gameanalysis.svg?branch=master)](https://travis-ci.org/egtaonline/gameanalysis)
+[![Coverage Status](https://coveralls.io/repos/github/egtaonline/gameanalysis/badge.svg?branch=master)](https://coveralls.io/github/egtaonline/gameanalysis?branch=master)
+
+This is a collection of python libraries and scripts that manipulate empirical game data.
+An index of the API of the most recent version is published on [github pages](http://egtaonline.github.io/gameanalysis/).
+
+
+Quick Setup
+-----------
+
+We recommend you install Game Analysis in it's own virtual environment.
+To use our recommended setup simply execute the following commands in the directory you want to store Game Analysis in.
+
+```
+curl https://raw.githubusercontent.com/egtaonline/gameanalysis/master/quickuse_makefile > Makefile && make setup
+```
+
+`ga` should now be accessible in the `bin` directory.
+To update Game Analysis, simply execute `make update` in the appropriate directory.
 
 
 Setup
 -----
 
-To use this script, you need to install the following dependencies:
+To use Game Analysis, you need to meet the following dependencies
 
-1. Python 3
+1. Python 3 & venv
 2. BLAS/LAPACK
 3. A fortran compiler
-4. Make
 
-### Ubuntu
 
-These dependencies can be met with
+Then you can install Game Analysis via pip with:
 
 ```
-$ sudo apt install python3 libatlas-base-dev gfortran python3-venv
+bin/pip install -U git+https://github.com/egtaonline/gameanalysis.git@<version>
 ```
 
-or `make ubuntut-requirements`
-
-### Mac
-
-On mac you can install these easily with [homebrew](http://brew.sh/).
-
-TODO add actual setup commands
-
-### Final setup
-
-After all of the dependencies are met, executing
-
-```
-$ make setup
-```
-
-will complete the setup.
+where `<version>` is the appropriate version to install.
+Generally we recommend this be done in a virtual environment to avoid dependency clashes, but it can be installed in the global environment.
 
 
 Usage
@@ -46,7 +47,13 @@ Usage
 
 `ga` is the game analysis command line tool.
 `./ga --help` will reveal all of the available options.
-If the root of this project is on your python path (done manually, with the venv active, or when executing anything in `bin`), then you also import individual packages from `gameanalysis`.
+
+
+Developing
+==========
+
+After cloning this repository, the included `Makefile` includes all the relevant actions to facilitate development.
+Typing `make` without targets will print out the various actions to help development.
 
 
 Testing
@@ -93,30 +100,13 @@ Generally follow PEP8 standard.
 6. flake8
 
 Running `make check` will search for some of these.
+`make format` will try to fix some in place.
 
-
-Open Design Questions
----------------------
-
-1. Whether to include version numbers or descriptions in json serialized profiles / mixtures or keep them a raw description.
-2. How to handle games where data doesn't exist for every role strategy pair, but only some agents.
-   Currently any incomplete profile is ignored / errors.
-   There might not be an efficient way to handle this case.
-3. Currently we use both array and dictionary representations of data, but it might make more sense to just use one.
-   We could subclass ndarray, and modify the repr, str, items, keys, values so that they appear like a dictionary, but internally they are an array with a reference back to the original game.
-   The pros are this simplifies a lot of things.
-   We can just cast all input to this form, and always output this form, no more `as_array`.
-   The downsides is that there are conflicts between the way an array operates and the way a dict operates, and it will be hard to join them in a way that makes sense. A couple that come to mind are:
-   1. We need to handle ndarrays that have a number of profiles, but still handle appropriate methods.
-   2. Equality on an array tests every value, versus the dict output.
-      This could likely be acomplished by clever implementation of equality, i.e. equality with another profile or a dict returns a boolean, but equality with an array returns an array.
-   3. The default iterator of a dictionary is the keys, but for an array it's the values.
 
 To Do
 -----
 
 - Change conditional in `dominance`, which indicates how to treat missing data to an enum or at least a string
 - Some functions in `dominance` could probably be more efficient.
-- Integrate read the docs with numpy docstyle extension and github travis-ci for testing etc.
-- Get parallel testing working.
-- Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pands?
+- Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pandas?
+- Test requirements are also in requirements.txt because of issues loading them with xdist.

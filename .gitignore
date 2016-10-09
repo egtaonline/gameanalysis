@@ -6,6 +6,8 @@
 /.coverage.*
 /.cache
 /test/.cache
+/.eggs
+/*.egg-info
 
 # Editors #
 ###########

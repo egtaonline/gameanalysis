@@ -9,13 +9,14 @@ import scipy.misc as spm
 import scipy.special as sps
 
 from gameanalysis import gamegen
+from gameanalysis import gameio
 from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import utils
 
 TINY = np.finfo(float).tiny
 EPS = 5 * np.finfo(float).eps
-GAMES = [
+SMALL_GAMES = [
     ([1], 1),
     ([1], 2),
     ([2], 1),
@@ -30,6 +31,8 @@ GAMES = [
     (5 * [1], 2),
     (2 * [1], 5),
     (2 * [2], 5),
+]
+GAMES = SMALL_GAMES + [
     (2 * [5], 2),
     (2 * [5], 5),
     (3 * [3], 3),
@@ -704,3 +707,91 @@ def test_deviation_nans_2(p, q):
     mix = np.array([1, 0, 0, 0, 1, 0])
     pays = game.deviation_payoffs(mix)
     assert not np.isnan(pays).any()
+
+
+@pytest.mark.parametrize('players,strategies', GAMES)
+def test_json_copy_base_game(players, strategies):
+    game1 = rsgame.BaseGame(players, strategies)
+    serial = gamegen.game_serializer(game1)
+    game2, _ = gameio.read_base_game(game1.to_json(serial))
+    assert game1 == game2
+
+
+def test_base_game_to_str():
+    game = rsgame.BaseGame([2, 1], [1, 2])
+    serial = gamegen.game_serializer(game)
+    expected = ('BaseGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
+                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
+                '        r1:\n            s0\n            s1')
+    assert game.to_str(serial) == expected
+
+
+@pytest.mark.parametrize('players,strategies', GAMES)
+def test_json_copy_game(players, strategies):
+    game1 = gamegen.role_symmetric_game(players, strategies)
+    serial = gamegen.game_serializer(game1)
+    game2, _ = gameio.read_game(game1.to_json(serial))
+    assert game1 == game2
+
+
+def test_game_to_str():
+    game = gamegen.role_symmetric_game([2, 1], [1, 2])
+    serial = gamegen.game_serializer(game)
+    expected = ('Game:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
+                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
+                '        r1:\n            s0\n            s1\n'
+                'payoff data for 2 out of 2 profiles')
+    assert game.to_str(serial) == expected
+
+
+@pytest.mark.parametrize('game_size,samples',
+                         zip(GAMES, itertools.cycle([1, 2, 5, 10])))
+def test_json_copy_sample_game(game_size, samples):
+    base = gamegen.role_symmetric_game(*game_size)
+    game1 = gamegen.add_noise(base, 1, samples)
+    serial = gamegen.game_serializer(game1)
+    game2, _ = gameio.read_sample_game(game1.to_json(serial))
+    assert game1 == game2
+
+
+def test_sample_game_to_str():
+    base = gamegen.role_symmetric_game([2, 1], [1, 2])
+    serial = gamegen.game_serializer(base)
+
+    game = gamegen.add_noise(base, 3)
+    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
+                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
+                '        r1:\n            s0\n            s1\n'
+                'payoff data for 2 out of 2 profiles\n'
+                '3 observations per profile')
+    assert game.to_str(serial) == expected
+
+    game = rsgame.SampleGame(base)
+    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
+                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
+                '        r1:\n            s0\n            s1\n'
+                'payoff data for 2 out of 2 profiles\n'
+                '1 observation per profile')
+    assert game.to_str(serial) == expected
+
+    game = rsgame.SampleGame(rsgame.BaseGame(base))
+    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
+                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
+                '        r1:\n            s0\n            s1\n'
+                'payoff data for 0 out of 2 profiles\n'
+                'no observations')
+    assert game.to_str(serial) == expected
+
+    profiles = [[2, 1, 0],
+                [2, 0, 1]]
+    spayoffs = [
+        [[[1], [2], [0]]],
+        [[[3, 4], [0] * 2, [5, 6]]],
+    ]
+    game = rsgame.SampleGame(base, profiles, spayoffs)
+    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
+                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
+                '        r1:\n            s0\n            s1\n'
+                'payoff data for 2 out of 2 profiles\n'
+                '1 to 2 observations per profile')
+    assert game.to_str(serial) == expected

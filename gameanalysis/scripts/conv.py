@@ -9,7 +9,7 @@ from gameanalysis import rsgame
 
 
 OUTPUT_TYPE = {
-    'json': lambda game, ser, out: json.dump(ser.to_json(game), out)
+    'json': lambda game, ser, out: json.dump(game.to_json(ser), out)
 }
 
 GAME_TYPE = {
