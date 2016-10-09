@@ -20,6 +20,7 @@ attribute or a property, not a method, so to get the number of profiles, it's
 just `num_profiles` not `num_profiles()`. These will also only be numbers,
 either a single int, or an array of them depending on the attribute."""
 import functools
+import itertools
 
 import numpy as np
 import numpy.random as rand
@@ -402,6 +403,26 @@ class BaseGame(object):
             self.num_players,
             self.num_strategies)
 
+    def to_json(self, serial):
+        return dict(
+            players=dict(zip(serial.role_names, map(int, self.num_players))),
+            strategies=dict(zip(serial.role_names, serial.strat_names)))
+
+    def to_str(self, serial):
+        return ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}\n'
+                .format(
+                    self.__class__.__name__,
+                    ', '.join(serial.role_names),
+                    '\n\t\t'.join(
+                        '{:d}x {}'.format(count, role)
+                        for role, count
+                        in sorted(zip(serial.role_names, self.num_players))),
+                    '\n\t\t'.join(
+                        '{}:\n\t\t\t{}'.format(role, '\n\t\t\t'.join(strats))
+                        for role, strats
+                        in sorted(zip(serial.role_names, serial.strat_names)))
+                )).expandtabs(4)
+
 
 class Game(BaseGame):
     """Role-symmetric game representation
@@ -739,6 +760,29 @@ class Game(BaseGame):
             data=self.num_profiles,
             total=self.num_all_profiles)
 
+    def to_json(self, serial):
+        json_ = super().to_json(serial)
+        json_['profiles'] = [
+            {
+                role: [(strat, int(count), float(pay))
+                       for strat, count, pay
+                       in zip(strats, counts, pays)
+                       if count > 0]
+                for counts, pays, role, strats
+                in zip(self.role_split(prof),
+                       self.role_split(payoffs),
+                       serial.role_names,
+                       serial.strat_names)}
+            for prof, payoffs in zip(self.profiles, self.payoffs)]
+        return json_
+
+    def to_str(self, serial):
+        str_ = super().to_str(serial)
+        str_ += ('payoff data for {data:d} out of {total:d} '
+                 'profiles').format(data=self.num_profiles,
+                                    total=self.num_all_profiles)
+        return str_
+
 
 class SampleGame(Game):
     """A Role Symmetric Game that has multiple samples per observation
@@ -937,3 +981,31 @@ class SampleGame(Game):
         else:
             sample_str = '{:d} - {:d}'.format(samples.min(), samples.max())
         return '{}, {})'.format(super().__repr__()[:-1], sample_str)
+
+    def to_json(self, serial):
+        json_ = BaseGame.to_json(self, serial)
+        json_['profiles'] = [
+            {
+                role: [(strat, int(count), list(map(float, pay)))
+                       for strat, count, pay
+                       in zip(strats, counts, pays)
+                       if count > 0]
+                for counts, pays, role, strats
+                in zip(self.role_split(prof),
+                       self.role_split(payoffs, 0),
+                       serial.role_names,
+                       serial.strat_names)}
+            for prof, payoffs
+            in zip(self.profiles,
+                   itertools.chain.from_iterable(self.sample_payoffs))]
+
+    def to_str(self, serial):
+        str_ = super().to_str(serial)
+        samples = self.num_samples
+        if samples.size == 0:
+            return str_ + '\nno observations'
+        elif samples.size == 1:
+            return str_ + '\n{:d} observations per profile'.format(samples[0])
+        else:
+            return str_ + '\n{:d} to {:d} observations per profile'.format(
+                samples.min(), samples.max())

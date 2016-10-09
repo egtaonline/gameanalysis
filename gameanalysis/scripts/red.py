@@ -74,7 +74,7 @@ def main():
     reduced = REDUCTIONS[args.type](game.num_strategies, game.num_players,
                                     reduced_players).reduce_game(game)
 
-    json.dump(serial.to_json(reduced), args.output)
+    json.dump(reduced.to_json(serial), args.output)
     args.output.write('\n')
 
 

@@ -1,4 +1,6 @@
 import itertools
+import math
+import warnings
 
 import numpy as np
 import numpy.random as rand
@@ -9,27 +11,47 @@ from gameanalysis import rsgame
 
 
 class CongestionGame(rsgame.BaseGame):
-    """Congestion Game"""
+    """Congestion Game
+
+    Parameters
+    ----------
+    num_players : int
+        The number of players in the symmetric congestion game.
+    num_required : int
+        The number of required facilities in a strategy.
+    facilities : int or ndarray
+        A description of the facilities. If an int then the congestion matrix
+        is randomly generated, otherwise this must be an n x 3 float matrix
+        where n is the number of facilities.
+    """
     # TODO This could be extended to any-order polynomials. The dth moment of
     # the binomial distribution is \sum_{k = 1}^d n!/(n - k)! p^k {d k}, where
     # {d k} is a sterling number of the second kind.
-    def __init__(self, num_players, num_facilities, num_required):
+    def __init__(self, num_players, num_required, facilities):
+        if isinstance(facilities, int):
+            num_facilities = facilities
+            # Generate value for congestions
+            # [Constant, Linear, Quadratic]
+            ranges = np.array([num_facilities, -num_required, -1])
+            congest = rand.random((num_facilities, 3)) * ranges
+        else:
+            num_facilities = facilities.shape[0]
+            assert facilities.shape[1] == 3, \
+                "Congestion games only support quadratic congestion"
+            congest = facilities
+
         assert num_required > 0
         assert num_facilities >= num_required
         num_strats = spm.comb(num_facilities, num_required, exact=True)
         super().__init__(num_players, num_strats)
         self.num_facilities = num_facilities
         self.num_required = num_required
+        self._congest = congest
 
         self._strats = np.zeros((num_strats, num_facilities), bool)
         for i, inds in enumerate(itertools.combinations(
                 range(num_facilities), num_required)):
             self._strats[i, inds] = True
-
-        # Generate value for congestions
-        # [Constant, Linear, Quadratic]
-        ranges = np.array([num_facilities, -num_required, -1])
-        self._congest = rand.random((num_facilities, 3)) * ranges
 
         # Compute extreme payoffs
         self._min_payoffs = np.array(np.partition(
@@ -45,6 +67,8 @@ class CongestionGame(rsgame.BaseGame):
             # XXX Because this is an integer problem, I'm not convinced there's
             # a great way to calculate this that's not roughly on the order of
             # enumerating all of the profiles so it's not calculated.
+            # XXX We could at least update this on the fly as more profiles are
+            # computed
             self._max_payoffs = self._min_payoffs
         self._max_payoffs.shape = (1,)
         self._max_payoffs.setflags(write=False)
@@ -91,12 +115,80 @@ class CongestionGame(rsgame.BaseGame):
         return rsgame.Game(self, profiles, payoffs)
 
     def gen_serializer(self):
-        strats = ['_'.join(map(str, np.nonzero(x)[0])) for x in self._strats]
+        digits = math.ceil(math.log10(self.num_facilities))
+        strats = ['_'.join('{:0{}d}'.format(f, digits)
+                           for f in np.nonzero(x)[0]) for x in self._strats]
         return gameio.GameSerializer(['all'], [strats])
 
     def __repr__(self):
         return '{}({}, {}, {})'.format(
             self.__class__.__name__,
             self.num_players[0],
-            self.num_facilities,
-            self.num_required)
+            self.num_required,
+            self.num_facilities)
+
+    def to_json(self, serial=None):
+        """Convert game to json
+
+        Parameters
+        ----------
+        serial : GameSerializer
+            If unspecified, one will be generated on the fly
+        """
+        if serial is None:
+            digits = math.ceil(math.log10(self.num_facilities))
+            facilities = ('{:0{}d}'.format(f, digits)
+                          for f in range(self.num_facilities))
+        else:
+            facilities = sorted(set(itertools.chain.from_iterable(
+                s.split('_') for s in serial.strat_names[0])))
+            if len(facilities) != self.num_facilities:
+                warnings.warn('Splitting strategies with "_" did not result '
+                              'in the right number of facilities. `to_json` '
+                              'will not produce accurate results.')
+        return dict(
+            num_players=self.num_players[0].item(),
+            num_required_facilities=self.num_required,
+            facilities={f: coefs.tolist() for f, coefs
+                        in zip(facilities, self._congest)})
+
+    def to_str(self, serial=None):
+        """Convert game to a human string
+
+        Parameters
+        ----------
+        serial : GameSerializer
+            If unspecified, one will be generated on the fly
+        """
+        if serial is None:
+            digits = math.ceil(math.log10(self.num_facilities))
+            facilities = ('{:0{}d}'.format(f, digits)
+                          for f in range(self.num_facilities))
+        else:
+            facilities = sorted(set(itertools.chain.from_iterable(
+                s.split('_') for s in serial.strat_names[0])))
+            if len(facilities) != self.num_facilities:
+                warnings.warn('Splitting strategies with "_" did not result '
+                              'in the right number of facilities. `to_json` '
+                              'will not produce accurate results.')
+        return ('{}:\n\tPlayers: {:d}\n\tRequired Facilities: {:d}'
+                '\n\tFacilities: {}\n'
+                .format(
+                    self.__class__.__name__,
+                    self.num_players[0],
+                    self.num_required,
+                    ', '.join(facilities)
+                )).expandtabs(4)
+
+
+def read_congestion_game(json_):
+    num_players = json_['num_players']
+    num_required = json_['num_required_facilities']
+    ordered = sorted(json_['facilities'].items())
+    congest_matrix = np.array(list(x[1] for x in ordered), float)
+    facilities = list(x[0] for x in ordered)
+    strats = list('_'.join(facs) for facs
+                  in itertools.combinations(facilities, num_required))
+    cgame = CongestionGame(num_players, num_required, congest_matrix)
+    serial = gameio.GameSerializer(['all'], [strats])
+    return cgame, serial

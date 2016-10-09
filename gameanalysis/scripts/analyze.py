@@ -135,7 +135,7 @@ def main():
     # Output Game
     args.output.write('Game Analysis\n')
     args.output.write('=============\n')
-    args.output.write(serial.to_str(game))
+    args.output.write(game.to_str(serial))
     args.output.write('\n\n')
     if args.dpr is not None:
         args.output.write('With DPR reduction: ')

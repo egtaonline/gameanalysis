@@ -76,5 +76,5 @@ parallel --joblog - <<< "
     '$GA' analyze -i '$GAME' -o /dev/null --subgames --dominance --dpr background 6 hft 1 -p1 --dist-thresh 1e-3 -r 1e-3 -t 1e-3 --rand-restarts 0 -m 10000 -c 1e-8
 
     # Congestion test
-    '$GA' congest 3 4 2 > /dev/null
+    '$GA' congest 3 2 4 > /dev/null
     " | grep -vE $'^([^\t]*\t){6}0'

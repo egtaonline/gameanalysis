@@ -514,6 +514,12 @@ class DeviationPreserving(object):
             self._rgame.num_players)
 
 
+def reduce_game_dpr(game, reduced_players):
+    return DeviationPreserving(
+        game.num_strategies, game.num_players,
+        reduced_players).reduce_game(game)
+
+
 class Twins(DeviationPreserving):
     """Twins Reduction
 

@@ -202,80 +202,9 @@ class GameSerializer(object):
                                           np.split(payoffs, splits),
                                           self.role_split(supp))}
 
-    def to_json(self, game):
-        """Convert to a json serializable format"""
-        assert np.all(self.num_strategies == game.num_strategies), \
-            "Number of strategies per role didn't match"
-        json = {'players': dict(zip(self.role_names,
-                                    map(int, game.num_players))),
-                'strategies': dict(zip(self.role_names, self.strat_names))}
-
-        if isinstance(game, rsgame.SampleGame):
-            json['profiles'] = [
-                {
-                    role: [(strat, int(count), list(map(float, pay)))
-                           for strat, count, pay
-                           in zip(strats, counts, pays)
-                           if count > 0]
-                    for counts, pays, role, strats
-                    in zip(self.role_split(prof),
-                           self.role_split(payoffs, 0),
-                           self.role_names,
-                           self.strat_names)}
-                for prof, payoffs
-                in zip(game.profiles,
-                       itertools.chain.from_iterable(game.sample_payoffs))]
-
-        elif isinstance(game, rsgame.Game):
-            json['profiles'] = [
-                {
-                    role: [(strat, int(count), float(pay))
-                           for strat, count, pay
-                           in zip(strats, counts, pays)
-                           if count > 0]
-                    for counts, pays, role, strats
-                    in zip(self.role_split(prof),
-                           self.role_split(payoffs),
-                           self.role_names,
-                           self.strat_names)}
-                for prof, payoffs in zip(game.profiles, game.payoffs)]
-
-        return json
-
-    def to_str(self, game):
-        strg = ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}\n'
-                .format(
-                    game.__class__.__name__,
-                    ', '.join(self.role_names),
-                    '\n\t\t'.join(
-                        '{:d}x {}'.format(count, role)
-                        for role, count
-                        in sorted(zip(self.role_names, game.num_players))),
-                    '\n\t\t'.join(
-                        '{}:\n\t\t\t{}'.format(role, '\n\t\t\t'.join(strats))
-                        for role, strats
-                        in sorted(zip(self.role_names, self.strat_names)))
-                )).expandtabs(4)
-        if isinstance(game, rsgame.Game):
-            strg += ('payoff data for {data:d} out of {total:d} '
-                     'profiles').format(data=game.num_profiles,
-                                        total=game.num_all_profiles)
-        if isinstance(game, rsgame.SampleGame):
-            samples = game.num_samples
-            if samples.size == 0:
-                sample_str = '\nno observations'
-            elif samples.size == 1:
-                sample_str = '\n{:d} observations per profile'.format(
-                    samples[0])
-            else:
-                sample_str = '\n{:d} to {:d} observations per profile'.format(
-                    samples.min(), samples.max())
-            strg += sample_str
-
-        return strg
-
-    def __hash__(self):
-        return self._hash
+    def __repr__(self):
+        return '{}({}, {})'.format(self.__class__.__name__, self.role_names,
+                                   self.strat_names)
 
 
 def read_base_game(json):
