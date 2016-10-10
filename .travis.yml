@@ -5,5 +5,5 @@ before_install:
     - "sudo apt-get -qq update"
     - "sudo apt-get install -y parallel"
 install: "pyvenv . && bin/pip install -r requirements.txt"
-script: "make coverage"
+script: "bin/py.test test -n auto --strict --showlocal --cov gameanalysis --cov test --cov-report term-missing"
 after_success: "bin/coveralls"
