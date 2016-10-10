@@ -1,6 +1,6 @@
 PYTEST_ARGS = -n auto --strict --showlocals
 
-help:
+help: temp
 	@echo "usage: make <tag>"
 	@echo
 	@echo "update   - get environment ready to run and verify up to date"
@@ -19,10 +19,14 @@ else
 endif
 
 coverage:
+ifeq ($(file),scripts)
+	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis/$(file) --cov test/$(file)_test.py --cov-report term-missing
+else
 ifdef file
-	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis.$(file) --cov test.$(file)_test --cov-report term-missing
+	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis/$(file).py --cov test/$(file)_test.py --cov-report term-missing
 else
 	bin/py.test test $(PYTEST_ARGS) --cov gameanalysis --cov test --cov-report term-missing
+endif
 endif
 
 big: export BIG_TESTS=ON
