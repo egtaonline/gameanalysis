@@ -37,11 +37,15 @@ format:
 todo:
 	grep -nrIF -e TODO -e XXX -e FIXME . --exclude-dir=.git --exclude-dir=lib --exclude=Makefile --color=always
 
-update:
-	git pull
+setup:
 	pyvenv .
 	bin/pip3 install -U pip
 	bin/pip3 install -r requirements.txt
+
+pull:
+	git pull
+
+update: pull setup
 
 ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv
