@@ -85,6 +85,8 @@ class BaseGPGame(rsgame.BaseGame):
 _CV_PARAMS = {'alpha': stats.powerlaw(.2, loc=1e-3, scale=50)}
 
 
+# XXX This changed in a scipy update and should be verified that its doing what
+# we want
 def _train_gp(x, y, **search_kwds):
     if 'n_jobs' in search_kwds and search_kwds['n_jobs'] < 1:
         # one job per cpu core
