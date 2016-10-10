@@ -104,7 +104,7 @@ def main():
         equilibria = game.trim_mixture_support(equilibria, args.support)
 
     else:
-        raise ValueError('Unknown command given: {0}'.format(args.type))
+        raise ValueError('Unknown command given: {0}'.format(args.type))  # pragma: no cover # noqa
 
     json.dump([serial.to_prof_json(eqm) for eqm in equilibria], args.output)
     args.output.write('\n')
