@@ -1,5 +1,9 @@
 language: python
 python:
-  - "3.5"
+    - "3.5"
+before_install:
+    - "sudo apt-get -qq update"
+    - "sudo apt-get install -y parallel"
 install: "pyvenv . && bin/pip install -r requirements.txt"
-script: "make test"
+script: "make coverage"
+after_success: "bin/coveralls"

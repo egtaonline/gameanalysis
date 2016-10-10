@@ -2,6 +2,7 @@ Game Analysis
 =============
 
 [![Build Status](https://travis-ci.org/egtaonline/GameAnalysis.svg?branch=master)](https://travis-ci.org/egtaonline/GameAnalysis)
+[![Coverage Status](https://coveralls.io/repos/github/egtaonline/GameAnalysis/badge.svg?branch=master)](https://coveralls.io/github/egtaonline/GameAnalysis?branch=master)
 
 This is a set of python scripts to manipulate empirical game data.
 

@@ -1,9 +1,10 @@
 autopep8==1.2.4
+coveralls==1.1
 flake8==3.0.4
 ipython==5.1.0
 numpy==1.11.2
-pytest==3.0.3
 pytest-cov==2.3.1
 pytest-xdist==1.15.0
+pytest==3.0.3
 scikit-learn==0.18
 scipy==0.18.1
