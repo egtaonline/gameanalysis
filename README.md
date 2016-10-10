@@ -1,6 +1,8 @@
 Game Analysis
 =============
 
+[![Build Status](https://travis-ci.org/egtaonline/GameAnalysis.svg?branch=master)](https://travis-ci.org/egtaonline/GameAnalysis)
+
 This is a set of python scripts to manipulate empirical game data.
 
 

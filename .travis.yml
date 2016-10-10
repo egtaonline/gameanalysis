@@ -2,4 +2,4 @@ language: python
 python:
   - "3.5"
 install: "pyvenv . && pip install -r requirements.txt"
-script: "make test"
+script: "pwd && ls && make test"
