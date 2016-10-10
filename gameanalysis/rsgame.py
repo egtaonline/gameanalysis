@@ -397,6 +397,10 @@ class BaseGame(object):
     def __hash__(self):
         return self._hash
 
+    def __eq__(self, other):
+        return (np.all(self.num_strategies == other.num_strategies) and
+                np.all(self.num_players == other.num_players))
+
     def __repr__(self):
         return '{}({}, {})'.format(
             self.__class__.__name__,
@@ -409,7 +413,7 @@ class BaseGame(object):
             strategies=dict(zip(serial.role_names, serial.strat_names)))
 
     def to_str(self, serial):
-        return ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}\n'
+        return ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}'
                 .format(
                     self.__class__.__name__,
                     ', '.join(serial.role_names),
@@ -764,7 +768,7 @@ class Game(BaseGame):
         json_ = super().to_json(serial)
         json_['profiles'] = [
             {
-                role: [(strat, int(count), float(pay))
+                role: [[strat, int(count), float(pay)]
                        for strat, count, pay
                        in zip(strats, counts, pays)
                        if count > 0]
@@ -777,11 +781,10 @@ class Game(BaseGame):
         return json_
 
     def to_str(self, serial):
-        str_ = super().to_str(serial)
-        str_ += ('payoff data for {data:d} out of {total:d} '
-                 'profiles').format(data=self.num_profiles,
-                                    total=self.num_all_profiles)
-        return str_
+        return ('{base}\npayoff data for {data:d} out of {total:d} '
+                'profiles').format(base=super().to_str(serial),
+                                   data=self.num_profiles,
+                                   total=self.num_all_profiles)
 
 
 class SampleGame(Game):
@@ -986,7 +989,7 @@ class SampleGame(Game):
         json_ = BaseGame.to_json(self, serial)
         json_['profiles'] = [
             {
-                role: [(strat, int(count), list(map(float, pay)))
+                role: [[strat, int(count), list(map(float, pay))]
                        for strat, count, pay
                        in zip(strats, counts, pays)
                        if count > 0]
@@ -998,6 +1001,7 @@ class SampleGame(Game):
             for prof, payoffs
             in zip(self.profiles,
                    itertools.chain.from_iterable(self.sample_payoffs))]
+        return json_
 
     def to_str(self, serial):
         str_ = super().to_str(serial)
@@ -1005,7 +1009,8 @@ class SampleGame(Game):
         if samples.size == 0:
             return str_ + '\nno observations'
         elif samples.size == 1:
-            return str_ + '\n{:d} observations per profile'.format(samples[0])
+            return '{}\n{:d} observation{} per profile'.format(
+                str_, samples[0], '' if samples[0] == 1 else 's')
         else:
-            return str_ + '\n{:d} to {:d} observations per profile'.format(
-                samples.min(), samples.max())
+            return '{}\n{:d} to {:d} observations per profile'.format(
+                str_, samples.min(), samples.max())

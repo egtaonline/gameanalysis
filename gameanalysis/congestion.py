@@ -3,8 +3,9 @@ import math
 import warnings
 
 import numpy as np
-import numpy.random as rand
+import numpy.linalg as nla
 import scipy.misc as spm
+import scipy.optimize as opt
 
 from gameanalysis import gameio
 from gameanalysis import rsgame
@@ -19,68 +20,95 @@ class CongestionGame(rsgame.BaseGame):
         The number of players in the symmetric congestion game.
     num_required : int
         The number of required facilities in a strategy.
-    facilities : int or ndarray
-        A description of the facilities. If an int then the congestion matrix
-        is randomly generated, otherwise this must be an n x 3 float matrix
-        where n is the number of facilities.
+    facility_coefs : ndarray, (num_facilities, 3)
+        The polynomial coefficients for the congestion function. The first
+        column is constant, then linear, then quadratic.
     """
     # TODO This could be extended to any-order polynomials. The dth moment of
     # the binomial distribution is \sum_{k = 1}^d n!/(n - k)! p^k {d k}, where
     # {d k} is a sterling number of the second kind.
-    def __init__(self, num_players, num_required, facilities):
-        if isinstance(facilities, int):
-            num_facilities = facilities
-            # Generate value for congestions
-            # [Constant, Linear, Quadratic]
-            ranges = np.array([num_facilities, -num_required, -1])
-            congest = rand.random((num_facilities, 3)) * ranges
-        else:
-            num_facilities = facilities.shape[0]
-            assert facilities.shape[1] == 3, \
-                "Congestion games only support quadratic congestion"
-            congest = facilities
+    def __init__(self, num_players, num_required, facility_coefs):
+        self.num_facilities = facility_coefs.shape[0]
+        assert facility_coefs.shape[1] == 3, \
+            "Congestion games only support quadratic congestion"
+        self.facility_coefs = facility_coefs.view()
+        self.facility_coefs.setflags(write=False)
 
         assert num_required > 0
-        assert num_facilities >= num_required
-        num_strats = spm.comb(num_facilities, num_required, exact=True)
+        assert self.num_facilities >= num_required
+        num_strats = spm.comb(self.num_facilities, num_required, exact=True)
         super().__init__(num_players, num_strats)
-        self.num_facilities = num_facilities
         self.num_required = num_required
-        self._congest = congest
 
-        self._strats = np.zeros((num_strats, num_facilities), bool)
+        self._strats = np.zeros((num_strats, self.num_facilities), bool)
         for i, inds in enumerate(itertools.combinations(
-                range(num_facilities), num_required)):
+                range(self.num_facilities), num_required)):
             self._strats[i, inds] = True
+        self._strats.setflags(write=False)
 
-        # Compute extreme payoffs
-        self._min_payoffs = np.array(np.partition(
-            self._congest.dot(num_players ** np.arange(3)),
-            num_required - 1)[:num_required].sum())
-        self._min_payoffs.shape = (1,)
-        self._min_payoffs.setflags(write=False)
-        if num_facilities >= 2 * num_required:
-            self._max_payoffs = np.array(np.partition(
-                self._congest.sum(-1),
-                -self.num_required)[-self.num_required:].sum())
-        else:
-            # XXX Because this is an integer problem, I'm not convinced there's
-            # a great way to calculate this that's not roughly on the order of
-            # enumerating all of the profiles so it's not calculated.
-            # XXX We could at least update this on the fly as more profiles are
-            # computed
-            self._max_payoffs = self._min_payoffs
-        self._max_payoffs.shape = (1,)
-        self._max_payoffs.setflags(write=False)
+        # Set placeholder values
+        self._min_payoffs = None
+        self._max_payoffs = None
 
     def is_complete(self):
         """Congestion games are always complete"""
         return True
 
     def min_payoffs(self):
+        # Computes the min payoff by finding the required facilities that have
+        # the lowest payoff when everyone uses them. This will fail if the
+        # highest order term isn't negative.
+        if self._min_payoffs is None:
+            self._min_payoffs = self.num_players.astype(float)
+            self._min_payoffs *= np.partition(
+                self.facility_coefs.dot(self.num_players ** np.arange(3)),
+                self.num_required - 1)[:self.num_required].sum()
+            self._min_payoffs.setflags(write=False)
         return self._min_payoffs
 
     def max_payoffs(self):
+        """Computes the max payoff per role
+
+        For computational efficiency, this computes an upper bound on max
+        payoff by relaxing integer assignment to facilities. In practice it
+        seems very close.
+        """
+        # This is structured to solve the facility assignment optimization,
+        # e.g. assign num_required * num_players to num_facilities to maximize
+        # total payoff. This is hard, so we solve the relaxation where
+        # potentially everyone could play the same facility, and we allow
+        # fractional assignment. We solve it by solving the lagrange multiplier
+        # equation instead of doing gradient descent. We also ignore the x >= 0
+        # constraint. Most valid congestion games should have an optimum that
+        # already satisfies that constraint, and if not, the answer will still
+        # be a valid upper bound.
+        if self._max_payoffs is None:
+            total = self.num_required * self.num_players[0]
+
+            def eqas(x):
+                vals = np.empty(x.size)
+                vals[:-1] = np.sum(x[:-1, None] ** np.arange(3) *
+                                   np.arange(1, 4) * self.facility_coefs, 1)
+                vals[:-1] -= x[-1]
+                vals[-1] = x[:-1].sum() - total
+                return vals
+
+            def eqajac(x):
+                jac = np.zeros((self.num_facilities + 1,) * 2)
+                diag = (2 * self.facility_coefs[:, 1] +
+                        6 * self.facility_coefs[:, 2] * x[:-1])
+                np.fill_diagonal(jac[:-1, :-1], diag)
+                jac[-1, :-1] = 1
+                jac[:-1, -1] = -1
+                return jac
+
+            x0 = np.ones(self.num_facilities + 1) / total
+            factor = 10**1.5 / nla.norm(x0)
+            res = opt.fsolve(eqas, x0, fprime=eqajac, factor=factor)
+            self._max_payoffs = np.empty(1)
+            self._max_payoffs[0] = np.sum(res[:-1, None] ** np.arange(1, 4) *
+                                          self.facility_coefs)
+            self._max_payoffs.setflags(write=False)
         return self._max_payoffs
 
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
@@ -88,26 +116,27 @@ class CongestionGame(rsgame.BaseGame):
         n = self.num_players[0] - 1
         fac_probs = np.sum(mix[..., None] * self._strats, -2)
         ex = fac_probs * n
-        fac_payoffs = (self._congest[..., 0] +
-                       self._congest[..., 1] * (ex + 1) +
-                       self._congest[..., 2] * (ex * fac_probs * (n - 1) +
-                                                3 * ex + 1))
+        fac_payoffs = (self.facility_coefs[..., 0] +
+                       self.facility_coefs[..., 1] * (ex + 1) +
+                       self.facility_coefs[..., 2] *
+                       (ex * fac_probs * (n - 1) + 3 * ex + 1))
         payoffs = fac_payoffs.dot(self._strats.T)
 
         if not jacobian:
             return payoffs
 
-        dfac_payoffs = (self._congest[..., 1] * n +
-                        self._congest[..., 2] * (2 * n * (n - 1) * fac_probs +
-                                                 3 * n))
+        dfac_payoffs = (self.facility_coefs[..., 1] * n +
+                        self.facility_coefs[..., 2] * (2 * n * (n - 1) *
+                                                       fac_probs + 3 * n))
         jac = np.dot(self._strats * dfac_payoffs[..., None, :], self._strats.T)
         return payoffs, jac
 
     def get_payoffs(self, profiles):
         usage = np.asarray(profiles, int).dot(self._strats)
-        fac_payoffs = np.sum(self._congest * usage[..., None] ** np.arange(3),
-                             -1)
-        return fac_payoffs.dot(self._strats.T) * (profiles > 0)
+        fac_payoffs = np.sum(self.facility_coefs * usage[..., None] **
+                             np.arange(3), -1)
+        payoffs = fac_payoffs.dot(self._strats.T) * (profiles > 0)
+        return payoffs
 
     def to_game(self):
         profiles = self.all_profiles()
@@ -150,7 +179,7 @@ class CongestionGame(rsgame.BaseGame):
             num_players=self.num_players[0].item(),
             num_required_facilities=self.num_required,
             facilities={f: coefs.tolist() for f, coefs
-                        in zip(facilities, self._congest)})
+                        in zip(facilities, self.facility_coefs)})
 
     def to_str(self, serial=None):
         """Convert game to a human string

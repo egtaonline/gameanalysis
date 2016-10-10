@@ -33,12 +33,18 @@ def test_dpr(keep_prob, game_desc):
     # Try to reduce game
     red.reduce_game(rsgame.BaseGame(game))
     red_game = red.reduce_game(game)
+    red_game2 = reduction.reduce_game_dpr(game, red_players)
     red_sgame = red.reduce_game(sgame)
+
+    # Assert that reduce_game_dpr produces identical results
+    reduced_profiles = utils.axis_to_elem(red_game.profiles)
+    reduced_profiles2 = utils.axis_to_elem(red_game2.profiles)
+    assert np.setxor1d(reduced_profiles, reduced_profiles2).size == 0, \
+        "different reduction functions didn't produce identical results"
 
     # Assert that reducing all profiles covers reduced game
     reduced_full_profiles = utils.axis_to_elem(
         red.reduce_profiles(game.profiles))
-    reduced_profiles = utils.axis_to_elem(red_game.profiles)
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
     reduced_sample_profiles = utils.axis_to_elem(red_sgame.profiles)
