@@ -62,8 +62,8 @@ bump-sync:
 	sed -ir "s/^version = '[0-9]+\.[0-9]+'$$/version = '$(shell jq -r '.version' setup.json)'/;s/^release = '[0-9]+\.[0-9]+'$$/release = '$(shell jq -r '.version' setup.json)'/" docs/source/conf.py
 	bin/sphinx-apidoc -f -o docs/source gameanalysis
 	$(MAKE) -C docs html
-	cd docs/build/html && git add . && git commit -m 'Update pages to $(shell jq -r .version setup.json)' && git push origin gh-pages
-	git commit setup.json docs/source/conf docs/build/html
+	cd docs/build/html && git add . && git commit -m 'Update pages to $(shell jq -r .version setup.json)'; git push origin gh-pages
+	git commit setup.json docs/source/conf.py docs/build/html
 	git tag v$(shell jq -r .version setup.json)
 	git push $(shell git remote | head -n1) v$(shell jq -r .version setup.json)
 
