@@ -106,3 +106,4 @@ To Do
 - Some functions in `dominance` could probably be more efficient.
 - Integrate read the docs with numpy docstyle extension and github travis-ci for testing etc.
 - Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pandas?
+- Test requirements are also in requirements.txt because of issues loading them with xdist.
