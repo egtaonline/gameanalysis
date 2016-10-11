@@ -5,6 +5,7 @@ Game Analysis
 [![Coverage Status](https://coveralls.io/repos/github/egtaonline/gameanalysis/badge.svg?branch=master)](https://coveralls.io/github/egtaonline/gameanalysis?branch=master)
 
 This is a collection of python libraries and scripts that manipulate empirical game data.
+An index of the API of the most recent version is published on [github pages](http://egtaonline.github.io/gameanalysis/).
 
 
 Quick Setup
