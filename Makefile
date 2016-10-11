@@ -60,8 +60,8 @@ bump-major:
 
 bump-sync:
 	git commit setup.json
-	git tag v$(shell jq .version setup.json)
-	git push $(shell git remote | head -n1) v$(shell jq .version setup.json)
+	git tag v$(shell jq -r .version setup.json)
+	git push $(shell git remote | head -n1) v$(shell jq -r .version setup.json)
 
 minor: bump-minor bump-sync
 
