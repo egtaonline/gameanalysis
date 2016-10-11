@@ -1,3 +1,3 @@
 [submodule "docs/build/html"]
 	path = docs/build/html
-	url = git@github.com:egtaonline/GameAnalysis.git
+	url = https://github.com/egtaonline/GameAnalysis.git
