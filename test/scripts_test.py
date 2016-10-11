@@ -7,7 +7,7 @@ from os import path
 # flush it. This will likely fail on windows.
 
 DIR = path.dirname(path.realpath(__file__))
-GA = path.join(DIR, '..', 'ga')
+GA = path.join(DIR, '..', 'bin', 'ga')
 GAME = path.join(DIR, 'hard_nash_game_1.json')
 
 
