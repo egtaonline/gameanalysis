@@ -39,6 +39,7 @@ bin/pip install -U git+https://github.com/egtaonline/gameanalysis.git@<version>
 ```
 
 where `<version>` is the appropriate version to install.
+Generally we recommend this be done in a virtual environment to avoid dependency clashes, but it can be installed in the global environment.
 
 
 Usage
@@ -46,7 +47,6 @@ Usage
 
 `ga` is the game analysis command line tool.
 `./ga --help` will reveal all of the available options.
-If the root of this project is on your python path (done manually, with the venv active, or when executing anything in `bin`), then you also import individual packages from `gameanalysis`.
 
 
 Developing
