@@ -4,3 +4,4 @@ ipython~=5.1
 pytest-cov~=2.3
 pytest-xdist~=1.15
 pytest~=3.0
+sphinx~=1.4
