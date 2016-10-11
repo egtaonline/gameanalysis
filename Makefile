@@ -48,7 +48,15 @@ setup:
 	bin/pip install -r requirements.txt
 
 ubuntu-reqs:
-	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv
+	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv moreutils jq
+
+minor:
+	# Update version in setup.json
+	jq '.version = (.version | split(".") | .[1] = (.[1] | tonumber + 1 | tostring) | join("."))' setup.json | sponge setup.json
+
+major:
+	# Update version in setup.json
+	jq '.version = (.version | split(".") | [.[0] | tonumber + 1 | tostring, "0"] | join("."))' setup.json | sponge setup.json
 
 clean:
 	rm -rf bin include lib lib64 share

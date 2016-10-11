@@ -1,6 +1,6 @@
 language: python
 python:
     - "3.5"
-install: "make setup"
+install: "make setup && bin/pip install coveralls"
 script: "make coverage"
 after_success: "bin/coveralls"
