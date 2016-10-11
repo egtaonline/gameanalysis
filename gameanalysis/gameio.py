@@ -13,18 +13,20 @@ from gameanalysis import utils
 class GameSerializer(object):
     """An object with utilities for serializing a game with names
 
-    Parameters 1
-    ------------
-    strategies : {role: [strategy]}
+    Parameters
+    ----------
+    strategy_dict : {role: [strategy]}
         A dictionary mapping role to strategies. The resulting serializer is
-        the sorted version of all inputs.
+        the sorted version of all inputs. If included, this must be the only
+        parameter.
 
-    Parameters 2
-    ------------
-    role : [role]
-        A list of ordered roles.
-    strategies : [[strategies]]
-        A list of lists of ordered strategies for each role.
+    Parameters
+    ----------
+    roles : [role]
+        A list of ordered roles. This must be included with ``strategies``.
+    strategies : [[strategy]]
+        A list of lists of ordered strategies for each role. This must be
+        included with ``roles``.
     """
     def __init__(self, *args):
         if len(args) == 1:

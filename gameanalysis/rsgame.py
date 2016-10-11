@@ -38,21 +38,22 @@ class BaseGame(object):
     This object only contains methods and information about definition of the
     game, and does not contain methods to operate on observation data.
 
-    Parameters (from game)
-    ----------------------
+    Parameters
+    ----------
     game : BaseGame
         Copies info from game. Useful to keep convenience methods of game
-        without attached data.
+        without attached data. This argument should be by itself.
 
-    Parameters (default constructor)
-    --------------------------------
+    Parameters
+    ----------
     num_players : int or [int] or ndarray
         The number of players in each role in order, or the number of players
         per role if identical (will be broadcast to match the number of roles).
+        This should be included with ``num_strategies``.
     num_strategies : int or [int] or ndarray
         The number of strategies in each role in order, or the number of
         strategies per role if identical (will be broadcast to match the number
-        of roles).
+        of roles). This should be included with ``num_players``.
 
     The number of roles is deduced from the number of entries in num_players
     and num_strategies. If either is an integer or has length 1, the other is
@@ -439,11 +440,12 @@ class Game(BaseGame):
     the game, but their data can be accessed via `get_payoffs`, and they will
     be used for calculating deviation payoffs if possible.
 
-    Parameters (from game)
-    ----------------------
+    Parameters
+    ----------
     game : BaseGame
         Game to copy information out of. This will copy as much information out
-        of the game as possible.
+        of the game as possible. This can optionally be specified with
+        ``profiles`` and ``payoffs``.
     profiles : ndarray-like, optional
         The profiles for the game, if unspecified, this will try to be grabbed
         from `game`. Must be specified with payoffs.
@@ -451,10 +453,12 @@ class Game(BaseGame):
         The payoffs for the game, if unspecified, payoffs will try to be
         grabbed from `game`. Must be specified with profiles.
 
-    Parameters (from game description)
-    ----------------------------------
+    Parameters
+    ----------
     num_players : int or [int] or ndarray
-        The number of players per role. See BaseGame.
+        The number of players per role. See BaseGame. This must be specified
+        with ``num_strategies``, and optionally with ``profiles`` and
+        ``payoffs``.
     num_strategies : int or [int] or ndarray
         The number of strategies per role. See BaseGame.
     profiles : ndarray-like, optional
@@ -464,13 +468,14 @@ class Game(BaseGame):
         The payoffs for the game, if unspecified, game will be empty. Must be
         specified with profiles.
 
-    Parameters (from asymmetric game)
-    ---------------------------------
+    Parameters
+    ----------
     matrix : ndarray-like
         The matrix of payoffs for an asymmetric game. The last axis is the
         payoffs for each player, the first axes are the strategies for each
         player. matrix.shape[:-1] must correspond to the number of strategies
-        for each player. matrix.ndim - 1 must equal matrix.shape[-1].
+        for each player. matrix.ndim - 1 must equal matrix.shape[-1]. This must
+        be specified by itself.
     """
 
     def __init__(self, *args, verify=True):

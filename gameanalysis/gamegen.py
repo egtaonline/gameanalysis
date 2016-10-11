@@ -117,16 +117,21 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
     assigned to profiles in order from smallest to largest according to the
     order parameters as follows:
 
-       | s0  | s1  |
-    ---|-----|-----|
-    s0 | a,a | b,c |
-    s1 | c,b | d,d |
-    ---|-----|-----|
+
+    +---+-----+-----+
+    |   | s0  | s1  |
+    +---+-----+-----+
+    |s0 | a,a | b,c |
+    +---+-----+-----+
+    |s1 | c,b | d,d |
+    +---+-----+-----+
+
 
     So a=2,b=0,c=3,d=1 gives a prisoners' dilemma; a=0,b=3,c=1,d=2 gives a game
     of chicken.
 
-    distribution must accept a size parameter a la numpy distributions."""
+    distribution must accept a size parameter a la numpy distributions.
+    """
     # Generate payoffs
     payoffs = distribution(4)
     payoffs.sort()
@@ -234,12 +239,20 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
     against each set of opponents. Each k-tuple of players plays an instance of
     the specified random k-player matrix game.
 
-    players_per_matrix: k
-    matrix_game:        a function of two arguments (player_per_matrix,
-                        num_strategies)
-                        num_strategies-strategy games.
+    Parameters
+    ----------
+    num_players : int
+        The number of players.
+    num_strategies : int
+        The number of strategies per player.
+    matrix_game : (players_per_matrix, num_strategies) -> Game, optional
+        A function to generate games between sub groups of players.
+    players_per_matrix : int, optional
+        The number of players that interact simultaneously.
 
-    Note: The actual roles and strategies of matrix game are ignored.
+    Notes
+    -----
+    The actual roles and strategies of matrix game are ignored.
     """
     payoffs = np.zeros([num_strategies] * num_players + [num_players])
     for players in itertools.combinations(range(num_players),
