@@ -9,6 +9,8 @@ help: temp
 	@echo "coverage - run the tests and print coverage, add file=<file> to run on specific file"
 	@echo "check    - check code for style"
 	@echo "todo     - list all XXX, TODO and FIXME flags"
+	@echo "minor    - commit a minor version"
+	@echo "major    - commit a major version"
 	@echo "ubuntu-reqs - install necessary packages on ubuntu (requires root)"
 
 test:
@@ -50,13 +52,20 @@ setup:
 ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv moreutils jq
 
-minor:
-	# Update version in setup.json
+bump-minor:
 	jq '.version = (.version | split(".") | .[1] = (.[1] | tonumber + 1 | tostring) | join("."))' setup.json | sponge setup.json
 
-major:
-	# Update version in setup.json
+bump-major:
 	jq '.version = (.version | split(".") | [.[0] | tonumber + 1 | tostring, "0"] | join("."))' setup.json | sponge setup.json
+
+bump-sync:
+	git commit setup.json
+	git tag v$(shell jq .version setup.json)
+	git push $(shell git remote | head -n1) v$(shell jq .version setup.json)
+
+minor: bump-minor bump-sync
+
+major: bump-major bump-sync
 
 clean:
 	rm -rf bin include lib lib64 share
