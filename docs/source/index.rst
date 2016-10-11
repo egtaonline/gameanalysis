@@ -19,4 +19,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
+* `Github Project <https://github.com/egtaonline/gameanalysis>`_
