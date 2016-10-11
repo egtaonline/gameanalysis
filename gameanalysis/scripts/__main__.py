@@ -29,7 +29,3 @@ def main():
     sys.argv.pop(1)
     runpy.run_module('gameanalysis.scripts.' + args.command,
                      run_name='__main__', alter_sys=True)
-
-
-if __name__ == '__main__':
-    main()
