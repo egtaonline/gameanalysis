@@ -73,6 +73,6 @@ minor: bump-minor bump-sync
 major: bump-major bump-sync
 
 clean:
-	rm -rf bin include lib lib64 share
+	rm -rf bin include lib lib64 share pyvenv.cfg
 
 .PHONY: test big
