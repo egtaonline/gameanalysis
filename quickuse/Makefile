@@ -1,5 +1,5 @@
 update:
-	bin/pip install -U git+https://github.com/egtaonline/GameAnalysis.git@$(shell curl https://api.github.com/repos/egtaonline/GameAnalysis/tags 2>/dev/null | jq -r 'map(.name | select(startswith("v")) | .[1:] | split(".") | map(tonumber)) | sort | .[-1] | map(tostring) | "v" + join(".")')
+	bin/pip install -U git+https://github.com/egtaonline/gameanalysis.git@$(shell curl https://api.github.com/repos/egtaonline/gameanalysis/tags 2>/dev/null | jq -r 'map(.name | select(startswith("v")) | .[1:] | split(".") | map(tonumber)) | sort | .[-1] | map(tostring) | "v" + join(".")')
 
 setup: setup-pre update
 

@@ -242,7 +242,7 @@ html_static_path = ['_static']
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'GameAnalysisdoc'
+htmlhelp_basename = 'gameanalysisdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -268,7 +268,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'GameAnalysis.tex', 'Game Analysis Documentation',
+    (master_doc, 'gameanalysis.tex', 'Game Analysis Documentation',
      'Strategic Reasoning Group', 'manual'),
 ]
 
@@ -325,8 +325,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'GameAnalysis', 'Game Analysis Documentation',
-     author, 'GameAnalysis', 'One line description of project.',
+    (master_doc, 'gameanalysis', 'Game Analysis Documentation',
+     author, 'gameanalysis', 'One line description of project.',
      'Miscellaneous'),
 ]
 
