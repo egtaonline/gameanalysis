@@ -43,15 +43,14 @@ todo:
 
 setup:
 	pyvenv .
-	bin/pip3 install -U pip
-	bin/pip3 install -r requirements.txt
-
-pull:
-	git pull
-
-update: pull setup
+	bin/pip install -U pip setuptools
+	bin/pip install -e .
+	bin/pip install -r requirements.txt
 
 ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv
+
+clean:
+	rm -rf bin include lib lib64 share
 
 .PHONY: test big
