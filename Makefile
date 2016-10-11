@@ -1,13 +1,14 @@
 PYTEST_ARGS = -n auto --strict --showlocals
 
-help: temp
+help:
 	@echo "usage: make <tag>"
 	@echo
-	@echo "update   - get environment ready to run and verify up to date"
+	@echo "setup    - setup environment for developing"
 	@echo "test     - run the tests, add file=<file> to run on a specific file e.g. file=rsgame"
 	@echo "big      - run all of the tests (may fail on some computers)"
 	@echo "coverage - run the tests and print coverage, add file=<file> to run on specific file"
 	@echo "check    - check code for style"
+	@echo "format   - try to autoformat code"
 	@echo "todo     - list all XXX, TODO and FIXME flags"
 	@echo "minor    - commit a minor version"
 	@echo "major    - commit a major version"

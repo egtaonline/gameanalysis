@@ -4,44 +4,40 @@ Game Analysis
 [![Build Status](https://travis-ci.org/egtaonline/gameanalysis.svg?branch=master)](https://travis-ci.org/egtaonline/gameanalysis)
 [![Coverage Status](https://coveralls.io/repos/github/egtaonline/gameanalysis/badge.svg?branch=master)](https://coveralls.io/github/egtaonline/gameanalysis?branch=master)
 
-This is a set of python scripts to manipulate empirical game data.
+This is a collection of python libraries and scripts that manipulate empirical game data.
+
+
+Quick Setup
+-----------
+
+We recommend you install Game Analysis in it's own virtual environment.
+To use our recommended setup simply execute the following commands in the directory you want to store Game Analysis in.
+
+```
+wget https://raw.githubusercontent.com/egtaonline/gameanalysis/master/quickuse_makefile -O Makefile && make setup
+```
+
+`ga` should now be accessible in the `bin` directory.
+To update Game Analysis, simply execute `make update` in the appropriate directory.
 
 
 Setup
 -----
 
-To use this script, you need to install the following dependencies:
+To use Game Analysis, you need to meet the following dependencies
 
-1. Python 3
+1. Python 3 & venv
 2. BLAS/LAPACK
 3. A fortran compiler
-4. Make
 
-### Ubuntu
 
-These dependencies can be met with
+Then you can install Game Analysis via pip with:
 
 ```
-$ sudo apt install python3 libatlas-base-dev gfortran python3-venv
+bin/pip install -U git+https://github.com/egtaonline/gameanalysis.git@<version>
 ```
 
-or `make ubuntu-reqs`
-
-### Mac
-
-On mac you can install these easily with [homebrew](http://brew.sh/).
-
-TODO add actual setup commands
-
-### Final setup
-
-After all of the dependencies are met, executing
-
-```
-$ make update
-```
-
-will complete the setup.
+where `<version>` is the appropriate version to install.
 
 
 Usage
@@ -50,6 +46,13 @@ Usage
 `ga` is the game analysis command line tool.
 `./ga --help` will reveal all of the available options.
 If the root of this project is on your python path (done manually, with the venv active, or when executing anything in `bin`), then you also import individual packages from `gameanalysis`.
+
+
+Developing
+==========
+
+After cloning this repository, the included `Makefile` includes all the relevant actions to facilitate development.
+Typing `make` without targets will print out the various actions to help development.
 
 
 Testing
@@ -104,6 +107,5 @@ To Do
 
 - Change conditional in `dominance`, which indicates how to treat missing data to an enum or at least a string
 - Some functions in `dominance` could probably be more efficient.
-- Integrate read the docs with numpy docstyle extension and github travis-ci for testing etc.
 - Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pandas?
 - Test requirements are also in requirements.txt because of issues loading them with xdist.
