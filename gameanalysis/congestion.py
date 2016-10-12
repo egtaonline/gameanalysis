@@ -103,8 +103,7 @@ class CongestionGame(rsgame.BaseGame):
                 return jac
 
             x0 = np.ones(self.num_facilities + 1) / total
-            factor = 10**1.5 / nla.norm(x0)
-            res = opt.fsolve(eqas, x0, fprime=eqajac, factor=factor)
+            res = opt.fsolve(eqas, x0, fprime=eqajac)
             self._max_payoffs = np.empty(1)
             self._max_payoffs[0] = np.sum(res[:-1, None] ** np.arange(1, 4) *
                                           self.facility_coefs)
@@ -162,24 +161,21 @@ class CongestionGame(rsgame.BaseGame):
         Parameters
         ----------
         serial : GameSerializer
-            If unspecified, one will be generated on the fly
+            If unspecified, one will be generated using :func:`gen_serializer`
         """
         if serial is None:
-            digits = math.ceil(math.log10(self.num_facilities))
-            facilities = ('{:0{}d}'.format(f, digits)
-                          for f in range(self.num_facilities))
-        else:
-            facilities = sorted(set(itertools.chain.from_iterable(
-                s.split('_') for s in serial.strat_names[0])))
-            if len(facilities) != self.num_facilities:
-                warnings.warn('Splitting strategies with "_" did not result '
-                              'in the right number of facilities. `to_json` '
-                              'will not produce accurate results.')
-        return dict(
-            num_players=self.num_players[0].item(),
-            num_required_facilities=self.num_required,
-            facilities={f: coefs.tolist() for f, coefs
-                        in zip(facilities, self.facility_coefs)})
+            serial = self.gen_serializer()
+        facilities = sorted(set(itertools.chain.from_iterable(
+            s.split('_') for s in serial.strat_names[0])))
+        if len(facilities) != self.num_facilities:
+            warnings.warn('Splitting strategies with "_" did not result '
+                          'in the right number of facilities. `to_json` '
+                          'will not produce accurate results.')
+        json_ = super().to_json(serial)
+        json_['num_required_facilities'] = self.num_required
+        json_['facilities'] = {f: coefs.tolist() for f, coefs
+                               in zip(facilities, self.facility_coefs)}
+        return json_
 
     def to_str(self, serial=None):
         """Convert game to a human string
@@ -187,7 +183,7 @@ class CongestionGame(rsgame.BaseGame):
         Parameters
         ----------
         serial : GameSerializer
-            If unspecified, one will be generated on the fly
+            If unspecified, one will be generated on the fly.
         """
         if serial is None:
             digits = math.ceil(math.log10(self.num_facilities))
@@ -211,13 +207,19 @@ class CongestionGame(rsgame.BaseGame):
 
 
 def read_congestion_game(json_):
-    num_players = json_['num_players']
+    num_players = next(iter(json_['players'].values()))
     num_required = json_['num_required_facilities']
     ordered = sorted(json_['facilities'].items())
     congest_matrix = np.array(list(x[1] for x in ordered), float)
     facilities = list(x[0] for x in ordered)
     strats = list('_'.join(facs) for facs
                   in itertools.combinations(facilities, num_required))
+    strategies = json_['strategies']
+    assert strats == next(iter(strategies.values())), (
+        "strategies recovered from facilities didn't equal provided "
+        "strategies. This likely means there was an error with serializing "
+        "the congestion game, potentially because the facility names "
+        "contained an invalid character.")
     cgame = CongestionGame(num_players, num_required, congest_matrix)
-    serial = gameio.GameSerializer(['all'], [strats])
+    serial = gameio.GameSerializer(strategies)
     return cgame, serial

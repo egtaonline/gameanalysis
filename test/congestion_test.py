@@ -5,6 +5,7 @@ from gameanalysis import congestion
 from gameanalysis import gamegen
 from gameanalysis import gameio
 from gameanalysis import nash
+from gameanalysis import rsgame
 
 
 EPS = np.finfo(float).eps
@@ -139,6 +140,24 @@ def test_serial_json_copy(players, facilities, required):
         dev1 = cgame1.deviation_payoffs(mix)
         dev2 = cgame2.deviation_payoffs(mix)
         assert np.allclose(dev1, dev2)
+
+
+@pytest.mark.parametrize('players,facilities,required', [
+    (1, 1, 1),
+    (2, 2, 1),
+    (2, 2, 2),
+    (2, 3, 2),
+    (3, 4, 2),
+    (5, 6, 4),
+] * 20)
+def test_serial_to_base_game(players, facilities, required):
+    """Test that reading a congestion game as a base game works"""
+    cgame = gamegen.congestion_game(players, required, facilities)
+    serial1 = cgame.gen_serializer()
+    base1 = rsgame.BaseGame(cgame)
+    base2, serial2 = gameio.read_base_game(cgame.to_json(serial1))
+    assert base1 == base2
+    assert serial1 == serial2
 
 
 def test_to_str():
