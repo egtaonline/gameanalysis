@@ -1,4 +1,4 @@
-PYTEST_ARGS = -n auto --strict --showlocals
+PYTEST_ARGS = -nauto --strict --showlocals -c/dev/null
 
 help:
 	@echo "usage: make <tag>"
@@ -10,6 +10,7 @@ help:
 	@echo "check    - check code for style"
 	@echo "format   - try to autoformat code"
 	@echo "todo     - list all XXX, TODO and FIXME flags"
+	@echo "docs     - generate html for documentation"
 	@echo "minor    - commit a minor version"
 	@echo "major    - commit a major version"
 	@echo "ubuntu-reqs - install necessary packages on ubuntu (requires root)"
@@ -60,20 +61,22 @@ bump-major:
 	jq '.version = (.version | split(".") | [.[0] | tonumber + 1 | tostring, "0"] | join("."))' setup.json | sponge setup.json
 
 bump-sync:
-	sed -ri.un~ "s/^version = '[0-9]+\.[0-9]+'$$/version = '$(shell jq -r '.version' setup.json)'/;s/^release = '[0-9]+\.[0-9]+'$$/release = '$(shell jq -r '.version' setup.json)'/" docs/source/conf.py
-	bin/sphinx-apidoc -f -o docs/source gameanalysis
-	$(MAKE) -C docs html
 	cd docs/build/html && git add . && git commit -m 'Update pages to $(shell jq -r .version setup.json)'; git push origin gh-pages
 	git commit setup.json docs/source/conf.py docs/build/html
 	git push
 	git tag v$(shell jq -r .version setup.json)
 	git push $(shell git remote | head -n1) v$(shell jq -r .version setup.json)
 
-minor: bump-minor bump-sync
+docs:
+	sed -ri.un~ "s/^version = '[0-9]+\.[0-9]+'$$/version = '$(shell jq -r '.version' setup.json)'/;s/^release = '[0-9]+\.[0-9]+'$$/release = '$(shell jq -r '.version' setup.json)'/" docs/source/conf.py
+	bin/sphinx-apidoc -f -o docs/source gameanalysis
+	$(MAKE) -C docs html
 
-major: bump-major bump-sync
+minor: bump-minor docs bump-sync
+
+major: bump-major docs bump-sync
 
 clean:
 	rm -rf bin include lib lib64 share pyvenv.cfg
 
-.PHONY: test big
+.PHONY: test big docs
