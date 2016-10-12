@@ -208,6 +208,10 @@ class GameSerializer(object):
         return '{}({}, {})'.format(self.__class__.__name__, self.role_names,
                                    self.strat_names)
 
+    def __eq__(self, other):
+        return (self.role_names == other.role_names and
+                self.strat_names == other.strat_names)
+
 
 def read_base_game(json):
     players, strats, _, _ = _game_from_json(json)
@@ -309,7 +313,7 @@ def _game_from_json(json_):
     """Returns constructor arguments for a game from parsed json"""
     if 'players' in json_ and 'strategies' in json_:
         return _ga_game_from_json(json_)
-    elif not json_['profiles']:
+    elif not json.get('profiles', ()):
         return _roles_from_json(json_)
     elif ('symmetry_groups' in json_['profiles'][0] and
           'observations' in json_['profiles'][0]):

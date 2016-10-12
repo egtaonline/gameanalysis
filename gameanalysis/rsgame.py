@@ -411,7 +411,8 @@ class BaseGame(object):
     def to_json(self, serial):
         return dict(
             players=dict(zip(serial.role_names, map(int, self.num_players))),
-            strategies=dict(zip(serial.role_names, serial.strat_names)))
+            strategies=dict(zip(serial.role_names,
+                                map(list, serial.strat_names))))
 
     def to_str(self, serial):
         return ('{}:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\tStrategies:\n\t\t{}'
