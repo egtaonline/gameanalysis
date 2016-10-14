@@ -1,11 +1,7 @@
 """create random games"""
 import argparse
-import collections
 import json
 import sys
-from os import path
-
-import numpy.random as rand
 
 from gameanalysis import gameio
 from gameanalysis import gamegen
@@ -15,12 +11,15 @@ class ZeroSum(object):
     """two player zero sum game"""
 
     @staticmethod
-    def update_parser(parser):
-        parser.description = """A two player zero sum game with uniform
-        values"""
+    def add_parser(subparsers, base):
+        parser = subparsers.add_parser('uzs', aliases=['zs'], parents=[base],
+                                       help="""Two-player Zero-sum""",
+                                       description="""Construct a two-player
+                                       zero-sum game with uniform payoffs.""")
         parser.add_argument('num_strats', metavar='<num-strategies>', type=int,
                             help="""Number of strategies to use in generating
                             the zero sum game""")
+        return parser
 
     @staticmethod
     def create(args):
@@ -33,13 +32,18 @@ class RoleSymmetric(object):
     """independent uniform role symmetric game"""
 
     @staticmethod
-    def update_parser(parser):
-        parser.description = """A role symmetric game"""
-        parser.add_argument('pands', nargs='+', metavar='<player-strat-pair>',
+    def add_parser(subparsers, base):
+        parser = subparsers.add_parser('ursym', aliases=['rs'], parents=[base],
+                                       description="""Construct a role
+                                       symmetric game.""", help="""Role
+                                       Symmetric""")
+        parser.add_argument('pands', nargs='+', metavar='<player> <strat>',
                             type=int, help="""The number of players and
-strategies for a role, specified as many times as there are roles. e.g. "1 4 3
-2" will be a two role game, the first role has 1 player and 4 strategies, the
-                            second role has 3 players and 2 strategies.""")
+                            strategies for a role, specified as many times as
+                            there are roles. e.g. "1 4 3 2" will be a two role
+                            game, the first role has 1 player and 4 strategies,
+                            the second role has 3 players and 2 strategies.""")
+        return parser
 
     @staticmethod
     def create(args):
@@ -55,8 +59,11 @@ class Congestion(object):
     """congestion game"""
 
     @staticmethod
-    def update_parser(parser):
-        parser.description = """A congestion game"""
+    def add_parser(subparsers, base):
+        parser = subparsers.add_parser('congest', aliases=['cgst'],
+                                       parents=[base], help="""Congestion""",
+                                       description="""Create a congestion
+                                       game.""")
         parser.add_argument('num_players', metavar='<num-players>', type=int,
                             help="""The number of players in the congestion
                             game.""")
@@ -66,6 +73,7 @@ class Congestion(object):
         parser.add_argument('num_required', metavar='<num-required>', type=int,
                             help="""The number of facilities a player has to
                             occupy in the congestion game.""")
+        return parser
 
     @staticmethod
     def create(args):
@@ -74,59 +82,31 @@ class Congestion(object):
         return game.to_game(), serial
 
 
-class ExperimentNoise(object):
+class Noise(object):
     """add experimental noise to a given game"""
 
-    def uniform(max_width):
-        def actual(shape):
-            num_payoffs, num_samples = shape
-            width = rand.uniform(0, max_width, num_payoffs)
-            return rand.uniform(-width, width, (num_samples, num_payoffs)).T
-        return actual
-
-    def gaussian(max_width):
-        def actual(shape):
-            num_payoffs, num_samples = shape
-            width = rand.uniform(0, max_width, num_payoffs)
-            return rand.normal(0, width, (num_samples, num_payoffs)).T
-        return actual
-
-    def bimodal_gaussian(max_width):
-        def actual(shape):
-            num_payoffs, num_samples = shape
-            width = rand.uniform(0, max_width, num_payoffs)
-            spread = rand.normal(0, max_width, num_payoffs)
-            means = ((rand.rand(num_payoffs) < .5) * 2 - 1) * spread
-            return rand.normal(means, width, (num_samples, num_payoffs)).T
-        return actual
-
-    def gumbel(max_width):
-        def actual(shape):
-            num_payoffs, num_samples = shape
-            width = rand.uniform(0, max_width, num_payoffs)
-            return rand.gumbel(0, width, (num_samples, num_payoffs)).T
-        return actual
-
     distributions = {
-        'uniform': uniform,
-        'gaussian': gaussian,
-        'bimodal': bimodal_gaussian,
-        'gumbel': gumbel,
+        'uniform': gamegen.width_uniform,
+        'gaussian': gamegen.width_gaussian,
+        'bimodal': gamegen.width_bimodal,
+        'gumbel': gamegen.width_gumbel,
     }
 
     @staticmethod
-    def update_parser(parser):
-        parser.description = """Add noise to an existing game"""
+    def add_parser(subparsers, base):
+        parser = subparsers.add_parser('noise', parents=[base], help="""Add
+                                       Noise""", description="""Add noise to an
+                                       existing game.""")
         parser.add_argument('--input', '-i', metavar='<input-file>',
                             default=sys.stdin, type=argparse.FileType('r'),
                             help="""Input file for script. (default: stdin)""")
         parser.add_argument('distribution',
-                            choices=ExperimentNoise.distributions, help="""The
+                            choices=Noise.distributions, help="""The
 distribution to sample from. uniform: the width corresponds to the half width
 of the sampled value. gaussian: the width corresponds to the standard
-                            deviation. bimodal: gaussian mixture where the
-                            means are N(0, max-width) apart.  gumbel: the width
-                            corresponds to the shape parameter.""")
+deviation. bimodal: gaussian mixture where the means are N(0, max-width) apart.
+                            gumbel: the width corresponds to the shape
+                            parameter.""")
         parser.add_argument('max_width', metavar='<max-width>', type=float,
                             help="""The max width for the distribution. For
                             each payoff the width is drawn uniformly from [0,
@@ -135,104 +115,48 @@ of the sampled value. gaussian: the width corresponds to the standard
         parser.add_argument('num_samples', metavar='<num-samples>', type=int,
                             help="""The number of samples to draw for every
                             payoff.""")
+        return parser
 
     @staticmethod
     def create(args):
         game, serial = gameio.read_game(json.load(args.input))
-        dist = ExperimentNoise.distributions[args.distribution](args.max_width)
-        return gamegen.add_noise(game, args.num_samples, noise=dist), serial
+        dist = Noise.distributions[args.distribution]
+        return gamegen.add_noise_width(game, args.num_samples, args.max_width,
+                                       dist), serial
 
 
-class Help(object):
-    """get help on a generation function"""
-
-    @staticmethod
-    def update_parser(parser):
-        parser.add_argument('gametype', metavar='game-type', nargs='?',
-                            help="""Game type to get help on""")
-
-    @staticmethod
-    def create(args):
-        if args.gametype is None:
-            game = PARSER
-        else:
-            game = SUBCOMMANDS.choices[args.gametype]
-        game.print_help()
-        sys.exit(0)
+_TYPES = {}
 
 
-GAME_TYPES = collections.OrderedDict([
-    ('uzs', ZeroSum),
-    ('ursym', RoleSymmetric),
-    ('congest', Congestion),
-    ('noise', ExperimentNoise),
-    ('help', Help),
-])
+def add_parser(subparsers):
+    base = argparse.ArgumentParser(add_help=False)
+    base.add_argument('--output', '-o', metavar='<output-file>',
+                      default=sys.stdout, type=argparse.FileType('w'),
+                      help="""Output file for script. (default: stdout)""")
+    base.add_argument('--normalize', '-n', action='store_true',
+                      help="""Normalize the game payoffs so that the minimum
+                      payoff is 0 and the maximum payoff is 1""")
+    parser = subparsers.add_parser('generate', aliases=['gen'], parents=[base],
+                                   help="""Generate random games""",
+                                   description="""Generate random games.  Input
+                                   is unused""")
+    subparsers = parser.add_subparsers(title='game generator types',
+                                       dest='type', metavar='<game-type>',
+                                       help="""The game generation function to
+                                       use. Allowed values:""")
+    for gentype in [RoleSymmetric, ZeroSum, Congestion, Noise]:
+        subparser = gentype.add_parser(subparsers, base)
+        subparser.create = gentype.create
+
+    _TYPES.update(subparsers.choices)
+    return parser
 
 
-TYPE_HELP = ' '.join('`{}` - {}.'.format(t, m.__doc__)
-                     for t, m in GAME_TYPES.items())
-PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]
-BASE = argparse.ArgumentParser(prog='ga ' + PACKAGE, add_help=False)
-BASE.add_argument('--output', '-o', metavar='<output-file>',
-                  default=sys.stdout, type=argparse.FileType('w'),
-                  help="""Output file for script. (default: stdout)""")
-BASE.add_argument('--normalize', '-n', action='store_true', help="""Normalize
-                  the game payoffs so that the minimum payoff is 0 and the
-                  maximum payoff is 1""")
-PARSER = argparse.ArgumentParser(prog='ga ' + PACKAGE, parents=[BASE],
-                                 description="""Generate random games. Input is
-                                 unused""")
-SUBCOMMANDS = PARSER.add_subparsers(title='Generator types', dest='type',
-                                    metavar='<game-type>', help="""The game
-                                    generation function to use. Options are:
-                                    """ + TYPE_HELP)
-SUBCOMMANDS.required = True
-
-for name, cls in GAME_TYPES.items():
-    SUB_PARSER = SUBCOMMANDS.add_parser(name, parents=[BASE])
-    cls.update_parser(SUB_PARSER)
-
-
-def main():
-    args = PARSER.parse_args()
-    game, serial = GAME_TYPES[args.type].create(args)
+def main(args):
+    game, serial = _TYPES[args.type].create(args)
 
     if args.normalize:
         game = gamegen.normalize(game)
 
-    # elif args.type == 'cs':
-    #     game_func = congestion_game
-    #     assert len(args.game_args) == 3, 'game_args must specify player, '+\
-    #                                 'facility, and required facility counts'
-    # elif args.type == 'LEG':
-    #     game_func = local_effect_game
-    #     assert len(args.game_args) == 2, 'game_args must specify player and '+\ # noqa
-    #                                 'strategy counts'
-    # elif args.type == 'PMX':
-    #     game_func = polymatrix_game
-    #     assert len(args.game_args) == 2, 'game_args must specify player and '+\ # noqa
-    #                                 'strategy counts'
-    # elif args.type == 'ind':
-    #     game_func = polymatrix_game
-    #     assert len(args.game_args) == 2, 'game_args must specify player and '+\ # noqa
-    #                                 'strategy counts'
-
-    # if args.noise == 'normal':
-    #     assert len(args.noise_args) == 2, 'noise_args must specify stdev '+\
-    #                                         'and sample count'
-    #     noise_args = [float(args.noise_args[0]), int(args.noise_args[1])]
-    #     games = map(lambda g: normal_noise(g, *noise_args), games)
-    # elif args.noise == 'gauss_mix':
-    #     assert len(args.noise_args) == 3, 'noise_args must specify max '+\
-    #                                 'stdev, sample count, and number of modes' # noqa
-    #     noise_args = [float(args.noise_args[0]), int(args.noise_args[1]), \
-    #                     int(args.noise_args[2])]
-    #     games = map(lambda g: gaussian_mixture_noise(g, *noise_args), games)
-
     json.dump(game.to_json(serial), args.output)
     args.output.write('\n')
-
-
-if __name__ == '__main__':
-    main()

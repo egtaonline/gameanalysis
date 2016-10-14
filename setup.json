@@ -7,7 +7,7 @@
   "license": "Apache 2.0",
   "entry_points": {
     "console_scripts": [
-      "ga=gameanalysis.scripts.__main__:main"
+      "ga=gameanalysis.script:main"
     ]
   },
   "install_requires": [

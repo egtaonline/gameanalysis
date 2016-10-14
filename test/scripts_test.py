@@ -3,6 +3,8 @@ import subprocess
 import tempfile
 from os import path
 
+from gameanalysis import gamegen
+
 # XXX To pass files to some scripts we use tempfile.NamedTemporaryFile and just
 # flush it. This will likely fail on windows.
 
@@ -13,8 +15,6 @@ GAME = path.join(DIR, 'hard_nash_game_1.json')
 
 def test_help():
     assert not subprocess.run([GA, '--help']).returncode
-    assert not subprocess.run([GA, 'help']).returncode
-    assert not subprocess.run([GA, 'help', 'nash']).returncode
     assert subprocess.run([GA, '--fail']).returncode
     assert subprocess.run([GA]).returncode
 
@@ -30,6 +30,7 @@ def test_convert():
 def test_dominance():
     assert not subprocess.run([GA, 'dom', '-h']).returncode
     assert not subprocess.run([GA, 'dom', '-i', GAME]).returncode
+    assert not subprocess.run([GA, 'dom', '-i', GAME, '-s']).returncode
     with open(GAME) as f:
         assert not subprocess.run([GA, 'dom', '-cweakdom', '-o/dev/null'],
                                   stdin=f).returncode
@@ -55,8 +56,6 @@ def test_gamegen():
                                GAME]).returncode
     assert not subprocess.run([GA, 'gen', 'noise', 'gaussian', '1.5', '5',
                                '-i', GAME]).returncode
-    assert not subprocess.run([GA, 'gen', 'help']).returncode
-    assert not subprocess.run([GA, 'gen', 'help', 'ursym']).returncode
 
 
 def test_nash():
@@ -75,6 +74,14 @@ def test_nash():
     assert not subprocess.run([GA, 'nash', '-trand', '-m10', '-i',
                                GAME]).returncode
     assert subprocess.run([GA, 'nash', '-tfail', '-i', GAME]).returncode
+
+    with tempfile.NamedTemporaryFile('w') as game:
+        sgame = gamegen.rock_paper_scissors()
+        serial = gamegen.game_serializer(sgame)
+        json.dump(sgame.to_json(serial), game)
+        game.flush()
+        assert not subprocess.run([GA, 'nash', '-tpure', '--one', '-i',
+                                   game.name]).returncode
 
 
 def test_payoff():
@@ -105,6 +112,17 @@ def test_payoff():
         with open(GAME) as f:
             assert not subprocess.run([GA, 'pay', mixed.name, '-twelfare'],
                                       stdin=f).returncode
+
+    # Singleton profile
+    with tempfile.NamedTemporaryFile('w') as pure:
+        prof = {
+            'background': {
+                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
+            'hft': {'noop': 1}}
+        json.dump(prof, pure)
+        pure.flush()
+        assert not subprocess.run([GA, 'pay', '-i', GAME, pure.name,
+                                   '-o/dev/null']).returncode
 
 
 def test_reduction():
@@ -187,5 +205,50 @@ def test_analysis():
         '-c1e-8']).returncode
 
 
+def test_learning():
+    with open(GAME) as f:
+        assert not subprocess.run([GA, 'learning'], stdin=f).returncode
+    assert not subprocess.run([
+        GA, 'learning', '-i', GAME, '-o/dev/null', '-p1', '--dist-thresh',
+        '1e-3', '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000',
+        '-c1e-8']).returncode
+
+
 def test_congestion():
     assert not subprocess.run([GA, 'congest', '3', '2', '4']).returncode
+
+
+def test_sgboot():
+    with tempfile.NamedTemporaryFile('w') as mixed, \
+            tempfile.NamedTemporaryFile('w') as game:
+        sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
+                                  20)
+        serial = gamegen.game_serializer(sgame)
+        json.dump(sgame.to_json(serial), game)
+        game.flush()
+
+        profs = [serial.to_prof_json(sgame.uniform_mixture())]
+        json.dump(profs, mixed)
+        mixed.flush()
+
+        assert not subprocess.run([GA, 'sgboot', '-i', game.name, mixed.name,
+                                   '-o/dev/null']).returncode
+        game.seek(0)
+        assert not subprocess.run([GA, 'sgboot', mixed.name, '-tsurplus',
+                                   '--processes', '1', '-n21', '-p', '5', '95',
+                                   '-m'], stdin=game).returncode
+
+
+def test_samp():
+    with tempfile.NamedTemporaryFile('w') as mixed:
+        prof = {
+            'background': {
+                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
+            'hft': {'noop': 1}}
+        json.dump(prof, mixed)
+        mixed.flush()
+        assert not subprocess.run([GA, 'samp', '-i', GAME, '-m', mixed.name,
+                                   '-o/dev/null']).returncode
+        with open(GAME) as f:
+            assert not subprocess.run([GA, 'samp', '-m', mixed.name, '-n2',
+                                       '-d'], stdin=f).returncode

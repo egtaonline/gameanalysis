@@ -3,7 +3,6 @@ import argparse
 import json
 import sys
 from collections import abc
-from os import path
 
 import numpy as np
 
@@ -42,27 +41,30 @@ TYPE = {
 TYPE_HELP = ' '.join('`{}` - {}.'.format(s, f.__doc__)
                      for s, f in TYPE.items())
 
-PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]
-PARSER = argparse.ArgumentParser(prog='ga ' + PACKAGE, description="""Compute
-                                 payoff relative information in input game of
-                                 specified profiles.""")
-PARSER.add_argument('--input', '-i', metavar='<input-file>', default=sys.stdin,
-                    type=argparse.FileType('r'), help="""Input file for script.
-                    (default: stdin)""")
-PARSER.add_argument('--output', '-o', metavar='<output-file>',
-                    default=sys.stdout, type=argparse.FileType('w'),
-                    help="""Output file for script. (default: stdout)""")
-PARSER.add_argument('profiles', metavar='<profile-file>',
-                    type=argparse.FileType('r'), help="""File with profiles
-                    from input games for which payoffs should be calculated.
-                    This file needs to be a json list of profiles""")
-PARSER.add_argument('-t', '--type', metavar='type', default='payoffs',
-                    choices=TYPE, help="""What to return: {} (default:
-                    %(default)s)""".format(TYPE_HELP))
+
+def add_parser(subparsers):
+    parser = subparsers.add_parser('payoffs', aliases=['pay'], help="""Compute
+                                   payoffs""", description="""Compute payoff
+                                   relative information in input game of
+                                   specified profiles.""")
+    parser.add_argument('--input', '-i', metavar='<input-file>',
+                        default=sys.stdin, type=argparse.FileType('r'),
+                        help="""Input file for script.  (default: stdin)""")
+    parser.add_argument('--output', '-o', metavar='<output-file>',
+                        default=sys.stdout, type=argparse.FileType('w'),
+                        help="""Output file for script. (default: stdout)""")
+    parser.add_argument('profiles', metavar='<profile-file>',
+                        type=argparse.FileType('r'), help="""File with profiles
+                        from input games for which payoffs should be
+                        calculated.  This file needs to be a json list of
+                        profiles""")
+    parser.add_argument('-t', '--type', metavar='type', default='payoffs',
+                        choices=TYPE, help="""What to return: {} (default:
+                        %(default)s)""".format(TYPE_HELP))
+    return parser
 
 
-def main():
-    args = PARSER.parse_args()
+def main(args):
     game, serial = gameio.read_game(json.load(args.input))
     profiles = json.load(args.profiles)
     if isinstance(profiles, abc.Mapping):
@@ -75,7 +77,3 @@ def main():
 
     json.dump(payoffs, args.output)
     args.output.write('\n')
-
-
-if __name__ == '__main__':
-    main()

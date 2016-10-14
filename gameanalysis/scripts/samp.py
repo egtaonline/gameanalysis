@@ -3,36 +3,40 @@ import argparse
 import itertools
 import json
 import sys
-from os import path
 
 from gameanalysis import gameio
 
 
-PACKAGE = path.splitext(path.basename(sys.modules[__name__].__file__))[0]
-PARSER = argparse.ArgumentParser(prog='ga ' + PACKAGE, description="""Sample
-                                 profiles from a mixture.""")
-PARSER.add_argument('--input', '-i', metavar='<input-file>', default=sys.stdin,
-                    type=argparse.FileType('r'), help="""Game file to draw
-                    samples from.  (default: stdin)""")
-PARSER.add_argument('--mix', '-m', metavar='<mixture-file>', default=sys.stdin,
-                    type=argparse.FileType('r'), help="""Mixture to sample
-                    profiles from. (default: stdin)""")
-PARSER.add_argument('--output', '-o', metavar='<output-file>',
-                    default=sys.stdout, type=argparse.FileType('w'),
-                    help="""File to write stream of profiles too. (default:
-                    stdout)""")
-PARSER.add_argument('--num', '-n', metavar='<num-samples>', default=1,
-                    type=int, help="""The number of samples to gather.
-                    (default: %(default)d)""")
-PARSER.add_argument('--deviations', '-d', action='store_true', help="""Sample
-                    deviation profiles instead of general mixture profiles.
-                    This will sample `num` profiles from each deviation. The
-                    output will be a stream of json objects with a devrole,
-                    devstrat, and profile field.""")
+def add_parser(subparsers):
+    parser = subparsers.add_parser('sample', aliases=['samp'], help="""Sample
+                                   profiles from a mixture""",
+                                   description="""Sample profiles from a
+                                   mixture.""")
+    parser.add_argument('--input', '-i', metavar='<input-file>',
+                        default=sys.stdin, type=argparse.FileType('r'),
+                        help="""Game file to draw samples from.  (default:
+                        stdin)""")
+    parser.add_argument('--mix', '-m', metavar='<mixture-file>',
+                        default=sys.stdin, type=argparse.FileType('r'),
+                        help="""Mixture to sample profiles from. (default:
+                        stdin)""")
+    parser.add_argument('--output', '-o', metavar='<output-file>',
+                        default=sys.stdout, type=argparse.FileType('w'),
+                        help="""File to write stream of profiles too. (default:
+                        stdout)""")
+    parser.add_argument('--num', '-n', metavar='<num-samples>', default=1,
+                        type=int, help="""The number of samples to gather.
+                        (default: %(default)d)""")
+    parser.add_argument('--deviations', '-d', action='store_true',
+                        help="""Sample deviation profiles instead of general
+                        mixture profiles.  This will sample `num` profiles from
+                        each deviation. The output will be a stream of json
+                        objects with a devrole, devstrat, and profile
+                        field.""")
+    return parser
 
 
-def main():
-    args = PARSER.parse_args()
+def main(args):
     game, serial = gameio.read_game(json.load(args.input))
     mix = serial.from_prof_json(json.load(args.mix))
 
@@ -53,7 +57,3 @@ def main():
         for prof in game.random_profiles(mix, args.num):
             json.dump(serial.to_prof_json(prof), args.output)
             args.output.write('\n')
-
-
-if __name__ == '__main__':
-    main()
