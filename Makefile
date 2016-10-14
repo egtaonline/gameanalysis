@@ -62,7 +62,7 @@ bump-major:
 
 bump-sync:
 	cd docs/build/html && git add . && git commit -m 'Update pages to $(shell jq -r .version setup.json)'; git push origin gh-pages
-	git commit setup.json docs/source/conf.py docs/build/html -em $$'Version bump to $(shell jq -r .version setup.json)\n\n# Fill in details...'
+	git commit setup.json docs/source/conf.py docs/build/html -em "$$(printf 'Version bump to $(shell jq -r .version setup.json)\n\n# Fill in details...')"
 	git push
 	git tag v$(shell jq -r .version setup.json)
 	git push $(shell git remote | head -n1) v$(shell jq -r .version setup.json)
