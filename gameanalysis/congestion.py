@@ -3,7 +3,6 @@ import math
 import warnings
 
 import numpy as np
-import numpy.linalg as nla
 import scipy.misc as spm
 import scipy.optimize as opt
 

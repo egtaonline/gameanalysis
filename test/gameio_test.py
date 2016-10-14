@@ -6,7 +6,7 @@ import pytest
 
 from gameanalysis import gameio
 
-EMPTY_GAME_JSON = {
+EMPTY_GAME_JSON_1 = {
     'players': {
         'role': 2,
     },
@@ -16,6 +16,19 @@ EMPTY_GAME_JSON = {
             'strat2',
         ],
     },
+}
+
+EMPTY_GAME_JSON_2 = {
+    'roles': [
+        {
+            'name': 'role',
+            'strategies': [
+                'strat1',
+                'strat2',
+            ],
+            'count': 2,
+        },
+    ],
 }
 
 GAME_JSON = {
@@ -79,20 +92,20 @@ SAMPLE_GAME_JSON = {
 }
 
 
-@pytest.mark.parametrize('json_',
-                         [EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON])
+@pytest.mark.parametrize('json_', [EMPTY_GAME_JSON_1, EMPTY_GAME_JSON_2,
+                                   GAME_JSON, SAMPLE_GAME_JSON])
 def test_base_game_from_json(json_):
     gameio.read_base_game(json_)
 
 
-@pytest.mark.parametrize('json_',
-                         [EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON])
+@pytest.mark.parametrize('json_', [EMPTY_GAME_JSON_1, EMPTY_GAME_JSON_2,
+                                   GAME_JSON, SAMPLE_GAME_JSON])
 def test_game_from_json(json_):
     gameio.read_game(json_)
 
 
-@pytest.mark.parametrize('json_',
-                         [EMPTY_GAME_JSON, GAME_JSON, SAMPLE_GAME_JSON])
+@pytest.mark.parametrize('json_', [EMPTY_GAME_JSON_1, EMPTY_GAME_JSON_2,
+                                   GAME_JSON, SAMPLE_GAME_JSON])
 def test_sample_game_from_json(json_):
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore',
@@ -173,3 +186,10 @@ def test_index():
     assert 2 == conv.role_strat_index('a', 'w')
     assert 3 == conv.role_strat_index('b', 'r')
     assert 4 == conv.role_strat_index('b', 't')
+
+
+def test_empty_games_identical():
+    game1, serial1 = gameio.read_base_game(EMPTY_GAME_JSON_1)
+    game2, serial2 = gameio.read_base_game(EMPTY_GAME_JSON_2)
+    assert game1 == game2
+    assert serial1 == serial2

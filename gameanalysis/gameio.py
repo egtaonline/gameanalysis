@@ -141,35 +141,60 @@ class GameSerializer(object):
                 prof[self._role_strat_index[role, strat]] = count
         return np.array(prof)
 
-    def from_prof_symgrp(self, symgrps):
-        """Read a profile from symmetry groups"""
-        prof = np.zeros(self.num_role_strats, int)
+    def from_prof_symgrp(self, symgrps, dest=None):
+        """Read a profile from symmetry groups
+
+        Parameters
+        ----------
+        symgrps : [{count: int, role: str, strategy: str}]
+            A description of a profile as a list of dictionaries, where each
+            dictionary lists a unique role strategy pair, and a count as the
+            number of players playing it.
+        dest : ndarray, optional
+            If supplied, ``dest`` will be written to instead of allocating a
+            new array.
+        """
+        if dest is None:
+            dest = np.zeros(self.num_role_strats, int)
         for sym_group in symgrps:
             role = sym_group['role']
             strat = sym_group['strategy']
             count = sym_group['count']
-            prof[self._role_strat_index[role, strat]] = count
-        return prof
+            dest[self._role_strat_index[role, strat]] = count
+        return dest
 
-    def from_payoff_symgrp(self, symgrps):
-        """Read a set of payoffs from symmetry groups"""
-        payoffs = np.zeros(self.num_role_strats)
+    def from_payoff_symgrp(self, symgrps, dest=None):
+        """Read a set of payoffs from symmetry groups
+
+        Parameters
+        ----------
+        symgrps : [{payoff: float, role: str, strategy: str}]
+            A description of a set of payoffs as a list of dictionaries, where
+            each dictionary gives the average payoff for players in ``role``
+            playing ``strategy``.
+        dest : ndarray, optional
+            If supplied, ``dest`` will be written to instead of allocating a
+            new array.
+        """
+        if dest is None:
+            dest = np.zeros(self.num_role_strats)
         for sym_group in symgrps:
             role = sym_group['role']
             strat = sym_group['strategy']
             payoff = sym_group['payoff']
-            payoffs[self._role_strat_index[role, strat]] = payoff
-        return payoffs
+            dest[self._role_strat_index[role, strat]] = payoff
+        return dest
 
-    def from_prof_string(self, prof_string):
+    def from_prof_string(self, prof_string, dest=None):
         """Read a profile from a string"""
-        prof = np.zeros(self.num_role_strats, int)
+        if dest is None:
+            dest = np.zeros(self.num_role_strats, int)
         for role_str in prof_string.split('; '):
             role, strats = role_str.split(': ', 1)
             for strat_str in strats.split(', '):
                 count, strat = strat_str.split(' ', 1)
-                prof[self._role_strat_index[role, strat]] = count
-        return prof
+                dest[self._role_strat_index[role, strat]] = count
+        return dest
 
     def to_role_json(self, role_info):
         """Format role data as json"""
@@ -313,7 +338,7 @@ def _game_from_json(json_):
     """Returns constructor arguments for a game from parsed json"""
     if 'players' in json_ and 'strategies' in json_:
         return _ga_game_from_json(json_)
-    elif not json.get('profiles', ()):
+    elif not json_.get('profiles', ()):
         return _roles_from_json(json_)
     elif ('symmetry_groups' in json_['profiles'][0] and
           'observations' in json_['profiles'][0]):
