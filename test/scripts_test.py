@@ -206,12 +206,20 @@ def test_analysis():
 
 
 def test_learning():
-    with open(GAME) as f:
-        assert not subprocess.run([GA, 'learning'], stdin=f).returncode
-    assert not subprocess.run([
-        GA, 'learning', '-i', GAME, '-o/dev/null', '-p1', '--dist-thresh',
-        '1e-3', '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000',
-        '-c1e-8']).returncode
+    with tempfile.NamedTemporaryFile('w') as game:
+        sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 2], [3, 3]),
+                                  10)
+        serial = gamegen.game_serializer(sgame)
+        json.dump(sgame.to_json(serial), game)
+        game.flush()
+
+        assert not subprocess.run([GA, 'learning', '-i', game.name,
+                                   '-o/dev/null', '-p1', '--dist-thresh',
+                                   '1e-3', '-r1e-3', '-t1e-3',
+                                   '--rand-restarts', '0', '-m10000',
+                                   '-c1e-8']).returncode
+        game.seek(0)
+        assert not subprocess.run([GA, 'learning'], stdin=game).returncode
 
 
 def test_congestion():
