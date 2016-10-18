@@ -165,7 +165,7 @@ def test_sym_2p2s_known_eq(eq_prob):
     (3, 3, 2),
 ] * 20)
 def test_congestion_game(players, facilities, required):
-    game = gamegen.congestion_game(players, required, facilities)
+    game = gamegen.congestion_game(players, facilities, required)
     assert game.is_complete(), "didn't generate a full game"
     assert game.num_roles == 1, \
         "didn't generate correct number of players"
@@ -176,7 +176,7 @@ def test_congestion_game(players, facilities, required):
 
 
 def test_congestion_game_names():
-    game, conv = gamegen.congestion_game(3, 2, 3, return_serial=True)
+    game, conv = gamegen.congestion_game(3, 3, 2, return_serial=True)
     assert conv.role_names == ('all',)
     assert all(s.count('_') == 2 - 1 for s in conv.strat_names[0])
 

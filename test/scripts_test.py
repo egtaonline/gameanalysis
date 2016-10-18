@@ -46,7 +46,7 @@ def test_gamegen():
     assert subprocess.run([GA, 'gen', 'ursym', '5']).returncode
     assert not subprocess.run([GA, 'gen', 'ursym', '3', '4', '4',
                                '3']).returncode
-    assert not subprocess.run([GA, 'gen', 'congest', '3', '2', '4']).returncode
+    assert not subprocess.run([GA, 'gen', 'congest', '3', '4', '2']).returncode
     with open(GAME) as f:
         assert not subprocess.run([GA, 'gen', 'noise', 'uniform', '1.5', '5'],
                                   stdin=f).returncode
@@ -223,7 +223,7 @@ def test_learning():
 
 
 def test_congestion():
-    assert not subprocess.run([GA, 'congest', '3', '2', '4']).returncode
+    assert not subprocess.run([GA, 'congest', '3', '4', '2']).returncode
 
 
 def test_sgboot():

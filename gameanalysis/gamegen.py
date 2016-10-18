@@ -156,7 +156,7 @@ def sym_2p2s_known_eq(eq_prob):
     return rsgame.Game([2], [2], profiles, payoffs)
 
 
-def congestion_game(num_players, num_required, num_facilities,
+def congestion_game(num_players, num_facilities, num_required,
                     return_serial=False):
     """Generates a random congestion game with num_players players and nCr(f, r)
     strategies
