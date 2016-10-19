@@ -18,14 +18,23 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
+
+# Mock out c modules so that they're not necessary to build documentation. This
+# will unfortunately need to be updated if new submodules of numpy, scipy, or
+# sklearn are used.
 import mock
- 
 MOCK_MODULES = ['numpy', 'numpy.random', 'scipy', 'scipy.misc',
                 'scipy.special', 'scipy.optimize', 'sklearn']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.MagicMock()
 
+# Add actual modules to path
 sys.path.insert(0, os.path.abspath('../..'))
+
+# Run api-doc automatically
+from sphinx import apidoc
+for module in ['gameanalysis']:
+    apidoc.main(['-f', '-o', '.', os.path.join('..', '..', module)])
 
 # -- General configuration ------------------------------------------------
 
