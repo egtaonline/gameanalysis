@@ -18,6 +18,13 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
+import mock
+ 
+MOCK_MODULES = ['numpy', 'numpy.random', 'scipy', 'scipy.misc',
+                'scipy.special', 'scipy.optimize', 'sklearn']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.MagicMock()
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 # -- General configuration ------------------------------------------------

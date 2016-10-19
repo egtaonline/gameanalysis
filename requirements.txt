@@ -1,6 +1,7 @@
 autopep8~=1.2
 flake8~=3.0
 ipython~=5.1
+mock~=2.0
 pytest-cov~=2.3
 pytest-xdist~=1.15
 pytest~=3.0
