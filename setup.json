@@ -1,6 +1,6 @@
 {
   "name": "gameanalysis",
-  "version": "1.3",
+  "version": "1.4",
   "description": "A python module for analyzing sparse and empirical games",
   "url": "https://github.com/egtaonline/gameanalysis.git",
   "author": "Strategic Reasoning Group",
