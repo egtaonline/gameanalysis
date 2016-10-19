@@ -61,18 +61,17 @@ bump-major:
 	jq '.version = (.version | split(".") | [.[0] | tonumber + 1 | tostring, "0"] | join("."))' setup.json | sponge setup.json
 
 bump-sync:
-	git commit setup.json docs/source/conf.py docs/build/html -em "$$(printf 'Version bump to $(shell jq -r .version setup.json)\n\n# Fill in details...')"
+	git commit setup.json -em "$$(printf 'Version bump to $(shell jq -r .version setup.json)\n\n# Fill in details...')"
 	git push
 	git tag v$(shell jq -r .version setup.json)
 	git push $(shell git remote | head -n1) v$(shell jq -r .version setup.json)
 
 docs:
-	sed -ri.un~ "s/^version = '[0-9]+\.[0-9]+'$$/version = '$(shell jq -r '.version' setup.json)'/;s/^release = '[0-9]+\.[0-9]+'$$/release = '$(shell jq -r '.version' setup.json)'/" docs/source/conf.py
 	$(MAKE) -C docs html
 
-minor: bump-minor docs bump-sync
+minor: bump-minor bump-sync
 
-major: bump-major docs bump-sync
+major: bump-major bump-sync
 
 clean:
 	rm -rf bin include lib lib64 share pyvenv.cfg
