@@ -2,12 +2,12 @@
 import argparse
 import json
 import sys
-from collections import abc
 
 import numpy as np
 
 from gameanalysis import gameio
 from gameanalysis import regret
+from gameanalysis import scriptutils
 
 
 def is_pure_profile(game, prof):
@@ -55,11 +55,10 @@ def add_parser(subparsers):
     parser.add_argument('--output', '-o', metavar='<output-file>',
                         default=sys.stdout, type=argparse.FileType('w'),
                         help="""Output file for script. (default: stdout)""")
-    parser.add_argument('profiles', metavar='<profile-file>',
-                        type=argparse.FileType('r'), help="""File with profiles
-                        from input games for which regrets should be
-                        calculated.  This file needs to be a json list of
-                        profiles""")
+    parser.add_argument('profiles', metavar='<profile>',
+                        nargs='+', help="""File with profiles or raw strings of
+                        profiles from the input. The input can be a json list
+                        of profiles or an individual profile.""")
     parser.add_argument('-t', '--type', default='regret', choices=TYPE,
                         help="""What to return: {} (default:
                         %(default)s)""".format(TYPE_HELP))
@@ -68,13 +67,9 @@ def add_parser(subparsers):
 
 def main(args):
     game, serial = gameio.read_game(json.load(args.input))
-    profiles = json.load(args.profiles)
-    if isinstance(profiles, abc.Mapping):
-        profiles = [profiles]
-    profiles = map(serial.from_prof_json, profiles)
     prof_func = TYPE[args.type]
-
-    regrets = [prof_func(game, serial, prof) for prof in profiles]
+    regrets = [prof_func(game, serial, serial.from_prof_json(prof))
+               for prof in scriptutils.load_profiles(args.profiles)]
 
     json.dump(regrets, args.output)
     args.output.write('\n')

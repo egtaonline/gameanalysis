@@ -124,6 +124,15 @@ def test_payoff():
         assert not subprocess.run([GA, 'pay', '-i', GAME, pure.name,
                                    '-o/dev/null']).returncode
 
+    # Singleton payoff as string
+    prof = {
+        'background': {
+            'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
+        'hft': {'noop': 1}}
+    profstr = json.dumps(prof)
+    assert not subprocess.run([GA, 'pay', '-i', GAME, profstr,
+                               '-o/dev/null']).returncode
+
 
 def test_reduction():
     with open(GAME) as f:

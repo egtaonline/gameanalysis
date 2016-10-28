@@ -8,6 +8,7 @@ import numpy as np
 from gameanalysis import bootstrap
 from gameanalysis import gameio
 from gameanalysis import regret
+from gameanalysis import scriptutils
 
 
 CHOICES = {
@@ -30,10 +31,10 @@ entry for each mixture in order. Each element is a dictionary mapping
     parser.add_argument('--output', '-o', metavar='<output-file>',
                         default=sys.stdout, type=argparse.FileType('w'),
                         help="""Output file for script. (default: stdout)""")
-    parser.add_argument('profiles', metavar='<profile-file>',
-                        type=argparse.FileType('r'), help="""File with profiles
-                        from input game for which regrets should be calculated.
-                        This file needs to be a json list of profiles""")
+    parser.add_argument('profiles', metavar='<profile>', nargs='+',
+                        help="""File or string with profiles from input game
+                        for which regrets should be calculated.  This file can
+                        be a list or a single profile""")
     parser.add_argument('-t', '--type', default='regret', choices=CHOICES,
                         help="""What to return. regret - returns the regret of
                         each profile. surplus - returns the bootstrap surplus
@@ -61,7 +62,7 @@ some error due to linear interpolation between points.  (default:
 def main(args):
     game, serial = gameio.read_sample_game(json.load(args.input))
     profiles = np.concatenate([serial.from_prof_json(p)[None] for p
-                               in json.load(args.profiles)])
+                               in scriptutils.load_profiles(args.profiles)])
     bootf, meanf = CHOICES[args.type]
     results = bootf(game, profiles, args.num_bootstraps, args.percentiles,
                     args.processes)
