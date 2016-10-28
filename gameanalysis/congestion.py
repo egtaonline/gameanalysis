@@ -3,6 +3,7 @@ import math
 import warnings
 
 import numpy as np
+import numpy.random as rand
 import scipy.misc as spm
 import scipy.optimize as opt
 
@@ -222,3 +223,22 @@ def read_congestion_game(json_):
     cgame = CongestionGame(num_players, num_required, congest_matrix)
     serial = gameio.GameSerializer(strategies)
     return cgame, serial
+
+
+def gen_congestion_game(num_players, num_facilities, num_required,
+                        return_serial=False):
+    """Generates a random congestion game with num_players players and nCr(f, r)
+    strategies
+
+    Congestion games are symmetric, so all players belong to one role. Each
+    strategy is a subset of size #required among the size #facilities set of
+    available facilities. Payoffs for each strategy are summed over facilities.
+    Each facility's payoff consists of three components:
+
+    -constant ~ U[0, num_facilities]
+    -linear congestion cost ~ U[-num_required, 0]
+    -quadratic congestion cost ~ U[-1, 0]
+    """
+    ranges = np.array([num_facilities, -num_required, -1])
+    facility_coefs = rand.random((num_facilities, 3)) * ranges
+    return CongestionGame(num_players, num_required, facility_coefs)

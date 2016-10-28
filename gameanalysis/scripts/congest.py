@@ -3,7 +3,7 @@ import argparse
 import json
 import sys
 
-from gameanalysis import gamegen
+from gameanalysis import congestion
 
 
 def add_parser(subparsers):
@@ -26,7 +26,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = gamegen.congestion_game(args.num_players, args.num_facilities,
-                                   args.num_required)
+    game = congestion.gen_congestion_game(
+        args.num_players, args.num_facilities, args.num_required)
     json.dump(game.to_json(), args.output)
     args.output.write('\n')

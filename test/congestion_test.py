@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from gameanalysis import congestion
-from gameanalysis import gamegen
 from gameanalysis import gameio
 from gameanalysis import nash
 from gameanalysis import rsgame
@@ -21,7 +20,7 @@ EPS = np.finfo(float).eps
 ] * 20)
 def test_deviation_payoffs(players, facilities, required):
     """Test that deviation payoff formulation is accurate"""
-    cgame = gamegen.congestion_game(players, facilities, required)
+    cgame = congestion.gen_congestion_game(players, facilities, required)
     game = cgame.to_game()
     mixes = game.random_mixtures(20)
 
@@ -40,13 +39,13 @@ def test_deviation_payoffs(players, facilities, required):
 @pytest.mark.parametrize('_', range(20))
 def test_jacobian_zeros(_):
     """Test that jacobian has appropriate zeros"""
-    cgame = gamegen.congestion_game(3, 3, 1)
+    cgame = congestion.gen_congestion_game(3, 3, 1)
     _, jac = cgame.deviation_payoffs(cgame.random_mixtures()[0], jacobian=True)
     np.fill_diagonal(jac, 0)
     assert np.allclose(jac, 0), \
         "deviation jacobian wasn't diagonal"
 
-    cgame = gamegen.congestion_game(5, 4, 2)
+    cgame = congestion.gen_congestion_game(5, 4, 2)
     _, jac = cgame.deviation_payoffs(cgame.random_mixtures()[0], jacobian=True)
     ns = cgame.num_strategies[0]
     opp_diag = np.arange(ns - 1, ns ** 2 - 1, ns - 1)
@@ -65,21 +64,21 @@ def test_jacobian_zeros(_):
 ] * 2)
 def test_nash_finding(players, facilities, required):
     """Test that nash works on congestion games"""
-    cgame = gamegen.congestion_game(players, facilities, required)
+    cgame = congestion.gen_congestion_game(players, facilities, required)
     eqa = nash.mixed_nash(cgame)
     assert eqa.size > 0, "didn't find any equilibria"
 
 
 def test_serializer():
     """Test that serializer works"""
-    cgame = gamegen.congestion_game(3, 3, 1)
+    cgame = congestion.gen_congestion_game(3, 3, 1)
     serial = cgame.gen_serializer()
     serial.to_prof_json(cgame.random_mixtures()[0])
 
 
 def test_repr():
     """Test repr"""
-    cgame = gamegen.congestion_game(3, 3, 1)
+    cgame = congestion.gen_congestion_game(3, 3, 1)
     assert repr(cgame) == "CongestionGame(3, 1, 3)"
 
 
@@ -93,7 +92,7 @@ def test_repr():
 ] * 20)
 def test_manual_copy(players, facilities, required):
     """Test that manually copying a congestion game works"""
-    cgame1 = gamegen.congestion_game(players, facilities, required)
+    cgame1 = congestion.gen_congestion_game(players, facilities, required)
     cgame2 = congestion.CongestionGame(players, required,
                                        cgame1.facility_coefs)
     mixes = cgame1.random_mixtures(20)
@@ -113,7 +112,7 @@ def test_manual_copy(players, facilities, required):
 ] * 20)
 def test_json_copy(players, facilities, required):
     """Test that manually copying a congestion game works"""
-    cgame1 = gamegen.congestion_game(players, facilities, required)
+    cgame1 = congestion.gen_congestion_game(players, facilities, required)
     cgame2, _ = congestion.read_congestion_game(cgame1.to_json())
     mixes = cgame1.random_mixtures(20)
     for mix in mixes:
@@ -132,7 +131,7 @@ def test_json_copy(players, facilities, required):
 ] * 20)
 def test_serial_json_copy(players, facilities, required):
     """Test that manually copying a congestion game works"""
-    cgame1 = gamegen.congestion_game(players, facilities, required)
+    cgame1 = congestion.gen_congestion_game(players, facilities, required)
     serial = cgame1.gen_serializer()
     cgame2, _ = congestion.read_congestion_game(cgame1.to_json(serial))
     mixes = cgame1.random_mixtures(20)
@@ -152,7 +151,7 @@ def test_serial_json_copy(players, facilities, required):
 ] * 20)
 def test_serial_to_base_game(players, facilities, required):
     """Test that reading a congestion game as a base game works"""
-    cgame = gamegen.congestion_game(players, facilities, required)
+    cgame = congestion.gen_congestion_game(players, facilities, required)
     serial1 = cgame.gen_serializer()
     base1 = rsgame.BaseGame(cgame)
     base2, serial2 = gameio.read_base_game(cgame.to_json(serial1))
@@ -161,7 +160,7 @@ def test_serial_to_base_game(players, facilities, required):
 
 
 def test_to_str():
-    cgame = gamegen.congestion_game(3, 3, 2)
+    cgame = congestion.gen_congestion_game(3, 3, 2)
     serial = cgame.gen_serializer()
     expected = ('CongestionGame:\n    Players: 3\n    Required Facilities: 2\n'
                 '    Facilities: 0, 1, 2\n')
@@ -170,7 +169,7 @@ def test_to_str():
 
 
 def test_warning_on_bad_serial():
-    cgame = gamegen.congestion_game(3, 2, 1)
+    cgame = congestion.gen_congestion_game(3, 2, 1)
     serial = gameio.GameSerializer(['all'], [['unserscore_fac', '0', '1']])
     with pytest.warns(UserWarning):
         cgame.to_json(serial)
@@ -187,7 +186,7 @@ def test_warning_on_bad_serial():
     (5, 6, 4),
 ] * 20)
 def test_payoff_bounds(players, facilities, required):
-    cgame = gamegen.congestion_game(3, 2, 1)
+    cgame = congestion.gen_congestion_game(3, 2, 1)
     minp = cgame.min_payoffs()[0] - EPS
     maxp = cgame.max_payoffs()[0] + EPS
     profiles = cgame.all_profiles()

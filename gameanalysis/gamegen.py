@@ -170,13 +170,12 @@ def congestion_game(num_players, num_facilities, num_required,
     -linear congestion cost ~ U[-num_required, 0]
     -quadratic congestion cost ~ U[-1, 0]
     """
-    ranges = np.array([num_facilities, -num_required, -1])
-    facility_coefs = rand.random((num_facilities, 3)) * ranges
-    game = congestion.CongestionGame(num_players, num_required, facility_coefs)
+    game = congestion.gen_congestion_game(num_players, num_facilities,
+                                          num_required)
     if return_serial:
-        return game, game.gen_serializer()
+        return game.to_game(), game.gen_serializer()
     else:
-        return game
+        return game.to_game()
 
 
 def local_effect_game(num_players, num_strategies):

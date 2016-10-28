@@ -79,7 +79,7 @@ class Congestion(object):
     def create(args):
         game, serial = gamegen.congestion_game(
             args.num_players, args.num_facilities, args.num_required, True)
-        return game.to_game(), serial
+        return game, serial
 
 
 class Noise(object):
