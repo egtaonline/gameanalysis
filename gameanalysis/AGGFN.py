@@ -58,6 +58,8 @@ class Sym_AGG_FNA(rsgame.BaseGame):
         self._min_payoffs = None
         self._max_payoffs = None
 
+    def is_complete(self):
+        return True
 
     @staticmethod
     def from_json(j_):
