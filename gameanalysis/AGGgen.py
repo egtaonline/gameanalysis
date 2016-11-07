@@ -15,10 +15,10 @@ def random_polynomial(degree=default_degr_dist, coef_distr=default_coef_dist):
     return np.poly1d([coef_distr(d) for d in range(degree, -1, -1)])
 
 
-congest_coef_dist = lambda d: -np.random.exponential(10**(1-d))
+CGST_coef_dist = lambda d: -np.random.exponential(10**(1-d))
 
 def congestion_game(num_players, num_facilities, num_required, degree=2,
-                    coef_dist=congest_coef_dist):
+                    coef_dist=CGST_coef_dist):
     # Used for both AGGFNA and rsgame representations
     facilities = np.arange(num_facilities)
     strategies = list(combinations(facilities, num_required))
@@ -87,3 +87,28 @@ def random_AGGFNA(num_players, num_strategies, num_funcs,
     function_inputs = func_edge_distr(num_strategies, num_funcs)
     return AGGFN.Sym_AGG_FNA(num_players, num_strategies, action_weights,
                              function_inputs, node_functions)
+
+LEG_self_coef_dist = lambda d: -np.random.exponential(10**(1-d))
+LEG_other_coef_dist = lambda d: np.random.normal(0, 10**(-d))
+
+def local_effect_game(num_players, num_strategies, edge_prob=.2,
+                      self_poly_deg=1, other_poly_deg=2,
+                      self_poly_coef=LEG_self_coef_dist,
+                      other_poly_coef=LEG_other_coef_dist):
+    local_effect_graph = np.random.random([num_strategies]*2) < edge_prob
+    np.fill_diagonal(local_effect_graph, False)
+    num_functions = local_effect_graph.sum() + num_strategies
+
+    action_weights = np.eye(num_functions, num_strategies, dtype=float)
+    function_inputs = np.eye(num_strategies, num_functions, dtype=bool)
+    for func, (in_act, out_act) in enumerate(zip(*np.where(local_effect_graph))):
+        function_inputs[in_act, func + num_strategies] = True
+        action_weights[func + num_strategies, out_act] = 1.
+
+    node_functions = [random_polynomial(self_poly_deg, self_poly_coef) for _
+                      in range(num_strategies)]
+    node_functions += [random_polynomial(other_poly_deg, other_poly_coef) for _
+                       in range(num_functions - num_strategies)]
+    agg = AGGFN.Sym_AGG_FNA(num_players, num_strategies, action_weights,
+                             function_inputs, node_functions)
+    return agg, agg.to_json()
