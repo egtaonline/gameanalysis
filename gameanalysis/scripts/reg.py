@@ -33,7 +33,7 @@ def gains(game, serial, prof):
         return serial.to_deviation_payoff_json(prof, gains)
     else:
         gains = regret.mixture_deviation_gains(game, prof)
-        return serial.to_payoff_json(prof, gains)
+        return serial.to_prof_json(gains, False)
 
 
 TYPE = {
