@@ -59,6 +59,10 @@ def add_parser(subparsers):
     parser.add_argument('--sorted-roles', '-s', action='store_true', help="""If
                         set, players should be a list of reduced counts for the
                         role names in sorted order.""")
+    parser.add_argument('--allow-incomplete', '-a', action='store_true',
+                        help="""If set, incomplete profiles will be kept in the
+                        reduced game. Currently this is only relevant to
+                        DPR.""")
     parser.add_argument('players', nargs='*', metavar='<role-or-count>',
                         help="""Number of players in each reduced-game role.
                         This should be a list of role then counts e.g. 'role1 4
@@ -73,8 +77,9 @@ def main(args):
         None if not args.players
         else PLAYERS[args.sorted_roles](args.players, serial))
 
-    reduced = REDUCTIONS[args.type](game.num_strategies, game.num_players,
-                                    reduced_players).reduce_game(game)
+    reduced = REDUCTIONS[args.type](
+        game.num_strategies, game.num_players,
+        reduced_players).reduce_game(game, args.allow_incomplete)
 
     json.dump(reduced.to_json(serial), args.output)
     args.output.write('\n')
