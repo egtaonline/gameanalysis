@@ -517,7 +517,7 @@ class DeviationPreserving(object):
 def reduce_game_dpr(game, reduced_players, *args, **kwargs):
     return DeviationPreserving(
         game.num_strategies, game.num_players,
-        reduced_players).reduce_game(game, *ars, **kwargs)
+        reduced_players).reduce_game(game, *args, **kwargs)
 
 
 class Twins(DeviationPreserving):
