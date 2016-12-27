@@ -219,6 +219,7 @@ _AVAILABLE_METHODS = {
 }
 
 
+# XXX Change method signature to return regret?
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
                random_restarts=0, processes=None, at_least_one=False,
                **methods):
@@ -268,14 +269,28 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     methods = [_AVAILABLE_METHODS[m](game, **(p or {}))
                for m, p in methods.items()]
 
+    i = [0]
     equilibria = []
     best = [np.inf, None]  # Need a pointer for closure
 
     def process(eqm):
+        """Processes a candidate equilibrium"""
         reg = regret.mixture_regret(game, eqm)
-        if (reg <= regret_thresh and all(linalg.norm(e - eqm) >= dist_thresh
-                                         for e in equilibria)):
-            equilibria.append(eqm[None])
+        if reg <= regret_thresh:
+            i[0] += 1
+            extras = [(reg, i[0], eqm, [eqm])]
+
+            def condition(x):
+                keep = all(linalg.norm(e - eqm) >= dist_thresh
+                           for e in x[3])
+                if not keep:
+                    extras.append(x)
+                return keep
+
+            equilibria[:] = filter(condition, equilibria)
+            breg, j, beq, _ = min(extras)
+            equilibria.append((breg, j, beq, list(
+                itertools.chain.from_iterable(ex[3] for ex in extras))))
         if reg < best[0]:
             best[0] = reg
             best[1] = eqm[None]
@@ -294,4 +309,4 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     elif not equilibria:
         return np.empty((0, game.num_role_strats))
     else:
-        return np.concatenate(equilibria)
+        return np.concatenate([x[2][None] for x in equilibria])
