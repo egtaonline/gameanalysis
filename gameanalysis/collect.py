@@ -3,6 +3,51 @@ from collections import abc
 import numpy as np
 
 
+class WeightedSimilaritySet(object):
+    """A set of non-similar elements prioritized by weight
+
+    Allows adding a bunch of weighted elements, and when iterated, only
+    iterates over dissimilar elements with the lowest weights. Adding new
+    elements that are similar to the existing set, but with higher weights
+    won't change the set returned."""
+    def __init__(self, is_similar):
+        self._is_similar = is_similar
+        self._i = 0  # Tie breaking
+        self._items = []
+        self._set = []
+        self._computed = True
+
+    def add(self, item, weight):
+        self._computed = False
+        self._set.clear()
+        self._items.append((weight, self._i, item))
+        self._i += 1
+        return self
+
+    def _satisfy(self):
+        if not self._computed:
+            self._items.sort()
+            for w, _, i in self._items:
+                if all(not self._is_similar(i, j) for j, _ in self._set):
+                    self._set.append((i, w))
+
+    def __len__(self):
+        self._satisfy()
+        return len(self._set)
+
+    def __iter__(self):
+        self._satisfy()
+        return iter(self._set)
+
+    def __repr__(self):
+        self._satisfy()
+        suffix = ('.add(' + ').add('.join('{}, {}'.format(i, w)
+                                          for w, _, i in self._items) + ')'
+                  if self._items else '')
+        return '{}({}){}'.format(self.__class__.__name__,
+                                 self._is_similar.__name__, suffix)
+
+
 class DynamicArray(object):
     """A object with a backed array that also allows adding data"""
     def __init__(self, item_shape, dtype=None, initial_room=8,
