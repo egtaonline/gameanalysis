@@ -277,7 +277,8 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     def process(eqm):
         """Processes a candidate equilibrium"""
         reg = regret.mixture_regret(game, eqm)
-        equilibria.add(eqm, reg)
+        if reg < regret_thresh:
+            equilibria.add(eqm, reg)
         if reg < best[0]:
             best[0] = reg
             best[1] = eqm[None]
