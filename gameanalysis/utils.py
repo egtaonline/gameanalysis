@@ -248,10 +248,11 @@ def acartesian2(*arrays):
 def simplex_project(array):
     """Return the projection onto the simplex"""
     array = np.asarray(array, float)
+    assert not np.isnan(array).any(), \
+        "can't project nan onto simplex: {}".format(array)
     # This fails for really large values, so we normalize the array so the
     # largest element has absolute value at most _SIMPLEX_BIG
-    array *= np.minimum(_SIMPLEX_BIG / (_TINY + np.abs(array.max(-1))),
-                        1)[..., None]
+    array = np.minimum(_SIMPLEX_BIG, np.maximum(array, -_SIMPLEX_BIG))
     size = array.shape[-1]
     sort = -np.sort(-array)
     rho = (1 - sort.cumsum(-1)) / np.arange(1, size + 1)
