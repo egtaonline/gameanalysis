@@ -72,7 +72,7 @@ class Sym_AGG_FNA(rsgame.BaseGame):
         function_names = sorted(j_["function_names"])
         num_functions = len(function_names)
         functions = np.array([j_["function_tables"][f] for
-                              f in function_names]).T
+                              f in function_names])
 
         action_weights = np.empty([num_functions, num_strats], dtype=float)
         function_inputs = np.zeros([num_strats, num_functions], dtype=bool)
