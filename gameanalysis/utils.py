@@ -273,7 +273,7 @@ def multinomial_mode(p, n):
     notation follows: Gall 2003. Determination of the modes of a Multinomial
     distribution.
     """
-    f = p * (n + p.size/2)
+    f = (p + _TINY) * (n + p.size/2)
     k = f.astype(int)
     f -= k
     n0 = k.sum()
