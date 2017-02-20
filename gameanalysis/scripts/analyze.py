@@ -114,10 +114,11 @@ def main(args):
         support = eqm > 0
         gains = regret.mixture_deviation_gains(redgame, eqm)
         role_gains = redgame.role_reduce(gains, ufunc=np.fmax)
+        gain = np.nanmax(role_gains)
 
-        if np.isnan(gains).any():
-            # Not fully explored
-            unconfirmed.append((eqm, np.nanmax(gains)))
+        if np.isnan(gains).any() and gain <= args.regret_thresh:
+            # Not fully explored but might be good
+            unconfirmed.append((eqm, gain))
 
         elif np.any(role_gains > args.regret_thresh):
             # There are deviations, did we explore them?
