@@ -10,6 +10,9 @@ from gameanalysis import utils
 
 
 # TODO Make reductions handle partial profiles
+# TODO Change reductions to not be based off the number of strategies. This
+# would break backwards compatibility, and might not be great, but it would
+# allow their use on subgames without modification
 
 
 def _expand_rsym_profiles(game, profiles, full_players, reduced_players):
@@ -597,9 +600,13 @@ class Twins(DeviationPreserving):
 
 
 class Identity(object):
-    """Identity reduction (lack of reduction)"""
+    """Identity reduction (lack of reduction)
 
-    def __init__(self, num_strats, num_players):
+    The second parameter can be ignored, but if specified, it must be the same
+    as the number pf players."""
+
+    def __init__(self, num_strats, num_players, num_players_=None):
+        assert num_players_ is None or np.all(num_players == num_players_)
         self.num_strategies = num_strats
         self.full_players = num_players
         self.reduced_players = num_players
