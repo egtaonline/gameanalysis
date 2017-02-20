@@ -1,4 +1,6 @@
 """Module for computing player reductions"""
+import abc
+
 import numpy as np
 import numpy.random as rand
 
@@ -116,7 +118,48 @@ def _reduce_rsym_profiles(game, profiles, full_players, reduced_players):
     return red_profs[valid], reduced
 
 
-class Hierarchical(object):
+class _Reduction(metaclass=abc.ABCMeta):
+    """Base Reduction class
+
+    This defines the reduction interface"""
+
+    @property
+    @abc.abstractmethod
+    def red_game(self):
+        """The reduced game"""
+        pass  # pragma: no cover
+
+    @property
+    @abc.abstractmethod
+    def full_game(self):
+        """The full game"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def expand_profiles(self, profiles):
+        """Returns full game profiles that contribute to reduced profile"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def reduce_profiles(self, profiles):
+        """Returns reduced profiles that contribute to the full profile"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def reduce_game(self, game, allow_incomplete=False):
+        """Convert an input game to a reduced game with new players
+
+        `allow_incomplete` will fill in profiles that only partial payoff data
+        is known for.."""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def expand_deviation_profiles(self, subgame_mask, role_index=None):
+        """Expand profiles that contribute to deviation payoffs"""
+        pass  # pragma: no cover
+
+
+class Hierarchical(_Reduction):
     """Hierarchical Reduction
 
     Either reduced or full players must be specified, the other will be taken
@@ -130,6 +173,14 @@ class Hierarchical(object):
         self._rgame = rsgame.BaseGame(reduced_players, num_strats)
         assert np.all(self._fgame.num_players >= self._rgame.num_players), \
             "All full counts must not be less than reduced counts"
+
+    @property
+    def red_game(self):
+        return self._rgame
+
+    @property
+    def full_game(self):
+        return self._fgame
 
     def reduce_game(self, game, allow_incomplete=False):
         """Convert an input game to a reduced game with new players
@@ -206,7 +257,7 @@ class Hierarchical(object):
             self._rgame.num_players)
 
 
-class DeviationPreserving(object):
+class DeviationPreserving(_Reduction):
     """Deviation Preserving Reduction
 
     Either reduced or full players must be specified, the other will be taken
@@ -219,6 +270,14 @@ class DeviationPreserving(object):
         self._rgame = rsgame.BaseGame(reduced_players, num_strats)
         assert np.all(self._fgame.num_players >= self._rgame.num_players), \
             "All full counts must not be less than reduced counts"
+
+    @property
+    def red_game(self):
+        return self._rgame
+
+    @property
+    def full_game(self):
+        return self._fgame
 
     def _devs(self, players, num_profs):
         """Return an array of the player counts after deviation"""
@@ -541,6 +600,14 @@ class Identity(object):
         self.full_players = num_players
         self.reduced_players = num_players
         self._game = rsgame.BaseGame(num_players, num_strats)
+
+    @property
+    def red_game(self):
+        return self._game
+
+    @property
+    def full_game(self):
+        return self._game
 
     def expand_profiles(self, profiles):
         """Returns full game profiles that contribute to reduced profile"""

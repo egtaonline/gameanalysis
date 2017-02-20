@@ -31,7 +31,8 @@ def test_dpr(keep_prob, game_desc):
     red = reduction.DeviationPreserving(strategies, players, red_players)
 
     # Try to reduce game
-    red.reduce_game(rsgame.BaseGame(game))
+    assert game == red.full_game
+    assert red.reduce_game(rsgame.BaseGame(game)) == red.red_game
     red_game = red.reduce_game(game)
     red_game2 = reduction.reduce_game_dpr(game, red_players)
     red_sgame = red.reduce_game(sgame)
@@ -210,7 +211,8 @@ def test_hierarchical(keep_prob, game_desc):
     red = reduction.Hierarchical(strategies, players, red_players)
 
     # Try to reduce game
-    red.reduce_game(rsgame.BaseGame(game))
+    assert game == red.full_game
+    assert red.reduce_game(rsgame.BaseGame(game)) == red.red_game
     red_game = red.reduce_game(game)
     red_sgame = red.reduce_game(sgame)
 
@@ -285,6 +287,8 @@ def test_identity(keep_prob, game_desc):
 
     # Try to reduce game
     red_game = red.reduce_game(game)
+    assert game == red.full_game
+    assert red_game == red.red_game
 
     # Assert that reducing all profiles covers reduced game
     reduced_full_profiles = utils.axis_to_elem(
