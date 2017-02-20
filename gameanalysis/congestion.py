@@ -27,6 +27,7 @@ class CongestionGame(rsgame.BaseGame):
     # TODO This could be extended to any-order polynomials. The dth moment of
     # the binomial distribution is \sum_{k = 1}^d n!/(n - k)! p^k {d k}, where
     # {d k} is a sterling number of the second kind.
+
     def __init__(self, num_players, num_required, facility_coefs):
         self.num_facilities = facility_coefs.shape[0]
         assert facility_coefs.shape[1] == 3, \

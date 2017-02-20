@@ -63,6 +63,7 @@ def game_function(game, function, num_resamples, num_returned,
 
 class _BootstrapPickleable(object):
     """A pickleable game function combo"""
+
     def __init__(self, game, function):
         self.game = game
         self.function = function
@@ -110,6 +111,7 @@ def profile_function(game, function, profiles, num_resamples, percentiles=None,
 
 
 class _ProfilePickleable(object):
+
     def __init__(self, profiles, function):
         self.profiles = profiles
         self.function = function

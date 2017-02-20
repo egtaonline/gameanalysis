@@ -21,6 +21,7 @@ class BaseGPGame(rsgame.BaseGame):
     cv_jobs and cv_iters are passed to train_gp and subsequently."""
     # XXX running the gps can be expensive. It might useful to wrap the gps in
     # something like lru-dict so that recent profiles are cached.
+
     def __init__(self, game, cv_jobs=0, cv_iters=16):
         super().__init__(game)
 

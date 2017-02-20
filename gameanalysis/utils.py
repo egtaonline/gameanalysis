@@ -58,7 +58,8 @@ def one_line(string, line_width=80):
     """
     string = string.replace('\n', ' ')
     if len(string) > line_width:
-        return string[:3*line_width//4] + "..." + string[-line_width//4+3:]
+        return "{}...{}".format(string[:3 * line_width // 4],
+                                string[-line_width // 4 + 3:])
     return string
 
 
@@ -84,7 +85,7 @@ def _reverse(seq, start, end):
         return
     while True:
         seq[start], seq[end] = seq[end], seq[start]
-        if start == end or start+1 == end:
+        if start == end or start + 1 == end:
             return
         start += 1
         end -= 1
@@ -166,8 +167,8 @@ def _acombr(n, k):
             n_ = n - 1
             k_ = k - ki
             m = spm.comb(n_, k_, repetition=True, exact=True)
-            region[o:o+m, 0] = ki
-            fill_region(n_, k_, region[o:o+m, 1:])
+            region[o:o + m, 0] = ki
+            fill_region(n_, k_, region[o:o + m, 1:])
             o += m
 
     fill_region(n, k, grid)
@@ -273,7 +274,7 @@ def multinomial_mode(p, n):
     notation follows: Gall 2003. Determination of the modes of a Multinomial
     distribution.
     """
-    f = (p + _TINY) * (n + p.size/2)
+    f = (p + _TINY) * (n + p.size / 2)
     k = f.astype(int)
     f -= k
     n0 = k.sum()
@@ -355,6 +356,7 @@ def unique_axis(array, axis=-1, **kwargs):
 
 
 class hash_array(object):
+
     def __init__(self, array):
         self.array = np.asarray(array)
         self.array.setflags(write=False)

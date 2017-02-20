@@ -10,6 +10,7 @@ class WeightedSimilaritySet(object):
     iterates over dissimilar elements with the lowest weights. Adding new
     elements that are similar to the existing set, but with higher weights
     won't change the set returned."""
+
     def __init__(self, is_similar):
         self._is_similar = is_similar
         self._i = 0  # Tie breaking
@@ -50,6 +51,7 @@ class WeightedSimilaritySet(object):
 
 class DynamicArray(object):
     """A object with a backed array that also allows adding data"""
+
     def __init__(self, item_shape, dtype=None, initial_room=8,
                  grow_fraction=2):
         assert grow_fraction > 1
@@ -66,7 +68,7 @@ class DynamicArray(object):
             # Adding multiple
             num = array.shape[0]
             self.ensure_capacity(self._length + num)
-            self._data[self._length:self._length+num] = array
+            self._data[self._length:self._length + num] = array
             self._length += num
 
         elif array.shape == self._data.shape[1:]:
@@ -88,7 +90,7 @@ class DynamicArray(object):
         else:
             assert num >= 0 and self._length >= num
             self._length -= num
-            return self._data[self._length:self._length+num].copy()
+            return self._data[self._length:self._length + num].copy()
 
     @property
     def data(self):
@@ -125,6 +127,7 @@ class BitSet(object):
     """Set of bitmasks
 
     A bitmask is in the set if all of the true bits have been added"""
+
     def __init__(self):
         self._masks = []
 
@@ -160,6 +163,7 @@ class MixtureSet(object):
 
     Elements are only kept if the norm of their difference is greater than the
     tolerance."""
+
     def __init__(self, tolerance):
         self._tol = tolerance ** 2
         self._mixtures = []

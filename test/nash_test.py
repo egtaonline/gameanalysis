@@ -56,7 +56,7 @@ def test_mixed_known_eq(methods, eq_prob):
             eqa, expected)
 
 
-@pytest.mark.parametrize('eq_prob', (p/10 for p in range(11)))
+@pytest.mark.parametrize('eq_prob', (p / 10 for p in range(11)))
 def test_optimization_stable_point(eq_prob):
     game = gamegen.sym_2p2s_known_eq(eq_prob)
     opt = nash.RegretOptimizer(game)
@@ -109,13 +109,13 @@ def test_mixed_roshambo(methods):
     eqa = nash.mixed_nash(game, dist_thresh=1e-2, processes=1, **methods)
     assert eqa.shape[0] == 1, \
         "didn't find right number of equilibria in roshambo"
-    assert np.allclose(1/3, eqa), \
+    assert np.allclose(1 / 3, eqa), \
         "roshambo equilibria wasn't uniform"
 
 
 def test_at_least_one():
     # Equilibrium of game is not at a starting point for equilibria finding
-    game = gamegen.sym_2p2s_known_eq(1/math.sqrt(2))
+    game = gamegen.sym_2p2s_known_eq(1 / math.sqrt(2))
     # Don't converge
     opts = {'max_iters': 0}
     eqa = nash.mixed_nash(game, processes=1, replicator=opts)

@@ -28,6 +28,7 @@ class GameSerializer(object):
         A list of lists of ordered strategies for each role. This must be
         included with ``roles``.
     """
+
     def __init__(self, *args):
         if len(args) == 1:
             role_strats = sorted(args[0].items())

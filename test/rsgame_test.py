@@ -582,7 +582,7 @@ def test_different_samples():
 
 def test_deviation_payoffs_jacobian():
     game = gamegen.rock_paper_scissors()
-    eqm = np.array([1/3] * 3)
+    eqm = np.array([1 / 3] * 3)
     dp, dpj = game.deviation_payoffs(eqm, jacobian=True)
     assert np.allclose(dp, 0)
     expected_jac = np.array([[0., -1., 1.],

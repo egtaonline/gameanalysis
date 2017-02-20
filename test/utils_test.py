@@ -50,7 +50,7 @@ def test_ordered_permutations():
 
 def test_simplex_project():
     res = utils.simplex_project(np.array([0, 0, 0]))
-    assert np.allclose(res, [1/3]*3), \
+    assert np.allclose(res, [1 / 3] * 3), \
         "projecting [0, 0, 0] didn't result in uniform"
 
     res = utils.simplex_project(np.array([1.2, 1.4]))

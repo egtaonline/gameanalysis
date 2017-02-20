@@ -30,7 +30,7 @@ def min_regret_profile(game):
     An error will be raised if there are no profiles with a defined regret.
     """
     regs = np.fromiter((regret.pure_strategy_regret(game, prof)
-                       for prof in game.profiles), float, game.num_profiles)
+                        for prof in game.profiles), float, game.num_profiles)
     return game.profiles[np.nanargmin(regs)]
 
 
@@ -71,6 +71,7 @@ class RegretOptimizer(object):
 
     This method uses constrained convex optimization to to attempt to solve a
     proxy for the nonconvex regret minimization."""
+
     def __init__(self, game, gtol=1e-8):
         self.game = game
         self.scale = game.role_repeat(game.max_payoffs() - game.min_payoffs())
@@ -141,6 +142,7 @@ class ReplicatorDynamicsOde(object):
     # little documentation for these integrators. They should probably be
     # tested / explored.
     # http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.integrate.ode.html  # noqa
+
     def __init__(self, game, final_time=1000):
         self.game = game
         self.final_time = final_time
@@ -181,6 +183,7 @@ class ReplicatorDynamics(object):
     simplex. If these aren't known then they should return inf and -inf
     respectively. Otherwise they can be conservative bounds.
     """
+
     def __init__(self, game, max_iters=10000, converge_thresh=1e-8,
                  slack=1e-3):
         self.game = game

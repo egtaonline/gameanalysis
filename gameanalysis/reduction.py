@@ -165,6 +165,7 @@ class Hierarchical(_Reduction):
     Either reduced or full players must be specified, the other will be taken
     from the game.
     """
+
     def __init__(self, num_strats, full_players, reduced_players):
         self.num_strategies = num_strats
         self.full_players = full_players
@@ -262,6 +263,7 @@ class DeviationPreserving(_Reduction):
 
     Either reduced or full players must be specified, the other will be taken
     from the game."""
+
     def __init__(self, num_strats, full_players, reduced_players):
         self.num_strategies = num_strats
         self.full_players = full_players
@@ -542,7 +544,7 @@ class DeviationPreserving(_Reduction):
                                              full_players, red_players)
             ndevs = np.sum(~mask)
             devs = np.zeros((ndevs, self._fgame.num_role_strats), int)
-            devs[:, rs:rs+mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
+            devs[:, rs:rs + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
             profs = non_devs[:, None] + devs
             profs.shape = (-1, self._fgame.num_role_strats)
             return profs
@@ -583,6 +585,7 @@ class Twins(DeviationPreserving):
     """Twins Reduction
 
     Same as Deviation Preserving, but where the reduced players are two."""
+
     def __init__(self, num_strats, full_players):
         super().__init__(num_strats, full_players, np.minimum(2, full_players))
 
@@ -595,6 +598,7 @@ class Twins(DeviationPreserving):
 
 class Identity(object):
     """Identity reduction (lack of reduction)"""
+
     def __init__(self, num_strats, num_players):
         self.num_strategies = num_strats
         self.full_players = num_players

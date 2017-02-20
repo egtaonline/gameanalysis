@@ -103,7 +103,7 @@ def deviation_profiles(game, subgame_mask, role_index=None):
         non_devs = translate(subg.all_profiles(), subgame_mask)
         ndevs = np.sum(~mask)
         devs = np.zeros((ndevs, game.num_role_strats), int)
-        devs[:, rs:rs+mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
+        devs[:, rs:rs + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
         profs = non_devs[:, None] + devs
         profs.shape = (-1, game.num_role_strats)
         return profs

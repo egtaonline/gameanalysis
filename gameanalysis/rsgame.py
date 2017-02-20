@@ -59,6 +59,7 @@ class BaseGame(object):
     and num_strategies. If either is an integer or has length 1, the other is
     used; if both are integers or have length 1, the game will have one role.
     """
+
     def __init__(self, *args):
         if len(args) == 1:
             # From Game
@@ -284,7 +285,7 @@ class BaseGame(object):
 
     def random_profile(self, mixture=None):
         """Sample a single profile from a mixture
-        
+
         If mixture is None, the uniform mixture is used"""
         if mixture is None:
             mixture = self.uniform_mixture()
@@ -347,7 +348,7 @@ class BaseGame(object):
                 mix = np.ones((1, 1))
             else:
                 mix = np.empty((num_strats, num_strats))
-                mix.fill((1 - bias)/(num_strats - 1))
+                mix.fill((1 - bias) / (num_strats - 1))
                 np.fill_diagonal(mix, bias)
             role_mixtures.append(mix)
 
@@ -366,9 +367,9 @@ class BaseGame(object):
         strat_offset = 0
         for num_strats in self.num_strategies:
             if num_strats > 1:
-                view = mixes[prof_offset:prof_offset+num_strats,
-                             strat_offset:strat_offset+num_strats]
-                view.fill((1 - bias)/(num_strats - 1))
+                view = mixes[prof_offset:prof_offset + num_strats,
+                             strat_offset:strat_offset + num_strats]
+                view.fill((1 - bias) / (num_strats - 1))
                 np.fill_diagonal(view, bias)
                 prof_offset += num_strats
             strat_offset += num_strats
@@ -989,7 +990,7 @@ class SampleGame(Game):
             shape = [dim if switch else 1
                      for dim, switch in zip(obs.shape, switches)]
             sample = rand.multinomial(
-                num_obs_resamples, [1/num_samples]*num_samples, shape)
+                num_obs_resamples, [1 / num_samples] * num_samples, shape)
             payoffs[begin:end] = ((obs * sample).mean(3) *
                                   (num_samples / num_obs_resamples))
 

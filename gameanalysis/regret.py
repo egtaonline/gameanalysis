@@ -82,6 +82,7 @@ class SocialWelfareOptimizer(object):
 
     This method uses constrained convex optimization to to attempt to solve a
     proxy for the nonconvex regret minimization."""
+
     def __init__(self, game, gtol=1e-8):
         self.game = game
         self.scale = game.max_payoffs() - game.min_payoffs()
