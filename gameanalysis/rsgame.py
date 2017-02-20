@@ -282,6 +282,14 @@ class BaseGame(object):
                         in zip(self.num_players, self.role_split(mixture))]
         return np.concatenate(role_samples, 1)
 
+    def random_profile(self, mixture=None):
+        """Sample a single profile from a mixture
+        
+        If mixture is None, the uniform mixture is used"""
+        if mixture is None:
+            mixture = self.uniform_mixture()
+        return self.random_profiles(mixture, 1)[0]
+
     def random_dev_profiles(self, mixture, num_samples=1):
         """Return partial profiles where dev player is missing
 
@@ -319,6 +327,10 @@ class BaseGame(object):
         mixtures = rand.gamma(alpha, 1, (num_samples, self.num_role_strats))
         mixtures /= self.role_reduce(mixtures, axis=1, keepdims=True)
         return mixtures
+
+    def random_mixture(self, alpha=1):
+        """Generate a single random mixture"""
+        return self.random_mixtures(1, alpha)[0]
 
     def biased_mixtures(self, bias=.9):
         """Generates mixtures biased towards one strategy for each role

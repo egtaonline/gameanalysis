@@ -128,6 +128,7 @@ def test_base_game_function(players, strategies):
             "uniform mixture wasn't uniform"
 
     # Random
+    assert np.allclose(game.role_reduce(game.random_mixture()), 1)
     mixes = game.random_mixtures(20)
     assert np.allclose(game.role_reduce(mixes, axis=1), 1), \
         "random mixtures weren't mixtures"
@@ -227,6 +228,7 @@ def test_verify_mixture_profile():
     assert game.verify_mixture([0.2, 0.3, 0.5, 0.6, 0.4])
     assert not game.verify_mixture([0.2, 0.3, 0.4, 0.5, 0.6])
 
+    assert game.verify_profile(game.random_profile())
     mix = game.uniform_mixture()
     random_profs = game.random_profiles(mix, 20)
     assert np.all(game.verify_profile(random_profs))
@@ -280,7 +282,7 @@ def test_game_function(players, strategies):
         assert prof in game, "profile from game not in game"
 
     # Test expected payoff
-    mix = game.random_mixtures()[0]
+    mix = game.random_mixture()
 
     dev1 = game.deviation_payoffs(mix)
     dev2, dev_jac = game.deviation_payoffs(mix, jacobian=True)
@@ -344,7 +346,7 @@ def test_empty_full_game(players, strategies):
     assert game.is_constant_sum()
 
     # Test expected payoff
-    mix = game.random_mixtures()[0]
+    mix = game.random_mixture()
     assert np.isnan(game.get_expected_payoffs(mix)).all(), \
         "not all expected payoffs were nan"
     assert np.isnan(game.deviation_payoffs(mix)).all(), \
