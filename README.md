@@ -91,7 +91,7 @@ Style Guidelines
 Generally follow PEP8 standard.
 
 1. Single quotes
-2. Lowercase underscore for mathod names
+2. Lowercase underscore for method names
 3. Camelcase classes
 4. Unless obvious or necessary, try to only import modules not specific
    functions or classes from a module.
@@ -111,3 +111,7 @@ To Do
 - Some functions in `dominance` could probably be more efficient.
 - Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pandas?
 - Test requirements are also in requirements.txt because of issues loading them with xdist.
+- Fix git dependencies, tie to a commit perhaps?
+- add get_sample_payoffs to SampleGame?
+- Consider making payoffs or profiles sparse? Currently this makes operations much slower and even for large sparse observation payoffs only save ~2 memory
+- Consider changing orientation of sample_payoffs in SampleGame from (i, p, o) to (i, o, p)

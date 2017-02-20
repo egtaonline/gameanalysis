@@ -118,3 +118,73 @@ class DynamicArray(object):
 
     def __repr__(self):
         return repr(self.data)
+
+
+# TODO Add length, number of subgames it can hold?
+class BitSet(object):
+    """Set of bitmasks
+
+    A bitmask is in the set if all of the true bits have been added"""
+    def __init__(self):
+        self._masks = []
+
+    def add(self, bitmask):
+        if not self._masks:
+            self._mask = 2 ** np.arange(bitmask.size)
+        if bitmask not in self:
+            num = bitmask @ self._mask
+            self._masks[:] = [m for m in self._masks if not m & ~num]
+            self._masks.append(num)
+            return True
+        else:
+            return False
+
+    def clear(self):
+        self._masks.clear()
+
+    def __contains__(self, bitmask):
+        assert bitmask.size == self._mask.size, \
+            "can't add bitmasks of different sizes"
+        num = bitmask @ self._mask
+        return not all(num & ~m for m in self._masks)
+
+    def __bool__(self):
+        return bool(self._masks)
+
+    def __repr__(self):
+        return '{}({!r})'.format(self.__class__.__name__, self._masks)
+
+
+class MixtureSet(object):
+    """A set of mixtures
+
+    Elements are only kept if the norm of their difference is greater than the
+    tolerance."""
+    def __init__(self, tolerance):
+        self._tol = tolerance ** 2
+        self._mixtures = []
+
+    def add(self, mixture):
+        if mixture not in self:
+            self._mixtures.append(mixture)
+            return True
+        else:
+            return False
+
+    def clear(self):
+        self._mixtures.clear()
+
+    def __contains__(self, mixture):
+        return any(np.sum((mix - mixture) ** 2) <= self._tol for mix in self)
+
+    def __bool__(self):
+        return bool(self._mixtures)
+
+    def __len__(self):
+        return len(self._mixtures)
+
+    def __iter__(self):
+        return iter(self._mixtures)
+
+    def __repr__(self):
+        return '{}({!r})'.format(self.__class__.__name__, self._mixtures)
