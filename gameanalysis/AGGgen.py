@@ -36,7 +36,7 @@ def congestion_game(num_players, num_facilities, num_required, degree=2,
     function_names = ["f" + str(f) for f in facilities]
     strategy_names = ["+".join("f" + str(s) for s in strat) for
                       strat in strategies]
-    return agg, agg.to_json(strategy_names, function_names)
+    return agg
 
 
 def random_bipartite_graph(source_set_size, dest_set_size, p=.2, min_inputs=1,
@@ -111,4 +111,4 @@ def local_effect_game(num_players, num_strategies, edge_prob=.2,
                        in range(num_functions - num_strategies)]
     agg = AGGFN.Sym_AGG_FNA(num_players, num_strategies, action_weights,
                              function_inputs, node_functions)
-    return agg, agg.to_json()
+    return agg
