@@ -9,45 +9,16 @@ Game Analysis
 This is a collection of python libraries and scripts that manipulate empirical game data.
 
 
-Quick Setup
+Usage Setup
 -----------
 
-We recommend you install Game Analysis in it's own virtual environment.
-To use our recommended setup simply execute the following commands in the directory you want to store Game Analysis in.
+This package is hosted on pypi. Install it with `pip install gameanalysis`.
 
-```
-curl https://raw.githubusercontent.com/egtaonline/gameanalysis/master/quickuse_makefile > Makefile && make setup
-```
+The entry point from the command line is `ga`. `ga --help` will document all
+available options.
 
-`ga` should now be accessible in the `bin` directory.
-To update Game Analysis, simply execute `make update` in the appropriate directory.
-
-
-Setup
------
-
-To use Game Analysis, you need to meet the following dependencies
-
-1. Python 3 & venv
-2. BLAS/LAPACK
-3. A fortran compiler
-
-
-Then you can install Game Analysis via pip with:
-
-```
-bin/pip install -U git+https://github.com/egtaonline/gameanalysis.git@<version>
-```
-
-where `<version>` is the appropriate version to install.
-Generally we recommend this be done in a virtual environment to avoid dependency clashes, but it can be installed in the global environment.
-
-
-Usage
------
-
-`ga` is the game analysis command line tool.
-`./ga --help` will reveal all of the available options.
+The entry point for python is `gameanalysis`. See the documentation for what is
+available from the python interface.
 
 
 Developing
@@ -55,6 +26,15 @@ Developing
 
 After cloning this repository, the included `Makefile` includes all the relevant actions to facilitate development.
 Typing `make` without targets will print out the various actions to help development.
+Type `make setup` to configure a virtual environment for development.
+
+
+Requirements
+------------
+
+1. Python 3 & venv
+2. BLAS/LAPACK
+3. A fortran compiler
 
 
 Testing
