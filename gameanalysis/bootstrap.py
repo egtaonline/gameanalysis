@@ -39,20 +39,13 @@ def game_function(game, function, num_resamples, num_returned,
         on the number of percentiles and the number of values returned from
         your function.
     """
+    results = np.empty((num_resamples, num_returned))
     func = _BootstrapPickleable(game, function)
-
-    def process(gen):
-        result = np.empty((num_resamples, num_returned))
-        for i, res in enumerate(gen):
-            result[i] = res
-        return result
-
-    if processes == 1:
-        results = process(func(_) for _ in range(num_resamples))
-
-    else:
-        with multiprocessing.Pool(processes) as pool:
-            results = process(pool.imap_unordered(func, range(num_resamples)))
+    chunksize = num_resamples if processes == 1 else 4
+    with multiprocessing.Pool(processes) as pool:
+        for i, res in enumerate(pool.imap_unordered(
+                func, range(num_resamples), chunksize=chunksize)):
+            results[i] = res
 
     if percentiles is None:
         results.sort(0)

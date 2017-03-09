@@ -3,29 +3,11 @@
 A subgame is a game with a restricted set of strategies that usually make
 analysis tractable. Most representations just use a subgame mask, which is a
 bitmask over included strategies."""
-import functools
-
 import numpy as np
-import numpy.random as rand
 
 from gameanalysis import gameio
 from gameanalysis import rsgame
 from gameanalysis import utils
-
-
-@functools.lru_cache()
-def num_pure_subgames(game):
-    """The number of pure subgames"""
-    return game.num_strategies.prod()
-
-
-def pure_subgames(game):
-    """Returns every pure subgame mask in a game
-
-    A pure subgame is a subgame where each role only has one strategy. This
-    returns the pure subgames in sorted order based off of role and
-    strategy."""
-    return game.pure_profiles() > 0
 
 
 def num_deviation_profiles(game, subgame_mask):
@@ -99,7 +81,7 @@ def deviation_profiles(game, subgame_mask, role_index=None):
     support = game.role_reduce(subgame_mask)
 
     def dev_profs(players, mask, rs):
-        subg = rsgame.BaseGame(players, support)
+        subg = rsgame.basegame(players, support)
         non_devs = translate(subg.all_profiles(), subgame_mask)
         ndevs = np.sum(~mask)
         devs = np.zeros((ndevs, game.num_role_strats), int)
@@ -130,8 +112,8 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
     subgame_mask = np.asarray(subgame_mask, bool)
     assert game.num_role_strats == subgame_mask.size
     new_players = game.num_players.copy()
-    new_players[game.role_index[role_strat_ind]] -= 1
-    base = rsgame.BaseGame(new_players, game.num_strategies)
+    new_players[game.role_indices[role_strat_ind]] -= 1
+    base = rsgame.basegame(new_players, game.num_strategies)
     new_mask = subgame_mask.copy()
     new_mask[role_strat_ind] = True
     profs = subgame(base, new_mask).all_profiles()
@@ -158,17 +140,17 @@ def subgame(game, subgame_mask):
                           in zip(game.sample_payoffs,
                                  np.split(prof_mask, game.sample_starts[1:]))
                           if pmask.any()]
-        return rsgame.SampleGame(game.num_players, num_strats, profiles,
+        return rsgame.samplegame(game.num_players, num_strats, profiles,
                                  sample_payoffs)
 
     elif isinstance(game, rsgame.Game):
         prof_mask = ~np.any(game.profiles * ~subgame_mask, 1)
         profiles = game.profiles[prof_mask][:, subgame_mask]
         payoffs = game.payoffs[prof_mask][:, subgame_mask]
-        return rsgame.Game(game.num_players, num_strats, profiles, payoffs)
+        return rsgame.game(game.num_players, num_strats, profiles, payoffs)
 
     else:
-        return rsgame.BaseGame(game.num_players, num_strats)
+        return rsgame.basegame(game.num_players, num_strats)
 
 
 def subserializer(serial, subgame_mask):
@@ -176,7 +158,15 @@ def subserializer(serial, subgame_mask):
     new_strats = [[s for s, m in zip(strats, mask) if m]
                   for strats, mask
                   in zip(serial.strat_names, serial.role_split(subgame_mask))]
-    return gameio.GameSerializer(serial.role_names, new_strats)
+    return gameio.gameserializer(serial.role_names, new_strats)
+
+
+def subreduction(reduction, subgame_mask):
+    """Return an identical reduction for a subgame"""
+    new_strats = reduction.full_game.role_reduce(subgame_mask)
+    # This is hacky
+    return reduction.__class__(new_strats, reduction.full_game.num_players,
+                               reduction.red_game.num_players)
 
 
 def translate(profiles, subgame_mask):
@@ -188,18 +178,7 @@ def translate(profiles, subgame_mask):
     return new_profs
 
 
-@functools.lru_cache()
-def num_all_subgames(game):
-    """Number of unique subgames"""
-    return np.prod(2 ** game.num_strategies - 1)
-
-
-def all_subgames(game):
-    """Return an array of all of the subgames"""
-    return subgame_from_id(game, np.arange(num_all_subgames(game)))
-
-
-def subgame_id(game, subgame_mask):
+def to_id(game, subgame_mask):
     """Return a unique integer representing a subgame"""
     bits = np.ones(game.num_role_strats, int)
     bits[0] = 0
@@ -209,7 +188,7 @@ def subgame_id(game, subgame_mask):
     return np.sum(roles * (game.role_reduce(subgame_mask * bits) - 1), -1)
 
 
-def subgame_from_id(game, subgame_id):
+def from_id(game, subgame_id):
     """Return a subgame mask from its unique indicator"""
     subgame_id = np.asarray(subgame_id)
     bits = np.ones(game.num_role_strats, int)
@@ -220,12 +199,6 @@ def subgame_from_id(game, subgame_id):
     rolesc = np.insert(np.cumprod(roles[:-1]), 0, 1)
     return (game.role_repeat(subgame_id[..., None] // rolesc % roles + 1)
             // bits % 2).astype(bool)
-
-
-def random_subgames(game, n=1):
-    """Return n random subgames"""
-    ids = rand.randint(num_all_subgames(game), size=n)
-    return subgame_from_id(game, ids)
 
 
 def maximal_subgames(game):

@@ -19,7 +19,7 @@ def test_weakly_dominated():
         [2, 1],
         [0, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.weakly_dominated(game)
     assert np.all(wd == [False, True])
 
@@ -31,7 +31,7 @@ def test_weakly_dominated():
         [2, 0],
         [0, 2],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.weakly_dominated(game)
     assert np.all(wd == [False, False])
 
@@ -45,7 +45,7 @@ def test_weakly_dominated():
         [2, 1],
         [0, 2],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.weakly_dominated(game)
     assert np.all(wd == [False, True])
 
@@ -59,7 +59,7 @@ def test_weakly_dominated():
         [2, 2],
         [0, 2],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.weakly_dominated(game)
     assert np.all(wd == [True, True])
 
@@ -73,7 +73,7 @@ def test_weakly_dominated_conditional():
         [0, 1],
         [1, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.weakly_dominated(game)
     assert np.all(wd == [True, False])
     wd = dominance.weakly_dominated(game, False)
@@ -91,7 +91,7 @@ def test_strictly_dominated():
         [2, 1],
         [0, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.strictly_dominated(game)
     assert np.all(wd == [False, True])
 
@@ -103,7 +103,7 @@ def test_strictly_dominated():
         [2, 0],
         [0, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.strictly_dominated(game)
     assert np.all(wd == [False, False])
 
@@ -117,7 +117,7 @@ def test_strictly_dominated():
         [2, 2],
         [0, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.strictly_dominated(game)
     assert np.all(wd == [False, False])
 
@@ -131,7 +131,7 @@ def test_strictly_dominated_conditional():
         [0, 1],
         [2, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.strictly_dominated(game)
     assert np.all(wd == [False, False])
     wd = dominance.strictly_dominated(game, False)
@@ -145,7 +145,7 @@ def test_strictly_dominated_conditional():
         [2, 0],
         [2, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.strictly_dominated(game)
     assert np.all(wd == [False, True])
 
@@ -157,7 +157,7 @@ def test_strictly_dominated_conditional():
         [2, 0],
         [2, 2],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.strictly_dominated(game)
     assert np.all(wd == [False, False])
 
@@ -169,7 +169,7 @@ def test_strictly_dominated_conditional():
         [2, 0],
         [0, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.strictly_dominated(game, False)
     assert np.all(wd == [False, False])
 
@@ -185,7 +185,7 @@ def test_never_best_response():
         [2, 2],
         [0, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.never_best_response(game, False)
     assert np.all(wd == [False, False])
 
@@ -199,7 +199,7 @@ def test_never_best_response():
         [2, 2],
         [0, 2],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.never_best_response(game, False)
     assert np.all(wd == [False, False])
 
@@ -213,7 +213,7 @@ def test_never_best_response():
         [2, 2],
         [0, 3],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.never_best_response(game, False)
     assert np.all(wd == [True, False])
 
@@ -227,7 +227,7 @@ def test_never_best_response_conditional():
         [1, 0],
         [0, 1],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.never_best_response(game, True)
     assert np.all(wd == [False, False])
 
@@ -239,7 +239,7 @@ def test_never_best_response_conditional():
         [2, 2],
         [0, 3],
     ]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     wd = dominance.never_best_response(game, True)
     assert np.all(wd == [True, False])
 

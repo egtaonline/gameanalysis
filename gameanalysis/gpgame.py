@@ -12,6 +12,8 @@ from gameanalysis import subgame
 from gameanalysis import utils
 
 
+# TODO Make constructors follow format in rsgame
+
 _TINY = np.finfo(float).tiny
 
 
@@ -23,7 +25,7 @@ class BaseGPGame(rsgame.BaseGame):
     # something like lru-dict so that recent profiles are cached.
 
     def __init__(self, game, cv_jobs=0, cv_iters=16):
-        super().__init__(game)
+        super().__init__(game.num_players, game.num_strategies)
 
         if isinstance(game, BaseGPGame):
             # Copy trained models
@@ -72,7 +74,7 @@ class BaseGPGame(rsgame.BaseGame):
             players in role i of dimension i should num_players[i] - 1.
         """
         payoffs = np.empty(self.num_role_strats)
-        for i, (gp, r) in enumerate(zip(self._gps, self.role_index)):
+        for i, (gp, r) in enumerate(zip(self._gps, self.role_indices)):
             payoffs[i] = gp.predict(profiles[r]).mean()
         return payoffs
 
@@ -178,14 +180,14 @@ class NeighborGPGame(BaseGPGame):
         mask = np.all(dev_players <= self.num_players, 1)
         dev_players = dev_players[mask]
         supp = prof > 0
-        sub = subgame.subgame(rsgame.BaseGame(self), supp)
+        sub = subgame.subgame(rsgame.basegame_copy(self), supp)
 
         profs = [prof[None]]
         for players in dev_players:
-            to_dev_profs = rsgame.BaseGame(
+            to_dev_profs = rsgame.basegame(
                 players, self.num_strategies).all_profiles()
             from_dev_profs = subgame.translate(
-                rsgame.BaseGame(players, sub.num_strategies).all_profiles(),
+                rsgame.basegame(players, sub.num_strategies).all_profiles(),
                 supp)
             before_devs = prof - from_dev_profs
             before_devs = before_devs[np.all(before_devs >= 0, 1)]
@@ -207,7 +209,7 @@ class DprGPGame(BaseGPGame):
         super().__init__(game, **base_args)
         dpr_players = (np.maximum(game.num_players, 2) if dpr_players is None
                        else np.asarray(dpr_players, int))
-        red_game = rsgame.BaseGame(dpr_players, self.num_strategies)
+        red_game = rsgame.basegame(dpr_players, self.num_strategies)
         red = reduction.DeviationPreserving(self.num_strategies,
                                             self.num_players, dpr_players)
         red_profiles = red_game.all_profiles()
@@ -220,8 +222,8 @@ class DprGPGame(BaseGPGame):
             profs[:, i] -= 1
             full_payoffs[mask, i] = gp.predict(profs)
 
-        self.dpr_game = red.reduce_game(rsgame.Game(game, full_profiles,
-                                                    full_payoffs))
+        self.dpr_game = red.reduce_game(rsgame.game_copy(game, full_profiles,
+                                                         full_payoffs))
 
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
         return self.dpr_game.deviation_payoffs(mix, jacobian=jacobian)
@@ -234,7 +236,7 @@ class FullGPGame(BaseGPGame):
         super().__init__(game, **base_args)
         profiles = self.all_profiles()
         payoffs = self.get_payoffs(profiles)
-        self.full_game = rsgame.Game(self, profiles, payoffs)
+        self.full_game = rsgame.game_copy(self, profiles, payoffs)
 
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
         return self.full_game.deviation_payoffs(mix, assume_complete=True,

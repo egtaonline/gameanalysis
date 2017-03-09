@@ -114,4 +114,3 @@ To Do
 - Fix git dependencies, tie to a commit perhaps?
 - add get_sample_payoffs to SampleGame?
 - Consider making payoffs or profiles sparse? Currently this makes operations much slower and even for large sparse observation payoffs only save ~2 memory
-- Consider changing orientation of sample_payoffs in SampleGame from (i, p, o) to (i, o, p)

@@ -29,7 +29,7 @@ def test_mixed_incomplete_data():
                 [1, 1]]
     payoffs = [[4.3, 0],
                [6.2, 6.7]]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     dg = regret.mixture_deviation_gains(game, [1, 0])
     expected_gains = [0.0, 2.4]
     assert np.allclose(dg, expected_gains), \
@@ -41,7 +41,7 @@ def test_mixed_incomplete_data():
 def test_mixed_incomplete_data_2():
     profiles = [[2, 0]]
     payoffs = [[1.0, 0.0]]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     dg = regret.mixture_deviation_gains(game, [1, 0])
     assert np.allclose(dg, [0, np.nan], equal_nan=True), \
         "nonzero regret or deviation without payoff didn't return nan"
@@ -50,7 +50,7 @@ def test_mixed_incomplete_data_2():
 def test_pure_incomplete_data():
     profiles = [[2, 0]]
     payoffs = [[1.0, 0.0]]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     reg = regret.pure_strategy_regret(game, [2, 0])
     assert np.isnan(reg), "regret of missing profile not nan"
 
@@ -64,7 +64,7 @@ def test_two_player_zero_sum_pure_wellfare(strategies):
 
 
 def test_nonzero_profile_welfare():
-    game = rsgame.Game([[[3.5, 2.5]]])
+    game = rsgame.game_matrix([[[3.5, 2.5]]])
     assert np.isclose(regret.pure_social_welfare(game, [1, 1]), 6), \
         "Didn't properly sum welfare"
 
@@ -78,7 +78,7 @@ def test_two_player_zero_sum_mixed_wellfare(strategies):
 
 
 def test_nonzero_mixed_welfare():
-    game = rsgame.Game([[[3.5, 2.5]]])
+    game = rsgame.game_matrix([[[3.5, 2.5]]])
     assert np.isclose(regret.mixed_social_welfare(game, [1, 1]), 6), \
         "Didn't properly sum welfare"
 
@@ -114,7 +114,7 @@ def test_max_mixed_profile():
     payoffs = [[1, 0],
                [3, 3],
                [0, 1]]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     mix1 = regret.max_mixed_social_welfare(game, processes=1)[1]
     mix2 = regret.max_mixed_social_welfare(game)[1]
     assert np.allclose(mix1, [0.5, 0.5])
@@ -128,11 +128,34 @@ def test_max_pure_profile():
     payoffs = [[3, 0],
                [4, 4],
                [0, 1]]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     prof = regret.max_pure_social_welfare(game)[1]
-    assert np.all(prof == [2, 0])
+    assert np.all(prof == [1, 1])
 
-    game = rsgame.Game(rsgame.BaseGame(2, 2))
+    game = rsgame.game(2, 2)
     sw, prof = regret.max_pure_social_welfare(game)
     assert np.isnan(sw)
     assert prof is None
+
+    (sw,), (prof,) = regret.max_pure_social_welfare(game, True)
+    assert np.isnan(sw)
+    assert prof is None
+
+
+def test_max_pure_profile_profile_game():
+    """Test that game are correct when profiles have incomplete data"""
+    profiles = [[2, 0, 2, 0],
+                [1, 1, 2, 0],
+                [1, 1, 1, 1]]
+    payoffs = [[np.nan, 0, 5, 0],  # Max role 2
+               [2, 3, np.nan, 0],  # Max role 1
+               [1, 1, 1, 1]]       # Max total
+    game = rsgame.game([2, 2], [2, 2], profiles, payoffs)
+    welfare, profile = regret.max_pure_social_welfare(game)
+    assert welfare == 4
+    assert np.all(profile == [1, 1, 1, 1])
+    welfares, profiles = regret.max_pure_social_welfare(game, True)
+    assert np.allclose(welfares, [5, 10])
+    expected = [[1, 1, 2, 0],
+                [2, 0, 2, 0]]
+    assert np.all(profiles == expected)

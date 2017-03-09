@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import numpy.random as rand
 import pytest
 
 from gameanalysis import gamegen
@@ -51,18 +50,8 @@ BIG_GAMES = GAMES + ([] if os.getenv('BIG_TESTS') != 'ON' else [
 ])
 
 
-@pytest.mark.parametrize('players,strategies', GAMES)
-def test_pure_subgame(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
-    subgames = subgame.pure_subgames(game)
-    expectation = game.num_strategies[None].repeat(game.num_roles, 0)
-    np.fill_diagonal(expectation, 1)
-    expectation = game.role_repeat(expectation.prod(1))
-    assert np.all(subgames.sum(0) == expectation)
-
-
 def test_subgame():
-    game = rsgame.BaseGame([3, 4], [3, 2])
+    game = rsgame.basegame([3, 4], [3, 2])
     subg = np.asarray([1, 0, 1, 0, 1], bool)
     devs = subgame.deviation_profiles(game, subg)
     assert devs.shape[0] == 7, \
@@ -76,7 +65,7 @@ def test_subgame():
             adds + subgame.subgame(game, subg).num_all_profiles), \
         "additional profiles didn't return the proper amount"
 
-    serial = gamegen.game_serializer(game)
+    serial = gamegen.serializer(game)
     sub_serial = subgame.subserializer(serial, subg)
     assert (subgame.subgame(game, subg).num_role_strats ==
             sub_serial.num_role_strats)
@@ -95,7 +84,7 @@ def test_maximal_subgames(players, strategies):
 @pytest.mark.parametrize('game_desc', SMALL_GAMES)
 @pytest.mark.parametrize('prob', [0.9, 0.6, 0.4])
 def test_missing_data_maximal_subgames(game_desc, prob):
-    base = rsgame.BaseGame(*game_desc)
+    base = rsgame.basegame(*game_desc)
     game = gamegen.add_profiles(base, prob)
     subs = subgame.maximal_subgames(game)
 
@@ -120,12 +109,8 @@ def test_missing_data_maximal_subgames(game_desc, prob):
 
 @pytest.mark.parametrize('players,strategies', BIG_GAMES * 20)
 def test_deviation_profile_count(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
-    sup = (rand.random(game.num_roles) * game.num_strategies).astype(int) + 1
-    inds = np.concatenate([rand.choice(s, x) + o for s, x, o
-                           in zip(game.num_strategies, sup, game.role_starts)])
-    mask = np.zeros(game.num_role_strats, bool)
-    mask[inds] = True
+    game = rsgame.basegame(players, strategies)
+    mask = game.random_subgames()
 
     devs = subgame.deviation_profiles(game, mask)
     assert devs.shape[0] == subgame.num_deviation_profiles(game, mask), \
@@ -156,8 +141,7 @@ def test_subgame_preserves_completeness(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
     assert game.is_complete(), "gamegen didn't create complete game"
 
-    mask = game.random_profiles(game.uniform_mixture())[0] > 0
-
+    mask = game.random_subgames()
     sub_game = subgame.subgame(game, mask)
     assert sub_game.is_complete(), "subgame didn't preserve game completeness"
 
@@ -174,57 +158,6 @@ def test_translate():
     assert np.all(expected == subgame.translate(prof, mask))
 
 
-def test_num_subgames():
-    game = rsgame.BaseGame([3, 4], [4, 3])
-    actual = subgame.num_pure_subgames(game)
-    expected = subgame.pure_subgames(game).shape[0]
-    assert actual == 12 == expected
-
-    actual = subgame.num_all_subgames(game)
-    assert actual == 105
-
-
-@pytest.mark.parametrize('players,strategies', [
-    ([1], [1]),
-    ([1] * 3, [2] * 3),
-    ([3], [2]),
-    ([2, 2], [3, 3]),
-    ([1, 2], [2, 2]),
-    ([2, 2], [1, 2]),
-    ([1, 2], [1, 2]),
-    ([3, 4], [4, 3]),
-    ([1, 2, 3], [3, 1, 2]),
-])
-def test_all_subgames(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
-    all_subgames = subgame.all_subgames(game)
-    assert game.role_reduce(all_subgames, ufunc=np.logical_or).all(), \
-        "Not all subgames were valid"
-
-    distinct = np.unique(utils.axis_to_elem(all_subgames)).size
-    assert distinct == all_subgames.shape[0]
-
-    ids = subgame.subgame_id(game, all_subgames)
-    distinct_ids = np.unique(ids).size
-    assert distinct_ids == all_subgames.shape[0]
-
-    all_subgames2 = subgame.subgame_from_id(game, ids)
-    assert np.all(all_subgames == all_subgames2)
-
-
-@pytest.mark.parametrize('players,strategies', GAMES)
-def test_random_subgames(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
-    rand_subgames = subgame.random_subgames(game, 30)
-    assert rand_subgames.shape[0] == 30
-    assert game.role_reduce(rand_subgames, ufunc=np.logical_or).all(), \
-        "Not all subgames were valid"
-
-    rand_subgames2 = subgame.subgame_from_id(
-        game, subgame.subgame_id(game, rand_subgames))
-    assert np.all(rand_subgames == rand_subgames2)
-
-
 def test_maximal_subgames_partial_profiles():
     """Test that maximal subgames properly handles partial profiles"""
     profiles = [[2, 0],
@@ -233,10 +166,37 @@ def test_maximal_subgames_partial_profiles():
     payoffs = [[1, 0],
                [np.nan, 2],
                [0, 3]]
-    game = rsgame.Game([2], [2], profiles, payoffs)
+    game = rsgame.game([2], [2], profiles, payoffs)
     subs = subgame.maximal_subgames(game)
     expected = utils.axis_to_elem(np.array([
         [True, False],
         [False, True]]))
     assert np.setxor1d(utils.axis_to_elem(subs), expected).size == 0, \
         "Didn't produce both pure subgames"
+
+
+@pytest.mark.parametrize('players,strategies', BIG_GAMES * 20)
+def test_subreduction(players, strategies):
+    players = np.asarray(players, int)
+    game = rsgame.basegame(players ** 2, strategies)
+    mask = game.random_subgames()
+    red = reduction.DeviationPreserving(
+        game.num_strategies, game.num_players, players)
+
+    redgame = red.reduce_game(game)
+    redsubg1 = subgame.subgame(redgame, mask)
+
+    subred = subgame.subreduction(red, mask)
+    subg = subgame.subgame(game, mask)
+    redsubg2 = subred.reduce_game(subg)
+
+    assert redsubg1 == redsubg2
+
+
+@pytest.mark.parametrize('players,strategies', SMALL_GAMES)
+def test_subgame_to_from_id(players, strategies):
+    """Test that subgame function preserves completeness"""
+    game = rsgame.basegame(players, strategies)
+    subgs = game.all_subgames()
+    subgs2 = subgame.from_id(game, subgame.to_id(game, subgs))
+    assert np.all(subgs == subgs2)

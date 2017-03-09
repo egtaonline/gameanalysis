@@ -60,7 +60,7 @@ some error due to linear interpolation between points.  (default:
 
 
 def main(args):
-    game, serial = gameio.read_sample_game(json.load(args.input))
+    game, serial = gameio.read_samplegame(json.load(args.input))
     profiles = np.concatenate([serial.from_prof_json(p)[None] for p
                                in scriptutils.load_profiles(args.profiles)])
     bootf, meanf = CHOICES[args.type]

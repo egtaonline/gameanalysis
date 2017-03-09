@@ -56,7 +56,7 @@ def test_sample_regret(players, strategies):
     n = 100
     game = gamegen.role_symmetric_game(players, strategies)
     max_regret = np.max(game.max_payoffs() - game.min_payoffs())
-    mix = game.random_mixtures()[0]
+    mix = game.random_mixtures()
     dev_profs = game.random_deviator_profiles(mix, n)
     dev_profs.shape = (-1, game.num_role_strats)
     inds = np.broadcast_to(np.arange(game.num_role_strats),
@@ -111,7 +111,7 @@ def test_mixture_regret_single_mix(players, strategies):
     num_boots = 200
     game = gamegen.add_noise(gamegen.role_symmetric_game(players, strategies),
                              1, 3)
-    mix = game.random_mixtures()[0]
+    mix = game.random_mixtures()
     boots = bootstrap.mixture_regret(game, mix, num_boots, processes=1)
     assert boots.shape == (1, num_boots)
     assert np.all(boots >= 0)

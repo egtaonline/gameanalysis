@@ -25,6 +25,12 @@ class WeightedSimilaritySet(object):
         self._i += 1
         return self
 
+    def clear(self):
+        self._i = 0
+        self._items.clear()
+        self._set.clear()
+        self._computed = True
+
     def _satisfy(self):
         if not self._computed:
             self._items.sort()
@@ -112,6 +118,9 @@ class DynamicArray(object):
         self._data = self.data.copy()
         self._length = self._data.shape[0]
 
+    def __iter__(self):
+        return iter(self.data)
+
     def __len__(self):
         return self._length
 
@@ -122,11 +131,12 @@ class DynamicArray(object):
         return repr(self.data)
 
 
-# TODO Add length, number of subgames it can hold?
 class BitSet(object):
     """Set of bitmasks
 
     A bitmask is in the set if all of the true bits have been added"""
+    # This compresses all bitmasks down to the number they are implicitly, and
+    # uses bitwise math to replicate the same functions.
 
     def __init__(self):
         self._masks = []
@@ -135,7 +145,7 @@ class BitSet(object):
         if not self._masks:
             self._mask = 2 ** np.arange(bitmask.size)
         if bitmask not in self:
-            num = bitmask @ self._mask
+            num = bitmask.dot(self._mask)
             self._masks[:] = [m for m in self._masks if not m & ~num]
             self._masks.append(num)
             return True
@@ -148,7 +158,7 @@ class BitSet(object):
     def __contains__(self, bitmask):
         assert bitmask.size == self._mask.size, \
             "can't add bitmasks of different sizes"
-        num = bitmask @ self._mask
+        num = bitmask.dot(self._mask)
         return not all(num & ~m for m in self._masks)
 
     def __bool__(self):

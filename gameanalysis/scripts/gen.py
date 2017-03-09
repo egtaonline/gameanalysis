@@ -24,7 +24,7 @@ class ZeroSum(object):
     @staticmethod
     def create(args):
         game = gamegen.two_player_zero_sum_game(args.num_strats)
-        serial = gamegen.game_serializer(game)
+        serial = gamegen.serializer(game)
         return game, serial
 
 
@@ -51,34 +51,7 @@ class RoleSymmetric(object):
             'Must specify matching sets of players and strategies'
         game = gamegen.role_symmetric_game(args.pands[::2],
                                            args.pands[1::2])
-        serial = gamegen.game_serializer(game)
-        return game, serial
-
-
-class Congestion(object):
-    """congestion game"""
-
-    @staticmethod
-    def add_parser(subparsers, base):
-        parser = subparsers.add_parser('congest', aliases=['cgst'],
-                                       parents=[base], help="""Congestion""",
-                                       description="""Create a congestion
-                                       game.""")
-        parser.add_argument('num_players', metavar='<num-players>', type=int,
-                            help="""The number of players in the congestion
-                            game.""")
-        parser.add_argument('num_facilities', metavar='<num-facilities>',
-                            type=int, help="""The number of facilities in the
-                            congestion game.""")
-        parser.add_argument('num_required', metavar='<num-required>', type=int,
-                            help="""The number of facilities a player has to
-                            occupy in the congestion game.""")
-        return parser
-
-    @staticmethod
-    def create(args):
-        game, serial = gamegen.congestion_game(
-            args.num_players, args.num_facilities, args.num_required, True)
+        serial = gamegen.serializer(game)
         return game, serial
 
 
@@ -144,7 +117,7 @@ def add_parser(subparsers):
                                        dest='type', metavar='<game-type>',
                                        help="""The game generation function to
                                        use. Allowed values:""")
-    for gentype in [RoleSymmetric, ZeroSum, Congestion, Noise]:
+    for gentype in [RoleSymmetric, ZeroSum, Noise]:
         subparser = gentype.add_parser(subparsers, base)
         subparser.create = gentype.create
 
@@ -158,5 +131,5 @@ def main(args):
     if args.normalize:
         game = gamegen.normalize(game)
 
-    json.dump(game.to_json(serial), args.output)
+    json.dump(serial.to_game_json(game), args.output)
     args.output.write('\n')

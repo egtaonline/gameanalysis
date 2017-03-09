@@ -223,7 +223,6 @@ _AVAILABLE_METHODS = {
 }
 
 
-# XXX Change method signature to return regret?
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
                random_restarts=0, processes=None, at_least_one=False,
                **methods):
@@ -275,28 +274,20 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
 
     equilibria = collect.WeightedSimilaritySet(
         lambda a, b: linalg.norm(a - b) < dist_thresh)
-    best = [np.inf, None]  # Need a pointer for closure
+    best = (np.inf, -1, None)
+    chunksize = len(initial_points) if processes == 1 else 4
 
-    def process(eqm):
-        """Processes a candidate equilibrium"""
-        reg = regret.mixture_regret(game, eqm)
-        if reg < regret_thresh:
-            equilibria.add(eqm, reg)
-        if reg < best[0]:
-            best[0] = reg
-            best[1] = eqm[None]
-
-    if processes == 1:
-        for m, p in itertools.product(methods, initial_points):
-            process(m(p))
-    else:
-        with multiprocessing.Pool(processes) as pool:
-            for eqm in itertools.chain.from_iterable(pool.imap_unordered(
-                    m, initial_points) for m in methods):
-                process(eqm)
+    with multiprocessing.Pool(processes) as pool:
+        for i, eqm in enumerate(itertools.chain.from_iterable(
+                pool.imap_unordered(m, initial_points, chunksize=chunksize)
+                for m in methods)):
+            reg = regret.mixture_regret(game, eqm)
+            if reg < regret_thresh:
+                equilibria.add(eqm, reg)
+            best = min(best, (reg, i, eqm[None]))
 
     if not equilibria and at_least_one:
-        return best[1]
+        return best[2]
     elif not equilibria:
         return np.empty((0, game.num_role_strats))
     else:

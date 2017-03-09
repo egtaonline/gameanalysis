@@ -28,7 +28,7 @@ def _gains(game):
 
     for i, (prof, support) in enumerate(zip(game.profiles, supports)):
         regs = regret.pure_strategy_deviation_gains(game, prof)
-        reps = game.num_strategies[game.role_index[support]] - 1
+        reps = game.num_strategies[game.role_indices[support]] - 1
         reg_offsets = np.insert(reps[:-1].cumsum(), 0, 0)
         inds = (np.repeat(offsets[support] - reg_offsets, reps) +
                 np.arange(regs.size))

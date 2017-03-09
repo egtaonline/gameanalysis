@@ -46,6 +46,6 @@ def main(args):
     else:
         sub_game = subgame.subgame(game, sub_mask)
         sub_serial = subgame.subserializer(serial, sub_mask)
-        json.dump(sub_game.to_json(sub_serial), args.output)
+        json.dump(sub_serial.to_game_json(sub_game), args.output)
 
     args.output.write('\n')

@@ -138,7 +138,7 @@ def main(args):
     # Output Game
     args.output.write('Game Analysis\n')
     args.output.write('=============\n')
-    args.output.write(game.to_str(serial))
+    args.output.write(serial.to_game_printstring(game))
     args.output.write('\n\n')
     if args.dpr is not None:
         args.output.write('With DPR reduction: ')
@@ -166,7 +166,7 @@ def main(args):
     # Output social welfare
     args.output.write('Social Welfare\n')
     args.output.write('--------------\n')
-    welfare, profile = game.get_max_social_welfare()
+    welfare, profile = regret.max_pure_social_welfare(game)
     if profile is None:
         args.output.write('There was no profile with complete payoff data\n\n')
     else:
@@ -176,7 +176,8 @@ def main(args):
 
         if game.num_roles > 1:
             for role, welfare, profile in zip(
-                    serial.role_names, *game.get_max_social_welfare(True)):
+                    serial.role_names,
+                    *regret.max_pure_social_welfare(game, True)):
                 args.output.write('Maximum "{}" welfare profile:\n'.format(
                     role))
                 args.output.write(serial.to_prof_printstring(profile))

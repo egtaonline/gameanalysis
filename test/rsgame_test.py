@@ -77,10 +77,10 @@ def exact_dev_reps(game):
 
 @pytest.mark.parametrize('players,strategies', BIG_GAMES)
 def test_devreps_approx(players, strategies):
-    base = rsgame.BaseGame(players, strategies)
+    base = rsgame.basegame(players, strategies)
     profiles = base.all_profiles()
     payoffs = np.zeros(profiles.shape, float)
-    game = rsgame.Game(base, profiles, payoffs)
+    game = rsgame.game_copy(base, profiles, payoffs)
     approx = game._dev_reps
     exact = exact_dev_reps(game)
     # The equals checks for -inf == -inf
@@ -89,25 +89,39 @@ def test_devreps_approx(players, strategies):
 
 # Test that all functions work on an BaseGame
 @pytest.mark.parametrize('players,strategies', GAMES)
-def test_base_game_function(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
+def test_basegame_function(players, strategies):
+    game = rsgame.basegame(players, strategies)
     assert game.num_players is not None, "num players was None"
     assert game.num_strategies is not None, "num strategies was None"
 
     # Test copy constructor
-    game2 = rsgame.BaseGame(game)
+    game2 = rsgame.basegame_copy(game)
+    assert game == game2
     assert np.all(game.num_players == game2.num_players)
     assert np.all(game.num_strategies == game2.num_strategies)
 
-    # Test role index
+    # Test role indices
     expected = game.role_repeat(np.arange(game.num_roles))
-    actual = game.role_index[np.arange(game.num_role_strats)]
+    actual = game.role_indices[np.arange(game.num_role_strats)]
     assert np.all(expected == actual)
 
     # Test that all profiles returns the correct number of things
     all_profs = game.all_profiles()
     assert all_profs.shape[0] == game.num_all_profiles, \
         "size of all profile generation is wrong"
+
+    # Test that all subgames returns the correct number
+    all_subs = game.all_subgames()
+    assert all_subs.shape[0] == game.num_all_subgames
+    assert game.role_reduce(all_subs, ufunc=np.bitwise_or).all()
+    uniques = np.unique(utils.axis_to_elem(all_subs))
+    assert uniques.size == all_subs.shape[0]
+
+    pure_subs = game.pure_subgames()
+    assert pure_subs.shape[0] == game.num_pure_subgames
+    assert game.role_reduce(pure_subs, ufunc=np.bitwise_or).all()
+    uniques = np.unique(utils.axis_to_elem(pure_subs))
+    assert uniques.size == pure_subs.shape[0]
 
     # Assert that mixture calculations do the right thing
     # Uniform
@@ -127,9 +141,20 @@ def test_base_game_function(players, strategies):
         assert np.allclose(mix[one_strats], 1), \
             "uniform mixture wasn't uniform"
 
+    # Random Subgames
+    assert game.role_reduce(game.random_subgames(), ufunc=np.bitwise_or).all()
+    subs = game.random_subgames(20)
+    assert game.role_reduce(subs, ufunc=np.bitwise_or).all()
+
     # Random
-    assert np.allclose(game.role_reduce(game.random_mixture()), 1)
+    assert np.allclose(game.role_reduce(game.random_mixtures()), 1)
     mixes = game.random_mixtures(20)
+    assert np.allclose(game.role_reduce(mixes, axis=1), 1), \
+        "random mixtures weren't mixtures"
+
+    # Random Sparse
+    assert np.allclose(game.role_reduce(game.random_sparse_mixtures()), 1)
+    mixes = game.random_sparse_mixtures(20)
     assert np.allclose(game.role_reduce(mixes, axis=1), 1), \
         "random mixtures weren't mixtures"
 
@@ -181,12 +206,13 @@ def test_base_game_function(players, strategies):
         "pure profiles weren't pure"
 
     # Test that various methods can be called
-    assert repr(game) is not None, "game repr was None"
+    assert repr(game) is not None
+    assert hash(game) is not None
 
 
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_max_prob_prof(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
+    game = rsgame.basegame(players, strategies)
     profiles = game.all_profiles()
     log_prob = (np.sum(sps.gammaln(game.num_players + 1)) -
                 np.sum(sps.gammaln(profiles + 1), 1))
@@ -199,47 +225,43 @@ def test_max_prob_prof(players, strategies):
                               utils.axis_to_elem(max_prob_profs)))
 
 
-def test_base_game_invalid_constructor():
-    with pytest.raises(ValueError):
-        rsgame.BaseGame(None, None, None)
-
-
-def test_base_game_min_payoffs():
+def test_basegame_min_payoffs():
     with pytest.raises(NotImplementedError):
-        rsgame.BaseGame(1, 1).min_payoffs()
+        rsgame.basegame(1, 1).min_payoffs()
 
 
-def test_base_game_max_payoffs():
+def test_basegame_max_payoffs():
     with pytest.raises(NotImplementedError):
-        rsgame.BaseGame(1, 1).max_payoffs()
+        rsgame.basegame(1, 1).max_payoffs()
 
 
-def test_base_game_deviation_payoffs():
-    base = rsgame.BaseGame(1, 1)
+def test_basegame_deviation_payoffs():
+    base = rsgame.basegame(1, 1)
     mix = base.uniform_mixture()
     with pytest.raises(NotImplementedError):
         base.deviation_payoffs(mix)
 
 
 def test_verify_mixture_profile():
-    game = rsgame.BaseGame([2, 3], [3, 2])
+    game = rsgame.basegame([2, 3], [3, 2])
     assert game.verify_profile([1, 1, 0, 3, 0])
     assert not game.verify_profile([1, 0, 0, 3, 0])
     assert game.verify_mixture([0.2, 0.3, 0.5, 0.6, 0.4])
     assert not game.verify_mixture([0.2, 0.3, 0.4, 0.5, 0.6])
 
-    assert game.verify_profile(game.random_profile())
+    assert game.verify_profile(game.random_profiles())
     mix = game.uniform_mixture()
     random_profs = game.random_profiles(mix, 20)
     assert np.all(game.verify_profile(random_profs))
 
+    assert game.verify_profile(game.random_deviator_profiles(mix)).all()
     random_profs = game.random_deviator_profiles(mix, 20)
-    assert np.all(game.verify_profile(random_profs))
+    assert game.verify_profile(random_profs).all()
 
 
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_simplex_project(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
+    game = rsgame.basegame(players, strategies)
     for non_mixture in rand.uniform(-1, 1, (100, game.num_role_strats)):
         new_mix = game.simplex_project(non_mixture)
         assert game.verify_mixture(new_mix), \
@@ -247,8 +269,8 @@ def test_simplex_project(players, strategies):
 
 
 def test_symmetric():
-    assert rsgame.BaseGame(3, 4).is_symmetric()
-    assert not rsgame.BaseGame([2, 2], 3).is_symmetric()
+    assert rsgame.basegame(3, 4).is_symmetric()
+    assert not rsgame.basegame([2, 2], 3).is_symmetric()
 
 
 # Test that game functions work
@@ -257,13 +279,12 @@ def test_game_function(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
 
     # Test copy
-    game2 = rsgame.Game(game)
-    assert not np.may_share_memory(game.profiles, game2.profiles)
+    game2 = rsgame.game_copy(game)
     assert not np.may_share_memory(game.payoffs, game2.payoffs)
     assert np.all(game.profiles == game2.profiles)
     assert np.all(game.payoffs == game2.payoffs)
 
-    game3 = rsgame.Game(rsgame.BaseGame(game))
+    game3 = rsgame.game_copy(rsgame.basegame_copy(game))
     assert game3.is_empty()
 
     mask = game.profiles > 0
@@ -282,7 +303,7 @@ def test_game_function(players, strategies):
         assert prof in game, "profile from game not in game"
 
     # Test expected payoff
-    mix = game.random_mixture()
+    mix = game.random_mixtures()
 
     dev1 = game.deviation_payoffs(mix)
     dev2, dev_jac = game.deviation_payoffs(mix, jacobian=True)
@@ -301,41 +322,15 @@ def test_game_function(players, strategies):
     assert not np.isnan(jac1).any()
     assert np.allclose(jac1, jac2)
 
-    # Max social welfare
-    welfare, profile = game.get_max_social_welfare()
-    assert not np.isnan(welfare)
-    assert profile is not None
-    for welfare, profile in zip(*game.get_max_social_welfare(True)):
-        assert not np.isnan(welfare)
-        assert profile is not None
-
     # Test that various methods can be called
     assert repr(game) is not None
-
-
-def test_partial_profile_game():
-    """Test that game are correct when profiles have incomplete data"""
-    profiles = [[2, 0, 2, 0],
-                [1, 1, 2, 0],
-                [1, 1, 1, 1]]
-    payoffs = [[np.nan, 0, 5, 0],  # Max role 2
-               [2, 3, np.nan, 0],  # Max role 1
-               [1, 1, 1, 1]]       # Max total
-    game = rsgame.Game([2, 2], [2, 2], profiles, payoffs)
-    welfare, profile = game.get_max_social_welfare()
-    assert welfare == 4
-    assert np.all(profile == [1, 1, 1, 1])
-    welfares, profiles = game.get_max_social_welfare(True)
-    assert np.allclose(welfares, [5, 10])
-    expected = [[1, 1, 2, 0],
-                [2, 0, 2, 0]]
-    assert np.all(profiles == expected)
+    assert hash(game) is not None
 
 
 # Test that a Game with no data can still be created
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_empty_full_game(players, strategies):
-    game = rsgame.Game(players, strategies)
+    game = rsgame.game(players, strategies)
 
     # Check that min payoffs can be called
     assert np.isnan(game.min_payoffs()).all()
@@ -346,7 +341,7 @@ def test_empty_full_game(players, strategies):
     assert game.is_constant_sum()
 
     # Test expected payoff
-    mix = game.random_mixture()
+    mix = game.random_mixtures()
     assert np.isnan(game.get_expected_payoffs(mix)).all(), \
         "not all expected payoffs were nan"
     assert np.isnan(game.deviation_payoffs(mix)).all(), \
@@ -354,14 +349,6 @@ def test_empty_full_game(players, strategies):
     pays, jac = game.deviation_payoffs(mix, jacobian=True)
     assert np.isnan(game.deviation_payoffs(mix, jacobian=True)[1]).all(), \
         "not all expected values were nan"
-
-    # Max social welfare
-    welfare, profile = game.get_max_social_welfare()
-    assert np.isnan(welfare)
-    assert profile is None
-    for welfare, profile in zip(*game.get_max_social_welfare(True)):
-        assert np.isnan(welfare)
-        assert profile is None
 
     # Default payoff
     for prof in game.all_profiles():
@@ -374,7 +361,7 @@ def test_empty_full_game(players, strategies):
 
 
 def test_deviation_mixture_support():
-    base = rsgame.BaseGame([2, 2], 3)
+    base = rsgame.basegame([2, 2], 3)
     profiles1 = [
         [2, 0, 0, 2, 0, 0],
         [1, 1, 0, 2, 0, 0],
@@ -395,9 +382,9 @@ def test_deviation_mixture_support():
         [11, 12, 0, 13, 14, 0],
         [0, 15, 0, 16, 17, 0],
     ]
-    game1 = rsgame.Game(base, profiles1, payoffs1)
-    game2 = rsgame.Game(base, profiles2, payoffs2)
-    game3 = rsgame.Game(base, profiles1 + profiles2, payoffs1 + payoffs2)
+    game1 = rsgame.game_copy(base, profiles1, payoffs1)
+    game2 = rsgame.game_copy(base, profiles2, payoffs2)
+    game3 = rsgame.game_copy(base, profiles1 + profiles2, payoffs1 + payoffs2)
     mix1 = [0.5, 0.5, 0, 0.3, 0.7, 0]
     mix2 = [0.5, 0.5, 0, 1, 0, 0]
 
@@ -419,17 +406,12 @@ def test_deviation_mixture_support():
                        equal_nan=True)
 
 
-def test_game_invalid_constructor():
-    with pytest.raises(ValueError):
-        rsgame.Game(None, None, None, None, None)
-
-
 def test_constant_sum():
     game = gamegen.two_player_zero_sum_game(2)
     assert game.is_constant_sum()
     payoffs = game.payoffs.copy()
     payoffs[game.profiles > 0] += 1
-    game2 = rsgame.Game(game, game.profiles, payoffs)
+    game2 = rsgame.game_copy(game, game.profiles, payoffs)
     assert game2.is_constant_sum()
     profiles = [
         [1, 0, 1, 0],
@@ -443,20 +425,19 @@ def test_constant_sum():
         [0, 5, 6, 0],
         [0, 7, 0, 8],
     ]
-    game3 = rsgame.Game(game, profiles, payoffs)
+    game3 = rsgame.game_copy(game, profiles, payoffs)
     assert not game3.is_constant_sum()
 
 
 # Test that sample game functions work
 @pytest.mark.parametrize('game_size,samples',
                          zip(GAMES, itertools.cycle([1, 2, 5, 10])))
-def test_sample_game_function(game_size, samples):
+def test_samplegame_function(game_size, samples):
     base = gamegen.role_symmetric_game(*game_size)
     game = gamegen.add_noise(base, 1, samples)
 
     # Test constructors
-    game2 = rsgame.SampleGame(game)
-    assert not np.may_share_memory(game.profiles, game2.profiles)
+    game2 = rsgame.samplegame_copy(game)
     assert not np.may_share_memory(game.payoffs, game2.payoffs)
     assert not any(np.may_share_memory(sp, sp2) for sp, sp2
                    in zip(game.sample_payoffs, game2.sample_payoffs))
@@ -465,20 +446,19 @@ def test_sample_game_function(game_size, samples):
     assert all(np.all(sp == sp2) for sp, sp2
                in zip(game.sample_payoffs, game2.sample_payoffs))
 
-    game3 = rsgame.SampleGame(base)
-    assert not np.may_share_memory(base.profiles, game3.profiles)
+    game3 = rsgame.samplegame_copy(base)
     assert not np.may_share_memory(base.payoffs, game3.payoffs)
     assert np.all(base.profiles == game3.profiles)
     assert np.all(base.payoffs == game3.payoffs)
     assert np.all(game3.num_samples == 1)
 
-    game4 = rsgame.SampleGame(rsgame.BaseGame(*game_size))
+    game4 = rsgame.samplegame_copy(rsgame.basegame(*game_size))
     assert game4.is_empty()
 
-    game5 = rsgame.SampleGame(*game_size)
+    game5 = rsgame.samplegame(*game_size)
     assert game5.is_empty()
 
-    game5 = rsgame.SampleGame(game.num_players, game.num_strategies,
+    game5 = rsgame.samplegame(game.num_players, game.num_strategies,
                               game.profiles, game.sample_payoffs)
 
     # Test that various methods can be called
@@ -489,9 +469,10 @@ def test_sample_game_function(game_size, samples):
     game.remean()
 
     assert repr(game) is not None
+    assert hash(game) is not None
 
 
-def test_sample_game_resample():
+def test_samplegame_resample():
     game = gamegen.role_symmetric_game([1, 2, 3], [4, 3, 2])
     game = gamegen.add_noise(game, 1, 20)
 
@@ -517,10 +498,8 @@ def test_sample_game_resample():
 
 # Test that a Game with no data can still be created
 @pytest.mark.parametrize('players,strategies', GAMES)
-def test_empty_sample_game(players, strategies):
-    base = rsgame.BaseGame(players, strategies)
-    profiles = np.empty([0, base.num_role_strats], dtype=int)
-    game = rsgame.SampleGame(base, profiles, [])
+def test_empty_samplegame(players, strategies):
+    game = rsgame.samplegame(players, strategies)
 
     # Test that various methods can be called
     assert game.num_samples is not None
@@ -528,12 +507,9 @@ def test_empty_sample_game(players, strategies):
     game.resample()
     game.resample(1)
 
-    repr(game)
+    assert repr(game) is not None
 
-
-def test_sample_game_invalid_constructor():
-    with pytest.raises(ValueError):
-        rsgame.SampleGame(None, None, None, None, None)
+    assert not game.get_sample_payoffs(game.random_profiles()).size
 
 
 # Test that sample game from matrix creates a game
@@ -545,9 +521,9 @@ def test_sample_game_invalid_constructor():
     (2, 2, 2),
     (3, 2, 4),
 ] * 20)
-def test_sample_game_from_matrix(players, strategies, samples):
+def test_samplegame_from_matrix(players, strategies, samples):
     matrix = np.random.random([strategies] * players + [players, samples])
-    game = rsgame.SampleGame(matrix)
+    game = rsgame.samplegame_matrix(matrix)
     assert game.is_complete(), "didn't generate a full game"
     assert game.num_roles == players, \
         "didn't generate correct number of players"
@@ -559,7 +535,7 @@ def test_sample_game_from_matrix(players, strategies, samples):
 
 # Test sample game with different number of samples
 def test_different_samples():
-    base = rsgame.BaseGame(1, [1, 2])
+    base = rsgame.basegame(1, [1, 2])
     profiles = [
         [1, 1, 0],
         [1, 0, 1],
@@ -573,7 +549,7 @@ def test_different_samples():
         ],
     ]
 
-    game = rsgame.SampleGame(base, profiles, payoffs)
+    game = rsgame.samplegame_copy(base, profiles, payoffs)
 
     assert np.all([1, 2] == game.num_samples), \
         "didn't get both sample sizes"
@@ -592,7 +568,7 @@ def test_deviation_payoffs_jacobian():
 
 
 def test_trim_mixture_support():
-    game = rsgame.BaseGame(2, 3)
+    game = rsgame.basegame(2, 3)
     mix = np.array([0.7, 0.3, 0])
     not_trimmed = game.trim_mixture_support(mix, 0.1)
     assert np.allclose(mix, not_trimmed), \
@@ -605,7 +581,7 @@ def test_trim_mixture_support():
 
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_profile_count(players, strategies):
-    game = rsgame.BaseGame(players, strategies)
+    game = rsgame.basegame(players, strategies)
 
     num_profiles = game.all_profiles().shape[0]
     assert num_profiles == game.num_all_profiles, \
@@ -627,7 +603,7 @@ def test_profile_count(players, strategies):
 
 def test_big_game_functions():
     """Test that everything works when game_size > int max"""
-    base = rsgame.BaseGame([100, 100], [30, 30])
+    base = rsgame.basegame([100, 100], [30, 30])
     game = gamegen.add_profiles(base, 1000)
     assert game.num_all_profiles > np.iinfo(int).max
     assert game.num_all_dpr_profiles > np.iinfo(int).max
@@ -641,7 +617,7 @@ def test_nan_mask_for_dev_payoffs():
     payoffs = [[1, 0, 0, 0],
                [np.nan, 2, 0, 0],
                [5, 0, np.nan, 0]]
-    game = rsgame.Game([3], [4], profiles, payoffs)
+    game = rsgame.game([3], [4], profiles, payoffs)
     devs = game.deviation_payoffs([1, 0, 0, 0])
     assert np.allclose(devs, [1, 2, np.nan, np.nan], equal_nan=True)
 
@@ -656,7 +632,7 @@ def test_nan_payoffs_for_dev_payoffs():
     payoffs = [[1, 0, 2, 0],
                [np.nan, 3, np.nan, 0],
                [np.nan, 0, np.nan, 4]]
-    game = rsgame.Game([3, 3], [2, 2], profiles, payoffs)
+    game = rsgame.game([3, 3], [2, 2], profiles, payoffs)
     devs = game.deviation_payoffs([1, 0, 1, 0])
     assert np.allclose(devs, [1, 3, 2, 4])
 
@@ -668,7 +644,7 @@ def test_expected_payoffs_jac():
     payoffs = [[1, 0],
                [3, 3],
                [0, 1]]
-    game = rsgame.Game(2, 2, profiles, payoffs)
+    game = rsgame.game(2, 2, profiles, payoffs)
     ep, ep_jac = game.get_expected_payoffs([.5, .5], jacobian=True)
     ep_jac -= ep_jac.sum() / 2  # project on simplex
     assert np.allclose(ep, 2)
@@ -686,7 +662,7 @@ def test_deviation_nans(p):
                [np.nan, 3, 0, 0, np.nan],
                [np.nan, 0, 4, 0, np.nan],
                [np.nan, 0, 0, 5, np.nan]]
-    game = rsgame.Game([p, 1], [4, 1], profiles, payoffs)
+    game = rsgame.game([p, 1], [4, 1], profiles, payoffs)
     mix = np.array([1, 0, 0, 0, 1])
     pays = game.deviation_payoffs(mix)
     assert not np.isnan(pays).any()
@@ -705,95 +681,39 @@ def test_deviation_nans_2(p, q):
                [np.nan, 0, 4, 0, np.nan, 0],
                [np.nan, 0, 0, 5, np.nan, 0],
                [6,      0, 0, 0, np.nan, 7]]
-    game = rsgame.Game([p, q], [4, 2], profiles, payoffs)
+    game = rsgame.game([p, q], [4, 2], profiles, payoffs)
     mix = np.array([1, 0, 0, 0, 1, 0])
     pays = game.deviation_payoffs(mix)
     assert not np.isnan(pays).any()
 
 
 @pytest.mark.parametrize('players,strategies', GAMES)
-def test_json_copy_base_game(players, strategies):
-    game1 = rsgame.BaseGame(players, strategies)
-    serial = gamegen.game_serializer(game1)
-    game2, _ = gameio.read_base_game(game1.to_json(serial))
+def test_json_copy_basegame(players, strategies):
+    game1 = rsgame.basegame(players, strategies)
+    serial = gamegen.serializer(game1)
+    game2, _ = gameio.read_basegame(serial.to_basegame_json(game1))
     assert game1 == game2
-
-
-def test_base_game_to_str():
-    game = rsgame.BaseGame([2, 1], [1, 2])
-    serial = gamegen.game_serializer(game)
-    expected = ('BaseGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
-                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
-                '        r1:\n            s0\n            s1')
-    assert game.to_str(serial) == expected
 
 
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_json_copy_game(players, strategies):
     game1 = gamegen.role_symmetric_game(players, strategies)
-    serial = gamegen.game_serializer(game1)
-    game2, _ = gameio.read_game(game1.to_json(serial))
+    serial = gamegen.serializer(game1)
+    game2, _ = gameio.read_game(serial.to_game_json(game1))
     assert game1 == game2
-
-
-def test_game_to_str():
-    game = gamegen.role_symmetric_game([2, 1], [1, 2])
-    serial = gamegen.game_serializer(game)
-    expected = ('Game:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
-                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
-                '        r1:\n            s0\n            s1\n'
-                'payoff data for 2 out of 2 profiles')
-    assert game.to_str(serial) == expected
+    assert np.all(game1.profiles == game2.profiles)
+    assert np.allclose(game1.payoffs, game2.payoffs)
 
 
 @pytest.mark.parametrize('game_size,samples',
                          zip(GAMES, itertools.cycle([1, 2, 5, 10])))
-def test_json_copy_sample_game(game_size, samples):
+def test_json_copy_samplegame(game_size, samples):
     base = gamegen.role_symmetric_game(*game_size)
     game1 = gamegen.add_noise(base, 1, samples)
-    serial = gamegen.game_serializer(game1)
-    game2, _ = gameio.read_sample_game(game1.to_json(serial))
+    serial = gamegen.serializer(game1)
+    game2, _ = gameio.read_samplegame(serial.to_samplegame_json(game1))
     assert game1 == game2
-
-
-def test_sample_game_to_str():
-    base = gamegen.role_symmetric_game([2, 1], [1, 2])
-    serial = gamegen.game_serializer(base)
-
-    game = gamegen.add_noise(base, 3)
-    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
-                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
-                '        r1:\n            s0\n            s1\n'
-                'payoff data for 2 out of 2 profiles\n'
-                '3 observations per profile')
-    assert game.to_str(serial) == expected
-
-    game = rsgame.SampleGame(base)
-    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
-                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
-                '        r1:\n            s0\n            s1\n'
-                'payoff data for 2 out of 2 profiles\n'
-                '1 observation per profile')
-    assert game.to_str(serial) == expected
-
-    game = rsgame.SampleGame(rsgame.BaseGame(base))
-    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
-                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
-                '        r1:\n            s0\n            s1\n'
-                'payoff data for 0 out of 2 profiles\n'
-                'no observations')
-    assert game.to_str(serial) == expected
-
-    profiles = [[2, 1, 0],
-                [2, 0, 1]]
-    spayoffs = [
-        [[[1], [2], [0]]],
-        [[[3, 4], [0] * 2, [5, 6]]],
-    ]
-    game = rsgame.SampleGame(base, profiles, spayoffs)
-    expected = ('SampleGame:\n    Roles: r0, r1\n    Players:\n        2x r0\n'
-                '        1x r1\n    Strategies:\n        r0:\n            s0\n'
-                '        r1:\n            s0\n            s1\n'
-                'payoff data for 2 out of 2 profiles\n'
-                '1 to 2 observations per profile')
-    assert game.to_str(serial) == expected
+    assert np.all(game1.profiles == game2.profiles)
+    assert np.allclose(game1.payoffs, game2.payoffs)
+    for spay1, spay2 in zip(game1.sample_payoffs, game2.sample_payoffs):
+        assert np.allclose(spay1, spay2)

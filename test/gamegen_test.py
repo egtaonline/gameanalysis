@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import scipy.misc as scm
 
 from gameanalysis import gamegen
 from gameanalysis import regret
@@ -43,8 +42,9 @@ def test_role_symmetric_game(players, strategies):
     assert np.all(strategies == game.num_strategies), \
         "didn't generate correct number of strategies"
 
-    conv = gamegen.game_serializer(game)
-    assert all(r.startswith('r') for r in conv.role_names)
+    conv = gamegen.serializer(game)
+    assert conv.role_names == ('all',) or all(
+        r.startswith('r') for r in conv.role_names)
     assert all(all(s.startswith('s') for s in strats)
                for strats in conv.strat_names)
 
@@ -59,7 +59,7 @@ def test_role_symmetric_game(players, strategies):
     ([1, 2], [1, 2]),
 ] * 20)
 def test_add_profiles(players, strategies):
-    base = rsgame.BaseGame(players, strategies)
+    base = rsgame.basegame(players, strategies)
     game = gamegen.add_profiles(base)
     assert game.is_complete(), "didn't generate a full game"
     assert np.all(players == game.num_players), \
@@ -77,7 +77,7 @@ def test_add_profiles(players, strategies):
 
 
 def test_add_profiles_large_game():
-    base = rsgame.BaseGame([100] * 2, 30)
+    base = rsgame.basegame([100] * 2, 30)
     game = gamegen.add_profiles(base, 1e-55)
     assert game.num_profiles == 363
 
@@ -156,48 +156,6 @@ def test_sym_2p2s_known_eq(eq_prob):
             "pure mixtures was equilibrium, {} {}".format(non_eqm, reg)
 
 
-@pytest.mark.parametrize('players,facilities,required', [
-    (1, 1, 1),
-    (2, 1, 1),
-    (1, 3, 3),
-    (1, 3, 2),
-    (3, 3, 3),
-    (3, 3, 2),
-] * 20)
-def test_congestion_game(players, facilities, required):
-    game = gamegen.congestion_game(players, facilities, required)
-    assert game.is_complete(), "didn't generate a full game"
-    assert game.num_roles == 1, \
-        "didn't generate correct number of players"
-    assert np.all(players == game.num_players), \
-        "didn't generate correct number of strategies"
-    assert np.all(scm.comb(facilities, required) == game.num_strategies), \
-        "didn't generate correct number of strategies"
-
-
-def test_congestion_game_names():
-    game, conv = gamegen.congestion_game(3, 3, 2, return_serial=True)
-    assert conv.role_names == ('all',)
-    assert all(s.count('_') == 2 - 1 for s in conv.strat_names[0])
-
-
-@pytest.mark.parametrize('players,strategies', [
-    (1, 1),
-    (2, 1),
-    (1, 3),
-    (3, 3),
-] * 20)
-def test_local_effect_game(players, strategies):
-    game = gamegen.local_effect_game(players, strategies)
-    assert game.is_complete(), "didn't generate a full game"
-    assert game.is_symmetric(), \
-        "didn't generate a symmetric game"
-    assert np.all(players == game.num_players), \
-        "didn't generate correct number of strategies"
-    assert np.all(strategies == game.num_strategies), \
-        "didn't generate correct number of strategies"
-
-
 @pytest.mark.parametrize('players,strategies,matrix_players', [
     (1, 1, 1),
     (2, 1, 1),
@@ -243,7 +201,7 @@ def test_add_noise(players, strategies, lower, upper):
 
 
 def test_empty_add_noise():
-    base_game = rsgame.Game([3, 3], [4, 4])
+    base_game = rsgame.game([3, 3], [4, 4])
     game = gamegen.add_noise(base_game, 1)
     assert game.is_empty()
 

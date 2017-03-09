@@ -1,4 +1,7 @@
 import functools
+import inspect
+import itertools
+import math
 import operator
 from collections import abc
 
@@ -100,11 +103,10 @@ def ordered_permutations(seq):
     >>> list(ordered_permutations([1, 2, 1]))
     [(1, 1, 2), (1, 2, 1), (2, 1, 1)]
 
-    This function is taken from this blog post:
-    http://blog.bjrn.se/2008/04/lexicographic-permutations-using.html
-    And this stack overflow post:
-    https://stackoverflow.com/questions/6534430/why-does-pythons-itertools-permutations-contain-duplicates-when-the-original
-    """
+    Notes
+    -----
+    .. [1] http://blog.bjrn.se/2008/04/lexicographic-permutations-using.html
+    .. [2] https://stackoverflow.com/questions/6534430/why-does-pythons-itertools-permutations-contain-duplicates-when-the-original"""  # noqa
     seq = sorted(seq)
     if not seq:
         return
@@ -269,12 +271,17 @@ def multinomial_mode(p, n):
 
     Notes
     -----
-    algorithm from: Finucan 1964. The mode of a multinomial distribution.
+    Algorithm from [3]_, notation follows [4]_.
 
-    notation follows: Gall 2003. Determination of the modes of a Multinomial
-    distribution.
+    .. [3] Finucan 1964. The mode of a multinomial distribution.
+    .. [4] Gall 2003. Determination of the modes of a Multinomial distribution.
     """
-    f = (p + _TINY) * (n + p.size / 2)
+    p = np.asarray(p, float)
+    mask = p > 0
+    result = np.zeros(p.size, int)
+
+    p = p[mask]
+    f = p * (n + p.size / 2)
     k = f.astype(int)
     f -= k
     n0 = k.sum()
@@ -293,7 +300,9 @@ def multinomial_mode(p, n):
                 k[a] -= 1
                 f[a] += 1
                 q[a] = f[a] / k[a]
-    return k
+
+    result[mask] = k
+    return result
 
 
 def axis_to_elem(array, axis=-1):
@@ -322,6 +331,7 @@ def axis_to_elem(array, axis=-1):
 
 def elem_to_axis(array, dtype, axis=-1):
     """Converts and array of axis elements back to an axis"""
+    dtype = np.dtype(dtype)
     new_shape = array.shape + (array.itemsize // dtype.itemsize,)
     return np.rollaxis(array.view(dtype).reshape(new_shape),
                        -1, axis)
@@ -360,7 +370,7 @@ class hash_array(object):
     def __init__(self, array):
         self.array = np.asarray(array)
         self.array.setflags(write=False)
-        self._hash = hash(self.array.data.tobytes())
+        self._hash = hash(self.array.tobytes())
 
     def __hash__(self):
         return self._hash
@@ -368,3 +378,77 @@ class hash_array(object):
     def __eq__(self, other):
         return (self._hash == other._hash and
                 np.all(self.array == other.array))
+
+
+def random_con_bitmask(prob, shape, mins=1):
+    """Generate a random bitmask with constraints
+
+    The functions allows specifying the minimum number of True values along a
+    single dimension while counting over the other ones. `mins` can be a scalar
+    or a tuple for each dimension and must be less than the product of the size
+    of the other dimensions.
+
+    If you just want a random bitmask use np.random.random(shape) < prob"""
+    assert len(shape) > 1
+    vals = np.random.random(shape)
+    mask = vals < prob
+    total = vals.size
+
+    if isinstance(mins, abc.Sequence):
+        assert len(mins) == vals.ndim
+        assert all(0 < s <= total // m for s, m in zip(mins, vals.shape))
+    else:
+        assert mins > 0
+        mins = tuple(min(mins, total // m) for m in vals.shape)
+
+    for dim, num in enumerate(mins):
+        aligned = np.rollaxis(vals, dim).reshape(vals.shape[dim], -1)
+        thresh = np.partition(aligned, num - 1, 1)[:, num - 1]
+        thresh.shape += (1,) * (vals.ndim - dim - 1)
+        mask |= vals <= thresh
+
+    return mask
+
+
+def prefix_strings(prefix, num):
+    """Returns a list of prefixed integer strings"""
+    padding = int(math.log10(max(num - 1, 1))) + 1
+    return ['{}{:0{:d}d}'.format(prefix, i, padding) for i in range(num)]
+
+
+def is_sorted(iterable, *, key=None, reverse=False):
+    """Returns true if iterable is sorted
+
+    `key` and `reverse` function as they for `sorted`"""
+    if key is None:
+        def key(x):
+            return x
+    if reverse:
+        def comp(a, b):
+            return a < b
+    else:
+        def comp(a, b):
+            return a > b
+
+    ai, bi = itertools.tee(map(key, iterable))
+    next(bi, None)  # Don't throw error if empty
+    for a, b in zip(ai, bi):
+        if comp(a, b):
+            return False
+    return True
+
+
+def memoize(member_function):
+    """Memoize computation of single object functions"""
+    assert len(inspect.signature(member_function).parameters) == 1, \
+        "Can only memoize single object functions"
+    member_name = '__' + member_function.__name__
+
+    @functools.wraps(member_function)
+    def new_member_function(obj):
+        if not hasattr(obj, member_name):
+            print('computed')
+            setattr(obj, member_name, member_function(obj))
+        return getattr(obj, member_name)
+
+    return new_member_function

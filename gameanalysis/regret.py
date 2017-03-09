@@ -16,7 +16,7 @@ def pure_strategy_deviation_gains(game, prof):
     supp = prof > 0
     num_supp = game.role_reduce(supp)
     from_inds = np.arange(game.num_role_strats)[supp]
-    reps = game.num_strategies[game.role_index[from_inds]]
+    reps = game.num_strategies[game.role_indices[from_inds]]
     num_devs = np.sum(num_supp * (game.num_strategies - 1))
 
     to_inds = np.ones(reps.sum(), int)
@@ -90,7 +90,7 @@ class SocialWelfareOptimizer(object):
         self.offset = game.min_payoffs()
         self.gtol = gtol
 
-    def obj_func(self, mix, penalty):
+    def obj_func(self, mix, penalty):  # pragma: no cover
         # We assume that the initial point is in a constant sum subspace, and
         # so project the gradient so that any gradient step maintains that
         # constant step. Thus, sum to 1 is not one of the penalty terms
@@ -116,7 +116,7 @@ class SocialWelfareOptimizer(object):
                                           self.game.num_strategies)
         return welfare, dwelfare
 
-    def __call__(self, mix):
+    def __call__(self, mix):  # pragma: no cover
         # Pass in lambda, and make penalty not a member
 
         result = None
@@ -149,101 +149,61 @@ def max_mixed_social_welfare(game, grid_points=2, random_restarts=0,
 
     Arguments
     ---------
-    grid_points : int > 1
+    grid_points : int > 1, optional
         The number of grid points to use for mixture seeds. two implies just
         pure mixtures, more will be denser, but scales exponentially with the
         dimension.
-    random_restarts : int
+    random_restarts : int, optional
         The number of random initializations.
-    processes : int
-        Number of processes to use when finding Nash equilibria. If greater
-        than one, the game will need to be pickleable.
+    processes : int, optional
+        Number of processes to use when finding Nash equilibria. The game needs
+        to be pickleable.
     """
-    # XXX The code for this in game is rather complicated because of its
-    # generality. This might be faster if that were not the case.
     assert game.is_complete(), \
         "Max welfare finding only works on complete games"""
 
-    initial_points = itertools.chain(
+    initial_points = list(itertools.chain(
         [game.uniform_mixture()],
         game.grid_mixtures(grid_points),
         game.biased_mixtures(),
         game.role_biased_mixtures(),
-        game.random_mixtures(random_restarts))
+        game.random_mixtures(random_restarts)))
+    chunksize = len(initial_points) if processes == 1 else 4
 
-    best = [-np.inf, None]  # Need a pointer for closure
-
-    def process(mix):
-        welfare = mixed_social_welfare(game, mix)
-        if welfare > best[0]:
-            best[0] = welfare
-            best[1] = mix
+    best = (-np.inf, -1, None)
 
     opt = SocialWelfareOptimizer(game, **swopt_args)
-    if processes == 1:
-        for mix in initial_points:
-            process(opt(mix))
+    with multiprocessing.Pool(processes) as pool:
+        for i, mix in enumerate(pool.imap_unordered(
+                opt, initial_points, chunksize=chunksize)):
+            welfare = mixed_social_welfare(game, mix)
+            best = max(best, (welfare, i, mix))
+
+    return best[0], best[2]
+
+
+def max_pure_social_welfare(game, by_role=False):
+    """Returns the maximum social welfare over the known profiles.
+
+    If by_role is specified, then max social welfare applies to each role
+    independently."""
+    if by_role:
+        if game.num_profiles:
+            welfares = game.role_reduce(game.profiles * game.payoffs)
+            prof_inds = np.nanargmax(welfares, 0)
+            return (welfares[prof_inds, np.arange(game.num_roles)],
+                    game.profiles[prof_inds])
+        else:
+            welfares = np.empty(game.num_roles)
+            welfares.fill(np.nan)
+            profiles = np.empty(game.num_roles, dtype=object)
+            profiles.fill(None)
+            return welfares, profiles
+
     else:
-        with multiprocessing.Pool(processes) as pool:
-            for mix in pool.imap_unordered(opt, initial_points):
-                process(mix)
-
-    return tuple(best)
-
-
-def max_pure_social_welfare(game):
-    """Get the max social welfare pure profile
-
-    Returns a tuple of the max welfare and the corresponding profile"""
-    mask = np.sum(game.profiles > 0, 1) == game.num_roles
-    if mask.any():
-        profiles = game.profiles[mask]
-        welfares = np.sum(profiles * game.payoffs[mask], 1)
-        prof_ind = np.nanargmax(welfares)
-        return welfares[prof_ind], profiles[prof_ind]
-    else:
-        return np.nan, None
-
-
-# def neighbors(game, p, *args, **kwargs):
-#     if isinstance(p, Profile):
-#         return profile_neighbors(game, p, *args, **kwargs)
-#     elif isinstance(p, np.ndarray):
-#         return mixture_neighbors(game, p, *args, **kwargs)
-#     raise TypeError('unrecognized argument type: ' + type(p).__name__)
-
-
-# def profile_neighbors(game, profile, role=None, strategy=None,
-#                       deviation=None):
-#     if role is None:
-#         return list(chain(*[profile_neighbors(game, profile, r, strategy, \
-#                 deviation) for r in game.roles]))
-#     if strategy is None:
-#         return list(chain(*[profile_neighbors(game, profile, role, s, \
-#                 deviation) for s in profile[role]]))
-#     if deviation is None:
-#         return list(chain(*[profile_neighbors(game, profile, role, strategy, \ # noqa
-#                 d) for d in set(game.strategies[role]) - {strategy}]))
-#     return [profile.deviate(role, strategy, deviation)]
-
-
-# def mixture_neighbors(game, mix, role=None, deviation=None):
-#     n = set()
-#     for profile in feasible_profiles(game, mix):
-#         n.update(profile_neighbors(game, profile, role, deviation=deviation))
-#     return n
-
-
-# def feasible_profiles(game, mix, thresh=1e-3):
-#     return [Profile({r:{s:p[game.index(r)].count(s) for s in set(p[ \
-#             game.index(r)])} for r in game.roles}) for p in product(*[ \
-#             CwR(filter(lambda s: mix[game.index(r), game.index(r,s)] >= \
-#             thresh, game.strategies[r]), game.players[r]) for r \
-#             in game.roles])]
-
-
-# def symmetric_profile_regrets(game):
-#     assert game.is_symmetric(), 'Game must be symmetric'
-#     role = next(iter(game.strategies))
-#     return {s: regret(game, rsgame.Profile({role:{s:game.players[role]}})) for s \ # noqa
-#             in game.strategies[role]}
+        if game.num_profiles:
+            welfares = np.sum(game.profiles * game.payoffs, 1)
+            prof_ind = np.nanargmax(welfares)
+            return welfares[prof_ind], game.profiles[prof_ind]
+        else:
+            return np.nan, None

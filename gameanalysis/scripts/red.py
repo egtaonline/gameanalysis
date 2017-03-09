@@ -71,7 +71,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    read = gameio.read_sample_game if args.sample_game else gameio.read_game
+    read = gameio.read_samplegame if args.sample_game else gameio.read_game
     game, serial = read(json.load(args.input))
     reduced_players = (
         None if not args.players
@@ -81,5 +81,5 @@ def main(args):
         game.num_strategies, game.num_players,
         reduced_players).reduce_game(game, args.allow_incomplete)
 
-    json.dump(reduced.to_json(serial), args.output)
+    json.dump(serial.to_game_json(reduced), args.output)
     args.output.write('\n')

@@ -1,9 +1,21 @@
 import itertools
+import random
 
 import numpy as np
 import pytest
 
 from gameanalysis import utils
+
+
+def array_set_equals(a, b):
+    """Returns true if the unique last dimensions are the same set"""
+    return not np.setxor1d(utils.axis_to_elem(a), utils.axis_to_elem(b)).size
+
+
+def test_comb():
+    assert utils.comb(100, 10) == 17310309456440
+    assert utils.comb(100, 20) == 535983370403809682970
+    assert utils.comb([100], 20)[0] == 535983370403809682970
 
 
 def test_only():
@@ -32,8 +44,8 @@ def test_one_line():
 
 
 def test_ordered_permutations():
-    assert list(utils.ordered_permutations([])) == [], \
-        "empty ordered permutations wasn't empty"
+    assert list(utils.ordered_permutations([])) == []
+    assert list(utils.ordered_permutations([None])) == [(None,)]
 
     result = list(utils.ordered_permutations([1, 2, 1, 2]))
     expected = [
@@ -46,6 +58,51 @@ def test_ordered_permutations():
     ]
     assert result == expected, \
         "ordered_permutations didn't produce the correct result"
+
+
+def test_acomb():
+    actual = utils.acomb(5, 0)
+    assert actual.shape == (1, 5)
+    assert not actual.any()
+
+    actual = utils.acomb(5, 5)
+    assert actual.shape == (1, 5)
+    assert actual.all()
+
+    actual = utils.acomb(6, 4)
+    expected = np.zeros_like(actual)
+    for i, inds in enumerate(itertools.combinations(range(6), 4)):
+        expected[i, inds] = True
+    assert array_set_equals(actual, expected)
+
+    actual = utils.acomb(6, 4, True)
+    expected = np.zeros_like(actual)
+    for i, inds in enumerate(map(list, itertools.combinations_with_replacement(
+            range(6), 4))):
+        np.add.at(expected[i], inds, 1)
+    assert array_set_equals(actual, expected)
+
+
+def test_acartesian2():
+    a = np.array([[1, 2, 3],
+                  [4, 5, 6]], int)
+    b = np.array([[7, 8],
+                  [9, 10],
+                  [11, 12]], int)
+    c = np.array([[13]], int)
+
+    assert array_set_equals(a, utils.acartesian2(a))
+    assert array_set_equals(b, utils.acartesian2(b))
+    assert array_set_equals(c, utils.acartesian2(c))
+
+    expected = np.array([[1, 2, 3,  7,  8, 13],
+                         [1, 2, 3,  9, 10, 13],
+                         [1, 2, 3, 11, 12, 13],
+                         [4, 5, 6,  7,  8, 13],
+                         [4, 5, 6,  9, 10, 13],
+                         [4, 5, 6, 11, 12, 13]], int)
+    assert array_set_equals(expected[:, :-1], utils.acartesian2(a, b))
+    assert array_set_equals(expected, utils.acartesian2(a, b, c))
 
 
 def test_simplex_project():
@@ -62,26 +119,106 @@ def test_simplex_project():
         "simplex project didn't return correct result"
 
 
-def test_acomb():
-    actual = utils.acomb(5, 0)
-    assert actual.shape == (1, 5)
-    assert not actual.any()
+def test_multinomial_mode():
+    actual = utils.multinomial_mode([1], 4)
+    expected = [4]
+    assert np.all(actual == expected)
 
-    actual = utils.acomb(5, 5)
-    assert actual.shape == (1, 5)
-    assert actual.all()
+    actual = utils.multinomial_mode([0, 1], 4)
+    expected = [0, 4]
+    assert np.all(actual == expected)
 
-    actual = utils.acomb(6, 4)
-    expected = np.zeros_like(actual)
-    for i, inds in enumerate(itertools.combinations(range(6), 4)):
-        expected[i, inds] = True
-    assert np.setxor1d(utils.axis_to_elem(actual),
-                       utils.axis_to_elem(expected)).size == 0
+    actual = utils.multinomial_mode([0.5, 0.5], 4)
+    expected = [2, 2]
+    assert np.all(actual == expected)
 
-    actual = utils.acomb(6, 4, True)
-    expected = np.zeros_like(actual)
-    for i, inds in enumerate(map(list, itertools.combinations_with_replacement(
-            range(6), 4))):
-        np.add.at(expected[i], inds, 1)
-    assert np.setxor1d(utils.axis_to_elem(actual),
-                       utils.axis_to_elem(expected)).size == 0
+    actual = utils.multinomial_mode([0.5, 0.5], 3)
+    expected = [[1, 2], [2, 1]]
+    assert np.all(actual == expected, 1).any()
+
+    actual = utils.multinomial_mode([0.45, 0.45, 0.1], 5)
+    expected = [[3, 2, 0], [2, 3, 0]]
+    assert np.all(actual == expected, 1).any()
+
+
+def test_elem_axis():
+    x = np.array([[5.4, 2.2],
+                  [5.7, 2.8],
+                  [9.6, 1.2]], float)
+    assert np.all(x == utils.elem_to_axis(utils.axis_to_elem(x), float))
+    assert np.all(x.astype(int) ==
+                  utils.elem_to_axis(utils.axis_to_elem(x.astype(int)), int))
+    assert utils.unique_axis(x).shape == (3, 2)
+    array, counts = utils.unique_axis(x.astype(int), return_counts=True)
+    assert array.shape == (2, 2)
+    assert not np.setxor1d(counts, [2, 1]).size
+
+
+def test_hash_array():
+    arrayset = {utils.hash_array([3, 4, 5]), utils.hash_array([6, 7])}
+
+    assert utils.hash_array([3, 4, 5]) in arrayset
+    assert utils.hash_array([6, 7]) in arrayset
+    assert utils.hash_array([3, 4, 6]) not in arrayset
+
+
+@pytest.mark.parametrize('_', range(100))
+def test_random_bipartite(_):
+    shape = (random.randint(1, 5), random.randint(1, 5))
+    mins = (random.randint(1, shape[1]), random.randint(1, shape[0]))
+    mask = utils.random_con_bitmask(.2, shape, mins)
+    assert np.all(mask.sum(0) >= mins[1])
+    assert np.all(mask.sum(1) >= mins[0])
+
+
+@pytest.mark.parametrize('_', range(100))
+def test_random_con_bitmask(_):
+    ndim = random.randint(2, 4)
+    shape = tuple(random.randint(1, 5) for _ in range(ndim))
+    total = utils.prod(shape)
+    mins = tuple(random.randint(1, total // d) for d in shape)
+    mask = utils.random_con_bitmask(.2, shape, mins)
+
+    for dim, min_in in enumerate(mins):
+        assert np.all(np.rollaxis(mask, dim).reshape(
+            mask.shape[dim], -1).sum(1) >= min_in)
+
+
+@pytest.mark.parametrize('_', range(100))
+def test_random_con_bitmask_default(_):
+    ndim = random.randint(2, 4)
+    shape = tuple(random.randint(1, 5) for _ in range(ndim))
+    mask = utils.random_con_bitmask(.2, shape)
+
+    for dim in range(ndim):
+        assert np.rollaxis(mask, dim).reshape(
+            mask.shape[dim], -1).any(1).all()
+
+
+def test_prefix_strings_test():
+    assert utils.is_sorted(utils.prefix_strings('', 13))
+
+
+def test_is_sorted():
+    assert utils.is_sorted([])
+    assert utils.is_sorted([0])
+    assert not utils.is_sorted([3, 4], reverse=True)
+
+
+def test_memoization():
+    # We need an object we can memoize
+    class O(object):
+        pass
+
+    called = [0]
+
+    @utils.memoize
+    def func(obj):
+        called[0] += 1
+
+    obj = O()
+    assert called[0] == 0
+    assert func(obj) is None
+    assert called[0] == 1
+    assert func(obj) is None
+    assert called[0] == 1

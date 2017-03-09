@@ -19,14 +19,6 @@ def test_help():
     assert subprocess.run([GA]).returncode
 
 
-def test_convert():
-    with open(GAME) as f:
-        assert not subprocess.run([GA, 'conv'], stdin=f).returncode
-    assert not subprocess.run([GA, 'conv', '-i', GAME,
-                               '-o/dev/null']).returncode
-    assert not subprocess.run([GA, 'conv', '-fjson', '-i', GAME]).returncode
-
-
 def test_dominance():
     assert not subprocess.run([GA, 'dom', '-h']).returncode
     assert not subprocess.run([GA, 'dom', '-i', GAME]).returncode
@@ -46,7 +38,6 @@ def test_gamegen():
     assert subprocess.run([GA, 'gen', 'ursym', '5']).returncode
     assert not subprocess.run([GA, 'gen', 'ursym', '3', '4', '4',
                                '3']).returncode
-    assert not subprocess.run([GA, 'gen', 'congest', '3', '4', '2']).returncode
     with open(GAME) as f:
         assert not subprocess.run([GA, 'gen', 'noise', 'uniform', '1.5', '5'],
                                   stdin=f).returncode
@@ -77,8 +68,8 @@ def test_nash():
 
     with tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.rock_paper_scissors()
-        serial = gamegen.game_serializer(sgame)
-        json.dump(sgame.to_json(serial), game)
+        serial = gamegen.serializer(sgame)
+        json.dump(serial.to_game_json(sgame), game)
         game.flush()
         assert not subprocess.run([GA, 'nash', '-tpure', '--one', '-i',
                                    game.name]).returncode
@@ -218,8 +209,8 @@ def test_learning():
     with tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 2], [3, 3]),
                                   10)
-        serial = gamegen.game_serializer(sgame)
-        json.dump(sgame.to_json(serial), game)
+        serial = gamegen.serializer(sgame)
+        json.dump(serial.to_samplegame_json(sgame), game)
         game.flush()
 
         assert not subprocess.run([GA, 'learning', '-i', game.name,
@@ -231,17 +222,13 @@ def test_learning():
         assert not subprocess.run([GA, 'learning'], stdin=game).returncode
 
 
-def test_congestion():
-    assert not subprocess.run([GA, 'congest', '3', '4', '2']).returncode
-
-
 def test_sgboot():
     with tempfile.NamedTemporaryFile('w') as mixed, \
             tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
                                   20)
-        serial = gamegen.game_serializer(sgame)
-        json.dump(sgame.to_json(serial), game)
+        serial = gamegen.serializer(sgame)
+        json.dump(serial.to_samplegame_json(sgame), game)
         game.flush()
 
         profs = [serial.to_prof_json(sgame.uniform_mixture())]

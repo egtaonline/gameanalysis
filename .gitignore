@@ -8,6 +8,8 @@
 /test/.cache
 /.eggs
 /*.egg-info
+/dist
+/build
 
 # Editors #
 ###########

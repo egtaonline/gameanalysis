@@ -110,7 +110,7 @@ def main(args):
                    for sub in subgames], args.output)
     else:
         json.dump([
-            subgame.subgame(game, sub).to_json(
-                subgame.subserializer(serial, sub))
+            subgame.subserializer(serial, sub).to_game_json(
+                subgame.subgame(game, sub))
             for sub in subgames], args.output)
     args.output.write('\n')

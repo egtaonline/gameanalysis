@@ -1,11 +1,9 @@
 import itertools
-import math
 
 import numpy as np
 import numpy.random as rand
 import scipy.special as sps
 
-from gameanalysis import congestion
 from gameanalysis import gameio
 from gameanalysis import rsgame
 from gameanalysis import utils
@@ -32,12 +30,12 @@ def role_symmetric_game(num_players, num_strategies,
     distribution : (shape) -> ndarray (shape)
         Payoff distribution.
     """
-    game = rsgame.BaseGame(num_players, num_strategies)
+    game = rsgame.basegame(num_players, num_strategies)
     profiles = game.all_profiles()
     mask = profiles > 0
     payoffs = np.zeros(profiles.shape)
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.Game(game, profiles, payoffs)
+    return rsgame.game_copy(game, profiles, payoffs)
 
 
 def independent_game(num_strategies, distribution=default_distribution):
@@ -98,7 +96,7 @@ def covariant_game(num_strategies, mean_dist=lambda shape: np.zeros(shape),
     payoffs = rand.normal(size=shape)
     payoffs = (payoffs[..., None] * (np.sqrt(s)[..., None] * v)).sum(-2)
     payoffs += mean_dist(shape)
-    return rsgame.Game(payoffs)
+    return rsgame.game_matrix(payoffs)
 
 
 def two_player_zero_sum_game(num_strategies,
@@ -107,7 +105,7 @@ def two_player_zero_sum_game(num_strategies,
     # Generate player 1 payoffs
     num_strategies = np.broadcast_to(num_strategies, 2)
     p1_payoffs = distribution(num_strategies)[..., None]
-    return rsgame.Game(np.concatenate([p1_payoffs, -p1_payoffs], -1))
+    return rsgame.game_matrix(np.concatenate([p1_payoffs, -p1_payoffs], -1))
 
 
 def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
@@ -137,7 +135,7 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
     payoffs.sort()
     counts = [[2, 0], [1, 1], [0, 2]]
     values = [[payoffs[a], 0], [payoffs[b], payoffs[c]], [0, payoffs[d]]]
-    return rsgame.Game([2], [2], counts, values)
+    return rsgame.game(2, 2, counts, values)
 
 
 def prisoners_dilemma(distribution=default_distribution):
@@ -153,81 +151,7 @@ def sym_2p2s_known_eq(eq_prob):
     """
     profiles = [[2, 0], [1, 1], [0, 2]]
     payoffs = [[0, 0], [eq_prob, 1 - eq_prob], [0, 0]]
-    return rsgame.Game([2], [2], profiles, payoffs)
-
-
-def congestion_game(num_players, num_facilities, num_required,
-                    return_serial=False):
-    """Generates a random congestion game with num_players players and nCr(f, r)
-    strategies
-
-    Congestion games are symmetric, so all players belong to one role. Each
-    strategy is a subset of size #required among the size #facilities set of
-    available facilities. Payoffs for each strategy are summed over facilities.
-    Each facility's payoff consists of three components:
-
-    -constant ~ U[0, num_facilities]
-    -linear congestion cost ~ U[-num_required, 0]
-    -quadratic congestion cost ~ U[-1, 0]
-    """
-    game = congestion.gen_congestion_game(num_players, num_facilities,
-                                          num_required)
-    if return_serial:
-        return game.to_game(), game.gen_serializer()
-    else:
-        return game.to_game()
-
-
-def local_effect_game(num_players, num_strategies):
-    """Generates random congestion games with num_players (N) players and
-    num_strategies (S) strategies.
-
-    Local effect games are symmetric, so all players belong to one role. Each
-    strategy corresponds to a node in the G(N, 2/S) (directed edros-renyi
-    random graph with edge probability of 2/S) local effect graph. Payoffs for
-    each strategy consist of constant terms for each strategy, and interaction
-    terms for the number of players choosing that strategy and each neighboring
-    strategy.
-
-    The one-strategy terms are drawn as follows:
-    -constant ~ U[-(N+S), N+S]
-    -linear ~ U[-N, 0]
-
-    The neighbor strategy terms are drawn as follows:
-    -linear ~ U[-S, S]
-    -quadratic ~ U[-1, 1]
-
-    """
-    # Generate local effects graph. This is an SxSx3 graph where the first two
-    # axis are in and out nodes, and the final axis is constant, linear,
-    # quadratic gains.
-
-    # There's a little redundant computation here (what?)
-    local_effects = np.empty((num_strategies, num_strategies, 3))
-    # Fill in neighbors
-    local_effects[..., 0] = 0
-    local_effects[..., 1] = rand.uniform(-num_strategies, num_strategies,
-                                         (num_strategies, num_strategies))
-    local_effects[..., 2] = rand.uniform(-1, 1,
-                                         (num_strategies, num_strategies))
-    # Mask out some edges
-    local_effects *= (rand.random((num_strategies, num_strategies)) >
-                      (2 / num_strategies))[..., None]
-    # Fill in self
-    np.fill_diagonal(local_effects[..., 0],
-                     rand.uniform(-(num_players + num_strategies),
-                                  num_players + num_strategies,
-                                  num_strategies))
-    np.fill_diagonal(local_effects[..., 1],
-                     rand.uniform(-num_players, 0, num_strategies))
-    np.fill_diagonal(local_effects[..., 2], 0)
-
-    # Compute all profiles and payoffs
-    base = rsgame.BaseGame([num_players], [num_strategies])
-    profiles = base.all_profiles()
-    payoffs = (local_effects * profiles[..., None, None] ** np.arange(3))\
-        .sum((1, 3)) * (profiles > 0)
-    return rsgame.Game(base, profiles, payoffs)
+    return rsgame.game(2, 2, profiles, payoffs)
 
 
 def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
@@ -262,7 +186,7 @@ def polymatrix_game(num_players, num_strategies, matrix_game=independent_game,
         new_shape[list(players)] = num_strategies
         payoffs[..., list(players)] += sub_payoffs.reshape(new_shape)
 
-    return rsgame.Game(payoffs)
+    return rsgame.game_matrix(payoffs)
 
 
 def _compact_payoffs(game):
@@ -274,7 +198,7 @@ def _compact_payoffs(game):
 
     Parameters
     ----------
-    game : rsgame.Game
+    game : Game
         The game to generate a compact payoff matrix for
 
     Returns
@@ -328,11 +252,11 @@ def rock_paper_scissors(win=1, loss=-1, return_serial=False):
                [0., 0., 0.],
                [0., loss, win],
                [0., 0., 0.]]
-    game = rsgame.Game([2], [3], profiles, payoffs)
+    game = rsgame.game(2, 3, profiles, payoffs)
     if not return_serial:
         return game
     else:
-        serial = gameio.GameSerializer(['all'],
+        serial = gameio.gameserializer(['all'],
                                        [['rock', 'paper', 'scissors']])
         return game, serial
 
@@ -344,7 +268,7 @@ def travellers_dilemma(players=2, max_value=100):
     strategies."""
     assert players > 1, "players must be more than one"
     assert max_value > 2, "max value must be more than 2"
-    game = rsgame.BaseGame([players], [max_value - 1])
+    game = rsgame.basegame(players, max_value - 1)
     profiles = game.all_profiles()
     payoffs = np.zeros(profiles.shape)
     mins = np.argmax(profiles, -1)
@@ -355,7 +279,7 @@ def travellers_dilemma(players=2, max_value=100):
     lowest_pays = mins + 4
     lowest_pays[ties] -= 2
     payoffs[rows, mins] = lowest_pays
-    return rsgame.Game(game, profiles, payoffs)
+    return rsgame.game_copy(game, profiles, payoffs, False)
 
 
 def normalize(game, new_min=0, new_max=1):
@@ -365,7 +289,7 @@ def normalize(game, new_min=0, new_max=1):
     offset = game.role_repeat(game.min_payoffs())
     payoffs = (game.payoffs - offset) / scale * (new_max - new_min) + new_min
     payoffs *= profiles > 0
-    return rsgame.Game(game, profiles, payoffs)
+    return rsgame.game_copy(game, profiles, payoffs, False)
 
 
 def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
@@ -421,7 +345,7 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.Game(game, profiles, payoffs, verify=False)
+    return rsgame.game_copy(game, profiles, payoffs, False)
 
 
 def drop_profiles(game, prob, independent=True):
@@ -444,12 +368,12 @@ def drop_profiles(game, prob, independent=True):
             in zip(game.sample_payoffs,
                    np.split(selection, game.sample_starts[1:]))
             if np.any(mask)]
-        return rsgame.SampleGame(game, new_profiles, new_sample_payoffs,
-                                 verify=False)
+        return rsgame.samplegame_copy(game, new_profiles, new_sample_payoffs,
+                                      False)
     else:
         new_profiles = game.profiles[selection]
         new_payoffs = game.payoffs[selection]
-        return rsgame.Game(game, new_profiles, new_payoffs, verify=False)
+        return rsgame.game_copy(game, new_profiles, new_payoffs, False)
 
 
 def drop_samples(game, prob):
@@ -483,7 +407,7 @@ def drop_samples(game, prob):
         profiles = np.empty((0, game.num_role_strats), dtype=int)
         sample_payoffs = []
 
-    return rsgame.SampleGame(game, profiles, sample_payoffs, verify=False)
+    return rsgame.samplegame_copy(game, profiles, sample_payoffs, False)
 
 
 def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
@@ -505,7 +429,7 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
         unbiased)
     """
     if game.num_profiles == 0:
-        return rsgame.SampleGame(game)
+        return rsgame.samplegame_copy(game)
 
     perm = rand.permutation(game.num_profiles)
     profiles = game.profiles[perm]
@@ -540,7 +464,7 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
         new_profiles = np.concatenate(new_profiles)
     else:  # No data
         new_profiles = np.empty((0, game.num_role_strats), dtype=int)
-    return rsgame.SampleGame(game, new_profiles, sample_payoffs, verify=False)
+    return rsgame.samplegame_copy(game, new_profiles, sample_payoffs, False)
 
 
 def width_gaussian(max_width, num_profiles, num_samples):
@@ -640,97 +564,12 @@ def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
     samples = noise(max_width, mask.sum(), num_samples)
     expand_mask = np.broadcast_to(mask[..., None], mask.shape + (num_samples,))
     spayoffs[expand_mask] += samples.flat
-    return rsgame.SampleGame(game, game.profiles, [spayoffs])
+    return rsgame.samplegame_copy(game, game.profiles, [spayoffs])
 
 
-def _names(prefix, num):
-    """Returns a lsit of names for roles or strategies"""
-    padding = int(math.log10(max(num - 1, 1))) + 1
-    return ['{}{:0{:d}d}'.format(prefix, i, padding) for i in range(num)]
-
-
-def game_serializer(game):
-    role_names = _names('r', game.num_roles)
-    strat_names = [_names('s', s) for s in game.num_strategies]
-    return gameio.GameSerializer(role_names, strat_names)
-
-
-# def gaussian_mixture_noise(max_stdev, samples, modes=2, spread_mult=2):
-#     """
-#     Generate Gaussian mixture noise to add to one payoff in a game.
-
-#     max_stdev: maximum standard deviation for the mixed distributions (also
-#                 affects how widely the mixed distributions are spaced)
-#     samples: numer of samples to take of every profile
-#     modes: number of Gaussians to mix
-#     spread_mult: multiplier for the spread of the Gaussians. Distance between
-#                 the mean and the nearest distribution is drawn from
-#                 N(0,max_stdev*spread_mult).
-#     """
-#     multipliers = arange(float(modes)) - float(modes-1)/2
-#     offset = normal(0, max_stdev * spread_mult)
-#     stdev = beta(2,1) * max_stdev
-#     return [normal(choice(multipliers)*offset, stdev) for _ in range(samples)] # noqa
-
-
-# eq_var_normal_noise = partial(normal, 0)
-# normal_noise = partial(gaussian_mixture_noise, modes=1)
-# bimodal_noise = partial(gaussian_mixture_noise, modes=2)
-
-
-# def nonzero_gaussian_noise(max_stdev, samples, prob_pos=0.5, spread_mult=1):
-#     """
-#     Generate Noise from a normal distribution centered up to one stdev from 0. # noqa
-
-#     With prob_pos=0.5, this implements the previous buggy output of
-#     bimodal_noise.
-
-#     max_stdev: maximum standard deviation for the mixed distributions (also
-#                 affects how widely the mixed distributions are spaced)
-#     samples: numer of samples to take of every profile
-#     prob_pos: the probability that the noise mean for any payoff will be >0.
-#     spread_mult: multiplier for the spread of the Gaussians. Distance between
-#                 the mean and the mean of the distribution is drawn from
-#                 N(0,max_stdev*spread_mult).
-#     """
-#     offset = normal(0, max_stdev)*(1 if U(0,1) < prob_pos else -1)*spread_mult # noqa
-#     stdev = beta(2,1) * max_stdev
-#     return normal(offset, stdev, samples)
-
-
-# def uniform_noise(max_half_width, samples):
-#     """
-#     Generate uniform random noise to add to one payoff in a game.
-
-#     max_range: maximum half-width of the uniform distribution
-#     samples: numer of samples to take of every profile
-#     """
-#     hw = beta(2,1) * max_half_width
-#     return U(-hw, hw, samples)
-
-
-# def gumbel_noise(scale, samples, flip_prob=0.5):
-#     """
-#     Generate random noise according to a gumbel distribution.
-
-#     Gumbel distributions are skewed, so the default setting of the flip_prob
-#     parameter makes it equally likely to be skewed positive or negative
-
-#     variance ~= 1.6*scale
-#     """
-#     location = -0.5772*scale
-#     multiplier = -1 if (U(0,1) < flip_prob) else 1
-#     return multiplier * gumbel(location, scale, samples)
-
-
-# def mix_models(models, rates, spread, samples):
-#     """
-#     Generate SampleGame with noise drawn from several models.
-
-#     models: a list of 2-parameter noise functions to draw from
-#     rates: the probabilites with which a payoff will be drawn from each model
-#     spread, samples: the parameters passed to the noise functions
-#     """
-#     cum_rates = cumsum(rates)
-#     m = models[bisect(cum_rates, U(0,1))]
-#     return m(spread, samples)
+def serializer(game):
+    """Generate a GameSerializer from a game"""
+    role_names = ['all'] if game.is_symmetric(
+    ) else utils.prefix_strings('r', game.num_roles)
+    strat_names = [utils.prefix_strings('s', s) for s in game.num_strategies]
+    return gameio.gameserializer(role_names, strat_names)

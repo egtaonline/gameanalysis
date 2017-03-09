@@ -45,7 +45,6 @@ def test_mixed_prisoners_dilemma(methods):
 
 @pytest.mark.parametrize('methods', ALL_METHODS)
 @pytest.mark.parametrize('eq_prob', [0, .1, .2, .3, .5, .7, .8, .9, 1])
-# XXX solo optimize failes on .4 and .6, but that's not really a problem
 def test_mixed_known_eq(methods, eq_prob):
     game = gamegen.sym_2p2s_known_eq(eq_prob)
     eqa = nash.mixed_nash(game, processes=1, **methods)
@@ -142,7 +141,7 @@ def test_mixed_nash(methods, strategies):
 
 
 def test_empty_game():
-    game = rsgame.Game(2, 3)
+    game = rsgame.game(2, 3)
     with pytest.raises(ValueError):
         nash.min_regret_profile(game)
 
@@ -161,7 +160,7 @@ def test_hard_nash():
         'hft': {
             'trend:trendLength_5_profitDemanded_50_expiration_50': 1.0
         }
-    })
+    }, dtype=float)
     assert np.isclose(game.trim_mixture_support(eqa), expected,
                       atol=1e-4, rtol=1e-4).all(1).any(), \
         "Didn't find equilibrium in known hard instance"
