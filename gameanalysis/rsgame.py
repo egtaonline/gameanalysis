@@ -382,6 +382,7 @@ class BaseGame(_StratArray):
         """Returns a uniform mixed profile"""
         return 1 / self.num_strategies.repeat(self.num_strategies)
 
+    # TODO Reverse order of the parameters to match random mixtures
     def random_profiles(self, mixture=None, num_samples=None):
         """Sample profiles from a mixture
 

@@ -447,7 +447,6 @@ def memoize(member_function):
     @functools.wraps(member_function)
     def new_member_function(obj):
         if not hasattr(obj, member_name):
-            print('computed')
             setattr(obj, member_name, member_function(obj))
         return getattr(obj, member_name)
 

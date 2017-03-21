@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="gameanalysis",
-    version="2.0.0",
+    version="2.0.1",
     description="A python module for analyzing sparse and empirical games",
     url="https://github.com/egtaonline/gameanalysis.git",
     author="Strategic Reasoning Group",
