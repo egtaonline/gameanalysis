@@ -31,16 +31,10 @@ from gameanalysis import utils
 _TINY = np.finfo(float).tiny
 
 
-class _StratArray(object):
-    """A base class with knowledge of the number of strategies per role
+class StratArray(object):
+    """A class with knowledge of the number of strategies per role
 
     This has methods common to working with strategy arrays
-
-    Methods
-    -------
-    role_reduce
-    role_split
-    role_repeat
     """
 
     def __init__(self, num_strats):
@@ -93,7 +87,7 @@ class _StratArray(object):
         """Repeat an array by role
 
         Takes an array of shape num_roles and turns it into shape
-        num_role_strats so that the arrays can interract."""
+        num_role_strats so that the arrays can interact."""
         return array.repeat(self.num_strategies, axis)
 
     @property
@@ -105,7 +99,9 @@ class _StratArray(object):
     @property
     @utils.memoize
     def num_pure_subgames(self):
-        """The number of pure subgames"""
+        """The number of pure subgames
+
+        A pure subgame is is one with only one strategy per role."""
         return self.num_strategies.prod()
 
     def all_subgames(self):
@@ -146,7 +142,6 @@ class _StratArray(object):
             num_strategies`. Individual role probabilities are thresholded to
             this value.
         """
-        # This is located in rsgame to avoid circular importing from subgame
         if num_samples is None:
             return self.random_subgames(1, strat_prob, normalize)[0]
         if strat_prob is None:
@@ -174,8 +169,146 @@ class _StratArray(object):
             rands, ufunc=np.minimum), strat_prob)
         return rands <= self.role_repeat(thresh)
 
+    def verify_subgame(self, subg, axis=-1):
+        """Verify that a subgame or array of subgames are valid"""
+        subg = np.asarray(subg, bool)
+        return (subg.shape[axis] == self.num_role_strats and
+                np.all(self.role_reduce(subg, axis, ufunc=np.bitwise_or),
+                       axis))
 
-class BaseGame(_StratArray):
+    def trim_mixture_support(self, mixture, supp_thresh=1e-3, axis=-1):
+        """Trims strategies played less than supp_thresh from the support"""
+        assert mixture.shape[axis] == self.num_role_strats
+        mixture *= mixture >= supp_thresh
+        mixture /= self.role_reduce(mixture, axis, keepdims=True)
+        return mixture
+
+    def verify_mixture(self, mix, axis=-1):
+        """Verify that a mixture is valid for game"""
+        mix = np.asarray(mix, float)
+        return (mix.shape[axis] == self.num_role_strats and
+                np.all(np.isclose(self.role_reduce(mix, axis), 1), axis))
+
+    def simplex_project(self, mixture):
+        """Project an invalid mixture array onto the simplex"""
+        return np.concatenate(list(map(utils.simplex_project,
+                                       self.role_split(mixture))), -1)
+
+    def uniform_mixture(self):
+        """Returns a uniform mixed profile"""
+        return 1 / self.num_strategies.repeat(self.num_strategies)
+
+    def random_mixtures(self, num_samples=None, alpha=1):
+        """Return a random mixed profile
+
+        Mixed profiles are sampled from a dirichlet distribution with parameter
+        alpha. If alpha = 1 (the default) this is a uniform distribution over
+        the simplex for each role. alpha \in (0, 1) is baised towards high
+        entropy mixtures, i.e. mixtures where one strategy is played in
+        majority. alpha \in (1, oo) is baised towards low entropy (uniform)
+        mixtures. If `num_samples` is None, a single mixture is returned.
+        """
+        if num_samples is None:
+            return self.random_mixtures(1, alpha)[0]
+        mixtures = rand.gamma(alpha, 1, (num_samples, self.num_role_strats))
+        mixtures /= self.role_reduce(mixtures, axis=1, keepdims=True)
+        return mixtures
+
+    def random_sparse_mixtures(self, num_samples=None, alpha=1,
+                               support_prob=None, normalize=True):
+        """Return a random sparse mixed profile
+
+        Parameters
+        ----------
+        num_samples : int, optional
+            The number of samples to be retuned, if None or unspecified, a
+            single sample without the extra dimension is returned.
+        alpha : float, optional, (0, oo)
+            Mixed profiles are sampled from a dirichlet distribution with
+            parameter alpha. If alpha = 1 (the default) this is a uniform
+            distribution over the simplex for each role. alpha \in (0, 1) is
+            baised towards high entropy mixtures, i.e. mixtures where one
+            strategy is played in majority. alpha \in (1, oo) is baised towards
+            low entropy (uniform) mixtures.
+        support_prob : float, ndarray, optional, (0, 1)
+            The probability that a given strategy is in support. If support
+            prob is None, supports will be sampled uniformly.
+        normalize : bool, optional
+            If true, the mixtures are normalized, so that the conditional
+            probability of any strategy in support equals support prob. If
+            true, the support_prob for any role must be at least `1 /
+            num_strategies`.
+        """
+        if num_samples is None:
+            return self.random_sparse_mixtures(
+                1, alpha, support_prob, normalize)[0]
+        mixtures = rand.gamma(alpha, 1, (num_samples, self.num_role_strats))
+        mixtures *= self.random_subgames(num_samples, support_prob, normalize)
+        mixtures /= self.role_reduce(mixtures, axis=1, keepdims=True)
+        return mixtures
+
+    def biased_mixtures(self, bias=.9):
+        """Generates mixtures biased towards one strategy for each role
+
+        Each role has one strategy played with probability bias; the reamaining
+        1-bias probability is distributed uniformly over the remaining S or S-1
+        strategies. If there's only one strategy, it is played with probability
+        1."""
+        assert 0 <= bias <= 1, "probabilities must be between zero and one"
+
+        role_mixtures = []
+        for num_strats in self.num_strategies:
+            if num_strats == 1:
+                mix = np.ones((1, 1))
+            else:
+                mix = np.empty((num_strats, num_strats))
+                mix.fill((1 - bias) / (num_strats - 1))
+                np.fill_diagonal(mix, bias)
+            role_mixtures.append(mix)
+
+        return utils.acartesian2(*role_mixtures)
+
+    def role_biased_mixtures(self, bias=0.9):
+        """Generates mixtures where one role-strategy is played with bias
+
+        If no roles have more than one strategy (a degenerate game), then this
+        returns nothing."""
+        assert 0 <= bias <= 1, "probabilities must be between zero and one"
+
+        num = self.num_strategies[self.num_strategies > 1].sum()
+        mixes = self.uniform_mixture()[None].repeat(num, 0)
+        prof_offset = 0
+        strat_offset = 0
+        for num_strats in self.num_strategies:
+            if num_strats > 1:
+                view = mixes[prof_offset:prof_offset + num_strats,
+                             strat_offset:strat_offset + num_strats]
+                view.fill((1 - bias) / (num_strats - 1))
+                np.fill_diagonal(view, bias)
+                prof_offset += num_strats
+            strat_offset += num_strats
+        return mixes
+
+    def pure_mixtures(self):
+        """Returns all mixtures where the probability is either 1 or 0."""
+        return self.biased_mixtures(bias=1)
+
+    def grid_mixtures(self, num_points):
+        """Returns all of the mixtures in a grid with n points
+
+        Arguments
+        ---------
+        num_points : int > 1
+            The number of points to have along one dimensions
+        """
+        assert num_points > 1, "Must have at least two points on a dimensions"
+        role_mixtures = [utils.acomb(num_strats, num_points - 1, True) /
+                         (num_points - 1)
+                         for num_strats in self.num_strategies]
+        return utils.acartesian2(*role_mixtures)
+
+
+class BaseGame(StratArray):
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
@@ -340,26 +473,11 @@ class BaseGame(_StratArray):
             deviations[mix < self.role_repeat(self.zero_prob)] = 0
             return self.role_reduce(mix * deviations)
 
-    def trim_mixture_support(self, mixture, supp_thresh=1e-3):
-        """Trims strategies played less than supp_thresh from the support"""
-        mixture *= mixture >= supp_thresh
-        mixture /= self.role_reduce(mixture, keepdims=True)
-        return mixture
-
     def verify_profile(self, prof, axis=-1):
         """Verify that a profile is valid for game"""
         prof = np.asarray(prof, int)
         return (prof.shape[axis] == self.num_role_strats and
                 np.all(self.num_players == self.role_reduce(prof, axis), axis))
-
-    def verify_mixture(self, mix, axis=-1):
-        """Verify that a mixture is valid for game"""
-        return np.all(np.isclose(self.role_reduce(mix, axis), 1), axis)
-
-    def simplex_project(self, mixture):
-        """Project an invalid mixture array onto the simplex"""
-        return np.concatenate(list(map(utils.simplex_project,
-                                       self.role_split(mixture))), -1)
 
     def all_profiles(self):
         """Return all profiles"""
@@ -378,25 +496,20 @@ class BaseGame(_StratArray):
                          in zip(self.num_players, self.num_strategies)]
         return utils.acartesian2(*role_profiles)
 
-    def uniform_mixture(self):
-        """Returns a uniform mixed profile"""
-        return 1 / self.num_strategies.repeat(self.num_strategies)
-
-    # TODO Reverse order of the parameters to match random mixtures
-    def random_profiles(self, mixture=None, num_samples=None):
+    def random_profiles(self, num_samples=None, mixture=None):
         """Sample profiles from a mixture
 
         Parameters
         ----------
-        mixture : ndarray, optional
-            Mixture to sample from, of None or omitted, then uses the uniform
-            mixture.
         num_samples : int, optional
             Number of samples to return. If None or omitted, then a single
             sample, without a leading singleton dimension is returned.
+        mixture : ndarray, optional
+            Mixture to sample from, of None or omitted, then uses the uniform
+            mixture.
         """
         if num_samples is None:
-            return self.random_profiles(mixture, 1)[0]
+            return self.random_profiles(1, mixture)[0]
         if mixture is None:
             mixture = self.uniform_mixture()
         role_samples = [rand.multinomial(n, probs, num_samples) for n, probs
@@ -425,7 +538,7 @@ class BaseGame(_StratArray):
                          int)
         for i, players in enumerate(dev_players):
             base = basegame(players, self.num_strategies)
-            profs[:, i] = base.random_profiles(mixture, num_samples)
+            profs[:, i] = base.random_profiles(num_samples, mixture)
         return profs
 
     def random_deviator_profiles(self, mixture, num_samples=None):
@@ -447,115 +560,6 @@ class BaseGame(_StratArray):
         devs = self.random_dev_profiles(mixture, num_samples)
         return (self.role_repeat(devs, -2) + np.eye(self.num_role_strats,
                                                     dtype=int))
-
-    def random_mixtures(self, num_samples=None, alpha=1):
-        """Return a random mixed profile
-
-        Mixed profiles are sampled from a dirichlet distribution with parameter
-        alpha. If alpha = 1 (the default) this is a uniform distribution over
-        the simplex for each role. alpha \in (0, 1) is baised towards high
-        entropy mixtures, i.e. mixtures where one strategy is played in
-        majority. alpha \in (1, oo) is baised towards low entropy (uniform)
-        mixtures. If `num_samples` is None, a single mixture is returned.
-        """
-        if num_samples is None:
-            return self.random_mixtures(1, alpha)[0]
-        mixtures = rand.gamma(alpha, 1, (num_samples, self.num_role_strats))
-        mixtures /= self.role_reduce(mixtures, axis=1, keepdims=True)
-        return mixtures
-
-    def random_sparse_mixtures(self, num_samples=None, alpha=1,
-                               support_prob=None, normalize=True):
-        """Return a random sparse mixed profile
-
-        Parameters
-        ----------
-        num_samples : int, optional
-            The number of samples to be retuned, if None or unspecified, a
-            single sample without the extra dimension is returned.
-        alpha : float, optional, (0, oo)
-            Mixed profiles are sampled from a dirichlet distribution with
-            parameter alpha. If alpha = 1 (the default) this is a uniform
-            distribution over the simplex for each role. alpha \in (0, 1) is
-            baised towards high entropy mixtures, i.e. mixtures where one
-            strategy is played in majority. alpha \in (1, oo) is baised towards
-            low entropy (uniform) mixtures.
-        support_prob : float, ndarray, optional, (0, 1)
-            The probability that a given strategy is in support. If support
-            prob is None, supports will be sampled uniformly.
-        normalize : bool, optional
-            If true, the mixtures are normalized, so that the conditional
-            probability of any strategy in support equals support prob. If
-            true, the support_prob for any role must be at least `1 /
-            num_strategies`.
-        """
-        if num_samples is None:
-            return self.random_sparse_mixtures(
-                1, alpha, support_prob, normalize)[0]
-        mixtures = rand.gamma(alpha, 1, (num_samples, self.num_role_strats))
-        mixtures *= self.random_subgames(num_samples, support_prob, normalize)
-        mixtures /= self.role_reduce(mixtures, axis=1, keepdims=True)
-        return mixtures
-
-    def biased_mixtures(self, bias=.9):
-        """Generates mixtures biased towards one strategy for each role
-
-        Each role has one strategy played with probability bias; the reamaining
-        1-bias probability is distributed uniformly over the remaining S or S-1
-        strategies. If there's only one strategy, it is played with probability
-        1."""
-        assert 0 <= bias <= 1, "probabilities must be between zero and one"
-
-        role_mixtures = []
-        for num_strats in self.num_strategies:
-            if num_strats == 1:
-                mix = np.ones((1, 1))
-            else:
-                mix = np.empty((num_strats, num_strats))
-                mix.fill((1 - bias) / (num_strats - 1))
-                np.fill_diagonal(mix, bias)
-            role_mixtures.append(mix)
-
-        return utils.acartesian2(*role_mixtures)
-
-    def role_biased_mixtures(self, bias=0.9):
-        """Generates mixtures where one role-strategy is played with bias
-
-        If no roles have more than one strategy (a degenerate game), then this
-        returns nothing."""
-        assert 0 <= bias <= 1, "probabilities must be between zero and one"
-
-        num = self.num_strategies[self.num_strategies > 1].sum()
-        mixes = self.uniform_mixture()[None].repeat(num, 0)
-        prof_offset = 0
-        strat_offset = 0
-        for num_strats in self.num_strategies:
-            if num_strats > 1:
-                view = mixes[prof_offset:prof_offset + num_strats,
-                             strat_offset:strat_offset + num_strats]
-                view.fill((1 - bias) / (num_strats - 1))
-                np.fill_diagonal(view, bias)
-                prof_offset += num_strats
-            strat_offset += num_strats
-        return mixes
-
-    def pure_mixtures(self):
-        """Returns all mixtures where the probability is either 1 or 0."""
-        return self.biased_mixtures(bias=1)
-
-    def grid_mixtures(self, num_points):
-        """Returns all of the mixtures in a grid with n points
-
-        Arguments
-        ---------
-        num_points : int > 1
-            The number of points to have along one dimensions
-        """
-        assert num_points > 1, "Must have at least two points on a dimensions"
-        role_mixtures = [utils.acomb(num_strats, num_points - 1, True) /
-                         (num_points - 1)
-                         for num_strats in self.num_strategies]
-        return utils.acartesian2(*role_mixtures)
 
     def max_prob_prof(self, mix):
         """Returns the pure strategy profile with highest probability."""
@@ -669,11 +673,12 @@ class Game(BaseGame):
         assert not verify or np.all(profiles >= 0), "profiles was negative"
         assert not verify or np.all(self.role_reduce(profiles) ==
                                     self.num_players), \
-            "not all profiles equaled player total {} {}".format(
-                np.any(self.role_reduce(profiles) ==
-                       self.num_players, 1).nonzero(),
-                profiles[np.any(self.role_reduce(profiles) ==
-                                self.num_players, 1)])
+            ("not all profiles equaled player total (inds: {}, profiles: {})"
+             .format(
+                 np.any(self.role_reduce(profiles) !=
+                        self.num_players, 1).nonzero()[0],
+                 profiles[np.any(self.role_reduce(profiles) !=
+                                 self.num_players, 1)]))
         assert not verify or np.all(payoffs[profiles == 0] == 0), \
             "there were nonzero payoffs for strategies without players"
 

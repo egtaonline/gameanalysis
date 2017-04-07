@@ -142,9 +142,8 @@ def test_basegame_function(players, strategies):
             "uniform mixture wasn't uniform"
 
     # Random Subgames
-    assert game.role_reduce(game.random_subgames(), ufunc=np.bitwise_or).all()
-    subs = game.random_subgames(20)
-    assert game.role_reduce(subs, ufunc=np.bitwise_or).all()
+    assert game.verify_subgame(game.random_subgames())
+    assert game.verify_subgame(game.random_subgames(20)).all()
 
     # Random
     assert np.allclose(game.role_reduce(game.random_mixtures()), 1)
@@ -250,13 +249,11 @@ def test_verify_mixture_profile():
     assert not game.verify_mixture([0.2, 0.3, 0.4, 0.5, 0.6])
 
     assert game.verify_profile(game.random_profiles())
-    mix = game.uniform_mixture()
-    random_profs = game.random_profiles(mix, 20)
-    assert np.all(game.verify_profile(random_profs))
+    assert game.verify_profile(game.random_profiles(20)).all()
 
+    mix = game.uniform_mixture()
     assert game.verify_profile(game.random_deviator_profiles(mix)).all()
-    random_profs = game.random_deviator_profiles(mix, 20)
-    assert game.verify_profile(random_profs).all()
+    assert game.verify_profile(game.random_deviator_profiles(mix, 20)).all()
 
 
 @pytest.mark.parametrize('players,strategies', GAMES)

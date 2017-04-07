@@ -10,6 +10,7 @@ from gameanalysis import utils
 
 
 # TODO Make reductions handle partial profiles
+# TODO This api is pretty weird in general. I'm not sure how to make it better
 
 
 def _expand_rsym_profiles(game, profiles, full_players, reduced_players):
@@ -118,7 +119,7 @@ def _reduce_rsym_profiles(game, profiles, full_players, reduced_players):
     return red_profs[valid], reduced
 
 
-class _Reduction(metaclass=abc.ABCMeta):
+class _Reduction(rsgame.StratArray, metaclass=abc.ABCMeta):
     """Base Reduction class
 
     This defines the reduction interface"""

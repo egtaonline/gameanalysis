@@ -23,8 +23,8 @@ else
 endif
 
 coverage:
-ifeq ($(file),scripts)
-	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis.script --cov gameanalysis.scriptutils --cov gameanalysis/scripts --cov test.$(file)_test --cov-report term-missing 2>/dev/null
+ifeq ($(file),script)
+	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis.script --cov gameanalysis.scriptutils --cov gameanalysis/$(file) --cov test.$(file)_test --cov-report term-missing 2>/dev/null
 else
 ifdef file
 	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis.$(file) --cov test.$(file)_test --cov-report term-missing 2>/dev/null

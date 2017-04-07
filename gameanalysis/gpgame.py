@@ -34,14 +34,18 @@ class BaseGPGame(rsgame.BaseGame):
             self._gps = game._gps
 
         else:
+            assert game.num_complete_profiles >= 3, \
+                "can't learn a game from less than 3 profiles"
+
             # copy game's attributes
             self._min_payoffs = game.min_payoffs()
             self._max_payoffs = game.max_payoffs()
 
             # train GPs for each role/strategy
             self._gps = []
+            all_payoffs = ~np.isnan(game.profiles).any(1)
             for rs in range(self.num_role_strats):
-                prof_mask = game.profiles[:, rs] > 0
+                prof_mask = (game.profiles[:, rs] > 0) & all_payoffs
                 gp_profs = game.profiles[prof_mask]
                 gp_profs[:, rs] -= 1
                 gp_pays = game.payoffs[prof_mask, rs]

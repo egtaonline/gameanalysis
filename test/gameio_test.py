@@ -11,6 +11,7 @@ from gameanalysis import utils
 
 
 SERIAL = gameio.gameserializer(['role'], [['strat1', 'strat2']])
+SERIAL2 = gameio.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
 
 GAME = rsgame.samplegame(
     [2], [2],
@@ -567,10 +568,25 @@ BaseGame:
             strat1
             strat2
 """[1:-1]
-    assert expected == SERIAL.to_basegame_printstring(GAME)
-    assert expected == SERIAL.to_basegame_printstring(rsgame.game_copy(GAME))
-    assert expected == SERIAL.to_basegame_printstring(
-        rsgame.basegame_copy(GAME))
+    assert expected == SERIAL.to_basegame_printstr(GAME)
+    assert expected == SERIAL.to_basegame_printstr(rsgame.game_copy(GAME))
+    assert expected == SERIAL.to_basegame_printstr(rsgame.basegame_copy(GAME))
+
+    expected = """
+BaseGame:
+    Roles: a, b
+    Players:
+        3x a
+        4x b
+    Strategies:
+        a:
+            bar
+            foo
+        b:
+            baz
+"""[1:-1]
+    assert expected == SERIAL2.to_basegame_printstr(rsgame.basegame(
+        [3, 4], SERIAL2.num_strategies))
 
     expected = """
 Game:
@@ -583,8 +599,8 @@ Game:
             strat2
 payoff data for 3 out of 3 profiles
 """[1:-1]
-    assert expected == SERIAL.to_game_printstring(GAME)
-    assert expected == SERIAL.to_game_printstring(rsgame.game_copy(GAME))
+    assert expected == SERIAL.to_game_printstr(GAME)
+    assert expected == SERIAL.to_game_printstr(rsgame.game_copy(GAME))
     expected = """
 Game:
     Roles: role
@@ -596,7 +612,7 @@ Game:
             strat2
 payoff data for 0 out of 3 profiles
 """[1:-1]
-    assert expected == SERIAL.to_game_printstring(rsgame.basegame_copy(GAME))
+    assert expected == SERIAL.to_game_printstr(rsgame.basegame_copy(GAME))
 
     expected = """
 SampleGame:
@@ -610,7 +626,7 @@ SampleGame:
 payoff data for 3 out of 3 profiles
 3 to 4 observations per profile
 """[1:-1]
-    assert expected == SERIAL.to_samplegame_printstring(GAME)
+    assert expected == SERIAL.to_samplegame_printstr(GAME)
     expected = """
 SampleGame:
     Roles: role
@@ -623,7 +639,7 @@ SampleGame:
 payoff data for 3 out of 3 profiles
 1 observation per profile
 """[1:-1]
-    assert expected == SERIAL.to_samplegame_printstring(rsgame.game_copy(GAME))
+    assert expected == SERIAL.to_samplegame_printstr(rsgame.game_copy(GAME))
     expected = """
 SampleGame:
     Roles: role
@@ -636,7 +652,7 @@ SampleGame:
 payoff data for 0 out of 3 profiles
 no observations
 """[1:-1]
-    assert expected == SERIAL.to_samplegame_printstring(
+    assert expected == SERIAL.to_samplegame_printstr(
         rsgame.basegame_copy(GAME))
 
 
@@ -651,43 +667,111 @@ def test_sorted_strategy_loading(_):
 
 
 def test_to_from_prof_json():
-    game = gameio.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
-
     prof = [6, 5, 3]
     json_prof = {'a': {'foo': 5, 'bar': 6}, 'b': {'baz': 3}}
-    assert game.to_prof_json(prof) == json_prof
-    assert np.all(game.from_prof_json(json_prof) == prof)
-    assert game.from_prof_json(json_prof).dtype == int
+    assert SERIAL2.to_prof_json(prof) == json_prof
+    new_prof = SERIAL2.from_prof_json(json_prof)
+    assert np.all(new_prof == prof)
+    assert new_prof.dtype == int
 
+    player_prof = {'players': [
+        {'role': 'a', 'strategy': 'foo', 'payoff': 0},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 0},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 0},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 0},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'b', 'strategy': 'baz', 'payoff': 0},
+        {'role': 'b', 'strategy': 'baz', 'payoff': 0},
+        {'role': 'b', 'strategy': 'baz', 'payoff': 0},
+    ]}
+    new_prof = SERIAL2.from_prof_json(player_prof)
+    assert np.all(new_prof == prof)
+    assert new_prof.dtype == int
+
+
+def test_to_from_payoff_json_roles():
+    pay = [1.0, 2.0, 3.0]
+    json_pay = {'a': {'foo': 2.0, 'bar': 1.0}, 'b': {'baz': 3.0}}
+    assert SERIAL2.to_payoff_json(pay) == json_pay
+    new_pay = SERIAL2.from_payoff_json(json_pay)
+    assert np.allclose(new_pay, pay)
+    assert new_pay.dtype == float
+
+    player_pay = {'players': [
+        {'role': 'a', 'strategy': 'foo', 'payoff': 4},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 2},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 0},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 4},
+        {'role': 'a', 'strategy': 'foo', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 2},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 2},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 2},
+        {'role': 'a', 'strategy': 'bar', 'payoff': 0},
+        {'role': 'b', 'strategy': 'baz', 'payoff': 0},
+        {'role': 'b', 'strategy': 'baz', 'payoff': 6},
+        {'role': 'b', 'strategy': 'baz', 'payoff': 3},
+    ]}
+    new_pay = SERIAL2.from_payoff_json(player_pay)
+    assert np.allclose(new_pay, pay)
+    assert new_pay.dtype == float
+
+
+def test_to_from_mix_json():
     mix = [.6, .4, 1]
     json_mix = {'a': {'foo': .4, 'bar': .6}, 'b': {'baz': 1}}
-    assert game.to_prof_json(mix) == json_mix
-    assert np.all(game.from_prof_json(json_mix, dtype=float) == mix)
-    assert game.from_prof_json(json_mix, dtype=float).dtype == float
+    assert SERIAL2.to_mix_json(mix) == json_mix
+    new_mix = SERIAL2.from_mix_json(json_mix)
+    assert np.all(new_mix == mix)
+    assert new_mix.dtype == float
 
+
+def test_to_from_subgame_json():
     sub = [True, False, True]
-    json_sub = {'a': {'bar': True}, 'b': {'baz': True}}
-    assert game.to_prof_json(sub) == json_sub
-    assert np.all(game.from_prof_json(json_sub, dtype=bool) == sub)
-    assert game.from_prof_json(json_sub, dtype=bool).dtype == bool
+    json_sub = {'a': ['bar'], 'b': ['baz']}
+    assert SERIAL2.to_subgame_json(sub) == json_sub
+    new_sub = SERIAL2.from_subgame_json(json_sub)
+    assert np.all(new_sub == sub)
+    assert new_sub.dtype == bool
 
+
+def test_to_from_prof_str():
+    prof = [6, 5, 3]
     prof_str = 'a: 5 foo, 6 bar; b: 3 baz'
-    assert np.all(game.from_prof_string(prof_str) == prof)
-    assert set(game.to_prof_string(prof)) == set(prof_str)
+    assert np.all(SERIAL2.from_prof_str(prof_str) == prof)
+    assert set(SERIAL2.to_prof_str(prof)) == set(prof_str)
 
+
+def test_to_from_samplepay_json():
     prof = [3, 0, 4]
-    obs = [[3, 0, 7], [4, 0, 8], [5, 0, 9]]
-    json_obs = {'a': {'bar': [3, 4, 5]}, 'b': {'baz': [7, 8, 9]}}
-    assert game.to_obs_json(prof, obs) == json_obs
-    assert np.allclose(game.from_obs_json(json_obs), obs)
+    spay = [[3, 0, 7], [4, 0, 8], [5, 0, 9]]
+    json_spay = {'a': {'bar': [3, 4, 5]}, 'b': {'baz': [7, 8, 9]}}
+    json_spay_0 = {'a': {'bar': [3, 4, 5], 'foo': [0, 0, 0]},
+                   'b': {'baz': [7, 8, 9]}}
+    assert SERIAL2.to_samplepay_json(spay, prof) == json_spay
+    assert SERIAL2.to_samplepay_json(spay) == json_spay_0
+    assert np.allclose(SERIAL2.from_samplepay_json(json_spay), spay)
 
-    json_profobs = {'a': [('bar', 3,  [3, 4, 5])],
-                    'b': [('baz', 4, [7, 8, 9])]}
-    assert game.to_profobs_json(prof, obs) == json_profobs
-    p, o = game.from_profobs_json(json_profobs)
+
+def test_to_from_profsamplepay_json():
+    prof = [3, 0, 4]
+    spay = [[3, 0, 7], [4, 0, 8], [5, 0, 9]]
+    json_profspay = {'a': [('bar', 3,  [3, 4, 5])],
+                     'b': [('baz', 4, [7, 8, 9])]}
+    assert SERIAL2.to_profsamplepay_json(spay, prof) == json_profspay
+    p, sp = SERIAL2.from_profsamplepay_json(json_profspay)
     assert np.all(p == prof)
-    assert np.allclose(o, obs)
+    assert np.allclose(sp, spay)
 
+
+def test_to_prof_printstr():
     prof = [6, 5, 3]
     expected = """
 a:
@@ -696,8 +780,10 @@ a:
 b:
     baz: 3
 """[1:]
-    assert game.to_prof_printstring(prof) == expected
+    assert SERIAL2.to_prof_printstr(prof) == expected
 
+
+def test_to_from_mix_printstr():
     mix = [0.3, 0.7, 1]
     expected = """
 a:
@@ -706,8 +792,10 @@ a:
 b:
     baz: 100.00%
 """[1:]
-    assert game.to_prof_printstring(mix) == expected
+    assert SERIAL2.to_mix_printstr(mix) == expected
 
+
+def test_to_from_subgame_printstr():
     sub = [True, False, True]
     expected = """
 a:
@@ -715,46 +803,50 @@ a:
 b:
     baz
 """[1:]
-    assert game.to_prof_printstring(sub) == expected
+    assert SERIAL2.to_subgame_printstr(sub) == expected
 
 
 def test_to_from_role_json():
-    game = gameio.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
     role = [6, 3]
     json_role = {'a': 6, 'b': 3}
-    assert game.to_role_json(role) == json_role
-    assert np.all(game.from_role_json(json_role) == role)
-    assert game.from_role_json(json_role).dtype == float
+    assert SERIAL2.to_role_json(role) == json_role
+    assert np.all(SERIAL2.from_role_json(json_role) == role)
+    assert SERIAL2.from_role_json(json_role).dtype == float
 
 
 def test_deviation_payoff_json():
-    game = gameio.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
     prof = [3, 0, 4]
     devpay = [5]
     json_devpay = {'a': {'bar': {'foo': 5}}, 'b': {'baz': {}}}
-    assert game.to_deviation_payoff_json(prof, devpay) == json_devpay
+    assert SERIAL2.to_deviation_payoff_json(devpay, prof) == json_devpay
 
     prof = [2, 1, 4]
     devpay = [5, 4]
     json_devpay = {'a': {'bar': {'foo': 5},
                          'foo': {'bar': 4}}, 'b': {'baz': {}}}
-    assert game.to_deviation_payoff_json(prof, devpay) == json_devpay
+    assert SERIAL2.to_deviation_payoff_json(devpay, prof) == json_devpay
 
 
 def test_to_pay_json():
-    jprof = SERIAL.to_payoff_json(GAME.profiles[0], GAME.payoffs[0])
+    jprof = SERIAL.to_payoff_json(GAME.payoffs[0], GAME.profiles[0])
     assert jprof == {'role': {'strat1': 0}}
-    jprof = SERIAL.to_payoff_json(GAME.profiles[1], GAME.payoffs[1])
+    jprof = SERIAL.to_payoff_json(GAME.payoffs[0])
+    assert jprof == {'role': {'strat1': 0, 'strat2': 0}}
+    jprof = SERIAL.to_payoff_json(GAME.payoffs[1], GAME.profiles[1])
     assert jprof == {'role': {'strat1': 10, 'strat2': 20}}
-    jprof = SERIAL.to_payoff_json(GAME.profiles[2], GAME.payoffs[2])
+    jprof = SERIAL.to_payoff_json(GAME.payoffs[1])
+    assert jprof == {'role': {'strat1': 10, 'strat2': 20}}
+    jprof = SERIAL.to_payoff_json(GAME.payoffs[2], GAME.profiles[2])
     assert jprof == {'role': {'strat2': 30}}
+    jprof = SERIAL.to_payoff_json(GAME.payoffs[2])
+    assert jprof == {'role': {'strat1': 0, 'strat2': 30}}
 
-    jprof = SERIAL.to_profpay_json(GAME.profiles[0], GAME.payoffs[0])
+    jprof = SERIAL.to_profpay_json(GAME.payoffs[0], GAME.profiles[0])
     assert jprof == {'role': [('strat1', 2, 0)]}
     jprof = {k: set(v) for k, v in SERIAL.to_profpay_json(
-        GAME.profiles[1], GAME.payoffs[1]).items()}
+        GAME.payoffs[1], GAME.profiles[1]).items()}
     assert jprof == {'role': set([('strat1', 1, 10), ('strat2', 1, 20)])}
-    jprof = SERIAL.to_profpay_json(GAME.profiles[2], GAME.payoffs[2])
+    jprof = SERIAL.to_profpay_json(GAME.payoffs[2], GAME.profiles[2])
     assert jprof == {'role': [('strat2', 2, 30)]}
 
 

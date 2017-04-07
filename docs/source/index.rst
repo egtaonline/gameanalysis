@@ -9,7 +9,7 @@ Welcome to Game Analysis's documentation!
 .. toctree::
    :maxdepth: 3
 
-   modules
+   gameanalysis
    profile_counts
 
 

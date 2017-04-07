@@ -15,50 +15,54 @@ from gameanalysis import subgame
 
 
 def add_parser(subparsers):
-    parser = subparsers.add_parser('analyze', help="""Analyze games""",
-                                   description="""Perform game analysis.""")
-    parser.add_argument('--input', '-i', metavar='<input-file>',
-                        default=sys.stdin, type=argparse.FileType('r'),
-                        help="""Input file for script.  (default: stdin)""")
-    parser.add_argument('--output', '-o', metavar='<output-file>',
-                        default=sys.stdout, type=argparse.FileType('w'),
-                        help="""Output file for script. (default: stdout)""")
-    parser.add_argument('--dist-thresh', metavar='<distance-threshold>',
-                        type=float, default=1e-3, help="""L2 norm threshold,
-                        inside of which, equilibria are considered identical.
-                        (default: %(default)g)""")
-    parser.add_argument('--regret-thresh', '-r', metavar='<regret-threshold>',
-                        type=float, default=1e-3, help="""Maximum regret to
-                        consider an equilibrium confirmed. (default:
-                        %(default)g)""")
-    parser.add_argument('--supp-thresh', '-t', metavar='<support-threshold>',
-                        type=float, default=1e-3, help="""Maximum probability
-                        to consider a strategy in support. (default:
-                        %(default)g)""")
-    parser.add_argument('--rand-restarts', metavar='<random-restarts>',
-                        type=int, default=0, help="""The number of random
-                        points to add to nash equilibrium finding. (default:
-                        %(default)d)""")
-    parser.add_argument('--max-iters', '-m', metavar='<maximum-iterations>',
-                        type=int, default=10000, help="""The maximum number of
-                        iterations to run through replicator dynamics.
-                        (default: %(default)d)""")
-    parser.add_argument('--converge-thresh', '-c',
-                        metavar='<convergence-threshold>', type=float,
-                        default=1e-8, help="""The convergence threshold for
-                        replicator dynamics. (default: %(default)g)""")
-    parser.add_argument('--processes', '-p', metavar='<num-procs>', type=int,
-                        help="""Number of processes to use to run nash finding.
-                        (default: number of cores)""")
-    parser.add_argument('--dpr', nargs='+', metavar='<role> <count>',
-                        help="""Apply a DPR reduction to the game, with reduced
-                        counts per role specified.""")
-    parser.add_argument('--dominance', '-d', action='store_true',
-                        help="""Remove dominated strategies.""")
-    parser.add_argument('--subgames', '-s', action='store_true',
-                        help="""Extract maximal subgames, and analyze each
-                        individually instead of considering the game as a
-                        whole.""")
+    parser = subparsers.add_parser(
+        'analyze', help="""Analyze games""", description="""Perform game
+        analysis.""")
+    parser.add_argument(
+        '--input', '-i', metavar='<input-file>', default=sys.stdin,
+        type=argparse.FileType('r'), help="""Input file for script.  (default:
+        stdin)""")
+    parser.add_argument(
+        '--output', '-o', metavar='<output-file>', default=sys.stdout,
+        type=argparse.FileType('w'), help="""Output file for script. (default:
+        stdout)""")
+    parser.add_argument(
+        '--dist-thresh', metavar='<distance-threshold>', type=float,
+        default=1e-3, help="""L2 norm threshold, inside of which, equilibria
+        are considered identical.  (default: %(default)g)""")
+    parser.add_argument(
+        '--regret-thresh', '-r', metavar='<regret-threshold>', type=float,
+        default=1e-3, help="""Maximum regret to consider an equilibrium
+        confirmed. (default: %(default)g)""")
+    parser.add_argument(
+        '--supp-thresh', '-t', metavar='<support-threshold>', type=float,
+        default=1e-3, help="""Maximum probability to consider a strategy in
+        support. (default: %(default)g)""")
+    parser.add_argument(
+        '--rand-restarts', metavar='<random-restarts>', type=int, default=0,
+        help="""The number of random points to add to nash equilibrium finding.
+        (default: %(default)d)""")
+    parser.add_argument(
+        '--max-iters', '-m', metavar='<maximum-iterations>', type=int,
+        default=10000, help="""The maximum number of iterations to run through
+        replicator dynamics.  (default: %(default)d)""")
+    parser.add_argument(
+        '--converge-thresh', '-c', metavar='<convergence-threshold>',
+        type=float, default=1e-8, help="""The convergence threshold for
+        replicator dynamics. (default: %(default)g)""")
+    parser.add_argument(
+        '--processes', '-p', metavar='<num-procs>', type=int, help="""Number of
+        processes to use to run nash finding.  (default: number of cores)""")
+    parser.add_argument(
+        '--dpr', nargs='+', metavar='<role> <count>', help="""Apply a DPR
+        reduction to the game, with reduced counts per role specified.""")
+    parser.add_argument(
+        '--dominance', '-d', action='store_true', help="""Remove dominated
+        strategies.""")
+    parser.add_argument(
+        '--subgames', '-s', action='store_true', help="""Extract maximal
+        subgames, and analyze each individually instead of considering the game
+        as a whole.""")
     return parser
 
 
@@ -105,7 +109,7 @@ def main(args):
                            for eq in candidates):
                     candidates.append(eqm)
         else:
-            noeq_subgames.append(submask)
+            noeq_subgames.append(submask)  # pragma: no cover
 
     equilibria = []
     unconfirmed = []
@@ -138,7 +142,7 @@ def main(args):
     # Output Game
     args.output.write('Game Analysis\n')
     args.output.write('=============\n')
-    args.output.write(serial.to_game_printstring(game))
+    args.output.write(serial.to_game_printstr(game))
     args.output.write('\n\n')
     if args.dpr is not None:
         args.output.write('With DPR reduction: ')
@@ -149,7 +153,7 @@ def main(args):
         if num:
             args.output.write('Found {:d} dominated strateg{}\n'.format(
                 num, 'y' if num == 1 else 'ies'))
-            args.output.write(serial.to_prof_printstring(~domsub))
+            args.output.write(serial.to_subgame_printstr(~domsub))
             args.output.write('\n')
         else:
             args.output.write('Found no dominated strategies\n\n')
@@ -171,7 +175,7 @@ def main(args):
         args.output.write('There was no profile with complete payoff data\n\n')
     else:
         args.output.write('\nMaximum social welfare profile:\n')
-        args.output.write(serial.to_prof_printstring(profile))
+        args.output.write(serial.to_prof_printstr(profile))
         args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
 
         if game.num_roles > 1:
@@ -180,7 +184,7 @@ def main(args):
                     *regret.max_pure_social_welfare(game, True)):
                 args.output.write('Maximum "{}" welfare profile:\n'.format(
                     role))
-                args.output.write(serial.to_prof_printstring(profile))
+                args.output.write(serial.to_prof_printstr(profile))
                 args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
 
     args.output.write('\n')
@@ -193,22 +197,22 @@ def main(args):
             len(equilibria), 'um' if len(equilibria) == 1 else 'a'))
         for i, (eqm, reg) in enumerate(equilibria, 1):
             args.output.write('Equilibrium {:d}:\n'.format(i))
-            args.output.write(redserial.to_prof_printstring(eqm))
+            args.output.write(redserial.to_mix_printstr(eqm))
             args.output.write('Regret: {:.4f}\n\n'.format(reg))
     else:
-        args.output.write('Found no equilibria\n\n')
+        args.output.write('Found no equilibria\n\n')  # pragma: no cover
     args.output.write('\n')
 
     # Output No-equilibria Subgames
     args.output.write('No-equilibria Subgames\n')
     args.output.write('----------------------\n')
-    if noeq_subgames:
+    if noeq_subgames:  # pragma: no cover
         args.output.write('Found {:d} no-equilibria subgame{}\n\n'.format(
             len(noeq_subgames), '' if len(noeq_subgames) == 1 else 's'))
         noeq_subgames.sort(key=lambda x: x.sum())
         for i, subg in enumerate(noeq_subgames, 1):
             args.output.write('No-equilibria subgame {:d}:\n'.format(i))
-            args.output.write(redserial.to_prof_printstring(subg))
+            args.output.write(redserial.to_subgame_printstr(subg))
             args.output.write('\n')
     else:
         args.output.write('Found no no-equilibria subgames\n\n')
@@ -223,7 +227,7 @@ def main(args):
         unconfirmed.sort(key=lambda x: ((x[0] > 0).sum(), x[1]))
         for i, (eqm, reg_bound) in enumerate(unconfirmed, 1):
             args.output.write('Unconfirmed candidate {:d}:\n'.format(i))
-            args.output.write(redserial.to_prof_printstring(eqm))
+            args.output.write(redserial.to_mix_printstr(eqm))
             args.output.write('Regret at least: {:.4f}\n\n'.format(reg_bound))
     else:
         args.output.write('Found no unconfirmed candidate equilibria\n\n')
@@ -244,10 +248,10 @@ def main(args):
         unexplored.sort(key=lambda x: (x[0].sum(), -x[2]))
         for i, (sub, dev, gain, eqm) in enumerate(unexplored, 1):
             args.output.write('Unexplored subgame {:d}:\n'.format(i))
-            args.output.write(redserial.to_prof_printstring(sub))
+            args.output.write(redserial.to_subgame_printstr(sub))
             args.output.write('{:.4f} for deviating to {} from:\n'.format(
                 gain, redserial.strat_name(dev)))
-            args.output.write(redserial.to_prof_printstring(eqm))
+            args.output.write(redserial.to_mix_printstr(eqm))
             args.output.write('\n')
     else:
         args.output.write('Found no unexplored best-response subgames\n\n')
@@ -257,6 +261,6 @@ def main(args):
     args.output.write('Json Data\n')
     args.output.write('=========\n')
     json_data = {
-        'equilibria': [redserial.to_prof_json(eqm) for eqm, _ in equilibria]}
+        'equilibria': [redserial.to_mix_json(eqm) for eqm, _ in equilibria]}
     json.dump(json_data, args.output)
     args.output.write('\n')

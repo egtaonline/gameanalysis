@@ -148,9 +148,9 @@ def test_empty_game():
 
 def test_hard_nash():
     with open('test/hard_nash_game_1.json') as f:
-        game, conv = gameio.read_game(json.load(f))
+        game, serial = gameio.read_game(json.load(f))
     eqa = nash.mixed_nash(game)
-    expected = conv.from_prof_json({
+    expected = serial.from_mix_json({
         'background': {
             'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
             0.5407460907477768,
@@ -160,7 +160,7 @@ def test_hard_nash():
         'hft': {
             'trend:trendLength_5_profitDemanded_50_expiration_50': 1.0
         }
-    }, dtype=float)
+    })
     assert np.isclose(game.trim_mixture_support(eqa), expected,
                       atol=1e-4, rtol=1e-4).all(1).any(), \
         "Didn't find equilibrium in known hard instance"

@@ -9,16 +9,18 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-class GameSerializer(rsgame._StratArray):
-    """An object with utilities for serializing a game with names
+class GameSerializer(rsgame.StratArray):
+    """An object with utilities for serializing objects with names
 
     Parameters
     ----------
     roles : [role]
-        A list of ordered roles. This must be included with ``strategies``.
+        A list of ordered roles. It is probably best if these are in
+        lexicographic order.
     strategies : [[strategy]]
         A list of lists of ordered strategies for each role. This must be
-        included with ``roles``.
+        included with ``roles``. For some algorithms to work as desired, these
+        strategies should be in lexicographic order.
     """
 
     def __init__(self, role_names, strat_names):
@@ -52,8 +54,11 @@ class GameSerializer(rsgame._StratArray):
         return self.strat_names[role_index][role_strat_index -
                                             self.role_starts[role_index]]
 
-    def from_prof_json(self, prof, dest=None, dtype=int):
+    def from_prof_json(self, prof, dest=None):
         """Read a profile from json
+
+        A profile is an assignment from role-strategy pairs to counts. This
+        method reads from several formats as specified in parameters.
 
         Parameters
         ----------
@@ -66,11 +71,9 @@ class GameSerializer(rsgame._StratArray):
         dest : ndarray, optional
             If supplied, ``dest`` will be written to instead of allocating a
             new array.
-        dtype : dtype, optional
-            The dtype of the returned array
         """
         if dest is None:
-            dest = np.empty(self.num_role_strats, dtype)
+            dest = np.empty(self.num_role_strats, int)
         dest.fill(0)
 
         # standard egta symmetry groups
@@ -78,6 +81,12 @@ class GameSerializer(rsgame._StratArray):
             for symgrp in prof['symmetry_groups']:
                 _, role, strat, count, _ = _unpack_symgrp(**symgrp)
                 dest[self.role_strat_index(role, strat)] = count
+
+        # observation from simulation
+        elif 'players' in prof:
+            for player in prof['players']:
+                role, strat, _ = _unpack_obs_player(**player)
+                dest[self.role_strat_index(role, strat)] += 1
 
         # dict profile
         elif all(isinstance(v, abc.Mapping) for v in prof.values()):
@@ -94,11 +103,50 @@ class GameSerializer(rsgame._StratArray):
         return dest
 
     def to_prof_json(self, prof):
-        """Convert a profile to json"""
+        """Convert a profile array to json"""
         return {role: {strat: count.item() for strat, count
                        in zip(strats, counts) if count > 0}
                 for counts, role, strats
                 in zip(self.role_split(prof),
+                       self.role_names, self.strat_names)}
+
+    def from_mix_json(self, mix, dest=None, verify=True):
+        """Read a json mixture into an array"""
+        if dest is None:
+            dest = np.empty(self.num_role_strats, float)
+        dest.fill(0)
+
+        for role, strats in mix.items():
+            for strat, prob in strats.items():
+                dest[self.role_strat_index(role, strat)] = prob
+
+        assert not verify or self.verify_mixture(dest), \
+            "\"{}\" does not define a valid mixture".format(mix)
+        return dest
+
+    def to_mix_json(self, mix):
+        """Convert a mixture array to json"""
+        return self.to_prof_json(mix)
+
+    def from_subgame_json(self, subg, dest=None, verify=True):
+        """Read a json subgame into an array"""
+        if dest is None:
+            dest = np.empty(self.num_role_strats, bool)
+        dest.fill(False)
+
+        for role, strats in subg.items():
+            for strat in strats:
+                dest[self.role_strat_index(role, strat)] = True
+
+        assert not verify or self.verify_subgame(dest), \
+            "\"{}\" does not define a valid subgame".format(subg)
+        return dest
+
+    def to_subgame_json(self, subg):
+        """Convert a subgame array to json"""
+        return {role: [strat for strat, inc in zip(strats, mask) if inc]
+                for mask, role, strats
+                in zip(self.role_split(subg),
                        self.role_names, self.strat_names)}
 
     def from_payoff_json(self, prof, dest=None):
@@ -154,6 +202,15 @@ class GameSerializer(rsgame._StratArray):
                     counts[k] += 1
                     dest[k] += (pay - dest[k]) / counts[k]
 
+        # observation from simulation
+        elif 'players' in prof:
+            counts = np.zeros(self.num_role_strats, int)
+            for player in prof['players']:
+                role, strat, pay = _unpack_obs_player(**player)
+                ind = self.role_strat_index(role, strat)
+                counts[ind] += 1
+                dest[ind] += (pay - dest[ind]) / counts[ind]
+
         # dict payoff
         elif all(isinstance(v, abc.Mapping) for v in prof.values()):
             for role, strats in prof.items():
@@ -168,8 +225,22 @@ class GameSerializer(rsgame._StratArray):
 
         return dest
 
-    def to_payoff_json(self, prof, payoffs):
-        """Format a profile and payoffs as json"""
+    def to_payoff_json(self, payoffs, prof=None):
+        """Format payoffs as json
+
+        If an optional profile is specified, the json will be sparsified to
+        only strategies with at least one player.
+
+        Parameters
+        ----------
+        payoffs : ndarray
+            The payoffs to serialize.
+        prof : ndarray, optional
+            The profile the payoffs correspond to, specifying it allows the
+            written json to omit strategies that aren't played.
+        """
+        if prof is None:
+            prof = np.broadcast_to(True, self.num_role_strats)
         return {role: {strat: pay.mean() for strat, count, pay
                        in zip(strats, counts, pays) if count > 0}
                 for role, strats, counts, pays
@@ -177,13 +248,15 @@ class GameSerializer(rsgame._StratArray):
                        self.role_split(prof),
                        self.role_split(payoffs))}
 
-    def from_profpay_json(self, prof, dest_prof=None, dest_pays=None,
-                          dtype=int):
+    # TODO Some from_payoff_json's also compute the profile, so it's be more
+    # efficient to have from_payoff_json discard the profile, rather than
+    # having from_profpay regenerate it.
+    def from_profpay_json(self, prof, dest_prof=None, dest_pays=None):
         """Read json as a profile and a payoff"""
-        return (self.from_prof_json(prof, dest_prof, dtype),
+        return (self.from_prof_json(prof, dest_prof),
                 self.from_payoff_json(prof, dest_pays))
 
-    def to_profpay_json(self, prof, payoffs):
+    def to_profpay_json(self, payoffs, prof):
         """Format a profile and payoffs as json"""
         return {role: [(strat, int(count), float(pay)) for strat, count, pay
                        in zip(strats, counts, pays) if count > 0]
@@ -192,10 +265,8 @@ class GameSerializer(rsgame._StratArray):
                        self.role_split(prof),
                        self.role_split(payoffs))}
 
-    def from_obs_json(self, prof, dest=None):
-        """Read a set of payoff observations
-
-        An observation is a set of payoffs.
+    def from_samplepay_json(self, prof, dest=None):
+        """Read a set of payoff samples
 
         Parameters
         ----------
@@ -265,22 +336,31 @@ class GameSerializer(rsgame._StratArray):
 
         return dest
 
-    def to_obs_json(self, prof, obs):
-        """Format a profile and payoffs as json"""
+    def to_samplepay_json(self, samplepay, prof=None):
+        """Format sample payoffs as json
+
+        If prof is specified, the resulting json will omit payoffs for
+        strategies that aren't played.
+        """
+        if prof is None:
+            prof = np.broadcast_to(True, self.num_role_strats)
         return {role: {strat: list(map(float, pay)) for strat, count, pay
                        in zip(strats, counts, pays.T) if count > 0}
                 for role, strats, counts, pays
                 in zip(self.role_names, self.strat_names,
                        self.role_split(prof),
-                       self.role_split(obs))}
+                       self.role_split(samplepay))}
 
-    def from_profobs_json(self, prof, dest_prof=None, dest_obs=None,
-                          dtype=int):
+    # TODO Some from_samplepay_json's also compute the profile, so it's be more
+    # efficient to have from_samplepay_json discard the profile, rather than
+    # having from_profsamplepay regenerate it.
+    def from_profsamplepay_json(self, prof, dest_prof=None,
+                                dest_samplepay=None):
         """Convert json into a profile and an observation"""
-        return (self.from_prof_json(prof, dest_prof, dtype),
-                self.from_obs_json(prof, dest_obs))
+        return (self.from_prof_json(prof, dest_prof),
+                self.from_samplepay_json(prof, dest_samplepay))
 
-    def to_profobs_json(self, prof, obs):
+    def to_profsamplepay_json(self, samplepay, prof):
         """Convery profile and observations to prof obs output"""
         return {role: [(strat, int(count), list(map(float, pay)))
                        for strat, count, pay
@@ -288,21 +368,21 @@ class GameSerializer(rsgame._StratArray):
                 for role, strats, counts, pays
                 in zip(self.role_names, self.strat_names,
                        self.role_split(prof),
-                       self.role_split(obs))}
+                       self.role_split(samplepay))}
 
-    def from_prof_string(self, prof_string, dest=None):
+    def from_prof_str(self, prof_str, dest=None):
         """Read a profile from a string"""
         if dest is None:
             dest = np.empty(self.num_role_strats, int)
         dest.fill(0)
-        for role_str in prof_string.split('; '):
+        for role_str in prof_str.split('; '):
             role, strats = role_str.split(': ', 1)
             for strat_str in strats.split(', '):
                 count, strat = strat_str.split(' ', 1)
                 dest[self.role_strat_index(role, strat)] = count
         return dest
 
-    def to_prof_string(self, prof):
+    def to_prof_str(self, prof):
         """Convert a profile to a string"""
         return '; '.join(
             '{}: {}'.format(role, ', '.join(
@@ -312,27 +392,38 @@ class GameSerializer(rsgame._StratArray):
             in zip(self.role_names, self.strat_names,
                    self.role_split(prof)))
 
-    def to_prof_printstring(self, prof):
+    def to_prof_printstr(self, prof):
         """Convert a profile to a printable string"""
-        prof = np.asarray(prof)
-        if np.issubdtype(prof.dtype, int):
-            def format_strat(s, p):
-                return '\t{}: {:d}\n'.format(s, p)
-        elif np.issubdtype(prof.dtype, float):
-            def format_strat(s, p):
-                return '\t{}: {:>7.2%}\n'.format(s, p)
-        else:  # boolean
-            def format_strat(s, p):
-                return '\t{}\n'.format(s)
-
         return ''.join(
-            '{}:\n{}'.format(role, ''.join(format_strat(s, p)
-                                           for p, s in zip(probs, strats)
-                                           if p > 0))
+            '{}:\n{}'.format(role, ''.join(
+                '    {}: {:d}\n'.format(s, c)
+                for c, s in zip(counts, strats)
+                if c > 0))
+            for counts, role, strats
+            in zip(self.role_split(np.asarray(prof)), self.role_names,
+                   self.strat_names))
+
+    def to_mix_printstr(self, mix):
+        """Convert a mixture to a printable string"""
+        return ''.join(
+            '{}:\n{}'.format(role, ''.join(
+                '    {}: {:>7.2%}\n'.format(s, p)
+                for p, s in zip(probs, strats)
+                if p > 0))
             for probs, role, strats
-            in zip(self.role_split(prof), self.role_names, self.strat_names)
-            if probs.any()
-        ).expandtabs(4)
+            in zip(self.role_split(np.asarray(mix)), self.role_names,
+                   self.strat_names))
+
+    def to_subgame_printstr(self, subg):
+        """Convert a subgame to a printable string"""
+        return ''.join(
+            '{}:\n{}'.format(role, ''.join(
+                '    {}\n'.format(s)
+                for m, s in zip(mask, strats)
+                if m))
+            for mask, role, strats
+            in zip(self.role_split(np.asarray(subg)), self.role_names,
+                   self.strat_names))
 
     def from_role_json(self, role_json, dest=None, dtype=float):
         """Format role data as array"""
@@ -347,12 +438,11 @@ class GameSerializer(rsgame._StratArray):
         return {role: info.item() for role, info
                 in zip(self.role_names, np.asarray(role_info))}
 
-    def to_deviation_payoff_json(self, profile, payoffs):
+    def to_deviation_payoff_json(self, payoffs, profile):
         """Format a profile and deviation payoffs as json"""
         supp = np.asarray(profile, bool)
         role_supp = self.role_reduce(supp)
         splits = ((self.num_strategies - 1) * role_supp)[:-1].cumsum()
-        print(role_supp, splits, payoffs)
         return {r: {s: {d: p.item() for p, d
                         in zip(dps, (d for d in ses if d != s))}  # noqa
                     for dps, s in zip(np.split(ps, sp.sum()),
@@ -366,42 +456,44 @@ class GameSerializer(rsgame._StratArray):
         if 'roles' in game:
             for role in game['roles']:
                 num_players[self.role_index(role['name'])] = role['count']
-
         elif 'players' in game:
             for role, count in game['players'].items():
                 num_players[self.role_index(role)] = count
-
         else:
             raise ValueError("Unknown game format: {}".format(game))
 
         return num_players
 
     def from_basegame_json(self, game):
+        """Read a BaseGame from json"""
         num_players = self._get_num_players(game)
         return rsgame.basegame(num_players, self.num_strategies)
 
     def to_basegame_json(self, game):
+        """Format basegame as json"""
         return {
             'players': dict(zip(self.role_names, map(int, game.num_players))),
             'strategies': dict(zip(self.role_names,
                                    map(list, self.strat_names)))
         }
 
-    def to_basegame_printstring(self, game):
-        return (('BaseGame:\n\tRoles: {}\n\tPlayers:\n\t\t{}\n\t'
-                 'Strategies:\n\t\t{}').format(
+    def to_basegame_printstr(self, game):
+        """Fromat basegame as a printable string"""
+        return (('BaseGame:\n    Roles: {}\n    Players:\n        {}\n    '
+                 'Strategies:\n        {}').format(
                      ', '.join(self.role_names),
-                     '\n\t\t'.join(
+                     '\n        '.join(
                          '{:d}x {}'.format(count, role)
                          for role, count
                          in sorted(zip(self.role_names, game.num_players))),
-                     '\n\t\t'.join(
-                         '{}:\n\t\t\t{}'.format(role, '\n\t\t\t'.join(strats))
+                     '\n        '.join(
+                         '{}:\n            {}'.format(
+                             role, '\n            '.join(strats))
                          for role, strats
-                         in sorted(zip(self.role_names, self.strat_names)))
-        )).expandtabs(4)
+                         in sorted(zip(self.role_names, self.strat_names)))))
 
     def from_game_json(self, game):
+        """Read a Game from json"""
         num_players = self._get_num_players(game)
         profile_list = game.get('profiles', ())
         num_profs = len(profile_list)
@@ -412,46 +504,50 @@ class GameSerializer(rsgame._StratArray):
         return rsgame.game(num_players, self.num_strategies, profiles, payoffs)
 
     def to_game_json(self, game):
+        """Fromat a Game as json"""
         res = self.to_basegame_json(game)
         if isinstance(game, rsgame.Game):
-            res['profiles'] = [self.to_profpay_json(*pp) for pp
+            res['profiles'] = [self.to_profpay_json(pay, prof) for prof, pay
                                in zip(game.profiles, game.payoffs)]
         else:
             res['profiles'] = []
         return res
 
-    def to_game_printstring(self, game):
+    def to_game_printstr(self, game):
+        """Format game as a printable string"""
         num_profs = game.num_profiles if isinstance(
             game, rsgame.Game) else 0
-        return ('{base}\npayoff data for {data:d} out of {total:d} '
-                'profiles').format(base=self.to_basegame_printstring(game)[4:],
-                                   data=num_profs, total=game.num_all_profiles)
+        return '{}\npayoff data for {:d} out of {:d} profiles'.format(
+            self.to_basegame_printstr(game)[4:], num_profs,
+            game.num_all_profiles)
 
     def from_samplegame_json(self, game):
+        """Read a SampleGame from json"""
         num_players = self._get_num_players(game)
         profile_list = game.get('profiles', ())
 
         sample_map = {}
         for profile in profile_list:
-            prof, obs = self.from_profobs_json(profile)
-            num_samps = obs.shape[0]
+            prof, spay = self.from_profsamplepay_json(profile)
+            num_samps = spay.shape[0]
             profls, payls = sample_map.setdefault(num_samps, ([], []))
             profls.append(prof[None])
-            payls.append(obs.T[None])
+            payls.append(spay.T[None])
 
         if sample_map:
             values = [v for _, v in sorted(sample_map.items())]
             profiles = np.concatenate(list(itertools.chain.from_iterable(
                 prof for prof, _ in values)))
-            sample_payoffs = [np.concatenate(obs) for _, obs in values]
+            sample_payoffs = [np.concatenate(spay) for _, spay in values]
         else:  # No data
-            profiles = np.empty((0, self.num_role_strats), dtype=int)
+            profiles = np.empty((0, self.num_role_strats), int)
             sample_payoffs = []
 
         return rsgame.samplegame(num_players, self.num_strategies, profiles,
                                  sample_payoffs)
 
     def to_samplegame_json(self, game):
+        """Fromat a SampleGame as json"""
         res = self.to_basegame_json(game)
         if isinstance(game, rsgame.SampleGame):
             profiles = game.profiles
@@ -463,13 +559,15 @@ class GameSerializer(rsgame._StratArray):
             profiles = ()
             spayoffs = ()
 
-        res['profiles'] = [self.to_profobs_json(prof, pay.T) for prof, pay
+        res['profiles'] = [self.to_profsamplepay_json(pay.T, prof)
+                           for prof, pay
                            in zip(profiles,
                                   itertools.chain.from_iterable(spayoffs))]
         return res
 
-    def to_samplegame_printstring(self, game):
-        str_ = 'Sample' + self.to_game_printstring(game)
+    def to_samplegame_printstr(self, game):
+        """Format a SampleGame as a printable string"""
+        str_ = 'Sample' + self.to_game_printstr(game)
         if isinstance(game, rsgame.SampleGame):
             samples = game.num_samples
         elif isinstance(game, rsgame.Game):
@@ -545,6 +643,9 @@ def read_samplegame(json):
 
 
 # Convenient unpacking of dictionaries
+_nan = float('nan')
+
+
 def _unpack_symgrp(role, strategy, count, payoff=None, id=None, **_):
     return id, role, strategy, count, payoff
 
@@ -557,6 +658,10 @@ def _unpack_player(sid, p, **_):
     return sid, p
 
 
+def _unpack_obs_player(role, strategy, payoff, **_):
+    return role, strategy, payoff
+
+
 def _mean(vals):
     if isinstance(vals, abc.Iterable):
         count = 0
@@ -564,6 +669,6 @@ def _mean(vals):
         for v in vals:
             count += 1
             mean += (v - mean) / count
-        return mean if count > 0 else float('nan')
+        return mean if count > 0 else _nan
     else:
         return vals

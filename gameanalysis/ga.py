@@ -1,12 +1,12 @@
 import argparse
 import pkgutil
 
-from gameanalysis import scripts
+from gameanalysis import script
 
 
 def create_parser():
     modules = [imp.find_module(name).load_module(name) for imp, name, _
-               in pkgutil.iter_modules(scripts.__path__)]
+               in pkgutil.iter_modules(script.__path__)]
     parser = argparse.ArgumentParser(
         description="""Command line access to the game analysis toolkit.""")
     subparsers = parser.add_subparsers(

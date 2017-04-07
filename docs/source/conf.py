@@ -21,6 +21,7 @@ import mock
 import os
 import setuptools
 import sys
+
 from sphinx import apidoc
 
 # Mock out c modules so that they're not necessary to build documentation. This
@@ -54,7 +55,6 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.imgmath',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
 ]
 

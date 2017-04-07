@@ -336,7 +336,7 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
         mix = game.uniform_mixture()
         while profiles.shape[0] < num:
             profiles = np.concatenate([profiles,
-                                       game.random_profiles(mix, num_per)])
+                                       game.random_profiles(num_per, mix)])
             profiles = utils.unique_axis(profiles)
         inds = rand.choice(profiles.shape[0], num, replace=False)
         profiles = profiles[inds]
