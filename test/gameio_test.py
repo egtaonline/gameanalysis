@@ -759,6 +759,16 @@ def test_to_from_samplepay_json():
     assert SERIAL2.to_samplepay_json(spay) == json_spay_0
     assert np.allclose(SERIAL2.from_samplepay_json(json_spay), spay)
 
+    with pytest.raises(AssertionError):
+        SERIAL2.from_samplepay_json(
+            json_spay, np.empty((0, SERIAL2.num_role_strats)))
+
+    json_prof_spay = {'a': [('bar', 3, [3, 4, 5])],
+                      'b': [('baz', 4, [7, 8, 9])]}
+    with pytest.raises(AssertionError):
+        SERIAL2.from_samplepay_json(
+            json_prof_spay, np.empty((0, SERIAL2.num_role_strats)))
+
 
 def test_to_from_profsamplepay_json():
     prof = [3, 0, 4]

@@ -76,28 +76,14 @@ class GameSerializer(rsgame.StratArray):
             dest = np.empty(self.num_role_strats, int)
         dest.fill(0)
 
-        # standard egta symmetry groups
-        if 'symmetry_groups' in prof:
-            for symgrp in prof['symmetry_groups']:
-                _, role, strat, count, _ = _unpack_symgrp(**symgrp)
-                dest[self.role_strat_index(role, strat)] = count
+        try:
+            # To parse as format that contains both data types
+            self.from_profpay_json(prof, dest_prof=dest)
 
-        # observation from simulation
-        elif 'players' in prof:
-            for player in prof['players']:
-                role, strat, _ = _unpack_obs_player(**player)
-                dest[self.role_strat_index(role, strat)] += 1
-
-        # dict profile
-        elif all(isinstance(v, abc.Mapping) for v in prof.values()):
+        except ValueError:
+            # Only remaining format is straight dictionary
             for role, strats in prof.items():
                 for strat, count in strats.items():
-                    dest[self.role_strat_index(role, strat)] = count
-
-        # payoff profile
-        else:
-            for role, strats in prof.items():
-                for strat, count, _ in strats:
                     dest[self.role_strat_index(role, strat)] = count
 
         return dest
@@ -164,64 +150,15 @@ class GameSerializer(rsgame.StratArray):
             dest = np.empty(self.num_role_strats, float)
         dest.fill(0)
 
-        # observations but no data
-        if not prof.get('observations', True):
-            for symgrp in prof['symmetry_groups']:
-                _, role, strat, *__ = _unpack_symgrp(**symgrp)
-                dest[self.role_strat_index(role, strat)] = np.nan
-            return dest
+        try:
+            # To parse as format that contains both data types
+            self.from_profpay_json(prof, dest_pays=dest)
 
-        # summary format
-        if 'observations' not in prof and 'symmetry_groups' in prof:
-            for symgrp in prof['symmetry_groups']:
-                _, role, strat, __, pay = _unpack_symgrp(**symgrp)
-                dest[self.role_strat_index(role, strat)] = pay
-
-        # observations format
-        elif ('observations' in prof
-              and 'symmetry_groups' in prof['observations'][0]):
-            ids = {i: self.role_strat_index(r, s) for i, r, s, *_
-                   in (_unpack_symgrp(**sg) for sg in prof['symmetry_groups'])}
-            counts = np.zeros(self.num_role_strats, int)
-            for j, obs in enumerate(prof['observations']):
-                for symgrp in obs['symmetry_groups']:
-                    i, pay = _unpack_obs(**symgrp)
-                    k = ids[i]
-                    counts[k] += 1
-                    dest[k] += (pay - dest[k]) / counts[k]
-
-        # full format
-        elif 'observations' in prof:
-            ids = {i: self.role_strat_index(r, s) for i, r, s, *_
-                   in (_unpack_symgrp(**sg) for sg in prof['symmetry_groups'])}
-            counts = np.zeros(self.num_role_strats, int)
-            for j, obs in enumerate(prof['observations']):
-                for player in obs['players']:
-                    i, pay = _unpack_player(**player)
-                    k = ids[i]
-                    counts[k] += 1
-                    dest[k] += (pay - dest[k]) / counts[k]
-
-        # observation from simulation
-        elif 'players' in prof:
-            counts = np.zeros(self.num_role_strats, int)
-            for player in prof['players']:
-                role, strat, pay = _unpack_obs_player(**player)
-                ind = self.role_strat_index(role, strat)
-                counts[ind] += 1
-                dest[ind] += (pay - dest[ind]) / counts[ind]
-
-        # dict payoff
-        elif all(isinstance(v, abc.Mapping) for v in prof.values()):
+        except ValueError:
+            # Only remaining format is straight dictionary
             for role, strats in prof.items():
                 for strat, pay in strats.items():
                     dest[self.role_strat_index(role, strat)] = _mean(pay)
-
-        # profile payoff
-        else:
-            for role, strats in prof.items():
-                for strat, _, pays in strats:
-                    dest[self.role_strat_index(role, strat)] = _mean(pays)
 
         return dest
 
@@ -248,13 +185,87 @@ class GameSerializer(rsgame.StratArray):
                        self.role_split(prof),
                        self.role_split(payoffs))}
 
-    # TODO Some from_payoff_json's also compute the profile, so it's be more
-    # efficient to have from_payoff_json discard the profile, rather than
-    # having from_profpay regenerate it.
     def from_profpay_json(self, prof, dest_prof=None, dest_pays=None):
         """Read json as a profile and a payoff"""
-        return (self.from_prof_json(prof, dest_prof),
-                self.from_payoff_json(prof, dest_pays))
+        if dest_prof is None:
+            dest_prof = np.empty(self.num_role_strats, int)
+        if dest_pays is None:
+            dest_pays = np.empty(self.num_role_strats, float)
+        dest_prof.fill(0)
+        dest_pays.fill(0)
+
+        # observations but no data
+        if not prof.get('observations', True):
+            for symgrp in prof['symmetry_groups']:
+                _, role, strat, count, __ = _unpack_symgrp(**symgrp)
+                index = self.role_strat_index(role, strat)
+                dest_prof[index] = count
+                dest_pays[index] = np.nan
+
+        # summary format
+        elif 'observations' not in prof and 'symmetry_groups' in prof:
+            for symgrp in prof['symmetry_groups']:
+                _, role, strat, count, pay = _unpack_symgrp(**symgrp)
+                index = self.role_strat_index(role, strat)
+                dest_prof[index] = count
+                dest_pays[index] = pay
+
+        # observations format
+        elif ('observations' in prof
+              and 'symmetry_groups' in prof['observations'][0]):
+            ids = {}
+            for symgrp in prof['symmetry_groups']:
+                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+                index = self.role_strat_index(role, strat)
+                ids[i] = index
+                dest_prof[index] = count
+
+            counts = np.zeros(self.num_role_strats, int)
+            for j, obs in enumerate(prof['observations']):
+                for symgrp in obs['symmetry_groups']:
+                    i, pay = _unpack_obs(**symgrp)
+                    k = ids[i]
+                    counts[k] += 1
+                    dest_pays[k] += (pay - dest_pays[k]) / counts[k]
+
+        # full format
+        elif 'observations' in prof:
+            ids = {}
+            for symgrp in prof['symmetry_groups']:
+                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+                index = self.role_strat_index(role, strat)
+                ids[i] = index
+                dest_prof[index] = count
+
+            counts = np.zeros(self.num_role_strats, int)
+            for j, obs in enumerate(prof['observations']):
+                for player in obs['players']:
+                    i, pay = _unpack_player(**player)
+                    k = ids[i]
+                    counts[k] += 1
+                    dest_pays[k] += (pay - dest_pays[k]) / counts[k]
+
+        # observation from simulation
+        elif 'players' in prof:
+            for player in prof['players']:
+                role, strat, pay = _unpack_obs_player(**player)
+                ind = self.role_strat_index(role, strat)
+                dest_prof[ind] += 1
+                dest_pays[ind] += (pay - dest_pays[ind]) / dest_prof[ind]
+
+        # dict payoff
+        elif all(not isinstance(v, abc.Mapping) for v in prof.values()):
+            for role, strats in prof.items():
+                for strat, count, pays in strats:
+                    index = self.role_strat_index(role, strat)
+                    dest_prof[index] = count
+                    dest_pays[index] = _mean(pays)
+
+        # error
+        else:
+            raise ValueError("unknown format")
+
+        return dest_prof, dest_pays
 
     def to_profpay_json(self, payoffs, prof):
         """Format a profile and payoffs as json"""
@@ -278,61 +289,26 @@ class GameSerializer(rsgame.StratArray):
             array. This may be hard to use as you need to know how many
             observations are in the json.
         """
-        def set_dest(dest, num):
+        try:
+            # samplepay format with profile too
+            _, dest = self.from_profsamplepay_json(prof, dest_samplepay=dest)
+
+        except ValueError:
+            # Must be {role: {strat: [pay]}}
+            num = max(max(len(p) if isinstance(p, abc.Iterable) else 1
+                          for p in pays.values())
+                      for pays in prof.values())
+
             if dest is None:
                 dest = np.empty((num, self.num_role_strats), float)
+            else:
+                assert dest.shape[0] >= num, \
+                    "dest_samplepay not large enough for observations"
             dest.fill(0)
-            return dest
 
-        # summary format
-        if 'observations' not in prof and 'symmetry_groups' in prof:
-            dest = set_dest(dest, 1)
-            for symgrp in prof['symmetry_groups']:
-                _, role, strat, __, pay = _unpack_symgrp(**symgrp)
-                dest[0, self.role_strat_index(role, strat)] = pay
-
-        # observations format
-        elif ('observations' in prof
-              and 'symmetry_groups' in prof['observations'][0]):
-            dest = set_dest(dest, len(prof['observations']))
-            ids = {i: self.role_strat_index(r, s) for i, r, s, *_
-                   in (_unpack_symgrp(**sg) for sg in prof['symmetry_groups'])}
-            for j, obs in enumerate(prof['observations']):
-                for symgrp in obs['symmetry_groups']:
-                    i, pay = _unpack_obs(**symgrp)
-                    dest[j, ids[i]] = pay
-
-        # full format
-        elif 'observations' in prof:
-            dest = set_dest(dest, len(prof['observations']))
-            ids = {i: self.role_strat_index(r, s) for i, r, s, *_
-                   in (_unpack_symgrp(**sg) for sg in prof['symmetry_groups'])}
-            counts = np.empty(self.num_role_strats, int)
-            for j, obs in enumerate(prof['observations']):
-                counts.fill(0)
-                for player in obs['players']:
-                    i, pay = _unpack_player(**player)
-                    k = ids[i]
-                    counts[k] += 1
-                    dest[j, k] += (pay - dest[j, k]) / counts[k]
-
-        # dict payoff
-        elif all(isinstance(v, abc.Mapping) for v in prof.values()):
-            val = next(iter(next(iter(prof.values())).values()))
-            num = len(val) if isinstance(val, abc.Iterable) else 1
-            dest = set_dest(dest, num)
             for role, strats in prof.items():
                 for strat, pay in strats.items():
                     dest[:, self.role_strat_index(role, strat)] = pay
-
-        # profile payoff
-        else:
-            val = next(iter(prof.values()))[0][2]
-            num = len(val) if isinstance(val, abc.Iterable) else 1
-            dest = set_dest(dest, num)
-            for role, strats in prof.items():
-                for strat, _, pays in strats:
-                    dest[:, self.role_strat_index(role, strat)] = pays
 
         return dest
 
@@ -351,14 +327,86 @@ class GameSerializer(rsgame.StratArray):
                        self.role_split(prof),
                        self.role_split(samplepay))}
 
-    # TODO Some from_samplepay_json's also compute the profile, so it's be more
-    # efficient to have from_samplepay_json discard the profile, rather than
-    # having from_profsamplepay regenerate it.
     def from_profsamplepay_json(self, prof, dest_prof=None,
                                 dest_samplepay=None):
         """Convert json into a profile and an observation"""
-        return (self.from_prof_json(prof, dest_prof),
-                self.from_samplepay_json(prof, dest_samplepay))
+        if dest_prof is None:
+            dest_prof = np.empty(self.num_role_strats, int)
+        dest_prof.fill(0)
+
+        def get_pay(num):
+            dest = dest_samplepay
+            if dest is None:
+                dest = np.empty((num, self.num_role_strats), float)
+            else:
+                assert dest.shape[0] >= num, \
+                    "dest_samplepay not large enough for observations"
+            dest.fill(0)
+            return dest
+
+        # summary format
+        if 'observations' not in prof and 'symmetry_groups' in prof:
+            dest = get_pay(1)
+            for symgrp in prof['symmetry_groups']:
+                _, role, strat, count, pay = _unpack_symgrp(**symgrp)
+                index = self.role_strat_index(role, strat)
+                dest_prof[index] = count
+                dest[0, index] = pay
+
+        # observations format
+        elif ('observations' in prof
+              and 'symmetry_groups' in prof['observations'][0]):
+            dest = get_pay(len(prof['observations']))
+            ids = {}
+            for symgrp in prof['symmetry_groups']:
+                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+                index = self.role_strat_index(role, strat)
+                ids[i] = index
+                dest_prof[index] = count
+
+            for j, obs in enumerate(prof['observations']):
+                for symgrp in obs['symmetry_groups']:
+                    i, pay = _unpack_obs(**symgrp)
+                    dest[j, ids[i]] = pay
+
+        # full format
+        elif 'observations' in prof:
+            dest = get_pay(len(prof['observations']))
+            ids = {}
+            for symgrp in prof['symmetry_groups']:
+                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+                index = self.role_strat_index(role, strat)
+                ids[i] = index
+                dest_prof[index] = count
+
+            counts = np.empty(self.num_role_strats, int)
+            for j, obs in enumerate(prof['observations']):
+                counts.fill(0)
+                for player in obs['players']:
+                    i, pay = _unpack_player(**player)
+                    k = ids[i]
+                    counts[k] += 1
+                    dest[j, k] += (pay - dest[j, k]) / counts[k]
+                assert np.all(counts == dest_prof), \
+                    "full format didn't have payoffs for the correct number of players"  # noqa
+
+        # profile payoff
+        elif all(not isinstance(v, abc.Mapping) for v in prof.values()):
+            num = max(max(len(p) if isinstance(p, abc.Iterable) else 1
+                          for _, __, p in sg)
+                      for sg in prof.values())
+            dest = get_pay(num)
+            for role, strats in prof.items():
+                for strat, count, pays in strats:
+                    index = self.role_strat_index(role, strat)
+                    dest_prof[index] = count
+                    dest[:, index] = pays
+
+        # unrecognized
+        else:
+            raise ValueError("unrecognized format")
+
+        return dest_prof, dest
 
     def to_profsamplepay_json(self, samplepay, prof):
         """Convery profile and observations to prof obs output"""
