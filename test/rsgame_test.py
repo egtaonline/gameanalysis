@@ -1,6 +1,5 @@
 import itertools
 import math
-import os
 
 import numpy as np
 import numpy.random as rand
@@ -13,48 +12,11 @@ from gameanalysis import gameio
 from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import utils
+from test import testutils
+
 
 TINY = np.finfo(float).tiny
 EPS = 5 * np.finfo(float).eps
-SMALL_GAMES = [
-    ([1], 1),
-    ([1], 2),
-    ([2], 1),
-    ([2], 2),
-    ([2], 5),
-    ([5], 2),
-    ([5], 5),
-    (2 * [1], 1),
-    (2 * [1], 2),
-    (2 * [2], 1),
-    (2 * [2], 2),
-    (5 * [1], 2),
-    (2 * [1], 5),
-    (2 * [2], 5),
-]
-GAMES = SMALL_GAMES + [
-    (2 * [5], 2),
-    (2 * [5], 5),
-    (3 * [3], 3),
-    (5 * [1], 5),
-    ([170], 2),
-    ([180], 2),
-    ([1, 2], 2),
-    ([1, 2], [2, 1]),
-    (2, [1, 2]),
-    ([3, 4], [2, 3]),
-    ([2, 3, 4], [4, 3, 2]),
-]
-BIG_GAMES = GAMES + ([] if os.getenv('BIG_TESTS') != 'ON' else [
-    (1000, 2),
-    (5, 40),
-    (3, 160),
-    (50, 2),
-    (20, 5),
-    (90, 5),
-    ([2] * 2, 40),
-    (12, 12),
-])
 
 
 def exact_dev_reps(game):
@@ -75,7 +37,7 @@ def exact_dev_reps(game):
     return dev_reps
 
 
-@pytest.mark.parametrize('players,strategies', BIG_GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.big_games)
 def test_devreps_approx(players, strategies):
     base = rsgame.basegame(players, strategies)
     profiles = base.all_profiles()
@@ -88,7 +50,7 @@ def test_devreps_approx(players, strategies):
 
 
 # Test that all functions work on an BaseGame
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_basegame_function(players, strategies):
     game = rsgame.basegame(players, strategies)
     assert game.num_players is not None, "num players was None"
@@ -209,7 +171,7 @@ def test_basegame_function(players, strategies):
     assert hash(game) is not None
 
 
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_max_prob_prof(players, strategies):
     game = rsgame.basegame(players, strategies)
     profiles = game.all_profiles()
@@ -256,7 +218,7 @@ def test_verify_mixture_profile():
     assert game.verify_profile(game.random_deviator_profiles(mix, 20)).all()
 
 
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_simplex_project(players, strategies):
     game = rsgame.basegame(players, strategies)
     for non_mixture in rand.uniform(-1, 1, (100, game.num_role_strats)):
@@ -271,7 +233,7 @@ def test_symmetric():
 
 
 # Test that game functions work
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_game_function(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
 
@@ -325,7 +287,7 @@ def test_game_function(players, strategies):
 
 
 # Test that a Game with no data can still be created
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_empty_full_game(players, strategies):
     game = rsgame.game(players, strategies)
 
@@ -428,7 +390,7 @@ def test_constant_sum():
 
 # Test that sample game functions work
 @pytest.mark.parametrize('game_size,samples',
-                         zip(GAMES, itertools.cycle([1, 2, 5, 10])))
+                         zip(testutils.games, itertools.cycle([1, 2, 5, 10])))
 def test_samplegame_function(game_size, samples):
     base = gamegen.role_symmetric_game(*game_size)
     game = gamegen.add_noise(base, 1, samples)
@@ -494,7 +456,7 @@ def test_samplegame_resample():
 
 
 # Test that a Game with no data can still be created
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_empty_samplegame(players, strategies):
     game = rsgame.samplegame(players, strategies)
 
@@ -576,7 +538,7 @@ def test_trim_mixture_support():
             trimmed)
 
 
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_profile_count(players, strategies):
     game = rsgame.basegame(players, strategies)
 
@@ -684,7 +646,7 @@ def test_deviation_nans_2(p, q):
     assert not np.isnan(pays).any()
 
 
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_json_copy_basegame(players, strategies):
     game1 = rsgame.basegame(players, strategies)
     serial = gamegen.serializer(game1)
@@ -692,7 +654,7 @@ def test_json_copy_basegame(players, strategies):
     assert game1 == game2
 
 
-@pytest.mark.parametrize('players,strategies', GAMES)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 def test_json_copy_game(players, strategies):
     game1 = gamegen.role_symmetric_game(players, strategies)
     serial = gamegen.serializer(game1)
@@ -703,7 +665,7 @@ def test_json_copy_game(players, strategies):
 
 
 @pytest.mark.parametrize('game_size,samples',
-                         zip(GAMES, itertools.cycle([1, 2, 5, 10])))
+                         zip(testutils.games, itertools.cycle([1, 2, 5, 10])))
 def test_json_copy_samplegame(game_size, samples):
     base = gamegen.role_symmetric_game(*game_size)
     game1 = gamegen.add_noise(base, 1, samples)

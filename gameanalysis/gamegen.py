@@ -1,4 +1,5 @@
 import itertools
+from collections import abc
 
 import numpy as np
 import numpy.random as rand
@@ -239,7 +240,16 @@ def _compact_payoffs(game):
 
 def rock_paper_scissors(win=1, loss=-1, return_serial=False):
     """Return an instance of rock paper scissors"""
-    assert win > 0 and loss < 0
+    if isinstance(win, abc.Iterable):
+        win = list(win)
+    else:
+        win = [win] * 3
+    if isinstance(loss, abc.Iterable):
+        loss = list(loss)
+    else:
+        loss = [loss] * 3
+    assert (all(l < 0 for l in loss) and all(0 < w for w in win) and
+            len(loss) == 3 and len(win) == 3)
     profiles = [[2, 0, 0],
                 [1, 1, 0],
                 [1, 0, 1],
@@ -247,10 +257,10 @@ def rock_paper_scissors(win=1, loss=-1, return_serial=False):
                 [0, 1, 1],
                 [0, 0, 2]]
     payoffs = [[0., 0., 0.],
-               [loss, win, 0.],
-               [win, 0., loss],
+               [loss[0], win[0], 0.],
+               [win[1], 0., loss[1]],
                [0., 0., 0.],
-               [0., loss, win],
+               [0., loss[2], win[2]],
                [0., 0., 0.]]
     game = rsgame.game(2, 3, profiles, payoffs)
     if not return_serial:

@@ -8,6 +8,7 @@ from scipy import optimize
 from scipy import integrate
 
 from gameanalysis import collect
+from gameanalysis import fixedpoint
 from gameanalysis import regret
 
 
@@ -72,7 +73,7 @@ class RegretOptimizer(object):
     This method uses constrained convex optimization to to attempt to solve a
     proxy for the nonconvex regret minimization."""
 
-    def __init__(self, game, gtol=1e-8):
+    def __init__(self, game, regret_thresh=None, gtol=1e-8):
         self.game = game
         self.scale = game.role_repeat(game.max_payoffs() - game.min_payoffs())
         self.scale[self.scale == 0] = 1  # In case payoffs are the same
@@ -143,17 +144,17 @@ class ReplicatorDynamicsOde(object):
     # tested / explored.
     # http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.integrate.ode.html  # noqa
 
-    def __init__(self, game, final_time=1000):
+    def __init__(self, game, regret_thresh=None, final_time=1000):
         self.game = game
         self.final_time = final_time
 
-    def func(self, t, mix):
+    def func(self, t, mix):  # pragma: no cover
         dev_pay = self.game.deviation_payoffs(np.maximum(mix, 0),
                                               assume_complete=True)
         return mix * (dev_pay - self.game.role_reduce(mix * dev_pay,
                                                       keepdims=True))
 
-    def grad(self, t, mix):
+    def grad(self, t, mix):  # pragma: no cover
         dev_pay, dev_jac = self.game.deviation_payoffs(
             np.maximum(mix, 0), jacobian=True, assume_complete=True)
 
@@ -184,8 +185,8 @@ class ReplicatorDynamics(object):
     respectively. Otherwise they can be conservative bounds.
     """
 
-    def __init__(self, game, max_iters=10000, converge_thresh=1e-8,
-                 slack=1e-3):
+    def __init__(self, game, regret_thresh=None, max_iters=10000,
+                 converge_thresh=1e-8, slack=1e-3):
         self.game = game
         self.max_iters = max_iters
         self.converge_thresh = converge_thresh
@@ -216,10 +217,51 @@ class ReplicatorDynamics(object):
         return self.game.simplex_project(mix)
 
 
+class FixedPoint(object):
+    """Compute equilibria using a fixed point search
+
+    This will run a search for a fixed point, in deviations space, which is is
+    guaranteed to approximate, but it may take exponential time.
+    """
+
+    def __init__(self, game, regret_thresh):
+        self.game = game
+        self.regret_thresh = regret_thresh
+
+    def __call__(self, init):  # pragma: no cover
+
+        def to_simplotope(simp):
+            """Project simplex onto simplotope"""
+            simp = simp.copy()
+            # if an entire role is zero, this will arbitrarily set it to
+            # uniform
+            simp += self.game.role_repeat(self.game.role_reduce(simp) <= 0)
+            simp /= self.game.role_reduce(simp, keepdims=True)
+            return simp
+
+        def eqa_func(mix):
+            mix = to_simplotope(mix)
+            gains = np.maximum(regret.mixture_deviation_gains(self.game, mix),
+                               0)
+            result = ((mix + gains) /
+                      (1 + self.game.role_reduce(gains, keepdims=True)))
+            # project back into simplex
+            result /= result.sum()
+            return result
+
+        def stop_func(mix):
+            reg = regret.mixture_regret(self.game, to_simplotope(mix))
+            return reg < self.regret_thresh
+
+        return to_simplotope(fixedpoint.fixed_point(
+            eqa_func, init / init.sum(), stop=stop_func))
+
+
 _AVAILABLE_METHODS = {
     'replicator': ReplicatorDynamics,
     'replicatorode': ReplicatorDynamicsOde,
     'optimize': RegretOptimizer,
+    'fixedpoint': FixedPoint,
 }
 
 
@@ -268,8 +310,9 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         game.role_biased_mixtures(),
         game.random_mixtures(random_restarts)))
 
-    methods = methods or dict(optimize=None, replicator=None)
-    methods = [_AVAILABLE_METHODS[m](game, **(p or {}))
+    methods = methods or {'optimize': None, 'replicator': None}
+    methods = [_AVAILABLE_METHODS[m](game, regret_thresh=regret_thresh,
+                                     **(p or {}))
                for m, p in methods.items()]
 
     equilibria = collect.WeightedSimilaritySet(

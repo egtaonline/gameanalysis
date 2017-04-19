@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from collections import abc
 
 from gameanalysis import gamegen
 from gameanalysis import regret
@@ -264,15 +265,26 @@ def test_drop_samples(players, strategies):
     assert not dropped.is_empty()
 
 
+def _first(val):
+    """Retrun first val if its an iterable"""
+    if isinstance(val, abc.Iterable):
+        return next(iter(val))
+    else:
+        return val
+
+
 @pytest.mark.parametrize('win,loss', [
     (1, -1),
     (2, -1),
+    ([2, 2, 3], -1),
     (1, -2),
+    (1, [-2, -2, -3]),
 ])
 def test_rock_paper_scissors(win, loss):
     game, conv = gamegen.rock_paper_scissors(win, loss, return_serial=True)
     assert conv.strat_names == (('rock', 'paper', 'scissors'),)
-    assert np.allclose(game.get_payoffs([1, 1, 0]), [loss, win, 0])
+    assert np.allclose(game.get_payoffs([1, 1, 0]),
+                       [_first(loss), _first(win), 0])
 
 
 def test_rock_paper_scissors_defaults():

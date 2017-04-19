@@ -1,5 +1,4 @@
 import itertools
-import os
 
 import numpy as np
 import numpy.random as rand
@@ -9,6 +8,7 @@ from gameanalysis import gamegen
 from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import utils
+from test import testutils
 
 
 @pytest.mark.parametrize('keep_prob', [0.6, 0.9, 1] * 10)
@@ -489,6 +489,7 @@ def test_sample_game_payoff():
     assert np.setxor1d(actual, expected).size == 1
 
 
+@pytest.mark.parametrize('_', range(20))
 @pytest.mark.parametrize('players,strategies', [
     ([1], [1]),
     ([2], [1]),
@@ -497,11 +498,11 @@ def test_sample_game_payoff():
     ([1, 2], [2, 1]),
     ([1, 4], [2, 1]),
     ([4, 9], [3, 2]),
-] * 20 + ([
+] + ([
     ([3] * 3, [3] * 3),
     ([3, 4, 9], [4, 3, 2]),
-] if os.getenv('BIG_TESTS') == 'ON' else []) * 20)
-def test_random_approximate_dpr(players, strategies):
+] if testutils.big_tests else []))
+def test_random_approximate_dpr(players, strategies, _):
     """Test approximate dpr preserves completeness on random games"""
     game = gamegen.role_symmetric_game(players, strategies)
     red_counts = 2 + (rand.random(game.num_roles) * (game.num_players - 1))\

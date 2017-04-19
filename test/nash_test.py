@@ -5,14 +5,17 @@ import math
 import numpy as np
 import pytest
 
+from gameanalysis import agggen
 from gameanalysis import gamegen
 from gameanalysis import gameio
 from gameanalysis import nash
 from gameanalysis import regret
 from gameanalysis import rsgame
+from test import testutils
 
 
-METHODS = [('optimize', {}), ('replicator', {}), ('replicatorode', {})]
+METHODS = [('optimize', {}), ('replicator', {}), ('replicatorode', {}),
+           ('fixedpoint', {})]
 ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
     itertools.combinations(METHODS, i)
     for i in range(1, len(METHODS) + 1))))
@@ -50,7 +53,7 @@ def test_mixed_known_eq(methods, eq_prob):
     eqa = nash.mixed_nash(game, processes=1, **methods)
     assert eqa.shape[0] >= 1, "didn't find equilibrium"
     expected = [eq_prob, 1 - eq_prob]
-    assert np.isclose(eqa, expected, atol=1e-3, rtol=1e-3).all(1).any(), \
+    assert np.isclose(eqa, expected, atol=1e-2, rtol=1e-2).all(1).any(), \
         "didn't find correct equilibrium {} instead of {}".format(
             eqa, expected)
 
@@ -108,7 +111,16 @@ def test_mixed_roshambo(methods):
     eqa = nash.mixed_nash(game, dist_thresh=1e-2, processes=1, **methods)
     assert eqa.shape[0] == 1, \
         "didn't find right number of equilibria in roshambo"
-    assert np.allclose(1 / 3, eqa), \
+    assert np.allclose(1 / 3, eqa, rtol=1e-3, atol=1e-3), \
+        "roshambo equilibria wasn't uniform"
+
+
+def test_hard_roshambo():
+    game = gamegen.rock_paper_scissors(loss=[-2, -3, -3])
+    eqa = nash.mixed_nash(game)
+    assert eqa.shape[0] == 1, \
+        "didn't find right number of equilibria in roshambo"
+    assert np.allclose([0.3125, 0.40625, 0.28125], eqa), \
         "roshambo equilibria wasn't uniform"
 
 
@@ -164,3 +176,15 @@ def test_hard_nash():
     assert np.isclose(game.trim_mixture_support(eqa), expected,
                       atol=1e-4, rtol=1e-4).all(1).any(), \
         "Didn't find equilibrium in known hard instance"
+
+
+@testutils.run_if_big
+@pytest.mark.parametrize('_', range(20))
+def test_fixed_point_always_eq(_):
+    num_roles = np.random.randint(1, 4)
+    players = np.random.randint(2, 5, num_roles)
+    strategies = np.random.randint(2, 5, num_roles)
+    functions = np.random.randint(2, 8)
+    agame = agggen.random_aggfn(players, strategies, functions)
+    eqa = nash.mixed_nash(agame, fixedpoint=None)
+    assert eqa.size, "didn't find equilibrium but should always find one"
