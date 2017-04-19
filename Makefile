@@ -1,5 +1,5 @@
-PYTEST_ARGS = -nauto --strict --showlocals -c/dev/null
 FILES = gameanalysis test setup.py
+PYTHON = python
 
 help:
 	@echo "usage: make <tag>"
@@ -17,19 +17,19 @@ help:
 
 test:
 ifdef file
-	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) 2>/dev/null
+	bin/pytest test/$(file)_test.py
 else
-	bin/py.test test $(PYTEST_ARGS) 2>/dev/null
+	bin/pytest test
 endif
 
 coverage:
 ifeq ($(file),script)
-	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis.script --cov gameanalysis.scriptutils --cov gameanalysis/$(file) --cov test.$(file)_test --cov-report term-missing 2>/dev/null
+	bin/pytest test/$(file)_test.py --cov gameanalysis.script --cov gameanalysis.scriptutils --cov gameanalysis/$(file) --cov test.$(file)_test 2>/dev/null
 else
 ifdef file
-	bin/py.test test/$(file)_test.py $(PYTEST_ARGS) --cov gameanalysis.$(file) --cov test.$(file)_test --cov-report term-missing 2>/dev/null
+	bin/pytest test/$(file)_test.py --cov gameanalysis.$(file) --cov test.$(file)_test 2>/dev/null
 else
-	bin/py.test test $(PYTEST_ARGS) --cov gameanalysis --cov test --cov-report term-missing 2>/dev/null
+	bin/pytest test --cov gameanalysis --cov test 2>/dev/null
 endif
 endif
 
@@ -46,10 +46,8 @@ todo:
 	grep -nrIF -e TODO -e XXX -e FIXME --color=always README.md $(FILES)
 
 setup:
-	pyvenv .
-	bin/pip install -U pip setuptools
-	bin/pip install -e .
-	bin/pip install -r requirements.txt
+	$(PYTHON) -m venv .
+	bin/pip install -U pip setuptools -r requirements.txt -e .
 
 ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv moreutils jq
