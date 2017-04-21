@@ -34,7 +34,9 @@ _TINY = np.finfo(float).tiny
 class StratArray(object):
     """A class with knowledge of the number of strategies per role
 
-    This has methods common to working with strategy arrays
+    This has methods common to working with strategy arrays, which essentially
+    represent points in a simplotope (a croxx product of simplicies), or points
+    in a discretized simplotope.
     """
 
     def __init__(self, num_strats):
@@ -186,13 +188,110 @@ class StratArray(object):
     def verify_mixture(self, mix, axis=-1):
         """Verify that a mixture is valid for game"""
         mix = np.asarray(mix, float)
-        return (mix.shape[axis] == self.num_role_strats and
+        assert mix.shape[axis] == self.num_role_strats
+        return (np.all(mix >= 0, axis) &
                 np.all(np.isclose(self.role_reduce(mix, axis), 1), axis))
 
-    def simplex_project(self, mixture):
-        """Project an invalid mixture array onto the simplex"""
-        return np.concatenate(list(map(utils.simplex_project,
-                                       self.role_split(mixture))), -1)
+    def mixture_project(self, mixture, axis=-1):
+        """Project a mixture array onto the simplotope"""
+        return np.concatenate([utils.simplex_project(r, axis) for r in
+                               self.role_split(mixture, axis)], axis)
+
+    @utils.deprecated
+    def simplex_project(self, mixture):  # pragma: no cover
+        return self.mixture_project(mixture)
+
+    def to_simplex(self, mixture, axis=-1):
+        """Convert a mixture to a simplex
+
+        The simplex will have dimension `num_role_strats - num_roles + 1`. This
+        uses the ray tracing homotopy. The uniform mixtures are aligned, and
+        then rays are extended to the edges to convert proportionally along
+        those rays on each object.
+        """
+        # This is relatively simple despite looking verbose. It's going to
+        # store the ray as the direction from the uniform mixture to the
+        # current mixture (grad)
+        mixture = np.asarray(mixture, float)
+        mixture = np.rollaxis(mixture, axis, mixture.ndim)
+        center = self.uniform_mixture()
+        grad = mixture - center
+        # Then we compute alpha, which is the constant to multiply grad by to
+        # get a point on an edge, in some sense this is the maximum weighting
+        # of the ray, and all valid points lie on w * grad, w \in [0, alpha]
+        with np.errstate(divide='ignore'):
+            alphas = np.where(np.isclose(grad, 0), np.inf, -center / grad)
+        alphas[alphas < 0] = np.inf
+        alpha_inds = np.abs(alphas).argmin(-1)[..., None]
+        alpha_inds.flat += np.arange(alpha_inds.size) * alphas.shape[-1]
+        alpha = alphas.flat[alpha_inds]
+
+        # Now compute the simplex gradient, which just copies the unconstrained
+        # gradients for every simplex in the simplotope, and then computes the
+        # final element so the gradient sums to 0 (necessary to stay on the
+        # simplex) This is done by simply deleting the last element of each
+        # role except the last (role_starts[1:] - 1)
+        simp_dim = self.num_role_strats - self.num_roles + 1
+        simp_center = np.ones(simp_dim) / simp_dim
+        simp_grad = np.delete(grad, self.role_starts[1:] - 1, -1)
+        simp_grad[..., -1] = -simp_grad[..., :-1].sum(-1)
+        # Then we compute alpha the same way for the simplex, but this is in
+        # terms of the simp_grad.
+        with np.errstate(divide='ignore'):
+            simp_alphas = np.where(np.isclose(simp_grad, 0), np.inf,
+                                   -simp_center / simp_grad)
+        simp_alphas[simp_alphas < 0] = np.inf
+        simp_alpha_inds = np.abs(simp_alphas).argmin(-1)[..., None]
+        simp_alpha_inds.flat += np.arange(simp_alpha_inds.size) * \
+            simp_alphas.shape[-1]
+        simp_alpha = simp_alphas.flat[simp_alpha_inds]
+        # The point on the simplex is going to be the ratio of the alphas,
+        # where we account for when their both infinite. They're infinite when
+        # the mixture is uniform, and when it's uniform there's no ray so we
+        # don't change the projection.
+        with np.errstate(invalid='ignore'):
+            ratio = np.where(np.isposinf(simp_alpha) & np.isposinf(alpha), 0,
+                             simp_alpha / alpha)
+        simp = simp_center + ratio * simp_grad
+        return np.rollaxis(simp, -1, axis)
+
+    def from_simplex(self, simp, axis=-1):
+        """Convery a simplex back into a valid mixture
+
+        This is the inverse function of to_simplex."""
+        # See to_simplex for an understanding of what these steps are doing.
+        simp = np.asarray(simp, float)
+        simp = np.rollaxis(simp, axis, simp.ndim)
+        simp_dim = self.num_role_strats - self.num_roles + 1
+        simp_center = np.ones(simp_dim) / simp_dim
+        center = self.uniform_mixture()
+        simp_grad = simp - simp_center
+        with np.errstate(divide='ignore'):
+            simp_alphas = np.where(np.isclose(simp_grad, 0), np.inf,
+                                   -simp_center / simp_grad)
+        simp_alphas[simp_alphas < 0] = np.inf
+        simp_alpha_inds = np.abs(simp_alphas).argmin(-1)[..., None]
+        simp_alpha_inds.flat += np.arange(simp_alpha_inds.size) * \
+            simp_alphas.shape[-1]
+        simp_alpha = simp_alphas.flat[simp_alpha_inds]
+
+        grad = np.insert(simp_grad,
+                         self.role_starts[1:] - np.arange(1, self.num_roles),
+                         0, -1)
+        grad[..., -1] = 0
+        grad[..., self.role_starts + self.num_strategies - 1] = \
+            -self.role_reduce(grad)
+        with np.errstate(divide='ignore'):
+            alphas = np.where(np.isclose(grad, 0), np.inf, -center / grad)
+        alphas[alphas < 0] = np.inf
+        alpha_inds = np.abs(alphas).argmin(-1)[..., None]
+        alpha_inds.flat += np.arange(alpha_inds.size) * alphas.shape[-1]
+        alpha = alphas.flat[alpha_inds]  # >= 1
+        with np.errstate(invalid='ignore'):
+            ratio = np.where(np.isposinf(simp_alpha) & np.isposinf(alpha), 0,
+                             alpha / simp_alpha)
+        mixture = center + ratio * grad
+        return np.rollaxis(mixture, -1, axis)
 
     def uniform_mixture(self):
         """Returns a uniform mixed profile"""

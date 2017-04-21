@@ -134,7 +134,7 @@ class SocialWelfareOptimizer(object):
 
             mix = opt.x
             # Project it onto the simplex, it might not be due to the penalty
-            result = self.game.simplex_project(mix)
+            result = self.game.mixture_project(mix)
             if np.allclose(mix, result):
                 break
             # Increase constraint penalty

@@ -54,8 +54,12 @@ def add_parser(subparsers):
         '--processes', '-p', metavar='<num-procs>', type=int, help="""Number of
         processes to use to run nash finding.  (default: number of cores)""")
     parser.add_argument(
-        '--dpr', nargs='+', metavar='<role> <count>', help="""Apply a DPR
-        reduction to the game, with reduced counts per role specified.""")
+        '--one', action='store_true', help="""If specified, run a potentially
+        expensive algorithm to guarantee an approximate equilibrium, if none
+        are found via other methods.""")
+    parser.add_argument(
+        '--dpr', metavar='<role>:<count>[,<role>:<count>]...', help="""Apply a
+        DPR reduction to the game, with reduced counts per role specified.""")
     parser.add_argument(
         '--dominance', '-d', action='store_true', help="""Remove dominated
         strategies.""")
@@ -70,8 +74,10 @@ def main(args):
     game, serial = gameio.read_game(json.load(args.input))
 
     if args.dpr:
-        red_players = serial.from_role_json(dict(zip(
-            args.dpr[::2], map(int, args.dpr[1::2]))))
+        red_players = np.zeros(game.num_roles, int)
+        for r in args.dpr.split(','):
+            s, c = r.split(':')
+            red_players[serial.role_index(s)] = int(c)
         red = reduction.DeviationPreserving(game.num_strategies,
                                             game.num_players, red_players)
         redgame = red.reduce_game(game, True)
@@ -100,7 +106,8 @@ def main(args):
         subg = subgame.subgame(redgame, submask)
         subeqa = nash.mixed_nash(
             subg, regret_thresh=args.regret_thresh,
-            dist_thresh=args.dist_thresh, processes=args.processes, **methods)
+            dist_thresh=args.dist_thresh, processes=args.processes,
+            at_least_one=args.one, **methods)
         eqa = subgame.translate(subg.trim_mixture_support(
             subeqa, supp_thresh=args.supp_thresh), submask)
         if eqa.size:
@@ -146,7 +153,7 @@ def main(args):
     args.output.write('\n\n')
     if args.dpr is not None:
         args.output.write('With DPR reduction: ')
-        args.output.write(' '.join(args.dpr))
+        args.output.write(' '.join(args.dpr.split(',')))
         args.output.write('\n\n')
     if args.dominance:
         num = np.sum(~domsub)

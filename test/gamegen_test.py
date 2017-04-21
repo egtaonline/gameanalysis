@@ -282,7 +282,7 @@ def _first(val):
 ])
 def test_rock_paper_scissors(win, loss):
     game, conv = gamegen.rock_paper_scissors(win, loss, return_serial=True)
-    assert conv.strat_names == (('rock', 'paper', 'scissors'),)
+    assert conv.strat_names == (('paper', 'rock', 'scissors'),)
     assert np.allclose(game.get_payoffs([1, 1, 0]),
                        [_first(loss), _first(win), 0])
 

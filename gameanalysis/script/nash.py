@@ -57,9 +57,15 @@ def add_parser(subparsers):
         minimum regret random profile or when initializing replicator dynamics.
         (default: %(default)d)""")
     parser.add_argument(
-        '--one', '-n', action='store_true', help="""Always report at least one
+        '--min', action='store_true', help="""Always report at least one
         equilibrium per game. This will return the minimum regret equilibrium
-        found, regardless of whether it was below the regret threshold""")
+        candidate found, regardless of whether it was below the regret
+        threshold""")
+    parser.add_argument(
+        '--one', '-n', action='store_true', help="""Always report at least one
+        equilibrium per game. This will use a method guaranteed to find an
+        equilibrium, but it may take exponential time. This argument overrides
+        `--min`""")
     parser.add_argument(
         '--processes', '-p', type=int, metavar='<num-processes>', default=None,
         help="""The number of processes to use when finding a mixed nahs using
@@ -88,7 +94,7 @@ def main(args):
         equilibria = nash.mixed_nash(
             game, args.regret, args.distance,
             random_restarts=args.random_mixtures, grid_points=args.grid_points,
-            at_least_one=args.one, processes=args.processes,
+            min_reg=args.min, at_least_one=args.one, processes=args.processes,
             replicator=rep_args, optimize={})
         equilibria = game.trim_mixture_support(equilibria, args.support)
 

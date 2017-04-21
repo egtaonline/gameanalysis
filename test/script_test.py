@@ -209,7 +209,7 @@ def test_payoff_pure_string():
 
 
 def test_reduction_1():
-    string, _ = run('red', 'background', '2', 'hft', '1', input=GAME_STR)
+    string, _ = run('red', 'background:2,hft:1', input=GAME_STR)
     game, serial = gameio.read_game(json.loads(string))
     red = reduction.DeviationPreserving([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
@@ -217,7 +217,7 @@ def test_reduction_1():
 
 
 def test_reduction_2():
-    string, _ = run('red', '-ms', '2', '1', '-i', GAME)
+    string, _ = run('red', '-m', '-s', '2,1', '-i', GAME)
     game, serial = gameio.read_samplegame(json.loads(string))
     red = reduction.DeviationPreserving([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
@@ -225,7 +225,7 @@ def test_reduction_2():
 
 
 def test_reduction_3():
-    string, _ = run('red', '-thr', '-s', '2', '1', '-i', GAME)
+    string, _ = run('red', '-thr', '-s', '2,1', '-i', GAME)
     game, serial = gameio.read_game(json.loads(string))
     red = reduction.Hierarchical([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
@@ -367,7 +367,7 @@ payoff data for 49 out of 49 profiles'''
 
 def test_analysis_2():
     run('analyze', '-i', GAME, '-o/dev/null', '--subgames', '--dominance',
-        '--dpr', 'background', '6', 'hft', '1', '-p1', '--dist-thresh', '1e-3',
+        '--dpr', 'background:6,hft:1', '-p1', '--dist-thresh', '1e-3',
         '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000', '-c1e-8')
 
 

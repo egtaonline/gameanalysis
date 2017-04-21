@@ -48,6 +48,10 @@ def add_parser(subparsers):
     parser.add_argument(
         '--processes', '-p', metavar='<num-procs>', type=int, help="""Number of
         processes to use to run nash finding.  (default: number of cores)""")
+    parser.add_argument(
+        '--one', action='store_true', help="""If specified, run a potentially
+        expensive algorithm to guarantee an approximate equilibrium, if none
+        are found via other methods.""")
     return parser
 
 
@@ -58,15 +62,13 @@ def main(args):
     lgame = gpgame.PointGPGame(game)
 
     # mixed strategy nash equilibria search
-    methods = {
-        'replicator': {
-            'max_iters': args.max_iters,
-            'converge_thresh': args.converge_thresh}}
+    methods = {'replicator': {'max_iters': args.max_iters,
+                              'converge_thresh': args.converge_thresh}}
 
     mixed_equilibria = game.trim_mixture_support(
         nash.mixed_nash(lgame, regret_thresh=args.regret_thresh,
                         dist_thresh=args.dist_thresh, processes=args.processes,
-                        at_least_one=True, **methods),
+                        at_least_one=args.one, **methods),
         args.supp_thresh)
 
     equilibria = [(eqm, regret.mixture_regret(lgame, eqm))

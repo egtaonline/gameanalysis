@@ -49,28 +49,19 @@ def test_devreps_approx(players, strategies):
     assert np.all(np.isclose(approx, exact) | (exact == approx))
 
 
-# Test that all functions work on an BaseGame
 @pytest.mark.parametrize('players,strategies', testutils.games)
-def test_basegame_function(players, strategies):
-    game = rsgame.basegame(players, strategies)
-    assert game.num_players is not None, "num players was None"
-    assert game.num_strategies is not None, "num strategies was None"
+def test_stratarray_function(players, strategies):
+    strategies = np.asarray(strategies, int)
+    num_roles = max(np.asarray(players, int).size, strategies.size)
+    strategies = np.broadcast_to(strategies, num_roles)
 
-    # Test copy constructor
-    game2 = rsgame.basegame_copy(game)
-    assert game == game2
-    assert np.all(game.num_players == game2.num_players)
-    assert np.all(game.num_strategies == game2.num_strategies)
+    game = rsgame.StratArray(strategies)
+    assert game.num_strategies is not None, "num strategies was None"
 
     # Test role indices
     expected = game.role_repeat(np.arange(game.num_roles))
     actual = game.role_indices[np.arange(game.num_role_strats)]
     assert np.all(expected == actual)
-
-    # Test that all profiles returns the correct number of things
-    all_profs = game.all_profiles()
-    assert all_profs.shape[0] == game.num_all_profiles, \
-        "size of all profile generation is wrong"
 
     # Test that all subgames returns the correct number
     all_subs = game.all_subgames()
@@ -112,12 +103,14 @@ def test_basegame_function(players, strategies):
     mixes = game.random_mixtures(20)
     assert np.allclose(game.role_reduce(mixes, axis=1), 1), \
         "random mixtures weren't mixtures"
+    assert np.all(mixes >= 0), "random mixtures weren't mixtures"
 
     # Random Sparse
     assert np.allclose(game.role_reduce(game.random_sparse_mixtures()), 1)
     mixes = game.random_sparse_mixtures(20)
     assert np.allclose(game.role_reduce(mixes, axis=1), 1), \
         "random mixtures weren't mixtures"
+    assert np.all(mixes >= 0), "random mixtures weren't mixtures"
 
     # Biased
     bias = 0.6
@@ -131,6 +124,7 @@ def test_basegame_function(players, strategies):
     assert saw_all_biases, "Didn't bias every strategy"
     assert np.allclose(game.role_reduce(mixes, axis=1), 1), \
         "biased mixtures weren't mixtures"
+    assert np.all(mixes >= 0), "biased mixtures weren't mixtures"
 
     # Role Biased
     mixes = game.role_biased_mixtures(bias)
@@ -143,6 +137,7 @@ def test_basegame_function(players, strategies):
     assert saw_all_biases, "Didn't bias every strategy"
     assert np.allclose(game.role_reduce(mixes, axis=1), 1), \
         "biased mixtures weren't mixtures"
+    assert np.all(mixes >= 0), "biased mixtures weren't mixtures"
 
     # Grid
     points = 3
@@ -154,6 +149,7 @@ def test_basegame_function(players, strategies):
         "didn't create the right number of grid mixtures"
     assert np.allclose(game.role_reduce(mixes, 1), 1), \
         "grid mixtures weren't mixtures"
+    assert np.all(mixes >= 0), "grid mixtures weren't mixtures"
 
     # Pure
     mixes = game.pure_mixtures()
@@ -161,7 +157,32 @@ def test_basegame_function(players, strategies):
         "pure mixtures weren't mixtures"
     assert np.all(game.role_reduce(np.isclose(mixes, 1)) == 1), \
         "not all roles in pure mixture had an assignment"
+    assert np.all(mixes >= 0), "pure mixtures weren't mixtures"
 
+    # Test that various methods can be called
+    assert repr(game) is not None
+    assert hash(game) is not None
+
+
+# Test that all functions work on an BaseGame
+@pytest.mark.parametrize('players,strategies', testutils.games)
+def test_basegame_function(players, strategies):
+    game = rsgame.basegame(players, strategies)
+    assert game.num_players is not None, "num players was None"
+    assert game.num_strategies is not None, "num strategies was None"
+
+    # Test copy constructor
+    game2 = rsgame.basegame_copy(game)
+    assert game == game2
+    assert np.all(game.num_players == game2.num_players)
+    assert np.all(game.num_strategies == game2.num_strategies)
+
+    # Test that all profiles returns the correct number of things
+    all_profs = game.all_profiles()
+    assert all_profs.shape[0] == game.num_all_profiles, \
+        "size of all profile generation is wrong"
+
+    # Test pure profiles
     profs = game.pure_profiles()
     assert np.all(game.role_reduce(profs > 0) == 1), \
         "pure profiles weren't pure"
@@ -219,12 +240,71 @@ def test_verify_mixture_profile():
 
 
 @pytest.mark.parametrize('players,strategies', testutils.games)
-def test_simplex_project(players, strategies):
+def test_mixture_project(players, strategies):
     game = rsgame.basegame(players, strategies)
     for non_mixture in rand.uniform(-1, 1, (100, game.num_role_strats)):
-        new_mix = game.simplex_project(non_mixture)
+        new_mix = game.mixture_project(non_mixture)
         assert game.verify_mixture(new_mix), \
             "simplex project did not create a valid mixture"
+
+    mixes = rand.uniform(-1, 1, (10, game.num_role_strats, 10))
+    simps = game.mixture_project(mixes, 1)
+    assert game.verify_mixture(simps, 1).all()
+
+
+@pytest.mark.parametrize('players,strategies', testutils.games)
+def test_uniform_simplex_homotopy(players, strategies):
+    game = rsgame.basegame(players, strategies)
+    uniform = game.uniform_mixture()
+    simp = game.to_simplex(uniform)
+    assert np.allclose(simp[0], simp[1:])
+    assert np.allclose(uniform, game.from_simplex(simp))
+
+
+@pytest.mark.parametrize('players,strategies', testutils.games)
+def test_random_simplex_homotopy(players, strategies):
+    game = rsgame.basegame(players, strategies)
+    mixes = game.random_mixtures(100)
+
+    simp = game.to_simplex(mixes[0])
+    assert np.all(simp >= 0)
+    assert np.isclose(simp.sum(), 1)
+    assert np.allclose(mixes[0], game.from_simplex(simp))
+
+    simps = game.to_simplex(mixes)
+    assert np.all(simps >= 0)
+    assert np.allclose(simps.sum(-1), 1)
+    assert np.allclose(mixes, game.from_simplex(simps))
+
+    mixes = np.rollaxis(mixes, -1, 1)
+    simps = game.to_simplex(mixes, 1)
+    assert np.all(simps >= 0)
+    assert np.allclose(simps.sum(1), 1)
+    assert np.allclose(mixes, game.from_simplex(simps, 1))
+
+
+@pytest.mark.parametrize('players,strategies', testutils.games)
+def test_random_uniform_simplex_homotopy(players, strategies):
+    game = rsgame.basegame(players, strategies)
+    rand_mixes = game.random_mixtures(100)
+    mask = game.role_repeat(np.random.random((100, game.num_roles)) < 0.5)
+    mixes = np.where(mask, rand_mixes, game.uniform_mixture())
+
+    simp = game.to_simplex(mixes[0])
+    assert np.all(simp >= 0)
+    assert np.isclose(simp.sum(), 1)
+    assert np.allclose(mixes[0], game.from_simplex(simp))
+
+    simps = game.to_simplex(mixes)
+    assert np.all(simps >= 0)
+    assert np.allclose(simps.sum(-1), 1)
+    assert np.allclose(mixes, game.from_simplex(simps))
+
+    mixes = np.rollaxis(mixes, -1, 1)
+    simps = game.to_simplex(mixes, 1)
+    assert np.all(simps >= 0)
+    assert np.allclose(simps.sum(1), 1)
+    assert np.allclose(mixes, game.from_simplex(simps, 1))
 
 
 def test_symmetric():

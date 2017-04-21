@@ -27,10 +27,23 @@ from sphinx import apidoc
 # Mock out c modules so that they're not necessary to build documentation. This
 # will unfortunately need to be updated if new submodules of numpy, scipy, or
 # sklearn are used.
+
+class OrderingMock(mock.MagicMock):
+    """This mock return true for all ordering calls"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__eq__ = lambda _, __: True
+        self.__ne__ = lambda _, __: True
+        self.__lt__ = lambda _, __: True
+        self.__le__ = lambda _, __: True
+        self.__gt__ = lambda _, __: True
+        self.__ge__ = lambda _, __: True
+
 MOCK_MODULES = ['numpy', 'numpy.random', 'scipy', 'scipy.misc',
                 'scipy.special', 'scipy.stats', 'scipy.optimize', 'sklearn']
+
 for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.MagicMock()
+    sys.modules[mod_name] = OrderingMock()
 
 # Add actual modules to path
 sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))

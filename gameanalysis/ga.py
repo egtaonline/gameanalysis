@@ -23,5 +23,6 @@ def main():
     args = parser.parse_args()
     if args.command is None:
         parser.print_help()
+        return 1
     else:
         commands[args.command].main(args)

@@ -9,20 +9,23 @@ from gameanalysis import gameio
 from gameanalysis import reduction
 
 
-def parse_sorted(players, serial):
+def parse_sorted(red, serial):
     """Parser reduction input for roles in sorted order"""
+    players = red.split(',')
     assert len(players) == serial.num_roles, \
         'Must input a reduced count for every role'
-    return players
+    return np.fromiter(map(int, players), int, len(players))
 
 
-def parse_inorder(players, serial):
+def parse_inorder(red, serial):
     """Parser input for role number pairs"""
-    assert len(players) == 2 * serial.num_roles, \
+    players = red.split(',')
+    assert len(players) == serial.num_roles, \
         'Must input a reduced count for every role'
     red_players = np.zeros(serial.num_roles, int)
-    for s, n in zip(players[::2], map(int, players[1::2])):
-        red_players[serial.role_index(s)] = n
+    for p in players:
+        s, c = p.split(':')
+        red_players[serial.role_index(s)] = int(c)
     return red_players
 
 
@@ -60,17 +63,17 @@ def add_parser(subparsers):
         '--sample-game', '-m', action='store_true', help="""If set, interprets
         the game as a sample game instead of a normal game.""")
     parser.add_argument(
-        '--sorted-roles', '-s', action='store_true', help="""If set, players
-        should be a list of reduced counts for the role names in sorted
-        order.""")
+        '--sorted-roles', '-s', action='store_true', help="""If set, reduction
+        should be a comma separated list of reduced counts for the role names
+        in sorted order.""")
     parser.add_argument(
         '--allow-incomplete', '-a', action='store_true', help="""If set,
         incomplete profiles will be kept in the reduced game. Currently this is
         only relevant to DPR.""")
     parser.add_argument(
-        'players', nargs='*', metavar='<role> <count>', help="""Number of
-        players in each reduced-game role.  This should be a list of role then
-        counts e.g. 'role1 4 role2 2'""")
+        'reduction', nargs='?', metavar='<role>:<count>[,<role>:<count>]...',
+        help="""Number of players in each reduced-game role.  This is a string
+        e.g. 'role1:4,role2:2'""")
     return parser
 
 
@@ -78,8 +81,8 @@ def main(args):
     read = gameio.read_samplegame if args.sample_game else gameio.read_game
     game, serial = read(json.load(args.input))
     reduced_players = (
-        None if not args.players
-        else PLAYERS[args.sorted_roles](args.players, serial))
+        None if not args.reduction
+        else PLAYERS[args.sorted_roles](args.reduction, serial))
 
     reduced = REDUCTIONS[args.type](
         game.num_strategies, game.num_players,

@@ -14,8 +14,7 @@ from gameanalysis import rsgame
 from test import testutils
 
 
-METHODS = [('optimize', {}), ('replicator', {}), ('replicatorode', {}),
-           ('fixedpoint', {})]
+METHODS = [('optimize', {}), ('replicator', {})]
 ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
     itertools.combinations(METHODS, i)
     for i in range(1, len(METHODS) + 1))))
@@ -32,8 +31,9 @@ def test_pure_prisoners_dilemma(_):
         "didn't find pd equilibrium"
 
 
-@pytest.mark.parametrize('methods', ALL_METHODS * 20)
-def test_mixed_prisoners_dilemma(methods):
+@pytest.mark.parametrize('_', range(20))
+@pytest.mark.parametrize('methods', ALL_METHODS)
+def test_mixed_prisoners_dilemma(methods, _):
     game = gamegen.prisoners_dilemma()
     eqa = nash.mixed_nash(game, dist_thresh=1e-3, **methods)
 
@@ -128,16 +128,15 @@ def test_at_least_one():
     # Equilibrium of game is not at a starting point for equilibria finding
     game = gamegen.sym_2p2s_known_eq(1 / math.sqrt(2))
     # Don't converge
-    opts = {'max_iters': 0}
-    eqa = nash.mixed_nash(game, replicator=opts)
+    eqa = nash.mixed_nash(game, replicator={'max_iters': 0})
     assert eqa.size == 0, "found an equilibrium normally"
-    eqa = nash.mixed_nash(game, replicator=opts,
+    eqa = nash.mixed_nash(game, replicator={'max_iters': 0},
                           at_least_one=True)
     assert eqa.shape[0] == 1, "at_least_one didn't return anything"
 
 
 @pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS,
+    ALL_METHODS * 2,
     [
         [1],
         [2],
@@ -148,8 +147,57 @@ def test_at_least_one():
     ]))
 def test_mixed_nash(methods, strategies):
     game = gamegen.role_symmetric_game(1, strategies)
-    eqa = nash.mixed_nash(game, at_least_one=True, **methods)
-    assert eqa.size > 0, "Didn't find an equilibria with at_least_one on"
+    eqa = nash.mixed_nash(game, **methods)
+    assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
+
+@pytest.mark.parametrize('methods,strategies', zip(
+    ALL_METHODS * 2,
+    [
+        [1],
+        [2],
+        [1, 1],
+        [2, 2],
+        [4, 4, 4],
+        [1, 3],
+    ]))
+def test_mixed_nash_multi_process(methods, strategies):
+    game = gamegen.role_symmetric_game(1, strategies)
+    eqa = nash.mixed_nash(game, processes=2, **methods)
+    assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
+
+
+@pytest.mark.parametrize('methods,strategies', zip(
+    ALL_METHODS * 2,
+    [
+        [1],
+        [2],
+        [1, 1],
+        [2, 2],
+        [4, 4, 4],
+        [1, 3],
+    ]))
+def test_mixed_nash_best(methods, strategies):
+    game = gamegen.role_symmetric_game(1, strategies)
+    eqa = nash.mixed_nash(game, processes=1, min_reg=True, **methods)
+    assert eqa.size, "didn't return something"
+
+
+@testutils.run_if_big
+@pytest.mark.parametrize('methods,strategies', zip(
+    ALL_METHODS * 2,
+    [
+        [1],
+        [2],
+        [1, 1],
+        [2, 2],
+        [4, 4, 4],
+        [1, 3],
+    ]))
+def test_mixed_nash_at_least_one(methods, strategies):  # pragma: no cover
+    game = gamegen.role_symmetric_game(1, strategies)
+    eqa = nash.mixed_nash(game, processes=1, at_least_one=True, **methods)
+    assert eqa.size, "didn't return at least one equilibria"
+    assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
 def test_empty_game():
@@ -180,11 +228,11 @@ def test_hard_nash():
 
 @testutils.run_if_big
 @pytest.mark.parametrize('_', range(20))
-def test_fixed_point_always_eq(_):
+def test_at_least_one_big(_):  # pragma: no cover
     num_roles = np.random.randint(1, 4)
     players = np.random.randint(2, 5, num_roles)
     strategies = np.random.randint(2, 5, num_roles)
     functions = np.random.randint(2, 8)
     agame = agggen.random_aggfn(players, strategies, functions)
-    eqa = nash.mixed_nash(agame, fixedpoint=None)
+    eqa = nash.mixed_nash(agame, at_least_one=True)
     assert eqa.size, "didn't find equilibrium but should always find one"

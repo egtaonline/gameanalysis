@@ -5,7 +5,6 @@ import multiprocessing
 import numpy as np
 from numpy import linalg
 from scipy import optimize
-from scipy import integrate
 
 from gameanalysis import collect
 from gameanalysis import fixedpoint
@@ -73,7 +72,7 @@ class RegretOptimizer(object):
     This method uses constrained convex optimization to to attempt to solve a
     proxy for the nonconvex regret minimization."""
 
-    def __init__(self, game, regret_thresh=None, gtol=1e-8):
+    def __init__(self, game, gtol=1e-8):
         self.game = game
         self.scale = game.role_repeat(game.max_payoffs() - game.min_payoffs())
         self.scale[self.scale == 0] = 1  # In case payoffs are the same
@@ -125,53 +124,13 @@ class RegretOptimizer(object):
                                     options={'gtol': self.gtol})
             mix = opt.x
             # Project it onto the simplex, it might not be due to the penalty
-            result = self.game.simplex_project(mix)
+            result = self.game.mixture_project(mix)
             if np.allclose(mix, result):
                 break
             # Increase constraint penalty
             penalty *= 2
 
         return result
-
-
-class ReplicatorDynamicsOde(object):
-    """A pickleable object to find Nash equilibria
-
-    This method uses ode integration on the replicator dynamics differential
-    equation."""
-    # TODO There are a few different methods and many different options, but
-    # little documentation for these integrators. They should probably be
-    # tested / explored.
-    # http://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.integrate.ode.html  # noqa
-
-    def __init__(self, game, regret_thresh=None, final_time=1000):
-        self.game = game
-        self.final_time = final_time
-
-    def func(self, t, mix):  # pragma: no cover
-        dev_pay = self.game.deviation_payoffs(np.maximum(mix, 0),
-                                              assume_complete=True)
-        return mix * (dev_pay - self.game.role_reduce(mix * dev_pay,
-                                                      keepdims=True))
-
-    def grad(self, t, mix):  # pragma: no cover
-        dev_pay, dev_jac = self.game.deviation_payoffs(
-            np.maximum(mix, 0), jacobian=True, assume_complete=True)
-
-        term1 = np.diag(dev_pay - self.game.role_reduce(mix * dev_pay,
-                                                        keepdims=True))
-        term2 = mix[:, None] * (dev_jac - dev_jac - self.game.role_reduce(
-            mix[:, None] * dev_jac, 0, keepdims=True))
-        return term1 + term2
-
-    def __call__(self, mix):  # pragma: no cover
-        inter = (integrate.ode(self.func, self.grad)
-                 .set_integrator('vode', method='adams', with_jacobian=True)
-                 .set_initial_value(mix, 0))
-        result = inter.integrate(self.final_time)
-        # inter.successful() will tell if it succeeded, but this can fail, and
-        # we'll just discard due to low regret.
-        return self.game.simplex_project(result)
 
 
 class ReplicatorDynamics(object):
@@ -185,16 +144,14 @@ class ReplicatorDynamics(object):
     respectively. Otherwise they can be conservative bounds.
     """
 
-    def __init__(self, game, regret_thresh=None, max_iters=10000,
-                 converge_thresh=1e-8, slack=1e-3):
+    def __init__(self, game, max_iters=10000, converge_thresh=1e-8,
+                 slack=1e-3):
         self.game = game
         self.max_iters = max_iters
         self.converge_thresh = converge_thresh
         self.slack = slack
 
-    def __call__(self, mix):  # pragma: no cover
-        # FIXME Allow for random convergence, (e.g.) repeatedly below threshold
-        # instead of just once
+    def __call__(self, mix):
         minp = self.game.min_payoffs()
         maxp = self.game.max_payoffs()
 
@@ -214,60 +171,18 @@ class ReplicatorDynamics(object):
                 break
 
         # Probabilities are occasionally negative
-        return self.game.simplex_project(mix)
-
-
-class FixedPoint(object):
-    """Compute equilibria using a fixed point search
-
-    This will run a search for a fixed point, in deviations space, which is is
-    guaranteed to approximate, but it may take exponential time.
-    """
-
-    def __init__(self, game, regret_thresh):
-        self.game = game
-        self.regret_thresh = regret_thresh
-
-    def __call__(self, init):  # pragma: no cover
-
-        def to_simplotope(simp):
-            """Project simplex onto simplotope"""
-            simp = simp.copy()
-            # if an entire role is zero, this will arbitrarily set it to
-            # uniform
-            simp += self.game.role_repeat(self.game.role_reduce(simp) <= 0)
-            simp /= self.game.role_reduce(simp, keepdims=True)
-            return simp
-
-        def eqa_func(mix):
-            mix = to_simplotope(mix)
-            gains = np.maximum(regret.mixture_deviation_gains(self.game, mix),
-                               0)
-            result = ((mix + gains) /
-                      (1 + self.game.role_reduce(gains, keepdims=True)))
-            # project back into simplex
-            result /= result.sum()
-            return result
-
-        def stop_func(mix):
-            reg = regret.mixture_regret(self.game, to_simplotope(mix))
-            return reg < self.regret_thresh
-
-        return to_simplotope(fixedpoint.fixed_point(
-            eqa_func, init / init.sum(), stop=stop_func))
+        return self.game.mixture_project(mix)
 
 
 _AVAILABLE_METHODS = {
     'replicator': ReplicatorDynamics,
-    'replicatorode': ReplicatorDynamicsOde,
     'optimize': RegretOptimizer,
-    'fixedpoint': FixedPoint,
 }
 
 
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
-               random_restarts=0, processes=1, at_least_one=False,
-               **methods):
+               random_restarts=0, processes=1, min_reg=False,
+               at_least_one=False, **methods):
     """Finds role-symmetric mixed Nash equilibria
 
     Arguments
@@ -286,23 +201,33 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         Number of processes to use when finding Nash equilibria. If greater
         than one, the game will need to be pickleable. Passing None will use
         the number of current processors.
-    methods : [str] or {str: {...}}, str in {'replicator', 'optimize',
-                                             'replicatorode'}
-        The methods to use to converge to an equilibrium. Methods should be an
-        iterable of strings. Optionally, it can be a dictionary with extra
-        options for each of the methods. If None, defaults to using all
-        methods.
-        EXAMPLE: nash.mixed_nash(game, replicator={})
+    min_reg : bool
+        If True, and no equilibria are found with the methods specified, return
+        the point with the lowest empirical regret. This is ignored if
+        at_least_one is True
     at_least_one : bool
-        Returns the minimum regret mixture found by replicator dynamics if no
-        equilibria were within the regret threshold
+        If True, always return an equilibrium. This will use the fixed point
+        method with increasingly smaller tolerances until an equilibrium with
+        small regret is found. This may take an exceedingly long time to
+        converge, so use with caution.
+    **methods : {'replicator', 'optimize'}={options}
+        All methods to use can be specified as key word arguments to additional
+        options for that method, e.g. mixed_nash(game,
+        replicator={'max_iters':100}). To use the default options for a method,
+        simply pass a falsey value i.e. {}, None, False. If no methods are
+        specified, this will use both replicator dynamics and regret
+        optimization as they tend to be reasonably fast and find different
+        equilibria.
 
     Returns
     -------
-    eqm : (Mixture)
-        A generator over low regret mixtures
+    eqm : ndarray
+        A two dimensional array with mixtures that have regret below
+        `regret_thresh` and have norm difference of at least `dist_thresh`.
     """
     assert game.is_complete(), "Nash finding only works on complete games"""
+    assert all(m in _AVAILABLE_METHODS for m in methods), \
+        "specified a invalid method {}".format(methods)
 
     initial_points = list(itertools.chain(
         [game.uniform_mixture()],
@@ -310,23 +235,21 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         game.biased_mixtures(),
         game.role_biased_mixtures(),
         game.random_mixtures(random_restarts)))
-
-    methods = methods or {'optimize': None, 'replicator': None}
-    methods = [_AVAILABLE_METHODS[m](game, regret_thresh=regret_thresh,
-                                     **(p or {}))
-               for m, p in methods.items()]
-
     equilibria = collect.WeightedSimilaritySet(
         lambda a, b: linalg.norm(a - b) < dist_thresh)
     best = [np.inf, -1, None]
     chunksize = len(initial_points) if processes == 1 else 4
+
+    methods = methods or {'replicator': None, 'optimize': None}
+    methods = (_AVAILABLE_METHODS[meth](game, **(opts or {}))
+               for meth, opts in methods.items())
 
     # what to do with each candidate equilibrium
     def process(i, eqm):
         reg = regret.mixture_regret(game, eqm)
         if reg < regret_thresh:
             equilibria.add(eqm, reg)
-        best[:] = min(best, [reg, i, eqm[None]])
+        best[:] = min(best, [reg, i, eqm])
 
     if processes == 1:
         for i, (meth, init) in enumerate(itertools.product(
@@ -339,9 +262,39 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
                     for m in methods)):
                 process(i, eqm)
 
-    if not equilibria and at_least_one:
-        return best[2]
-    elif not equilibria:
-        return np.empty((0, game.num_role_strats))
-    else:
+    if at_least_one and not equilibria:
+        eqm = game.uniform_mixture()
+        reg = regret.mixture_regret(game, eqm)
+        disc = 8
+        while reg > regret_thresh:
+            eqm = _fixed_point_nash(game, eqm, disc)
+            reg = regret.mixture_regret(game, eqm)
+            disc *= 2
+        equilibria.add(eqm, reg)
+    elif min_reg and not equilibria:
+        reg, _, eqm = best
+        equilibria.add(eqm, reg)
+
+    if equilibria:
         return np.concatenate([x[0][None] for x in equilibria])
+    else:
+        return np.empty((0, game.num_role_strats))
+
+
+def _fixed_point_nash(game, mix, disc):
+    """Uses fixed point method to find nash eqm
+
+    This is guaranteed to find an equilibrium that's within tol od a true
+    equilibrium. Therefore, by making tol arbitrarily small, this will find an
+    approximate equilibrium. However, it's guaranteed convergence is assured by
+    potentially exponential time, and therefore is not recommended unless
+    you're willing to wait.
+    """
+    def eqa_func(mix):
+        mix = game.from_simplex(mix)
+        gains = np.maximum(regret.mixture_deviation_gains(game, mix), 0)
+        result = ((mix + gains) / (1 + game.role_reduce(gains, keepdims=True)))
+        return game.to_simplex(result)
+
+    return game.from_simplex(fixedpoint.fixed_point(
+        eqa_func, game.to_simplex(mix), disc=disc))

@@ -267,7 +267,7 @@ def rock_paper_scissors(win=1, loss=-1, return_serial=False):
         return game
     else:
         serial = gameio.gameserializer(['all'],
-                                       [['rock', 'paper', 'scissors']])
+                                       [['paper', 'rock', 'scissors']])
         return game, serial
 
 

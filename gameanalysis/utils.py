@@ -3,6 +3,7 @@ import inspect
 import itertools
 import math
 import operator
+import warnings
 from collections import abc
 
 import numpy as np
@@ -12,6 +13,7 @@ import scipy.misc as spm
 _TINY = np.finfo(float).tiny
 _MAX_INT_FLOAT = 2 ** (np.finfo(float).nmant - 1)
 _SIMPLEX_BIG = 1 / np.finfo(float).resolution
+# XXX A lot of these are candidates for cython
 
 
 def prod(collection):
@@ -102,6 +104,8 @@ def ordered_permutations(seq):
 
     >>> list(ordered_permutations([1, 2, 1]))
     [(1, 1, 2), (1, 2, 1), (2, 1, 1)]
+
+    Algorithm comes from [1]_ and [2]_
 
     Notes
     -----
@@ -248,22 +252,24 @@ def acartesian2(*arrays):
     return result
 
 
-def simplex_project(array):
+def simplex_project(array, axis=-1):
     """Return the projection onto the simplex"""
     array = np.asarray(array, float)
     assert not np.isnan(array).any(), \
         "can't project nan onto simplex: {}".format(array)
+    array = np.rollaxis(array, axis, array.ndim)
     # This fails for really large values, so we normalize the array so the
     # largest element has absolute value at most _SIMPLEX_BIG
-    array = np.minimum(_SIMPLEX_BIG, np.maximum(array, -_SIMPLEX_BIG))
+    array = np.clip(array, -_SIMPLEX_BIG, _SIMPLEX_BIG)
     size = array.shape[-1]
-    sort = -np.sort(-array)
+    sort = -np.sort(-array, -1)
     rho = (1 - sort.cumsum(-1)) / np.arange(1, size + 1)
     inds = size - 1 - np.argmax((rho + sort > 0)[..., ::-1], -1)
     rho.shape = (-1, size)
     lam = rho[np.arange(rho.shape[0]), inds.flat]
     lam.shape = array.shape[:-1] + (1,)
-    return np.maximum(array + lam, 0)
+    simplex = np.maximum(array + lam, 0)
+    return np.rollaxis(simplex, -1, axis)
 
 
 def multinomial_mode(p, n):
@@ -451,3 +457,14 @@ def memoize(member_function):
         return getattr(obj, member_name)
 
     return new_member_function
+
+
+def deprecated(func):
+    """Mark a function as deprecated"""
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        warnings.warn("Call to deprecated function {}.".format(func.__name__),
+                      category=DeprecationWarning, stacklevel=2)
+        return func(*args, **kwargs)
+
+    return wrapped

@@ -1,8 +1,6 @@
 """Module for finding fixed points of functions on a simplex"""
 import numpy as np
 
-from gameanalysis import utils
-
 
 def fixed_point(func, init, **kwargs):
     """Compute an approximate fixed point of a function
@@ -18,15 +16,16 @@ def fixed_point(func, init, **kwargs):
         Additional options to pass on to labeled_subsimplex. See other options
         for details.
     """
-    def fixed_func(mix):
-        mix.setflags(write=False)
-        return np.argmin(func(mix) - mix + (mix == 0))
-
-    return labeled_subsimplex(fixed_func, init, **kwargs)
+    return labeled_subsimplex(
+        lambda mix: np.argmin((mix == 0) - mix + func(mix)), init, **kwargs)
 
 
-def labeled_subsimplex(label_func, init, tol=1e-3, stop=None, init_disc=1):
+def labeled_subsimplex(label_func, init, disc):
     """Find approximate center of a fully labeled subsimplex
+
+    This runs once at the discretization provided. It is recommended that this
+    be run several times with successively finer discretization and warm
+    started with the past result.
 
     Parameters
     ----------
@@ -37,82 +36,34 @@ def labeled_subsimplex(label_func, init, tol=1e-3, stop=None, init_disc=1):
     init : ndarray
         An initial guess for where the fully labeled element might be. This
         will be projected onto the simplex if it is not already.
-    tol : float, optional
-        The tolerance for the returned value.
-    stop : ndarray -> bool
-        Function of the current simplex that returns true when the search
-        should stop. By default, this stops when the sub-simplex has sides
-        smaller than tol.
-    init_disc : int, optional
-        The initial discretization amount for the mixture. The initial
-        discretization relates to the amount of possible starting points, which
-        may achieve different subsimplicies. This setting this higher may make
-        finding one subsimplex slower, but allow the possibility of finding
-        more. This function uses the `max(init.size, init_disc, 8)`.
-
-    Notes
-    -----
-    Implementation from [1]_ and [2]_
-
-    .. [1] Kuhn and Mackinnon 1975. Sandwich Method for Finding Fixed Points.
-    .. [2] Kuhn 1968. Simplicial Approximation Of Fixed Points.
-    """
-    k = max(init.size, init_disc, 8)
-    # XXX There's definitely a more principled way to set `2 / k`
-    thresh = round(1 / tol) * 2 + 1
-
-    if stop is None:
-        def stop(_):
-            return k > thresh
-
-    disc_simplex = _discretize_mixture(utils.simplex_project(init), k)
-    sub_simplex = disc_simplex / k
-    while not stop(sub_simplex):
-        disc_simplex = _sandwich(label_func, disc_simplex) * 2
-        k = (k - 1) * 2
-        sub_simplex = disc_simplex / k
-    return sub_simplex
-
-
-def _discretize_mixture(mix, k):
-    """Discretize a mixture
-
-    The returned value will have all integer components that sum to k, with the
-    minimum error. Thus, discretizing the mixture.
-    """
-    disc = np.floor(mix * k).astype(int)
-    inds = np.argsort(disc - mix * k)[:k - disc.sum()]
-    disc[inds] += 1
-    return disc
-
-
-def _sandwich(label_func, init):
-    """Actual implementation of the sandwich method
-
-    Parameters
-    ----------
-    label_func : ndarray -> int
-        See sandwich.
-    init : ndarray
-        A discretized simplex, e.g. an array of nonnegative integers.
+    disc : int
+        The discretization to use. Fixed points will be approximated by the
+        reciprocal this much.
 
     Returns
     -------
     ret : ndarray
         A discretized simplex with 1 coarser resolution (i.e. ret.sum() + 1 ==
         init.sum()) that is fully labeled.
+
+    Notes
+    -----
+    This is an implementation of the sandwhich method from [5]_ and [6]_
+
+    .. [5] Kuhn and Mackinnon 1975. Sandwich Method for Finding Fixed Points.
+    .. [6] Kuhn 1968. Simplicial Approximation Of Fixed Points.
     """
+    init = np.asarray(init, float)
     dim = init.size
-    disc = init.sum()
     # Base vertex of the subsimplex currently being used
-    base = np.append(init, 0)
+    base = np.append(_discretize_mixture(init, disc), 0)
     base[0] += 1
     # permutation array of [1,dim] where v0 = base,
     # v{i+1} = [..., vi_{perms[i] - 1} - 1, vi_{perms[i]} + 1, ...]
     perms = np.arange(1, dim + 1)
     # Array of labels for each vertex
     labels = np.arange(dim + 1)
-    labels[dim] = label_func(init / disc)
+    labels[dim] = label_func(init)
     # Vertex used to label initial vertices (vertex[-1] == 0)
     label_vertex = base[:-1].copy()
     # Last index moved
@@ -162,4 +113,30 @@ def _sandwich(label_func, init):
                     new_vertex[labels[index]]), \
                 "labeling function was not proper (see help)"
 
-    return new_vertex[:-1]
+    # Average out all vertices in simplex we care about
+    current = base
+    if index == 0:  # pragma: no cover
+        count = 0
+        mean = np.zeros(dim)
+    else:  # pragma: no cover
+        count = 1
+        mean = current.astype(float)
+    for i, j in enumerate(perms, 1):
+        current[j] += 1
+        current[j - 1] -= 1
+        if i != index:
+            count += 1
+            mean += (current - mean) / count
+    return mean[:-1] / disc
+
+
+def _discretize_mixture(mix, k):
+    """Discretize a mixture
+
+    The returned value will have all integer components that sum to k, with the
+    minimum error. Thus, discretizing the mixture.
+    """
+    disc = np.floor(mix * k).astype(int)
+    inds = np.argsort(disc - mix * k)[:k - disc.sum()]
+    disc[inds] += 1
+    return disc

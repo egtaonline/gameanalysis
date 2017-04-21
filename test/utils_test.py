@@ -1,7 +1,9 @@
 import itertools
 import random
+import warnings
 
 import numpy as np
+import numpy.random as rand
 import pytest
 
 from gameanalysis import utils
@@ -119,6 +121,20 @@ def test_simplex_project():
         "simplex project didn't return correct result"
 
 
+@pytest.mark.parametrize('array,axis', [
+    (rand.random(6), -1),
+    (rand.random((4, 5)), -1),
+    (rand.random((2, 3, 4)), -1),
+    (rand.random((3, 4, 5)), 1),
+    (rand.random((5, 4)), 0),
+])
+def test_simplex_project_random(array, axis):
+    simp = utils.simplex_project(array, axis)
+    assert simp.shape == array.shape
+    assert np.all(simp >= 0)
+    assert np.allclose(simp.sum(axis), 1)
+
+
 def test_multinomial_mode():
     actual = utils.multinomial_mode([1], 4)
     expected = [4]
@@ -222,3 +238,23 @@ def test_memoization():
     assert called[0] == 1
     assert func(obj) is None
     assert called[0] == 1
+
+
+def test_deprecation():
+
+    @utils.deprecated
+    def func(a, b):
+        return a, b
+
+    try:
+        func(None, None)
+        assert False, "should throw DeprecationWarning"  # pragma: no cover
+    except:
+        pass
+
+    with warnings.catch_warnings(record=True) as warns:
+        warnings.simplefilter('always', DeprecationWarning)
+        assert func(3, b=4) == (3, 4)
+
+    assert len(warns) == 1
+    assert issubclass(warns[0].category, DeprecationWarning)
