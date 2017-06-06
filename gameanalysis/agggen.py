@@ -5,20 +5,38 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-def random_poly_dist(coef_dist, degree):
+def random_poly_dist(coef_dist, degree_dist):
     """Generate a function table distribution from a polynomial
 
+    Parameters
+    ----------
+    coef_dist : ndarray int -> ndarray float
+        Distribution that maps an array of degrees for a polynomial to a
+        coefficient of that degree, e.g. `lambda d: np.random.normal(0,
+        10.0**(1 - d))`
+    degree_dist : ndarray
+        Probability that a polynomial will have a specific degree starting from
+        zero. [0.1, 0.4, 0.5] means each function has a 10% chance of being
+        constant, 40% chance of being linear, and a 50% chance of being
+        quadratic.
+
+    Notes
+    -----
     Table distributions take a shape and return a random matrix of that shape,
     where the first axis is the number of functions, and the other axes are the
     number of players from each role."""
-    degrees = np.arange(degree + 1)
+    degree_dist = np.asarray(degree_dist, float)
+    assert np.all(degree_dist >= 0) and np.sum(degree_dist[:-1]) <= 1
+    degrees = np.arange(degree_dist.size)
+    degree_dist = np.insert(degree_dist[:-1], 0, 0).cumsum()
 
     def table_func(shape):
         funcs, *players = shape
         table = np.ones(shape, float)
         for d, play in enumerate(players):
-            polys = coef_dist(np.broadcast_to(degrees, (funcs, degree + 1)))
-            values = polys.dot(np.arange(play) ** degrees[:, None])
+            polys = coef_dist(np.broadcast_to(degrees, (funcs, degrees.size)))
+            dmask = np.random.random(funcs)[:, None] > degree_dist
+            values = np.dot(polys * dmask, np.arange(play) ** degrees[:, None])
             values.shape += (1,) * (len(players) - 1)
             table *= np.rollaxis(values, 1, d + 2)
         return table
@@ -78,7 +96,7 @@ def congestion(num_players, num_facilities, num_required, degree=2,
         true congestion game.
     """
     function_inputs = utils.acomb(num_facilities, num_required)
-    table_dist = random_poly_dist(coef_dist, degree)
+    table_dist = random_poly_dist(coef_dist, np.insert(np.zeros(degree), 2, 1))
     functions = table_dist((num_facilities, num_players + 1))
     return aggfn.aggfn(num_players, function_inputs.shape[0],
                        function_inputs.T, function_inputs, functions)
@@ -86,9 +104,9 @@ def congestion(num_players, num_facilities, num_required, degree=2,
 
 def local_effect(num_players, num_strategies, edge_prob=.2,
                  self_dist=random_poly_dist(
-                     lambda d: -np.random.exponential(10. ** (1 - d)), 1),
+                     lambda d: -np.random.exponential(10. ** (1 - d)), [0, 1]),
                  other_dist=random_poly_dist(
-                     lambda d: np.random.normal(0, 10. ** (-d)), 2)):
+                     lambda d: np.random.normal(0, 10. ** (-d)), [0, 0, 1])):
     """Generate a local effect game
 
     Parameters
