@@ -320,14 +320,25 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     best = (np.inf, -1, None)
     chunksize = len(initial_points) if processes == 1 else 4
 
-    with multiprocessing.Pool(processes) as pool:
-        for i, eqm in enumerate(itertools.chain.from_iterable(
-                pool.imap_unordered(m, initial_points, chunksize=chunksize)
-                for m in methods)):
-            reg = regret.mixture_regret(game, eqm)
-            if reg < regret_thresh:
-                equilibria.add(eqm, reg)
-            best = min(best, (reg, i, eqm[None]))
+    if processes > 1:
+        with multiprocessing.Pool(processes) as pool:
+            for i, eqm in enumerate(itertools.chain.from_iterable(
+                    pool.imap_unordered(m, initial_points, chunksize=chunksize)
+                    for m in methods)):
+                reg = regret.mixture_regret(game, eqm)
+                if reg < regret_thresh:
+                    equilibria.add(eqm, reg)
+                best = min(best, (reg, i, eqm[None]))
+    else:
+        i = 0
+        for m in methods:
+            for p in initial_points:
+                eqm = m(p)
+                reg = regret.mixture_regret(game, eqm)
+                if reg < regret_thresh:
+                    equilibria.add(eqm, reg)
+                best = min(best, (reg, i, eqm[None]))
+                i += 1
 
     if not equilibria and at_least_one:
         return best[2]
