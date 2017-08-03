@@ -266,7 +266,7 @@ _AVAILABLE_METHODS = {
 
 
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
-               random_restarts=0, processes=None, at_least_one=False,
+               random_restarts=0, processes=1, at_least_one=False,
                **methods):
     """Finds role-symmetric mixed Nash equilibria
 
