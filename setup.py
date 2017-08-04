@@ -11,7 +11,7 @@ setuptools.setup(
     license="Apache 2.0",
     entry_points={"console_scripts": ["ga=gameanalysis.ga:main"]},
     install_requires=[
-        "numpy~=1.12",
+        "numpy~=1.13",
         "scipy~=0.19",
         "scikit-learn~=0.18",
     ],
