@@ -282,9 +282,10 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         dimension.
     random_restarts : int
         The number of random initializations.
-    processes : int
+    processes : int or None
         Number of processes to use when finding Nash equilibria. If greater
-        than one, the game will need to be pickleable.
+        than one, the game will need to be pickleable. Passing None will use
+        the number of current processors.
     methods : [str] or {str: {...}}, str in {'replicator', 'optimize',
                                              'replicatorode'}
         The methods to use to converge to an equilibrium. Methods should be an
@@ -317,28 +318,26 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
 
     equilibria = collect.WeightedSimilaritySet(
         lambda a, b: linalg.norm(a - b) < dist_thresh)
-    best = (np.inf, -1, None)
+    best = [np.inf, -1, None]
     chunksize = len(initial_points) if processes == 1 else 4
 
-    if processes > 1:
+    # what to do with each candidate equilibrium
+    def process(i, eqm):
+        reg = regret.mixture_regret(game, eqm)
+        if reg < regret_thresh:
+            equilibria.add(eqm, reg)
+        best[:] = min(best, [reg, i, eqm[None]])
+
+    if processes == 1:
+        for i, (meth, init) in enumerate(itertools.product(
+                methods, initial_points)):
+            process(i, meth(init))
+    else:
         with multiprocessing.Pool(processes) as pool:
             for i, eqm in enumerate(itertools.chain.from_iterable(
                     pool.imap_unordered(m, initial_points, chunksize=chunksize)
                     for m in methods)):
-                reg = regret.mixture_regret(game, eqm)
-                if reg < regret_thresh:
-                    equilibria.add(eqm, reg)
-                best = min(best, (reg, i, eqm[None]))
-    else:
-        i = 0
-        for m in methods:
-            for p in initial_points:
-                eqm = m(p)
-                reg = regret.mixture_regret(game, eqm)
-                if reg < regret_thresh:
-                    equilibria.add(eqm, reg)
-                best = min(best, (reg, i, eqm[None]))
-                i += 1
+                process(i, eqm)
 
     if not equilibria and at_least_one:
         return best[2]

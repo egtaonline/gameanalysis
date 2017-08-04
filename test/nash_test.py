@@ -35,7 +35,7 @@ def test_pure_prisoners_dilemma(_):
 @pytest.mark.parametrize('methods', ALL_METHODS * 20)
 def test_mixed_prisoners_dilemma(methods):
     game = gamegen.prisoners_dilemma()
-    eqa = nash.mixed_nash(game, dist_thresh=1e-3, processes=1, **methods)
+    eqa = nash.mixed_nash(game, dist_thresh=1e-3, **methods)
 
     assert eqa.shape[0] >= 1, \
         "didn't find at least one equilibria in pd {}".format(eqa)
@@ -50,7 +50,7 @@ def test_mixed_prisoners_dilemma(methods):
 @pytest.mark.parametrize('eq_prob', [0, .1, .2, .3, .5, .7, .8, .9, 1])
 def test_mixed_known_eq(methods, eq_prob):
     game = gamegen.sym_2p2s_known_eq(eq_prob)
-    eqa = nash.mixed_nash(game, processes=1, **methods)
+    eqa = nash.mixed_nash(game, **methods)
     assert eqa.shape[0] >= 1, "didn't find equilibrium"
     expected = [eq_prob, 1 - eq_prob]
     assert np.isclose(eqa, expected, atol=1e-2, rtol=1e-2).all(1).any(), \
@@ -108,7 +108,7 @@ def test_minreg_rand_roshambo():
 @pytest.mark.parametrize('methods', ALL_METHODS)
 def test_mixed_roshambo(methods):
     game = gamegen.rock_paper_scissors()
-    eqa = nash.mixed_nash(game, dist_thresh=1e-2, processes=1, **methods)
+    eqa = nash.mixed_nash(game, dist_thresh=1e-2, **methods)
     assert eqa.shape[0] == 1, \
         "didn't find right number of equilibria in roshambo"
     assert np.allclose(1 / 3, eqa, rtol=1e-3, atol=1e-3), \
@@ -129,9 +129,9 @@ def test_at_least_one():
     game = gamegen.sym_2p2s_known_eq(1 / math.sqrt(2))
     # Don't converge
     opts = {'max_iters': 0}
-    eqa = nash.mixed_nash(game, processes=1, replicator=opts)
+    eqa = nash.mixed_nash(game, replicator=opts)
     assert eqa.size == 0, "found an equilibrium normally"
-    eqa = nash.mixed_nash(game, replicator=opts, processes=1,
+    eqa = nash.mixed_nash(game, replicator=opts,
                           at_least_one=True)
     assert eqa.shape[0] == 1, "at_least_one didn't return anything"
 
@@ -148,7 +148,7 @@ def test_at_least_one():
     ]))
 def test_mixed_nash(methods, strategies):
     game = gamegen.role_symmetric_game(1, strategies)
-    eqa = nash.mixed_nash(game, at_least_one=True, processes=1, **methods)
+    eqa = nash.mixed_nash(game, at_least_one=True, **methods)
     assert eqa.size > 0, "Didn't find an equilibria with at_least_one on"
 
 

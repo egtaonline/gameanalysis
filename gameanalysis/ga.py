@@ -21,4 +21,7 @@ def create_parser():
 def main():
     parser, commands = create_parser()
     args = parser.parse_args()
-    commands[args.command].main(args)
+    if args.command is None:
+        parser.print_help()
+    else:
+        commands[args.command].main(args)
