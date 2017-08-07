@@ -26,3 +26,7 @@ def main():
         return 1
     else:
         commands[args.command].main(args)
+
+
+if __name__ == '__main__':
+    main()

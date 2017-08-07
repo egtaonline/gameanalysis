@@ -23,15 +23,15 @@ def add_parser(subparsers):
     parser.add_argument(
         '--regret', '-r', metavar='<thresh>', type=float, default=1e-3,
         help="""Max allowed regret for approximate Nash equilibria/ (default:
-        %(default)f)""")
+        %(default)g)""")
     parser.add_argument(
         '--distance', '-d', metavar='<distance>', type=float, default=1e-3,
         help="""L2-distance threshold to consider equilibria distinct.
-        (default: %(default)f)""")
+        (default: %(default)g)""")
     parser.add_argument(
         '--convergence', '-c', metavar='<convergence>', type=float,
         default=1e-8, help="""Replicator dynamics convergence thrshold.
-        (default: %(default)f)""")
+        (default: %(default)g)""")
     parser.add_argument(
         '--max-iterations', '-x', metavar='<iterations>', type=int,
         default=10000, help="""Max replicator dynamics iterations.  (default:
@@ -39,7 +39,7 @@ def add_parser(subparsers):
     parser.add_argument(
         '--support', '-s', metavar='<support>', type=float, default=1e-3,
         help="""Min probability for a strategy to be considered in support.
-        (default: %(default)f)""")
+        (default: %(default)g)""")
     parser.add_argument(
         '--type', '-t', metavar='<type>', default='mixed',
         choices=('mixed', 'pure', 'min-reg-prof', 'min-reg-grid',

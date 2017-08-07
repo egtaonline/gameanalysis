@@ -24,15 +24,15 @@ def add_parser(subparsers):
     parser.add_argument(
         '--dist-thresh', metavar='<distance-threshold>', type=float,
         default=1e-3, help="""L2 norm threshold, inside of which, equilibria
-        are considered identical.  (default: %(default)f)""")
+        are considered identical.  (default: %(default)g)""")
     parser.add_argument(
         '--regret-thresh', '-r', metavar='<regret-threshold>', type=float,
         default=1e-3, help="""Maximum regret to consider an equilibrium
-        confirmed. (default: %(default)f)""")
+        confirmed. (default: %(default)g)""")
     parser.add_argument(
         '--supp-thresh', '-t', metavar='<support-threshold>', type=float,
         default=1e-3, help="""Maximum probability to consider a strategy in
-        support. (default: %(default)f)""")
+        support. (default: %(default)g)""")
     parser.add_argument(
         '--rand-restarts', metavar='<random-restarts>', type=int, default=0,
         help="""The number of random points to add to nash equilibrium finding.
@@ -44,7 +44,7 @@ def add_parser(subparsers):
     parser.add_argument(
         '--converge-thresh', '-c', metavar='<convergence-threshold>',
         type=float, default=1e-8, help="""The convergence threshold for
-        replicator dynamics. (default: %(default)f)""")
+        replicator dynamics. (default: %(default)g)""")
     parser.add_argument(
         '--processes', '-p', metavar='<num-procs>', type=int, help="""Number of
         processes to use to run nash finding.  (default: number of cores)""")

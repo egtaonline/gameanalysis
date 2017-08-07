@@ -9,7 +9,7 @@ setuptools.setup(
     author="Strategic Reasoning Group",
     author_email='strategic.reasoning.group@umich.edu',
     license="Apache 2.0",
-    entry_points={"console_scripts": ["ga=gameanalysis.ga:main"]},
+    entry_points={"console_scripts": ["ga=gameanalysis.__main__:main"]},
     install_requires=[
         "numpy~=1.13",
         "scipy~=0.19",

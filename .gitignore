@@ -27,6 +27,8 @@
 /share
 /pip-selfcheck.json
 /pyvenv.cfg
+/src
+/site-packages
 
 # LaTeX #
 #########
