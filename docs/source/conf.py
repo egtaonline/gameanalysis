@@ -50,7 +50,7 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 
 # Run api-doc automatically
 for module in ['gameanalysis']:
-    apidoc.main(['-f', '-o', '.', os.path.join('..', '..', module)])
+    apidoc.main(['<prog-name>', '-f', '-o', '.', os.path.join('..', '..', module)])
 
 # -- General configuration ------------------------------------------------
 

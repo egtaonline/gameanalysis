@@ -53,7 +53,7 @@ ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv moreutils jq
 
 docs:
-	bin/python setup.py build_sphinx
+	bin/python setup.py build_sphinx -b html
 
 serve: docs
 	cd docs/build/html && ../../../bin/python -m http.server
