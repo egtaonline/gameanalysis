@@ -70,8 +70,10 @@ def add_parser(subparsers):
         '--allow-incomplete', '-a', action='store_true', help="""If set,
         incomplete profiles will be kept in the reduced game. Currently this is
         only relevant to DPR.""")
+    # TODO Want metavar to be '<role>:<count>[,<role>:<count>]...', but
+    # argparse doesn't allow [] in metavars
     parser.add_argument(
-        'reduction', nargs='?', metavar='<role>:<count>[,<role>:<count>]...',
+        'reduction', nargs='?', metavar='<role>:<count>,...',
         help="""Number of players in each reduced-game role.  This is a string
         e.g. 'role1:4,role2:2'""")
     return parser

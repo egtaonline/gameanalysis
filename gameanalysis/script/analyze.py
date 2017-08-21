@@ -57,8 +57,11 @@ def add_parser(subparsers):
         '--one', action='store_true', help="""If specified, run a potentially
         expensive algorithm to guarantee an approximate equilibrium, if none
         are found via other methods.""")
+    # TODO I want metavar to be '<role>:<count>[,<role>:<count>]...' but
+    # currently argparse can't handle metavars with anything in square
+    # brackets.
     parser.add_argument(
-        '--dpr', metavar='<role>:<count>[,<role>:<count>]...', help="""Apply a
+        '--dpr', metavar='<role>:<count>,...', help="""Apply a
         DPR reduction to the game, with reduced counts per role specified.""")
     parser.add_argument(
         '--dominance', '-d', action='store_true', help="""Remove dominated

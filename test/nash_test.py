@@ -150,6 +150,7 @@ def test_mixed_nash(methods, strategies):
     eqa = nash.mixed_nash(game, **methods)
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
+
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [

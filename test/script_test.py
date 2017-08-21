@@ -28,121 +28,144 @@ GAME_DATA, SERIAL = gameio.read_game(GAME_JSON)
 def run(*cmd, fail=False, input=''):
     res = subprocess.run((GA,) + cmd, input=input.encode('utf-8'),
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out = res.stdout.decode('utf-8')
     err = res.stderr.decode('utf-8')
-    assert fail == bool(res.returncode), err
-    return res.stdout.decode('utf-8'), err
+    return not res.returncode, out, err
 
 
 def test_help():
-    run('--help')
-    run(fail=True)
-    run('--fail', fail=True)
+    assert not run()[0]
+    assert not run('--fail')[0]
+    success, out, err = run('--help')
+    assert success, err
+    for cmd in (line.split()[0] for line in out.split('\n')
+                if line.startswith('    ') and line[4] != ' '):
+        success, _, err = run(cmd, '--help')
+        assert success, err
 
 
 def test_dominance_1():
-    run('dom', '-h')
-
-    string, _ = run('dom', '-i', GAME)
-    game, serial = gameio.read_game(json.loads(string))
+    success, out, err = run('dom', '-i', GAME)
+    assert success, err
+    game, serial = gameio.read_game(json.loads(out))
     assert serial == SERIAL
     assert game == GAME_DATA
 
 
 def test_dominance_2():
-    string, _ = run('dom', '-i', GAME, '-s')
-    assert json.loads(string) == GAME_JSON['strategies']
+    success, out, err = run('dom', '-i', GAME, '-s')
+    assert success, err
+    assert json.loads(out) == GAME_JSON['strategies']
 
 
 def test_dominance_3():
-    run('dom', '-cweakdom', '-o/dev/null', input=GAME_STR)
+    success, _, err = run('dom', '-cweakdom', '-o/dev/null', input=GAME_STR)
+    assert success, err
 
 
 def test_dominance_4():
-    string, _ = run('dom', '-cstrictdom', '-i', GAME)
-    gameio.read_game(json.loads(string))
+    success, out, err = run('dom', '-cstrictdom', '-i', GAME)
+    assert success, err
+    gameio.read_game(json.loads(out))
 
 
 def test_dominance_5():
-    string, _ = run('dom', '-cneverbr', '-i', GAME)
-    gameio.read_game(json.loads(string))
+    success, out, err = run('dom', '-cneverbr', '-i', GAME)
+    assert success, err
+    gameio.read_game(json.loads(out))
 
 
 def test_gamegen_1():
-    run('gen', fail=True)
-    run('gen', 'uzs', '6', '-n', '-o/dev/null')
-    run('gen', 'ursym', '5', fail=True)
+    assert not run('gen')[0]
+    assert not run('gen', 'ursym', '5')[0]
+    success, _, err = run('gen', 'uzs', '6', '-n', '-o/dev/null')
+    assert success, err
 
 
 def test_gamegen_2():
-    string, _ = run('gen', 'ursym', '3', '4', '4', '3')
-    gameio.read_game(json.loads(string))
+    success, out, err = run('gen', 'ursym', '3', '4', '4', '3')
+    assert success, err
+    gameio.read_game(json.loads(out))
 
 
 def test_gamegen_3():
-    string, _ = run('gen', 'noise', 'uniform', '1.5', '5', input=GAME_STR)
-    gameio.read_game(json.loads(string))
+    success, out, err = run('gen', 'noise', 'uniform', '1.5', '5',
+                            input=GAME_STR)
+    assert success, err
+    gameio.read_game(json.loads(out))
 
 
 def test_gamegen_4():
-    string, _ = run('gen', 'noise', 'gumbel', '1.5', '5', '-i', GAME)
-    gameio.read_game(json.loads(string))
+    success, out, err = run('gen', 'noise', 'gumbel', '1.5', '5', '-i', GAME)
+    assert success, err
+    gameio.read_game(json.loads(out))
 
 
 def test_gamegen_5():
-    string, _ = run('gen', 'noise', 'bimodal', '1.5', '5', '-i', GAME)
-    gameio.read_game(json.loads(string))
+    success, out, err = run('gen', 'noise', 'bimodal', '1.5', '5', '-i', GAME)
+    assert success, err
+    gameio.read_game(json.loads(out))
 
 
 def test_gamegen_6():
-    string, _ = run('gen', 'noise', 'gaussian', '1.5', '5', '-i', GAME)
-    gameio.read_game(json.loads(string))
+    success, out, err = run('gen', 'noise', 'gaussian', '1.5', '5', '-i', GAME)
+    assert success, err
+    gameio.read_game(json.loads(out))
 
 
 def test_nash_1():
-    run('nash', '-tfail', '-i', GAME, fail=True)
+    assert not run('nash', '-tfail', '-i', GAME)[0]
 
-    string, _, = run('nash', input=GAME_STR)
+    success, out, err = run('nash', input=GAME_STR)
+    assert success, err
     assert any(
         np.allclose(SERIAL.from_mix_json(mix),
                     [0.54074617,  0.45925383,  0., 0., 0., 1., 0., 0., 0.])
-        for mix in json.loads(string))
+        for mix in json.loads(out))
 
 
 def test_nash_2():
-    run('nash', '-i', GAME, '-o/dev/null', '-r1e-2', '-d1e-2', '-c1e-7',
+    success, _, err = run(
+        'nash', '-i', GAME, '-o/dev/null', '-r1e-2', '-d1e-2', '-c1e-7',
         '-x100', '-s1e-2', '-m5', '-n', '-p1')
+    assert success, err
 
 
 def test_nash_3():
-    string, _ = run('nash', '-tpure', '-i', GAME)
+    success, out, err = run('nash', '-tpure', '-i', GAME)
+    assert success, err
     assert any(
         np.all(SERIAL.from_prof_json(prof) == [4, 2, 0, 0, 0, 1, 0, 0, 0])
-        for prof in json.loads(string))
+        for prof in json.loads(out))
 
 
 def test_nash_4():
-    string, _ = run('nash', '-tmin-reg-prof', '-i', GAME)
+    success, out, err = run('nash', '-tmin-reg-prof', '-i', GAME)
+    assert success, err
     assert any(
         np.all(SERIAL.from_prof_json(prof) == [4, 2, 0, 0, 0, 1, 0, 0, 0])
-        for prof in json.loads(string))
+        for prof in json.loads(out))
 
 
 def test_nash_5():
-    string, _ = run('nash', '-tmin-reg-grid', '-i', GAME)
+    success, out, err = run('nash', '-tmin-reg-grid', '-i', GAME)
+    assert success, err
     assert any(
         np.allclose(SERIAL.from_mix_json(mix), [0, 1, 0, 0, 0, 1, 0, 0, 0])
-        for mix in json.loads(string))
+        for mix in json.loads(out))
 
 
 def test_nash_6():
-    string, _ = run('nash', '-tmin-reg-rand', '-m10', '-i', GAME)
-    for mix in json.loads(string):
+    success, out, err = run('nash', '-tmin-reg-rand', '-m10', '-i', GAME)
+    assert success, err
+    for mix in json.loads(out):
         SERIAL.from_mix_json(mix)
 
 
 def test_nash_7():
-    string, _ = run('nash', '-trand', '-m10', '-i', GAME)
-    for mix in json.loads(string):
+    success, out, err = run('nash', '-trand', '-m10', '-i', GAME)
+    assert success, err
+    for mix in json.loads(out):
         SERIAL.from_mix_json(mix)
 
 
@@ -152,7 +175,8 @@ def test_nash_8():
         serial = gamegen.serializer(sgame)
         json.dump(serial.to_game_json(sgame), game)
         game.flush()
-        run('nash', '-tpure', '--one', '-i', game.name)
+        success, _, err = run('nash', '-tpure', '--one', '-i', game.name)
+        assert success, err
 
 
 def test_payoff_pure():
@@ -163,10 +187,12 @@ def test_payoff_pure():
             'hft': {'noop': 1}}]
         json.dump(prof, pure)
         pure.flush()
-        run('pay', '-i', GAME, pure.name, '-o/dev/null')
+        success, _, err = run('pay', '-i', GAME, pure.name, '-o/dev/null')
+        assert success, err
 
-        string, _ = run('pay', pure.name, '-twelfare', input=GAME_STR)
-        assert np.isclose(json.loads(string)[0], -315.4034577992763)
+        success, out, err = run('pay', pure.name, '-twelfare', input=GAME_STR)
+        assert success, err
+        assert np.isclose(json.loads(out)[0], -315.4034577992763)
 
 
 def test_payoff_mixed():
@@ -177,10 +203,12 @@ def test_payoff_mixed():
             'hft': {'noop': 1}}]
         json.dump(prof, mixed)
         mixed.flush()
-        run('pay', '-i', GAME, mixed.name, '-o/dev/null')
+        success, _, err = run('pay', '-i', GAME, mixed.name, '-o/dev/null')
+        assert success, err
 
-        string, _ = run('pay', mixed.name, '-twelfare', input=GAME_STR)
-        assert np.isclose(json.loads(string)[0], -315.4034577992763)
+        success, out, err = run('pay', mixed.name, '-twelfare', input=GAME_STR)
+        assert success, err
+        assert np.isclose(json.loads(out)[0], -315.4034577992763)
 
 
 def test_payoff_pure_single():
@@ -191,8 +219,9 @@ def test_payoff_pure_single():
             'hft': {'noop': 1}}
         json.dump(prof, pure)
         pure.flush()
-        string, _ = run('pay', '-i', GAME, pure.name)
-        assert np.allclose(SERIAL.from_payoff_json(json.loads(string)[0]),
+        success, out, err = run('pay', '-i', GAME, pure.name)
+        assert success, err
+        assert np.allclose(SERIAL.from_payoff_json(json.loads(out)[0]),
                            [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
@@ -203,46 +232,52 @@ def test_payoff_pure_string():
             'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
         'hft': {'noop': 1}}
     profstr = json.dumps(prof)
-    string, _ = run('pay', '-i', GAME, profstr)
-    assert np.allclose(SERIAL.from_payoff_json(json.loads(string)[0]),
+    success, out, err = run('pay', '-i', GAME, profstr)
+    assert success, err
+    assert np.allclose(SERIAL.from_payoff_json(json.loads(out)[0]),
                        [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
 def test_reduction_1():
-    string, _ = run('red', 'background:2,hft:1', input=GAME_STR)
-    game, serial = gameio.read_game(json.loads(string))
+    success, out, err = run('red', 'background:2,hft:1', input=GAME_STR)
+    assert success, err
+    game, serial = gameio.read_game(json.loads(out))
     red = reduction.DeviationPreserving([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
     assert game == red.reduce_game(GAME_DATA)
 
 
 def test_reduction_2():
-    string, _ = run('red', '-m', '-s', '2,1', '-i', GAME)
-    game, serial = gameio.read_samplegame(json.loads(string))
+    success, out, err = run('red', '-m', '-s', '2,1', '-i', GAME)
+    assert success, err
+    game, serial = gameio.read_samplegame(json.loads(out))
     red = reduction.DeviationPreserving([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
     assert game == red.reduce_game(rsgame.samplegame_copy(GAME_DATA))
 
 
 def test_reduction_3():
-    string, _ = run('red', '-thr', '-s', '2,1', '-i', GAME)
-    game, serial = gameio.read_game(json.loads(string))
+    success, out, err = run('red', '-thr', '-s', '2,1', '-i', GAME)
+    assert success, err
+    game, serial = gameio.read_game(json.loads(out))
     red = reduction.Hierarchical([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
     assert game == red.reduce_game(GAME_DATA)
 
 
 def test_reduction_4():
-    string, _ = run('red', '-ttr', '-i', GAME)
-    game, serial = gameio.read_game(json.loads(string))
+    success, out, err = run('red', '-ttr', '-i', GAME)
+    assert success, err
+    game, serial = gameio.read_game(json.loads(out))
     red = reduction.Twins([2, 7], [6, 1])
     assert serial == SERIAL
     assert game == red.reduce_game(GAME_DATA)
 
 
 def test_reduction_5():
-    string, _ = run('red', '-tidr', '-i', GAME)
-    game, serial = gameio.read_game(json.loads(string))
+    success, out, err = run('red', '-tidr', '-i', GAME)
+    assert success, err
+    game, serial = gameio.read_game(json.loads(out))
     assert serial == SERIAL
     assert game == GAME_DATA
 
@@ -255,11 +290,13 @@ def test_regret_pure():
             'hft': {'noop': 1}}
         json.dump([prof], pure)
         pure.flush()
-        string, _ = run('reg', '-i', GAME, pure.name)
-        assert np.isclose(json.loads(string)[0], 7747.618428)
+        success, out, err = run('reg', '-i', GAME, pure.name)
+        assert success, err
+        assert np.isclose(json.loads(out)[0], 7747.618428)
 
-        string, _ = run('reg', pure.name, '-tgains', input=GAME_STR)
-        dev_pay = json.loads(string)[0]
+        success, out, err = run('reg', pure.name, '-tgains', input=GAME_STR)
+        assert success, err
+        dev_pay = json.loads(out)[0]
         for role, strats in dev_pay.items():
             prof_strats = prof[role]
             assert prof_strats.keys() == strats.keys()
@@ -278,11 +315,13 @@ def test_regret_mixed():
             'hft': {'noop': 1}}]
         json.dump(prof, mixed)
         mixed.flush()
-        string, _ = run('reg', '-i', GAME, mixed.name)
-        assert np.isclose(json.loads(string)[0], 7747.618428)
+        success, out, err = run('reg', '-i', GAME, mixed.name)
+        assert success, err
+        assert np.isclose(json.loads(out)[0], 7747.618428)
 
-        string, _ = run('reg', mixed.name, '-tgains', input=GAME_STR)
-        assert np.allclose(SERIAL.from_payoff_json(json.loads(string)[0]),
+        success, out, err = run('reg', mixed.name, '-tgains', input=GAME_STR)
+        assert success, err
+        assert np.allclose(SERIAL.from_payoff_json(json.loads(out)[0]),
                            [581.18996992, 0., 0., 4696.19261, 3716.207196,
                             7747.618428, 4569.842172, 4191.665254,
                             4353.146694])
@@ -296,26 +335,30 @@ def test_regret_single():
             'hft': {'noop': 1}}
         json.dump(prof, pure)
         pure.flush()
-        string, _ = run('reg', '-i', GAME, pure.name)
-        assert np.isclose(json.loads(string)[0], 7747.618428)
+        success, out, err = run('reg', '-i', GAME, pure.name)
+        assert success, err
+        assert np.isclose(json.loads(out)[0], 7747.618428)
 
 
 def test_subgame_detect():
-    string, _ = run('sub', '-nd', '-i', GAME)
-    assert SERIAL.from_subgame_json(json.loads(string)[0]).all()
+    success, out, err = run('sub', '-nd', '-i', GAME)
+    assert success, err
+    assert SERIAL.from_subgame_json(json.loads(out)[0]).all()
 
 
 def test_subgame_extract_1():
-    string, _ = run('sub', '-n', '-t', 'background',
-                    'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9',
-                    'hft', 'noop', '-s', '0', '3', '4', input=GAME_STR)
+    success, out, err = run(
+        'sub', '-n', '-t', 'background',
+        'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9', 'hft', 'noop',
+        '-s', '0', '3', '4', input=GAME_STR)
+    assert success, err
 
     expected = {utils.hash_array([False,  True,  True, False, False, False,
                                   False, False, False]),
                 utils.hash_array([True, False, False,  True,  True, False,
                                   False, False, False])}
     assert {utils.hash_array(SERIAL.from_subgame_json(s))
-            for s in json.loads(string)} == expected
+            for s in json.loads(out)} == expected
 
 
 def test_subgame_extract_2():
@@ -323,14 +366,16 @@ def test_subgame_extract_2():
         subg = [False, True, True, False, False, False, False, False, False]
         json.dump([SERIAL.to_subgame_json(subg)], sub)
         sub.flush()
-        string, _ = run('sub', '-i', GAME, '-f', sub.name)
-        game, serial = gameio.read_game(json.loads(string)[0])
+        success, out, err = run('sub', '-i', GAME, '-f', sub.name)
+        assert success, err
+        game, serial = gameio.read_game(json.loads(out)[0])
         assert serial == subgame.subserializer(SERIAL, subg)
         assert game == subgame.subgame(GAME_DATA, subg)
 
 
 def test_analysis_1():
-    string, _ = run('analyze', input=GAME_STR)
+    success, out, err = run('analyze', input=GAME_STR)
+    assert success, err
     start = '''Game Analysis
 =============
 Game:
@@ -351,18 +396,18 @@ Game:
             trend:trendLength_8_profitDemanded_20_expiration_50
             trend:trendLength_8_profitDemanded_50_expiration_50
 payoff data for 49 out of 49 profiles'''
-    assert string.startswith(start)
-    assert 'Social Welfare\n--------------' in string
-    assert 'Maximum social welfare profile:' in string
-    assert 'Maximum "background" welfare profile:' in string
-    assert 'Maximum "hft" welfare profile:' in string
-    assert 'Equilibria\n----------' in string
-    assert 'No-equilibria Subgames\n----------------------' in string
+    assert out.startswith(start)
+    assert 'Social Welfare\n--------------' in out
+    assert 'Maximum social welfare profile:' in out
+    assert 'Maximum "background" welfare profile:' in out
+    assert 'Maximum "hft" welfare profile:' in out
+    assert 'Equilibria\n----------' in out
+    assert 'No-equilibria Subgames\n----------------------' in out
     assert ('Unconfirmed Candidate Equilibria\n'
-            '--------------------------------') in string
+            '--------------------------------') in out
     assert ('Unexplored Best-response Subgames\n'
-            '---------------------------------') in string
-    assert 'Json Data\n=========' in string
+            '---------------------------------') in out
+    assert 'Json Data\n=========' in out
 
 
 def test_analysis_2():
@@ -438,10 +483,11 @@ def test_analysis_3():
     serial = gamegen.serializer(game)
     game_str = json.dumps(serial.to_game_json(game))
 
-    string, _ = run('analyze', '-sd', input=game_str)
-    assert 'Found 1 dominated strategy' in string
-    assert 'Found 1 unconfirmed candidate' in string
-    assert 'Found 1 unexplored best-response subgame' in string
+    success, out, err = run('analyze', '-sd', input=game_str)
+    assert success, err
+    assert 'Found 1 dominated strategy' in out
+    assert 'Found 1 unconfirmed candidate' in out
+    assert 'Found 1 unexplored best-response subgame' in out
 
 
 def test_analysis_4():
@@ -449,13 +495,15 @@ def test_analysis_4():
     serial = gamegen.serializer(game)
     game_str = json.dumps(serial.to_game_json(game))
 
-    string, _ = run('analyze', '-s', input=game_str)
-    assert 'There was no profile with complete payoff data' in string
-    assert 'Found no complete subgames' in string
+    success, out, err = run('analyze', '-s', input=game_str)
+    assert success, err
+    assert 'There was no profile with complete payoff data' in out
+    assert 'Found no complete subgames' in out
 
 
 def test_learning_1():
-    string, _ = run('learning', input=GAME_STR)
+    success, out, err = run('learning', input=GAME_STR)
+    assert success, err
     start = '''Game Learning
 =============
 Game:
@@ -476,13 +524,13 @@ Game:
             trend:trendLength_8_profitDemanded_20_expiration_50
             trend:trendLength_8_profitDemanded_50_expiration_50
 payoff data for 49 out of 49 profiles'''
-    assert string.startswith(start)
-    assert 'Social Welfare\n--------------' in string
-    assert 'Maximum social welfare profile:' in string
-    assert 'Maximum "background" welfare profile:' in string
-    assert 'Maximum "hft" welfare profile:' in string
-    assert 'Equilibria\n----------' in string
-    assert 'Json Data\n=========' in string
+    assert out.startswith(start)
+    assert 'Social Welfare\n--------------' in out
+    assert 'Maximum social welfare profile:' in out
+    assert 'Maximum "background" welfare profile:' in out
+    assert 'Maximum "hft" welfare profile:' in out
+    assert 'Equilibria\n----------' in out
+    assert 'Json Data\n=========' in out
 
 
 def test_learning_2():
@@ -517,17 +565,20 @@ def test_sgboot_2():
         json.dump(profs, mixed)
         mixed.flush()
 
-        string, _ = run('sgboot', mixed.name, '-tsurplus', '--processes', '1',
-                        '-n21', '-p', '5', '95', '-m', input=game_str)
-        data = json.loads(string)
+        success, out, err = run(
+            'sgboot', mixed.name, '-tsurplus', '--processes', '1', '-n21',
+            '-p', '5', '95', '-m', input=game_str)
+        assert success, err
+        data = json.loads(out)
         assert all(j.keys() == {'5', '95', 'mean'} for j in data)
         assert all(j['5'] <= j['95'] for j in data)
 
 
 def test_sampboot():
     inp = json.dumps([random.random() for _ in range(10)])
-    string, _ = run('sampboot', '-n21', '-m', input=inp)
-    data = json.loads(string)
+    success, out, err = run('sampboot', '-n21', '-m', input=inp)
+    assert success, err
+    data = json.loads(out)
     keys = list(map(str, range(0, 101, 5)))
     assert data.keys() == set(keys + ['mean'])
     ordered = [data[k] for k in keys]
@@ -545,10 +596,12 @@ def test_sampboot_reg():
         json.dump(SERIAL.to_mix_json(GAME_DATA.random_mixtures()), mixed)
         mixed.flush()
 
-        string, _ = run('sampboot', '--regret', GAME, mixed.name, '-n21', '-p',
-                        '5', '95', '-m', input=json.dumps(inp))
+        success, out, err = run(
+            'sampboot', '--regret', GAME, mixed.name, '-n21', '-p', '5', '95',
+            '-m', input=json.dumps(inp))
+        assert success, err
 
-        data = json.loads(string)
+        data = json.loads(out)
         assert data.keys() == {'5', '95', 'mean'}
         assert data['5'] <= data['95']
 
@@ -564,10 +617,12 @@ def test_sampboot_dev_surp():
         json.dump(SERIAL.to_mix_json(GAME_DATA.random_mixtures()), mixed)
         mixed.flush()
 
-        string, _ = run('sampboot', '--dev-surplus', GAME, mixed.name, '-n21',
-                        '-p', '5', '95', '-m', input=json.dumps(inp))
+        success, out, err = run(
+            'sampboot', '--dev-surplus', GAME, mixed.name, '-n21', '-p', '5',
+            '95', '-m', input=json.dumps(inp))
+        assert success, err
 
-        data = json.loads(string)
+        data = json.loads(out)
         assert data.keys() == {'5', '95', 'mean'}
         assert data['5'] <= data['95']
 
@@ -580,12 +635,15 @@ def test_samp():
             'hft': {'noop': 1}}
         json.dump(prof, mixed)
         mixed.flush()
-        string, _ = run('samp', '-i', GAME, '-m', mixed.name)
-        prof = SERIAL.from_prof_json(json.loads(string))
+        success, out, err = run('samp', '-i', GAME, '-m', mixed.name)
+        assert success, err
+        prof = SERIAL.from_prof_json(json.loads(out))
         assert GAME_DATA.verify_profile(prof)
 
-        string, _ = run('samp', '-m', mixed.name, '-n2', '-d', input=GAME_STR)
-        lines = string[:-1].split('\n')
+        success, out, err = run('samp', '-m', mixed.name, '-n2', '-d',
+                                input=GAME_STR)
+        assert success, err
+        lines = out[:-1].split('\n')
         assert len(lines) == 2 * 9
         for line in lines:
             prof = SERIAL.from_prof_json(json.loads(line)['profile'])
