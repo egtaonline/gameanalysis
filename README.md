@@ -1,10 +1,9 @@
 Game Analysis
 =============
 
-[![Build Status](https://travis-ci.org/egtaonline/gameanalysis.svg?branch=master)](https://travis-ci.org/egtaonline/gameanalysis)
-[![Coverage Status](https://coveralls.io/repos/github/egtaonline/gameanalysis/badge.svg?branch=master)](https://coveralls.io/github/egtaonline/gameanalysis?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/gameanalysis/badge/?version=latest)](http://gameanalysis.readthedocs.io/en/latest/?badge=latest)
-
+[![Build Status](https://img.shields.io/travis/egtaonline/gameanalysis.svg?style=flat-square)](https://travis-ci.org/egtaonline/gameanalysis)
+[![Coverage Status](https://img.shields.io/coveralls/egtaonline/gameanalysis.svg?style=flat-square)](https://coveralls.io/github/egtaonline/gameanalysis?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/gameanalysis/badge/?version=latest&style=flat-square)](http://gameanalysis.readthedocs.io/en/latest/?badge=latest)
 
 This is a collection of python libraries and scripts that manipulate empirical game data.
 
