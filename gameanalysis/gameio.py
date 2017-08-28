@@ -39,6 +39,14 @@ class GameSerializer(rsgame.StratArray):
             in zip(self.role_names, self.strat_names))
         self._role_strat_index = {(r, s): i for i, (r, s)
                                   in enumerate(role_strats)}
+        role_strat_devs = itertools.chain.from_iterable(
+            itertools.chain.from_iterable(
+                ((r, s, d) for d in strats if d != s)
+                for s in strats)
+            for r, strats
+            in zip(self.role_names, self.strat_names))
+        self._role_strat_dev_index = {(r, s, d): i for i, (r, s, d)
+                                      in enumerate(role_strat_devs)}
         self._hash = hash((self.role_names, self.strat_names))
 
     def role_index(self, role):
@@ -48,6 +56,9 @@ class GameSerializer(rsgame.StratArray):
     def role_strat_index(self, role, strat):
         """Return the index of a role strat pair"""
         return self._role_strat_index[role, strat]
+
+    def role_strat_dev_index(self, role, strat, dev):
+        return self._role_strat_dev_index[role, strat, dev]
 
     def strat_name(self, role_strat_index):
         """Get the strategy name from a full index"""
@@ -320,7 +331,7 @@ class GameSerializer(rsgame.StratArray):
         strategies that aren't played.
         """
         if prof is None:
-            prof = np.broadcast_to(True, self.num_strats)
+            prof = np.broadcast_to(1, self.num_strats)
         return {role: {strat: list(map(float, pay)) for strat, count, pay
                        in zip(strats, counts, pays.T) if count > 0}
                 for role, strats, counts, pays
@@ -487,18 +498,32 @@ class GameSerializer(rsgame.StratArray):
         return {role: info.item() for role, info
                 in zip(self.role_names, np.asarray(role_info))}
 
-    def to_deviation_payoff_json(self, payoffs, profile):
+    def from_dev_payoff_json(self, deviations, dest=None):
+        if dest is None:
+            dest = np.empty(self.num_devs)
+        dest.fill(0)
+
+        for role, strats in deviations.items():
+            for strat, devs in strats.items():
+                for dev, val in devs.items():
+                    dest[self.role_strat_dev_index(role, strat, dev)] = val
+
+        return dest
+
+    def to_dev_payoff_json(self, payoffs, profile=None):
         """Format a profile and deviation payoffs as json"""
-        supp = np.asarray(profile, bool)
-        role_supp = np.add.reduceat(supp, self.role_starts)
-        splits = ((self.num_role_strats - 1) * role_supp)[:-1].cumsum()
-        return {r: {s: {d: p.item() for p, d
-                        in zip(dps, (d for d in ses if d != s))}  # noqa
-                    for dps, s in zip(np.split(ps, sp.sum()),
-                                      (s for s, m in zip(ses, sp) if m))}  # noqa
-                for r, ses, ps, sp
+        payoffs = np.asarray(payoffs, float)
+        supp = (np.ones(self.num_strats, bool) if profile is None
+                else np.asarray(profile, bool))
+        return {r: {s: {d: float(pay) for pay, d
+                        in zip(spays, (d for d in ses if d != s))}  # noqa
+                    for spays, s, su
+                    in zip(np.split(rpay, n), ses, sup)
+                    if su}
+                for r, ses, n, rpay, sup
                 in zip(self.role_names, self.strat_names,
-                       np.split(payoffs, splits),
+                       self.num_role_strats,
+                       np.split(payoffs, self.dev_role_starts[1:]),
                        np.split(supp, self.role_starts[1:]))}
 
     def _get_num_role_players(self, game):

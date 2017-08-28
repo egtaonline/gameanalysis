@@ -6,35 +6,23 @@ import numpy as np
 from scipy import optimize
 
 
-def pure_strategy_deviation_gains(game, prof):
+def pure_strategy_deviation_gains(game, profile):
     """Returns the pure strategy deviations gains
 
     The result is a compact array of deviation gains. Each element corresponds
     to the deviation from strategy i to strategy j ordered by (i, j) for all
     valid deviations."""
-    prof = np.asarray(prof, int)
-    supp = prof > 0
-    num_supp = np.add.reduceat(supp, game.role_starts)
-    from_inds = np.arange(game.num_strats)[supp]
-    reps = game.num_role_strats[game.role_indices[from_inds]]
-    num_devs = np.sum(num_supp * (game.num_role_strats - 1))
+    profile = np.asarray(profile, int)
+    dev_profs = profile[None].repeat(game.num_devs, 0)
+    dev_profs[np.arange(game.num_devs), game.dev_from_indices] -= 1
+    dev_profs[np.arange(game.num_devs), game.dev_to_indices] += 1
 
-    to_inds = np.ones(reps.sum(), int)
-    to_inds[0] = 0
-    to_inds[reps[:-1].cumsum()] -= reps[:-1]
-    role_inds = (num_supp * game.num_role_strats)[:-1].cumsum()
-    to_inds[role_inds] += game.num_role_strats[:-1]
-    to_inds = to_inds.cumsum()
-    to_inds = to_inds[to_inds != from_inds.repeat(reps)]
-    from_inds = from_inds.repeat(reps - 1)
-
-    pays = game.get_payoffs(prof)[from_inds]
-    dev_profs = prof[None].repeat(num_devs, 0)
-    dev_profs[np.arange(num_devs), from_inds] -= 1
-    dev_profs[np.arange(num_devs), to_inds] += 1
-    dev_pays = np.array([game.get_payoffs(dprof)[to]
-                         for dprof, to in zip(dev_profs, to_inds)])
-    return dev_pays - pays
+    pays = game.get_payoffs(profile)
+    return np.fromiter(
+        (game.get_payoffs(prof)[t] - pays[f] if np.all(prof >= 0) else 0
+         for prof, f, t
+         in zip(dev_profs, game.dev_from_indices, game.dev_to_indices)),
+        float, game.num_devs)
 
 
 def pure_strategy_regret(game, prof):
@@ -42,7 +30,6 @@ def pure_strategy_regret(game, prof):
 
     If prof has more than one dimension, the last dimension is taken as a set
     of profiles and returned as a new array."""
-    prof = np.asarray(prof, int)
     return max(pure_strategy_deviation_gains(game, prof).max(), 0)
 
 

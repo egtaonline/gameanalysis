@@ -6,6 +6,33 @@ from gameanalysis import regret
 from gameanalysis import rsgame
 
 
+def test_pure_strategy_deviation_gains():
+    profiles = [[2, 0, 2, 0],
+                [2, 0, 1, 1],
+                [2, 0, 0, 2],
+                [1, 1, 2, 0],
+                [1, 1, 1, 1],
+                [1, 1, 0, 2],
+                [0, 2, 2, 0],
+                [0, 2, 1, 1],
+                [0, 2, 0, 2]]
+    payoffs = [[1, 0, 2, 0],
+               [3, 0, 4, 5],
+               [6, 0, 0, 7],
+               [8, 9, 10, 0],
+               [11, 12, 13, 14],
+               [15, 16, 0, 17],
+               [0, 18, 19, 0],
+               [0, 20, 21, 22],
+               [0, 23, 0, 24]]
+    game = rsgame.game(2, [2, 2], profiles, payoffs)
+
+    gains = regret.pure_strategy_deviation_gains(game, [2, 0, 2, 0])
+    assert np.allclose(gains, [8, 0, 3, 0])
+    gains = regret.pure_strategy_deviation_gains(game, [1, 1, 1, 1])
+    assert np.allclose(gains, [9, -9, 4, -4])
+
+
 @pytest.mark.parametrize('_', range(20))
 def test_pure_prisoners_dilemma(_):
     game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma

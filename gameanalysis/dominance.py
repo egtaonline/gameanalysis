@@ -19,22 +19,9 @@ def _gains(game):
 
     Also returns the profile supports for indexing when the gains array should
     be zero because it's invalid versus having an actual zero gain."""
-    sizes = np.repeat(game.num_role_strats - 1, game.num_role_strats)
-    offsets = np.insert(sizes.cumsum(), 0, 0)
-    size = offsets[-1]
-    offsets = offsets[:-1]
-    gains = np.zeros((game.num_profiles, size))
-    supports = game.profiles > 0
-
-    for i, (prof, support) in enumerate(zip(game.profiles, supports)):
-        regs = regret.pure_strategy_deviation_gains(game, prof)
-        reps = game.num_role_strats[game.role_indices[support]] - 1
-        reg_offsets = np.insert(reps[:-1].cumsum(), 0, 0)
-        inds = (np.repeat(offsets[support] - reg_offsets, reps) +
-                np.arange(regs.size))
-        gains[i, inds] = regs
-
-    return gains, supports
+    return np.concatenate(
+        [regret.pure_strategy_deviation_gains(game, prof)[None]
+         for prof in game.profiles])
 
 
 def _reduceat(ufunc, a, indices, axis=0, dtype=None, out=None):
@@ -108,17 +95,16 @@ def weakly_dominated(game, conditional=True):
     """Return a mask of the strategies that are weakly dominated
 
     If conditional, then missing data will be treated as dominating."""
-    gains, supports = _gains(game)
-    return _weak_dominance(gains, supports, game.num_role_strats, conditional)
+    return _weak_dominance(_gains(game), game.profiles > 0,
+                           game.num_role_strats, conditional)
 
 
 def strictly_dominated(game, conditional=True):
     """Return a mask of the strategies that are strictly dominated
 
     If conditional, then missing data will be treated as dominating."""
-    gains, supports = _gains(game)
-    return _strict_dominance(gains, supports, game.num_role_strats,
-                             conditional)
+    return _strict_dominance(_gains(game), game.profiles > 0,
+                             game.num_role_strats, conditional)
 
 
 def never_best_response(game, conditional=True):
@@ -126,9 +112,8 @@ def never_best_response(game, conditional=True):
 
     If conditional, then missing data is treated as a best response. The
     counted best response will be the largest deviation that has data."""
-    gains, supports = _gains(game)
-    return _never_best_response(gains, supports, game.num_role_strats,
-                                conditional)
+    return _never_best_response(_gains(game), game.profiles > 0,
+                                game.num_role_strats, conditional)
 
 
 _CRITERIA = {
@@ -157,7 +142,8 @@ def iterated_elimination(game, criterion, conditional=True):
     cfunc = _CRITERIA[criterion]
 
     num_strats = game.num_role_strats
-    gains, supports = _gains(game)
+    gains = _gains(game)
+    supports = game.profiles > 0
 
     subgame_mask = np.ones(game.num_strats, bool)
     mask = ~cfunc(gains, supports, num_strats, conditional)

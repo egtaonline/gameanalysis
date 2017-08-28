@@ -19,6 +19,7 @@ games = [
 ]
 
 
+# FIXME Replace with @pytest.mark.slow
 def long_test(func):
     return pytest.mark.skipif(
         not long_tests,

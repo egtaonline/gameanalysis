@@ -21,6 +21,7 @@ just `num_profiles` not `num_profiles()`. These will also only be numbers,
 either a single int, or an array of them depending on the attribute."""
 import functools
 import itertools
+import warnings
 
 import numpy as np
 import numpy.random as rand
@@ -66,6 +67,84 @@ class StratArray(object):
 
         A pure subgame is is one with only one strategy per role."""
         return self.num_role_strats.prod()
+
+    @property
+    @utils.memoize
+    def num_strat_devs(self):
+        """The number of deviations for each strategy"""
+        devs = np.repeat(self.num_role_strats - 1, self.num_role_strats)
+        devs.setflags(write=False)
+        return devs
+
+    @property
+    @utils.memoize
+    def num_role_devs(self):
+        """The number of deviations for each role"""
+        devs = (self.num_role_strats - 1) * self.num_role_strats
+        devs.setflags(write=False)
+        return devs
+
+    @property
+    @utils.memoize
+    def num_devs(self):
+        """The total number of deviations"""
+        return self.num_role_devs.sum()
+
+    @property
+    @utils.memoize
+    def dev_strat_starts(self):
+        """The start index for each strategy deviation"""
+        if np.any(self.num_role_strats == 1):
+            warnings.warn(
+                "using reduceat with dev_strat_starts will not produce "
+                "correct results if any role only has one strategy. This "
+                "might get fixed at some point, but currently extra care must "
+                "be taken for these cases.")
+        starts = np.insert(self.num_strat_devs[:-1].cumsum(), 0, 0)
+        starts.setflags(write=False)
+        return starts
+
+    @property
+    @utils.memoize
+    def dev_role_starts(self):
+        """The start index for each role deviation"""
+        if np.any(self.num_role_strats == 1):
+            warnings.warn(
+                "using reduceat with dev_role_starts will not produce "
+                "correct results if any role only has one strategy. This "
+                "might get fixed at some point, but currently extra care must "
+                "be taken for these cases.")
+        starts = np.insert(self.num_role_devs[:-1].cumsum(), 0, 0)
+        starts.setflags(write=False)
+        return starts
+
+    @property
+    @utils.memoize
+    def dev_from_indices(self):
+        """The strategy deviating from for each deviation"""
+        inds = np.arange(self.num_strats).repeat(self.num_strat_devs)
+        inds.setflags(write=False)
+        return inds
+
+    @property
+    @utils.memoize
+    def dev_to_indices(self):
+        """The strategy deviating to for each deviation"""
+        inds = (np.arange(self.num_devs) -
+                self.dev_strat_starts.repeat(self.num_strat_devs) +
+                self.role_starts.repeat(self.num_role_devs))
+
+        # XXX The use of bincount here allows for one strategy roles
+        pos_offset = np.bincount(np.arange(self.num_strats) -
+                                 self.role_starts.repeat(self.num_role_strats)
+                                 + self.dev_strat_starts,
+                                 minlength=self.num_devs + 1)[:-1]
+        neg_offset = np.bincount(self.dev_strat_starts[1:],
+                                 minlength=self.num_devs + 1)[:-1]
+        inds += np.cumsum(pos_offset - neg_offset)
+
+        inds.setflags(write=False)
+        return inds
 
     def all_subgames(self):
         """Return all valid subgames"""
@@ -575,30 +654,31 @@ class BaseGame(StratArray):
         return (self.pure_subgames() *
                 self.num_role_players.repeat(self.num_role_strats))
 
-    def nearby_profs(self, prof, num_devs):
+    def nearby_profiles(self, profile, num_devs):
         """Returns profiles reachable by at most num_devs deviations"""
         # TODO This is pretty slow and could probably be sped up
         assert num_devs >= 0
+        profile = np.asarray(profile, int)
         dev_players = utils.acomb(self.num_roles, num_devs, True)
         mask = np.all(dev_players <= self.num_role_players, 1)
         dev_players = dev_players[mask]
-        supp = prof > 0
+        supp = profile > 0
         sub_strats = np.add.reduceat(supp, self.role_starts)
 
-        profs = [prof[None]]
+        profiles = [profile[None]]
         for players in dev_players:
             to_dev_profs = game(players, self.num_role_strats).all_profiles()
             sub = game(players, sub_strats)
             from_dev_profs = np.zeros((sub.num_all_profiles,
                                        self.num_strats), int)
             from_dev_profs[:, supp] = sub.all_profiles()
-            before_devs = prof - from_dev_profs
+            before_devs = profile - from_dev_profs
             before_devs = before_devs[np.all(before_devs >= 0, 1)]
             before_devs = utils.unique_axis(before_devs)
             nearby = before_devs[:, None] + to_dev_profs
             nearby.shape = (-1, self.num_strats)
-            profs.append(utils.unique_axis(nearby))
-        return utils.unique_axis(np.concatenate(profs))
+            profiles.append(utils.unique_axis(nearby))
+        return utils.unique_axis(np.concatenate(profiles))
 
     def random_profiles(self, num_samples=None, mixture=None):
         """Sample profiles from a mixture

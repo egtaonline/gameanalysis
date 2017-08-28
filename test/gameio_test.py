@@ -830,17 +830,34 @@ def test_to_from_role_json():
     assert SERIAL2.from_role_json(json_role).dtype == float
 
 
-def test_deviation_payoff_json():
+def test_dev_payoff_json():
     prof = [3, 0, 4]
-    devpay = [5]
+    devpay = [5, 0]
     json_devpay = {'a': {'bar': {'foo': 5}}, 'b': {'baz': {}}}
-    assert SERIAL2.to_deviation_payoff_json(devpay, prof) == json_devpay
+    json_devpay2 = {'a': {'bar': {'foo': 5}, 'foo': {'bar': 0}},
+                    'b': {'baz': {}}}
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        assert SERIAL2.to_dev_payoff_json(devpay, prof) == json_devpay
+        assert SERIAL2.to_dev_payoff_json(devpay) == json_devpay2
+        dest = np.empty(SERIAL2.num_devs)
+        SERIAL2.from_dev_payoff_json(json_devpay, dest)
+        assert np.allclose(dest, devpay)
+        assert np.allclose(SERIAL2.from_dev_payoff_json(json_devpay), devpay)
 
     prof = [2, 1, 4]
     devpay = [5, 4]
     json_devpay = {'a': {'bar': {'foo': 5},
-                         'foo': {'bar': 4}}, 'b': {'baz': {}}}
-    assert SERIAL2.to_deviation_payoff_json(devpay, prof) == json_devpay
+                         'foo': {'bar': 4}},
+                   'b': {'baz': {}}}
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        assert SERIAL2.to_dev_payoff_json(devpay, prof) == json_devpay
+        assert SERIAL2.to_dev_payoff_json(devpay) == json_devpay
+        dest = np.empty(SERIAL2.num_devs)
+        SERIAL2.from_dev_payoff_json(json_devpay, dest)
+        assert np.allclose(dest, devpay)
+        assert np.allclose(SERIAL2.from_dev_payoff_json(json_devpay), devpay)
 
 
 def test_to_pay_json():

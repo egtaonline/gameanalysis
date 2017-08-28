@@ -181,7 +181,7 @@ class NeighborEVs(rsgame.BaseGame):
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
         assert not jacobian, "NeighborEVs doesn't support jacobian"
 
-        profiles = self.game.nearby_profs(
+        profiles = self.game.nearby_profiles(
             self.game.max_prob_prof(mix), self._num_devs)
         payoffs = self.regression_model.get_payoffs(profiles)
 

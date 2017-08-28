@@ -1,4 +1,5 @@
 import collections
+import warnings
 
 import numpy as np
 import numpy.random as rand
@@ -29,6 +30,21 @@ def test_stratarray_properties():
     assert np.all(sarr.role_indices == [0])
     assert sarr.num_all_subgames == 1
     assert sarr.num_pure_subgames == 1
+    assert np.all(sarr.num_strat_devs == [0])
+    assert np.all(sarr.num_role_devs == [0])
+    assert sarr.num_devs == 0
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        assert np.all(sarr.dev_strat_starts == [0])
+        assert len(w) == 1
+        assert issubclass(w[0].category, UserWarning)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        assert np.all(sarr.dev_role_starts == [0])
+        assert len(w) == 1
+        assert issubclass(w[0].category, UserWarning)
+    assert np.all(sarr.dev_from_indices == [])
+    assert np.all(sarr.dev_to_indices == [])
 
     sarr = rsgame.StratArray(np.array([3]))
     assert sarr.num_strats == 3
@@ -38,6 +54,13 @@ def test_stratarray_properties():
     assert np.all(sarr.role_indices == [0, 0, 0])
     assert sarr.num_all_subgames == 7
     assert sarr.num_pure_subgames == 3
+    assert np.all(sarr.num_strat_devs == [2, 2, 2])
+    assert np.all(sarr.num_role_devs == [6])
+    assert sarr.num_devs == 6
+    assert np.all(sarr.dev_strat_starts == [0, 2, 4])
+    assert np.all(sarr.dev_role_starts == [0])
+    assert np.all(sarr.dev_from_indices == [0, 0, 1, 1, 2, 2])
+    assert np.all(sarr.dev_to_indices == [1, 2, 0, 2, 0, 1])
 
     sarr = rsgame.StratArray(np.array([1, 3]))
     assert sarr.num_strats == 4
@@ -47,6 +70,21 @@ def test_stratarray_properties():
     assert np.all(sarr.role_indices == [0, 1, 1, 1])
     assert sarr.num_all_subgames == 7
     assert sarr.num_pure_subgames == 3
+    assert np.all(sarr.num_strat_devs == [0, 2, 2, 2])
+    assert np.all(sarr.num_role_devs == [0, 6])
+    assert sarr.num_devs == 6
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        assert np.all(sarr.dev_strat_starts == [0, 0, 2, 4])
+        assert len(w) == 1
+        assert issubclass(w[0].category, UserWarning)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        assert np.all(sarr.dev_role_starts == [0, 0])
+        assert len(w) == 1
+        assert issubclass(w[0].category, UserWarning)
+    assert np.all(sarr.dev_from_indices == [1, 1, 2, 2, 3, 3])
+    assert np.all(sarr.dev_to_indices == [2, 3, 1, 3, 1, 2])
 
     sarr = rsgame.StratArray(np.array([3, 2, 1]))
     assert sarr.num_strats == 6
@@ -56,6 +94,21 @@ def test_stratarray_properties():
     assert np.all(sarr.role_indices == [0, 0, 0, 1, 1, 2])
     assert sarr.num_all_subgames == 21
     assert sarr.num_pure_subgames == 6
+    assert np.all(sarr.num_strat_devs == [2, 2, 2, 1, 1, 0])
+    assert np.all(sarr.num_role_devs == [6, 2, 0])
+    assert sarr.num_devs == 8
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        assert np.all(sarr.dev_strat_starts == [0, 2, 4, 6, 7, 8])
+        assert len(w) == 1
+        assert issubclass(w[0].category, UserWarning)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        assert np.all(sarr.dev_role_starts == [0, 6, 8])
+        assert len(w) == 1
+        assert issubclass(w[0].category, UserWarning)
+    assert np.all(sarr.dev_from_indices == [0, 0, 1, 1, 2, 2, 3, 4])
+    assert np.all(sarr.dev_to_indices == [1, 2, 0, 2, 0, 1, 4, 3])
 
 
 def test_subgame_enumeration():
@@ -884,6 +937,99 @@ def test_pure_profiles():
                            utils.axis_to_elem(game.pure_profiles())).size
 
 
+def test_nearby_profiles_1():
+    """This is essentially just testing single deviations"""
+    game = rsgame.basegame(1, 1)
+    prof = [1]
+    expected = [1]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+
+    game = rsgame.basegame(3, 2)
+    prof = [3, 0]
+    expected = [[3, 0],
+                [2, 1]]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+    prof = [2, 1]
+    expected = [[3, 0],
+                [2, 1],
+                [1, 2]]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+
+    game = rsgame.basegame([1, 3], 2)
+    prof = [1, 0, 0, 3]
+    expected = [[0, 1, 0, 3],
+                [1, 0, 0, 3],
+                [1, 0, 1, 2]]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+    prof = [1, 0, 2, 1]
+    expected = [[0, 1, 2, 1],
+                [1, 0, 2, 1],
+                [1, 0, 3, 0],
+                [1, 0, 1, 2]]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+
+    game = rsgame.basegame(1, [3, 1])
+    prof = [0, 0, 1, 1]
+    expected = [[1, 0, 0, 1],
+                [0, 0, 1, 1],
+                [0, 1, 0, 1]]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+
+    game = rsgame.basegame([3, 2, 1], [1, 2, 3])
+    prof = [3, 2, 0, 1, 0, 0]
+    expected = [[3, 1, 1, 1, 0, 0],
+                [3, 2, 0, 1, 0, 0],
+                [3, 2, 0, 0, 1, 0],
+                [3, 2, 0, 0, 0, 1]]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+    prof = [3, 1, 1, 1, 0, 0]
+    expected = [[3, 2, 0, 1, 0, 0],
+                [3, 1, 1, 1, 0, 0],
+                [3, 0, 2, 1, 0, 0],
+                [3, 1, 1, 0, 1, 0],
+                [3, 1, 1, 0, 0, 1]]
+    actual = game.nearby_profiles(prof, 1)
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected),
+        utils.axis_to_elem(actual)).size
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+@pytest.mark.parametrize('num_devs', range(5))
+def test_random_nearby_profiles(role_players, role_strats, num_devs):
+    base = rsgame.game(role_players, role_strats)
+    prof = base.random_profiles()
+    nearby = base.nearby_profiles(prof, num_devs)
+    diff = nearby - prof
+    devs_from = np.add.reduceat((diff < 0) * -diff, base.role_starts, 1)
+    devs_to = np.add.reduceat((diff > 0) * diff, base.role_starts, 1)
+    assert np.all(devs_to.sum(1) <= num_devs)
+    assert np.all(devs_from.sum(1) <= num_devs)
+    assert np.all(devs_to == devs_from)
+    assert np.all(base.is_profile(nearby))
+
+
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_fixed_profiles(role_players, role_strats):
     game = rsgame.basegame(role_players, role_strats)
@@ -1389,21 +1535,6 @@ def test_deviation_nans_2(p, q):
     mix = np.array([1, 0, 0, 0, 1, 0])
     pays = game.deviation_payoffs(mix)
     assert not np.isnan(pays).any()
-
-
-@pytest.mark.parametrize('role_players,role_strats', testutils.games)
-@pytest.mark.parametrize('num_devs', range(5))
-def test_nearby_profiles(role_players, role_strats, num_devs):
-    base = rsgame.game(role_players, role_strats)
-    prof = base.random_profiles()
-    nearby = base.nearby_profs(prof, num_devs)
-    diff = nearby - prof
-    devs_from = np.add.reduceat((diff < 0) * -diff, base.role_starts, 1)
-    devs_to = np.add.reduceat((diff > 0) * diff, base.role_starts, 1)
-    assert np.all(devs_to.sum(1) <= num_devs)
-    assert np.all(devs_from.sum(1) <= num_devs)
-    assert np.all(devs_to == devs_from)
-    assert np.all(base.is_profile(nearby))
 
 
 def test_expected_payoffs():

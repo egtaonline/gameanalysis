@@ -34,7 +34,7 @@ def gains(game, serial, prof):
     if is_pure_profile(game, prof):
         prof = np.asarray(prof, int)
         gains = regret.pure_strategy_deviation_gains(game, prof)
-        return serial.to_deviation_payoff_json(gains, prof)
+        return serial.to_dev_payoff_json(gains, prof)
     else:
         gains = regret.mixture_deviation_gains(game, prof)
         return serial.to_payoff_json(gains)

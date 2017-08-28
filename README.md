@@ -93,3 +93,4 @@ To Do
 - Fix git dependencies, tie to a commit perhaps?
 - add get_sample_payoffs to SampleGame?
 - Consider making payoffs or profiles sparse? Currently this makes operations much slower and even for large sparse observation payoffs only save ~2 memory
+- Use `--durations=N` to find slowest tests and fix them / speed them up.
