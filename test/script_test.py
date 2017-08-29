@@ -642,7 +642,7 @@ def test_samp():
         success, out, err = run('samp', '-i', GAME, '-m', mixed.name)
         assert success, err
         prof = SERIAL.from_prof_json(json.loads(out))
-        assert GAME_DATA.verify_profile(prof)
+        assert GAME_DATA.is_profile(prof)
 
         success, out, err = run('samp', '-m', mixed.name, '-n2', '-d',
                                 input=GAME_STR)
@@ -651,4 +651,4 @@ def test_samp():
         assert len(lines) == 2 * 9
         for line in lines:
             prof = SERIAL.from_prof_json(json.loads(line)['profile'])
-            assert GAME_DATA.verify_profile(prof)
+            assert GAME_DATA.is_profile(prof)

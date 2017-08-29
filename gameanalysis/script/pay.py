@@ -15,9 +15,9 @@ def is_pure_profile(game, prof):
     # For an asymmetric game, this will always return false, but then it
     # shouldn't be an issue, because pure strategy regret will be more
     # informative.
-    pure = np.any(game.role_reduce(prof) > 1.5)
-    assert (game.verify_profile(np.asarray(prof, int)) if pure else
-            game.verify_mixture(prof))
+    pure = np.any(np.add.reduceat(prof, game.role_starts) > 1.5)
+    assert (game.is_profile(np.asarray(prof, int)) if pure else
+            game.is_mixture(prof))
     return pure
 
 

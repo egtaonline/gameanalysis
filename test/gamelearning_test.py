@@ -19,8 +19,8 @@ def test_basic_functions(reg_method, ev_method):
 
     reggame = gamelearning.RegressionGame(game, reg_method, ev_method)
 
-    assert np.all(reggame.min_payoffs() == game.min_payoffs())
-    assert np.all(reggame.max_payoffs() == game.max_payoffs())
+    assert np.all(reggame.min_strat_payoffs() == game.min_strat_payoffs())
+    assert np.all(reggame.max_strat_payoffs() == game.max_strat_payoffs())
 
     assert reggame.is_complete()
 

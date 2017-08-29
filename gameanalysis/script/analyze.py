@@ -81,8 +81,8 @@ def main(args):
         for r in args.dpr.split(','):
             s, c = r.split(':')
             red_players[serial.role_index(s)] = int(c)
-        red = reduction.DeviationPreserving(game.num_strategies,
-                                            game.num_players, red_players)
+        red = reduction.DeviationPreserving(game.num_role_strats,
+                                            game.num_role_players, red_players)
         redgame = red.reduce_game(game, True)
     else:
         redgame = game
@@ -96,7 +96,7 @@ def main(args):
     if args.subgames:
         subgames = subgame.maximal_subgames(redgame)
     else:
-        subgames = np.ones(redgame.num_role_strats, bool)[None]
+        subgames = np.ones(redgame.num_strats, bool)[None]
 
     methods = {
         'replicator': {
@@ -127,7 +127,7 @@ def main(args):
     for eqm in candidates:
         support = eqm > 0
         gains = regret.mixture_deviation_gains(redgame, eqm)
-        role_gains = redgame.role_reduce(gains, ufunc=np.fmax)
+        role_gains = np.fmax.reduceat(gains, redgame.role_starts)
         gain = np.nanmax(role_gains)
 
         if np.isnan(gains).any() and gain <= args.regret_thresh:
@@ -137,7 +137,8 @@ def main(args):
         elif np.any(role_gains > args.regret_thresh):
             # There are deviations, did we explore them?
             dev_inds = ([np.argmax(gs == mg) for gs, mg
-                         in zip(redgame.role_split(gains), role_gains)] +
+                         in zip(np.split(gains, redgame.role_starts[1:]),
+                                role_gains)] +
                         redgame.role_starts)[role_gains > args.regret_thresh]
             for dind in dev_inds:
                 devsupp = support.copy()

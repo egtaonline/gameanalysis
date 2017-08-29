@@ -492,21 +492,27 @@ FULLGAME_JSON = {
                                    EMPTYGAME_JSON, SUMMARYGAME_JSON,
                                    OBSERVATIONGAME_JSON, FULLGAME_JSON])
 def test_basegame_from_json(jgame):
-    gameio.read_basegame(jgame)
+    game, serial = gameio.read_basegame(jgame)
+    copy = serial.from_basegame_json(serial.to_basegame_json(game))
+    assert game == copy
 
 
 @pytest.mark.parametrize('jgame', [BASEGAME_JSON, GAME_JSON, SAMPLEGAME_JSON,
                                    EMPTYGAME_JSON, SUMMARYGAME_JSON,
                                    OBSERVATIONGAME_JSON, FULLGAME_JSON])
 def test_game_from_json(jgame):
-    gameio.read_game(jgame)
+    game, serial = gameio.read_game(jgame)
+    copy = serial.from_game_json(serial.to_game_json(game))
+    assert game == copy
 
 
 @pytest.mark.parametrize('jgame', [BASEGAME_JSON, GAME_JSON, SAMPLEGAME_JSON,
                                    EMPTYGAME_JSON, SUMMARYGAME_JSON,
                                    OBSERVATIONGAME_JSON, FULLGAME_JSON])
 def test_samplegame_from_json(jgame):
-    gameio.read_samplegame(jgame)
+    game, serial = gameio.read_samplegame(jgame)
+    copy = serial.from_samplegame_json(serial.to_samplegame_json(game))
+    assert game == copy
 
 
 @pytest.mark.parametrize('jgame', [BASEGAME_JSON, GAME_JSON, SAMPLEGAME_JSON,
@@ -586,7 +592,7 @@ BaseGame:
             baz
 """[1:-1]
     assert expected == SERIAL2.to_basegame_printstr(rsgame.basegame(
-        [3, 4], SERIAL2.num_strategies))
+        [3, 4], SERIAL2.num_role_strats))
 
     expected = """
 Game:
@@ -761,13 +767,13 @@ def test_to_from_samplepay_json():
 
     with pytest.raises(AssertionError):
         SERIAL2.from_samplepay_json(
-            json_spay, np.empty((0, SERIAL2.num_role_strats)))
+            json_spay, np.empty((0, SERIAL2.num_strats)))
 
     json_prof_spay = {'a': [('bar', 3, [3, 4, 5])],
                       'b': [('baz', 4, [7, 8, 9])]}
     with pytest.raises(AssertionError):
         SERIAL2.from_samplepay_json(
-            json_prof_spay, np.empty((0, SERIAL2.num_role_strats)))
+            json_prof_spay, np.empty((0, SERIAL2.num_strats)))
 
 
 def test_to_from_profsamplepay_json():

@@ -21,7 +21,7 @@ def pure_nash(game, epsilon=0):
     if eqa:
         return np.concatenate(eqa)
     else:
-        return np.empty((0, game.num_role_strats))
+        return np.empty((0, game.num_strats))
 
 
 def min_regret_profile(game):
@@ -74,9 +74,10 @@ class RegretOptimizer(object):
 
     def __init__(self, game, gtol=1e-8):
         self.game = game
-        self.scale = game.role_repeat(game.max_payoffs() - game.min_payoffs())
+        self.scale = np.repeat(game.max_role_payoffs() -
+                               game.min_role_payoffs(), game.num_role_strats)
         self.scale[self.scale == 0] = 1  # In case payoffs are the same
-        self.offset = game.role_repeat(game.min_payoffs())
+        self.offset = game.min_role_payoffs().repeat(game.num_role_strats)
         self.gtol = gtol
 
     def grad(self, mix, penalty):
@@ -94,12 +95,17 @@ class RegretOptimizer(object):
         dev_jac /= self.scale[:, None]
 
         # Gains from deviation (objective)
-        gains = np.maximum(dev_pay - self.game.role_reduce(mix * dev_pay,
-                                                           keepdims=True), 0)
+        gains = np.maximum(
+            dev_pay -
+            np.add.reduceat(
+                mix * dev_pay, self.game.role_starts).repeat(
+                    self.game.num_role_strats),
+            0)
         obj = np.sum(gains ** 2) / 2
 
-        gains_jac = (dev_jac - dev_pay - self.game.role_reduce(
-            mix[:, None] * dev_jac, 0, keepdims=True))
+        gains_jac = (dev_jac - dev_pay - np.add.reduceat(
+            mix[:, None] * dev_jac, self.game.role_starts).repeat(
+                self.game.num_role_strats, 0))
         grad = np.sum(gains[:, None] * gains_jac, 0)
 
         # Penalty terms for obj and gradient
@@ -107,8 +113,8 @@ class RegretOptimizer(object):
         grad += penalty * np.minimum(mix, 0)
 
         # Project grad so steps stay in the appropriate space
-        grad -= self.game.role_repeat(self.game.role_reduce(grad) /
-                                      self.game.num_strategies)
+        grad -= np.repeat(np.add.reduceat(grad, self.game.role_starts) /
+                          self.game.num_role_strats, self.game.num_role_strats)
 
         return obj, grad
 
@@ -152,21 +158,22 @@ class ReplicatorDynamics(object):
         self.slack = slack
 
     def __call__(self, mix):
-        minp = self.game.min_payoffs()
-        maxp = self.game.max_payoffs()
+        minp = self.game.min_role_payoffs()
+        maxp = self.game.max_role_payoffs()
 
         for _ in range(self.max_iters):
             old_mix = mix
             dev_pays = self.game.deviation_payoffs(mix, assume_complete=True)
-            minp = np.minimum(minp, self.game.role_reduce(dev_pays,
-                                                          ufunc=np.minimum))
-            maxp = np.maximum(maxp, self.game.role_reduce(dev_pays,
-                                                          ufunc=np.maximum))
+            minp = np.minimum(minp, np.minimum.reduceat(
+                dev_pays, self.game.role_starts))
+            maxp = np.maximum(maxp, np.maximum.reduceat(
+                dev_pays, self.game.role_starts))
             slack = self.slack * (maxp - minp)
             slack[slack == 0] = self.slack
-            offset = self.game.role_repeat(minp - slack)
+            offset = np.repeat(minp - slack, self.game.num_role_strats)
             mix = (dev_pays - offset) * mix
-            mix /= self.game.role_reduce(mix, keepdims=True)
+            mix /= np.add.reduceat(
+                mix, self.game.role_starts).repeat(self.game.num_role_strats)
             if linalg.norm(mix - old_mix) <= self.converge_thresh:
                 break
 
@@ -276,9 +283,9 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         equilibria.add(eqm, reg)
 
     if equilibria:
-        return np.concatenate([x[0][None] for x in equilibria])
+        return np.concatenate([e[None] for e, r in equilibria])
     else:
-        return np.empty((0, game.num_role_strats))
+        return np.empty((0, game.num_strats))
 
 
 def _fixed_point_nash(game, mix, disc):
@@ -293,7 +300,8 @@ def _fixed_point_nash(game, mix, disc):
     def eqa_func(mix):
         mix = game.from_simplex(mix)
         gains = np.maximum(regret.mixture_deviation_gains(game, mix), 0)
-        result = ((mix + gains) / (1 + game.role_reduce(gains, keepdims=True)))
+        result = ((mix + gains) / (1 + np.add.reduceat(
+            gains, game.role_starts).repeat(game.num_role_strats)))
         return game.to_simplex(result)
 
     return game.from_simplex(fixedpoint.fixed_point(

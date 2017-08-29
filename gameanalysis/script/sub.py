@@ -65,22 +65,22 @@ def add_parser(subparsers):
 
 def parse_text_spec(serial, spec):
     current_role = '<undefined role>'
-    subg = np.zeros(serial.num_role_strats, bool)
+    subg = np.zeros(serial.num_strats, bool)
     roles = set(serial.role_names)
     for role_strat in spec:
         if role_strat in roles:
             current_role = role_strat
         else:
             subg[serial.role_strat_index(current_role, role_strat)] = True
-    assert serial.verify_subgame(subg), \
+    assert serial.is_subgame(subg), \
         "\"{}\" does not define a valid subgame".format(' '.join(spec))
     return subg
 
 
 def parse_index_spec(serial, spec):
-    subg = np.zeros(serial.num_role_strats, bool)
+    subg = np.zeros(serial.num_strats, bool)
     subg[spec] = True
-    assert serial.verify_subgame(subg), \
+    assert serial.is_subgame(subg), \
         "\"{}\" does not define a valid subgame".format(' '.join(spec))
     return subg
 

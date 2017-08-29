@@ -6,7 +6,6 @@ help:
 	@echo
 	@echo "setup    - setup environment for developing"
 	@echo "test     - run the tests, add file=<file> to run on a specific file e.g. file=rsgame"
-	@echo "big      - run all of the tests (may fail on some computers)"
 	@echo "coverage - run the tests and print coverage, add file=<file> to run on specific file"
 	@echo "check    - check code for style"
 	@echo "format   - try to autoformat code"
@@ -32,9 +31,6 @@ else
 	bin/pytest test --cov gameanalysis --cov test 2>/dev/null
 endif
 endif
-
-big: export BIG_TESTS=ON
-big: test
 
 check:
 	bin/flake8 $(FILES)

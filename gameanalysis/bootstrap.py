@@ -62,8 +62,7 @@ class _BootstrapPickleable(object):
         self.function = function
 
     def __call__(self, _):
-        self.game.resample()
-        return self.function(self.game)
+        return self.function(self.game.resample())
 
 
 def profile_function(game, function, profiles, num_resamples, percentiles=None,
@@ -226,13 +225,12 @@ def sample_regret(game, mixture_payoffs, deviation_payoffs, num_resamples,
 
     Note: The lengths of every list must be the same
     """
-
     num_samples = mixture_payoffs.shape[0]
     samples = rand.multinomial(num_samples,
                                np.ones(num_samples) / num_samples,
                                num_resamples) / num_samples
-    dev_samples = game.role_reduce(samples.dot(deviation_payoffs),
-                                   ufunc=np.maximum)
+    dev_samples = np.maximum.reduceat(
+        samples.dot(deviation_payoffs), game.role_starts, 1)
     mix_samples = samples.dot(mixture_payoffs)
     result = np.max(dev_samples - mix_samples, 1)
     if percentiles is None:

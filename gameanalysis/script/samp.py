@@ -40,7 +40,7 @@ def main(args):
 
     if args.deviations:
         profs = (game.random_deviator_profiles(mix, args.num)
-                 .reshape((-1, game.num_role_strats)))
+                 .reshape((-1, game.num_strats)))
         dev_names = itertools.cycle(itertools.chain.from_iterable(
             ((r, s) for s in ses) for r, ses
             in zip(serial.role_names, serial.strat_names)))

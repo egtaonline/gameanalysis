@@ -17,11 +17,11 @@ def num_deviation_profiles(game, subgame_mask):
     subgame_mask).shape[0]`.
     """
     subgame_mask = np.asarray(subgame_mask, bool)
-    assert game.num_role_strats == subgame_mask.size
-    num_strategies = game.role_reduce(subgame_mask)
-    num_devs = game.num_strategies - num_strategies
-    dev_players = game.num_players - np.eye(game.num_roles, dtype=int)
-    return np.sum(utils.game_size(dev_players, num_strategies).prod(1) *
+    assert game.num_strats == subgame_mask.size
+    num_role_strats = np.add.reduceat(subgame_mask, game.role_starts)
+    num_devs = game.num_role_strats - num_role_strats
+    dev_players = game.num_role_players - np.eye(game.num_roles, dtype=int)
+    return np.sum(utils.game_size(dev_players, num_role_strats).prod(1) *
                   num_devs)
 
 
@@ -31,35 +31,36 @@ def num_deviation_payoffs(game, subgame_mask):
     This is a closed form way to compute `np.sum(deviation_profiles(game,
     subgame_mask) > 0)`."""
     subgame_mask = np.asarray(subgame_mask, bool)
-    assert game.num_role_strats == subgame_mask.size
-    num_strategies = game.role_reduce(subgame_mask)
-    num_devs = game.num_strategies - num_strategies
-    dev_players = (game.num_players - np.eye(game.num_roles, dtype=int) -
+    assert game.num_strats == subgame_mask.size
+    num_role_strats = np.add.reduceat(subgame_mask, game.role_starts)
+    num_devs = game.num_role_strats - num_role_strats
+    dev_players = (game.num_role_players - np.eye(game.num_roles, dtype=int) -
                    np.eye(game.num_roles, dtype=int)[:, None])
-    temp = utils.game_size(dev_players, num_strategies).prod(2)
-    non_deviators = np.sum(np.sum(temp * num_strategies, 1) * num_devs)
+    temp = utils.game_size(dev_players, num_role_strats).prod(2)
+    non_deviators = np.sum(np.sum(temp * num_role_strats, 1) * num_devs)
     return non_deviators + num_deviation_profiles(game, subgame_mask)
 
 
 def num_dpr_deviation_profiles(game, subgame_mask):
     """Returns the number of dpr deviation profiles"""
     subgame_mask = np.asarray(subgame_mask, bool)
-    assert game.num_role_strats == subgame_mask.size
-    num_strategies = game.role_reduce(subgame_mask)
-    num_devs = game.num_strategies - num_strategies
+    assert game.num_strats == subgame_mask.size
+    num_role_strats = np.add.reduceat(subgame_mask, game.role_starts)
+    num_devs = game.num_role_strats - num_role_strats
 
     pure = (np.arange(3, 1 << game.num_roles)[:, None] &
             (1 << np.arange(game.num_roles))).astype(bool)
     cards = pure.sum(1)
     pure = pure[cards > 1]
-    card_counts = cards[cards > 1, None] - 1 - ((game.num_players > 1) & pure)
+    card_counts = cards[cards > 1, None] - 1 - \
+        ((game.num_role_players > 1) & pure)
     # For each combination of pure roles, compute the number of profiles
     # conditioned on those roles being pure, then multiply them by the
     # cardinality of the pure roles.
-    sp_dev = np.eye(game.num_roles, dtype=bool) & (game.num_players == 1)
-    pure_counts = num_strategies * ~sp_dev + sp_dev
-    dev_players = game.num_players - np.eye(game.num_roles, dtype=int)
-    unpure_counts = utils.game_size(dev_players, num_strategies) - pure_counts
+    sp_dev = np.eye(game.num_roles, dtype=bool) & (game.num_role_players == 1)
+    pure_counts = num_role_strats * ~sp_dev + sp_dev
+    dev_players = game.num_role_players - np.eye(game.num_roles, dtype=int)
+    unpure_counts = utils.game_size(dev_players, num_role_strats) - pure_counts
     pure_counts = np.prod(pure_counts * pure[:, None] + ~pure[:, None], 2)
     unpure_counts = np.prod(unpure_counts * ~pure[:, None] + pure[:, None], 2)
     overcount = np.sum(card_counts * pure_counts * unpure_counts * num_devs)
@@ -77,29 +78,31 @@ def deviation_profiles(game, subgame_mask, role_index=None):
     If `role_index` is specified, only profiles for that role will be
     returned."""
     subgame_mask = np.asarray(subgame_mask, bool)
-    assert game.num_role_strats == subgame_mask.size
-    support = game.role_reduce(subgame_mask)
+    assert (game.num_strats,) == subgame_mask.shape
+    support = np.add.reduceat(subgame_mask, game.role_starts)
 
     def dev_profs(players, mask, rs):
         subg = rsgame.basegame(players, support)
         non_devs = translate(subg.all_profiles(), subgame_mask)
         ndevs = np.sum(~mask)
-        devs = np.zeros((ndevs, game.num_role_strats), int)
+        devs = np.zeros((ndevs, game.num_strats), int)
         devs[:, rs:rs + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
         profs = non_devs[:, None] + devs
-        profs.shape = (-1, game.num_role_strats)
+        profs.shape = (-1, game.num_strats)
         return profs
 
     if role_index is None:
         profs = [dev_profs(players, mask, rs) for players, mask, rs
-                 in zip(game.num_players - np.eye(game.num_roles, dtype=int),
-                        game.role_split(subgame_mask), game.role_starts)]
+                 in zip(game.num_role_players - np.eye(game.num_roles,
+                                                       dtype=int),
+                        np.split(subgame_mask, game.role_starts[1:]),
+                        game.role_starts)]
         return np.concatenate(profs)
 
     else:
-        players = game.num_players.copy()
+        players = game.num_role_players.copy()
         players[role_index] -= 1
-        mask = game.role_split(subgame_mask)[role_index]
+        mask = np.split(subgame_mask, game.role_starts[1:])[role_index]
         rs = game.role_starts[role_index]
         return dev_profs(players, mask, rs)
 
@@ -110,14 +113,14 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
     # profiles of the new subgame with one less player in role, and then
     # where that last player always plays strat
     subgame_mask = np.asarray(subgame_mask, bool)
-    assert game.num_role_strats == subgame_mask.size
-    new_players = game.num_players.copy()
+    assert game.num_strats == subgame_mask.size
+    new_players = game.num_role_players.copy()
     new_players[game.role_indices[role_strat_ind]] -= 1
-    base = rsgame.basegame(new_players, game.num_strategies)
+    base = rsgame.basegame(new_players, game.num_role_strats)
     new_mask = subgame_mask.copy()
     new_mask[role_strat_ind] = True
     profs = subgame(base, new_mask).all_profiles()
-    expand_profs = np.zeros((profs.shape[0], game.num_role_strats), int)
+    expand_profs = np.zeros((profs.shape[0], game.num_strats), int)
     expand_profs[:, new_mask] = profs
     expand_profs[:, role_strat_ind] += 1
     return expand_profs
@@ -126,8 +129,8 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
 def subgame(game, subgame_mask):
     """Returns a new game that only has data for profiles in subgame_mask"""
     subgame_mask = np.asarray(subgame_mask, bool)
-    assert game.num_role_strats == subgame_mask.size
-    num_strats = game.role_reduce(subgame_mask)
+    assert game.num_strats == subgame_mask.size
+    num_strats = np.add.reduceat(subgame_mask, game.role_starts)
     assert np.all(num_strats > 0), \
         "Not all roles have at least one strategy"
 
@@ -140,33 +143,36 @@ def subgame(game, subgame_mask):
                           in zip(game.sample_payoffs,
                                  np.split(prof_mask, game.sample_starts[1:]))
                           if pmask.any()]
-        return rsgame.samplegame(game.num_players, num_strats, profiles,
+        return rsgame.samplegame(game.num_role_players, num_strats, profiles,
                                  sample_payoffs)
 
     elif isinstance(game, rsgame.Game):
         prof_mask = ~np.any(game.profiles * ~subgame_mask, 1)
         profiles = game.profiles[prof_mask][:, subgame_mask]
         payoffs = game.payoffs[prof_mask][:, subgame_mask]
-        return rsgame.game(game.num_players, num_strats, profiles, payoffs)
+        return rsgame.game(game.num_role_players, num_strats, profiles,
+                           payoffs)
 
     else:
-        return rsgame.basegame(game.num_players, num_strats)
+        return rsgame.basegame(game.num_role_players, num_strats)
 
 
 def subserializer(serial, subgame_mask):
     """Return a serializer for a subgame"""
     new_strats = [[s for s, m in zip(strats, mask) if m]
                   for strats, mask
-                  in zip(serial.strat_names, serial.role_split(subgame_mask))]
+                  in zip(serial.strat_names,
+                         np.split(subgame_mask, serial.role_starts[1:]))]
     return gameio.gameserializer(serial.role_names, new_strats)
 
 
 def subreduction(reduction, subgame_mask):
     """Return an identical reduction for a subgame"""
-    new_strats = reduction.full_game.role_reduce(subgame_mask)
+    new_strats = np.add.reduceat(subgame_mask, reduction.role_starts)
     # This is hacky
-    return reduction.__class__(new_strats, reduction.full_game.num_players,
-                               reduction.red_game.num_players)
+    return reduction.__class__(new_strats,
+                               reduction.full_game.num_role_players,
+                               reduction.red_game.num_role_players)
 
 
 def translate(profiles, subgame_mask):
@@ -180,25 +186,26 @@ def translate(profiles, subgame_mask):
 
 def to_id(game, subgame_mask):
     """Return a unique integer representing a subgame"""
-    bits = np.ones(game.num_role_strats, int)
+    bits = np.ones(game.num_strats, int)
     bits[0] = 0
-    bits[game.role_starts[1:]] -= game.num_strategies[:-1]
+    bits[game.role_starts[1:]] -= game.num_role_strats[:-1]
     bits = 2 ** bits.cumsum()
-    roles = np.insert(np.cumprod(2 ** game.num_strategies[:-1] - 1), 0, 1)
-    return np.sum(roles * (game.role_reduce(subgame_mask * bits) - 1), -1)
+    roles = np.insert(np.cumprod(2 ** game.num_role_strats[:-1] - 1), 0, 1)
+    return np.sum(roles * (np.add.reduceat(subgame_mask * bits,
+                                           game.role_starts, -1) - 1), -1)
 
 
 def from_id(game, subgame_id):
     """Return a subgame mask from its unique indicator"""
     subgame_id = np.asarray(subgame_id)
-    bits = np.ones(game.num_role_strats, int)
+    bits = np.ones(game.num_strats, int)
     bits[0] = 0
-    bits[game.role_starts[1:]] -= game.num_strategies[:-1]
+    bits[game.role_starts[1:]] -= game.num_role_strats[:-1]
     bits = 2 ** bits.cumsum()
-    roles = 2 ** game.num_strategies - 1
+    roles = 2 ** game.num_role_strats - 1
     rolesc = np.insert(np.cumprod(roles[:-1]), 0, 1)
-    return (game.role_repeat(subgame_id[..., None] // rolesc % roles + 1)
-            // bits % 2).astype(bool)
+    return (np.repeat(subgame_id[..., None] // rolesc % roles + 1,
+                      game.num_role_strats, -1) // bits % 2).astype(bool)
 
 
 def maximal_subgames(game):
@@ -211,7 +218,8 @@ def maximal_subgames(game):
         sub = queue.pop()
         maximal = True
         devs = sub.astype(int)
-        devs[game.role_starts[1:]] -= game.role_reduce(sub)[:-1]
+        devs[game.role_starts[1:]
+             ] -= np.add.reduceat(sub, game.role_starts)[:-1]
         devs = np.nonzero((devs.cumsum() > 0) & ~sub)[0][::-1]
         for dev_ind in devs:
             profs = additional_strategy_profiles(game, sub, dev_ind)

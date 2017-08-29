@@ -27,8 +27,9 @@ class GameSerializer(rsgame.StratArray):
         self.role_names = tuple(role_names)
         self.strat_names = tuple(map(tuple, strat_names))
 
-        super().__init__(np.fromiter(map(len, self.strat_names), int,
-                                     len(self.strat_names)))
+        num_role_strats = np.fromiter(map(len, self.strat_names), int,
+                                      len(self.strat_names))
+        super().__init__(num_role_strats)
         if not all(map(utils.is_sorted, self.strat_names)):
             warnings.warn("If strategies aren't sorted, some functions "
                           "won't work as intended")
@@ -73,7 +74,7 @@ class GameSerializer(rsgame.StratArray):
             new array.
         """
         if dest is None:
-            dest = np.empty(self.num_role_strats, int)
+            dest = np.empty(self.num_strats, int)
         dest.fill(0)
 
         try:
@@ -93,20 +94,20 @@ class GameSerializer(rsgame.StratArray):
         return {role: {strat: count.item() for strat, count
                        in zip(strats, counts) if count > 0}
                 for counts, role, strats
-                in zip(self.role_split(prof),
+                in zip(np.split(prof, self.role_starts[1:]),
                        self.role_names, self.strat_names)}
 
     def from_mix_json(self, mix, dest=None, verify=True):
         """Read a json mixture into an array"""
         if dest is None:
-            dest = np.empty(self.num_role_strats, float)
+            dest = np.empty(self.num_strats, float)
         dest.fill(0)
 
         for role, strats in mix.items():
             for strat, prob in strats.items():
                 dest[self.role_strat_index(role, strat)] = prob
 
-        assert not verify or self.verify_mixture(dest), \
+        assert not verify or self.is_mixture(dest), \
             "\"{}\" does not define a valid mixture".format(mix)
         return dest
 
@@ -117,14 +118,14 @@ class GameSerializer(rsgame.StratArray):
     def from_subgame_json(self, subg, dest=None, verify=True):
         """Read a json subgame into an array"""
         if dest is None:
-            dest = np.empty(self.num_role_strats, bool)
+            dest = np.empty(self.num_strats, bool)
         dest.fill(False)
 
         for role, strats in subg.items():
             for strat in strats:
                 dest[self.role_strat_index(role, strat)] = True
 
-        assert not verify or self.verify_subgame(dest), \
+        assert not verify or self.is_subgame(dest), \
             "\"{}\" does not define a valid subgame".format(subg)
         return dest
 
@@ -132,7 +133,7 @@ class GameSerializer(rsgame.StratArray):
         """Convert a subgame array to json"""
         return {role: [strat for strat, inc in zip(strats, mask) if inc]
                 for mask, role, strats
-                in zip(self.role_split(subg),
+                in zip(np.split(subg, self.role_starts[1:]),
                        self.role_names, self.strat_names)}
 
     def from_payoff_json(self, prof, dest=None):
@@ -147,7 +148,7 @@ class GameSerializer(rsgame.StratArray):
             new array.
         """
         if dest is None:
-            dest = np.empty(self.num_role_strats, float)
+            dest = np.empty(self.num_strats, float)
         dest.fill(0)
 
         try:
@@ -177,20 +178,20 @@ class GameSerializer(rsgame.StratArray):
             written json to omit strategies that aren't played.
         """
         if prof is None:
-            prof = np.broadcast_to(True, self.num_role_strats)
+            prof = np.broadcast_to(True, self.num_strats)
         return {role: {strat: pay.mean() for strat, count, pay
                        in zip(strats, counts, pays) if count > 0}
                 for role, strats, counts, pays
                 in zip(self.role_names, self.strat_names,
-                       self.role_split(prof),
-                       self.role_split(payoffs))}
+                       np.split(prof, self.role_starts[1:]),
+                       np.split(payoffs, self.role_starts[1:]))}
 
     def from_profpay_json(self, prof, dest_prof=None, dest_pays=None):
         """Read json as a profile and a payoff"""
         if dest_prof is None:
-            dest_prof = np.empty(self.num_role_strats, int)
+            dest_prof = np.empty(self.num_strats, int)
         if dest_pays is None:
-            dest_pays = np.empty(self.num_role_strats, float)
+            dest_pays = np.empty(self.num_strats, float)
         dest_prof.fill(0)
         dest_pays.fill(0)
 
@@ -220,7 +221,7 @@ class GameSerializer(rsgame.StratArray):
                 ids[i] = index
                 dest_prof[index] = count
 
-            counts = np.zeros(self.num_role_strats, int)
+            counts = np.zeros(self.num_strats, int)
             for j, obs in enumerate(prof['observations']):
                 for symgrp in obs['symmetry_groups']:
                     i, pay = _unpack_obs(**symgrp)
@@ -237,7 +238,7 @@ class GameSerializer(rsgame.StratArray):
                 ids[i] = index
                 dest_prof[index] = count
 
-            counts = np.zeros(self.num_role_strats, int)
+            counts = np.zeros(self.num_strats, int)
             for j, obs in enumerate(prof['observations']):
                 for player in obs['players']:
                     i, pay = _unpack_player(**player)
@@ -273,8 +274,8 @@ class GameSerializer(rsgame.StratArray):
                        in zip(strats, counts, pays) if count > 0]
                 for role, strats, counts, pays
                 in zip(self.role_names, self.strat_names,
-                       self.role_split(prof),
-                       self.role_split(payoffs))}
+                       np.split(prof, self.role_starts[1:]),
+                       np.split(payoffs, self.role_starts[1:]))}
 
     def from_samplepay_json(self, prof, dest=None):
         """Read a set of payoff samples
@@ -300,7 +301,7 @@ class GameSerializer(rsgame.StratArray):
                       for pays in prof.values())
 
             if dest is None:
-                dest = np.empty((num, self.num_role_strats), float)
+                dest = np.empty((num, self.num_strats), float)
             else:
                 assert dest.shape[0] >= num, \
                     "dest_samplepay not large enough for observations"
@@ -319,25 +320,25 @@ class GameSerializer(rsgame.StratArray):
         strategies that aren't played.
         """
         if prof is None:
-            prof = np.broadcast_to(True, self.num_role_strats)
+            prof = np.broadcast_to(True, self.num_strats)
         return {role: {strat: list(map(float, pay)) for strat, count, pay
                        in zip(strats, counts, pays.T) if count > 0}
                 for role, strats, counts, pays
                 in zip(self.role_names, self.strat_names,
-                       self.role_split(prof),
-                       self.role_split(samplepay))}
+                       np.split(prof, self.role_starts[1:]),
+                       np.split(samplepay, self.role_starts[1:], 1))}
 
     def from_profsamplepay_json(self, prof, dest_prof=None,
                                 dest_samplepay=None):
         """Convert json into a profile and an observation"""
         if dest_prof is None:
-            dest_prof = np.empty(self.num_role_strats, int)
+            dest_prof = np.empty(self.num_strats, int)
         dest_prof.fill(0)
 
         def get_pay(num):
             dest = dest_samplepay
             if dest is None:
-                dest = np.empty((num, self.num_role_strats), float)
+                dest = np.empty((num, self.num_strats), float)
             else:
                 assert dest.shape[0] >= num, \
                     "dest_samplepay not large enough for observations"
@@ -379,7 +380,7 @@ class GameSerializer(rsgame.StratArray):
                 ids[i] = index
                 dest_prof[index] = count
 
-            counts = np.empty(self.num_role_strats, int)
+            counts = np.empty(self.num_strats, int)
             for j, obs in enumerate(prof['observations']):
                 counts.fill(0)
                 for player in obs['players']:
@@ -415,13 +416,13 @@ class GameSerializer(rsgame.StratArray):
                        in zip(strats, counts, pays.T) if count > 0]
                 for role, strats, counts, pays
                 in zip(self.role_names, self.strat_names,
-                       self.role_split(prof),
-                       self.role_split(samplepay))}
+                       np.split(prof, self.role_starts[1:]),
+                       np.split(samplepay, self.role_starts[1:], 1))}
 
     def from_prof_str(self, prof_str, dest=None):
         """Read a profile from a string"""
         if dest is None:
-            dest = np.empty(self.num_role_strats, int)
+            dest = np.empty(self.num_strats, int)
         dest.fill(0)
         for role_str in prof_str.split('; '):
             role, strats = role_str.split(': ', 1)
@@ -438,7 +439,7 @@ class GameSerializer(rsgame.StratArray):
                 for strat, count in zip(strats, counts) if count > 0))
             for role, strats, counts
             in zip(self.role_names, self.strat_names,
-                   self.role_split(prof)))
+                   np.split(prof, self.role_starts[1:])))
 
     def to_prof_printstr(self, prof):
         """Convert a profile to a printable string"""
@@ -448,8 +449,8 @@ class GameSerializer(rsgame.StratArray):
                 for c, s in zip(counts, strats)
                 if c > 0))
             for counts, role, strats
-            in zip(self.role_split(np.asarray(prof)), self.role_names,
-                   self.strat_names))
+            in zip(np.split(np.asarray(prof), self.role_starts[1:]),
+                   self.role_names, self.strat_names))
 
     def to_mix_printstr(self, mix):
         """Convert a mixture to a printable string"""
@@ -459,8 +460,8 @@ class GameSerializer(rsgame.StratArray):
                 for p, s in zip(probs, strats)
                 if p > 0))
             for probs, role, strats
-            in zip(self.role_split(np.asarray(mix)), self.role_names,
-                   self.strat_names))
+            in zip(np.split(np.asarray(mix), self.role_starts[1:]),
+                   self.role_names, self.strat_names))
 
     def to_subgame_printstr(self, subg):
         """Convert a subgame to a printable string"""
@@ -470,8 +471,8 @@ class GameSerializer(rsgame.StratArray):
                 for m, s in zip(mask, strats)
                 if m))
             for mask, role, strats
-            in zip(self.role_split(np.asarray(subg)), self.role_names,
-                   self.strat_names))
+            in zip(np.split(np.asarray(subg), self.role_starts[1:]),
+                   self.role_names, self.strat_names))
 
     def from_role_json(self, role_json, dest=None, dtype=float):
         """Format role data as array"""
@@ -489,38 +490,40 @@ class GameSerializer(rsgame.StratArray):
     def to_deviation_payoff_json(self, payoffs, profile):
         """Format a profile and deviation payoffs as json"""
         supp = np.asarray(profile, bool)
-        role_supp = self.role_reduce(supp)
-        splits = ((self.num_strategies - 1) * role_supp)[:-1].cumsum()
+        role_supp = np.add.reduceat(supp, self.role_starts)
+        splits = ((self.num_role_strats - 1) * role_supp)[:-1].cumsum()
         return {r: {s: {d: p.item() for p, d
                         in zip(dps, (d for d in ses if d != s))}  # noqa
                     for dps, s in zip(np.split(ps, sp.sum()),
                                       (s for s, m in zip(ses, sp) if m))}  # noqa
-                for r, ses, ps, sp in zip(self.role_names, self.strat_names,
-                                          np.split(payoffs, splits),
-                                          self.role_split(supp))}
+                for r, ses, ps, sp
+                in zip(self.role_names, self.strat_names,
+                       np.split(payoffs, splits),
+                       np.split(supp, self.role_starts[1:]))}
 
-    def _get_num_players(self, game):
-        num_players = np.empty(self.num_roles, int)
+    def _get_num_role_players(self, game):
+        num_role_players = np.empty(self.num_roles, int)
         if 'roles' in game:
             for role in game['roles']:
-                num_players[self.role_index(role['name'])] = role['count']
+                num_role_players[self.role_index(role['name'])] = role['count']
         elif 'players' in game:
             for role, count in game['players'].items():
-                num_players[self.role_index(role)] = count
+                num_role_players[self.role_index(role)] = count
         else:
             raise ValueError("Unknown game format: {}".format(game))
 
-        return num_players
+        return num_role_players
 
     def from_basegame_json(self, game):
         """Read a BaseGame from json"""
-        num_players = self._get_num_players(game)
-        return rsgame.basegame(num_players, self.num_strategies)
+        num_role_players = self._get_num_role_players(game)
+        return rsgame.basegame(num_role_players, self.num_role_strats)
 
     def to_basegame_json(self, game):
         """Format basegame as json"""
         return {
-            'players': dict(zip(self.role_names, map(int, game.num_players))),
+            'players': dict(zip(self.role_names,
+                                map(int, game.num_role_players))),
             'strategies': dict(zip(self.role_names,
                                    map(list, self.strat_names)))
         }
@@ -533,7 +536,8 @@ class GameSerializer(rsgame.StratArray):
                      '\n        '.join(
                          '{:d}x {}'.format(count, role)
                          for role, count
-                         in sorted(zip(self.role_names, game.num_players))),
+                         in sorted(zip(
+                             self.role_names, game.num_role_players))),
                      '\n        '.join(
                          '{}:\n            {}'.format(
                              role, '\n            '.join(strats))
@@ -542,14 +546,15 @@ class GameSerializer(rsgame.StratArray):
 
     def from_game_json(self, game):
         """Read a Game from json"""
-        num_players = self._get_num_players(game)
+        num_role_players = self._get_num_role_players(game)
         profile_list = game.get('profiles', ())
         num_profs = len(profile_list)
-        profiles = np.empty((num_profs, self.num_role_strats), int)
-        payoffs = np.empty((num_profs, self.num_role_strats), float)
+        profiles = np.empty((num_profs, self.num_strats), int)
+        payoffs = np.empty((num_profs, self.num_strats), float)
         for profj, prof, pay in zip(profile_list, profiles, payoffs):
             self.from_profpay_json(profj, prof, pay)
-        return rsgame.game(num_players, self.num_strategies, profiles, payoffs)
+        return rsgame.game(num_role_players, self.num_role_strats, profiles,
+                           payoffs)
 
     def to_game_json(self, game):
         """Fromat a Game as json"""
@@ -571,7 +576,7 @@ class GameSerializer(rsgame.StratArray):
 
     def from_samplegame_json(self, game):
         """Read a SampleGame from json"""
-        num_players = self._get_num_players(game)
+        num_role_players = self._get_num_role_players(game)
         profile_list = game.get('profiles', ())
 
         sample_map = {}
@@ -588,11 +593,11 @@ class GameSerializer(rsgame.StratArray):
                 prof for prof, _ in values)))
             sample_payoffs = [np.concatenate(spay) for _, spay in values]
         else:  # No data
-            profiles = np.empty((0, self.num_role_strats), int)
+            profiles = np.empty((0, self.num_strats), int)
             sample_payoffs = []
 
-        return rsgame.samplegame(num_players, self.num_strategies, profiles,
-                                 sample_payoffs)
+        return rsgame.samplegame(num_role_players, self.num_role_strats,
+                                 profiles, sample_payoffs)
 
     def to_samplegame_json(self, game):
         """Fromat a SampleGame as json"""

@@ -60,7 +60,7 @@ class RegressionPayoffs(object):
         dimension corresponding to the deviating role, i.e. the number of
         players in role i of dimension i should num_players[i] - 1.
         """
-        payoffs = np.empty(self.game.num_role_strats)
+        payoffs = np.empty(self.game.num_strats)
         for i, (model, r) in enumerate(zip(
                 self.regressors, self.game.role_indices)):
             payoffs[i] = model.predict(profiles[r]).mean()
@@ -100,8 +100,8 @@ class NNPayoffs(RegressionPayoffs):
         # normalize payoffs to [0,1]
         # TODO allow specification of an arbitrary payoff range, is this only
         # important for different final activations?
-        self._scale = np.empty(self.game.num_role_strats)
-        self._offset = np.empty(self.game.num_role_strats)
+        self._scale = np.empty(self.game.num_strats)
+        self._offset = np.empty(self.game.num_strats)
         for rs, (pays, mask) in enumerate(zip(payoffs.T, profiles.T > 0)):
             rs_pays = pays[mask]
             minimum = np.nanmin(rs_pays)
@@ -166,9 +166,9 @@ class PointEVs(rsgame.BaseGame):
 
     def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
         assert not jacobian, "PointEVs doesn't support jacobian"
-        dev_players = self.game.num_players - \
+        dev_players = self.game.num_role_players - \
             np.eye(self.game.num_roles, dtype=int)
-        dev_profs = self.game.role_repeat(dev_players) * mix
+        dev_profs = dev_players.repeat(self.game.num_role_strats, 1) * mix
         return self.regression_model.get_mean_dev_payoffs(dev_profs[:, None])
 
 
@@ -186,11 +186,13 @@ class NeighborEVs(rsgame.BaseGame):
         payoffs = self.regression_model.get_payoffs(profiles)
 
         player_factorial = np.sum(sps.gammaln(profiles + 1), 1)[:, None]
-        tot_factorial = np.sum(sps.gammaln(self.game.num_players + 1))
+        tot_factorial = np.sum(sps.gammaln(self.game.num_role_players + 1))
         log_mix = np.log(mix + _TINY)
         prof_prob = np.sum(profiles * log_mix, 1, keepdims=True)
         profile_probs = tot_factorial - player_factorial + prof_prob
-        denom = log_mix + self.game.role_repeat(np.log(self.game.num_players))
+        denom = log_mix + \
+            np.log(self.game.num_role_players).repeat(
+                self.game.num_role_strats)
         with np.errstate(divide='ignore'):
             log_profs = np.log(profiles)
         probs = np.exp(log_profs + profile_probs - denom)
@@ -231,8 +233,8 @@ class RegressionGame(rsgame.BaseGame):
             "invalid EV_method: {}. options: {}".format(
                 EV_method, ', '.join(_EV_METHODS))
         self.EV_method = _EV_METHODS[EV_method.lower()]
-        super().__init__(game_to_learn.num_players,
-                         game_to_learn.num_strategies)
+        super().__init__(game_to_learn.num_role_players,
+                         game_to_learn.num_role_strats)
 
         if isinstance(game_to_learn, RegressionGame):
             # shallow copy trained models
@@ -247,8 +249,8 @@ class RegressionGame(rsgame.BaseGame):
             # when the GP was cross validated.
             assert game_to_learn.num_complete_profiles >= 3, \
                 "can't learn a game from less than 3 profiles"
-            self._min_payoffs = game_to_learn.min_payoffs()
-            self._max_payoffs = game_to_learn.max_payoffs()
+            self._min_payoffs = game_to_learn.min_strat_payoffs()
+            self._max_payoffs = game_to_learn.max_strat_payoffs()
             self.regression_model = self.regression_method(
                 game_to_learn, **regression_args)
 
@@ -259,17 +261,17 @@ class RegressionGame(rsgame.BaseGame):
 
     def get_payoffs(self, profiles):
         payoffs = self.regression_model.get_payoffs(
-            profiles.reshape((-1, self.num_role_strats)))
+            profiles.reshape((-1, self.num_strats)))
         return payoffs.reshape(profiles.shape)
 
     def is_complete(self):
         # RegressionGames are always complete
         return True
 
-    def min_payoffs(self):
+    def min_strat_payoffs(self):
         return self._min_payoffs.view()
 
-    def max_payoffs(self):
+    def max_strat_payoffs(self):
         return self._max_payoffs.view()
 
 

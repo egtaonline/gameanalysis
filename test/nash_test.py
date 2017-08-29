@@ -183,7 +183,7 @@ def test_mixed_nash_best(methods, strategies):
     assert eqa.size, "didn't return something"
 
 
-@testutils.run_if_big
+@testutils.long_test
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -227,7 +227,7 @@ def test_hard_nash():
         "Didn't find equilibrium in known hard instance"
 
 
-@testutils.run_if_big
+@testutils.long_test
 @pytest.mark.parametrize('_', range(20))
 def test_at_least_one_big(_):  # pragma: no cover
     num_roles = np.random.randint(1, 4)

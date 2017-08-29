@@ -43,7 +43,7 @@ def random_poly_dist(coef_dist, degree_dist):
     return table_func
 
 
-def random_aggfn(num_players, num_strategies, num_functions,
+def random_aggfn(num_role_players, num_role_strats, num_functions,
                  input_dist=lambda s: utils.random_con_bitmask(.2, s),
                  weight_dist=lambda s: np.random.normal(0, 1, s) *
                  utils.random_con_bitmask(.2, s),
@@ -53,8 +53,8 @@ def random_aggfn(num_players, num_strategies, num_functions,
 
     Parameters
     ----------
-    num_players : int or ndarray
-    num_strategies : int or ndarray
+    num_role_players : int or ndarray
+    num_role_strats : int or ndarray
     num_functions : int
     input_dist : f(shape) -> ndarray, bool, optional
         Function that takes a shape and redurns a boolean ndarray with the same
@@ -70,11 +70,11 @@ def random_aggfn(num_players, num_strategies, num_functions,
         Generate a role form AgfnGame. A role form game uses functions of the
         number of activations for each role, instead of just the total number
         of activations."""
-    base = rsgame.basegame(num_players, num_strategies)
-    weights = weight_dist((num_functions, base.num_role_strats))
-    inputs = input_dist((base.num_role_strats, num_functions))
-    shape = ((num_functions,) + tuple(base.num_players + 1)
-             if by_role else (num_functions, base.num_all_players + 1))
+    base = rsgame.basegame(num_role_players, num_role_strats)
+    weights = weight_dist((num_functions, base.num_strats))
+    inputs = input_dist((base.num_strats, num_functions))
+    shape = ((num_functions,) + tuple(base.num_role_players + 1)
+             if by_role else (num_functions, base.num_players + 1))
     func_table = func_dist(shape)
     return aggfn.aggfn_copy(base, weights, inputs, func_table)
 
@@ -145,7 +145,7 @@ def serializer(game):
     """Generate a random serializer from an AgfnGame"""
     role_names = ['all'] if game.is_symmetric(
     ) else utils.prefix_strings('r', game.num_roles)
-    strat_names = [utils.prefix_strings('s', s) for s in game.num_strategies]
+    strat_names = [utils.prefix_strings('s', s) for s in game.num_role_strats]
     function_names = utils.prefix_strings('f', game.num_functions)
     return aggfn.aggfnserializer(role_names, strat_names, function_names)
 
@@ -158,7 +158,9 @@ def function_serializer(game):
     role_names = ['all'] if game.is_symmetric(
     ) else utils.prefix_strings('r', game.num_roles)
     function_names = utils.prefix_strings('f', game.num_functions)
-    strat_names = [['_'.join(f for f, i in zip(function_names, inp) if i)
-                    for inp in role_inps]
-                   for role_inps in game.role_split(game._function_inputs)]
+    strat_names = [
+        ['_'.join(f for f, i in zip(function_names, inp) if i)
+         for inp in role_inps]
+        for role_inps
+        in np.split(game._function_inputs, game.role_starts[1:], -1)]
     return aggfn.aggfnserializer(role_names, strat_names, function_names)

@@ -55,17 +55,17 @@ def test_mean():
 def test_sample_regret(players, strategies):
     n = 100
     game = gamegen.role_symmetric_game(players, strategies)
-    max_regret = np.max(game.max_payoffs() - game.min_payoffs())
+    max_regret = np.max(game.max_role_payoffs() - game.min_role_payoffs())
     mix = game.random_mixtures()
     dev_profs = game.random_deviator_profiles(mix, n)
-    dev_profs.shape = (-1, game.num_role_strats)
-    inds = np.broadcast_to(np.arange(game.num_role_strats),
-                           (n, game.num_role_strats)).flat
+    dev_profs.shape = (-1, game.num_strats)
+    inds = np.broadcast_to(np.arange(game.num_strats),
+                           (n, game.num_strats)).flat
     dev_payoffs = np.fromiter(
         (game.get_payoffs(p)[i] for p, i in zip(dev_profs, inds)),
-        float, n * game.num_role_strats)
-    dev_payoffs.shape = (n, game.num_role_strats)
-    mix_payoffs = game.role_reduce(dev_payoffs * mix)
+        float, n * game.num_strats)
+    dev_payoffs.shape = (n, game.num_strats)
+    mix_payoffs = np.add.reduceat(dev_payoffs * mix, game.role_starts, 1)
     boots = bootstrap.sample_regret(game, mix_payoffs, dev_payoffs, 200)
     assert boots.shape == (200,)
     assert np.all(boots <= max_regret)

@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 
-
 from gameanalysis import aggfn
 from gameanalysis import agggen
 from gameanalysis import nash
@@ -11,14 +10,13 @@ from gameanalysis import rsgame
 def verify_aggfn(game):
     payoff_game = game.to_rsgame()
     assert game.is_complete()
-    assert repr(game) is not None
 
     # Check accuracy of min and max payoffs
     assert np.all(
-        (payoff_game.payoffs >= game.role_repeat(game.min_payoffs()) - 1e-6) |
+        (payoff_game.payoffs >= game.min_strat_payoffs() - 1e-6) |
         (payoff_game.profiles == 0))
     assert np.all(
-        (payoff_game.payoffs <= game.role_repeat(game.max_payoffs()) + 1e-6) |
+        (payoff_game.payoffs <= game.max_strat_payoffs() + 1e-6) |
         (payoff_game.profiles == 0))
 
     # Check that we get the same deviations if we construct the full game
@@ -51,7 +49,7 @@ def verify_aggfn(game):
     ([1, 2], [2, 1], 4),
     (2, [1, 2], 4),
     ([3, 4], [2, 3], 6),
-] * 20)
+])
 def test_random_sum_game(players, strategies, functions):
     """Test that deviation payoff formulation is accurate"""
     game = agggen.random_aggfn(players, strategies, functions)
@@ -70,7 +68,7 @@ def test_random_sum_game(players, strategies, functions):
     ([1, 2], [2, 1], 4),
     (2, [1, 2], 4),
     ([3, 4], [2, 3], 6),
-] * 20)
+])
 def test_random_role_game(players, strategies, functions):
     """Test that deviation payoff formulation is accurate"""
     game = agggen.random_aggfn(players, strategies, functions, by_role=True)
@@ -124,3 +122,13 @@ def test_serializer(by_role):
     game3, serial3 = aggfn.read_agfngame(jgame)
     assert serial == serial3
     assert game == game3
+
+
+def test_aggfn_repr():
+    game = agggen.random_aggfn(5, 4, 3)
+    expected = 'AgfnGame([5], [4], 3)'
+    assert repr(game) == expected
+
+    game = agggen.random_aggfn([5, 4], [4, 3], 3)
+    expected = 'AgfnGame([5 4], [4 3], 3)'
+    assert repr(game) == expected

@@ -14,16 +14,16 @@ def pure_strategy_deviation_gains(game, prof):
     valid deviations."""
     prof = np.asarray(prof, int)
     supp = prof > 0
-    num_supp = game.role_reduce(supp)
-    from_inds = np.arange(game.num_role_strats)[supp]
-    reps = game.num_strategies[game.role_indices[from_inds]]
-    num_devs = np.sum(num_supp * (game.num_strategies - 1))
+    num_supp = np.add.reduceat(supp, game.role_starts)
+    from_inds = np.arange(game.num_strats)[supp]
+    reps = game.num_role_strats[game.role_indices[from_inds]]
+    num_devs = np.sum(num_supp * (game.num_role_strats - 1))
 
     to_inds = np.ones(reps.sum(), int)
     to_inds[0] = 0
     to_inds[reps[:-1].cumsum()] -= reps[:-1]
-    role_inds = (num_supp * game.num_strategies)[:-1].cumsum()
-    to_inds[role_inds] += game.num_strategies[:-1]
+    role_inds = (num_supp * game.num_role_strats)[:-1].cumsum()
+    to_inds[role_inds] += game.num_role_strats[:-1]
     to_inds = to_inds.cumsum()
     to_inds = to_inds[to_inds != from_inds.repeat(reps)]
     from_inds = from_inds.repeat(reps - 1)
@@ -56,7 +56,8 @@ def mixture_deviation_gains(game, mix, assume_complete=False):
     # the mix, it doesn't effect the role_evs
     masked = strategy_evs.copy()
     masked[mix == 0] = 0
-    role_evs = game.role_reduce(masked * mix, keepdims=True)
+    role_evs = np.add.reduceat(
+        masked * mix, game.role_starts).repeat(game.num_role_strats)
     return strategy_evs - role_evs
 
 
@@ -74,7 +75,7 @@ def pure_social_welfare(game, profile):
 
 def mixed_social_welfare(game, mix):
     """Returns the social welfare of a mixed strategy profile"""
-    return game.get_expected_payoffs(mix).dot(game.num_players)
+    return game.get_expected_payoffs(mix).dot(game.num_role_players)
 
 
 class SocialWelfareOptimizer(object):
@@ -85,9 +86,9 @@ class SocialWelfareOptimizer(object):
 
     def __init__(self, game, gtol=1e-8):
         self.game = game
-        self.scale = game.max_payoffs() - game.min_payoffs()
+        self.scale = game.max_role_payoffs() - game.min_role_payoffs()
         self.scale[self.scale == 0] = 1  # In case payoffs are the same
-        self.offset = game.min_payoffs()
+        self.offset = game.min_role_payoffs()
         self.gtol = gtol
 
     def obj_func(self, mix, penalty):  # pragma: no cover
@@ -104,23 +105,24 @@ class SocialWelfareOptimizer(object):
         ep_jac /= self.scale[:, None]
 
         # Compute normalized negative walfare (minimization)
-        welfare = -self.game.num_players.dot(ep)
-        dwelfare = -self.game.num_players.dot(ep_jac)
+        welfare = -self.game.num_role_players.dot(ep)
+        dwelfare = -self.game.num_role_players.dot(ep_jac)
 
         # Add penalty for negative mixtures
         welfare += penalty * np.sum(np.minimum(mix, 0) ** 2) / 2
         dwelfare += penalty * np.minimum(mix, 0)
 
         # Project grad so steps stay in the simplex (more or less)
-        dwelfare -= self.game.role_repeat(self.game.role_reduce(dwelfare) /
-                                          self.game.num_strategies)
+        dwelfare -= np.repeat(np.add.reduceat(dwelfare, self.game.role_starts)
+                              / self.game.num_role_strats,
+                              self.game.num_role_strats)
         return welfare, dwelfare
 
     def __call__(self, mix):  # pragma: no cover
         # Pass in lambda, and make penalty not a member
 
         result = None
-        penalty = np.sum(self.game.num_players)
+        penalty = np.sum(self.game.num_role_players)
         for _ in range(30):
             # First get an unconstrained result from the optimization
             with np.errstate(over='raise', invalid='raise'):
@@ -191,7 +193,8 @@ def max_pure_social_welfare(game, by_role=False):
         if game.num_complete_profiles:
             # TODO technically you could have no complete profiles, but full
             # payoff data for all roles
-            welfares = game.role_reduce(game.profiles * game.payoffs)
+            welfares = np.add.reduceat(
+                game.profiles * game.payoffs, game.role_starts, 1)
             prof_inds = np.nanargmax(welfares, 0)
             return (welfares[prof_inds, np.arange(game.num_roles)],
                     game.profiles[prof_inds])

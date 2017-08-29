@@ -87,7 +87,7 @@ def main(args):
         else PLAYERS[args.sorted_roles](args.reduction, serial))
 
     reduced = REDUCTIONS[args.type](
-        game.num_strategies, game.num_players,
+        game.num_role_strats, game.num_role_players,
         reduced_players).reduce_game(game, args.allow_incomplete)
 
     json.dump(serial.to_game_json(reduced), args.output)

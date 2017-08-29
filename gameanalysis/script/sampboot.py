@@ -61,8 +61,8 @@ def _unpack_datum(role, strategy, payoff, **_):
 
 
 def load_devs(game, serial, data):
-    devs = np.empty((len(data) // game.num_role_strats, game.num_role_strats))
-    inds = np.zeros(game.num_role_strats, int)
+    devs = np.empty((len(data) // game.num_strats, game.num_strats))
+    inds = np.zeros(game.num_strats, int)
     for datum in data:
         role, strat, pay = _unpack_datum(**datum)
         sind = serial.role_strat_index(role, strat)
@@ -77,19 +77,21 @@ def main(args):
         game, serial = gameio.read_basegame(json.load(args.regret[0]))
         mix = serial.from_mix_json(json.load(args.regret[1]))
         devs = load_devs(game, serial, data)
-        expect = game.role_reduce(devs * mix)
+        expect = np.add.reduceat(devs * mix, game.role_starts, 1)
         result = bootstrap.sample_regret(game, expect, devs,
                                          args.num_bootstraps, args.percentiles)
         if args.mean:
             mdevs = devs.mean(0)
-            mexpect = game.role_reduce(mdevs * mix, keepdims=True)
+            mexpect = np.add.reduceat(
+                mdevs * mix, game.role_starts).repeat(game.num_role_strats)
             mean = np.max(mdevs - mexpect)
 
     elif args.dev_surplus is not None:
         game, serial = gameio.read_basegame(json.load(args.dev_surplus[0]))
         mix = serial.from_mix_json(json.load(args.dev_surplus[1]))
         devs = load_devs(game, serial, data)
-        surpluses = np.sum(devs * mix * game.role_repeat(game.num_players), 1)
+        surpluses = np.sum(
+            devs * mix * game.num_role_players.repeat(game.num_role_strats), 1)
         result = bootstrap.mean(surpluses, args.num_bootstraps,
                                 args.percentiles)
         if args.mean:

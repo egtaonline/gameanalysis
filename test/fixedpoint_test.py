@@ -4,6 +4,8 @@ import numpy as np
 from gameanalysis import fixedpoint
 from gameanalysis import utils
 
+from test import testutils
+
 
 @pytest.mark.parametrize('dim', [2, 3, 4, 7, 10])
 def test_ndim_fixed_point(dim):
@@ -33,7 +35,7 @@ def test_ndim_progressive_fixed_point(dim, disc):
     assert np.all(np.abs(res - 1 / dim) <= 1 / disc)
 
 
-@pytest.mark.skip("takes forever and is correct")
+@testutils.long_test
 @pytest.mark.parametrize('tol', [1e-3, 1e-4, 1e-6])
 def test_rps_fixed_point(tol):  # pragma: no cover
     """Test that it computes a fixed point for bad shapley triangles"""

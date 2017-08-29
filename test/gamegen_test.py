@@ -22,7 +22,7 @@ def test_independent_game(strategies):
         "didn't generate correct number of players"
     assert game.is_asymmetric(), \
         "didn't generate an asymmetric game"
-    assert np.all(strategies == game.num_strategies), \
+    assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
 
@@ -38,9 +38,9 @@ def test_independent_game(strategies):
 def test_role_symmetric_game(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
     assert game.is_complete(), "didn't generate a full game"
-    assert np.all(players == game.num_players), \
+    assert np.all(players == game.num_role_players), \
         "didn't generate correct number of strategies"
-    assert np.all(strategies == game.num_strategies), \
+    assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
     conv = gamegen.serializer(game)
@@ -63,9 +63,9 @@ def test_add_profiles(players, strategies):
     base = rsgame.basegame(players, strategies)
     game = gamegen.add_profiles(base)
     assert game.is_complete(), "didn't generate a full game"
-    assert np.all(players == game.num_players), \
+    assert np.all(players == game.num_role_players), \
         "didn't generate correct number of strategies"
-    assert np.all(strategies == game.num_strategies), \
+    assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
     game = gamegen.add_profiles(base, 0.0)
@@ -96,7 +96,7 @@ def test_covariant_game(strategies):
     assert game.is_complete(), "didn't generate a full game"
     assert game.is_asymmetric(), \
         "didn't generate an asymmetric game"
-    assert np.all(strategies == game.num_strategies), \
+    assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
 
@@ -107,7 +107,7 @@ def test_two_player_zero_sum_game(strategies):
     assert game.num_roles == 2, "not two player"
     assert game.is_asymmetric(), \
         "didn't generate an asymmetric game"
-    assert np.all(strategies == game.num_strategies), \
+    assert np.all(strategies == game.num_role_strats), \
         "didn't generate right number of strategies"
     assert game.is_constant_sum(), "game not constant sum"
 
@@ -118,9 +118,9 @@ def test_sym_2p2s_game(_):
     assert game.is_complete(), "didn't generate a full game"
     assert game.is_symmetric(), \
         "didn't generate a symmetric game"
-    assert np.all(2 == game.num_players), \
+    assert np.all(2 == game.num_role_players), \
         "didn't generate correct number of strategies"
-    assert np.all(2 == game.num_strategies), \
+    assert np.all(2 == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
 
@@ -130,9 +130,9 @@ def test_prisonzers_dilemma(_):
     assert game.is_complete(), "didn't generate a full game"
     assert game.is_symmetric(), \
         "didn't generate a symmetric game"
-    assert np.all(2 == game.num_players), \
+    assert np.all(2 == game.num_role_players), \
         "didn't generate correct number of strategies"
-    assert np.all(2 == game.num_strategies), \
+    assert np.all(2 == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
 
@@ -142,9 +142,9 @@ def test_sym_2p2s_known_eq(eq_prob):
     assert game.is_complete(), "didn't generate a full game"
     assert game.is_symmetric(), \
         "didn't generate a symmetric game"
-    assert np.all(2 == game.num_players), \
+    assert np.all(2 == game.num_role_players), \
         "didn't generate correct number of strategies"
-    assert np.all(2 == game.num_strategies), \
+    assert np.all(2 == game.num_role_strats), \
         "didn't generate correct number of strategies"
     eqm = np.array([eq_prob, 1 - eq_prob])
     reg = regret.mixture_regret(game, eqm)
@@ -171,7 +171,7 @@ def test_polymatrix_game(players, strategies, matrix_players):
     assert game.is_complete(), "didn't generate a full game"
     assert game.is_asymmetric(), \
         "didn't generate an asymmetric game"
-    assert np.all(strategies == game.num_strategies), \
+    assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
 
@@ -194,7 +194,7 @@ def test_add_noise(players, strategies, lower, upper):
     assert lower == 0 or game.is_complete(), "didn't generate a full game"
     assert game.num_roles == roles, \
         "didn't generate correct number of players"
-    assert np.all(strategies == game.num_strategies), \
+    assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
     assert (np.all(game.num_samples >= min(lower, 1)) and
             np.all(game.num_samples <= upper)), \
@@ -295,9 +295,9 @@ def test_rock_paper_scissors_defaults():
 def test_travellers_dilemma():
     game = gamegen.travellers_dilemma(2, 10)
     assert game.is_complete(), "didn't generate a full game"
-    assert np.all(2 == game.num_players), \
+    assert np.all(2 == game.num_role_players), \
         "didn't generate correct number of strategies"
-    assert np.all(9 == game.num_strategies), \
+    assert np.all(9 == game.num_role_strats), \
         "didn't generate correct number of strategies"
     assert game.num_profiles == 45
 
