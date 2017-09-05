@@ -14,10 +14,11 @@ from gameanalysis import rsgame
 from test import testutils
 
 
-METHODS = [('optimize', {}), ('replicator', {})]
+METHS = [('optimize', {}), ('replicator', {})]
+METHODS = [{k: v} for k, v in METHS]
 ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
-    itertools.combinations(METHODS, i)
-    for i in range(1, len(METHODS) + 1))))
+    itertools.combinations(METHS, i)
+    for i in range(1, len(METHS) + 1))))
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -31,6 +32,7 @@ def test_pure_prisoners_dilemma(_):
         "didn't find pd equilibrium"
 
 
+@testutils.warnings_filter()
 @pytest.mark.parametrize('_', range(20))
 @pytest.mark.parametrize('methods', ALL_METHODS)
 def test_mixed_prisoners_dilemma(methods, _):
@@ -46,7 +48,8 @@ def test_mixed_prisoners_dilemma(methods, _):
         "didn't find pd equilibrium {}".format(eqa)
 
 
-@pytest.mark.parametrize('methods', ALL_METHODS)
+@testutils.warnings_filter()
+@pytest.mark.parametrize('methods', METHODS)
 @pytest.mark.parametrize('eq_prob', [0, .1, .2, .3, .5, .7, .8, .9, 1])
 def test_mixed_known_eq(methods, eq_prob):
     game = gamegen.sym_2p2s_known_eq(eq_prob)
@@ -56,17 +59,6 @@ def test_mixed_known_eq(methods, eq_prob):
     assert np.isclose(eqa, expected, atol=1e-2, rtol=1e-2).all(1).any(), \
         "didn't find correct equilibrium {} instead of {}".format(
             eqa, expected)
-
-
-@pytest.mark.parametrize('eq_prob', (p / 10 for p in range(11)))
-def test_optimization_stable_point(eq_prob):
-    game = gamegen.sym_2p2s_known_eq(eq_prob)
-    opt = nash.RegretOptimizer(game)
-    val, grad = opt.grad(np.array([eq_prob, 1 - eq_prob]), 1)
-    assert np.isclose(val, 0), \
-        "value at equilibrium was not close to zero: {}".format(val)
-    assert np.allclose(grad, 0), \
-        "grad at equilibrium was not close to zero: {}".format(grad)
 
 
 def test_pure_roshambo():
@@ -105,6 +97,7 @@ def test_minreg_rand_roshambo():
         "Found a mixture with greater than maximum regret"
 
 
+@testutils.warnings_filter()
 @pytest.mark.parametrize('methods', ALL_METHODS)
 def test_mixed_roshambo(methods):
     game = gamegen.rock_paper_scissors()
@@ -135,6 +128,7 @@ def test_at_least_one():
     assert eqa.shape[0] == 1, "at_least_one didn't return anything"
 
 
+@testutils.warnings_filter()
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -151,6 +145,7 @@ def test_mixed_nash(methods, strategies):
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
+@testutils.warnings_filter()
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -167,6 +162,7 @@ def test_mixed_nash_multi_process(methods, strategies):
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
+@testutils.warnings_filter()
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -183,6 +179,7 @@ def test_mixed_nash_best(methods, strategies):
     assert eqa.size, "didn't return something"
 
 
+@testutils.warnings_filter()
 @testutils.long_test
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,

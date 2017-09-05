@@ -66,131 +66,206 @@ def min_regret_rand_mixture(game, mixtures):
     return mixes[np.nanargmin(regs)]
 
 
-class RegretOptimizer(object):
+def replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
+                        slack=1e-3):
+    """Replicator Dynamics
+
+    Run replicator dynamics on a game starting at mix. Replicator dynamics may
+    not converge, and so the resulting mixture may not actually represent a
+    nash equilibrium.
+
+    Arguments
+    ---------
+    game : Game
+        The game to run replicator dynamics on. Game must support
+        `deviation_payoffs`.
+    mix : mixture
+        The mixture to initialize replicator dynamics with.
+    max_iters : int
+        Replicator dynamics may never converge and this prevents replicator
+        dynamics from running forever.
+    converge_thresh : float
+        This will terminate early if successive updates differ with a norm
+        smaller than `converge_thresh`.
+    slack : float
+        For repliactor dynamics to operate, it must know the minimum and
+        maximum payoffs for a role such that deviations always have positive
+        probability. This is the proportional slack that given relative to the
+        minimum and maximum payoffs. This has an effect on convergence, but the
+        actual effect isn't really know.
+    """
+    # TODO Add efficient cycle detection to remove max_iters
+    minp = game.min_role_payoffs()
+    maxp = game.max_role_payoffs()
+
+    for _ in range(max_iters):
+        old_mix = mix.copy()
+        dev_pays = game.deviation_payoffs(mix, assume_complete=True)
+        np.minimum(minp, np.minimum.reduceat(dev_pays, game.role_starts), minp)
+        np.maximum(maxp, np.maximum.reduceat(dev_pays, game.role_starts), maxp)
+        resid = slack * (maxp - minp)
+        # TODO Change == 0 to < tol
+        resid[resid == 0] = slack
+        offset = np.repeat(minp - resid, game.num_role_strats)
+        mix *= dev_pays - offset
+        mix /= np.add.reduceat(
+            mix, game.role_starts).repeat(game.num_role_strats)
+        if linalg.norm(mix - old_mix) <= converge_thresh:
+            break
+
+    # Probabilities are occasionally negative
+    return game.mixture_project(mix)
+
+
+def regret_minimize(game, mix, gtol=1e-8):
     """A pickleable object to find Nash equilibria
 
     This method uses constrained convex optimization to to attempt to solve a
-    proxy for the nonconvex regret minimization."""
+    proxy for the nonconvex regret minimization. Since this may converge to a
+    local optimum, it may return a mixture that is not an approximate
+    equilibrium.
 
-    def __init__(self, game, gtol=1e-8):
-        self.game = game
-        self.scale = np.repeat(game.max_role_payoffs() -
-                               game.min_role_payoffs(), game.num_role_strats)
-        self.scale[self.scale == 0] = 1  # In case payoffs are the same
-        self.offset = game.min_role_payoffs().repeat(game.num_role_strats)
-        self.gtol = gtol
+    Arguments
+    ---------
+    game : Game
+        The game to run replicator dynamics on. Game must support
+        `deviation_payoffs`.
+    mix : mixture
+        The mixture to initialize replicator dynamics with.
+    gtol : float
+        The gradient tolerance used for optimization convergence. See
+        `scipy.optimize.minimize`.
+    """
+    scale = np.repeat(game.max_role_payoffs() - game.min_role_payoffs(),
+                      game.num_role_strats)
+    # TODO should probably be scale < tol instead of == 0
+    scale[scale == 0] = 1  # In case payoffs are the same
+    offset = game.min_role_payoffs().repeat(game.num_role_strats)
+    penalty = 1
 
-    def grad(self, mix, penalty):
+    def grad(mixture):
         # We assume that the initial point is in a constant sum subspace, and
         # so project the gradient so that any gradient step maintains that
         # constant step. Thus, sum to 1 is not one of the penalty terms
 
         # Because deviation payoffs uses log space, we max with 0 just for the
         # payoff calculation
-        dev_pay, dev_jac = self.game.deviation_payoffs(
-            np.maximum(mix, 0), jacobian=True, assume_complete=True)
+        dev_pay, dev_jac = game.deviation_payoffs(
+            np.maximum(mixture, 0), jacobian=True, assume_complete=True)
 
         # Normalize
-        dev_pay = (dev_pay - self.offset) / self.scale
-        dev_jac /= self.scale[:, None]
+        dev_pay = (dev_pay - offset) / scale
+        dev_jac /= scale[:, None]
 
         # Gains from deviation (objective)
         gains = np.maximum(
-            dev_pay -
-            np.add.reduceat(
-                mix * dev_pay, self.game.role_starts).repeat(
-                    self.game.num_role_strats),
+            dev_pay - np.add.reduceat(
+                mixture * dev_pay,
+                game.role_starts).repeat(game.num_role_strats),
             0)
         obj = np.sum(gains ** 2) / 2
 
         gains_jac = (dev_jac - dev_pay - np.add.reduceat(
-            mix[:, None] * dev_jac, self.game.role_starts).repeat(
-                self.game.num_role_strats, 0))
+            mixture[:, None] * dev_jac, game.role_starts).repeat(
+                game.num_role_strats, 0))
         grad = np.sum(gains[:, None] * gains_jac, 0)
 
         # Penalty terms for obj and gradient
-        obj += penalty * np.sum(np.minimum(mix, 0) ** 2) / 2
-        grad += penalty * np.minimum(mix, 0)
+        obj += penalty * np.sum(np.minimum(mixture, 0) ** 2) / 2
+        grad += penalty * np.minimum(mixture, 0)
 
         # Project grad so steps stay in the appropriate space
-        grad -= np.repeat(np.add.reduceat(grad, self.game.role_starts) /
-                          self.game.num_role_strats, self.game.num_role_strats)
+        grad -= np.repeat(np.add.reduceat(grad, game.role_starts) /
+                          game.num_role_strats, game.num_role_strats)
 
         return obj, grad
 
-    def __call__(self, mix):
-        # Pass in lambda, and make penalty not a member
+    result = None
+    penalty = 1
+    for _ in range(10):
+        # First get an unconstrained result from the optimization
+        mix = optimize.minimize(grad, mix, method='CG', jac=True,
+                                options={'gtol': gtol}).x
+        # Project it onto the simplex, it might not be due to the penalty
+        result = game.mixture_project(mix)
+        if np.allclose(mix, result):
+            break
+        # Increase constraint penalty
+        penalty *= 2
 
-        result = None
-        penalty = 1
-        for _ in range(10):
-            # First get an unconstrained result from the optimization
-            opt = optimize.minimize(lambda m: self.grad(m, penalty), mix,
-                                    method='CG', jac=True,
-                                    options={'gtol': self.gtol})
-            mix = opt.x
-            # Project it onto the simplex, it might not be due to the penalty
-            result = self.game.mixture_project(mix)
-            if np.allclose(mix, result):
-                break
-            # Increase constraint penalty
-            penalty *= 2
-
-        return result
+    return result
 
 
-class ReplicatorDynamics(object):
-    """Replicator dynamics
+def scarfs_algorithm(game, mix, regret_thresh=1e-3, disc=8):
+    """Uses fixed point method to find nash eqm
 
-    This will run at most max_iters of replicator dynamics and return unless
-    the difference between successive mixtures is less than converge_thresh.
-    This is an object to support pickling. Replicator Dynamics needs minimum
-    and maximum payoffs in order to project successive iterations into the
-    simplex. If these aren't known then they should return inf and -inf
-    respectively. Otherwise they can be conservative bounds.
+    This is guaranteed to find an equilibrium with regret below regret_thresh,
+    however, it's guaranteed convergence is assured by potentially exponential
+    running time, and therefore is not recommended unless you're willing to
+    wait. The underlying algorithm is solving for an approximate fixed point.
+
+    Arguments
+    ---------
+    game : Game
+        The game to run replicator dynamics on. Game must support
+        `deviation_payoffs`.
+    mix : mixture
+        The mixture to initialize replicator dynamics with.
+    regret_thresh : float
+        The maximum regret of the returned mixture.
+    disc : int
+        The initial discretization of the mixture. A lower initial
+        discretization means fewer possible starting points for search in the
+        mixture space, but is likely to converge faster as the search at higher
+        discretization will be seeded with an approximate equilibrium from a
+        lower discretization. For example, with `disc=2` there are only
+        `game.num_strats - game.num_roles + 1` possible starting points.
     """
+    def eqa_func(mixture):
+        mixture = game.from_simplex(mixture)
+        gains = np.maximum(regret.mixture_deviation_gains(game, mixture), 0)
+        result = (mixture + gains) / (1 + np.add.reduceat(
+            gains, game.role_starts).repeat(game.num_role_strats))
+        return game.to_simplex(result)
 
-    def __init__(self, game, max_iters=10000, converge_thresh=1e-8,
-                 slack=1e-3):
-        self.game = game
-        self.max_iters = max_iters
-        self.converge_thresh = converge_thresh
-        self.slack = slack
+    disc = min(disc, 8)
+    reg = regret.mixture_regret(game, mix)
+    while reg > regret_thresh:
+        mix = game.from_simplex(fixedpoint.fixed_point(
+            eqa_func, game.to_simplex(mix), disc=disc))
+        reg = regret.mixture_regret(game, mix)
+        disc *= 2
 
-    def __call__(self, mix):
-        minp = self.game.min_role_payoffs()
-        maxp = self.game.max_role_payoffs()
-
-        for _ in range(self.max_iters):
-            old_mix = mix
-            dev_pays = self.game.deviation_payoffs(mix, assume_complete=True)
-            minp = np.minimum(minp, np.minimum.reduceat(
-                dev_pays, self.game.role_starts))
-            maxp = np.maximum(maxp, np.maximum.reduceat(
-                dev_pays, self.game.role_starts))
-            slack = self.slack * (maxp - minp)
-            slack[slack == 0] = self.slack
-            offset = np.repeat(minp - slack, self.game.num_role_strats)
-            mix = (dev_pays - offset) * mix
-            mix /= np.add.reduceat(
-                mix, self.game.role_starts).repeat(self.game.num_role_strats)
-            if linalg.norm(mix - old_mix) <= self.converge_thresh:
-                break
-
-        # Probabilities are occasionally negative
-        return self.game.mixture_project(mix)
+    return mix
 
 
 _AVAILABLE_METHODS = {
-    'replicator': ReplicatorDynamics,
-    'optimize': RegretOptimizer,
+    'replicator': replicator_dynamics,
+    'optimize': regret_minimize,
+    'scarf': scarfs_algorithm,
 }
+
+
+class _PickleableEqaFinding(object):
+    """This allows all of the nash equilibria functions to be pickled"""
+
+    def __init__(self, func, game, args):
+        self.func = func
+        self.game = game
+        self.args = args
+
+    def __call__(self, mix):
+        return self.func(self.game, mix, **self.args)
 
 
 def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
                random_restarts=0, processes=1, min_reg=False,
                at_least_one=False, **methods):
     """Finds role-symmetric mixed Nash equilibria
+
+    This is the intended front end for nash equilibria finding, wrapping the
+    individual methods in a convenient front end that also support parallel
+    execution.
 
     Arguments
     ---------
@@ -217,14 +292,16 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         method with increasingly smaller tolerances until an equilibrium with
         small regret is found. This may take an exceedingly long time to
         converge, so use with caution.
-    **methods : {'replicator', 'optimize'}={options}
+    **methods : {'replicator', 'optimize', 'scarf'}={options}
         All methods to use can be specified as key word arguments to additional
         options for that method, e.g. mixed_nash(game,
         replicator={'max_iters':100}). To use the default options for a method,
         simply pass a falsey value i.e. {}, None, False. If no methods are
         specified, this will use both replicator dynamics and regret
         optimization as they tend to be reasonably fast and find different
-        equilibria.
+        equilibria. Scarfs algorithm is almost never recommended to be passed
+        here, as it will be called if at_least_one is True and only after
+        failing with a faster method and only called once.
 
     Returns
     -------
@@ -247,8 +324,10 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     best = [np.inf, -1, None]
     chunksize = len(initial_points) if processes == 1 else 4
 
+    # Initialize pickleable methods
     methods = methods or {'replicator': None, 'optimize': None}
-    methods = (_AVAILABLE_METHODS[meth](game, **(opts or {}))
+    methods = (_PickleableEqaFinding(_AVAILABLE_METHODS[meth], game,
+                                     (opts or {}))
                for meth, opts in methods.items())
 
     # what to do with each candidate equilibrium
@@ -270,13 +349,9 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
                 process(i, eqm)
 
     if at_least_one and not equilibria:
-        eqm = game.uniform_mixture()
+        eqm = scarfs_algorithm(game, game.uniform_mixture(),
+                               regret_thresh=regret_thresh)
         reg = regret.mixture_regret(game, eqm)
-        disc = 8
-        while reg > regret_thresh:
-            eqm = _fixed_point_nash(game, eqm, disc)
-            reg = regret.mixture_regret(game, eqm)
-            disc *= 2
         equilibria.add(eqm, reg)
     elif min_reg and not equilibria:
         reg, _, eqm = best
@@ -286,23 +361,3 @@ def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         return np.concatenate([e[None] for e, r in equilibria])
     else:
         return np.empty((0, game.num_strats))
-
-
-def _fixed_point_nash(game, mix, disc):
-    """Uses fixed point method to find nash eqm
-
-    This is guaranteed to find an equilibrium that's within tol od a true
-    equilibrium. Therefore, by making tol arbitrarily small, this will find an
-    approximate equilibrium. However, it's guaranteed convergence is assured by
-    potentially exponential time, and therefore is not recommended unless
-    you're willing to wait.
-    """
-    def eqa_func(mix):
-        mix = game.from_simplex(mix)
-        gains = np.maximum(regret.mixture_deviation_gains(game, mix), 0)
-        result = ((mix + gains) / (1 + np.add.reduceat(
-            gains, game.role_starts).repeat(game.num_role_strats)))
-        return game.to_simplex(result)
-
-    return game.from_simplex(fixedpoint.fixed_point(
-        eqa_func, game.to_simplex(mix), disc=disc))
