@@ -117,6 +117,65 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
     return game.mixture_project(mix)
 
 
+# FIXME This is failing to converge appropriately. I want to test this by
+# recording the empirical profile distribution and then testing regret of
+# correlated mixture.
+def regret_matching(game, profile, max_iters=10000, slack=0.1,
+                    converge_thresh=1e-8, converge_num=3):
+    profile = np.asarray(profile, int)
+    mean_gains = np.zeros(game.num_devs)
+    mean_profile = np.zeros(game.num_strats)
+    max_devs = (game.max_strat_payoffs()[game.dev_to_indices] -
+                game.min_strat_payoffs().repeat(game.num_strat_devs))
+    mus = np.maximum.reduceat(
+        np.add.reduceat(np.maximum(max_devs, slack), game.dev_strat_starts),
+        game.role_starts) * (1 + slack) * game.num_role_players
+
+    num_conv = 0
+    for i in range(1, max_iters + 1):
+        update = (profile - mean_profile) / i
+        mean_profile += update
+        if linalg.norm(update) <= converge_thresh:
+            num_conv += 1
+            if num_conv == converge_num:
+                break
+        else:
+            num_conv = 0
+        gains = regret.pure_strategy_deviation_gains(game, profile)
+        gains *= profile.repeat(game.num_strat_devs)
+
+        empirical_gains = np.maximum.reduceat(
+            np.add.reduceat(np.maximum(gains, 0), game.dev_strat_starts),
+            game.role_starts) * (1 + slack)
+        np.maximum(mus, empirical_gains, mus)
+        mean_gains += (gains - mean_gains) / i
+        new_profile = np.zeros(game.num_strats, int)
+
+        # For each strategy sample from regret matching distribution
+        # FIXME Better variable names
+        for gs, prof, nprof, mu, ns in zip(
+                np.split(mean_gains, game.dev_role_starts[1:]),
+                np.split(profile, game.role_starts[1:]),
+                np.split(new_profile, game.role_starts[1:]),
+                mus,
+                game.num_role_strats):
+            probs = np.insert(np.maximum(gs, 0), np.arange(0, ns * ns, ns),
+                              0).reshape((ns, ns))
+            probs /= mu
+            probs[np.diag_indices(ns)] = 1 - probs.sum(1)
+            # TODO this can be more efficient when random.multinomial supports
+            # multiple ns and probs
+            for n, prob in zip(prof, probs):
+                nprof += np.random.multinomial(n, prob)
+        profile = new_profile
+
+    return mean_profile / game.num_role_players.repeat(game.num_role_strats)
+
+
+def _regret_matching_mix(game, mix, **kwargs):
+    return regret_matching(game, game.max_prob_prof(mix), **kwargs)
+
+
 def regret_minimize(game, mix, *, gtol=1e-8):
     """A pickleable object to find Nash equilibria
 
@@ -261,6 +320,7 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
 _AVAILABLE_METHODS = {
     'replicator': replicator_dynamics,
     'fictitious': fictitious_play,
+    'matching': _regret_matching_mix,
     'optimize': regret_minimize,
     'scarf': scarfs_algorithm,
 }

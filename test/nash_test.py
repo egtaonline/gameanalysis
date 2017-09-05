@@ -14,7 +14,7 @@ from gameanalysis import rsgame
 from test import testutils
 
 
-METHS = [('optimize', {}), ('replicator', {}), ('fictitious', {})]
+METHS = [('optimize', {}), ('replicator', {}), ('fictitious', {}), ('matching', {})]
 METHODS = [{k: v} for k, v in METHS]
 ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
     itertools.combinations(METHS, i)
@@ -33,9 +33,8 @@ def test_pure_prisoners_dilemma(_):
 
 
 @testutils.warnings_filter()
-@pytest.mark.parametrize('_', range(20))
-@pytest.mark.parametrize('methods', ALL_METHODS)
-def test_mixed_prisoners_dilemma(methods, _):
+@pytest.mark.parametrize('methods', METHODS)
+def test_mixed_prisoners_dilemma(methods):
     game = gamegen.prisoners_dilemma()
     eqa = nash.mixed_nash(game, dist_thresh=1e-3, **methods)
 
@@ -49,7 +48,8 @@ def test_mixed_prisoners_dilemma(methods, _):
 
 
 @testutils.warnings_filter()
-@pytest.mark.parametrize('methods', METHODS)
+@pytest.mark.parametrize(
+    'methods', [{'optimize': None}, {'replicator': None}])
 @pytest.mark.parametrize('eq_prob', [0, .1, .2, .3, .5, .7, .8, .9, 1])
 def test_mixed_known_eq(methods, eq_prob):
     game = gamegen.sym_2p2s_known_eq(eq_prob)
@@ -98,10 +98,9 @@ def test_minreg_rand_roshambo():
 
 
 @testutils.warnings_filter()
-@pytest.mark.parametrize('methods', METHODS)
-def test_mixed_roshambo(methods):
+def test_mixed_roshambo():
     game = gamegen.rock_paper_scissors()
-    eqa = nash.mixed_nash(game, dist_thresh=1e-2, **methods)
+    eqa = nash.mixed_nash(game, dist_thresh=1e-2)
     assert eqa.shape[0] == 1, \
         "didn't find right number of equilibria in roshambo"
     assert np.allclose(1 / 3, eqa, rtol=1e-3, atol=1e-3), \
@@ -140,48 +139,32 @@ def test_min_reg_nash():
 
 
 @testutils.warnings_filter()
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [1, 3],
-    ]))
-def test_mixed_nash(methods, strategies):
+@pytest.mark.slow
+@pytest.mark.parametrize('methods', METHODS)
+@pytest.mark.parametrize('strategies', [
+    [2],
+    [2, 2],
+    [1, 3],
+])
+def test_random_mixed_nash(methods, strategies):
     game = gamegen.role_symmetric_game(1, strategies)
     eqa = nash.mixed_nash(game, **methods)
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
 @testutils.warnings_filter()
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [1, 3],
-    ]))
-def test_mixed_nash_multi_process(methods, strategies):
-    game = gamegen.role_symmetric_game(1, strategies)
-    eqa = nash.mixed_nash(game, processes=2, **methods)
+def test_mixed_nash_multi_process():
+    game = gamegen.role_symmetric_game(1, [3, 2])
+    eqa = nash.mixed_nash(game, processes=2)
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
-@testutils.warnings_filter()
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [1, 3],
-    ]))
-def test_mixed_nash_best(methods, strategies):
+@pytest.mark.parametrize('methods', METHODS)
+@pytest.mark.parametrize('strategies', [
+    [2],
+    [2, 3],
+])
+def test_random_mixed_nash_best(methods, strategies):
     game = gamegen.role_symmetric_game(1, strategies)
     eqa = nash.mixed_nash(game, min_reg=True, **methods)
     assert eqa.size, "didn't return something"
@@ -189,17 +172,13 @@ def test_mixed_nash_best(methods, strategies):
 
 @testutils.warnings_filter()
 @pytest.mark.slow
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [4, 4, 4],
-        [1, 3],
-    ]))
-def test_mixed_nash_at_least_one(methods, strategies):  # pragma: no cover
+@pytest.mark.parametrize('methods', METHODS)
+@pytest.mark.parametrize('strategies', [
+    [2],
+    [2, 2],
+    [1, 3],
+])
+def test_random_mixed_nash_at_least_one(methods, strategies):  # pragma: no cover
     game = gamegen.role_symmetric_game(1, strategies)
     eqa = nash.mixed_nash(game, at_least_one=True, **methods)
     assert eqa.size, "didn't return at least one equilibria"
