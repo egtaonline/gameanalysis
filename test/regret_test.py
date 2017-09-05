@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from gameanalysis import gamegen
+from gameanalysis import matgame
 from gameanalysis import regret
 from gameanalysis import rsgame
 
@@ -91,7 +92,7 @@ def test_two_player_zero_sum_pure_wellfare(strategies):
 
 
 def test_nonzero_profile_welfare():
-    game = rsgame.game_matrix([[[3.5, 2.5]]])
+    game = matgame.matgame([[[3.5, 2.5]]])
     assert np.isclose(regret.pure_social_welfare(game, [1, 1]), 6), \
         "Didn't properly sum welfare"
 
@@ -105,7 +106,7 @@ def test_two_player_zero_sum_mixed_wellfare(strategies):
 
 
 def test_nonzero_mixed_welfare():
-    game = rsgame.game_matrix([[[3.5, 2.5]]])
+    game = matgame.matgame([[[3.5, 2.5]]])
     assert np.isclose(regret.mixed_social_welfare(game, [1, 1]), 6), \
         "Didn't properly sum welfare"
 

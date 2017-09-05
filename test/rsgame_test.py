@@ -383,7 +383,7 @@ def test_random_simplex_homotopy(_, role_strats):
 def test_random_uniform_simplex_homotopy(_, role_strats):
     sarr = rsgame.StratArray(np.array(role_strats))
     rand_mixes = sarr.random_mixtures(100)
-    mask = np.repeat(np.random.random((100, sarr.num_roles))
+    mask = np.repeat(rand.random((100, sarr.num_roles))
                      < 0.5, sarr.num_role_strats, 1)
     mixes = np.where(mask, rand_mixes, sarr.uniform_mixture())
 
@@ -1272,7 +1272,7 @@ def test_min_max_payoffs():
 def test_random_min_max_payoffs(role_players, role_strats):
     base = rsgame.basegame(role_players, role_strats)
     profiles = base.all_profiles()
-    payoffs = np.random.random(profiles.shape)
+    payoffs = rand.random(profiles.shape)
     mask = profiles > 0
     payoffs *= mask
     game = rsgame.game_copy(base, profiles, payoffs)
@@ -1307,7 +1307,7 @@ def test_get_payoffs():
 def test_random_get_payoffs(role_players, role_strats):
     base = rsgame.basegame(role_players, role_strats)
     profiles = base.all_profiles()
-    payoffs = np.random.random(profiles.shape)
+    payoffs = rand.random(profiles.shape)
     payoffs *= profiles > 0
     game = rsgame.game_copy(base, profiles, payoffs)
 
@@ -1370,27 +1370,6 @@ def test_deviation_mixture_support():
     dev_payoffs = game3.deviation_payoffs(mix2)
     assert np.allclose(dev_payoffs, [2, 5, np.nan, 4.75, 13.75, np.nan],
                        equal_nan=True)
-
-
-# Test that sample game from matrix creates a game
-@pytest.mark.parametrize('players,strategies,samples', [
-    (1, 1, 1),
-    (1, 2, 1),
-    (1, 1, 2),
-    (2, 1, 2),
-    (2, 2, 2),
-    (3, 2, 4),
-] * 20)
-def test_samplegame_from_matrix(players, strategies, samples):
-    matrix = np.random.random([strategies] * players + [players, samples])
-    game = rsgame.samplegame_matrix(matrix)
-    assert game.is_complete(), "didn't generate a full game"
-    assert game.num_roles == players, \
-        "didn't generate correct number of players"
-    assert game.is_asymmetric(), \
-        "didn't generate an asymmetric game"
-    assert np.all(game.num_samples == [samples]), \
-        "profiles didn't have correct number of samples"
 
 
 # Test sample game with different number of samples
@@ -1625,6 +1604,9 @@ def test_random_is_empty(role_players, role_strats):
     game = rsgame.game(role_players, role_strats)
     assert game.is_empty()
 
+    game = rsgame.game_copy(rsgame.basegame(role_players, role_strats))
+    assert game.is_empty()
+
     game = rsgame.game_copy(game, np.empty((0, game.num_strats), int),
                             np.empty((0, game.num_strats)))
     assert game.is_empty()
@@ -1651,13 +1633,25 @@ def test_is_constant_sum():
     game = rsgame.game(2, 3)
     assert game.is_constant_sum()
 
-    game = rsgame.game_matrix([[[2, -2], [-3, 3]], [[-5, 5], [1, -1]]])
+    profiles = [
+        [1, 0, 1, 0],
+        [1, 0, 0, 1],
+        [0, 1, 1, 0],
+        [0, 1, 0, 1],
+    ]
+    payoffs = [
+        [2, 0, -2, 0],
+        [3, 0, 0, -3],
+        [0, 5, -5, 0],
+        [0, 1, 0, -1],
+    ]
+    game = rsgame.game(1, [2, 2], profiles, payoffs)
     assert game.is_constant_sum()
 
     payoffs = game.payoffs.copy()
     payoffs[game.profiles > 0] += 1
-    game2 = rsgame.game_copy(game, game.profiles, payoffs)
-    assert game2.is_constant_sum()
+    game = rsgame.game_copy(game, game.profiles, payoffs)
+    assert game.is_constant_sum()
 
     profiles = [
         [1, 0, 1, 0],
@@ -1671,8 +1665,8 @@ def test_is_constant_sum():
         [0, 5, 6, 0],
         [0, 7, 0, 8],
     ]
-    game3 = rsgame.game_copy(game, profiles, payoffs)
-    assert not game3.is_constant_sum()
+    game = rsgame.game_copy(game, profiles, payoffs)
+    assert not game.is_constant_sum()
 
 
 def test_contains():
@@ -1712,33 +1706,19 @@ def test_game_hash_eq():
 def test_random_game_copy(role_players, role_strats):
     base = rsgame.basegame(role_players, role_strats)
     profs = base.all_profiles()
-    np.random.shuffle(profs)
-    num_profs = np.random.randint(0, base.num_all_profiles + 1)
+    rand.shuffle(profs)
+    num_profs = rand.randint(0, base.num_all_profiles + 1)
     profs = profs[:num_profs].copy()
-    pays = np.random.random(profs.shape)
+    pays = rand.random(profs.shape)
     pays *= profs > 0
     game = rsgame.game_copy(base, profs, pays)
 
     copy = rsgame.game_copy(game)
     assert game == copy and hash(game) == hash(copy)
 
-    perm = np.random.permutation(num_profs)
+    perm = rand.permutation(num_profs)
     copy = rsgame.game_copy(game, game.profiles[perm], game.payoffs[perm])
     assert game == copy and hash(game) == hash(copy)
-
-
-def test_game_matrix():
-    mat = rsgame.game_matrix([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
-    profs = [[1, 0, 1, 0],
-             [1, 0, 0, 1],
-             [0, 1, 1, 0],
-             [0, 1, 0, 1]]
-    pays = [[1, 0, 2, 0],
-            [3, 0, 0, 4],
-            [0, 5, 6, 0],
-            [0, 7, 0, 8]]
-    game = rsgame.game([1, 1], 2, profs, pays)
-    assert mat == game
 
 
 def test_game_repr():
@@ -1764,7 +1744,9 @@ def test_samplegame_properties():
     assert np.all([] == game.sample_starts)
     assert np.all([] == game.num_samples)
 
-    game = rsgame.samplegame_matrix(np.zeros((4, 3, 2, 2)))
+    base = rsgame.basegame(1, [4, 3])
+    game = rsgame.samplegame_copy(
+        base, base.all_profiles(), [np.zeros((12, 7, 2))])
     assert np.all([12] == game.num_sample_profs)
     assert np.all([0] == game.sample_starts)
     assert np.all([2] == game.num_samples)
@@ -1785,12 +1767,16 @@ def test_empty_samplegame_resample():
     assert rsgame.game_copy(sgame) == sgame.resample()
     assert rsgame.game_copy(sgame) == sgame.resample(1)
 
+    sgame = rsgame.samplegame_copy(rsgame.basegame([2, 3], [3, 2]))
+    assert rsgame.game_copy(sgame) == sgame.resample()
+    assert rsgame.game_copy(sgame) == sgame.resample(1)
+
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_samplegame_singlesample_resample(role_players, role_strats):
     base = rsgame.basegame(role_players, role_strats)
     profs = base.all_profiles()
-    pays = np.random.random(profs.shape)
+    pays = rand.random(profs.shape)
     pays *= profs > 0
     sgame = rsgame.samplegame_copy(rsgame.game_copy(base, profs, pays))
     copy = rsgame.game_copy(sgame)
@@ -1819,7 +1805,13 @@ def test_random_samplegame_singlesample_resample(role_players, role_strats):
 
 
 def test_samplegame_resample_changes():
-    sgame = rsgame.samplegame_matrix(np.random.random((3, 2, 2, 1000)))
+    base = rsgame.basegame(1, [3, 2])
+    profiles = base.all_profiles()
+    payoffs = rand.random(profiles.shape + (1000,))
+    view = payoffs.view()
+    view.shape = (-1, 1000)
+    view[profiles.ravel() == 0] = 0
+    sgame = rsgame.samplegame_copy(base, profiles, [payoffs])
     copy = rsgame.game_copy(sgame)
 
     # These aren't guaranteed to be true, but they're highly unlikely
@@ -1894,17 +1886,17 @@ def test_samplegame_hash_eq():
 def test_random_samplegame_copy(role_players, role_strats):
     base = rsgame.basegame(role_players, role_strats)
     profs = base.all_profiles()
-    np.random.shuffle(profs)
+    rand.shuffle(profs)
     spays = []
     start = 0
     for n, c in collections.Counter(
-            np.random.geometric(.5, base.num_all_profiles) - 1).items():
+            rand.geometric(.5, base.num_all_profiles) - 1).items():
         if n == 0:
             profs = np.delete(profs, slice(start, start + c), 0)
         else:
             sprofs = profs[start:start + c]
             start += c
-            pays = np.random.random((c * base.num_strats, n))
+            pays = rand.random((c * base.num_strats, n))
             pays[sprofs.ravel() == 0] = 0
             spays.append(pays.reshape((c, base.num_strats, n)))
 
@@ -1913,12 +1905,12 @@ def test_random_samplegame_copy(role_players, role_strats):
     copy = rsgame.samplegame_copy(game)
     assert game == copy and hash(game) == hash(copy)
 
-    samp_perm = np.random.permutation(game.num_samples.size)
+    samp_perm = rand.permutation(game.num_samples.size)
     prof_list = np.split(game.profiles, game.sample_starts[1:], 0)
     sprofs = []
     spays = []
     for i in samp_perm:
-        perm = np.random.permutation(game.num_sample_profs[i])
+        perm = rand.permutation(game.num_sample_profs[i])
         sprofs.append(prof_list[i][perm])
         spays.append(game.sample_payoffs[i][perm])
 
@@ -1926,43 +1918,6 @@ def test_random_samplegame_copy(role_players, role_strats):
         sprofs) if sprofs else np.empty((0, game.num_strats))
     copy = rsgame.samplegame_copy(game, profiles, spays)
     assert game == copy and hash(game) == hash(copy)
-
-
-def test_samplegame_matrix():
-    matrix = [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
-              [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]
-    mat = rsgame.samplegame_matrix(matrix)
-    profiles = [[1, 0, 1, 0],
-                [1, 0, 0, 1],
-                [0, 1, 1, 0],
-                [0, 1, 0, 1]]
-    spayoffs = [[[[1, 2], [0] * 2, [3, 4], [0] * 2],
-                 [[5, 6], [0] * 2, [0] * 2, [7, 8]],
-                 [[0] * 2, [9, 10], [11, 12], [0] * 2],
-                 [[0] * 2, [13, 14], [0] * 2, [15, 16]]]]
-    game = rsgame.samplegame([1, 1], 2, profiles, spayoffs)
-    assert mat == game
-
-
-# Test that sample game from matrix creates a game
-@pytest.mark.parametrize('players,strategies,samples', [
-    (1, 1, 1),
-    (1, 2, 1),
-    (1, 1, 2),
-    (2, 1, 2),
-    (2, 2, 2),
-    (3, 2, 4),
-])
-def test_random_samplegame_from_matrix(players, strategies, samples):
-    matrix = np.random.random([strategies] * players + [players, samples])
-    game = rsgame.samplegame_matrix(matrix)
-    assert game.is_complete(), "didn't generate a full game"
-    assert game.num_roles == players, \
-        "didn't generate correct number of players"
-    assert game.is_asymmetric(), \
-        "didn't generate an asymmetric game"
-    assert np.all(game.num_samples == [samples]), \
-        "profiles didn't have correct number of samples"
 
 
 # Test sample game with different number of samples
@@ -1993,7 +1948,9 @@ def test_samplegame_repr():
     expected = 'SampleGame([2], [3], 0 / 6, 0)'
     assert repr(game) == expected
 
-    game = rsgame.samplegame_matrix(np.zeros((4, 3, 2, 2)))
+    base = rsgame.basegame(1, [4, 3])
+    game = rsgame.samplegame_copy(
+        base, base.all_profiles(), [np.zeros((12, 7, 2))])
     expected = 'SampleGame([1 1], [4 3], 12 / 12, 2)'
     assert repr(game) == expected
 

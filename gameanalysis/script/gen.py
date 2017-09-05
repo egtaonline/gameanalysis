@@ -5,6 +5,7 @@ import sys
 
 from gameanalysis import gameio
 from gameanalysis import gamegen
+from gameanalysis import rsgame
 
 
 class ZeroSum(object):
@@ -23,7 +24,10 @@ class ZeroSum(object):
 
     @staticmethod
     def create(args):
-        game = gamegen.two_player_zero_sum_game(args.num_strats)
+        # TODO We don't need to do this copy once we have serialization that
+        # handles arbitrary game substitutes
+        game = rsgame.game_copy(
+            gamegen.two_player_zero_sum_game(args.num_strats))
         serial = gamegen.serializer(game)
         return game, serial
 

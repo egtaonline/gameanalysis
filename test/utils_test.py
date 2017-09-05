@@ -45,23 +45,6 @@ def test_one_line():
         "one_line didn't truncate as expected"
 
 
-def test_ordered_permutations():
-    assert list(utils.ordered_permutations([])) == []
-    assert list(utils.ordered_permutations([None])) == [(None,)]
-
-    result = list(utils.ordered_permutations([1, 2, 1, 2]))
-    expected = [
-        (1, 1, 2, 2),
-        (1, 2, 1, 2),
-        (1, 2, 2, 1),
-        (2, 1, 1, 2),
-        (2, 1, 2, 1),
-        (2, 2, 1, 1),
-    ]
-    assert result == expected, \
-        "ordered_permutations didn't produce the correct result"
-
-
 def test_acomb():
     actual = utils.acomb(5, 0)
     assert actual.shape == (1, 5)

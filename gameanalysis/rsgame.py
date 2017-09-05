@@ -550,6 +550,7 @@ class BaseGame(StratArray):
         """The total number of profiles in the game
 
         Not just the ones with data."""
+        # FIXME Test for overflow here basegame([20, 20], [20, 20])
         return self.num_all_role_profiles.prod()
 
     @property
@@ -771,6 +772,7 @@ class BaseGame(StratArray):
 
     def __eq__(self, other):
         return (type(self) is type(other) and
+                self.num_roles == other.num_roles and
                 np.all(self.num_role_strats == other.num_role_strats) and
                 np.all(self.num_role_players == other.num_role_players))
 
@@ -901,10 +903,11 @@ class Game(BaseGame):
         if not self.num_profiles:
             pays = np.empty(self.num_strats)
             pays.fill(np.nan)
-            return pays
         else:
-            return np.fmin.reduce(np.where(
+            pays = np.fmin.reduce(np.where(
                 self.profiles > 0, self.payoffs, np.nan), 0)
+        pays.setflags(write=False)
+        return pays
 
     @utils.memoize
     def max_strat_payoffs(self):
@@ -912,10 +915,11 @@ class Game(BaseGame):
         if not self.num_profiles:
             pays = np.empty(self.num_strats)
             pays.fill(np.nan)
-            return pays
         else:
-            return np.fmax.reduce(np.where(
+            pays = np.fmax.reduce(np.where(
                 self.profiles > 0, self.payoffs, np.nan), 0)
+        pays.setflags(write=False)
+        return pays
 
     def get_payoffs(self, profile):
         """Returns an array of profile payoffs
@@ -1044,6 +1048,7 @@ class Game(BaseGame):
 
     def __eq__(self, other):
         return (type(self) is type(other) and
+                self.num_roles == other.num_roles and
                 np.all(self.num_role_strats == other.num_role_strats) and
                 np.all(self.num_role_players == other.num_role_players) and
                 # Identical profiles
@@ -1108,37 +1113,15 @@ def game_copy(copy_game, profiles=None, payoffs=None, verify=True):
     """
     assert (profiles is None) == (payoffs is None), \
         "profiles and payoffs must be specified together"
-    if isinstance(copy_game, Game) and profiles is None:
-        profiles = copy_game.profiles
-        payoffs = copy_game.payoffs
-        verify = False
+    if profiles is None:
+        try:  # Has game data
+            profiles = copy_game.profiles
+            payoffs = copy_game.payoffs
+            verify = False
+        except AttributeError:
+            profiles = payoffs = None
     return game(copy_game.num_role_players, copy_game.num_role_strats,
                 profiles, payoffs, verify)
-
-
-def game_matrix(matrix):
-    """Create a game from a dense matrix
-
-    Parameters
-    ----------
-    matrix : ndarray-like
-        The matrix of payoffs for an asymmetric game. The last axis is the
-        payoffs for each player, the first axes are the strategies for each
-        player. matrix.shape[:-1] must correspond to the number of strategies
-        for each player. matrix.ndim - 1 must equal matrix.shape[-1]. This must
-        be specified by itself.
-    """
-    matrix = np.asarray(matrix, float)
-    assert matrix.shape[-1] == matrix.ndim - 1, \
-        "matrix shape is inconsistent with a matrix game {}".format(
-            matrix.shape)
-    num_role_players = np.ones(matrix.shape[-1], int)
-    num_role_strats = np.asarray(matrix.shape[:-1], int)
-    profiles = utils.acartesian2(*[np.eye(s, dtype=int)
-                                   for s in num_role_strats])
-    payoffs = np.zeros(profiles.shape, float)
-    payoffs[profiles > 0] = matrix.ravel()
-    return Game(num_role_players, num_role_strats, profiles, payoffs, False)
 
 
 class SampleGame(Game):
@@ -1253,7 +1236,7 @@ class SampleGame(Game):
                                  else num_resamples)
             dim1 = obs.shape[0] if independent_profile else 1
             sample = rand.multinomial(num_obs_resamples,
-                                      [1 / num_samples] * num_samples,
+                                      np.ones(num_samples) / num_samples,
                                       (dim1, dim2))
             if independent_role and not independent_strategy:
                 sample = sample.repeat(self.num_role_strats, 1)
@@ -1302,6 +1285,7 @@ class SampleGame(Game):
     def __eq__(self, other):
         return (
             type(self) is type(other) and
+            self.num_roles == other.num_roles and
             np.all(self.num_role_strats == other.num_role_strats) and
             np.all(self.num_role_players == other.num_role_players) and
             # Identical profiles
@@ -1392,49 +1376,19 @@ def samplegame_copy(copy_game, profiles=None, sample_payoffs=None,
     """
     assert (profiles is None) == (sample_payoffs is None), \
         "profiles and payoffs must be specified together"
-    if isinstance(copy_game, SampleGame) and profiles is None:
-        profiles = copy_game.profiles
-        sample_payoffs = copy_game.sample_payoffs
-        verify = False
-    elif isinstance(copy_game, Game) and profiles is None:
-        profiles = copy_game.profiles
-        sample_payoffs = [copy_game.payoffs[..., None]]
-        verify = False
+    if profiles is None:
+        try:  # Has sample game data
+            sample_payoffs = copy_game.sample_payoffs
+            profiles = copy_game.profiles
+            verify = False
+        except AttributeError:
+            profiles = sample_payoffs = None
+    if profiles is None:
+        try:  # Has game data
+            sample_payoffs = [copy_game.payoffs[..., None]]
+            profiles = copy_game.profiles
+            verify = False
+        except AttributeError:
+            profiles = sample_payoffs = None
     return samplegame(copy_game.num_role_players, copy_game.num_role_strats,
                       profiles, sample_payoffs, verify)
-
-
-def samplegame_matrix(matrix):
-    """Create sample game from dense matrix
-
-    Parameters
-    ----------
-    matrix : ndarray-like
-        The matrix of payoffs for an asymmetric game. The last axis is the
-        number of observations for each payoff, the second to last axis is
-        payoffs for each player, the first axes are the strategies for each
-        player. matrix.shape[:-2] must correspond to the number of strategies
-        for each player. matrix.ndim - 2 must equal matrix.shape[-2]. This
-        should be specified alone if used.
-    """
-    matrix = np.asarray(matrix, float)
-    assert matrix.shape[-2] == matrix.ndim - 2, \
-        ("matrix shape is inconsistent with a matrix sample game {}"
-         .format(matrix.shape))
-    num_role_players = np.ones(matrix.shape[-2], int)
-    num_role_strats = np.array(matrix.shape[:-2], int)
-    num_samples = matrix.shape[-1]
-    profiles = utils.acartesian2(*[np.eye(s, dtype=int)
-                                   for s in num_role_strats])
-    payoffs = np.zeros(profiles.shape + (num_samples,))
-    # This next set of steps is a hacky way of avoiding duplicating
-    # mask by num_samples
-    pview = payoffs.view()
-    pview.shape = (-1, num_samples)
-    mask = profiles > 0
-    mask.shape = (-1, 1)
-    mask = np.broadcast_to(mask, (mask.size, num_samples))
-    np.place(pview, mask, matrix.flat)
-    sample_payoffs = (payoffs,)
-    return SampleGame(num_role_players, num_role_strats, profiles,
-                      sample_payoffs, False)

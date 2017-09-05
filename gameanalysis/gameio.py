@@ -9,6 +9,8 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# FIXME Make BaseSerializer for others to extend. That way mixtures etc share a
+# common base, but not the game reading
 class GameSerializer(rsgame.StratArray):
     """An object with utilities for serializing objects with names
 

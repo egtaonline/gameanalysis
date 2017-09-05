@@ -6,6 +6,7 @@ import numpy.random as rand
 import scipy.special as sps
 
 from gameanalysis import gameio
+from gameanalysis import matgame
 from gameanalysis import rsgame
 from gameanalysis import utils
 
@@ -46,16 +47,15 @@ def independent_game(num_role_strats, distribution=default_distribution):
 
     Parameters
     ----------
-    num_role_players : int > 0
-        The number of players.
     num_role_strats : int or [int], len == num_role_players
-        The number of strategies for each player. If an int, then every player
-        has the same number of strategies.
+        The number of strategies for each player. If an int, then it's a one
+        player game.
     distribution : (shape) -> ndarray (shape)
         The distribution to sample payoffs from. Must take a single shape
         argument and return an ndarray of iid values with that shape.
     """
-    return role_symmetric_game(1, num_role_strats, distribution)
+    return matgame.matgame(distribution(
+        tuple(num_role_strats) + (len(num_role_strats),)))
 
 
 def covariant_game(num_role_strats, mean_dist=lambda shape: np.zeros(shape),
@@ -97,7 +97,7 @@ def covariant_game(num_role_strats, mean_dist=lambda shape: np.zeros(shape),
     payoffs = rand.normal(size=shape)
     payoffs = (payoffs[..., None] * (np.sqrt(s)[..., None] * v)).sum(-2)
     payoffs += mean_dist(shape)
-    return rsgame.game_matrix(payoffs)
+    return matgame.matgame(payoffs)
 
 
 def two_player_zero_sum_game(num_role_strats,
@@ -106,7 +106,7 @@ def two_player_zero_sum_game(num_role_strats,
     # Generate player 1 payoffs
     num_role_strats = np.broadcast_to(num_role_strats, 2)
     p1_payoffs = distribution(num_role_strats)[..., None]
-    return rsgame.game_matrix(np.concatenate([p1_payoffs, -p1_payoffs], -1))
+    return matgame.matgame(np.concatenate([p1_payoffs, -p1_payoffs], -1))
 
 
 def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
@@ -181,62 +181,13 @@ def polymatrix_game(num_players, num_strats, matrix_game=independent_game,
     payoffs = np.zeros([num_strats] * num_players + [num_players])
     for players in itertools.combinations(range(num_players),
                                           players_per_matrix):
-        sub_payoffs = _compact_payoffs(matrix_game([num_strats] *
-                                                   players_per_matrix))
+        sub_payoffs = matgame.matgame_copy(matrix_game(
+            [num_strats] * players_per_matrix)).payoff_matrix
         new_shape = np.array([1] * num_players + [players_per_matrix])
         new_shape[list(players)] = num_strats
         payoffs[..., list(players)] += sub_payoffs.reshape(new_shape)
 
-    return rsgame.game_matrix(payoffs)
-
-
-def _compact_payoffs(game):
-    """Given a game returns a compact representation of the payoffs
-
-    In this case compact means that they're in one ndarray. This representation
-    is inefficient for almost everything but an independent game with full
-    data.
-
-    Parameters
-    ----------
-    game : Game
-        The game to generate a compact payoff matrix for
-
-    Returns
-    -------
-    payoffs : ndarray; shape (s1, s2, ..., sn, n)
-        payoffs[s1, s2, ..., sn, j] is the payoff to player j when player 1
-        plays s1, player 2 plays s2, etc. n is the total number of players.
-    """
-    payoffs = np.empty(list(game.num_role_strats) + [game.num_roles])
-    for profile, payoff in zip(game.profiles, game.payoffs):
-        # This generator expression takes a role symmetric profile with payoffs
-        # and generates tuples of strategy indexes and payoffs for every player
-        # when that player plays the given strategy.
-
-        # The first line takes results in the form:
-        # (((r1i1, r1p1), (r1i2, r1p2)), ((r1i1, r2p1),)) that is grouped by
-        # role, then by player in the role, then grouped strategy index and
-        # payoff, and turns it into a single tuple of indices and payoffs.
-        perms = (zip(*itertools.chain.from_iterable(sp))
-                 # This product is over roles
-                 for sp in itertools.product(*[
-                     # This computes all of the ordered permutations of
-                     # strategies in a given role, e.g. if two players play s1
-                     # and one plays s2, this iterates over all possible ways
-                     # that could be expressed in an asymmetric game.
-                     utils.ordered_permutations(itertools.chain.from_iterable(
-                         # This iterates over the strategy counts, and
-                         # duplicates strategy indices and payoffs based on the
-                         # strategy counts.
-                         itertools.repeat((i, v), c) for i, (c, v)
-                         in enumerate(zip(p, pay))))
-                     for p, pay in zip(
-                         np.split(profile, game.role_starts[1:]),
-                         np.split(payoff, game.role_starts[1:]))]))
-        for indices, utilities in perms:
-            payoffs[indices] = utilities
-    return payoffs
+    return matgame.matgame(payoffs)
 
 
 def rock_paper_scissors(win=1, loss=-1, return_serial=False):
