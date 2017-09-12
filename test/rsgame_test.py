@@ -6,9 +6,9 @@ import numpy.random as rand
 import pytest
 import scipy.special as sps
 
-from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import utils
+from gameanalysis.reduction import deviation_preserving as dpr
 from test import testutils
 
 
@@ -793,10 +793,9 @@ def test_random_profile_counts(role_players, role_strats):
     num_payoffs = np.sum(game.all_profiles() > 0)
     assert num_payoffs == game.num_all_payoffs
 
-    red = reduction.DeviationPreserving(
-        game.num_role_strats, game.num_role_players ** 2,
-        game.num_role_players)
-    num_dpr_profiles = red.expand_profiles(game.all_profiles()).shape[0]
+    full_game = rsgame.game(game.num_role_players ** 2, game.num_role_strats)
+    num_dpr_profiles = dpr.expand_profiles(
+        full_game, game.all_profiles()).shape[0]
     assert num_dpr_profiles == game.num_all_dpr_profiles
 
 
@@ -1212,6 +1211,40 @@ def test_game_properties():
         rsgame.game(1, 2, [[1, 0]], [[0, 1]])
     with pytest.raises(AssertionError):
         rsgame.game(1, 2, [[1, 0], [1, 0]], [[0, 0], [0, 0]])
+
+
+def test_game_verifications():
+    game = rsgame.game(2, 2)
+
+    profiles = [[3, -1]]
+    payoffs = [[4, 5]]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        rsgame.game_copy(game, profiles, payoffs, verify=False)
+    with pytest.raises(AssertionError):
+        rsgame.game_copy(game, profiles, payoffs)
+
+    profiles = [[3, 0]]
+    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    with pytest.raises(AssertionError):
+        rsgame.game_copy(game, profiles, payoffs)
+
+    profiles = [[2, 0]]
+    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    with pytest.raises(AssertionError):
+        rsgame.game_copy(game, profiles, payoffs)
+
+    profiles = [[1, 1]]
+    payoffs = [[np.nan, np.nan]]
+    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    with pytest.raises(AssertionError):
+        rsgame.game_copy(game, profiles, payoffs)
+
+    profiles = [[2, 0]]
+    payoffs = [[np.nan, 0]]
+    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    with pytest.raises(AssertionError):
+        rsgame.game_copy(game, profiles, payoffs)
 
 
 def test_dev_reps_on_large_games():

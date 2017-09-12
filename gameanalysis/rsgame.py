@@ -867,6 +867,9 @@ class Game(BaseGame):
             "not all profiles equaled player total"
         assert not verify or np.all(payoffs[profiles == 0] == 0), \
             "there were nonzero payoffs for strategies without players"
+        assert (not verify or
+                not np.all(np.isnan(payoffs) | (profiles == 0), 1).any()), \
+            "A profile had entirely nan payoffs"
 
         self.profiles = profiles
         self.profiles.setflags(write=False)
@@ -921,21 +924,26 @@ class Game(BaseGame):
         pays.setflags(write=False)
         return pays
 
-    def get_payoffs(self, profile):
+    def get_payoffs(self, profiles, axis=-1):
         """Returns an array of profile payoffs
 
         If profile is not in game, an array of nans is returned where profile
         has support."""
-        profile = np.asarray(profile, int)
-        assert self.is_profile(profile)
-        hashed = utils.hash_array(profile)
-        if hashed not in self._profile_map:
-            pay = np.zeros(self.num_strats)
-            pay[profile > 0] = np.nan
-            return pay
-        else:
-            return self._profile_map[hashed]
+        profiles = np.asarray(profiles, int)
+        assert self.is_profile(profiles, axis).all()
+        profiles = np.rollaxis(profiles, axis, profiles.ndim)
+        prof_view = profiles.reshape((-1, self.num_strats))
+        payoffs = np.empty(prof_view.shape, float)
+        for prof, pay in zip(prof_view, payoffs):
+            hashed = utils.hash_array(prof)
+            if hashed not in self._profile_map:
+                pay[prof == 0] = 0
+                pay[prof > 0] = np.nan
+            else:
+                np.copyto(pay, self._profile_map[hashed])
+        return np.rollaxis(payoffs.reshape(profiles.shape), -1, axis)
 
+    # FIXME Remove assume_complete from all apis
     def deviation_payoffs(self, mix, assume_complete=False, jacobian=False):
         """Computes the expected value of each pure strategy played against all
         opponents playing mix.

@@ -166,15 +166,6 @@ def subserializer(serial, subgame_mask):
     return gameio.gameserializer(serial.role_names, new_strats)
 
 
-def subreduction(reduction, subgame_mask):
-    """Return an identical reduction for a subgame"""
-    new_strats = np.add.reduceat(subgame_mask, reduction.role_starts)
-    # This is hacky
-    return reduction.__class__(new_strats,
-                               reduction.full_game.num_role_players,
-                               reduction.red_game.num_role_players)
-
-
 def translate(profiles, subgame_mask):
     """Translate a mixture or profile from a subgame to the full game"""
     assert profiles.shape[-1] == subgame_mask.sum()

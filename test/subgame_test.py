@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 from gameanalysis import gamegen
-from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import subgame
 from gameanalysis import utils
+from gameanalysis.reduction import deviation_preserving as dpr
 from test import testutils
 
 
@@ -86,11 +86,9 @@ def test_deviation_profile_count(players, strategies, _):
         count += r_devs.shape[0]
     assert count == subgame.num_deviation_profiles(game, mask)
 
-    red = reduction.DeviationPreserving(
-        game.num_role_strats, game.num_role_players ** 2,
-        game.num_role_players)
-    dpr_devs = red.expand_profiles(subgame.deviation_profiles(
-        game, mask)).shape[0]
+    full_game = rsgame.game(game.num_role_players ** 2, game.num_role_strats)
+    dpr_devs = dpr.expand_profiles(
+        full_game, subgame.deviation_profiles(game, mask)).shape[0]
     num = subgame.num_dpr_deviation_profiles(game, mask)
     assert dpr_devs == num, \
         "num_dpr_deviation_profiles didn't return correct number"
@@ -135,25 +133,6 @@ def test_maximal_subgames_partial_profiles():
         [False, True]]))
     assert np.setxor1d(utils.axis_to_elem(subs), expected).size == 0, \
         "Didn't produce both pure subgames"
-
-
-@pytest.mark.parametrize('_', range(20))
-@pytest.mark.parametrize('players,strategies', testutils.games)
-def test_subreduction(players, strategies, _):
-    players = np.asarray(players, int)
-    game = rsgame.basegame(players ** 2, strategies)
-    mask = game.random_subgames()
-    red = reduction.DeviationPreserving(
-        game.num_role_strats, game.num_role_players, players)
-
-    redgame = red.reduce_game(game)
-    redsubg1 = subgame.subgame(redgame, mask)
-
-    subred = subgame.subreduction(red, mask)
-    subg = subgame.subgame(game, mask)
-    redsubg2 = subred.reduce_game(subg)
-
-    assert redsubg1 == redsubg2
 
 
 @pytest.mark.parametrize('players,strategies', testutils.games)

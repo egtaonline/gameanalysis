@@ -153,6 +153,19 @@ def test_elem_axis():
     assert not np.setxor1d(counts, [2, 1]).size
 
 
+def test_empty_elem_axis():
+    x = np.empty((0, 2), float)
+    assert np.all(x.shape == utils.elem_to_axis(
+        utils.axis_to_elem(x), float).shape)
+    assert np.all(
+        x.astype(int).shape ==
+        utils.elem_to_axis(utils.axis_to_elem(x.astype(int)), int).shape)
+    assert utils.unique_axis(x).shape == (0, 2)
+    array, counts = utils.unique_axis(x.astype(int), return_counts=True)
+    assert array.shape == (0, 2)
+    assert counts.shape == (0,)
+
+
 def test_hash_array():
     arrayset = {utils.hash_array([3, 4, 5]), utils.hash_array([6, 7])}
 

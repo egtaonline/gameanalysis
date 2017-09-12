@@ -8,10 +8,12 @@ import numpy as np
 
 from gameanalysis import gamegen
 from gameanalysis import gameio
-from gameanalysis import reduction
 from gameanalysis import rsgame
 from gameanalysis import subgame
 from gameanalysis import utils
+from gameanalysis.reduction import deviation_preserving as dpr
+from gameanalysis.reduction import hierarchical as hr
+from gameanalysis.reduction import twins as tr
 
 # XXX To pass files to some scripts we use tempfile.NamedTemporaryFile and just
 # flush it. This will likely fail on windows.
@@ -242,36 +244,24 @@ def test_reduction_1():
     success, out, err = run('red', 'background:2,hft:1', input=GAME_STR)
     assert success, err
     game, serial = gameio.read_game(json.loads(out))
-    red = reduction.DeviationPreserving([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
-    assert game == red.reduce_game(GAME_DATA)
-
-
-def test_reduction_2():
-    success, out, err = run('red', '-m', '-s', '2,1', '-i', GAME)
-    assert success, err
-    game, serial = gameio.read_samplegame(json.loads(out))
-    red = reduction.DeviationPreserving([2, 7], [6, 1], [2, 1])
-    assert serial == SERIAL
-    assert game == red.reduce_game(rsgame.samplegame_copy(GAME_DATA))
+    assert game == dpr.reduce_game(GAME_DATA, [2, 1])
 
 
 def test_reduction_3():
     success, out, err = run('red', '-thr', '-s', '2,1', '-i', GAME)
     assert success, err
     game, serial = gameio.read_game(json.loads(out))
-    red = reduction.Hierarchical([2, 7], [6, 1], [2, 1])
     assert serial == SERIAL
-    assert game == red.reduce_game(GAME_DATA)
+    assert game == hr.reduce_game(GAME_DATA, [2, 1])
 
 
 def test_reduction_4():
     success, out, err = run('red', '-ttr', '-i', GAME)
     assert success, err
     game, serial = gameio.read_game(json.loads(out))
-    red = reduction.Twins([2, 7], [6, 1])
     assert serial == SERIAL
-    assert game == red.reduce_game(GAME_DATA)
+    assert game == tr.reduce_game(GAME_DATA)
 
 
 def test_reduction_5():

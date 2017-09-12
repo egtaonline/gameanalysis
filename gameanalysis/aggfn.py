@@ -73,6 +73,7 @@ class _AgfnGame(rsgame.BaseGame):
 
     @property
     def payoffs(self):
+        # FIXME Once get_payoffs supports multiple, then just make one call
         profiles = self.profiles
         payoffs = np.empty(profiles.shape, float)
         for prof, pay in zip(profiles, payoffs):
@@ -144,6 +145,7 @@ class RoleAgfnGame(_AgfnGame):
                 == tuple(self.num_role_players + 1)), \
             "function table improper shape"
 
+    # FIXME Support multiple profiles and axis
     def get_payoffs(self, profile):
         """Returns an array of profile payoffs."""
         profile = np.asarray(profile, int)
@@ -237,6 +239,7 @@ class SumAgfnGame(_AgfnGame):
         assert self._function_table.shape[1:] == (self.num_players + 1,), \
             "function table is improper shape"
 
+    # FIXME Support multiple profiles and axis
     def get_payoffs(self, profile):
         profile = np.asarray(profile, int)
         function_inputs = profile.dot(self._function_inputs)

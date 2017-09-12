@@ -9,9 +9,9 @@ from numpy import linalg
 from gameanalysis import dominance
 from gameanalysis import gameio
 from gameanalysis import nash
-from gameanalysis import reduction
 from gameanalysis import regret
 from gameanalysis import subgame
+from gameanalysis.reduction import deviation_preserving as dpr
 
 
 def add_parser(subparsers):
@@ -81,9 +81,7 @@ def main(args):
         for r in args.dpr.split(','):
             s, c = r.split(':')
             red_players[serial.role_index(s)] = int(c)
-        red = reduction.DeviationPreserving(game.num_role_strats,
-                                            game.num_role_players, red_players)
-        redgame = red.reduce_game(game, True)
+        redgame = dpr.reduce_game(game, red_players)
     else:
         redgame = game
     redserial = serial

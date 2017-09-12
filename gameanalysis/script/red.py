@@ -6,7 +6,10 @@ import sys
 import numpy as np
 
 from gameanalysis import gameio
-from gameanalysis import reduction
+from gameanalysis.reduction import deviation_preserving as dpr
+from gameanalysis.reduction import hierarchical as hr
+from gameanalysis.reduction import identity as idr
+from gameanalysis.reduction import twins as tr
 
 
 def parse_sorted(red, serial):
@@ -35,10 +38,10 @@ PLAYERS = {
 }
 
 REDUCTIONS = {
-    'dpr': reduction.DeviationPreserving,
-    'hr': reduction.Hierarchical,
-    'tr': lambda s, f, r: reduction.Twins(s, f),
-    'idr': lambda s, f, r: reduction.Identity(s, f),
+    'dpr': dpr,
+    'hr': hr,
+    'tr': tr,
+    'idr': idr,
 }
 
 
@@ -60,16 +63,9 @@ def add_parser(subparsers):
         hierarchical. `tr` - twins. `idr` - identity. (default:
         %(default)s)""")
     parser.add_argument(
-        '--sample-game', '-m', action='store_true', help="""If set, interprets
-        the game as a sample game instead of a normal game.""")
-    parser.add_argument(
         '--sorted-roles', '-s', action='store_true', help="""If set, reduction
         should be a comma separated list of reduced counts for the role names
         in sorted order.""")
-    parser.add_argument(
-        '--allow-incomplete', '-a', action='store_true', help="""If set,
-        incomplete profiles will be kept in the reduced game. Currently this is
-        only relevant to DPR.""")
     # TODO Want metavar to be '<role>:<count>[,<role>:<count>]...', but
     # argparse doesn't allow [] in metavars
     parser.add_argument(
@@ -80,15 +76,11 @@ def add_parser(subparsers):
 
 
 def main(args):
-    read = gameio.read_samplegame if args.sample_game else gameio.read_game
-    game, serial = read(json.load(args.input))
+    game, serial = gameio.read_game(json.load(args.input))
     reduced_players = (
         None if not args.reduction
         else PLAYERS[args.sorted_roles](args.reduction, serial))
 
-    reduced = REDUCTIONS[args.type](
-        game.num_role_strats, game.num_role_players,
-        reduced_players).reduce_game(game, args.allow_incomplete)
-
+    reduced = REDUCTIONS[args.type].reduce_game(game, reduced_players)
     json.dump(serial.to_game_json(reduced), args.output)
     args.output.write('\n')
