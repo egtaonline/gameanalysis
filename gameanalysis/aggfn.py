@@ -119,14 +119,20 @@ class _AgfnGame(rsgame.BaseGame):
             nfuncs=self.num_functions)
 
     def __eq__(self, other):
-        # FIXME Test for permutations in functions
+        selfp = np.lexsort(
+            self._function_table.reshape((self.num_functions, -1)).T)
+        otherp = np.lexsort(
+            other._function_table.reshape((other.num_functions, -1)).T)
         return (type(self) is type(other) and
                 np.all(self.num_role_strats == other.num_role_strats) and
                 np.all(self.num_role_players == other.num_role_players) and
-                np.all(self._function_inputs == other._function_inputs) and
-                np.allclose(self._action_weights, other._action_weights) and
                 self._function_table.shape == other._function_table.shape and
-                np.allclose(self._function_table, other._function_table))
+                np.all(self._function_inputs[:, selfp]
+                       == other._function_inputs[:, otherp]) and
+                np.allclose(self._action_weights[selfp],
+                            other._action_weights[otherp]) and
+                np.allclose(self._function_table[selfp],
+                            other._function_table[otherp]))
 
 
 class RoleAgfnGame(_AgfnGame):
@@ -341,7 +347,7 @@ def aggfn(num_role_players, num_role_strats, action_weights, function_inputs,
                            action_weights, function_inputs, function_table)
     else:
         return RoleAgfnGame(base.num_role_players, base.num_role_strats,
-                           action_weights, function_inputs, function_table)
+                            action_weights, function_inputs, function_table)
 
 
 # TODO Make action_weights, function_inputs, and function_table optional, where
