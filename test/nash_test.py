@@ -65,10 +65,10 @@ def test_pure_roshambo():
     game = gamegen.rock_paper_scissors()
     eqa = nash.pure_nash(game)
     assert eqa.size == 0, "found a pure equilibrium in roshambo"
-    eqa = nash.pure_nash(game, 1)
+    eqa = nash.pure_nash(game, epsilon=1)
     assert eqa.shape[0] == 3, \
         "didn't find low regret ties in roshambo"
-    eqa = nash.pure_nash(game, 2)
+    eqa = nash.pure_nash(game, epsilon=2)
     assert eqa.shape[0] == game.num_all_profiles, \
         "found profiles with more than 2 regret in roshambo"
 
@@ -126,6 +126,17 @@ def test_at_least_one():
     eqa = nash.mixed_nash(game, replicator={'max_iters': 0},
                           at_least_one=True)
     assert eqa.shape[0] == 1, "at_least_one didn't return anything"
+
+
+def test_min_reg_nash():
+    # Equilibrium of game is not at a starting point for equilibria finding
+    game = gamegen.sym_2p2s_known_eq(1 / math.sqrt(2))
+    # Don't converge
+    eqa = nash.mixed_nash(game, replicator={'max_iters': 0})
+    assert eqa.size == 0, "found an equilibrium normally"
+    eqa = nash.mixed_nash(game, replicator={'max_iters': 0},
+                          min_reg=True)
+    assert eqa.shape[0] == 1, "min_reg didn't return anything"
 
 
 @testutils.warnings_filter()
@@ -199,7 +210,7 @@ def test_mixed_nash_at_least_one(methods, strategies):  # pragma: no cover
 
 
 def test_empty_game():
-    game = rsgame.game(2, 3)
+    game = rsgame.emptygame(2, 3)
     with pytest.raises(ValueError):
         nash.min_regret_profile(game)
 

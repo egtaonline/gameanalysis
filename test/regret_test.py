@@ -128,7 +128,7 @@ def test_nonzero_mixed_welfare():
 # Test that for complete games, there are never any nan deviations.
 def test_nan_deviations(players, strategies):
     game = gamegen.role_symmetric_game(players, strategies)
-    for mix in game.random_mixtures(20, 0.05):
+    for mix in game.random_mixtures(20, alpha=0.05):
         mix = game.trim_mixture_support(mix)
         gains = regret.mixture_deviation_gains(game, mix)
         assert not np.isnan(gains).any(), \
@@ -160,12 +160,12 @@ def test_max_pure_profile():
     prof = regret.max_pure_social_welfare(game)[1]
     assert np.all(prof == [1, 1])
 
-    game = rsgame.game(2, 2)
+    game = rsgame.emptygame(2, 2)
     sw, prof = regret.max_pure_social_welfare(game)
     assert np.isnan(sw)
     assert prof is None
 
-    (sw,), (prof,) = regret.max_pure_social_welfare(game, True)
+    (sw,), (prof,) = regret.max_pure_social_welfare(game, by_role=True)
     assert np.isnan(sw)
     assert prof is None
 
@@ -182,7 +182,7 @@ def test_max_pure_profile_profile_game():
     welfare, profile = regret.max_pure_social_welfare(game)
     assert welfare == 4
     assert np.all(profile == [1, 1, 1, 1])
-    welfares, profiles = regret.max_pure_social_welfare(game, True)
+    welfares, profiles = regret.max_pure_social_welfare(game, by_role=True)
     assert np.allclose(welfares, [5, 10])
     expected = [[1, 1, 2, 0],
                 [2, 0, 2, 0]]

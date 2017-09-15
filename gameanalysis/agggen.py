@@ -70,13 +70,13 @@ def random_aggfn(num_role_players, num_role_strats, num_functions,
         Generate a role form AgfnGame. A role form game uses functions of the
         number of activations for each role, instead of just the total number
         of activations."""
-    base = rsgame.basegame(num_role_players, num_role_strats)
+    base = rsgame.emptygame(num_role_players, num_role_strats)
     weights = weight_dist((num_functions, base.num_strats))
     inputs = input_dist((base.num_strats, num_functions))
     shape = ((num_functions,) + tuple(base.num_role_players + 1)
              if by_role else (num_functions, base.num_players + 1))
     func_table = func_dist(shape)
-    return aggfn.aggfn_copy(base, weights, inputs, func_table)
+    return aggfn.aggfn_replace(base, weights, inputs, func_table)
 
 
 def congestion(num_players, num_facilities, num_required, degree=2,

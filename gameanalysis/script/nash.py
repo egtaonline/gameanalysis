@@ -82,7 +82,7 @@ def main(args):
     game, serial = gameio.read_game(json.load(args.input))
 
     if args.type == 'pure':
-        equilibria = nash.pure_nash(game, args.regret)
+        equilibria = nash.pure_nash(game, epsilon=args.regret)
         if args.one and not equilibria:
             equilibria = nash.min_regret_profile(game)[None]
 
@@ -92,11 +92,11 @@ def main(args):
             'converge_thresh': args.convergence
         }
         equilibria = nash.mixed_nash(
-            game, args.regret, args.distance,
+            game, regret_thresh=args.regret, dist_thresh=args.distance,
             random_restarts=args.random_mixtures, grid_points=args.grid_points,
             min_reg=args.min, at_least_one=args.one, processes=args.processes,
             replicator=rep_args, optimize={})
-        equilibria = game.trim_mixture_support(equilibria, args.support)
+        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
 
     elif args.type == 'min-reg-prof':
         equilibria = nash.min_regret_profile(game)[None]
@@ -104,16 +104,16 @@ def main(args):
     elif args.type == 'min-reg-grid':
         equilibria = nash.min_regret_grid_mixture(
             game, args.grid_points)[None]
-        equilibria = game.trim_mixture_support(equilibria, args.support)
+        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
 
     elif args.type == 'min-reg-rand':
         equilibria = nash.min_regret_rand_mixture(
             game, args.random_mixtures)[None]
-        equilibria = game.trim_mixture_support(equilibria, args.support)
+        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
 
     elif args.type == 'rand':
         equilibria = game.random_mixtures(args.random_mixtures)
-        equilibria = game.trim_mixture_support(equilibria, args.support)
+        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
 
     else:
         raise ValueError('Unknown command given: {0}'.format(args.type))  # pragma: no cover # noqa

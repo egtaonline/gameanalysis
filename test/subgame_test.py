@@ -10,7 +10,7 @@ from test import testutils
 
 
 def test_subgame():
-    game = rsgame.basegame([3, 4], [3, 2])
+    game = rsgame.emptygame([3, 4], [3, 2])
     subg = np.asarray([1, 0, 1, 0, 1], bool)
     devs = subgame.deviation_profiles(game, subg)
     assert devs.shape[0] == 7, \
@@ -40,10 +40,10 @@ def test_maximal_subgames(players, strategies):
         "found subgame wasn't the full one"
 
 
-@pytest.mark.parametrize('game_desc', testutils.games)
+@pytest.mark.parametrize('players,strategies', testutils.games)
 @pytest.mark.parametrize('prob', [0.9, 0.6, 0.4])
-def test_missing_data_maximal_subgames(game_desc, prob):
-    base = rsgame.basegame(*game_desc)
+def test_missing_data_maximal_subgames(players, strategies, prob):
+    base = rsgame.emptygame(players, strategies)
     game = gamegen.add_profiles(base, prob)
     subs = subgame.maximal_subgames(game)
 
@@ -69,7 +69,7 @@ def test_missing_data_maximal_subgames(game_desc, prob):
 @pytest.mark.parametrize('_', range(20))
 @pytest.mark.parametrize('players,strategies', testutils.games)
 def test_deviation_profile_count(players, strategies, _):
-    game = rsgame.basegame(players, strategies)
+    game = rsgame.emptygame(players, strategies)
     mask = game.random_subgames()
 
     devs = subgame.deviation_profiles(game, mask)
@@ -86,7 +86,8 @@ def test_deviation_profile_count(players, strategies, _):
         count += r_devs.shape[0]
     assert count == subgame.num_deviation_profiles(game, mask)
 
-    full_game = rsgame.game(game.num_role_players ** 2, game.num_role_strats)
+    full_game = rsgame.emptygame(
+        game.num_role_players ** 2, game.num_role_strats)
     dpr_devs = dpr.expand_profiles(
         full_game, subgame.deviation_profiles(game, mask)).shape[0]
     num = subgame.num_dpr_deviation_profiles(game, mask)
@@ -138,7 +139,7 @@ def test_maximal_subgames_partial_profiles():
 @pytest.mark.parametrize('players,strategies', testutils.games)
 def test_subgame_to_from_id(players, strategies):
     """Test that subgame function preserves completeness"""
-    game = rsgame.basegame(players, strategies)
+    game = rsgame.emptygame(players, strategies)
     subgs = game.all_subgames()
     subgs2 = subgame.from_id(game, subgame.to_id(game, subgs))
     assert np.all(subgs == subgs2)

@@ -32,12 +32,12 @@ def role_symmetric_game(num_role_players, num_role_strats,
     distribution : (shape) -> ndarray (shape)
         Payoff distribution.
     """
-    game = rsgame.basegame(num_role_players, num_role_strats)
+    game = rsgame.emptygame(num_role_players, num_role_strats)
     profiles = game.all_profiles()
     mask = profiles > 0
     payoffs = np.zeros(profiles.shape)
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.game_copy(game, profiles, payoffs)
+    return rsgame.game_replace(game, profiles, payoffs, verify=False)
 
 
 def independent_game(num_role_strats, distribution=default_distribution):
@@ -230,7 +230,7 @@ def travellers_dilemma(players=2, max_value=100):
     strategies."""
     assert players > 1, "players must be more than one"
     assert max_value > 2, "max value must be more than 2"
-    game = rsgame.basegame(players, max_value - 1)
+    game = rsgame.emptygame(players, max_value - 1)
     profiles = game.all_profiles()
     payoffs = np.zeros(profiles.shape)
     mins = np.argmax(profiles, -1)
@@ -241,7 +241,7 @@ def travellers_dilemma(players=2, max_value=100):
     lowest_pays = mins + 4
     lowest_pays[ties] -= 2
     payoffs[rows, mins] = lowest_pays
-    return rsgame.game_copy(game, profiles, payoffs, False)
+    return rsgame.game_replace(game, profiles, payoffs, verify=False)
 
 
 def normalize(game, new_min=0, new_max=1):
@@ -252,7 +252,7 @@ def normalize(game, new_min=0, new_max=1):
     offset = np.repeat(game.min_role_payoffs(), game.num_role_strats)
     payoffs = (game.payoffs - offset) / scale * (new_max - new_min) + new_min
     payoffs *= profiles > 0
-    return rsgame.game_copy(game, profiles, payoffs, False)
+    return rsgame.game_replace(game, profiles, payoffs, verify=False)
 
 
 def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
@@ -308,7 +308,7 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.game_copy(game, profiles, payoffs, False)
+    return rsgame.game_replace(game, profiles, payoffs, verify=False)
 
 
 def drop_profiles(game, prob, independent=True):
@@ -331,12 +331,13 @@ def drop_profiles(game, prob, independent=True):
             in zip(game.sample_payoffs,
                    np.split(selection, game.sample_starts[1:]))
             if np.any(mask)]
-        return rsgame.samplegame_copy(game, new_profiles, new_sample_payoffs,
-                                      False)
+        return rsgame.samplegame_replace(game, new_profiles,
+                                         new_sample_payoffs, verify=False)
     else:
         new_profiles = game.profiles[selection]
         new_payoffs = game.payoffs[selection]
-        return rsgame.game_copy(game, new_profiles, new_payoffs, False)
+        return rsgame.game_replace(game, new_profiles, new_payoffs,
+                                   verify=False)
 
 
 def drop_samples(game, prob):
@@ -370,7 +371,8 @@ def drop_samples(game, prob):
         profiles = np.empty((0, game.num_strats), dtype=int)
         sample_payoffs = []
 
-    return rsgame.samplegame_copy(game, profiles, sample_payoffs, False)
+    return rsgame.samplegame_replace(game, profiles, sample_payoffs,
+                                     verify=False)
 
 
 def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
@@ -427,7 +429,8 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
         new_profiles = np.concatenate(new_profiles)
     else:  # No data
         new_profiles = np.empty((0, game.num_strats), dtype=int)
-    return rsgame.samplegame_copy(game, new_profiles, sample_payoffs, False)
+    return rsgame.samplegame_replace(game, new_profiles, sample_payoffs,
+                                     verify=False)
 
 
 def width_gaussian(max_width, num_profiles, num_samples):
@@ -527,12 +530,13 @@ def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
     samples = noise(max_width, mask.sum(), num_samples)
     expand_mask = np.broadcast_to(mask[..., None], mask.shape + (num_samples,))
     spayoffs[expand_mask] += samples.flat
-    return rsgame.samplegame_copy(game, game.profiles, [spayoffs])
+    return rsgame.samplegame_replace(game, game.profiles, [spayoffs],
+                                     verify=False)
 
 
 def serializer(game):
     """Generate a GameSerializer from a game"""
-    role_names = ['all'] if game.is_symmetric(
-    ) else utils.prefix_strings('r', game.num_roles)
+    role_names = (['all'] if game.is_symmetric()
+                  else utils.prefix_strings('r', game.num_roles))
     strat_names = [utils.prefix_strings('s', s) for s in game.num_role_strats]
     return gameio.gameserializer(role_names, strat_names)

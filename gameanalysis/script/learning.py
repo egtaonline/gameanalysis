@@ -78,7 +78,7 @@ def main(args):
         nash.mixed_nash(lgame, regret_thresh=args.regret_thresh,
                         dist_thresh=args.dist_thresh, processes=args.processes,
                         at_least_one=args.one, **methods),
-        args.supp_thresh)
+        thresh=args.supp_thresh)
 
     equilibria = [(eqm, regret.mixture_regret(lgame, eqm))
                   for eqm in mixed_equilibria]
@@ -101,7 +101,7 @@ def main(args):
     if game.num_roles > 1:
         for role, welfare, profile in zip(
                 serial.role_names,
-                *regret.max_pure_social_welfare(game, True)):
+                *regret.max_pure_social_welfare(game, by_role=True)):
             args.output.write('Maximum "{}" welfare profile:\n'.format(
                 role))
             args.output.write(serial.to_prof_printstr(profile))

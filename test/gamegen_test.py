@@ -60,7 +60,7 @@ def test_role_symmetric_game(players, strategies):
     ([1, 2], [1, 2]),
 ] * 20)
 def test_add_profiles(players, strategies):
-    base = rsgame.basegame(players, strategies)
+    base = rsgame.emptygame(players, strategies)
     game = gamegen.add_profiles(base)
     assert game.is_complete(), "didn't generate a full game"
     assert np.all(players == game.num_role_players), \
@@ -78,7 +78,7 @@ def test_add_profiles(players, strategies):
 
 
 def test_add_profiles_large_game():
-    base = rsgame.basegame([100] * 2, 30)
+    base = rsgame.emptygame([100] * 2, 30)
     game = gamegen.add_profiles(base, 1e-55)
     assert game.num_profiles == 363
 
@@ -202,7 +202,7 @@ def test_add_noise(players, strategies, lower, upper):
 
 
 def test_empty_add_noise():
-    base_game = rsgame.game([3, 3], [4, 4])
+    base_game = rsgame.emptygame([3, 3], [4, 4])
     game = gamegen.add_noise(base_game, 1)
     assert game.is_empty()
 

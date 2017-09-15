@@ -45,7 +45,7 @@ def test_mean():
     assert np.all(boots >= min_val)
     assert np.all(boots <= max_val)
 
-    perc_boots = bootstrap.mean(means, 200, [2.5, 97.5])
+    perc_boots = bootstrap.mean(means, 200, percentiles=[2.5, 97.5])
     assert perc_boots.shape == (2,)
     assert np.all(perc_boots >= min_val)
     assert np.all(perc_boots <= max_val)
@@ -72,7 +72,7 @@ def test_sample_regret(players, strategies):
     assert np.all(boots >= 0)
 
     perc_boots = bootstrap.sample_regret(game, mix_payoffs, dev_payoffs, 200,
-                                         [2.5, 97.5])
+                                         percentiles=[2.5, 97.5])
     assert perc_boots.shape == (2,)
     assert np.all(perc_boots <= max_regret)
     assert np.all(perc_boots >= 0)
@@ -100,8 +100,8 @@ def test_mixture_regret(players, strategies):
     assert boots.shape == (num_mixes, num_boots)
     assert np.all(boots >= 0)
 
-    perc_boots = bootstrap.mixture_regret(game, mixes, num_boots, [2.5, 97.5],
-                                          processes=1)
+    perc_boots = bootstrap.mixture_regret(game, mixes, num_boots,
+                                          percentiles=[2.5, 97.5], processes=1)
     assert perc_boots.shape == (num_mixes, 2)
     assert np.all(perc_boots >= 0)
 

@@ -7,7 +7,7 @@ import numpy.random as rand
 from gameanalysis import regret
 
 
-def game_function(game, function, num_resamples, num_returned,
+def game_function(game, function, num_resamples, num_returned, *,
                   percentiles=None, processes=None):
     """Bootstrap the value of a function over a sample game
 
@@ -65,8 +65,8 @@ class _BootstrapPickleable(object):
         return self.function(self.game.resample())
 
 
-def profile_function(game, function, profiles, num_resamples, percentiles=None,
-                     processes=None):
+def profile_function(game, function, profiles, num_resamples, *,
+                     percentiles=None, processes=None):
     """Compute a function over profiles
 
     Parameters
@@ -99,7 +99,7 @@ def profile_function(game, function, profiles, num_resamples, percentiles=None,
         profiles = profiles[None]
     func = _ProfilePickleable(profiles, function)
     return game_function(game, func, num_resamples, profiles.shape[0],
-                         percentiles, processes)
+                         percentiles=percentiles, processes=processes)
 
 
 class _ProfilePickleable(object):
@@ -112,7 +112,7 @@ class _ProfilePickleable(object):
         return [self.function(game, prof) for prof in self.profiles]
 
 
-def mixture_regret(game, mixtures, num_resamples, percentiles=None,
+def mixture_regret(game, mixtures, num_resamples, *, percentiles=None,
                    processes=None):
     """Compute percentile bounds on mixture regret
 
@@ -138,10 +138,11 @@ def mixture_regret(game, mixtures, num_resamples, percentiles=None,
         An ndarray of the percentiles for bootstrap regret for each profile.
     """
     return profile_function(game, regret.mixture_regret, mixtures,
-                            num_resamples, percentiles, processes)
+                            num_resamples, percentiles=percentiles,
+                            processes=processes)
 
 
-def mixture_welfare(game, mixtures, num_resamples, percentiles=None,
+def mixture_welfare(game, mixtures, num_resamples, *, percentiles=None,
                     processes=None):
     """Compute percentile bounds on mixture welfare
 
@@ -167,10 +168,11 @@ def mixture_welfare(game, mixtures, num_resamples, percentiles=None,
         An ndarray of the percentiles for bootstrap welfare for each profile.
     """
     return profile_function(game, regret.mixed_social_welfare, mixtures,
-                            num_resamples, percentiles, processes)
+                            num_resamples, percentiles=percentiles,
+                            processes=processes)
 
 
-def mean(data, num_resamples, percentiles=None):
+def mean(data, num_resamples, *, percentiles=None):
     """Compute bootstrap bounds for the mean of a data set
 
     One particular use is compute bootstrap bounds on social welfare of a
@@ -198,7 +200,7 @@ def mean(data, num_resamples, percentiles=None):
         return np.percentile(result, percentiles)
 
 
-def sample_regret(game, mixture_payoffs, deviation_payoffs, num_resamples,
+def sample_regret(game, mixture_payoffs, deviation_payoffs, num_resamples, *,
                   percentiles=None):
     """Compute bootstrap bounds on the mixture regret with samples
 

@@ -62,7 +62,7 @@ def test_sum_aggfn():
                [0, 2, 1, 0, 0],
                [0, 3, 0, 6, 0],
                [0, 3, 0, 0, 4]]
-    copy = rsgame.game_copy(game, profiles, payoffs)
+    copy = rsgame.game_replace(game, profiles, payoffs)
     assert rsgame.game_copy(game) == copy
 
     functabp = [[9, 4, 1, 0],
@@ -140,7 +140,7 @@ def test_role_aggfn():
                [0, 6, 11, 0, 0],
                [0, 3, 0, 6, 0],
                [0, 3, 0, 0, 10]]
-    copy = rsgame.game_copy(game, profiles, payoffs)
+    copy = rsgame.game_replace(game, profiles, payoffs)
     assert rsgame.game_copy(game) == copy
 
     functabp = [[[9, 7], [4, 1], [1, 4]],
@@ -177,17 +177,22 @@ def verify_aggfn(game):
         (payoff_game.payoffs <= game.max_strat_payoffs() + 1e-6) |
         (payoff_game.profiles == 0))
 
+    # Test that get payoffs works for multiple dimensions
+    profiles = game.random_profiles(20).reshape((4, 5, -1))
+    payoffs = game.get_payoffs(profiles)
+    true_payoffs = payoff_game.get_payoffs(profiles)
+    assert np.allclose(payoffs, true_payoffs)
+
     # Check that we get the same deviations if we construct the full game
     # game deviation payoff jacobian is inaccurate for sparse mixtures, so we
     # can't use it as ground truth
     for mix in game.random_mixtures(20):
         dev = game.deviation_payoffs(mix)
-        tdev = payoff_game.deviation_payoffs(mix, assume_complete=True)
+        tdev = payoff_game.deviation_payoffs(mix)
         assert np.allclose(dev, tdev)
 
         dev, jac = game.deviation_payoffs(mix, jacobian=True)
-        tdev, tjac = payoff_game.deviation_payoffs(mix, assume_complete=True,
-                                                   jacobian=True)
+        tdev, tjac = payoff_game.deviation_payoffs(mix, jacobian=True)
         assert np.allclose(dev, tdev)
         assert np.allclose(jac, tjac)
 
@@ -249,7 +254,7 @@ def test_nash_finding(players, strategies, functions, by_role):
 
 def test_alternate_constructors():
     game = aggfn.aggfn(2, 2, [[1, 2]], [[True], [True]], [[0, 1, 2]])
-    game2 = aggfn.aggfn_copy(game, [[1, 2]], [[True], [True]], [[0, 1, 2]])
+    game2 = aggfn.aggfn_replace(game, [[1, 2]], [[True], [True]], [[0, 1, 2]])
     assert game == game2
 
 

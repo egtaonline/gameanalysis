@@ -14,7 +14,7 @@ from gameanalysis import regret
 _TINY = np.finfo(float).tiny
 
 
-def pure_nash(game, epsilon=0):
+def pure_nash(game, *, epsilon=0):
     """Returns an array of all pure nash profiles"""
     eqa = [prof[None] for prof in game.profiles
            if regret.pure_strategy_regret(game, prof) <= epsilon]
@@ -66,7 +66,7 @@ def min_regret_rand_mixture(game, mixtures):
     return mixes[np.nanargmin(regs)]
 
 
-def replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
+def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
                         slack=1e-3):
     """Replicator Dynamics
 
@@ -100,7 +100,7 @@ def replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
 
     for _ in range(max_iters):
         old_mix = mix.copy()
-        dev_pays = game.deviation_payoffs(mix, assume_complete=True)
+        dev_pays = game.deviation_payoffs(mix)
         np.minimum(minp, np.minimum.reduceat(dev_pays, game.role_starts), minp)
         np.maximum(maxp, np.maximum.reduceat(dev_pays, game.role_starts), maxp)
         resid = slack * (maxp - minp)
@@ -117,7 +117,7 @@ def replicator_dynamics(game, mix, max_iters=10000, converge_thresh=1e-8,
     return game.mixture_project(mix)
 
 
-def regret_minimize(game, mix, gtol=1e-8):
+def regret_minimize(game, mix, *, gtol=1e-8):
     """A pickleable object to find Nash equilibria
 
     This method uses constrained convex optimization to to attempt to solve a
@@ -151,7 +151,7 @@ def regret_minimize(game, mix, gtol=1e-8):
         # Because deviation payoffs uses log space, we max with 0 just for the
         # payoff calculation
         dev_pay, dev_jac = game.deviation_payoffs(
-            np.maximum(mixture, 0), jacobian=True, assume_complete=True)
+            np.maximum(mixture, 0), jacobian=True)
 
         # Normalize
         dev_pay = (dev_pay - offset) / scale
@@ -196,7 +196,7 @@ def regret_minimize(game, mix, gtol=1e-8):
     return result
 
 
-def scarfs_algorithm(game, mix, regret_thresh=1e-3, disc=8):
+def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
     """Uses fixed point method to find nash eqm
 
     This is guaranteed to find an equilibrium with regret below regret_thresh,
@@ -258,7 +258,7 @@ class _PickleableEqaFinding(object):
         return self.func(self.game, mix, **self.args)
 
 
-def mixed_nash(game, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
+def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
                random_restarts=0, processes=1, min_reg=False,
                at_least_one=False, **methods):
     """Finds role-symmetric mixed Nash equilibria

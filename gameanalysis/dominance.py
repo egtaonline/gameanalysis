@@ -24,6 +24,7 @@ def _gains(game):
          for prof in game.profiles])
 
 
+# TODO Remove when reduceat is fixed
 def _reduceat(ufunc, a, indices, axis=0, dtype=None, out=None):
     """Fix for the way reduceat handles empty slices"""
     if dtype is None:
@@ -31,7 +32,7 @@ def _reduceat(ufunc, a, indices, axis=0, dtype=None, out=None):
     if out is None:
         new_shape = list(a.shape)
         new_shape[axis] = indices.size
-        out = np.empty(new_shape, dtype)
+        out = np.empty(new_shape, a.dtype)
     out.fill(ufunc.identity)
     valid = np.diff(np.insert(indices, indices.size, a.shape[axis])) > 0
     index = [slice(None)] * out.ndim
@@ -91,7 +92,7 @@ def _never_best_response(gains, supports, num_strats, conditional):
     return np.bincount(inds, is_br, num_strats.sum()) == 0
 
 
-def weakly_dominated(game, conditional=True):
+def weakly_dominated(game, *, conditional=True):
     """Return a mask of the strategies that are weakly dominated
 
     If conditional, then missing data will be treated as dominating."""
@@ -99,7 +100,7 @@ def weakly_dominated(game, conditional=True):
                            game.num_role_strats, conditional)
 
 
-def strictly_dominated(game, conditional=True):
+def strictly_dominated(game, *, conditional=True):
     """Return a mask of the strategies that are strictly dominated
 
     If conditional, then missing data will be treated as dominating."""
@@ -107,7 +108,7 @@ def strictly_dominated(game, conditional=True):
                              game.num_role_strats, conditional)
 
 
-def never_best_response(game, conditional=True):
+def never_best_response(game, *, conditional=True):
     """Return a mask of the strategies that are never a best response
 
     If conditional, then missing data is treated as a best response. The
@@ -123,7 +124,7 @@ _CRITERIA = {
 }
 
 
-def iterated_elimination(game, criterion, conditional=True):
+def iterated_elimination(game, criterion, *, conditional=True):
     """Return a subgame mask resulting from iterated elimination of strategies
 
     Parameters

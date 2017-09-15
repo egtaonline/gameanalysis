@@ -110,7 +110,7 @@ def main(args):
             dist_thresh=args.dist_thresh, processes=args.processes,
             at_least_one=args.one, **methods)
         eqa = subgame.translate(subg.trim_mixture_support(
-            subeqa, supp_thresh=args.supp_thresh), submask)
+            subeqa, thresh=args.supp_thresh), submask)
         if eqa.size:
             for eqm in eqa:
                 if not any(linalg.norm(eqm - eq) < args.dist_thresh
@@ -190,7 +190,7 @@ def main(args):
         if game.num_roles > 1:
             for role, welfare, profile in zip(
                     serial.role_names,
-                    *regret.max_pure_social_welfare(game, True)):
+                    *regret.max_pure_social_welfare(game, by_role=True)):
                 args.output.write('Maximum "{}" welfare profile:\n'.format(
                     role))
                 args.output.write(serial.to_prof_printstr(profile))

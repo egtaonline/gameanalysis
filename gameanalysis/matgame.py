@@ -1,4 +1,5 @@
 """module for complete independent games"""
+import functools
 import itertools
 
 import numpy as np
@@ -8,7 +9,7 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-class MatrixGame(rsgame.BaseGame):
+class MatrixGame(rsgame._CompleteGame):
     """Matrix game representation
 
     This represents a dense independent game as a matrix of payoffs.
@@ -36,7 +37,8 @@ class MatrixGame(rsgame.BaseGame):
         self._prof_offset[self.role_starts] = 1
         self._prof_offset.setflags(write=False)
 
-        self.num_profiles = self.num_all_profiles
+        self._payoff_view = self.payoff_matrix.view()
+        self._payoff_view.shape = (self.num_profiles, self.num_roles)
 
     @utils.memoize
     def min_strat_payoffs(self):
@@ -63,17 +65,19 @@ class MatrixGame(rsgame.BaseGame):
         return mpays
 
     @property
+    @functools.lru_cache(maxsize=1)
     def profiles(self):
         return self.all_profiles()
 
     @property
+    @functools.lru_cache(maxsize=1)
     def payoffs(self):
         profiles = self.profiles
-        payoffs = np.zeros(profiles.shape, float)
-        payoffs[profiles > 0] = self.payoff_matrix.ravel()
+        payoffs = np.zeros(profiles.shape)
+        payoffs[profiles > 0] = self.payoff_matrix.flat
         return payoffs
 
-    def compress_profile(self, profile, axis=-1):
+    def compress_profile(self, profile):
         """Compress profile in array of ints
 
         Normal profiles are an array of number of players playing a strategy.
@@ -81,16 +85,13 @@ class MatrixGame(rsgame.BaseGame):
         each roles counts into a single int representing the played strategy
         per role.
         """
-        assert self.is_profile(profile, axis).all()
+        assert self.is_profile(profile).all()
         profile = np.asarray(profile, int)
-        profile = np.rollaxis(profile, axis, profile.ndim)
-        comp_prof = np.add.reduceat(np.cumsum(self._prof_offset - profile, -1),
-                                    self.role_starts, -1)
-        return np.rollaxis(comp_prof, -1, axis)
+        return np.add.reduceat(np.cumsum(self._prof_offset - profile, -1),
+                               self.role_starts, -1)
 
-    def uncompress_profile(self, comp_prof, axis=-1):
+    def uncompress_profile(self, comp_prof):
         comp_prof = np.asarray(comp_prof, int)
-        comp_prof = np.rollaxis(comp_prof, axis, comp_prof.ndim)
         assert np.all(comp_prof >= 0) and np.all(
             comp_prof < self.num_role_strats)
         profile = np.zeros(comp_prof.shape[:-1] + (self.num_strats,), int)
@@ -98,19 +99,17 @@ class MatrixGame(rsgame.BaseGame):
                 self.role_starts + self.num_strats *
                 np.arange(int(np.prod(comp_prof.shape[:-1])))[:, None])
         profile.flat[inds] = 1
-        return np.rollaxis(profile, -1, axis)
+        return profile
 
     def get_payoffs(self, profile):
         """Returns an array of profile payoffs"""
-        # TODO It might be more efficient to just store it as a linear array
-        # and use profile_id
         profile = np.asarray(profile, int)
-        ind = tuple(self.compress_profile(profile))
-        payoff = np.zeros(self.num_strats)
-        payoff[profile > 0] = self.payoff_matrix[ind]
-        return payoff
+        ids = self.profile_id(profile)
+        payoffs = np.zeros(profile.shape[:-1] + (self.num_strats,))
+        payoffs[profile > 0] = self._payoff_view[ids].flat
+        return payoffs
 
-    def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False):
         """Computes the expected value of each pure strategy played against all
         opponents playing mix.
 
@@ -118,8 +117,6 @@ class MatrixGame(rsgame.BaseGame):
         ----------
         mix : ndarray
             The mix all other players are using
-        assume_complete : bool
-            Ignored
         jacobian : bool
             If true, the second returned argument will be the jacobian of the
             deviation payoffs with respect to the mixture. The first axis is
@@ -173,32 +170,12 @@ class MatrixGame(rsgame.BaseGame):
                          self.num_role_strats, self.num_role_strats, 1)
         return devpays, jac
 
-    def is_empty(self):
-        """Returns true if no profiles have data"""
-        return False
-
-    def is_complete(self):
-        """Returns true if every profile has data"""
-        return True
-
-    def is_constant_sum(self):
-        """Returns true if this game is constant sum"""
-        profile_sums = self.payoff_matrix.sum(-1)
-        return np.allclose(profile_sums, profile_sums[0])
-
-    def __contains__(self, profile):
-        """Returns true if all data for that profile exists"""
-        return True
-
     @utils.memoize
     def __hash__(self):
-        return hash((self.num_role_strats.tobytes(),
-                     self.num_role_players.tobytes()))
+        return super().__hash__()
 
     def __eq__(self, other):
-        return (type(self) is type(other) and
-                np.all(self.num_role_strats == other.num_role_strats) and
-                np.all(self.num_role_players == other.num_role_players) and
+        return (super().__eq__(other) and
                 # Identical payoffs
                 np.allclose(self.payoff_matrix, other.payoff_matrix))
 
@@ -233,25 +210,24 @@ def matgame_copy(copy_game):
     """
     assert copy_game.is_complete()
 
-    try:  # MatrixGame
+    if hasattr(copy_game, 'payoff_matrix'):
+        # Matrix Game
         return matgame(copy_game.payoff_matrix)
-    except AttributeError:
-        pass
-
-    num_role_strats = copy_game.num_role_strats.repeat(
-        copy_game.num_role_players)
-    shape = tuple(num_role_strats) + (num_role_strats.size,)
-    payoff_matrix = np.empty(shape, float)
-    for profile, payoffs in zip(copy_game.profiles, copy_game.payoffs):
-        # TODO Is is possible to do this with array logic?
-        pays = payoffs[profile > 0]
-        inds = itertools.product(*[
-            set(itertools.permutations(np.arange(s.size).repeat(s))) for s
-            in np.split(profile, copy_game.role_starts[1:])])
-        for nested in inds:
-            ind = tuple(itertools.chain.from_iterable(nested))
-            payoff_matrix[ind] = pays
-    return matgame(payoff_matrix)
+    else:
+        num_role_strats = copy_game.num_role_strats.repeat(
+            copy_game.num_role_players)
+        shape = tuple(num_role_strats) + (num_role_strats.size,)
+        payoff_matrix = np.empty(shape, float)
+        for profile, payoffs in zip(copy_game.profiles, copy_game.payoffs):
+            # TODO Is is possible to do this with array logic?
+            pays = payoffs[profile > 0]
+            inds = itertools.product(*[
+                set(itertools.permutations(np.arange(s.size).repeat(s))) for s
+                in np.split(profile, copy_game.role_starts[1:])])
+            for nested in inds:
+                ind = tuple(itertools.chain.from_iterable(nested))
+                payoff_matrix[ind] = pays
+        return matgame(payoff_matrix)
 
 
 class SampleMatrixGame(MatrixGame):
@@ -276,7 +252,12 @@ class SampleMatrixGame(MatrixGame):
         self.num_sample_profs = np.array([self.num_profiles], int)
         self.sample_starts = np.zeros(1, int)
 
+        self._spayoff_view = self.spayoff_matrix.view()
+        self._spayoff_view.shape = (self.num_profiles, self.num_roles,
+                                    self.num_samples[0])
+
     @property
+    @functools.lru_cache(maxsize=1)
     def sample_payoffs(self):
         profiles = self.profiles
         spayoffs = np.zeros(profiles.shape + (self.num_samples[0],))
@@ -290,7 +271,7 @@ class SampleMatrixGame(MatrixGame):
         np.place(pview, mask, self.spayoff_matrix.flat)
         return spayoffs,
 
-    def resample(self, num_resamples=None, independent_profile=False,
+    def resample(self, *, num_resamples=None, independent_profile=False,
                  independent_role=False, independent_strategy=False):
         """Overwrite payoff values with a bootstrap resample
 
@@ -326,10 +307,12 @@ class SampleMatrixGame(MatrixGame):
 
         This returns an array of shape (num_samples, num_role_strats)"""
         profile = np.asarray(profile, int)
-        ind = tuple(self.compress_profile(profile))
-        spayoff = np.zeros((self.num_strats, self.num_samples[0]))
-        spayoff[profile > 0] = self.spayoff_matrix[ind]
-        return spayoff.T
+        ids = self.profile_id(profile)
+        spayoffs = np.zeros(profile.shape[:-1] +
+                            (self.num_strats, self.num_samples[0]))
+        mask = np.broadcast_to((profile > 0)[..., None], spayoffs.shape)
+        spayoffs[mask] = self._spayoff_view[ids].flat
+        return spayoffs.swapaxes(-1, -2)
 
     def __hash__(self):
         return super().__hash__()
@@ -384,12 +367,11 @@ def samplematgame_copy(copy_game):
     """
     assert copy_game.is_complete()
 
-    try:  # SampleMatrixGame
+    if hasattr(copy_game, 'spayoff_matrix'):
+        # SampleMatGame
         return samplematgame(copy_game.spayoff_matrix)
-    except AttributeError:
-        pass
-
-    try:  # SampleGame
+    elif hasattr(copy_game, 'sample_payoffs'):
+        # SampleGame
         spayoffs = itertools.chain.from_iterable(copy_game.sample_payoffs)
         num_role_strats = copy_game.num_role_strats.repeat(
             copy_game.num_role_players)
@@ -406,7 +388,5 @@ def samplematgame_copy(copy_game):
                 # XXX This is truncated, but may it should be shuffled first?
                 spayoff_matrix[ind] = spayoff[profile > 0, :num_samples]
         return samplematgame(spayoff_matrix)
-    except AttributeError:
-        pass
-
-    return samplematgame(matgame_copy(copy_game).payoff_matrix[..., None])
+    else:
+        return samplematgame(matgame_copy(copy_game).payoff_matrix[..., None])

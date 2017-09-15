@@ -86,15 +86,9 @@ Running `make check` will search for some of these.
 To Do
 -----
 
-- Change conditional in `dominance`, which indicates how to treat missing data to an enum or at least a string
 - Some functions in `dominance` could probably be more efficient.
 - Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pandas?
   Or maybe numpy will implement these more efficiently in c.
 - Consider making payoffs or profiles sparse? Currently this makes operations much slower and even for large sparse observation payoffs only save ~2 memory
 - Use `--durations=N` to find slowest tests and fix them / speed them up.
-- Change copy methods to remove optional payoff data and instead make two functions, one that copies data and one that doesn't.
-  There's no reason these need to share a name.
 - Rework serializer so that arbitrary json can be loaded as a Game, Serializer pair that does the expected things.
-- Better refine game api. Maybe make StratArray a base class that extended by Game and Serializer.
-  Then have every other game and serializer extend those with a common api that is thought out.
-  This would include something like egame, which is just a game with no data.

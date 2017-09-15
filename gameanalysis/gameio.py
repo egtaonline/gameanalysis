@@ -10,7 +10,8 @@ from gameanalysis import utils
 
 
 # FIXME Make BaseSerializer for others to extend. That way mixtures etc share a
-# common base, but not the game reading
+# common base, but not the game reading This will require a refactor of the way
+# gameio works
 class GameSerializer(rsgame.StratArray):
     """An object with utilities for serializing objects with names
 
@@ -544,7 +545,7 @@ class GameSerializer(rsgame.StratArray):
     def from_basegame_json(self, game):
         """Read a BaseGame from json"""
         num_role_players = self._get_num_role_players(game)
-        return rsgame.basegame(num_role_players, self.num_role_strats)
+        return rsgame.emptygame(num_role_players, self.num_role_strats)
 
     def to_basegame_json(self, game):
         """Format basegame as json"""
@@ -586,17 +587,13 @@ class GameSerializer(rsgame.StratArray):
     def to_game_json(self, game):
         """Fromat a Game as json"""
         res = self.to_basegame_json(game)
-        if isinstance(game, rsgame.Game):
-            res['profiles'] = [self.to_profpay_json(pay, prof) for prof, pay
-                               in zip(game.profiles, game.payoffs)]
-        else:
-            res['profiles'] = []
+        res['profiles'] = [self.to_profpay_json(pay, prof) for prof, pay
+                           in zip(game.profiles, game.payoffs)]
         return res
 
     def to_game_printstr(self, game):
         """Format game as a printable string"""
-        num_profs = game.num_profiles if isinstance(
-            game, rsgame.Game) else 0
+        num_profs = game.num_profiles
         return '{}\npayoff data for {:d} out of {:d} profiles'.format(
             self.to_basegame_printstr(game)[4:], num_profs,
             game.num_all_profiles)
@@ -632,12 +629,9 @@ class GameSerializer(rsgame.StratArray):
         if isinstance(game, rsgame.SampleGame):
             profiles = game.profiles
             spayoffs = game.sample_payoffs
-        elif isinstance(game, rsgame.Game):
+        else:
             profiles = game.profiles
             spayoffs = [game.payoffs[..., None]]
-        else:
-            profiles = ()
-            spayoffs = ()
 
         res['profiles'] = [self.to_profsamplepay_json(pay.T, prof)
                            for prof, pay
@@ -650,10 +644,10 @@ class GameSerializer(rsgame.StratArray):
         str_ = 'Sample' + self.to_game_printstr(game)
         if isinstance(game, rsgame.SampleGame):
             samples = game.num_samples
-        elif isinstance(game, rsgame.Game):
-            samples = np.ones(1, int)
-        else:
+        elif game.is_empty():
             samples = np.empty(0, int)
+        else:
+            samples = np.ones(1, int)
         if samples.size == 0:
             return str_ + '\nno observations'
         elif samples.size == 1:

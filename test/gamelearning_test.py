@@ -14,9 +14,7 @@ from gameanalysis import rsgame
 @pytest.mark.parametrize('ev_method', ['full', 'sample', 'point', 'neighbor'])
 def test_basic_functions(reg_method, ev_method):
     """Test that all functions can be called without breaking"""
-    base = rsgame.basegame([4, 3], [3, 4])
-    game = gamegen.add_profiles(base, 200)
-
+    game = gamegen.add_profiles(rsgame.emptygame([4, 3], [3, 4]), 200)
     reggame = gamelearning.RegressionGame(game, reg_method, ev_method)
 
     assert np.all(reggame.min_strat_payoffs() == game.min_strat_payoffs())

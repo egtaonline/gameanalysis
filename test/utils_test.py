@@ -104,18 +104,18 @@ def test_simplex_project():
         "simplex project didn't return correct result"
 
 
-@pytest.mark.parametrize('array,axis', [
-    (rand.random(6), -1),
-    (rand.random((4, 5)), -1),
-    (rand.random((2, 3, 4)), -1),
-    (rand.random((3, 4, 5)), 1),
-    (rand.random((5, 4)), 0),
+@pytest.mark.parametrize('array', [
+    rand.random(6),
+    rand.random((4, 5)),
+    rand.random((2, 3, 4)),
+    rand.random((3, 4, 5)),
+    rand.random((5, 4)),
 ])
-def test_simplex_project_random(array, axis):
-    simp = utils.simplex_project(array, axis)
+def test_simplex_project_random(array):
+    simp = utils.simplex_project(array)
     assert simp.shape == array.shape
     assert np.all(simp >= 0)
-    assert np.allclose(simp.sum(axis), 1)
+    assert np.allclose(simp.sum(-1), 1)
 
 
 def test_multinomial_mode():

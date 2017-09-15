@@ -79,7 +79,8 @@ def main(args):
         devs = load_devs(game, serial, data)
         expect = np.add.reduceat(devs * mix, game.role_starts, 1)
         result = bootstrap.sample_regret(game, expect, devs,
-                                         args.num_bootstraps, args.percentiles)
+                                         args.num_bootstraps,
+                                         percentiles=args.percentiles)
         if args.mean:
             mdevs = devs.mean(0)
             mexpect = np.add.reduceat(
@@ -93,13 +94,14 @@ def main(args):
         surpluses = np.sum(
             devs * mix * game.num_role_players.repeat(game.num_role_strats), 1)
         result = bootstrap.mean(surpluses, args.num_bootstraps,
-                                args.percentiles)
+                                percentiles=args.percentiles)
         if args.mean:
             mean = surpluses.mean()
 
     else:
         data = np.asarray(data, float)
-        result = bootstrap.mean(data, args.num_bootstraps, args.percentiles)
+        result = bootstrap.mean(data, args.num_bootstraps,
+                                percentiles=args.percentiles)
         if args.mean:
             mean = data.mean()
 

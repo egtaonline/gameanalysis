@@ -222,12 +222,12 @@ def test_random_random_subgames(_, role_strats):
 def test_trim_mixture_support():
     sarr = rsgame.StratArray(np.array([3]))
     mix = np.array([0.7, 0.3, 0])
-    not_trimmed = sarr.trim_mixture_support(mix, 0.1)
+    not_trimmed = sarr.trim_mixture_support(mix, thresh=0.1)
     assert np.allclose(mix, not_trimmed)
-    trimmed = sarr.trim_mixture_support(mix, 0.4)
+    trimmed = sarr.trim_mixture_support(mix, thresh=0.4)
     assert np.allclose([1, 0, 0], trimmed)
 
-    trimmed = sarr.trim_mixture_support(mix[:, None], 0.4, 0)[:, 0]
+    trimmed = sarr.trim_mixture_support(mix[:, None], thresh=0.4, axis=0)[:, 0]
     assert np.allclose([1, 0, 0], trimmed)
 
 
@@ -305,9 +305,10 @@ def test_random_mixture_project(_, role_strats):
         assert sarr.is_mixture(new_mix), \
             "simplex project did not create a valid mixture"
 
-    mixes = rand.uniform(-1, 1, (10, sarr.num_strats, 10))
-    simps = sarr.mixture_project(mixes, 1)
-    assert sarr.is_mixture(simps, 1).all()
+    mixes = rand.uniform(-1, 1, (10, 12, sarr.num_strats))
+    simps = sarr.mixture_project(mixes)
+    assert simps.shape[:2] == (10, 12)
+    assert sarr.is_mixture(simps).all()
 
 
 def test_to_from_simplex():
@@ -331,11 +332,6 @@ def test_to_from_simplex():
     simplex = [1, 0, 0]
     assert np.allclose(simplex, sarr.to_simplex(mixture))
     assert np.allclose(mixture, sarr.from_simplex(simplex))
-
-    assert np.allclose(simplex, sarr.to_simplex(
-        [[x] for x in mixture], 0)[:, 0])
-    assert np.allclose(mixture, sarr.from_simplex(
-        [[x] for x in simplex], 0)[:, 0])
 
 
 @pytest.mark.parametrize('strats', [1, 2, 4])
@@ -372,11 +368,12 @@ def test_random_simplex_homotopy(_, role_strats):
     assert np.allclose(simps.sum(-1), 1)
     assert np.allclose(mixes, sarr.from_simplex(simps))
 
-    mixes = np.rollaxis(mixes, -1, 1)
-    simps = sarr.to_simplex(mixes, 1)
+    mixes = mixes.reshape((4, 25, -1))
+    simps = sarr.to_simplex(mixes)
+    assert simps.shape[:2] == (4, 25)
     assert np.all(simps >= 0)
-    assert np.allclose(simps.sum(1), 1)
-    assert np.allclose(mixes, sarr.from_simplex(simps, 1))
+    assert np.allclose(simps.sum(-1), 1)
+    assert np.allclose(mixes, sarr.from_simplex(simps))
 
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
@@ -397,11 +394,12 @@ def test_random_uniform_simplex_homotopy(_, role_strats):
     assert np.allclose(simps.sum(-1), 1)
     assert np.allclose(mixes, sarr.from_simplex(simps))
 
-    mixes = np.rollaxis(mixes, -1, 1)
-    simps = sarr.to_simplex(mixes, 1)
+    mixes = mixes.reshape((4, 25, -1))
+    simps = sarr.to_simplex(mixes)
+    assert simps.shape[:2] == (4, 25)
     assert np.all(simps >= 0)
-    assert np.allclose(simps.sum(1), 1)
-    assert np.allclose(mixes, sarr.from_simplex(simps, 1))
+    assert np.allclose(simps.sum(-1), 1)
+    assert np.allclose(mixes, sarr.from_simplex(simps))
 
 
 def test_uniform_mixture():
@@ -427,10 +425,10 @@ def test_random_mixtures(_, role_strats):
     rand_mixes = sarr.random_mixtures(100)
     assert sarr.is_mixture(rand_mixes).all()
 
-    rand_mixes = sarr.random_mixtures(100, 0.1)
+    rand_mixes = sarr.random_mixtures(100, alpha=0.1)
     assert sarr.is_mixture(rand_mixes).all()
 
-    rand_mixes = sarr.random_mixtures(100, 2)
+    rand_mixes = sarr.random_mixtures(100, alpha=2)
     assert sarr.is_mixture(rand_mixes).all()
 
 
@@ -467,10 +465,10 @@ def test_random_random_sparse_mixtures(_, role_strats):
     rand_mixes = sarr.random_sparse_mixtures(100)
     assert sarr.is_mixture(rand_mixes).all()
 
-    rand_mixes = sarr.random_sparse_mixtures(100, 0.1)
+    rand_mixes = sarr.random_sparse_mixtures(100, alpha=0.1)
     assert sarr.is_mixture(rand_mixes).all()
 
-    rand_mixes = sarr.random_mixtures(100, 2)
+    rand_mixes = sarr.random_mixtures(100, alpha=2)
     assert sarr.is_mixture(rand_mixes).all()
 
 
@@ -671,118 +669,101 @@ def test_random_fixed_mixtures(_, role_strats):
 # --------
 
 
-def test_basegame_properties():
-    game = rsgame.basegame(1, 1)
+def test_emptygame_properties():
+    game = rsgame.emptygame(1, 1)
     assert np.all(game.num_role_players == [1])
     assert game.num_players == 1
     assert game.zero_prob.shape == (1,)
 
-    game = rsgame.basegame(3, 1)
+    game = rsgame.emptygame(3, 1)
     assert np.all(game.num_role_players == [3])
     assert game.num_players == 3
     assert game.zero_prob.shape == (1,)
 
-    game = rsgame.basegame([1, 3], 1)
+    game = rsgame.emptygame([1, 3], 1)
     assert np.all(game.num_role_players == [1, 3])
     assert game.num_players == 4
     assert game.zero_prob.shape == (2,)
 
-    game = rsgame.basegame([3, 2, 1], 1)
+    game = rsgame.emptygame([3, 2, 1], 1)
     assert np.all(game.num_role_players == [3, 2, 1])
     assert game.num_players == 6
     assert game.zero_prob.shape == (3,)
 
 
-def test_basegame_min_payoffs():
-    with pytest.raises(NotImplementedError):
-        rsgame.basegame(1, 1).min_strat_payoffs()
-    with pytest.raises(NotImplementedError):
-        rsgame.basegame(1, 1).min_role_payoffs()
-
-
-def test_basegame_max_payoffs():
-    with pytest.raises(NotImplementedError):
-        rsgame.basegame(1, 1).max_strat_payoffs()
-    with pytest.raises(NotImplementedError):
-        rsgame.basegame(1, 1).max_role_payoffs()
-
-
-def test_basegame_deviation_payoffs():
-    base = rsgame.basegame(1, 1)
-    mix = base.uniform_mixture()
-    with pytest.raises(NotImplementedError):
-        base.deviation_payoffs(mix)
-
-
 def test_num_all_profiles():
-    game = rsgame.basegame(1, 1)
+    game = rsgame.emptygame(1, 1)
     assert np.all(game.num_all_role_profiles == [1])
     assert game.num_all_profiles == 1
 
-    game = rsgame.basegame(3, 2)
+    game = rsgame.emptygame(3, 2)
     assert np.all(game.num_all_role_profiles == [4])
     assert game.num_all_profiles == 4
 
-    game = rsgame.basegame([1, 3], 2)
+    game = rsgame.emptygame([1, 3], 2)
     assert np.all(game.num_all_role_profiles == [2, 4])
     assert game.num_all_profiles == 8
 
-    game = rsgame.basegame(1, [3, 1])
+    game = rsgame.emptygame(1, [3, 1])
     assert np.all(game.num_all_role_profiles == [3, 1])
     assert game.num_all_profiles == 3
 
-    game = rsgame.basegame([3, 2, 1], 3)
+    game = rsgame.emptygame([3, 2, 1], 3)
     assert np.all(game.num_all_role_profiles == [10, 6, 3])
     assert game.num_all_profiles == 180
 
-    game = rsgame.basegame([3, 2, 1], [1, 2, 3])
+    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
     assert np.all(game.num_all_role_profiles == [1, 3, 3])
     assert game.num_all_profiles == 9
 
+    game = rsgame.emptygame([20, 20], 20)
+    assert np.all(game.num_all_role_profiles == [68923264410, 68923264410])
+    assert game.num_all_profiles == 4750416376930772648100
+
 
 def test_num_all_payoffs():
-    game = rsgame.basegame(1, 1)
+    game = rsgame.emptygame(1, 1)
     assert game.num_all_payoffs == 1
 
-    game = rsgame.basegame(3, 2)
+    game = rsgame.emptygame(3, 2)
     assert game.num_all_payoffs == 6
 
-    game = rsgame.basegame([1, 3], 2)
+    game = rsgame.emptygame([1, 3], 2)
     assert game.num_all_payoffs == 20
 
-    game = rsgame.basegame(1, [3, 1])
+    game = rsgame.emptygame(1, [3, 1])
     assert game.num_all_payoffs == 6
 
-    game = rsgame.basegame([3, 2, 1], 3)
+    game = rsgame.emptygame([3, 2, 1], 3)
     assert game.num_all_payoffs == 774
 
-    game = rsgame.basegame([3, 2, 1], [1, 2, 3])
+    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
     assert game.num_all_payoffs == 30
 
 
 def test_num_all_dpr_profiles():
-    game = rsgame.basegame(1, 1)
+    game = rsgame.emptygame(1, 1)
     assert game.num_all_dpr_profiles == 1
 
-    game = rsgame.basegame(3, 2)
+    game = rsgame.emptygame(3, 2)
     assert game.num_all_dpr_profiles == 6
 
-    game = rsgame.basegame([1, 3], 2)
+    game = rsgame.emptygame([1, 3], 2)
     assert game.num_all_dpr_profiles == 16
 
-    game = rsgame.basegame(1, [3, 1])
+    game = rsgame.emptygame(1, [3, 1])
     assert game.num_all_dpr_profiles == 3
 
-    game = rsgame.basegame([3, 2, 1], [1, 2, 3])
+    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
     assert game.num_all_dpr_profiles == 15
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_profile_counts(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
 
     num_role_profiles = np.fromiter(
-        (rsgame.basegame(p, s).all_profiles().shape[0] for p, s
+        (rsgame.emptygame(p, s).all_profiles().shape[0] for p, s
          in zip(game.num_role_players, game.num_role_strats)),
         int, game.num_roles)
     assert np.all(num_role_profiles == game.num_all_role_profiles)
@@ -793,41 +774,46 @@ def test_random_profile_counts(role_players, role_strats):
     num_payoffs = np.sum(game.all_profiles() > 0)
     assert num_payoffs == game.num_all_payoffs
 
-    full_game = rsgame.game(game.num_role_players ** 2, game.num_role_strats)
+    full_game = rsgame.emptygame(
+        game.num_role_players ** 2, game.num_role_strats)
     num_dpr_profiles = dpr.expand_profiles(
         full_game, game.all_profiles()).shape[0]
     assert num_dpr_profiles == game.num_all_dpr_profiles
 
 
 def test_profile_id():
-    game = rsgame.basegame(3, [2, 2])
-    profs = [[0, 2],
-             [3, 1],
-             [2, 3],
-             [1, 0]]
-    res = game.profile_id(profs, 0)
-    assert res.shape == (2,)
+    game = rsgame.emptygame(3, [2, 2])
+    profs = [[[0, 3, 2, 1],
+              [2, 1, 3, 0]],
+             [[2, 1, 2, 1],
+              [3, 0, 3, 0]],
+             [[1, 2, 1, 2],
+              [2, 1, 1, 2]]]
+    res = game.profile_id(profs)
+    assert res.shape == (3, 2)
     assert np.all((0 <= res) & (res < game.num_all_profiles))
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_profile_id(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
+    # Here we have an expectation that all_profiles always returns profiles in
+    # order of id
+    game = rsgame.emptygame(role_players, role_strats)
     expected = np.arange(game.num_all_profiles)
     actual = game.profile_id(game.all_profiles())
-    assert not np.setxor1d(expected, actual).size
+    assert np.all(expected == actual)
 
 
 def test_big_game_functions():
     """Test that everything works when game_size > int max"""
-    game = rsgame.basegame([100, 100], [30, 30])
+    game = rsgame.emptygame([100, 100], [30, 30])
     assert game.num_all_profiles > np.iinfo(int).max
     assert game.num_all_dpr_profiles > np.iinfo(int).max
     assert np.all(game.profile_id(game.random_profiles(1000)) >= 0)
 
 
 def test_is_profile():
-    game = rsgame.basegame([2, 3], [3, 2])
+    game = rsgame.emptygame([2, 3], [3, 2])
     assert game.is_profile([1, 0, 1, 2, 1])
     assert not game.is_profile([1, 0, 2, 2, 1])
     assert not game.is_profile([1, -1, 2, 2, 1])
@@ -852,12 +838,12 @@ def test_is_profile():
 
 
 def test_all_profiles():
-    game = rsgame.basegame(1, 1)
+    game = rsgame.emptygame(1, 1)
     expected = [[1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.basegame(3, 2)
+    game = rsgame.emptygame(3, 2)
     expected = [[3, 0],
                 [2, 1],
                 [1, 2],
@@ -865,7 +851,7 @@ def test_all_profiles():
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.basegame([1, 3], 2)
+    game = rsgame.emptygame([1, 3], 2)
     expected = [[1, 0, 3, 0],
                 [1, 0, 2, 1],
                 [1, 0, 1, 2],
@@ -877,14 +863,14 @@ def test_all_profiles():
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.basegame(1, [3, 1])
+    game = rsgame.emptygame(1, [3, 1])
     expected = [[1, 0, 0, 1],
                 [0, 1, 0, 1],
                 [0, 0, 1, 1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.basegame([3, 2, 1], [1, 2, 3])
+    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
     expected = [[3, 2, 0, 1, 0, 0],
                 [3, 2, 0, 0, 1, 0],
                 [3, 2, 0, 0, 0, 1],
@@ -899,18 +885,18 @@ def test_all_profiles():
 
 
 def test_pure_profiles():
-    game = rsgame.basegame(1, 1)
+    game = rsgame.emptygame(1, 1)
     expected = [[1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.basegame(3, 2)
+    game = rsgame.emptygame(3, 2)
     expected = [[3, 0],
                 [0, 3]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.basegame([1, 3], 2)
+    game = rsgame.emptygame([1, 3], 2)
     expected = [[1, 0, 3, 0],
                 [1, 0, 0, 3],
                 [0, 1, 3, 0],
@@ -918,14 +904,14 @@ def test_pure_profiles():
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.basegame(1, [3, 1])
+    game = rsgame.emptygame(1, [3, 1])
     expected = [[1, 0, 0, 1],
                 [0, 1, 0, 1],
                 [0, 0, 1, 1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.basegame([3, 2, 1], [1, 2, 3])
+    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
     expected = [[3, 2, 0, 1, 0, 0],
                 [3, 2, 0, 0, 1, 0],
                 [3, 2, 0, 0, 0, 1],
@@ -938,7 +924,7 @@ def test_pure_profiles():
 
 def test_nearby_profiles_1():
     """This is essentially just testing single deviations"""
-    game = rsgame.basegame(1, 1)
+    game = rsgame.emptygame(1, 1)
     prof = [1]
     expected = [1]
     actual = game.nearby_profiles(prof, 1)
@@ -946,7 +932,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.basegame(3, 2)
+    game = rsgame.emptygame(3, 2)
     prof = [3, 0]
     expected = [[3, 0],
                 [2, 1]]
@@ -963,7 +949,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.basegame([1, 3], 2)
+    game = rsgame.emptygame([1, 3], 2)
     prof = [1, 0, 0, 3]
     expected = [[0, 1, 0, 3],
                 [1, 0, 0, 3],
@@ -982,7 +968,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.basegame(1, [3, 1])
+    game = rsgame.emptygame(1, [3, 1])
     prof = [0, 0, 1, 1]
     expected = [[1, 0, 0, 1],
                 [0, 0, 1, 1],
@@ -992,7 +978,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.basegame([3, 2, 1], [1, 2, 3])
+    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
     prof = [3, 2, 0, 1, 0, 0]
     expected = [[3, 1, 1, 1, 0, 0],
                 [3, 2, 0, 1, 0, 0],
@@ -1017,7 +1003,7 @@ def test_nearby_profiles_1():
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 @pytest.mark.parametrize('num_devs', range(5))
 def test_random_nearby_profiles(role_players, role_strats, num_devs):
-    base = rsgame.game(role_players, role_strats)
+    base = rsgame.emptygame(role_players, role_strats)
     prof = base.random_profiles()
     nearby = base.nearby_profiles(prof, num_devs)
     diff = nearby - prof
@@ -1031,7 +1017,7 @@ def test_random_nearby_profiles(role_players, role_strats, num_devs):
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_fixed_profiles(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     all_profiles = game.all_profiles()
     assert game.num_all_profiles == all_profiles.shape[0]
     assert game.is_profile(all_profiles).all()
@@ -1041,25 +1027,25 @@ def test_random_fixed_profiles(role_players, role_strats):
 
 
 def test_random_profiles():
-    game = rsgame.basegame(3, 3)
+    game = rsgame.emptygame(3, 3)
     mixes = game.random_profiles(100, [0, 0.4, 0.6])
     assert np.all(mixes[:, 0] == 0)
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_random_profiles(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     assert game.is_profile(game.random_profiles(100)).all()
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_random_dev_profiles(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     prof = game.random_dev_profiles(game.uniform_mixture())
     for r, dprof in enumerate(prof):
         role_players = game.num_role_players.copy()
         role_players[r] -= 1
-        dgame = rsgame.basegame(role_players, game.num_role_strats)
+        dgame = rsgame.emptygame(role_players, game.num_role_strats)
         assert dgame.is_profile(dprof).all()
 
     profs = game.random_dev_profiles(game.uniform_mixture(), 100)
@@ -1067,13 +1053,13 @@ def test_random_random_dev_profiles(role_players, role_strats):
     for r, dprofs in enumerate(np.rollaxis(profs, 1, 0)):
         role_players = game.num_role_players.copy()
         role_players[r] -= 1
-        dgame = rsgame.basegame(role_players, game.num_role_strats)
+        dgame = rsgame.emptygame(role_players, game.num_role_strats)
         assert dgame.is_profile(dprofs).all()
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_random_deviator_profiles(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     profs = game.random_deviator_profiles(game.uniform_mixture(), 100)
     assert profs.shape == (100, game.num_strats, game.num_strats)
     prof_mins = np.minimum.reduceat(
@@ -1088,7 +1074,7 @@ def test_random_random_deviator_profiles(role_players, role_strats):
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_max_prob_prof(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     profiles = game.all_profiles()
     log_prob = (np.sum(sps.gammaln(game.num_role_players + 1)) -
                 np.sum(sps.gammaln(profiles + 1), 1))
@@ -1102,54 +1088,54 @@ def test_random_max_prob_prof(role_players, role_strats):
 
 
 def test_is_symmetric():
-    assert rsgame.basegame(3, 4).is_symmetric()
-    assert not rsgame.basegame([2, 2], 3).is_symmetric()
+    assert rsgame.emptygame(3, 4).is_symmetric()
+    assert not rsgame.emptygame([2, 2], 3).is_symmetric()
 
 
 def test_is_asymmetric():
-    assert rsgame.basegame(1, 4).is_asymmetric()
-    assert not rsgame.basegame([1, 2], 3).is_asymmetric()
+    assert rsgame.emptygame(1, 4).is_asymmetric()
+    assert not rsgame.emptygame([1, 2], 3).is_asymmetric()
 
 
-def test_basegame_hash_eq():
-    a = rsgame.basegame(4, 5)
-    b = rsgame.basegame([4], [5])
+def test_emptygame_hash_eq():
+    a = rsgame.emptygame(4, 5)
+    b = rsgame.emptygame([4], [5])
     assert a == b and hash(a) == hash(b)
 
-    a = rsgame.basegame([1, 2], [3, 2])
-    b = rsgame.basegame([1, 2], [3, 2])
+    a = rsgame.emptygame([1, 2], [3, 2])
+    b = rsgame.emptygame([1, 2], [3, 2])
     assert a == b and hash(a) == hash(b)
 
-    a = rsgame.basegame([2], [3, 2])
-    b = rsgame.basegame([2, 2], [3, 2])
+    a = rsgame.emptygame([2], [3, 2])
+    b = rsgame.emptygame([2, 2], [3, 2])
     assert a == b and hash(a) == hash(b)
 
-    a = rsgame.basegame([2, 3], [3])
-    b = rsgame.basegame([2, 3], [3, 3])
+    a = rsgame.emptygame([2, 3], [3])
+    b = rsgame.emptygame([2, 3], [3, 3])
     assert a == b and hash(a) == hash(b)
 
-    assert rsgame.basegame(3, 4) != rsgame.basegame(3, 5)
-    assert rsgame.basegame(3, 4) != rsgame.basegame(2, 4)
-    assert rsgame.basegame([1, 2], 4) != rsgame.basegame([2, 2], 4)
-    assert rsgame.basegame([1, 2], 4) != rsgame.basegame([2, 1], 4)
-    assert rsgame.basegame(2, [2, 3]) != rsgame.basegame(2, [2, 2])
-    assert rsgame.basegame(2, [2, 3]) != rsgame.basegame(2, [3, 2])
+    assert rsgame.emptygame(3, 4) != rsgame.emptygame(3, 5)
+    assert rsgame.emptygame(3, 4) != rsgame.emptygame(2, 4)
+    assert rsgame.emptygame([1, 2], 4) != rsgame.emptygame([2, 2], 4)
+    assert rsgame.emptygame([1, 2], 4) != rsgame.emptygame([2, 1], 4)
+    assert rsgame.emptygame(2, [2, 3]) != rsgame.emptygame(2, [2, 2])
+    assert rsgame.emptygame(2, [2, 3]) != rsgame.emptygame(2, [3, 2])
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
-def test_random_basegame_copy(role_players, role_strats):
-    game = rsgame.basegame(role_players, role_strats)
-    copy = rsgame.basegame_copy(game)
+def test_random_emptygame_copy(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    copy = rsgame.emptygame_copy(game)
     assert game == copy and hash(game) == hash(copy)
 
 
-def test_basegame_repr():
-    game = rsgame.basegame(3, 4)
-    expected = 'BaseGame([3], [4])'
+def test_emptygame_repr():
+    game = rsgame.emptygame(3, 4)
+    expected = 'Game([3], [4], 0 / 20)'
     assert repr(game) == expected
 
-    game = rsgame.basegame(3, [4, 5])
-    expected = 'BaseGame([3 3], [4 5])'
+    game = rsgame.emptygame(3, [4, 5])
+    expected = 'Game([3 3], [4 5], 0 / 700)'
     assert repr(game) == expected
 
 
@@ -1159,7 +1145,7 @@ def test_basegame_repr():
 
 
 def test_game_properties():
-    game = rsgame.game(1, 1)
+    game = rsgame.emptygame(1, 1)
     assert np.all(game.profiles == np.empty((0, 1), int))
     assert np.all(game.payoffs == np.empty((0, 1), float))
     assert game.num_profiles == 0
@@ -1181,19 +1167,19 @@ def test_game_properties():
     assert game.num_profiles == 2
     assert game.num_complete_profiles == 1
 
-    game = rsgame.game(1, [3, 1])
+    game = rsgame.emptygame(1, [3, 1])
     assert game.profiles.shape == (0, 4)
     assert game.payoffs.shape == (0, 4)
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
 
-    game = rsgame.game([3, 2, 1], 3)
+    game = rsgame.emptygame([3, 2, 1], 3)
     assert game.profiles.shape == (0, 9)
     assert game.payoffs.shape == (0, 9)
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
 
-    game = rsgame.game([3, 2, 1], [1, 2, 3])
+    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
     assert game.profiles.shape == (0, 6)
     assert game.payoffs.shape == (0, 6)
     assert game.num_profiles == 0
@@ -1214,37 +1200,37 @@ def test_game_properties():
 
 
 def test_game_verifications():
-    game = rsgame.game(2, 2)
+    game = rsgame.emptygame(2, 2)
 
     profiles = [[3, -1]]
     payoffs = [[4, 5]]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        rsgame.game_copy(game, profiles, payoffs, verify=False)
+        rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
-        rsgame.game_copy(game, profiles, payoffs)
+        rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[3, 0]]
-    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
-        rsgame.game_copy(game, profiles, payoffs)
+        rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[2, 0]]
-    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
-        rsgame.game_copy(game, profiles, payoffs)
+        rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[1, 1]]
     payoffs = [[np.nan, np.nan]]
-    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
-        rsgame.game_copy(game, profiles, payoffs)
+        rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[2, 0]]
     payoffs = [[np.nan, 0]]
-    rsgame.game_copy(game, profiles, payoffs, verify=False)
+    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
-        rsgame.game_copy(game, profiles, payoffs)
+        rsgame.game_replace(game, profiles, payoffs)
 
 
 def test_dev_reps_on_large_games():
@@ -1274,7 +1260,7 @@ def test_dev_reps_on_large_games():
 
 
 def test_min_max_payoffs():
-    game = rsgame.game([2, 2], 2)
+    game = rsgame.emptygame([2, 2], 2)
     mins = game.min_strat_payoffs()
     assert np.allclose([np.nan] * 4, mins, equal_nan=True)
     mins = game.min_role_payoffs()
@@ -1303,12 +1289,12 @@ def test_min_max_payoffs():
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_min_max_payoffs(role_players, role_strats):
-    base = rsgame.basegame(role_players, role_strats)
+    base = rsgame.emptygame(role_players, role_strats)
     profiles = base.all_profiles()
     payoffs = rand.random(profiles.shape)
     mask = profiles > 0
     payoffs *= mask
-    game = rsgame.game_copy(base, profiles, payoffs)
+    game = rsgame.game_replace(base, profiles, payoffs)
 
     assert (game.payoffs >= game.min_strat_payoffs())[mask].all()
     assert (game.payoffs >= game.min_role_payoffs().repeat(
@@ -1338,11 +1324,11 @@ def test_get_payoffs():
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_get_payoffs(role_players, role_strats):
-    base = rsgame.basegame(role_players, role_strats)
+    base = rsgame.emptygame(role_players, role_strats)
     profiles = base.all_profiles()
     payoffs = rand.random(profiles.shape)
     payoffs *= profiles > 0
-    game = rsgame.game_copy(base, profiles, payoffs)
+    game = rsgame.game_replace(base, profiles, payoffs)
 
     for prof, pay in zip(profiles, payoffs):
         assert np.allclose(pay, game.get_payoffs(prof))
@@ -1350,7 +1336,7 @@ def test_random_get_payoffs(role_players, role_strats):
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_empty_get_payoffs(role_players, role_strats):
-    game = rsgame.game(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
 
     for prof in game.all_profiles():
         supp = prof > 0
@@ -1360,7 +1346,7 @@ def test_random_empty_get_payoffs(role_players, role_strats):
 
 
 def test_deviation_mixture_support():
-    base = rsgame.basegame([2, 2], 3)
+    base = rsgame.emptygame([2, 2], 3)
     profiles1 = [
         [2, 0, 0, 2, 0, 0],
         [1, 1, 0, 2, 0, 0],
@@ -1381,9 +1367,10 @@ def test_deviation_mixture_support():
         [11, 12, 0, 13, 14, 0],
         [0, 15, 0, 16, 17, 0],
     ]
-    game1 = rsgame.game_copy(base, profiles1, payoffs1)
-    game2 = rsgame.game_copy(base, profiles2, payoffs2)
-    game3 = rsgame.game_copy(base, profiles1 + profiles2, payoffs1 + payoffs2)
+    game1 = rsgame.game_replace(base, profiles1, payoffs1)
+    game2 = rsgame.game_replace(base, profiles2, payoffs2)
+    game3 = rsgame.game_replace(
+        base, profiles1 + profiles2, payoffs1 + payoffs2)
     mix1 = [0.5, 0.5, 0, 0.3, 0.7, 0]
     mix2 = [0.5, 0.5, 0, 1, 0, 0]
 
@@ -1427,7 +1414,7 @@ def test_different_samples():
 
 
 def test_deviation_payoffs_jacobian():
-    game = rsgame.game(2, 3)
+    game = rsgame.emptygame(2, 3)
     eqm = np.ones(3) / 3
     dp, dpj = game.deviation_payoffs(eqm, jacobian=True)
     assert np.isnan(dp).all()
@@ -1498,9 +1485,6 @@ def test_nan_mask_for_dev_payoffs():
     devs = game.deviation_payoffs([1, 0, 0, 0])
     assert np.allclose(devs, [1, 2, np.nan, np.nan], equal_nan=True)
 
-    devs = game.deviation_payoffs([1, 0, 0, 0], assume_complete=True)
-    assert np.allclose(devs, [1, 2, np.nan, 0], equal_nan=True)
-
 
 def test_nan_payoffs_for_dev_payoffs():
     profiles = [[3, 0, 3, 0],
@@ -1550,7 +1534,7 @@ def test_deviation_nans_2(p, q):
 
 
 def test_expected_payoffs():
-    game = rsgame.game(2, [2, 2])
+    game = rsgame.emptygame(2, [2, 2])
     pays = game.get_expected_payoffs([0.2, 0.8, 0.4, 0.6])
     assert np.allclose([np.nan, np.nan], pays, equal_nan=True)
 
@@ -1634,36 +1618,34 @@ def test_expected_payoffs_jac():
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_is_empty(role_players, role_strats):
-    game = rsgame.game(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     assert game.is_empty()
 
-    game = rsgame.game_copy(rsgame.basegame(role_players, role_strats))
+    game = rsgame.game_replace(game, np.empty((0, game.num_strats), int),
+                               np.empty((0, game.num_strats)))
     assert game.is_empty()
 
-    game = rsgame.game_copy(game, np.empty((0, game.num_strats), int),
-                            np.empty((0, game.num_strats)))
-    assert game.is_empty()
-
-    game = rsgame.game_copy(game, game.random_profiles()[None],
-                            np.zeros((1, game.num_strats)))
+    game = rsgame.game_replace(game, game.random_profiles()[None],
+                               np.zeros((1, game.num_strats)))
     assert not game.is_empty()
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_is_complete(role_players, role_strats):
-    game = rsgame.game(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     assert not game.is_complete()
 
-    game = rsgame.game_copy(game, game.all_profiles(),
-                            np.zeros((game.num_all_profiles, game.num_strats)))
+    game = rsgame.game_replace(
+        game, game.all_profiles(),
+        np.zeros((game.num_all_profiles, game.num_strats)))
     assert game.is_complete()
 
-    game = rsgame.game_copy(game, game.profiles[1:], game.payoffs[1:])
+    game = rsgame.game_replace(game, game.profiles[1:], game.payoffs[1:])
     assert not game.is_complete()
 
 
 def test_is_constant_sum():
-    game = rsgame.game(2, 3)
+    game = rsgame.emptygame(2, 3)
     assert game.is_constant_sum()
 
     profiles = [
@@ -1683,7 +1665,7 @@ def test_is_constant_sum():
 
     payoffs = game.payoffs.copy()
     payoffs[game.profiles > 0] += 1
-    game = rsgame.game_copy(game, game.profiles, payoffs)
+    game = rsgame.game_replace(game, game.profiles, payoffs)
     assert game.is_constant_sum()
 
     profiles = [
@@ -1698,7 +1680,7 @@ def test_is_constant_sum():
         [0, 5, 6, 0],
         [0, 7, 0, 8],
     ]
-    game = rsgame.game_copy(game, profiles, payoffs)
+    game = rsgame.game_replace(game, profiles, payoffs)
     assert not game.is_constant_sum()
 
 
@@ -1715,19 +1697,20 @@ def test_contains():
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_contains(role_players, role_strats):
-    game = rsgame.game(role_players, role_strats)
+    game = rsgame.emptygame(role_players, role_strats)
     for prof in game.all_profiles():
         assert prof not in game
 
-    game = rsgame.game_copy(game, game.all_profiles(),
-                            np.zeros((game.num_all_profiles, game.num_strats)))
+    game = rsgame.game_replace(
+        game, game.all_profiles(),
+        np.zeros((game.num_all_profiles, game.num_strats)))
     for prof in game.all_profiles():
         assert prof in game
 
 
 def test_game_hash_eq():
-    a = rsgame.game(4, 5)
-    b = rsgame.game([4], [5])
+    a = rsgame.emptygame(4, 5)
+    b = rsgame.emptygame([4], [5])
     assert a == b and hash(a) == hash(b)
 
     a = rsgame.game(4, 2, [[3, 1], [2, 2]], [[1, 2], [3, 4]])
@@ -1737,31 +1720,31 @@ def test_game_hash_eq():
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_game_copy(role_players, role_strats):
-    base = rsgame.basegame(role_players, role_strats)
+    base = rsgame.emptygame(role_players, role_strats)
     profs = base.all_profiles()
     rand.shuffle(profs)
     num_profs = rand.randint(0, base.num_all_profiles + 1)
     profs = profs[:num_profs].copy()
     pays = rand.random(profs.shape)
     pays *= profs > 0
-    game = rsgame.game_copy(base, profs, pays)
+    game = rsgame.game_replace(base, profs, pays)
 
     copy = rsgame.game_copy(game)
     assert game == copy and hash(game) == hash(copy)
 
     perm = rand.permutation(num_profs)
-    copy = rsgame.game_copy(game, game.profiles[perm], game.payoffs[perm])
+    copy = rsgame.game_replace(game, game.profiles[perm], game.payoffs[perm])
     assert game == copy and hash(game) == hash(copy)
 
 
 def test_game_repr():
-    game = rsgame.game(3, 4)
+    game = rsgame.emptygame(3, 4)
     expected = 'Game([3], [4], 0 / 20)'
     assert repr(game) == expected
 
-    game = rsgame.basegame(3, [4, 5])
-    game = rsgame.game_copy(game, game.all_profiles()[:21],
-                            np.zeros((21, game.num_strats)))
+    game = rsgame.emptygame(3, [4, 5])
+    game = rsgame.game_replace(game, game.all_profiles()[:21],
+                               np.zeros((21, game.num_strats)))
     expected = 'Game([3 3], [4 5], 21 / 700)'
     assert repr(game) == expected
 
@@ -1772,46 +1755,46 @@ def test_game_repr():
 
 
 def test_samplegame_properties():
-    game = rsgame.samplegame(2, 3)
+    game = rsgame.samplegame_copy(rsgame.emptygame(2, 3))
     assert np.all([] == game.num_sample_profs)
     assert np.all([] == game.sample_starts)
     assert np.all([] == game.num_samples)
 
-    base = rsgame.basegame(1, [4, 3])
-    game = rsgame.samplegame_copy(
+    base = rsgame.emptygame(1, [4, 3])
+    game = rsgame.samplegame_replace(
         base, base.all_profiles(), [np.zeros((12, 7, 2))])
     assert np.all([12] == game.num_sample_profs)
     assert np.all([0] == game.sample_starts)
     assert np.all([2] == game.num_samples)
 
-    game = rsgame.basegame([3, 4], [4, 3])
+    game = rsgame.emptygame([3, 4], [4, 3])
     profiles = game.all_profiles()[:30]
     spays = [np.zeros((9, game.num_strats, 4)),
              np.zeros((11, game.num_strats, 1)),
              np.zeros((10, game.num_strats, 2))]
-    game = rsgame.samplegame_copy(game, profiles, spays)
+    game = rsgame.samplegame_replace(game, profiles, spays)
     assert np.all([9, 11, 10] == game.num_sample_profs)
     assert np.all([0, 9, 20] == game.sample_starts)
     assert np.all([4, 1, 2] == game.num_samples)
 
 
 def test_empty_samplegame_resample():
-    sgame = rsgame.samplegame([2, 3], [3, 2])
+    sgame = rsgame.samplegame_copy(rsgame.emptygame([2, 3], [3, 2]))
     assert rsgame.game_copy(sgame) == sgame.resample()
     assert rsgame.game_copy(sgame) == sgame.resample(1)
 
-    sgame = rsgame.samplegame_copy(rsgame.basegame([2, 3], [3, 2]))
+    sgame = rsgame.samplegame_copy(rsgame.emptygame([2, 3], [3, 2]))
     assert rsgame.game_copy(sgame) == sgame.resample()
     assert rsgame.game_copy(sgame) == sgame.resample(1)
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_samplegame_singlesample_resample(role_players, role_strats):
-    base = rsgame.basegame(role_players, role_strats)
+    base = rsgame.emptygame(role_players, role_strats)
     profs = base.all_profiles()
     pays = rand.random(profs.shape)
     pays *= profs > 0
-    sgame = rsgame.samplegame_copy(rsgame.game_copy(base, profs, pays))
+    sgame = rsgame.samplegame_copy(rsgame.game_replace(base, profs, pays))
     copy = rsgame.game_copy(sgame)
 
     game = sgame.resample()
@@ -1838,13 +1821,13 @@ def test_random_samplegame_singlesample_resample(role_players, role_strats):
 
 
 def test_samplegame_resample_changes():
-    base = rsgame.basegame(1, [3, 2])
+    base = rsgame.emptygame(1, [3, 2])
     profiles = base.all_profiles()
     payoffs = rand.random(profiles.shape + (1000,))
     view = payoffs.view()
     view.shape = (-1, 1000)
     view[profiles.ravel() == 0] = 0
-    sgame = rsgame.samplegame_copy(base, profiles, [payoffs])
+    sgame = rsgame.samplegame_replace(base, profiles, [payoffs])
     copy = rsgame.game_copy(sgame)
 
     # These aren't guaranteed to be true, but they're highly unlikely
@@ -1872,7 +1855,7 @@ def test_samplegame_resample_changes():
 
 
 def test_get_sample_payoffs():
-    base = rsgame.basegame(2, [1, 2])
+    base = rsgame.emptygame(2, [1, 2])
     profiles = [
         [2, 2, 0],
         [2, 0, 2],
@@ -1885,7 +1868,7 @@ def test_get_sample_payoffs():
             [[5, 6], [0, 0], [2, 3]],
         ],
     ]
-    game = rsgame.samplegame_copy(base, profiles, spayoffs)
+    game = rsgame.samplegame_replace(base, profiles, spayoffs)
     pay = game.get_sample_payoffs([2, 1, 1])
     assert np.allclose(np.empty((0, 3)), pay)
     pay = game.get_sample_payoffs([2, 2, 0])
@@ -1900,8 +1883,8 @@ def test_get_sample_payoffs():
 
 
 def test_samplegame_hash_eq():
-    a = rsgame.samplegame(4, 5)
-    b = rsgame.samplegame([4], [5])
+    a = rsgame.samplegame_copy(rsgame.emptygame(4, 5))
+    b = rsgame.samplegame_copy(rsgame.emptygame([4], [5]))
     assert a == b and hash(a) == hash(b)
 
     a = rsgame.samplegame(
@@ -1917,7 +1900,7 @@ def test_samplegame_hash_eq():
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_samplegame_copy(role_players, role_strats):
-    base = rsgame.basegame(role_players, role_strats)
+    base = rsgame.emptygame(role_players, role_strats)
     profs = base.all_profiles()
     rand.shuffle(profs)
     spays = []
@@ -1933,7 +1916,7 @@ def test_random_samplegame_copy(role_players, role_strats):
             pays[sprofs.ravel() == 0] = 0
             spays.append(pays.reshape((c, base.num_strats, n)))
 
-    game = rsgame.samplegame_copy(base, profs, spays)
+    game = rsgame.samplegame_replace(base, profs, spays)
 
     copy = rsgame.samplegame_copy(game)
     assert game == copy and hash(game) == hash(copy)
@@ -1949,13 +1932,13 @@ def test_random_samplegame_copy(role_players, role_strats):
 
     profiles = np.concatenate(
         sprofs) if sprofs else np.empty((0, game.num_strats))
-    copy = rsgame.samplegame_copy(game, profiles, spays)
+    copy = rsgame.samplegame_replace(game, profiles, spays)
     assert game == copy and hash(game) == hash(copy)
 
 
 # Test sample game with different number of samples
 def test_samplegame_different_samples():
-    base = rsgame.basegame(1, [1, 2])
+    base = rsgame.emptygame(1, [1, 2])
     profiles = [
         [1, 1, 0],
         [1, 0, 1],
@@ -1968,7 +1951,7 @@ def test_samplegame_different_samples():
             [[5, 6], [0, 0], [2, 3]],
         ],
     ]
-    sgame = rsgame.samplegame_copy(base, profiles, payoffs)
+    sgame = rsgame.samplegame_replace(base, profiles, payoffs)
     game = rsgame.game_copy(sgame)
 
     assert not np.setxor1d([1, 2], sgame.num_samples).size
@@ -1977,17 +1960,17 @@ def test_samplegame_different_samples():
 
 
 def test_samplegame_repr():
-    game = rsgame.samplegame(2, 3)
+    game = rsgame.samplegame_copy(rsgame.emptygame(2, 3))
     expected = 'SampleGame([2], [3], 0 / 6, 0)'
     assert repr(game) == expected
 
-    base = rsgame.basegame(1, [4, 3])
-    game = rsgame.samplegame_copy(
+    base = rsgame.emptygame(1, [4, 3])
+    game = rsgame.samplegame_replace(
         base, base.all_profiles(), [np.zeros((12, 7, 2))])
     expected = 'SampleGame([1 1], [4 3], 12 / 12, 2)'
     assert repr(game) == expected
 
-    base = rsgame.basegame(1, [1, 2])
+    base = rsgame.emptygame(1, [1, 2])
     profiles = [
         [1, 1, 0],
         [1, 0, 1],
@@ -2000,7 +1983,7 @@ def test_samplegame_repr():
             [[5, 6], [0, 0], [2, 3]],
         ],
     ]
-    game = rsgame.samplegame_copy(base, profiles, payoffs)
+    game = rsgame.samplegame_replace(base, profiles, payoffs)
     expected = 'SampleGame([1 1], [1 2], 2 / 2, 1 - 2)'
     assert repr(game) == expected
 
@@ -2012,6 +1995,17 @@ def test_samplegame_repr():
             [[5, 6, 7], [0, 0, 0], [2, 3, 4]],
         ],
     ]
-    game = rsgame.samplegame_copy(base, profiles, payoffs)
+    game = rsgame.samplegame_replace(base, profiles, payoffs)
     expected = 'SampleGame([1 1], [1 2], 2 / 2, 1 - 3)'
     assert repr(game) == expected
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_ramdom_complete_game(role_players, role_strats):
+    base = rsgame.emptygame(role_players, role_strats)
+    game = rsgame._CompleteGame(base.num_role_players, base.num_role_strats)
+    assert game.is_complete()
+    assert not game.is_empty()
+    assert game.num_profiles == game.num_all_profiles
+    assert game.num_complete_profiles == game.num_all_profiles
+    assert all(prof in game for prof in game.all_profiles())

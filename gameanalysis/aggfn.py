@@ -1,3 +1,4 @@
+import functools
 import inspect
 import itertools
 
@@ -9,7 +10,7 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-class _AgfnGame(rsgame.BaseGame):
+class _AgfnGame(rsgame._CompleteGame):
     """Action graph with function nodes game
 
     Action node utilities have additive structure. Function nodes are
@@ -46,7 +47,6 @@ class _AgfnGame(rsgame.BaseGame):
         self._function_table = function_table
         self._function_table.setflags(write=False)
         self.num_functions = self._function_table.shape[0]
-        self.num_profiles = self.num_all_profiles
 
         # Verify proper formatting of data
         assert (self._action_weights.shape
@@ -68,23 +68,14 @@ class _AgfnGame(rsgame.BaseGame):
         self._dinputs.setflags(write=False)
 
     @property
+    @functools.lru_cache(maxsize=1)
     def profiles(self):
         return self.all_profiles()
 
     @property
+    @functools.lru_cache(maxsize=1)
     def payoffs(self):
-        # FIXME Once get_payoffs supports multiple, then just make one call
-        profiles = self.profiles
-        payoffs = np.empty(profiles.shape, float)
-        for prof, pay in zip(profiles, payoffs):
-            np.copyto(pay, self.get_payoffs(prof))
-        return payoffs
-
-    def is_complete(self):
-        return True
-
-    def is_empty(self):
-        return False
+        return self.get_payoffs(self.profiles)
 
     @utils.memoize
     def min_strat_payoffs(self):
@@ -135,6 +126,10 @@ class _AgfnGame(rsgame.BaseGame):
                 np.allclose(self._function_table[selfp],
                             other._function_table[otherp]))
 
+    @utils.memoize
+    def __hash__(self):
+        return hash((super().__hash__(), self.num_functions))
+
 
 class RoleAgfnGame(_AgfnGame):
     def __init__(self, num_role_players, num_role_strats, action_weights,
@@ -144,20 +139,25 @@ class RoleAgfnGame(_AgfnGame):
         assert (self._function_table.shape[1:]
                 == tuple(self.num_role_players + 1)), \
             "function table improper shape"
+        self._basis = np.insert(
+            np.cumprod(self.num_role_players[:0:-1] + 1)[::-1],
+            self.num_roles - 1, 1)
+        self._func_offset = (np.arange(self.num_functions) *
+                             np.prod(self.num_role_players + 1))
 
-    # FIXME Support multiple profiles and axis
     def get_payoffs(self, profile):
         """Returns an array of profile payoffs."""
         profile = np.asarray(profile, int)
         function_inputs = np.add.reduceat(
-            profile[:, None] * self._function_inputs, self.role_starts)
-        inds = (np.arange(self.num_functions),) + tuple(function_inputs)
-        function_outputs = self._function_table[inds]
+            profile[..., None, :] * self._function_inputs.T,
+            self.role_starts, -1)
+        inds = function_inputs.dot(self._basis) + self._func_offset
+        function_outputs = self._function_table.ravel()[inds]
         payoffs = function_outputs.dot(self._action_weights)
         payoffs[profile == 0] = 0
         return payoffs
 
-    def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False):
         """Get the deviation payoffs"""
         mix = np.asarray(mix, float)
         role_node_probs = np.minimum(
@@ -230,6 +230,10 @@ class RoleAgfnGame(_AgfnGame):
                          self.num_role_strats, self.num_role_strats, 1)
         return devs, jac
 
+    @utils.memoize
+    def __hash__(self):
+        return super().__hash__()
+
 
 class SumAgfnGame(_AgfnGame):
     def __init__(self, num_role_players, num_role_strats, action_weights,
@@ -239,7 +243,6 @@ class SumAgfnGame(_AgfnGame):
         assert self._function_table.shape[1:] == (self.num_players + 1,), \
             "function table is improper shape"
 
-    # FIXME Support multiple profiles and axis
     def get_payoffs(self, profile):
         profile = np.asarray(profile, int)
         function_inputs = profile.dot(self._function_inputs)
@@ -249,7 +252,7 @@ class SumAgfnGame(_AgfnGame):
         payoffs[profile == 0] = 0
         return payoffs
 
-    def deviation_payoffs(self, mix, assume_complete=True, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False):
         mix = np.asarray(mix, float)
         role_node_probs = np.minimum(
             np.add.reduceat(mix[:, None] * self._function_inputs,
@@ -316,6 +319,10 @@ class SumAgfnGame(_AgfnGame):
                          self.num_role_strats, self.num_role_strats, 1)
         return devs, jac
 
+    @utils.memoize
+    def __hash__(self):
+        return super().__hash__()
+
 
 def aggfn(num_role_players, num_role_strats, action_weights, function_inputs,
           function_table):
@@ -340,25 +347,15 @@ def aggfn(num_role_players, num_role_strats, action_weights, function_inputs,
         each nodes inputs as distinct, and so each function maps from the
         number of inputs from each role.
     """
-    action_weights = np.asarray(action_weights, float)
-    function_inputs = np.asarray(function_inputs, bool)
-    function_table = np.asarray(function_table, float)
-    base = rsgame.basegame(num_role_players, num_role_strats)
-
-    if not base.is_symmetric() and function_table.ndim == 2:
-        return SumAgfnGame(base.num_role_players, base.num_role_strats,
-                           action_weights, function_inputs, function_table)
-    else:
-        return RoleAgfnGame(base.num_role_players, base.num_role_strats,
-                            action_weights, function_inputs, function_table)
+    return aggfn_replace(rsgame.emptygame(num_role_players, num_role_strats),
+                         action_weights, function_inputs, function_table)
 
 
-# TODO Make action_weights, function_inputs, and function_table optional, where
-# if copy_game has them then they'll be copied, and if they don't exist,
-# they'll be learned via some method... This "method" isn't necessarily
-# trivial, as there needs to be some sparsity constraint, otherwise we'll just
-# map to a different uncompressed representation
-def aggfn_copy(copy_game, action_weights, function_inputs, function_table):
+# TODO Make aggfn_copy method that will clone the aggfn game if it is one,
+# else, it will regress on profiles to compute one.
+
+
+def aggfn_replace(copy_game, action_weights, function_inputs, function_table):
     """Static constructor for AgfnGame
 
     Parameters
@@ -380,8 +377,17 @@ def aggfn_copy(copy_game, action_weights, function_inputs, function_table):
         each nodes inputs as distinct, and so each function maps from the
         number of inputs from each role.
     """
-    return aggfn(copy_game.num_role_players, copy_game.num_role_strats,
-                 action_weights, function_inputs, function_table)
+    action_weights = np.asarray(action_weights, float)
+    function_inputs = np.asarray(function_inputs, bool)
+    function_table = np.asarray(function_table, float)
+    if not copy_game.is_symmetric() and function_table.ndim == 2:
+        return SumAgfnGame(copy_game.num_role_players,
+                           copy_game.num_role_strats, action_weights,
+                           function_inputs, function_table)
+    else:
+        return RoleAgfnGame(copy_game.num_role_players,
+                            copy_game.num_role_strats, action_weights,
+                            function_inputs, function_table)
 
 
 def aggfn_funcs(num_role_players, num_role_strats, action_weights,
@@ -407,7 +413,7 @@ def aggfn_funcs(num_role_players, num_role_strats, action_weights,
         per role activations to a single value.
     """
     assert functions, "must have at least one function"
-    base = rsgame.basegame(num_role_players, num_role_strats)
+    base = rsgame.emptygame(num_role_players, num_role_strats)
     num_functions = len(functions)
     num_params = _num_args_safe(functions[0])
     assert all(num_params == _num_args_safe(f) for f in functions)
@@ -480,8 +486,8 @@ class AgfnGameSerializer(gameio.GameSerializer):
         for func, table in game['function_tables'].items():
             function_list[self.function_index(func)] = np.asarray(table, float)
 
-        return aggfn_copy(base, action_weights, function_inputs,
-                          np.asarray(function_list, float))
+        return aggfn_replace(base, action_weights, function_inputs,
+                             np.asarray(function_list, float))
 
     def to_agfngame_json(self, game):
         assert isinstance(game, _AgfnGame)

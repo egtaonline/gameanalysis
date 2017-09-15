@@ -26,23 +26,19 @@ def test_random_dpr(keep_prob, game_desc, _):
     """Simple test that dpr functions are consistent"""
     players, strategies, red_players = game_desc
     # Create game
-    game = gamegen.add_profiles(rsgame.game(players, strategies), keep_prob)
+    game = gamegen.add_profiles(
+        rsgame.emptygame(players, strategies), keep_prob)
 
     # Try to reduce game
     red_game = dpr.reduce_game(game, red_players)
-    assert (rsgame.basegame(red_players, strategies) ==
-            dpr.reduce_game(rsgame.basegame(players, strategies), red_players))
+    assert (rsgame.emptygame(red_players, strategies) ==
+            dpr.reduce_game(rsgame.emptygame(players, strategies),
+                            red_players))
 
     # Assert that reducing all profiles covers reduced game
     reduced_profiles = utils.axis_to_elem(red_game.profiles)
     reduced_full_profiles = utils.axis_to_elem(
         dpr.reduce_profiles(red_game, game.profiles))
-    assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
-        "reduced game contained profiles it shouldn't have"
-
-    # Test axis
-    reduced_full_profiles = utils.axis_to_elem(
-        dpr.reduce_profiles(red_game, game.profiles.T, 0))
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
@@ -52,12 +48,6 @@ def test_random_dpr(keep_prob, game_desc, _):
     complete_profs = ~np.isnan(red_game.payoffs).any(1)
     full_reduced_profiles = utils.axis_to_elem(
         dpr.expand_profiles(game, red_game.profiles[complete_profs]))
-    assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
-        "full game did not have data for all profiles required of reduced"
-
-    # Test axis
-    full_reduced_profiles = utils.axis_to_elem(
-        dpr.expand_profiles(game, red_game.profiles[complete_profs].T, 0))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
 
@@ -104,7 +94,8 @@ def test_empty_dpr_2():
 @pytest.mark.parametrize('_', range(10))
 def test_random_twins(players, strategies, keep_prob, _):
     # Create game and reduction
-    game = gamegen.add_profiles(rsgame.game(players, strategies), keep_prob)
+    game = gamegen.add_profiles(
+        rsgame.emptygame(players, strategies), keep_prob)
 
     # Try to reduce game
     red_game = tr.reduce_game(game)
@@ -113,12 +104,6 @@ def test_random_twins(players, strategies, keep_prob, _):
     reduced_full_profiles = utils.axis_to_elem(
         tr.reduce_profiles(red_game, game.profiles))
     reduced_profiles = utils.axis_to_elem(red_game.profiles)
-    assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
-        "reduced game contained profiles it shouldn't have"
-
-    # Test axis
-    reduced_full_profiles = utils.axis_to_elem(
-        tr.reduce_profiles(red_game, game.profiles.T, 0))
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
@@ -131,15 +116,9 @@ def test_random_twins(players, strategies, keep_prob, _):
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
 
-    # Test axis
-    full_reduced_profiles = utils.axis_to_elem(
-        tr.expand_profiles(game, red_game.profiles[complete_profs].T, 0))
-    assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
-        "full game did not have data for all profiles required of reduced"
-
 
 @pytest.mark.parametrize('keep_prob', [0.6, 0.9, 1])
-@pytest.mark.parametrize('game_desc', [
+@pytest.mark.parametrize('players,strategies,red_players', [
     ([1], [1], [1]),
     ([2], [1], [2]),
     ([4], [1], [2]),
@@ -149,12 +128,12 @@ def test_random_twins(players, strategies, keep_prob, _):
     ([4, 9], [3, 2], [2, 3]),
 ])
 @pytest.mark.parametrize('_', range(10))
-def test_random_hierarchical(keep_prob, game_desc, _):
-    players, strategies, red_players = game_desc
+def test_random_hierarchical(keep_prob, players, strategies, red_players, _):
     # Create game and reduction
-    game = gamegen.add_profiles(rsgame.game(players, strategies), keep_prob)
-    assert (rsgame.basegame(red_players, strategies) ==
-            hr.reduce_game(rsgame.basegame(players, strategies), red_players))
+    game = gamegen.add_profiles(
+        rsgame.emptygame(players, strategies), keep_prob)
+    assert (rsgame.emptygame(red_players, strategies) ==
+            hr.reduce_game(rsgame.emptygame(players, strategies), red_players))
 
     # Try to reduce game
     red_game = hr.reduce_game(game, red_players)
@@ -166,23 +145,11 @@ def test_random_hierarchical(keep_prob, game_desc, _):
     assert np.setxor1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
-    # Test axis
-    reduced_full_profiles = utils.axis_to_elem(
-        hr.reduce_profiles(red_game, game.profiles.T, 0))
-    assert np.setxor1d(reduced_profiles, reduced_full_profiles).size == 0, \
-        "reduced game contained profiles it shouldn't have"
-
     # Assert that all contributing profiles are in the expansion of the reduced
     # game. Since hr doesn't add any incomplete profiles, it can't produce any
     full_profiles = utils.axis_to_elem(game.profiles)
     full_reduced_profiles = utils.axis_to_elem(
         hr.expand_profiles(game, red_game.profiles))
-    assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
-        "full game did not have data for all profiles required of reduced"
-
-    # Test axis
-    full_reduced_profiles = utils.axis_to_elem(
-        hr.expand_profiles(game, red_game.profiles.T, 0))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
 
@@ -202,9 +169,10 @@ def test_random_hierarchical(keep_prob, game_desc, _):
 def test_random_identity(keep_prob, game_desc, _):
     players, strategies = game_desc
     # Create game and reduction
-    game = gamegen.add_profiles(rsgame.game(players, strategies), keep_prob)
-    assert (rsgame.basegame(players, strategies) ==
-            ir.reduce_game(rsgame.basegame(players, strategies)))
+    game = gamegen.add_profiles(
+        rsgame.emptygame(players, strategies), keep_prob)
+    assert (rsgame.emptygame(players, strategies) ==
+            ir.reduce_game(rsgame.emptygame(players, strategies)))
 
     # Try to reduce game
     red_game = ir.reduce_game(game)
@@ -216,21 +184,9 @@ def test_random_identity(keep_prob, game_desc, _):
     assert np.setxor1d(reduced_full_profiles, reduced_profiles).size == 0, \
         "reduced game didn't match full game"
 
-    # Test axis
-    reduced_full_profiles = utils.axis_to_elem(
-        ir.reduce_profiles(red_game, game.profiles.T, 0))
-    assert np.setxor1d(reduced_full_profiles, reduced_profiles).size == 0, \
-        "reduced game didn't match full game"
-
     full_profiles = utils.axis_to_elem(game.profiles)
     full_reduced_profiles = utils.axis_to_elem(
         ir.expand_profiles(game, red_game.profiles))
-    assert np.setxor1d(full_profiles, full_reduced_profiles).size == 0, \
-        "full game did not match reduced game"
-
-    # Test axis
-    full_reduced_profiles = utils.axis_to_elem(
-        ir.expand_profiles(game, red_game.profiles.T, 0))
     assert np.setxor1d(full_profiles, full_reduced_profiles).size == 0, \
         "full game did not match reduced game"
 
@@ -239,7 +195,7 @@ def test_expand_tie_breaking():
     """Test that standard expansion breaks ties appropriately"""
 
     def expand(prof, full):
-        return hr.expand_profiles(rsgame.game(full, len(prof)), prof)
+        return hr.expand_profiles(rsgame.emptygame(full, len(prof)), prof)
 
     full = expand([4, 2], 20)
     assert np.all(full == [13, 7]), \
@@ -256,7 +212,7 @@ def test_reduce_tie_breaking():
     """Test that the standard reduction breaks ties appropriately"""
 
     def reduce_prof(prof, red):
-        return hr.reduce_profiles(rsgame.game(red, len(prof)), prof)
+        return hr.reduce_profiles(rsgame.emptygame(red, len(prof)), prof)
 
     red = reduce_prof([13, 7], 6)
     assert np.all(red == [4, 2]), \
@@ -281,16 +237,16 @@ def test_random_hr_identity(_):
         profile[0, rand.randint(num_strats)] += 1
         reduced_players += 1
     full_players = rand.randint(reduced_players + 1, reduced_players ** 2)
-    game = rsgame.game(reduced_players, num_strats)
+    game = rsgame.emptygame(reduced_players, num_strats)
     full_profile = hr.expand_profiles(
-        rsgame.game(full_players, num_strats), profile)
+        rsgame.emptygame(full_players, num_strats), profile)
     red_profile = hr.reduce_profiles(game, full_profile)
     assert np.all(red_profile == profile), "reduction didn't pass identity"
 
 
 def test_approximate_dpr_expansion():
     """Test expansion on approximate dpr"""
-    full_game = rsgame.game([8, 11], [2, 2])
+    full_game = rsgame.emptygame([8, 11], [2, 2])
     red_prof = [[1, 2, 2, 2]]
     full_profs, contributions = dpr.expand_profiles(
         full_game, red_prof, return_contributions=True)
@@ -313,7 +269,7 @@ def test_approximate_dpr_expansion():
 
 def test_expansion_contributions():
     """Test expansion on approximate dpr"""
-    full_game = rsgame.game([4, 9], [2, 2])
+    full_game = rsgame.emptygame([4, 9], [2, 2])
     red_profs = [
         [2, 0, 0, 3],
         [1, 1, 3, 0]]
@@ -380,7 +336,7 @@ def test_random_approximate_dpr(players, strategies, _):
 
 def test_identity_dev_expansion():
     """Test that identity dev expansion is correct"""
-    game = rsgame.game([3, 4], [4, 3])
+    game = rsgame.emptygame([3, 4], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = ir.expand_deviation_profiles(game, mask)
     actual = utils.axis_to_elem(profs)
@@ -417,7 +373,7 @@ def test_identity_dev_expansion():
 
 def test_hierarchical_dev_expansion():
     """Test that hierarchical dev expansion is correct"""
-    game = rsgame.game([9, 16], [4, 3])
+    game = rsgame.emptygame([9, 16], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = hr.expand_deviation_profiles(game, mask, [3, 4])
     actual = utils.axis_to_elem(profs)
@@ -457,7 +413,7 @@ def test_dpr_dev_expansion():
 
     Note, this is the only one that has "new" code, so it's the most important
     to test."""
-    game = rsgame.basegame([9, 16], [4, 3])
+    game = rsgame.emptygame([9, 16], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = dpr.expand_deviation_profiles(game, mask, [3, 4])
     actual = utils.axis_to_elem(profs)
@@ -497,7 +453,7 @@ def test_twins_dev_expansion():
 
     Note, this is the only one that has "new" code, so it's the most important
     to test."""
-    game = rsgame.basegame([9, 16], [4, 3])
+    game = rsgame.emptygame([9, 16], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = tr.expand_deviation_profiles(game, mask)
     actual = utils.axis_to_elem(profs)
@@ -538,7 +494,7 @@ def test_twins_dev_expansion():
 ])
 def test_rand_dpr_dev_expandion(players, strategies, red_players, _):
     """Test that dpr devs works for random games"""
-    game = rsgame.game(players, strategies)
+    game = rsgame.emptygame(players, strategies)
     sup = (rand.random(game.num_roles) * game.num_role_strats).astype(int) + 1
     inds = np.concatenate(
         [rand.choice(s, x) + o for s, x, o

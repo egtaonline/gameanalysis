@@ -82,7 +82,7 @@ def deviation_profiles(game, subgame_mask, role_index=None):
     support = np.add.reduceat(subgame_mask, game.role_starts)
 
     def dev_profs(players, mask, rs):
-        subg = rsgame.basegame(players, support)
+        subg = rsgame.emptygame(players, support)
         non_devs = translate(subg.all_profiles(), subgame_mask)
         ndevs = np.sum(~mask)
         devs = np.zeros((ndevs, game.num_strats), int)
@@ -116,7 +116,7 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
     assert game.num_strats == subgame_mask.size
     new_players = game.num_role_players.copy()
     new_players[game.role_indices[role_strat_ind]] -= 1
-    base = rsgame.basegame(new_players, game.num_role_strats)
+    base = rsgame.emptygame(new_players, game.num_role_strats)
     new_mask = subgame_mask.copy()
     new_mask[role_strat_ind] = True
     profs = subgame(base, new_mask).all_profiles()
@@ -134,6 +134,8 @@ def subgame(game, subgame_mask):
     assert np.all(num_strats > 0), \
         "Not all roles have at least one strategy"
 
+    # FIXME Account for various game types off of attributes instead of
+    # subclasses? maybe include subgame logic in games themselves?
     # There's some duplication here in order to allow base games
     if isinstance(game, rsgame.SampleGame):
         prof_mask = ~np.any(game.profiles * ~subgame_mask, 1)
@@ -146,15 +148,12 @@ def subgame(game, subgame_mask):
         return rsgame.samplegame(game.num_role_players, num_strats, profiles,
                                  sample_payoffs)
 
-    elif isinstance(game, rsgame.Game):
+    else:
         prof_mask = ~np.any(game.profiles * ~subgame_mask, 1)
         profiles = game.profiles[prof_mask][:, subgame_mask]
         payoffs = game.payoffs[prof_mask][:, subgame_mask]
         return rsgame.game(game.num_role_players, num_strats, profiles,
                            payoffs)
-
-    else:
-        return rsgame.basegame(game.num_role_players, num_strats)
 
 
 def subserializer(serial, subgame_mask):

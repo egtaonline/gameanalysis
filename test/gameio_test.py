@@ -520,7 +520,7 @@ def test_samplegame_from_json(jgame):
                                    OBSERVATIONGAME_JSON, FULLGAME_JSON])
 def test_basegame_equality(jgame):
     game, serial = gameio.read_basegame(jgame)
-    assert game == rsgame.basegame_copy(GAME)
+    assert game == rsgame.emptygame_copy(GAME)
     assert serial == SERIAL
 
 
@@ -552,17 +552,18 @@ def test_output():
 
     assert BASEGAME_JSON == SERIAL.to_basegame_json(GAME)
     assert BASEGAME_JSON == SERIAL.to_basegame_json(rsgame.game_copy(GAME))
-    assert BASEGAME_JSON == SERIAL.to_basegame_json(rsgame.basegame_copy(GAME))
+    assert BASEGAME_JSON == SERIAL.to_basegame_json(
+        rsgame.emptygame_copy(GAME))
 
     assert GAME_JSON == SERIAL.to_game_json(GAME)
     assert GAME_JSON == SERIAL.to_game_json(rsgame.game_copy(GAME))
-    assert EMPTYGAME_JSON == SERIAL.to_game_json(rsgame.basegame_copy(GAME))
+    assert EMPTYGAME_JSON == SERIAL.to_game_json(rsgame.emptygame_copy(GAME))
 
     assert SAMPLEGAME_JSON == SERIAL.to_samplegame_json(GAME)
     assert SAMPLEDGAME_JSON == SERIAL.to_samplegame_json(
         rsgame.game_copy(GAME))
     assert EMPTYGAME_JSON == SERIAL.to_samplegame_json(
-        rsgame.basegame_copy(GAME))
+        rsgame.emptygame_copy(GAME))
 
     expected = """
 BaseGame:
@@ -576,7 +577,7 @@ BaseGame:
 """[1:-1]
     assert expected == SERIAL.to_basegame_printstr(GAME)
     assert expected == SERIAL.to_basegame_printstr(rsgame.game_copy(GAME))
-    assert expected == SERIAL.to_basegame_printstr(rsgame.basegame_copy(GAME))
+    assert expected == SERIAL.to_basegame_printstr(rsgame.emptygame_copy(GAME))
 
     expected = """
 BaseGame:
@@ -591,7 +592,7 @@ BaseGame:
         b:
             baz
 """[1:-1]
-    assert expected == SERIAL2.to_basegame_printstr(rsgame.basegame(
+    assert expected == SERIAL2.to_basegame_printstr(rsgame.emptygame(
         [3, 4], SERIAL2.num_role_strats))
 
     expected = """
@@ -618,7 +619,7 @@ Game:
             strat2
 payoff data for 0 out of 3 profiles
 """[1:-1]
-    assert expected == SERIAL.to_game_printstr(rsgame.basegame_copy(GAME))
+    assert expected == SERIAL.to_game_printstr(rsgame.emptygame_copy(GAME))
 
     expected = """
 SampleGame:
@@ -659,7 +660,7 @@ payoff data for 0 out of 3 profiles
 no observations
 """[1:-1]
     assert expected == SERIAL.to_samplegame_printstr(
-        rsgame.basegame_copy(GAME))
+        rsgame.emptygame_copy(GAME))
 
 
 @pytest.mark.parametrize('_', range(20))

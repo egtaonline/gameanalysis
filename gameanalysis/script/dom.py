@@ -39,8 +39,8 @@ def add_parser(subparsers):
 
 def main(args):
     game, serial = gameio.read_game(json.load(args.input))
-    sub_mask = dominance.iterated_elimination(game, args.criterion,
-                                              args.unconditional)
+    sub_mask = dominance.iterated_elimination(
+        game, args.criterion, conditional=args.unconditional)
     if args.strategies:
         res = {r: list(s) for r, s in serial.to_subgame_json(sub_mask).items()}
         json.dump(res, args.output)

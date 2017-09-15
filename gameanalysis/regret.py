@@ -33,12 +33,12 @@ def pure_strategy_regret(game, prof):
     return max(pure_strategy_deviation_gains(game, prof).max(), 0)
 
 
-def mixture_deviation_gains(game, mix, assume_complete=False):
+def mixture_deviation_gains(game, mix):
     """Returns all the gains from deviation from a mixed strategy
 
     The result is ordered by role, then strategy."""
     mix = np.asarray(mix, float)
-    strategy_evs = game.deviation_payoffs(mix, assume_complete=assume_complete)
+    strategy_evs = game.deviation_payoffs(mix)
     # strategy_evs is nan where there's no data, however, if it's not played in
     # the mix, it doesn't effect the role_evs
     masked = strategy_evs.copy()
@@ -65,11 +65,11 @@ def mixed_social_welfare(game, mix):
     return game.get_expected_payoffs(mix).dot(game.num_role_players)
 
 
-class SocialWelfareOptimizer(object):
-    """A pickleable object to find Nash equilibria
+class _SocialWelfareOptimizer(object):
+    """A pickleable object to find maximal social welfare
 
-    This method uses constrained convex optimization to to attempt to solve a
-    proxy for the nonconvex regret minimization."""
+    This method uses constrained convex optimization to to attempt to maximize
+    mixed social welfare."""
 
     def __init__(self, game, gtol=1e-8):
         self.game = game
@@ -86,7 +86,7 @@ class SocialWelfareOptimizer(object):
         # Because deviation payoffs uses log space, we max with 0 just for the
         # payoff calculation
         ep, ep_jac = self.game.get_expected_payoffs(
-            np.maximum(0, mix), assume_complete=True, jacobian=True)
+            np.maximum(0, mix), jacobian=True)
         # Normalize so payoffs are effectively in [0, 1]
         ep = (ep - self.offset) / self.scale
         ep_jac /= self.scale[:, None]
@@ -132,7 +132,7 @@ class SocialWelfareOptimizer(object):
         return result
 
 
-def max_mixed_social_welfare(game, grid_points=2, random_restarts=0,
+def max_mixed_social_welfare(game, *, grid_points=2, random_restarts=0,
                              processes=None, **swopt_args):
     """Returns the maximum role symmetric mixed social welfare profile
 
@@ -161,7 +161,7 @@ def max_mixed_social_welfare(game, grid_points=2, random_restarts=0,
 
     best = (-np.inf, -1, None)
 
-    opt = SocialWelfareOptimizer(game, **swopt_args)
+    opt = _SocialWelfareOptimizer(game, **swopt_args)
     with multiprocessing.Pool(processes) as pool:
         for i, mix in enumerate(pool.imap_unordered(
                 opt, initial_points, chunksize=chunksize)):
@@ -171,7 +171,7 @@ def max_mixed_social_welfare(game, grid_points=2, random_restarts=0,
     return best[0], best[2]
 
 
-def max_pure_social_welfare(game, by_role=False):
+def max_pure_social_welfare(game, *, by_role=False):
     """Returns the maximum social welfare over the known profiles.
 
     If by_role is specified, then max social welfare applies to each role

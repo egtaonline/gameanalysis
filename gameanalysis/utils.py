@@ -11,6 +11,7 @@ import scipy.misc as spm
 
 
 _TINY = np.finfo(float).tiny
+# This is the maximum integer that can be exactly represented as a float
 _MAX_INT_FLOAT = 2 ** (np.finfo(float).nmant - 1)
 _SIMPLEX_BIG = 1 / np.finfo(float).resolution
 # XXX A lot of these are candidates for cython
@@ -22,9 +23,9 @@ def prod(collection):
 
 
 def comb(n, k):
-    res = np.rint(spm.comb(n, k, False)).astype(int)
-    if np.all(res >= 0) and np.all(res < _MAX_INT_FLOAT):
-        return res
+    res = np.rint(spm.comb(n, k, False))
+    if np.all(res < _MAX_INT_FLOAT):
+        return res.astype(int)
     elif isinstance(n, abc.Iterable) or isinstance(k, abc.Iterable):
         broad = np.broadcast(np.asarray(n), np.asarray(k))
         res = np.empty(broad.shape, dtype=object)
@@ -184,12 +185,11 @@ def acartesian2(*arrays):
     return result
 
 
-def simplex_project(array, axis=-1):
+def simplex_project(array):
     """Return the projection onto the simplex"""
     array = np.asarray(array, float)
     assert not np.isnan(array).any(), \
         "can't project nan onto simplex: {}".format(array)
-    array = np.rollaxis(array, axis, array.ndim)
     # This fails for really large values, so we normalize the array so the
     # largest element has absolute value at most _SIMPLEX_BIG
     array = np.clip(array, -_SIMPLEX_BIG, _SIMPLEX_BIG)
@@ -200,8 +200,7 @@ def simplex_project(array, axis=-1):
     rho.shape = (-1, size)
     lam = rho[np.arange(rho.shape[0]), inds.flat]
     lam.shape = array.shape[:-1] + (1,)
-    simplex = np.maximum(array + lam, 0)
-    return np.rollaxis(simplex, -1, axis)
+    return np.maximum(array + lam, 0)
 
 
 def multinomial_mode(p, n):

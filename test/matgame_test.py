@@ -69,8 +69,8 @@ def test_random_compress_profiles(strats):
     copy_profs = matg.uncompress_profile(matg.compress_profile(profs))
     assert np.all(profs == copy_profs)
 
-    profs = matg.random_profiles(20).T
-    copy_profs = matg.uncompress_profile(matg.compress_profile(profs, 0), 0)
+    profs = matg.random_profiles(20).reshape((4, 5, -1))
+    copy_profs = matg.uncompress_profile(matg.compress_profile(profs))
     assert np.all(profs == copy_profs)
 
 
@@ -89,6 +89,22 @@ def test_get_payoffs():
 
     expected = [0, 7, 0, 8]
     assert np.allclose(expected, matg.get_payoffs([0, 1, 0, 1]))
+
+
+@pytest.mark.parametrize('strats', [
+    [1],
+    [3],
+    [2, 3],
+    [1, 2, 3],
+    [2, 3, 1],
+])
+def test_random_get_payoffs(strats):
+    payoffs = rand.random(tuple(strats) + (len(strats),))
+    matg = matgame.matgame(payoffs)
+    profiles = matg.random_profiles(20).reshape((4, 5, -1))
+    payoffs = matg.get_payoffs(profiles)
+    assert profiles.shape == payoffs.shape
+    assert np.all((profiles > 0) | (payoffs == 0))
 
 
 @pytest.mark.parametrize('strats', [
@@ -224,6 +240,22 @@ def test_get_sample_payoffs():
     [1, 2, 3],
     [2, 3, 1],
 ])
+@pytest.mark.parametrize('samples', [1, 3])
+def test_random_get_sample_payoffs(strats, samples):
+    payoffs = rand.random(tuple(strats) + (len(strats), samples))
+    smatg = matgame.samplematgame(payoffs)
+    profiles = smatg.random_profiles(20).reshape((4, 5, -1))
+    spayoffs = smatg.get_sample_payoffs(profiles)
+    assert spayoffs.shape[:-1] == (4, 5, samples)
+
+
+@pytest.mark.parametrize('strats', [
+    [1],
+    [3],
+    [2, 3],
+    [1, 2, 3],
+    [2, 3, 1],
+])
 def test_random_singleton_resample(strats):
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
@@ -261,7 +293,7 @@ def test_random_samplematgame_hash_eq(strats, samples):
 
 
 def test_from_samplegame_truncate():
-    base = rsgame.basegame(1, [1, 2])
+    base = rsgame.emptygame(1, [1, 2])
     profiles = [
         [1, 1, 0],
         [1, 0, 1],
@@ -274,7 +306,7 @@ def test_from_samplegame_truncate():
             [[5, 6], [0, 0], [2, 3]],
         ],
     ]
-    game = rsgame.samplegame_copy(base, profiles, payoffs)
+    game = rsgame.samplegame_replace(base, profiles, payoffs)
     smatg = matgame.samplematgame_copy(game)
     assert np.all(smatg.num_samples == [1])
 
