@@ -4,7 +4,8 @@ import itertools
 import json
 import sys
 
-from gameanalysis import gameio
+from gameanalysis import gamereader
+from gameanalysis import rsgame
 
 
 def add_parser(subparsers):
@@ -35,7 +36,8 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
+    game = rsgame.emptygame_copy(game)  # gc any data
     mix = serial.from_mix_json(json.load(args.mix))
 
     if args.deviations:

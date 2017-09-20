@@ -5,7 +5,7 @@ import numpy as np
 import numpy.random as rand
 import scipy.special as sps
 
-from gameanalysis import gameio
+from gameanalysis import serialize
 from gameanalysis import matgame
 from gameanalysis import rsgame
 from gameanalysis import utils
@@ -218,8 +218,8 @@ def rock_paper_scissors(win=1, loss=-1, return_serial=False):
     if not return_serial:
         return game
     else:
-        serial = gameio.gameserializer(['all'],
-                                       [['paper', 'rock', 'scissors']])
+        serial = serialize.gameserializer(['all'],
+                                          [['paper', 'rock', 'scissors']])
         return game, serial
 
 
@@ -539,4 +539,4 @@ def serializer(game):
     role_names = (['all'] if game.is_symmetric()
                   else utils.prefix_strings('r', game.num_roles))
     strat_names = [utils.prefix_strings('s', s) for s in game.num_role_strats]
-    return gameio.gameserializer(role_names, strat_names)
+    return serialize.gameserializer(role_names, strat_names)

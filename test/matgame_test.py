@@ -2,6 +2,7 @@ import numpy as np
 import numpy.random as rand
 import pytest
 
+from gameanalysis import gamegen
 from gameanalysis import matgame
 from gameanalysis import rsgame
 
@@ -194,6 +195,33 @@ def test_matgame_repr():
     assert repr(matg) == 'MatrixGame([2 3])'
 
 
+@pytest.mark.parametrize('players,strats', [
+    (1, [2, 2]),
+    (2, 2),
+    ([1, 2], 2),
+    ([4, 3], [4, 3]),
+    ([2, 3, 4], [4, 3, 2]),
+])
+def test_random_matgame_copy(players, strats):
+    game = gamegen.role_symmetric_game(players, strats)
+    matg = matgame.matgame_copy(game)
+    inds = np.cumsum(game.num_role_players[:-1] * game.num_role_strats[:-1])
+
+    mprofs = matg.random_profiles(20)
+    mpays = matg.get_payoffs(mprofs)
+    mpays = np.concatenate(
+        [m.reshape(20, p, -1).mean(1).filled(0) for m, p
+         in zip(np.split(np.ma.masked_array(mpays, mprofs == 0), inds, 1),
+                game.num_role_players)], 1)
+
+    profs = np.concatenate(
+        [m.reshape(20, p, -1).sum(1) for m, p
+         in zip(np.split(mprofs, inds, 1), game.num_role_players)], 1)
+    pays = game.get_payoffs(profs)
+
+    assert np.allclose(mpays, pays)
+
+
 def test_samplematgame_payoffs():
     matrix = [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
               [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]
@@ -316,3 +344,18 @@ def test_samplematgame_repr():
     assert repr(smatg) == 'SampleMatrixGame([2], 1)'
     smatg = matgame.samplematgame(rand.random((2, 3, 2, 4)))
     assert repr(smatg) == 'SampleMatrixGame([2 3], 4)'
+
+
+def test_serializer():
+    game = matgame.matgame(np.random.random((2, 3, 4, 3)))
+    serial = matgame.matgameserializer_copy(gamegen.serializer(game))
+    expected = ("MatGameSerializer(('r0', 'r1', 'r2'), (('s0', 's1'), "
+                "('s0', 's1', 's2'), ('s0', 's1', 's2', 's3')))")
+    assert repr(serial) == expected
+
+    jgame = serial.to_json(game)
+    copy = serial.from_json(jgame)
+    assert game == copy
+    copy, scopy = matgame.read_matgame(jgame)
+    assert serial == scopy
+    assert game == copy

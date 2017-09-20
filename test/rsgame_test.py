@@ -22,7 +22,7 @@ EPS = 5 * np.finfo(float).eps
 
 
 def test_stratarray_properties():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     assert sarr.num_strats == 1
     assert np.all(sarr.num_role_strats == [1])
     assert sarr.num_roles == 1
@@ -46,7 +46,7 @@ def test_stratarray_properties():
     assert np.all(sarr.dev_from_indices == [])
     assert np.all(sarr.dev_to_indices == [])
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     assert sarr.num_strats == 3
     assert np.all(sarr.num_role_strats == [3])
     assert sarr.num_roles == 1
@@ -62,7 +62,7 @@ def test_stratarray_properties():
     assert np.all(sarr.dev_from_indices == [0, 0, 1, 1, 2, 2])
     assert np.all(sarr.dev_to_indices == [1, 2, 0, 2, 0, 1])
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     assert sarr.num_strats == 4
     assert np.all(sarr.num_role_strats == [1, 3])
     assert sarr.num_roles == 2
@@ -86,7 +86,7 @@ def test_stratarray_properties():
     assert np.all(sarr.dev_from_indices == [1, 1, 2, 2, 3, 3])
     assert np.all(sarr.dev_to_indices == [2, 3, 1, 3, 1, 2])
 
-    sarr = rsgame.StratArray(np.array([3, 2, 1]))
+    sarr = rsgame._StratArray(np.array([3, 2, 1]))
     assert sarr.num_strats == 6
     assert np.all(sarr.num_role_strats == [3, 2, 1])
     assert sarr.num_roles == 3
@@ -112,7 +112,7 @@ def test_stratarray_properties():
 
 
 def test_subgame_enumeration():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     all_subgames = [[True]]
     assert not np.setxor1d(utils.axis_to_elem(all_subgames),
                            utils.axis_to_elem(sarr.all_subgames())).size
@@ -120,7 +120,7 @@ def test_subgame_enumeration():
     assert not np.setxor1d(utils.axis_to_elem(pure_subgames),
                            utils.axis_to_elem(sarr.pure_subgames())).size
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     all_subgames = [[True, False, False],
                     [False, True, False],
                     [True, True, False],
@@ -136,7 +136,7 @@ def test_subgame_enumeration():
     assert not np.setxor1d(utils.axis_to_elem(pure_subgames),
                            utils.axis_to_elem(sarr.pure_subgames())).size
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     all_subgames = [[True, True, False, False],
                     [True, False, True, False],
                     [True, True, True, False],
@@ -154,7 +154,7 @@ def test_subgame_enumeration():
 
 
 def test_is_subgame():
-    sarr = rsgame.StratArray(np.array([3, 2]))
+    sarr = rsgame._StratArray(np.array([3, 2]))
     assert sarr.is_subgame([True, False, True, False, True])
     assert not sarr.is_subgame([True, False, True, False, False])
     assert not sarr.is_subgame([False, False, False, True, False])
@@ -176,7 +176,7 @@ def test_is_subgame():
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_stratarray_subgames(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     all_subgames = sarr.all_subgames()
     assert sarr.is_subgame(all_subgames).all()
     assert sarr.num_all_subgames == all_subgames.shape[0]
@@ -187,7 +187,7 @@ def test_random_stratarray_subgames(_, role_strats):
 
 def test_random_subgames():
     # Technically some of these can fail, but it's extremely unlikely
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     subgs = sarr.random_subgames(1000)
     assert sarr.is_subgame(subgs).all()
     assert not subgs.all()
@@ -203,7 +203,7 @@ def test_random_subgames():
     subgs = sarr.random_subgames(1000, 0, False)
     assert sarr.is_subgame(subgs).all()
 
-    sarr = rsgame.StratArray(np.array([3, 2]))
+    sarr = rsgame._StratArray(np.array([3, 2]))
     subgs = sarr.random_subgames(1000, [1, 1 / 2])
     assert sarr.is_subgame(subgs).all()
     assert np.all([True, True, True, False, False] == subgs.all(0))
@@ -211,7 +211,7 @@ def test_random_subgames():
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_random_subgames(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     subg = sarr.random_subgames()
     assert len(subg.shape) == 1
 
@@ -220,7 +220,7 @@ def test_random_random_subgames(_, role_strats):
 
 
 def test_trim_mixture_support():
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     mix = np.array([0.7, 0.3, 0])
     not_trimmed = sarr.trim_mixture_support(mix, thresh=0.1)
     assert np.allclose(mix, not_trimmed)
@@ -232,7 +232,7 @@ def test_trim_mixture_support():
 
 
 def test_is_mixture():
-    sarr = rsgame.StratArray(np.array([3, 2]))
+    sarr = rsgame._StratArray(np.array([3, 2]))
     assert sarr.is_mixture([0.2, 0.3, 0.5, 0.6, 0.4])
     assert not sarr.is_mixture([0.2, 0.3, 0.4, 0.5, 0.6])
     assert not sarr.is_mixture([0.2, 0.3, 0.4, 0.5, 0.4])
@@ -255,7 +255,7 @@ def test_is_mixture():
 
 
 def test_mixture_project():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     mixtures = [[0],
                 [1],
                 [2],
@@ -263,7 +263,7 @@ def test_mixture_project():
     expected = [[1]] * 4
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     mixtures = [[0, 0, 0],
                 [1, 0, 0],
                 [2, 1, 0],
@@ -274,7 +274,7 @@ def test_mixture_project():
                 [0.2, 0.3, 0.5]]
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     mixtures = [[0, 0, 0, 0],
                 [1, 1, 0, 0],
                 [2, 2, 1, 0],
@@ -285,7 +285,7 @@ def test_mixture_project():
                 [1, 0.2, 0.3, 0.5]]
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
-    sarr = rsgame.StratArray(np.array([3, 2, 1]))
+    sarr = rsgame._StratArray(np.array([3, 2, 1]))
     mixtures = [[0, 0, 0, 0, 0, 0],
                 [1, 0, 0, 0, 1, 1],
                 [2, 1, 0, 1, 2, 2],
@@ -299,7 +299,7 @@ def test_mixture_project():
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_mixture_project(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     for non_mixture in rand.uniform(-1, 1, (100, sarr.num_strats)):
         new_mix = sarr.mixture_project(non_mixture)
         assert sarr.is_mixture(new_mix), \
@@ -312,7 +312,7 @@ def test_random_mixture_project(_, role_strats):
 
 
 def test_to_from_simplex():
-    sarr = rsgame.StratArray(np.array([2, 2]))
+    sarr = rsgame._StratArray(np.array([2, 2]))
     mixture = [1 / 5, 4 / 5, 1 / 5, 4 / 5]
     simplex = [2 / 15, 2 / 15, 11 / 15]
     assert np.allclose(simplex, sarr.to_simplex(mixture))
@@ -336,7 +336,7 @@ def test_to_from_simplex():
 
 @pytest.mark.parametrize('strats', [1, 2, 4])
 def test_random_one_role_to_from_simplex(strats):
-    sarr = rsgame.StratArray(np.array([strats]))
+    sarr = rsgame._StratArray(np.array([strats]))
     inits = sarr.random_mixtures(100)
     simplicies = sarr.to_simplex(inits)
     assert np.allclose(inits, simplicies)
@@ -346,7 +346,7 @@ def test_random_one_role_to_from_simplex(strats):
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_uniform_simplex_homotopy(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     uniform = sarr.uniform_mixture()
     simp = sarr.to_simplex(uniform)
     assert np.allclose(simp[0], simp[1:])
@@ -355,7 +355,7 @@ def test_uniform_simplex_homotopy(_, role_strats):
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_simplex_homotopy(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     mixes = sarr.random_mixtures(100)
 
     simp = sarr.to_simplex(mixes[0])
@@ -378,7 +378,7 @@ def test_random_simplex_homotopy(_, role_strats):
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_uniform_simplex_homotopy(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     rand_mixes = sarr.random_mixtures(100)
     mask = np.repeat(rand.random((100, sarr.num_roles))
                      < 0.5, sarr.num_role_strats, 1)
@@ -403,22 +403,22 @@ def test_random_uniform_simplex_homotopy(_, role_strats):
 
 
 def test_uniform_mixture():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     assert np.allclose([1], sarr.uniform_mixture())
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     assert np.allclose([1 / 3] * 3, sarr.uniform_mixture())
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     assert np.allclose([1] + [1 / 3] * 3, sarr.uniform_mixture())
 
-    sarr = rsgame.StratArray(np.array([3, 2, 1]))
+    sarr = rsgame._StratArray(np.array([3, 2, 1]))
     assert np.allclose([1 / 3] * 3 + [1 / 2] * 2 + [1], sarr.uniform_mixture())
 
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_mixtures(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     mix = sarr.random_mixtures()
     assert len(mix.shape) == 1
 
@@ -434,7 +434,7 @@ def test_random_mixtures(_, role_strats):
 
 def test_random_sparse_mixtures():
     # Technically some of these can fail, but it's extremely unlikely
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     mixes = sarr.random_sparse_mixtures(1000)
     assert sarr.is_mixture(mixes).all()
     assert not np.all(mixes > 0)
@@ -450,7 +450,7 @@ def test_random_sparse_mixtures():
     mixes = sarr.random_sparse_mixtures(1000, support_prob=0, normalize=False)
     assert sarr.is_mixture(mixes).all()
 
-    sarr = rsgame.StratArray(np.array([3, 2]))
+    sarr = rsgame._StratArray(np.array([3, 2]))
     mixes = sarr.random_sparse_mixtures(1000, support_prob=[1, 1 / 2])
     assert sarr.is_mixture(mixes).all()
     assert np.all([True, True, True, False, False] == np.all(mixes > 0, 0))
@@ -458,7 +458,7 @@ def test_random_sparse_mixtures():
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_random_sparse_mixtures(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     mix = sarr.random_sparse_mixtures()
     assert len(mix.shape) == 1
 
@@ -473,26 +473,26 @@ def test_random_random_sparse_mixtures(_, role_strats):
 
 
 def test_biased_mixtures():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     expected = [[1]]
     actual = sarr.biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     expected = [[0.8, 0.1, 0.1],
                 [0.1, 0.8, 0.1],
                 [0.1, 0.1, 0.8]]
     actual = sarr.biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     expected = [[1, 0.8, 0.1, 0.1],
                 [1, 0.1, 0.8, 0.1],
                 [1, 0.1, 0.1, 0.8]]
     actual = sarr.biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3, 2, 1]))
+    sarr = rsgame._StratArray(np.array([3, 2, 1]))
     expected = [[0.8, 0.1, 0.1, 0.8, 0.2, 1],
                 [0.8, 0.1, 0.1, 0.2, 0.8, 1],
                 [0.1, 0.8, 0.1, 0.8, 0.2, 1],
@@ -504,26 +504,26 @@ def test_biased_mixtures():
 
 
 def test_role_biased_mixtures():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     expected = [[1]]
     actual = sarr.role_biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     expected = [[0.8, 0.1, 0.1],
                 [0.1, 0.8, 0.1],
                 [0.1, 0.1, 0.8]]
     actual = sarr.role_biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     expected = [[1, 0.8, 0.1, 0.1],
                 [1, 0.1, 0.8, 0.1],
                 [1, 0.1, 0.1, 0.8]]
     actual = sarr.role_biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3, 2, 1]))
+    sarr = rsgame._StratArray(np.array([3, 2, 1]))
     expected = [[0.8, 0.1, 0.1, 0.5, 0.5, 1],
                 [0.1, 0.8, 0.1, 0.5, 0.5, 1],
                 [0.1, 0.1, 0.8, 0.5, 0.5, 1],
@@ -536,7 +536,7 @@ def test_role_biased_mixtures():
 @pytest.mark.parametrize('strats', [1, 2, 4])
 @pytest.mark.parametrize('bias', [0.0, 0.2, 0.5, 0.8, 1.0])
 def test_random_onerole_biased_equivelance(strats, bias):
-    sarr = rsgame.StratArray(np.array([strats]))
+    sarr = rsgame._StratArray(np.array([strats]))
     amix = sarr.biased_mixtures(bias)
     bmix = sarr.role_biased_mixtures(bias)
     assert amix.shape == bmix.shape
@@ -544,26 +544,26 @@ def test_random_onerole_biased_equivelance(strats, bias):
 
 
 def test_pure_mixtures():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     expected = [[1]]
     actual = sarr.pure_mixtures()
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     expected = [[1, 0, 0],
                 [0, 1, 0],
                 [0, 0, 1]]
     actual = sarr.pure_mixtures()
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     expected = [[1, 1, 0, 0],
                 [1, 0, 1, 0],
                 [1, 0, 0, 1]]
     actual = sarr.pure_mixtures()
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3, 2, 1]))
+    sarr = rsgame._StratArray(np.array([3, 2, 1]))
     expected = [[1, 0, 0, 1, 0, 1],
                 [1, 0, 0, 0, 1, 1],
                 [0, 1, 0, 1, 0, 1],
@@ -575,13 +575,13 @@ def test_pure_mixtures():
 
 
 def test_grid_mixtures_error():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     with pytest.raises(AssertionError):
         sarr.grid_mixtures(1)
 
 
 def test_grid_mixtures():
-    sarr = rsgame.StratArray(np.array([1]))
+    sarr = rsgame._StratArray(np.array([1]))
     expected = [[1]]
     actual = sarr.grid_mixtures(2)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
@@ -590,7 +590,7 @@ def test_grid_mixtures():
     actual = sarr.grid_mixtures(4)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3]))
+    sarr = rsgame._StratArray(np.array([3]))
     expected = [[0, 0, 1],
                 [0, 1 / 2, 1 / 2],
                 [0, 1, 0],
@@ -613,7 +613,7 @@ def test_grid_mixtures():
     actual = sarr.grid_mixtures(4)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([1, 3]))
+    sarr = rsgame._StratArray(np.array([1, 3]))
     expected = [[1, 0, 0, 1],
                 [1, 0, 1 / 2, 1 / 2],
                 [1, 0, 1, 0],
@@ -623,7 +623,7 @@ def test_grid_mixtures():
     actual = sarr.grid_mixtures(3)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    sarr = rsgame.StratArray(np.array([3, 2, 1]))
+    sarr = rsgame._StratArray(np.array([3, 2, 1]))
     expected = [[0, 0, 1, 0, 1, 1],
                 [0, 0, 1, 1 / 2, 1 / 2, 1],
                 [0, 0, 1, 1, 0, 1],
@@ -648,7 +648,7 @@ def test_grid_mixtures():
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_grid_pure_equivelance(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     expected = sarr.pure_mixtures()
     actual = sarr.grid_mixtures(2)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
@@ -656,7 +656,7 @@ def test_random_grid_pure_equivelance(_, role_strats):
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_fixed_mixtures(_, role_strats):
-    sarr = rsgame.StratArray(np.array(role_strats))
+    sarr = rsgame._StratArray(np.array(role_strats))
     assert sarr.is_mixture(sarr.biased_mixtures()).all()
     assert sarr.is_mixture(sarr.role_biased_mixtures()).all()
     assert sarr.is_mixture(sarr.pure_mixtures()).all()

@@ -3,7 +3,7 @@ import argparse
 import json
 import sys
 
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import nash
 
 
@@ -79,7 +79,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
 
     if args.type == 'pure':
         equilibria = nash.pure_nash(game, epsilon=args.regret)

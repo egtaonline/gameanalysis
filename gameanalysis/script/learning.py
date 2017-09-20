@@ -3,8 +3,8 @@ import argparse
 import json
 import sys
 
-from gameanalysis import gameio
 from gameanalysis import gamelearning
+from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import regret
 
@@ -61,7 +61,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
 
     # create regression game
     # FIXME We probably don't need to keep game around and can use lgame for
@@ -86,7 +86,7 @@ def main(args):
     # Output game
     args.output.write('Game Learning\n')
     args.output.write('=============\n')
-    args.output.write(serial.to_game_printstr(game))
+    args.output.write(serial.to_printstr(game))
     args.output.write('\n\n')
 
     # Output social welfare

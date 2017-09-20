@@ -9,10 +9,7 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-# FIXME Make BaseSerializer for others to extend. That way mixtures etc share a
-# common base, but not the game reading This will require a refactor of the way
-# gameio works
-class GameSerializer(rsgame.StratArray):
+class _BaseSerializer(rsgame._StratArray):
     """An object with utilities for serializing objects with names
 
     Parameters
@@ -27,12 +24,11 @@ class GameSerializer(rsgame.StratArray):
     """
 
     def __init__(self, role_names, strat_names):
-        self.role_names = tuple(role_names)
-        self.strat_names = tuple(map(tuple, strat_names))
+        super().__init__(np.fromiter(map(len, strat_names), int,
+                                     len(strat_names)))
+        self.role_names = role_names
+        self.strat_names = strat_names
 
-        num_role_strats = np.fromiter(map(len, self.strat_names), int,
-                                      len(self.strat_names))
-        super().__init__(num_role_strats)
         if not all(map(utils.is_sorted, self.strat_names)):
             warnings.warn("If strategies aren't sorted, some functions "
                           "won't work as intended")
@@ -529,7 +525,8 @@ class GameSerializer(rsgame.StratArray):
                        np.split(payoffs, self.dev_role_starts[1:]),
                        np.split(supp, self.role_starts[1:]))}
 
-    def _get_num_role_players(self, game):
+    def from_json(self, game):
+        """Read a BaseGame from json"""
         num_role_players = np.empty(self.num_roles, int)
         if 'roles' in game:
             for role in game['roles']:
@@ -539,15 +536,9 @@ class GameSerializer(rsgame.StratArray):
                 num_role_players[self.role_index(role)] = count
         else:
             raise ValueError("Unknown game format: {}".format(game))
-
-        return num_role_players
-
-    def from_basegame_json(self, game):
-        """Read a BaseGame from json"""
-        num_role_players = self._get_num_role_players(game)
         return rsgame.emptygame(num_role_players, self.num_role_strats)
 
-    def to_basegame_json(self, game):
+    def to_json(self, game):
         """Format basegame as json"""
         return {
             'players': dict(zip(self.role_names,
@@ -556,51 +547,117 @@ class GameSerializer(rsgame.StratArray):
                                    map(list, self.strat_names)))
         }
 
-    def to_basegame_printstr(self, game):
+    def to_printstr(self, game):
         """Fromat basegame as a printable string"""
-        return (('BaseGame:\n    Roles: {}\n    Players:\n        {}\n    '
-                 'Strategies:\n        {}').format(
-                     ', '.join(self.role_names),
-                     '\n        '.join(
-                         '{:d}x {}'.format(count, role)
-                         for role, count
-                         in sorted(zip(
-                             self.role_names, game.num_role_players))),
-                     '\n        '.join(
-                         '{}:\n            {}'.format(
-                             role, '\n            '.join(strats))
-                         for role, strats
-                         in sorted(zip(self.role_names, self.strat_names)))))
+        return (
+            ('{}:\n    Roles: {}\n    Players:\n        {}\n    '
+             'Strategies:\n        {}').format(
+                 game.__class__.__name__,
+                 ', '.join(self.role_names),
+                 '\n        '.join(
+                     '{:d}x {}'.format(count, role)
+                     for role, count
+                     in zip(self.role_names, game.num_role_players)),
+                 '\n        '.join(
+                     '{}:\n            {}'.format(
+                         role, '\n            '.join(strats))
+                     for role, strats
+                     in zip(self.role_names, self.strat_names))))
 
-    def from_game_json(self, game):
+    def __repr__(self):
+        return '{}({}, {})'.format(self.__class__.__name__, self.role_names,
+                                   self.strat_names)
+
+    def __eq__(self, other):
+        return (type(self) is type(other) and
+                self.role_names == other.role_names and
+                self.strat_names == other.strat_names)
+
+
+class GameSerializer(_BaseSerializer):
+    def __init__(self, role_names, strat_names):
+        super().__init__(role_names, strat_names)
+
+    def from_json(self, game):
         """Read a Game from json"""
-        num_role_players = self._get_num_role_players(game)
+        base = super().from_json(game)
         profile_list = game.get('profiles', ())
         num_profs = len(profile_list)
         profiles = np.empty((num_profs, self.num_strats), int)
         payoffs = np.empty((num_profs, self.num_strats), float)
         for profj, prof, pay in zip(profile_list, profiles, payoffs):
             self.from_profpay_json(profj, prof, pay)
-        return rsgame.game(num_role_players, self.num_role_strats, profiles,
-                           payoffs)
+        return rsgame.game_replace(base, profiles, payoffs)
 
-    def to_game_json(self, game):
+    def to_json(self, game):
         """Fromat a Game as json"""
-        res = self.to_basegame_json(game)
+        res = super().to_json(game)
         res['profiles'] = [self.to_profpay_json(pay, prof) for prof, pay
                            in zip(game.profiles, game.payoffs)]
+        res['type'] = 'game.1'
         return res
 
-    def to_game_printstr(self, game):
+    def to_printstr(self, game):
         """Format game as a printable string"""
-        num_profs = game.num_profiles
         return '{}\npayoff data for {:d} out of {:d} profiles'.format(
-            self.to_basegame_printstr(game)[4:], num_profs,
+            super().to_printstr(game), game.num_profiles,
             game.num_all_profiles)
 
-    def from_samplegame_json(self, game):
+
+def gameserializer(role_names, strat_names):
+    """Static constrictor for GameSerializer
+
+    Parameters
+    ----------
+    role_names : [str]
+        The name of each role.
+    strat_names : [[str]]
+        The name of each strategy for each role.
+    """
+    return GameSerializer(tuple(role_names), tuple(map(tuple, strat_names)))
+
+
+def gameserializer_json(json):
+    """Read a GameSerializer from json
+
+    Parameters
+    ----------
+    json : json
+        A json representation of a basic game with names. Must either be
+        {roles: [{name: <role>, strategies: [<strat>]}]}, or {strategies:
+        {<role>: [<strat>]}}.
+    """
+    if 'roles' in json:
+        desc = json['roles']
+        role_names = [j['name'] for j in desc]
+        strat_names = [j['strategies'] for j in desc]
+    elif 'strategies' in json:
+        desc = sorted(json['strategies'].items())
+        role_names = [r for r, _ in desc]
+        strat_names = [s for _, s in desc]
+    else:
+        raise ValueError("unparsable json")
+    return gameserializer(role_names, strat_names)
+
+
+def gameserializer_copy(serial):
+    """Copy a serializer into a GameSerializer"""
+    return GameSerializer(serial.role_names, serial.strat_names)
+
+
+def read_game(json):
+    """Read a Game and its serializer from json"""
+    serial = gameserializer_json(json)
+    return serial.from_json(json), serial
+
+
+class SampleGameSerializer(_BaseSerializer):
+    def __init__(self, role_names, strat_names):
+        super().__init__(role_names, strat_names)
+
+    def from_json(self, game):
         """Read a SampleGame from json"""
-        num_role_players = self._get_num_role_players(game)
+        base = super().from_json(game)
         profile_list = game.get('profiles', ())
 
         sample_map = {}
@@ -616,68 +673,56 @@ class GameSerializer(rsgame.StratArray):
             profiles = np.concatenate(list(itertools.chain.from_iterable(
                 prof for prof, _ in values)))
             sample_payoffs = [np.concatenate(spay) for _, spay in values]
+            return rsgame.samplegame_replace(base, profiles, sample_payoffs)
         else:  # No data
-            profiles = np.empty((0, self.num_strats), int)
-            sample_payoffs = []
+            return rsgame.samplegame_copy(base)
 
-        return rsgame.samplegame(num_role_players, self.num_role_strats,
-                                 profiles, sample_payoffs)
-
-    def to_samplegame_json(self, game):
+    def to_json(self, game):
         """Fromat a SampleGame as json"""
-        res = self.to_basegame_json(game)
-        if isinstance(game, rsgame.SampleGame):
-            profiles = game.profiles
-            spayoffs = game.sample_payoffs
-        else:
-            profiles = game.profiles
-            spayoffs = [game.payoffs[..., None]]
-
-        res['profiles'] = [self.to_profsamplepay_json(pay.T, prof)
-                           for prof, pay
-                           in zip(profiles,
-                                  itertools.chain.from_iterable(spayoffs))]
+        game = rsgame.samplegame_copy(game)  # relatively free
+        res = super().to_json(game)
+        res['profiles'] = [
+            self.to_profsamplepay_json(pay.T, prof) for prof, pay
+            in zip(game.profiles,
+                   itertools.chain.from_iterable(game.sample_payoffs))]
+        res['type'] = 'samplegame.1'
         return res
 
-    def to_samplegame_printstr(self, game):
+    def to_printstr(self, game):
         """Format a SampleGame as a printable string"""
-        str_ = 'Sample' + self.to_game_printstr(game)
-        if isinstance(game, rsgame.SampleGame):
-            samples = game.num_samples
-        elif game.is_empty():
-            samples = np.empty(0, int)
+        game = rsgame.samplegame_copy(game)  # relatively free
+        if game.num_samples.size == 0:
+            sampstr = 'no observations'
+        elif game.num_samples.size == 1:
+            samps = game.num_samples[0]
+            sampstr = '{:d} observation{} per profile'.format(
+                samps, '' if samps == 1 else 's')
         else:
-            samples = np.ones(1, int)
-        if samples.size == 0:
-            return str_ + '\nno observations'
-        elif samples.size == 1:
-            return '{}\n{:d} observation{} per profile'.format(
-                str_, samples[0], '' if samples[0] == 1 else 's')
-        else:
-            return '{}\n{:d} to {:d} observations per profile'.format(
-                str_, samples.min(), samples.max())
-
-    def __repr__(self):
-        return '{}({}, {})'.format(self.__class__.__name__, self.role_names,
-                                   self.strat_names)
-
-    def __eq__(self, other):
-        return (type(self) is type(other) and
-                self.role_names == other.role_names and
-                self.strat_names == other.strat_names)
+            sampstr = '{:d} to {:d} observations per profile'.format(
+                game.num_samples.min(), game.num_samples.max())
+        return '{}\npayoff data for {:d} out of {:d} profiles\n{}'.format(
+            super().to_printstr(game),
+            game.num_profiles,
+            game.num_all_profiles,
+            sampstr,
+        )
 
 
-def gameserializer(role_names, strat_names):
+def samplegameserializer(role_names, strat_names):
     """Static constrictor for GameSerializer
 
     Parameters
     ----------
     role_names : [str]
-    strat_names : [[str]]"""
-    return GameSerializer(role_names, strat_names)
+        The name of each role.
+    strat_names : [[str]]
+        The name of each strategy for each role.
+    """
+    return SampleGameSerializer(tuple(role_names),
+                                tuple(map(tuple, strat_names)))
 
 
-def gameserializer_json(json):
+def samplegameserializer_json(json):
     """Read a GameSerializer from json
 
     Parameters
@@ -686,34 +731,18 @@ def gameserializer_json(json):
         A json representation of a basic game with names. Must either be
         {roles: [{name: <role>, strategies: [<strat>]}]}, or {strategies:
         {<role>: [<strat>]}}."""
-    if 'roles' in json:
-        desc = json['roles']
-        role_names = [j['name'] for j in desc]
-        strat_names = [j['strategies'] for j in desc]
-    elif 'strategies' in json:
-        desc = sorted(json['strategies'].items())
-        role_names = [r for r, _ in desc]
-        strat_names = [s for _, s in desc]
-    else:
-        raise ValueError("unparsable json")
-    return GameSerializer(role_names, strat_names)
+    return samplegameserializer_copy(gameserializer_json(json))
 
 
-def read_basegame(json):
-    """Read a BaseGame and GameSerializer from json"""
-    serial = gameserializer_json(json)
-    return serial.from_basegame_json(json), serial
-
-
-def read_game(json):
-    """Read a Game and GameSerializer from json"""
-    serial = gameserializer_json(json)
-    return serial.from_game_json(json), serial
+def samplegameserializer_copy(serial):
+    """Copy a SampleGameSerializer from a serialzier"""
+    return SampleGameSerializer(serial.role_names, serial.strat_names)
 
 
 def read_samplegame(json):
-    serial = gameserializer_json(json)
-    return serial.from_samplegame_json(json), serial
+    """Read a SampleGame and its associated serialzier from json"""
+    serial = samplegameserializer_json(json)
+    return serial.from_json(json), serial
 
 
 # Convenient unpacking of dictionaries

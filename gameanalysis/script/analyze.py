@@ -7,9 +7,10 @@ import numpy as np
 from numpy import linalg
 
 from gameanalysis import dominance
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import regret
+from gameanalysis import serialize
 from gameanalysis import subgame
 from gameanalysis.reduction import deviation_preserving as dpr
 
@@ -74,7 +75,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
 
     if args.dpr:
         red_players = np.zeros(game.num_roles, int)
@@ -82,9 +83,10 @@ def main(args):
             s, c = r.split(':')
             red_players[serial.role_index(s)] = int(c)
         redgame = dpr.reduce_game(game, red_players)
+        redserial = serialize.gameserializer_copy(serial)
     else:
         redgame = game
-    redserial = serial
+        redserial = serial
 
     if args.dominance:
         domsub = dominance.iterated_elimination(redgame, 'strictdom')
@@ -151,7 +153,7 @@ def main(args):
     # Output Game
     args.output.write('Game Analysis\n')
     args.output.write('=============\n')
-    args.output.write(serial.to_game_printstr(game))
+    args.output.write(serial.to_printstr(game))
     args.output.write('\n\n')
     if args.dpr is not None:
         args.output.write('With DPR reduction: ')

@@ -6,6 +6,7 @@ import numpy as np
 import numpy.random as rand
 
 from gameanalysis import rsgame
+from gameanalysis import serialize
 from gameanalysis import utils
 
 
@@ -218,15 +219,15 @@ def matgame_copy(copy_game):
             copy_game.num_role_players)
         shape = tuple(num_role_strats) + (num_role_strats.size,)
         payoff_matrix = np.empty(shape, float)
+        offset = copy_game.role_starts.repeat(copy_game.num_role_players)
         for profile, payoffs in zip(copy_game.profiles, copy_game.payoffs):
             # TODO Is is possible to do this with array logic?
-            pays = payoffs[profile > 0]
             inds = itertools.product(*[
                 set(itertools.permutations(np.arange(s.size).repeat(s))) for s
                 in np.split(profile, copy_game.role_starts[1:])])
             for nested in inds:
                 ind = tuple(itertools.chain.from_iterable(nested))
-                payoff_matrix[ind] = pays
+                payoff_matrix[ind] = payoffs[ind + offset]
         return matgame(payoff_matrix)
 
 
@@ -390,3 +391,66 @@ def samplematgame_copy(copy_game):
         return samplematgame(spayoff_matrix)
     else:
         return samplematgame(matgame_copy(copy_game).payoff_matrix[..., None])
+
+
+class MatGameSerializer(serialize._BaseSerializer):
+    """A serializer for agfn games
+
+    Parameters
+    ----------
+    role_names : [str]
+        Names of each role.
+    strat_names : [[str]]
+        Names of each strategy for each role.
+    """
+
+    def __init__(self, role_names, strat_names):
+        super().__init__(role_names, strat_names)
+
+    def from_json(self, game):
+        return matgame(np.asarray(game['matrix'], float))
+
+    def to_json(self, game):
+        res = super().to_json(game)
+        res['matrix'] = game.payoff_matrix.tolist()
+        res['type'] = 'matrix.1'
+        return res
+
+
+def matgameserializer(role_names, strat_names):
+    """Static constructor for AgfnGameSerializer
+
+    Parameters
+    ----------
+    role_names : [str]
+    strat_names : [[str]]
+    function_names : [str]
+    """
+    return MatGameSerializer(
+        tuple(role_names), tuple(map(tuple, strat_names)))
+
+
+def matgameserializer_json(json):
+    """Static constructor for AgfnGameSerializer
+
+    Takes a game that would be loaded from json and determines field names.
+
+    Parameters
+    ----------
+    json : json
+        A json format of a base AgfnGame. One standard output is the one output
+        by to_agfngame_json. {strategies: {<role>: [<strat>]}, function_names:
+        [<func>]}
+    """
+    return matgameserializer_copy(serialize.gameserializer_json(json))
+
+
+def matgameserializer_copy(serial):
+    """Copy a MatGameSerializer from a serializer"""
+    return matgameserializer(serial.role_names, serial.strat_names)
+
+
+def read_matgame(json):
+    """Read a matgame and its associate serializer from json"""
+    serial = matgameserializer_json(json)
+    return serial.from_json(json), serial

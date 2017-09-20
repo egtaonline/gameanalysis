@@ -5,7 +5,7 @@ import itertools
 import numpy as np
 import scipy.stats as spt
 
-from gameanalysis import gameio
+from gameanalysis import serialize
 from gameanalysis import rsgame
 from gameanalysis import utils
 
@@ -439,7 +439,7 @@ def aggfn_funcs(num_role_players, num_role_strats, action_weights,
                  function_inputs, function_table)
 
 
-class AgfnGameSerializer(gameio.GameSerializer):
+class AgfnGameSerializer(serialize._BaseSerializer):
     """A serializer for agfn games
 
     Parameters
@@ -454,16 +454,16 @@ class AgfnGameSerializer(gameio.GameSerializer):
 
     def __init__(self, role_names, strat_names, function_names):
         super().__init__(role_names, strat_names)
-        self.function_names = tuple(function_names)
+        self.function_names = function_names
+        self.num_functions = len(self.function_names)
         self._function_index = {f: i for i,
                                 f in enumerate(self.function_names)}
-        self.num_functions = len(self.function_names)
 
     def function_index(self, func_name):
         return self._function_index[func_name]
 
-    def from_agfngame_json(self, game):
-        base = self.from_basegame_json(game)
+    def from_json(self, game):
+        base = super().from_json(game)
 
         function_inputs = np.zeros(
             (self.num_strats, self.num_functions), bool)
@@ -489,9 +489,8 @@ class AgfnGameSerializer(gameio.GameSerializer):
         return aggfn_replace(base, action_weights, function_inputs,
                              np.asarray(function_list, float))
 
-    def to_agfngame_json(self, game):
-        assert isinstance(game, _AgfnGame)
-        res = self.to_basegame_json(game)
+    def to_json(self, game):
+        res = super().to_json(game)
         res['function_names'] = self.function_names
 
         finputs = {}
@@ -520,16 +519,15 @@ class AgfnGameSerializer(gameio.GameSerializer):
         res['function_tables'] = dict(zip(
             self.function_names, (tab.tolist() for tab in
                                   game._function_table)))
+        res['type'] = 'aggfn.1'
 
         return res
 
     def __repr__(self):
-        return '{}, {})'.format(super().__repr__(), self.function_names)
+        return '{}, {})'.format(super().__repr__()[:-1], self.function_names)
 
     def __eq__(self, other):
-        return (type(self) is type(other) and
-                self.role_names == other.role_names and
-                self.strat_names == other.strat_names and
+        return (super().__eq__(other) and
                 self.function_names == other.function_names)
 
 
@@ -542,7 +540,9 @@ def aggfnserializer(role_names, strat_names, function_names):
     strat_names : [[str]]
     function_names : [str]
     """
-    return AgfnGameSerializer(role_names, strat_names, function_names)
+    return AgfnGameSerializer(tuple(role_names),
+                              tuple(map(tuple, strat_names)),
+                              tuple(function_names))
 
 
 def aggfnserializer_json(json):
@@ -557,15 +557,14 @@ def aggfnserializer_json(json):
         by to_agfngame_json. {strategies: {<role>: [<strat>]}, function_names:
         [<func>]}
     """
-    serial = gameio.gameserializer_json(json)
-    function_names = json['function_names']
-    return AgfnGameSerializer(serial.role_names, serial.strat_names,
-                              function_names)
+    base = serialize.gameserializer_json(json)
+    function_names = tuple(json['function_names'])
+    return aggfnserializer(base.role_names, base.strat_names, function_names)
 
 
-def read_agfngame(json):
+def read_aggfn(json):
     serial = aggfnserializer_json(json)
-    return serial.from_agfngame_json(json), serial
+    return serial.from_json(json), serial
 
 
 def _num_args(func):

@@ -5,7 +5,8 @@ import sys
 
 import numpy as np
 
-from gameanalysis import gameio
+from gameanalysis import gamereader
+from gameanalysis import serialize
 from gameanalysis.reduction import deviation_preserving as dpr
 from gameanalysis.reduction import hierarchical as hr
 from gameanalysis.reduction import identity as idr
@@ -76,11 +77,12 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
     reduced_players = (
         None if not args.reduction
         else PLAYERS[args.sorted_roles](args.reduction, serial))
 
     reduced = REDUCTIONS[args.type].reduce_game(game, reduced_players)
-    json.dump(serial.to_game_json(reduced), args.output)
+    rserial = serialize.gameserializer_copy(serial)
+    json.dump(rserial.to_json(reduced), args.output)
     args.output.write('\n')

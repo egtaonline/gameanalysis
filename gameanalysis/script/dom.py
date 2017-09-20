@@ -4,7 +4,7 @@ import json
 import sys
 
 from gameanalysis import dominance
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import subgame
 
 
@@ -38,7 +38,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
     sub_mask = dominance.iterated_elimination(
         game, args.criterion, conditional=args.unconditional)
     if args.strategies:
@@ -47,6 +47,6 @@ def main(args):
     else:
         sub_game = subgame.subgame(game, sub_mask)
         sub_serial = subgame.subserializer(serial, sub_mask)
-        json.dump(sub_serial.to_game_json(sub_game), args.output)
+        json.dump(sub_serial.to_json(sub_game), args.output)
 
     args.output.write('\n')

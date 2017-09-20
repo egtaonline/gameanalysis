@@ -3,9 +3,10 @@ import argparse
 import json
 import sys
 
-from gameanalysis import gameio
 from gameanalysis import gamegen
-from gameanalysis import rsgame
+from gameanalysis import gamereader
+from gameanalysis import matgame
+from gameanalysis import serialize
 
 
 class ZeroSum(object):
@@ -24,11 +25,8 @@ class ZeroSum(object):
 
     @staticmethod
     def create(args):
-        # TODO We don't need to do this copy once we have serialization that
-        # handles arbitrary game substitutes
-        game = rsgame.game_copy(
-            gamegen.two_player_zero_sum_game(args.num_strats))
-        serial = gamegen.serializer(game)
+        game = gamegen.two_player_zero_sum_game(args.num_strats)
+        serial = matgame.matgameserializer_copy(gamegen.serializer(game))
         return game, serial
 
 
@@ -96,10 +94,11 @@ class Noise(object):
 
     @staticmethod
     def create(args):
-        game, serial = gameio.read_game(json.load(args.input))
+        game, serial = gamereader.read(json.load(args.input))
         dist = Noise.distributions[args.distribution]
-        return gamegen.add_noise_width(game, args.num_samples, args.max_width,
-                                       dist), serial
+        return (gamegen.add_noise_width(game, args.num_samples, args.max_width,
+                                        dist),
+                serialize.samplegameserializer_copy(serial))
 
 
 _TYPES = {}
@@ -133,6 +132,9 @@ def main(args):
 
     if args.normalize:
         game = gamegen.normalize(game)
+        # FIXME Should normalize be a thing that games implement to prevent
+        # payoff copies
+        serial = serialize.gameserializer_copy(serial)
 
-    json.dump(serial.to_game_json(game), args.output)
+    json.dump(serial.to_json(game), args.output)
     args.output.write('\n')

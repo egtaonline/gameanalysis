@@ -541,7 +541,7 @@ class identity(object):
         assert (red_players is None or
                 np.all(full_game.num_role_players == red_players)), \
             "identity reduction must have same number of players"
-        return full_game
+        return rsgame.game_copy(full_game)
 
     @staticmethod
     def expand_profiles(full_game, profiles):

@@ -6,7 +6,7 @@ import sys
 import numpy as np
 
 from gameanalysis import bootstrap
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import regret
 from gameanalysis import scriptutils
 
@@ -63,7 +63,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_samplegame(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
     profiles = np.concatenate([serial.from_prof_json(p)[None] for p
                                in scriptutils.load_profiles(args.profiles)])
     bootf, meanf = CHOICES[args.type]

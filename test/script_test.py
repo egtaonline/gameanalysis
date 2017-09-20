@@ -7,8 +7,10 @@ import tempfile
 import numpy as np
 
 from gameanalysis import gamegen
-from gameanalysis import gameio
+from gameanalysis import gamereader
+from gameanalysis import matgame
 from gameanalysis import rsgame
+from gameanalysis import serialize
 from gameanalysis import subgame
 from gameanalysis import utils
 from gameanalysis.reduction import deviation_preserving as dpr
@@ -17,6 +19,8 @@ from gameanalysis.reduction import twins as tr
 
 # XXX To pass files to some scripts we use tempfile.NamedTemporaryFile and just
 # flush it. This will likely fail on windows.
+# XXX Some tests also use /dev/null which will also fail on windows
+
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 GA = os.path.join(DIR, '..', 'bin', 'ga')
@@ -24,7 +28,10 @@ GAME = os.path.join(DIR, 'hard_nash_game_1.json')
 with open(GAME, 'r') as f:
     GAME_STR = f.read()
 GAME_JSON = json.loads(GAME_STR)
-GAME_DATA, SERIAL = gameio.read_game(GAME_JSON)
+GAME_DATA, SERIAL = gamereader.read(GAME_JSON)
+
+MATGAME = gamegen.independent_game([2, 3, 4])
+MSERIAL = matgame.matgameserializer_copy(gamegen.serializer(MATGAME))
 
 
 def run(*cmd, fail=False, input=''):
@@ -49,9 +56,9 @@ def test_help():
 def test_dominance_1():
     success, out, err = run('dom', '-i', GAME)
     assert success, err
-    game, serial = gameio.read_game(json.loads(out))
-    assert serial == SERIAL
-    assert game == GAME_DATA
+    game, serial = gamereader.read(json.loads(out))
+    assert serial == serialize.gameserializer_copy(SERIAL)
+    assert game == rsgame.game_copy(GAME_DATA)
 
 
 def test_dominance_2():
@@ -68,13 +75,23 @@ def test_dominance_3():
 def test_dominance_4():
     success, out, err = run('dom', '-cstrictdom', '-i', GAME)
     assert success, err
-    gameio.read_game(json.loads(out))
+    gamereader.read(json.loads(out))
 
 
 def test_dominance_5():
     success, out, err = run('dom', '-cneverbr', '-i', GAME)
     assert success, err
-    gameio.read_game(json.loads(out))
+    gamereader.read(json.loads(out))
+
+
+def test_dominance_6():
+    """Test dom works for non Games"""
+    with tempfile.NamedTemporaryFile('w') as game:
+        json.dump(MSERIAL.to_json(MATGAME), game)
+        game.flush()
+        success, _, err = run('dom', '-cweakdom',
+                              '-o/dev/null', '-i', game.name)
+    assert success, err
 
 
 def test_gamegen_1():
@@ -87,32 +104,32 @@ def test_gamegen_1():
 def test_gamegen_2():
     success, out, err = run('gen', 'ursym', '3', '4', '4', '3')
     assert success, err
-    gameio.read_game(json.loads(out))
+    gamereader.read(json.loads(out))
 
 
 def test_gamegen_3():
     success, out, err = run('gen', 'noise', 'uniform', '1.5', '5',
                             input=GAME_STR)
     assert success, err
-    gameio.read_game(json.loads(out))
+    gamereader.read(json.loads(out))
 
 
 def test_gamegen_4():
     success, out, err = run('gen', 'noise', 'gumbel', '1.5', '5', '-i', GAME)
     assert success, err
-    gameio.read_game(json.loads(out))
+    gamereader.read(json.loads(out))
 
 
 def test_gamegen_5():
     success, out, err = run('gen', 'noise', 'bimodal', '1.5', '5', '-i', GAME)
     assert success, err
-    gameio.read_game(json.loads(out))
+    gamereader.read(json.loads(out))
 
 
 def test_gamegen_6():
     success, out, err = run('gen', 'noise', 'gaussian', '1.5', '5', '-i', GAME)
     assert success, err
-    gameio.read_game(json.loads(out))
+    gamereader.read(json.loads(out))
 
 
 def test_nash_1():
@@ -175,10 +192,19 @@ def test_nash_8():
     with tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.rock_paper_scissors()
         serial = gamegen.serializer(sgame)
-        json.dump(serial.to_game_json(sgame), game)
+        json.dump(serial.to_json(sgame), game)
         game.flush()
         success, _, err = run('nash', '-tpure', '--one', '-i', game.name)
         assert success, err
+
+
+def test_nash_9():
+    """Test nash works with non Game"""
+    with tempfile.NamedTemporaryFile('w') as game:
+        json.dump(MSERIAL.to_json(MATGAME), game)
+        game.flush()
+        success, _, err = run('nash', '-o/dev/null', '-i', game.name)
+    assert success, err
 
 
 def test_payoff_pure():
@@ -243,33 +269,44 @@ def test_payoff_pure_string():
 def test_reduction_1():
     success, out, err = run('red', 'background:2,hft:1', input=GAME_STR)
     assert success, err
-    game, serial = gameio.read_game(json.loads(out))
-    assert serial == SERIAL
+    game, serial = gamereader.read(json.loads(out))
+    assert serial == serialize.gameserializer_copy(SERIAL)
     assert game == dpr.reduce_game(GAME_DATA, [2, 1])
 
 
 def test_reduction_3():
     success, out, err = run('red', '-thr', '-s', '2,1', '-i', GAME)
     assert success, err
-    game, serial = gameio.read_game(json.loads(out))
-    assert serial == SERIAL
+    game, serial = gamereader.read(json.loads(out))
+    assert serial == serialize.gameserializer_copy(SERIAL)
     assert game == hr.reduce_game(GAME_DATA, [2, 1])
 
 
 def test_reduction_4():
     success, out, err = run('red', '-ttr', '-i', GAME)
     assert success, err
-    game, serial = gameio.read_game(json.loads(out))
-    assert serial == SERIAL
+    game, serial = gamereader.read(json.loads(out))
+    assert serial == serialize.gameserializer_copy(SERIAL)
     assert game == tr.reduce_game(GAME_DATA)
 
 
 def test_reduction_5():
+    """Test identity reduction"""
     success, out, err = run('red', '-tidr', '-i', GAME)
     assert success, err
-    game, serial = gameio.read_game(json.loads(out))
-    assert serial == SERIAL
-    assert game == GAME_DATA
+    game, serial = gamereader.read(json.loads(out))
+    assert serial == serialize.gameserializer_copy(SERIAL)
+    assert game == rsgame.game_copy(GAME_DATA)
+
+
+def test_reduction_6():
+    """Test that reduction works for non Games"""
+    with tempfile.NamedTemporaryFile('w') as game:
+        json.dump(MSERIAL.to_json(MATGAME), game)
+        game.flush()
+        success, out, err = run('red', '-tidr', '-i', game.name)
+        assert success, err
+    gamereader.read(json.loads(out))
 
 
 def test_regret_pure():
@@ -358,9 +395,9 @@ def test_subgame_extract_2():
         sub.flush()
         success, out, err = run('sub', '-i', GAME, '-f', sub.name)
         assert success, err
-        game, serial = gameio.read_game(json.loads(out)[0])
+        game, serial = gamereader.read(json.loads(out)[0])
         assert serial == subgame.subserializer(SERIAL, subg)
-        assert game == subgame.subgame(GAME_DATA, subg)
+        assert game == subgame.subgame(rsgame.game_copy(GAME_DATA), subg)
 
 
 def test_analysis_1():
@@ -368,7 +405,7 @@ def test_analysis_1():
     assert success, err
     start = '''Game Analysis
 =============
-Game:
+SampleGame:
     Roles: background, hft
     Players:
         6x background
@@ -471,7 +508,7 @@ def test_analysis_3():
     ]
     game = rsgame.game([4], [5], profiles, payoffs)
     serial = gamegen.serializer(game)
-    game_str = json.dumps(serial.to_game_json(game))
+    game_str = json.dumps(serial.to_json(game))
 
     success, out, err = run('analyze', '-sd', input=game_str)
     assert success, err
@@ -483,7 +520,7 @@ def test_analysis_3():
 def test_analysis_4():
     game = rsgame.game([2], [2], [[1, 1]], [[5, float('nan')]])
     serial = gamegen.serializer(game)
-    game_str = json.dumps(serial.to_game_json(game))
+    game_str = json.dumps(serial.to_json(game))
 
     success, out, err = run('analyze', '-s', input=game_str)
     assert success, err
@@ -496,7 +533,7 @@ def test_learning_output():
     assert success, err
     start = '''Game Learning
 =============
-Game:
+SampleGame:
     Roles: background, hft
     Players:
         6x background
@@ -537,8 +574,8 @@ def test_sgboot_1():
             tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
                                   20)
-        serial = gamegen.serializer(sgame)
-        json.dump(serial.to_samplegame_json(sgame), game)
+        serial = serialize.samplegameserializer_copy(gamegen.serializer(sgame))
+        json.dump(serial.to_json(sgame), game)
         game.flush()
 
         profs = [serial.to_prof_json(sgame.uniform_mixture())]
@@ -552,8 +589,8 @@ def test_sgboot_2():
     with tempfile.NamedTemporaryFile('w') as mixed:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
                                   20)
-        serial = gamegen.serializer(sgame)
-        game_str = json.dumps(serial.to_samplegame_json(sgame))
+        serial = serialize.samplegameserializer_copy(gamegen.serializer(sgame))
+        game_str = json.dumps(serial.to_json(sgame))
 
         profs = [serial.to_prof_json(sgame.uniform_mixture())]
         json.dump(profs, mixed)

@@ -5,13 +5,14 @@ import warnings
 import numpy as np
 import pytest
 
-from gameanalysis import gameio
+from gameanalysis import serialize
 from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-SERIAL = gameio.gameserializer(['role'], [['strat1', 'strat2']])
-SERIAL2 = gameio.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
+SERIAL = serialize.gameserializer(['role'], [['strat1', 'strat2']])
+SSERIAL = serialize.samplegameserializer_copy(SERIAL)
+SERIAL2 = serialize.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
 
 GAME = rsgame.samplegame(
     [2], [2],
@@ -491,18 +492,9 @@ FULLGAME_JSON = {
 @pytest.mark.parametrize('jgame', [BASEGAME_JSON, GAME_JSON, SAMPLEGAME_JSON,
                                    EMPTYGAME_JSON, SUMMARYGAME_JSON,
                                    OBSERVATIONGAME_JSON, FULLGAME_JSON])
-def test_basegame_from_json(jgame):
-    game, serial = gameio.read_basegame(jgame)
-    copy = serial.from_basegame_json(serial.to_basegame_json(game))
-    assert game == copy
-
-
-@pytest.mark.parametrize('jgame', [BASEGAME_JSON, GAME_JSON, SAMPLEGAME_JSON,
-                                   EMPTYGAME_JSON, SUMMARYGAME_JSON,
-                                   OBSERVATIONGAME_JSON, FULLGAME_JSON])
 def test_game_from_json(jgame):
-    game, serial = gameio.read_game(jgame)
-    copy = serial.from_game_json(serial.to_game_json(game))
+    game, serial = serialize.read_game(jgame)
+    copy = serial.from_json(serial.to_json(game))
     assert game == copy
 
 
@@ -510,16 +502,13 @@ def test_game_from_json(jgame):
                                    EMPTYGAME_JSON, SUMMARYGAME_JSON,
                                    OBSERVATIONGAME_JSON, FULLGAME_JSON])
 def test_samplegame_from_json(jgame):
-    game, serial = gameio.read_samplegame(jgame)
-    copy = serial.from_samplegame_json(serial.to_samplegame_json(game))
+    game, serial = serialize.read_samplegame(jgame)
+    copy = serial.from_json(serial.to_json(game))
     assert game == copy
 
 
-@pytest.mark.parametrize('jgame', [BASEGAME_JSON, GAME_JSON, SAMPLEGAME_JSON,
-                                   EMPTYGAME_JSON, SUMMARYGAME_JSON,
-                                   OBSERVATIONGAME_JSON, FULLGAME_JSON])
-def test_basegame_equality(jgame):
-    game, serial = gameio.read_basegame(jgame)
+def test_emptygame_equality():
+    game, serial = serialize.read_game(BASEGAME_JSON)
     assert game == rsgame.emptygame_copy(GAME)
     assert serial == SERIAL
 
@@ -528,59 +517,50 @@ def test_basegame_equality(jgame):
                                    SUMMARYGAME_JSON, OBSERVATIONGAME_JSON,
                                    FULLGAME_JSON])
 def test_game_equality(jgame):
-    game, serial = gameio.read_game(jgame)
-    assert rsgame.game_copy(game) == rsgame.game_copy(GAME)
+    game, serial = serialize.read_game(jgame)
+    assert game == rsgame.game_copy(GAME)
     assert serial == SERIAL
 
 
 @pytest.mark.parametrize('jgame', [SAMPLEGAME_JSON, OBSERVATIONGAME_JSON,
                                    FULLGAME_JSON])
 def test_samplegame_equality(jgame):
-    game, serial = gameio.read_samplegame(jgame)
+    game, serial = serialize.read_samplegame(jgame)
     assert game == GAME
-    assert serial == SERIAL
+    assert serial == SSERIAL
 
 
 def test_output():
+    VGAME_JSON = GAME_JSON.copy()
+    VGAME_JSON['type'] = 'game.1'
+
     EMPTYGAME_JSON = BASEGAME_JSON.copy()
     EMPTYGAME_JSON['profiles'] = []
+    EMPTYGAME_JSON['type'] = 'game.1'
+
+    assert VGAME_JSON == SERIAL.to_json(GAME)
+    assert VGAME_JSON == SERIAL.to_json(rsgame.game_copy(GAME))
+    assert EMPTYGAME_JSON == SERIAL.to_json(rsgame.emptygame_copy(GAME))
+
+    VSAMPLEGAME_JSON = SAMPLEGAME_JSON.copy()
+    VSAMPLEGAME_JSON['type'] = 'samplegame.1'
 
     SAMPLEDGAME_JSON = copy.deepcopy(GAME_JSON)
     for prof in SAMPLEDGAME_JSON['profiles']:
         for pays in prof.values():
             pays[:] = [(s, c, [p]) for s, c, p in pays]
+    SAMPLEDGAME_JSON['type'] = 'samplegame.1'
 
-    assert BASEGAME_JSON == SERIAL.to_basegame_json(GAME)
-    assert BASEGAME_JSON == SERIAL.to_basegame_json(rsgame.game_copy(GAME))
-    assert BASEGAME_JSON == SERIAL.to_basegame_json(
-        rsgame.emptygame_copy(GAME))
+    EMPTYGAME_JSON['type'] = 'samplegame.1'
 
-    assert GAME_JSON == SERIAL.to_game_json(GAME)
-    assert GAME_JSON == SERIAL.to_game_json(rsgame.game_copy(GAME))
-    assert EMPTYGAME_JSON == SERIAL.to_game_json(rsgame.emptygame_copy(GAME))
-
-    assert SAMPLEGAME_JSON == SERIAL.to_samplegame_json(GAME)
-    assert SAMPLEDGAME_JSON == SERIAL.to_samplegame_json(
+    assert VSAMPLEGAME_JSON == SSERIAL.to_json(GAME)
+    assert SAMPLEDGAME_JSON == SSERIAL.to_json(
         rsgame.game_copy(GAME))
-    assert EMPTYGAME_JSON == SERIAL.to_samplegame_json(
+    assert EMPTYGAME_JSON == SSERIAL.to_json(
         rsgame.emptygame_copy(GAME))
 
     expected = """
-BaseGame:
-    Roles: role
-    Players:
-        2x role
-    Strategies:
-        role:
-            strat1
-            strat2
-"""[1:-1]
-    assert expected == SERIAL.to_basegame_printstr(GAME)
-    assert expected == SERIAL.to_basegame_printstr(rsgame.game_copy(GAME))
-    assert expected == SERIAL.to_basegame_printstr(rsgame.emptygame_copy(GAME))
-
-    expected = """
-BaseGame:
+Game:
     Roles: a, b
     Players:
         3x a
@@ -591,10 +571,23 @@ BaseGame:
             foo
         b:
             baz
+payoff data for 0 out of 4 profiles
 """[1:-1]
-    assert expected == SERIAL2.to_basegame_printstr(rsgame.emptygame(
+    assert expected == SERIAL2.to_printstr(rsgame.emptygame(
         [3, 4], SERIAL2.num_role_strats))
 
+    expected = """
+SampleGame:
+    Roles: role
+    Players:
+        2x role
+    Strategies:
+        role:
+            strat1
+            strat2
+payoff data for 3 out of 3 profiles
+"""[1:-1]
+    assert expected == SERIAL.to_printstr(GAME)
     expected = """
 Game:
     Roles: role
@@ -606,8 +599,7 @@ Game:
             strat2
 payoff data for 3 out of 3 profiles
 """[1:-1]
-    assert expected == SERIAL.to_game_printstr(GAME)
-    assert expected == SERIAL.to_game_printstr(rsgame.game_copy(GAME))
+    assert expected == SERIAL.to_printstr(rsgame.game_copy(GAME))
     expected = """
 Game:
     Roles: role
@@ -619,7 +611,7 @@ Game:
             strat2
 payoff data for 0 out of 3 profiles
 """[1:-1]
-    assert expected == SERIAL.to_game_printstr(rsgame.emptygame_copy(GAME))
+    assert expected == SERIAL.to_printstr(rsgame.emptygame_copy(GAME))
 
     expected = """
 SampleGame:
@@ -633,7 +625,7 @@ SampleGame:
 payoff data for 3 out of 3 profiles
 3 to 4 observations per profile
 """[1:-1]
-    assert expected == SERIAL.to_samplegame_printstr(GAME)
+    assert expected == SSERIAL.to_printstr(GAME)
     expected = """
 SampleGame:
     Roles: role
@@ -646,7 +638,7 @@ SampleGame:
 payoff data for 3 out of 3 profiles
 1 observation per profile
 """[1:-1]
-    assert expected == SERIAL.to_samplegame_printstr(rsgame.game_copy(GAME))
+    assert expected == SSERIAL.to_printstr(rsgame.game_copy(GAME))
     expected = """
 SampleGame:
     Roles: role
@@ -659,14 +651,14 @@ SampleGame:
 payoff data for 0 out of 3 profiles
 no observations
 """[1:-1]
-    assert expected == SERIAL.to_samplegame_printstr(
+    assert expected == SSERIAL.to_printstr(
         rsgame.emptygame_copy(GAME))
 
 
 @pytest.mark.parametrize('_', range(20))
 def test_sorted_strategy_loading(_):
     with open('test/hard_nash_game_1.json') as f:
-        _, serial = gameio.read_basegame(json.load(f))
+        _, serial = serialize.read_game(json.load(f))
     assert utils.is_sorted(serial.role_names), \
         "loaded json game didn't have sorted roles"
     assert all(utils.is_sorted(strats) for strats in serial.strat_names), \
@@ -888,7 +880,7 @@ def test_to_pay_json():
                                    SUMMARYGAME_JSON, OBSERVATIONGAME_JSON,
                                    FULLGAME_JSON])
 def test_to_from_payoff_json(jgame):
-    _, serial = gameio.read_basegame(jgame)
+    _, serial = serialize.read_game(jgame)
     payoffs = np.concatenate([serial.from_payoff_json(p)[None]
                               for p in jgame['profiles']])
     expected = [[0, 0],
@@ -898,7 +890,7 @@ def test_to_from_payoff_json(jgame):
 
 
 def test_load_empty_observations():
-    serial = gameio.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
+    serial = serialize.gameserializer(['a', 'b'], [['bar', 'foo'], ['baz']])
     profile = {
         'symmetry_groups': [
             {
@@ -934,14 +926,16 @@ def test_load_empty_observations():
 def test_sorted_strategy_warning():
     with pytest.raises(UserWarning), warnings.catch_warnings():
         warnings.simplefilter('error')
-        gameio.gameserializer(['role'], [['b', 'a']])
+        serialize.gameserializer(['role'], [['b', 'a']])
 
 
 def test_invalid_game():
     with pytest.raises(ValueError):
-        SERIAL.from_basegame_json({})
+        SERIAL.from_json({})
     with pytest.raises(ValueError):
-        gameio.read_basegame({})
+        SSERIAL.from_json({})
+    with pytest.raises(ValueError):
+        serialize.read_game({})
 
 
 def test_repr():
@@ -949,13 +943,15 @@ def test_repr():
 
 
 def test_strat_name():
-    serial = gameio.gameserializer(['a', 'b'], [['e', 'q', 'w'], ['r', 't']])
+    serial = serialize.gameserializer(
+        ['a', 'b'], [['e', 'q', 'w'], ['r', 't']])
     for i, s in enumerate(['e', 'q', 'w', 'r', 't']):
         assert s == serial.strat_name(i)
 
 
 def test_index():
-    serial = gameio.gameserializer(['a', 'b'], [['e', 'q', 'w'], ['r', 't']])
+    serial = serialize.gameserializer(
+        ['a', 'b'], [['e', 'q', 'w'], ['r', 't']])
     assert 0 == serial.role_index('a')
     assert 1 == serial.role_index('b')
     assert 0 == serial.role_strat_index('a', 'e')
@@ -966,6 +962,27 @@ def test_index():
 
 
 def test_serialization():
-    json.dumps(SERIAL.to_basegame_json(GAME))
-    json.dumps(SERIAL.to_game_json(GAME))
-    json.dumps(SERIAL.to_samplegame_json(GAME))
+    """This will fail if numpy types make it to final output"""
+    json.dumps(SERIAL.to_json(GAME))
+    json.dumps(SSERIAL.to_json(GAME))
+
+
+def test_serializer_constructors():
+    copy = serialize.gameserializer_copy(SERIAL)
+    assert copy == SERIAL
+
+    copy = serialize.gameserializer_copy(SSERIAL)
+    assert copy == SERIAL
+
+    copy = serialize.gameserializer(SERIAL.role_names, SERIAL.strat_names)
+    assert copy == SERIAL
+
+    copy = serialize.samplegameserializer_copy(SERIAL)
+    assert copy == SSERIAL
+
+    copy = serialize.samplegameserializer_copy(SSERIAL)
+    assert copy == SSERIAL
+
+    copy = serialize.samplegameserializer(
+        SSERIAL.role_names, SSERIAL.strat_names)
+    assert copy == SSERIAL

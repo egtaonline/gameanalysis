@@ -4,7 +4,7 @@ import numpy as np
 
 from gameanalysis import dominance
 from gameanalysis import gamegen
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import rsgame
 
 
@@ -252,5 +252,5 @@ def test_travellers_dilemma():
 
 def test_known_fail_case():
     with open('test/hard_nash_game_1.json') as f:
-        game, _ = gameio.read_game(json.load(f))
+        game, _ = gamereader.read(json.load(f))
     dominance.iterated_elimination(game, 'neverbr')

@@ -7,7 +7,7 @@ import pytest
 
 from gameanalysis import agggen
 from gameanalysis import gamegen
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import regret
 from gameanalysis import rsgame
@@ -217,7 +217,7 @@ def test_empty_game():
 
 def test_hard_nash():
     with open('test/hard_nash_game_1.json') as f:
-        game, serial = gameio.read_game(json.load(f))
+        game, serial = gamereader.read(json.load(f))
     eqa = nash.mixed_nash(game)
     expected = serial.from_mix_json({
         'background': {

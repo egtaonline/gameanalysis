@@ -6,7 +6,8 @@ import sys
 import numpy as np
 
 from gameanalysis import bootstrap
-from gameanalysis import gameio
+from gameanalysis import gamereader
+from gameanalysis import rsgame
 
 
 def add_parser(subparsers):
@@ -74,7 +75,8 @@ def load_devs(game, serial, data):
 def main(args):
     data = json.load(args.input)
     if args.regret is not None:
-        game, serial = gameio.read_basegame(json.load(args.regret[0]))
+        game, serial = gamereader.read(json.load(args.regret[0]))
+        game = rsgame.emptygame_copy(game)  # gc any extra data
         mix = serial.from_mix_json(json.load(args.regret[1]))
         devs = load_devs(game, serial, data)
         expect = np.add.reduceat(devs * mix, game.role_starts, 1)
@@ -88,7 +90,8 @@ def main(args):
             mean = np.max(mdevs - mexpect)
 
     elif args.dev_surplus is not None:
-        game, serial = gameio.read_basegame(json.load(args.dev_surplus[0]))
+        game, serial = gamereader.read(json.load(args.dev_surplus[0]))
+        game = rsgame.emptygame_copy(game)  # gc any extra data
         mix = serial.from_mix_json(json.load(args.dev_surplus[1]))
         devs = load_devs(game, serial, data)
         surpluses = np.sum(

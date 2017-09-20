@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import subgame
 
 
@@ -86,7 +86,7 @@ def parse_index_spec(serial, spec):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
 
     # Collect all subgames
     subgames = []
@@ -105,7 +105,7 @@ def main(args):
                   args.output)
     else:
         json.dump([
-            subgame.subserializer(serial, sub).to_game_json(
+            subgame.subserializer(serial, sub).to_json(
                 subgame.subgame(game, sub))
             for sub in subgames], args.output)
     args.output.write('\n')

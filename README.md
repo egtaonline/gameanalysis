@@ -89,6 +89,4 @@ To Do
 - Some functions in `dominance` could probably be more efficient.
 - Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pandas?
   Or maybe numpy will implement these more efficiently in c.
-- Consider making payoffs or profiles sparse? Currently this makes operations much slower and even for large sparse observation payoffs only save ~2 memory
 - Use `--durations=N` to find slowest tests and fix them / speed them up.
-- Rework serializer so that arbitrary json can be loaded as a Game, Serializer pair that does the expected things.

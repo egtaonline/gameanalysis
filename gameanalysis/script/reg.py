@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 
-from gameanalysis import gameio
+from gameanalysis import gamereader
 from gameanalysis import regret
 from gameanalysis import scriptutils
 
@@ -72,7 +72,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gameio.read_game(json.load(args.input))
+    game, serial = gamereader.read(json.load(args.input))
     prof_func = TYPE[args.type]
     regrets = [prof_func(game, serial,
                          serial.from_mix_json(prof, verify=False))

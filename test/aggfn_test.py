@@ -272,14 +272,16 @@ def test_from_function():
 def test_serializer(by_role):
     game = agggen.random_aggfn([5, 4], [4, 3], 3, by_role=by_role)
     serial = agggen.serializer(game)
-    assert repr(serial) is not None
+    expected = ("AgfnGameSerializer(('r0', 'r1'), (('s0', 's1', 's2', 's3'), "
+                "('s0', 's1', 's2')), ('f0', 'f1', 'f2'))")
+    assert repr(serial) == expected
 
-    jgame = serial.to_agfngame_json(game)
-    game2 = serial.from_agfngame_json(jgame)
-    assert game == game2
-    game3, serial3 = aggfn.read_agfngame(jgame)
-    assert serial == serial3
-    assert game == game3
+    jgame = serial.to_json(game)
+    copy = serial.from_json(jgame)
+    assert game == copy
+    copy, scopy = aggfn.read_aggfn(jgame)
+    assert serial == scopy
+    assert game == copy
 
 
 def test_aggfn_repr():

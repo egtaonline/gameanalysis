@@ -5,7 +5,7 @@ analysis tractable. Most representations just use a subgame mask, which is a
 bitmask over included strategies."""
 import numpy as np
 
-from gameanalysis import gameio
+from gameanalysis import serialize
 from gameanalysis import rsgame
 from gameanalysis import utils
 
@@ -156,13 +156,14 @@ def subgame(game, subgame_mask):
                            payoffs)
 
 
+# FIXME Treat serializers like games, they must implement this on their own
 def subserializer(serial, subgame_mask):
     """Return a serializer for a subgame"""
     new_strats = [[s for s, m in zip(strats, mask) if m]
                   for strats, mask
                   in zip(serial.strat_names,
                          np.split(subgame_mask, serial.role_starts[1:]))]
-    return gameio.gameserializer(serial.role_names, new_strats)
+    return serialize.gameserializer(serial.role_names, new_strats)
 
 
 def translate(profiles, subgame_mask):

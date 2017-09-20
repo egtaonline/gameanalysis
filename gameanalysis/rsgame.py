@@ -33,7 +33,7 @@ from gameanalysis import utils
 _TINY = np.finfo(float).tiny
 
 
-class StratArray(object):
+class _StratArray(object):
     """A class with knowledge of the number of strategies per role
 
     This has methods common to working with strategy arrays, which essentially
@@ -449,7 +449,7 @@ class StratArray(object):
         return utils.acartesian2(*role_mixtures)
 
 
-class _BaseGame(StratArray):
+class _BaseGame(_StratArray):
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
@@ -581,6 +581,8 @@ class _BaseGame(StratArray):
             profile_sums = np.sum(self.profiles * self.payoffs, 1)
             return np.allclose(profile_sums, profile_sums[0])
 
+    # TODO Implement inverse
+    # FIXME Test for overflow
     def profile_id(self, profiles):
         """Return a unique integer representing a profile"""
         profiles = -np.asarray(profiles, int)
