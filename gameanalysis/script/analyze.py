@@ -90,8 +90,8 @@ def main(args):
 
     if args.dominance:
         domsub = dominance.iterated_elimination(redgame, 'strictdom')
-        redgame = subgame.subgame(redgame, domsub)
-        redserial = subgame.subserializer(redserial, domsub)
+        redgame = redgame.subgame(domsub)
+        redserial = redserial.subserial(domsub)
 
     if args.subgames:
         subgames = subgame.maximal_subgames(redgame)
@@ -106,7 +106,7 @@ def main(args):
     noeq_subgames = []
     candidates = []
     for submask in subgames:
-        subg = subgame.subgame(redgame, submask)
+        subg = redgame.subgame(submask)
         subeqa = nash.mixed_nash(
             subg, regret_thresh=args.regret_thresh,
             dist_thresh=args.dist_thresh, processes=args.processes,

@@ -1684,6 +1684,48 @@ def test_is_constant_sum():
     assert not game.is_constant_sum()
 
 
+def test_game_subgame():
+    profiles = [
+        [2, 0, 2, 0],
+        [1, 1, 2, 0],
+        [0, 2, 2, 0],
+    ]
+    payoffs = [
+        [1, 0, 2, 0],
+        [3, 4, 5, 0],
+        [0, 6, 7, 0],
+    ]
+    game = rsgame.game(2, [2, 2], profiles, payoffs)
+    mask = [True, False, True, False]
+    sprofiles = [[2, 2]]
+    spayoffs = [[1, 2]]
+    sgame = rsgame.game(2, [1, 1], sprofiles, spayoffs)
+    assert sgame == game.subgame(mask)
+
+    mask = [True, True, False, True]
+    assert rsgame.emptygame(2, [2, 1]) == game.subgame(mask)
+
+    profiles = [
+        [2, 0, 1, 1],
+        [1, 1, 1, 1],
+        [0, 2, 1, 1],
+    ]
+    payoffs = [
+        [8, 0, 9, 10],
+        [11, 12, 13, 14],
+        [0, 15, 16, 17],
+    ]
+    game = rsgame.game_replace(game, profiles, payoffs)
+    mask = [True, False, True, True]
+    sprofiles = [[2, 1, 1]]
+    spayoffs = [[8, 9, 10]]
+    sgame = rsgame.game(2, [1, 2], sprofiles, spayoffs)
+    assert sgame == game.subgame(mask)
+
+    mask = [True, True, False, True]
+    assert rsgame.emptygame(2, [2, 1]) == game.subgame(mask)
+
+
 def test_contains():
     profs = [[2, 0, 0, 2, 1],
              [1, 1, 0, 0, 3]]
@@ -1957,6 +1999,58 @@ def test_samplegame_different_samples():
     assert not np.setxor1d([1, 2], sgame.num_samples).size
     # This could technically fail, but it's extremely unlikely
     assert any(game != sgame.resample() for _ in range(1000))
+
+
+def test_samplegame_subgame():
+    profiles = [
+        [2, 0, 2, 0],
+        [1, 1, 2, 0],
+        [0, 2, 2, 0],
+    ]
+    payoffs = [
+        [
+            [[1], [0], [2], [0]],
+            [[3], [4], [5], [0]],
+        ],
+        [
+            [[0, 0], [6, 7], [8, 9], [0, 0]],
+        ]
+    ]
+    game = rsgame.samplegame(2, [2, 2], profiles, payoffs)
+    mask = [True, False, True, False]
+    sprofiles = [[2, 2]]
+    spayoffs = [[[[1], [2]]]]
+    sgame = rsgame.samplegame(2, [1, 1], sprofiles, spayoffs)
+    assert sgame == game.subgame(mask)
+
+    mask = [True, True, False, True]
+    sgame = rsgame.samplegame_copy(rsgame.emptygame(2, [2, 1]))
+    assert sgame == game.subgame(mask)
+
+    profiles = [
+        [2, 0, 1, 1],
+        [1, 1, 1, 1],
+        [0, 2, 1, 1],
+    ]
+    payoffs = [
+        [
+            [[8], [0], [9], [10]],
+            [[11], [12], [13], [14]],
+        ],
+        [
+            [[0, 0], [15, 16], [17, 18], [19, 20]],
+        ]
+    ]
+    game = rsgame.samplegame_replace(game, profiles, payoffs)
+    mask = [False, True, True, True]
+    sprofiles = [[2, 1, 1]]
+    spayoffs = [[[[15, 16], [17, 18], [19, 20]]]]
+    sgame = rsgame.samplegame(2, [1, 2], sprofiles, spayoffs)
+    assert sgame == game.subgame(mask)
+
+    mask = [True, True, False, True]
+    sgame = rsgame.samplegame_copy(rsgame.emptygame(2, [2, 1]))
+    assert sgame == game.subgame(mask)
 
 
 def test_samplegame_repr():

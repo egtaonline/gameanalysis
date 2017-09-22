@@ -5,7 +5,6 @@ analysis tractable. Most representations just use a subgame mask, which is a
 bitmask over included strategies."""
 import numpy as np
 
-from gameanalysis import serialize
 from gameanalysis import rsgame
 from gameanalysis import utils
 
@@ -119,51 +118,11 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
     base = rsgame.emptygame(new_players, game.num_role_strats)
     new_mask = subgame_mask.copy()
     new_mask[role_strat_ind] = True
-    profs = subgame(base, new_mask).all_profiles()
+    profs = base.subgame(new_mask).all_profiles()
     expand_profs = np.zeros((profs.shape[0], game.num_strats), int)
     expand_profs[:, new_mask] = profs
     expand_profs[:, role_strat_ind] += 1
     return expand_profs
-
-
-def subgame(game, subgame_mask):
-    """Returns a new game that only has data for profiles in subgame_mask"""
-    subgame_mask = np.asarray(subgame_mask, bool)
-    assert game.num_strats == subgame_mask.size
-    num_strats = np.add.reduceat(subgame_mask, game.role_starts)
-    assert np.all(num_strats > 0), \
-        "Not all roles have at least one strategy"
-
-    # FIXME Account for various game types off of attributes instead of
-    # subclasses? maybe include subgame logic in games themselves?
-    # There's some duplication here in order to allow base games
-    if isinstance(game, rsgame.SampleGame):
-        prof_mask = ~np.any(game.profiles * ~subgame_mask, 1)
-        profiles = game.profiles[prof_mask][:, subgame_mask]
-        sample_payoffs = [pays[pmask][:, subgame_mask]
-                          for pays, pmask
-                          in zip(game.sample_payoffs,
-                                 np.split(prof_mask, game.sample_starts[1:]))
-                          if pmask.any()]
-        return rsgame.samplegame(game.num_role_players, num_strats, profiles,
-                                 sample_payoffs)
-
-    else:
-        prof_mask = ~np.any(game.profiles * ~subgame_mask, 1)
-        profiles = game.profiles[prof_mask][:, subgame_mask]
-        payoffs = game.payoffs[prof_mask][:, subgame_mask]
-        return rsgame.game(game.num_role_players, num_strats, profiles,
-                           payoffs)
-
-
-# FIXME Treat serializers like games, they must implement this on their own
-def subserializer(serial, subgame_mask):
-    """Return a serializer for a subgame"""
-    new_strats = [[s for s, m in zip(strats, mask) if m]
-                  for strats, mask
-                  in zip(serial.strat_names,
-                         np.split(subgame_mask, serial.role_starts[1:]))]
-    return serialize.gameserializer(serial.role_names, new_strats)
 
 
 def translate(profiles, subgame_mask):

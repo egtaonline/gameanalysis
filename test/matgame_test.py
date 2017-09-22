@@ -167,6 +167,17 @@ def test_is_constant_sum():
     assert not matg.is_constant_sum()
 
 
+def test_submatgame():
+    matg = matgame.matgame(rand.random((2, 3, 4, 3)))
+    mask = [True, True, True, False, True, False, False, True, True]
+    smatg = matgame.matgame(matg.payoff_matrix[:, [0, 2]][:, :, 2:].copy())
+    assert smatg == matg.subgame(mask)
+
+    matg = matgame.matgame([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    mask = [True, True, True, False]
+    matg = matgame.matgame([[[1, 2]], [[5, 6]]])
+
+
 @pytest.mark.parametrize('strats', [
     [1],
     [3],
@@ -359,3 +370,8 @@ def test_serializer():
     copy, scopy = matgame.read_matgame(jgame)
     assert serial == scopy
     assert game == copy
+
+    mask = [True, False, True, False, False, True, True, False, False]
+    sserial = matgame.matgameserializer(
+        ['r0', 'r1', 'r2'], [['s0'], ['s0'], ['s0', 's1']])
+    assert sserial == serial.subserial(mask)

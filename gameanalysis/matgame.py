@@ -171,6 +171,15 @@ class MatrixGame(rsgame._CompleteGame):
                          self.num_role_strats, self.num_role_strats, 1)
         return devpays, jac
 
+    def subgame(self, subgame_mask):
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be valid"
+        matrix = self.payoff_matrix
+        for i, mask in enumerate(np.split(subgame_mask, self.role_starts[1:])):
+            matrix = matrix[(slice(None),) * i + (mask,)]
+        return matgame(matrix.copy())
+
     @utils.memoize
     def __hash__(self):
         return super().__hash__()
@@ -415,6 +424,17 @@ class MatGameSerializer(serialize._BaseSerializer):
         res['matrix'] = game.payoff_matrix.tolist()
         res['type'] = 'matrix.1'
         return res
+
+    def subserial(self, subgame_mask):
+        """Restrict possible strategies"""
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be valid"
+        strat_names = [[s for s, m in zip(strats, mask) if m]
+                       for strats, mask
+                       in zip(self.strat_names,
+                              np.split(subgame_mask, self.role_starts[1:]))]
+        return matgameserializer(self.role_names, strat_names)
 
 
 def matgameserializer(role_names, strat_names):

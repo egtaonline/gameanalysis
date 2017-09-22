@@ -85,6 +85,33 @@ def test_sum_aggfn():
     verify_aggfn(game)
 
 
+def test_sum_aggfn_subgame():
+    functab = [[0, 1, 2, 3],
+               [0, 3, 2, 1],
+               [9, 4, 1, 0],
+               [3, 0, 0, 3]]
+    funcinps = [[True, True, True, True],
+                [False, True, True, False],
+                [True, False, True, True],
+                [False, False, False, False],
+                [True, False, False, True]]
+    actw = [[-1, 0, 1, 2, 3],
+            [0, 1, 0, 1, 0],
+            [1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1]]
+    game = aggfn.aggfn([2, 1], [2, 3], actw, funcinps, functab)
+    mask = [True, False, True, True, False]
+    sfuncinps = [[True, True, True, True],
+                 [True, False, True, True],
+                 [False, False, False, False]]
+    sactw = [[-1, 1, 2],
+             [0, 0, 1],
+             [1, 1, 1],
+             [0, 1, 1]]
+    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps, functab)
+    assert sgame == game.subgame(mask)
+
+
 def test_role_aggfn():
     functab = [[[0, 1], [1, 3], [2, 0]],
                [[0, 0], [3, 2], [2, 4]],
@@ -161,6 +188,33 @@ def test_role_aggfn():
     assert perm == game
 
     verify_aggfn(game)
+
+
+def test_role_aggfn_subgame():
+    functab = [[[0, 1], [1, 3], [2, 0]],
+               [[0, 0], [3, 2], [2, 4]],
+               [[9, 7], [4, 1], [1, 4]],
+               [[3, 6], [0, -1], [3, 4]]]
+    funcinps = [[True, True, True, True],
+                [False, True, True, False],
+                [True, False, True, True],
+                [False, False, False, False],
+                [True, False, False, True]]
+    actw = [[-1, 0, 1, 2, 3],
+            [0, 1, 0, 1, 0],
+            [1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1]]
+    game = aggfn.aggfn([2, 1], [2, 3], actw, funcinps, functab)
+    mask = [False, True, True, False, True]
+    sfuncinps = [[False, True, True, False],
+                 [True, False, True, True],
+                 [True, False, False, True]]
+    sactw = [[0, 1, 3],
+             [1, 0, 0],
+             [1, 1, 1],
+             [0, 1, 1]]
+    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps, functab)
+    assert sgame == game.subgame(mask)
 
 
 def verify_aggfn(game):
@@ -282,6 +336,11 @@ def test_serializer(by_role):
     copy, scopy = aggfn.read_aggfn(jgame)
     assert serial == scopy
     assert game == copy
+
+    mask = [True, False, True, False, False, True, True]
+    sserial = aggfn.aggfnserializer(['r0', 'r1'], [['s0', 's2'], ['s1', 's2']],
+                                    ['f0', 'f1', 'f2'])
+    assert sserial == serial.subserial(mask)
 
 
 def test_aggfn_repr():

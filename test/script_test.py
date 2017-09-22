@@ -11,7 +11,6 @@ from gameanalysis import gamereader
 from gameanalysis import matgame
 from gameanalysis import rsgame
 from gameanalysis import serialize
-from gameanalysis import subgame
 from gameanalysis import utils
 from gameanalysis.reduction import deviation_preserving as dpr
 from gameanalysis.reduction import hierarchical as hr
@@ -57,8 +56,8 @@ def test_dominance_1():
     success, out, err = run('dom', '-i', GAME)
     assert success, err
     game, serial = gamereader.read(json.loads(out))
-    assert serial == serialize.gameserializer_copy(SERIAL)
-    assert game == rsgame.game_copy(GAME_DATA)
+    assert serial == SERIAL
+    assert game == GAME_DATA
 
 
 def test_dominance_2():
@@ -396,8 +395,8 @@ def test_subgame_extract_2():
         success, out, err = run('sub', '-i', GAME, '-f', sub.name)
         assert success, err
         game, serial = gamereader.read(json.loads(out)[0])
-        assert serial == subgame.subserializer(SERIAL, subg)
-        assert game == subgame.subgame(rsgame.game_copy(GAME_DATA), subg)
+        assert serial == SERIAL.subserial(subg)
+        assert game == GAME_DATA.subgame(subg)
 
 
 def test_analysis_1():

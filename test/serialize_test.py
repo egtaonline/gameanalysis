@@ -961,6 +961,24 @@ def test_index():
     assert 4 == serial.role_strat_index('b', 't')
 
 
+def test_subgameserial():
+    mask = [True, False, True, True, False]
+    serial = serialize.gameserializer(
+        ['a', 'b'], [['e', 'q', 'w'], ['r', 't']])
+    sserial = serialize.gameserializer(
+        ['a', 'b'], [['e', 'w'], ['r']])
+    assert serial.subserial(mask) == sserial
+
+
+def test_subsamplegameserial():
+    mask = [True, False, True, True, False]
+    serial = serialize.samplegameserializer(
+        ['a', 'b'], [['e', 'q', 'w'], ['r', 't']])
+    sserial = serialize.samplegameserializer(
+        ['a', 'b'], [['e', 'w'], ['r']])
+    assert serial.subserial(mask) == sserial
+
+
 def test_serialization():
     """This will fail if numpy types make it to final output"""
     json.dumps(SERIAL.to_json(GAME))

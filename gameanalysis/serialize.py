@@ -603,6 +603,17 @@ class GameSerializer(_BaseSerializer):
             super().to_printstr(game), game.num_profiles,
             game.num_all_profiles)
 
+    def subserial(self, subgame_mask):
+        """Restrict possible strategies"""
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be valid"
+        strat_names = [[s for s, m in zip(strats, mask) if m]
+                       for strats, mask
+                       in zip(self.strat_names,
+                              np.split(subgame_mask, self.role_starts[1:]))]
+        return gameserializer(self.role_names, strat_names)
+
 
 def gameserializer(role_names, strat_names):
     """Static constrictor for GameSerializer
@@ -706,6 +717,17 @@ class SampleGameSerializer(_BaseSerializer):
             game.num_all_profiles,
             sampstr,
         )
+
+    def subserial(self, subgame_mask):
+        """Restrict possible strategies"""
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be valid"
+        strat_names = [[s for s, m in zip(strats, mask) if m]
+                       for strats, mask
+                       in zip(self.strat_names,
+                              np.split(subgame_mask, self.role_starts[1:]))]
+        return samplegameserializer(self.role_names, strat_names)
 
 
 def samplegameserializer(role_names, strat_names):

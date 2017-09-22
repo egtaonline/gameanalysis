@@ -472,10 +472,17 @@ class _BaseGame(_StratArray):
     1, the other is used; if both are integers or have length 1, the game will
     have one role.
 
-    A few functions should be provided by subclasses: `max_strat_payoffs()`,
-    `min_strat_payoffs()`, `get_payoffs()`, `deviation_payoffs()`,
-    `__contains__()`, `num_profiles`, `num_complete_profiles`, `profiles`, and
-    `payoffs`
+    A few functions should be provided by subclasses:
+    - `max_strat_payoffs()`
+    - `min_strat_payoffs()`
+    - `get_payoffs()`
+    - `deviation_payoffs()`
+    - `subgame()`
+    - `__contains__()`
+    - `num_profiles`
+    - `num_complete_profiles`
+    - `profiles`
+    - `payoffs`
 
     Attributes
     ----------
@@ -989,6 +996,17 @@ class Game(_BaseGame):
         dev_jac[nan_mask] = np.nan
         return devs, dev_jac
 
+    def subgame(self, subgame_mask):
+        """Remove possible strategies from consideration"""
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be a valid subgame"
+        num_strats = np.add.reduceat(subgame_mask, self.role_starts)
+        prof_mask = ~np.any(self.profiles * ~subgame_mask, 1)
+        profiles = self.profiles[prof_mask][:, subgame_mask]
+        payoffs = self.payoffs[prof_mask][:, subgame_mask]
+        return game(self.num_role_players, num_strats, profiles, payoffs)
+
     def __contains__(self, profile):
         """Returns true if all data for that profile exists"""
         return (utils.hash_array(np.asarray(profile, int))
@@ -1263,6 +1281,22 @@ class SampleGame(Game):
         return np.concatenate([
             np.rollaxis(pay, 2, 1).reshape((-1, self.num_strats))
             for pay in self.sample_payoffs])
+
+    def subgame(self, subgame_mask):
+        """Remove possible strategies from consideration"""
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be a valid subgame"
+        num_strats = np.add.reduceat(subgame_mask, self.role_starts)
+        prof_mask = ~np.any(self.profiles * ~subgame_mask, 1)
+        profiles = self.profiles[prof_mask][:, subgame_mask]
+        sample_payoffs = [pays[pmask][:, subgame_mask]
+                          for pays, pmask
+                          in zip(self.sample_payoffs,
+                                 np.split(prof_mask, self.sample_starts[1:]))
+                          if pmask.any()]
+        return samplegame(self.num_role_players, num_strats, profiles,
+                          sample_payoffs)
 
     @utils.memoize
     def __hash__(self):

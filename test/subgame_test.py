@@ -20,14 +20,13 @@ def test_subgame():
         "didn't generate the right number of additional profiles"
     subg2 = subg.copy()
     subg2[1] = True
-    assert (subgame.subgame(game, subg2).num_all_profiles ==
-            adds + subgame.subgame(game, subg).num_all_profiles), \
+    assert (game.subgame(subg2).num_all_profiles ==
+            adds + game.subgame(subg).num_all_profiles), \
         "additional profiles didn't return the proper amount"
 
     serial = gamegen.serializer(game)
-    sub_serial = subgame.subserializer(serial, subg)
-    assert (subgame.subgame(game, subg).num_strats ==
-            sub_serial.num_strats)
+    sub_serial = serial.subserial(subg)
+    assert game.subgame(subg).num_strats == sub_serial.num_strats
 
 
 @pytest.mark.parametrize('players,strategies', testutils.games)
@@ -54,8 +53,7 @@ def test_missing_data_maximal_subgames(players, strategies, prob):
             "One maximal subgame dominated another"
 
     for sub in subs:
-        subprofs = subgame.translate(subgame.subgame(base, sub).all_profiles(),
-                                     sub)
+        subprofs = subgame.translate(base.subgame(sub).all_profiles(), sub)
         assert all(p in game for p in subprofs), \
             "Maximal subgame didn't have all profiles"
         for dev in np.nonzero(~sub)[0]:
@@ -103,11 +101,11 @@ def test_subgame_preserves_completeness(players, strategies, _):
     assert game.is_complete(), "gamegen didn't create complete game"
 
     mask = game.random_subgames()
-    sub_game = subgame.subgame(game, mask)
+    sub_game = game.subgame(mask)
     assert sub_game.is_complete(), "subgame didn't preserve game completeness"
 
     sgame = gamegen.add_noise(game, 1, 3)
-    sub_sgame = subgame.subgame(sgame, mask)
+    sub_sgame = sgame.subgame(mask)
     assert sub_sgame.is_complete(), \
         "subgame didn't preserve sample game completeness"
 

@@ -5,7 +5,6 @@ import sys
 
 from gameanalysis import dominance
 from gameanalysis import gamereader
-from gameanalysis import subgame
 
 
 def add_parser(subparsers):
@@ -45,8 +44,8 @@ def main(args):
         res = {r: list(s) for r, s in serial.to_subgame_json(sub_mask).items()}
         json.dump(res, args.output)
     else:
-        sub_game = subgame.subgame(game, sub_mask)
-        sub_serial = subgame.subserializer(serial, sub_mask)
+        sub_game = game.subgame(sub_mask)
+        sub_serial = serial.subserial(sub_mask)
         json.dump(sub_serial.to_json(sub_game), args.output)
 
     args.output.write('\n')

@@ -53,6 +53,12 @@ class _AgfnGame(rsgame._CompleteGame):
                 == (self.num_functions, self.num_strats))
         assert (self._function_inputs.shape
                 == (self.num_strats, self.num_functions))
+        # FIXME The way subgame works right now these first two asserts can be
+        # false for a subgame if we don't remove the corresponding functions.
+        # However, there's no way for subserial to know that functions are
+        # removed without knowing the aggfn structure. Either these checks
+        # should be removed or games and serializers need to be merged to
+        # account for this fact.
         assert self._function_inputs.any(0).all(), \
             "not every function get input"
         assert np.any(self._action_weights != 0, 1).all(), \
@@ -104,6 +110,16 @@ class _AgfnGame(rsgame._CompleteGame):
         maxs = np.sum((minima + maxima) * self._action_weights, 0)
         maxs.setflags(write=False)
         return maxs
+
+    def subgame(self, subgame_mask):
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be valid"
+        num_strats = np.add.reduceat(subgame_mask, self.role_starts)
+        return aggfn(self.num_role_players, num_strats,
+                     self._action_weights[:, subgame_mask],
+                     self._function_inputs[subgame_mask],
+                     self._function_table)
 
     def __repr__(self):
         return '{old}, {nfuncs:d})'.format(
@@ -522,6 +538,18 @@ class AgfnGameSerializer(serialize._BaseSerializer):
         res['type'] = 'aggfn.1'
 
         return res
+
+    def subserial(self, subgame_mask):
+        """Restrict possible strategies"""
+        subgame_mask = np.asarray(subgame_mask, bool)
+        assert self.is_subgame(subgame_mask), \
+            "subgame_mask must be valid"
+        strat_names = [[s for s, m in zip(strats, mask) if m]
+                       for strats, mask
+                       in zip(self.strat_names,
+                              np.split(subgame_mask, self.role_starts[1:]))]
+        return aggfnserializer(self.role_names, strat_names,
+                               self.function_names)
 
     def __repr__(self):
         return '{}, {})'.format(super().__repr__()[:-1], self.function_names)
