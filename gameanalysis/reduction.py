@@ -44,8 +44,7 @@ class hierarchical(object):
 
         red_profiles, mask = hierarchical._reduce_profiles(
             full_game, red_game.num_role_players[None], profiles)
-        return rsgame.game_replace(red_game, red_profiles, payoffs[mask],
-                                   verify=False)
+        return rsgame.game_replace(red_game, red_profiles, payoffs[mask])
 
     def _reduce_profiles(sarr, reduced_players, profiles):
         """Hierarchically reduces several role symmetric array profiles
@@ -291,7 +290,7 @@ class deviation_preserving(object):
         red_payoffs[unknown] = np.nan
         valid = ~np.all((red_profiles == 0) | np.isnan(red_payoffs), 1)
         return rsgame.game_replace(red_game, red_profiles[valid],
-                                   red_payoffs[valid], verify=False)
+                                   red_payoffs[valid])
 
     @staticmethod
     def expand_profiles(full_game, profiles, *, return_contributions=False):

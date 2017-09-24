@@ -147,7 +147,6 @@ def test_min_reg_nash():
         [2],
         [1, 1],
         [2, 2],
-        [4, 4, 4],
         [1, 3],
     ]))
 def test_mixed_nash(methods, strategies):
@@ -164,7 +163,6 @@ def test_mixed_nash(methods, strategies):
         [2],
         [1, 1],
         [2, 2],
-        [4, 4, 4],
         [1, 3],
     ]))
 def test_mixed_nash_multi_process(methods, strategies):
@@ -181,7 +179,6 @@ def test_mixed_nash_multi_process(methods, strategies):
         [2],
         [1, 1],
         [2, 2],
-        [4, 4, 4],
         [1, 3],
     ]))
 def test_mixed_nash_best(methods, strategies):
@@ -191,7 +188,7 @@ def test_mixed_nash_best(methods, strategies):
 
 
 @testutils.warnings_filter()
-@testutils.long_test
+@pytest.mark.slow
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -235,7 +232,7 @@ def test_hard_nash():
         "Didn't find equilibrium in known hard instance"
 
 
-@testutils.long_test
+@pytest.mark.slow
 @pytest.mark.parametrize('_', range(20))
 def test_at_least_one_big(_):  # pragma: no cover
     num_roles = np.random.randint(1, 4)

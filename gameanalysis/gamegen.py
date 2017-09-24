@@ -37,7 +37,7 @@ def role_symmetric_game(num_role_players, num_role_strats,
     mask = profiles > 0
     payoffs = np.zeros(profiles.shape)
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.game_replace(game, profiles, payoffs, verify=False)
+    return rsgame.game_replace(game, profiles, payoffs)
 
 
 def independent_game(num_role_strats, distribution=default_distribution):
@@ -241,7 +241,7 @@ def travellers_dilemma(players=2, max_value=100):
     lowest_pays = mins + 4
     lowest_pays[ties] -= 2
     payoffs[rows, mins] = lowest_pays
-    return rsgame.game_replace(game, profiles, payoffs, verify=False)
+    return rsgame.game_replace(game, profiles, payoffs)
 
 
 def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
@@ -297,7 +297,7 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.game_replace(game, profiles, payoffs, verify=False)
+    return rsgame.game_replace(game, profiles, payoffs)
 
 
 def drop_profiles(game, prob, independent=True):
@@ -321,12 +321,11 @@ def drop_profiles(game, prob, independent=True):
                    np.split(selection, game.sample_starts[1:]))
             if np.any(mask)]
         return rsgame.samplegame_replace(game, new_profiles,
-                                         new_sample_payoffs, verify=False)
+                                         new_sample_payoffs)
     else:
         new_profiles = game.profiles[selection]
         new_payoffs = game.payoffs[selection]
-        return rsgame.game_replace(game, new_profiles, new_payoffs,
-                                   verify=False)
+        return rsgame.game_replace(game, new_profiles, new_payoffs)
 
 
 def drop_samples(game, prob):
@@ -360,8 +359,7 @@ def drop_samples(game, prob):
         profiles = np.empty((0, game.num_strats), dtype=int)
         sample_payoffs = []
 
-    return rsgame.samplegame_replace(game, profiles, sample_payoffs,
-                                     verify=False)
+    return rsgame.samplegame_replace(game, profiles, sample_payoffs)
 
 
 def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
@@ -418,8 +416,7 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
         new_profiles = np.concatenate(new_profiles)
     else:  # No data
         new_profiles = np.empty((0, game.num_strats), dtype=int)
-    return rsgame.samplegame_replace(game, new_profiles, sample_payoffs,
-                                     verify=False)
+    return rsgame.samplegame_replace(game, new_profiles, sample_payoffs)
 
 
 def width_gaussian(max_width, num_profiles, num_samples):
@@ -519,8 +516,7 @@ def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
     samples = noise(max_width, mask.sum(), num_samples)
     expand_mask = np.broadcast_to(mask[..., None], mask.shape + (num_samples,))
     spayoffs[expand_mask] += samples.flat
-    return rsgame.samplegame_replace(game, game.profiles, [spayoffs],
-                                     verify=False)
+    return rsgame.samplegame_replace(game, game.profiles, [spayoffs])
 
 
 def serializer(game):

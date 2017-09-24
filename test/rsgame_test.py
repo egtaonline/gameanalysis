@@ -794,6 +794,18 @@ def test_profile_id():
     assert np.all((0 <= res) & (res < game.num_all_profiles))
 
 
+def test_profile_id_big():
+    game = rsgame.emptygame([20, 20], 20)
+    profile = np.zeros(40, int)
+    profile[[19, 39]] = 20
+    assert game.profile_id(profile) == 4750416376930772648099
+
+    game = rsgame.emptygame(40, 40)
+    profile = np.zeros(40, int)
+    profile[39] = 40
+    assert game.profile_id(profile) == 53753604366668088230809
+
+
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_profile_id(role_players, role_strats):
     # Here we have an expectation that all_profiles always returns profiles in
@@ -1204,31 +1216,24 @@ def test_game_verifications():
 
     profiles = [[3, -1]]
     payoffs = [[4, 5]]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
         rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[3, 0]]
-    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
         rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[2, 0]]
-    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
         rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[1, 1]]
     payoffs = [[np.nan, np.nan]]
-    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
         rsgame.game_replace(game, profiles, payoffs)
 
     profiles = [[2, 0]]
     payoffs = [[np.nan, 0]]
-    rsgame.game_replace(game, profiles, payoffs, verify=False)
     with pytest.raises(AssertionError):
         rsgame.game_replace(game, profiles, payoffs)
 

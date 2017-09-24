@@ -23,13 +23,16 @@ from gameanalysis.reduction import twins as tr
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 GA = os.path.join(DIR, '..', 'bin', 'ga')
-GAME = os.path.join(DIR, 'hard_nash_game_1.json')
-with open(GAME, 'r') as f:
-    GAME_STR = f.read()
-GAME_JSON = json.loads(GAME_STR)
-GAME_DATA, SERIAL = gamereader.read(GAME_JSON)
+HARD_GAME = os.path.join(DIR, 'hard_nash_game_1.json')
+with open(HARD_GAME, 'r') as f:
+    HARD_GAME_STR = f.read()
+HARD_GAME_DATA, HARD_SERIAL = gamereader.read(json.loads(HARD_GAME_STR))
+GAME_DATA = gamegen.role_symmetric_game([3, 2], [2, 3])
+SERIAL = gamegen.serializer(GAME_DATA)
+GAME_JSON = SERIAL.to_json(GAME_DATA)
+GAME_STR = json.dumps(GAME_JSON)
 
-MATGAME = gamegen.independent_game([2, 3, 4])
+MATGAME = gamegen.independent_game([2, 3])
 MSERIAL = matgame.matgameserializer_copy(gamegen.serializer(MATGAME))
 
 
@@ -53,7 +56,10 @@ def test_help():
 
 
 def test_dominance_1():
-    success, out, err = run('dom', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('dom', '-i', game.name)
     assert success, err
     game, serial = gamereader.read(json.loads(out))
     assert serial == SERIAL
@@ -61,7 +67,10 @@ def test_dominance_1():
 
 
 def test_dominance_2():
-    success, out, err = run('dom', '-i', GAME, '-s')
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('dom', '-i', game.name, '-s')
     assert success, err
     assert json.loads(out) == GAME_JSON['strategies']
 
@@ -72,13 +81,19 @@ def test_dominance_3():
 
 
 def test_dominance_4():
-    success, out, err = run('dom', '-cstrictdom', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('dom', '-cstrictdom', '-i', game.name)
     assert success, err
     gamereader.read(json.loads(out))
 
 
 def test_dominance_5():
-    success, out, err = run('dom', '-cneverbr', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('dom', '-cneverbr', '-i', game.name)
     assert success, err
     gamereader.read(json.loads(out))
 
@@ -114,74 +129,96 @@ def test_gamegen_3():
 
 
 def test_gamegen_4():
-    success, out, err = run('gen', 'noise', 'gumbel', '1.5', '5', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('gen', 'noise', 'gumbel',
+                                '1.5', '5', '-i', game.name)
     assert success, err
     gamereader.read(json.loads(out))
 
 
 def test_gamegen_5():
-    success, out, err = run('gen', 'noise', 'bimodal', '1.5', '5', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('gen', 'noise', 'bimodal',
+                                '1.5', '5', '-i', game.name)
     assert success, err
     gamereader.read(json.loads(out))
 
 
 def test_gamegen_6():
-    success, out, err = run('gen', 'noise', 'gaussian', '1.5', '5', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run(
+            'gen', 'noise', 'gaussian', '1.5', '5', '-i', game.name)
     assert success, err
     gamereader.read(json.loads(out))
 
 
 def test_nash_1():
-    assert not run('nash', '-tfail', '-i', GAME)[0]
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        assert not run('nash', '-tfail', '-i', game.name)[0]
 
-    success, out, err = run('nash', input=GAME_STR)
+    success, _, err = run('nash', input=GAME_STR)
     assert success, err
-    assert any(
-        np.allclose(SERIAL.from_mix_json(mix),
-                    [0.54074617,  0.45925383,  0., 0., 0., 1., 0., 0., 0.])
-        for mix in json.loads(out))
 
 
 def test_nash_2():
-    success, _, err = run(
-        'nash', '-i', GAME, '-o/dev/null', '-r1e-2', '-d1e-2', '-c1e-7',
-        '-x100', '-s1e-2', '-m5', '-n', '-p1')
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, _, err = run(
+            'nash', '-i', game.name, '-o/dev/null', '-r1e-2', '-d1e-2',
+            '-c1e-7', '-x100', '-s1e-2', '-m5', '-n', '-p1')
     assert success, err
 
 
 def test_nash_3():
-    success, out, err = run('nash', '-tpure', '-i', GAME)
+    success, out, err = run('nash', '-tpure', '-i', HARD_GAME)
     assert success, err
     assert any(
-        np.all(SERIAL.from_prof_json(prof) == [4, 2, 0, 0, 0, 1, 0, 0, 0])
+        np.all(HARD_SERIAL.from_prof_json(prof) == [4, 2, 0, 0, 0, 1, 0, 0, 0])
         for prof in json.loads(out))
 
 
 def test_nash_4():
-    success, out, err = run('nash', '-tmin-reg-prof', '-i', GAME)
+    success, out, err = run('nash', '-tmin-reg-prof', '-i', HARD_GAME)
     assert success, err
     assert any(
-        np.all(SERIAL.from_prof_json(prof) == [4, 2, 0, 0, 0, 1, 0, 0, 0])
+        np.all(HARD_SERIAL.from_prof_json(prof) == [4, 2, 0, 0, 0, 1, 0, 0, 0])
         for prof in json.loads(out))
 
 
 def test_nash_5():
-    success, out, err = run('nash', '-tmin-reg-grid', '-i', GAME)
+    success, out, err = run('nash', '-tmin-reg-grid', '-i', HARD_GAME)
     assert success, err
     assert any(
-        np.allclose(SERIAL.from_mix_json(mix), [0, 1, 0, 0, 0, 1, 0, 0, 0])
+        np.allclose(HARD_SERIAL.from_mix_json(
+            mix), [0, 1, 0, 0, 0, 1, 0, 0, 0])
         for mix in json.loads(out))
 
 
 def test_nash_6():
-    success, out, err = run('nash', '-tmin-reg-rand', '-m10', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('nash', '-tmin-reg-rand',
+                                '-m10', '-i', game.name)
     assert success, err
     for mix in json.loads(out):
         SERIAL.from_mix_json(mix)
 
 
 def test_nash_7():
-    success, out, err = run('nash', '-trand', '-m10', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('nash', '-trand', '-m10', '-i', game.name)
     assert success, err
     for mix in json.loads(out):
         SERIAL.from_mix_json(mix)
@@ -214,10 +251,11 @@ def test_payoff_pure():
             'hft': {'noop': 1}}]
         json.dump(prof, pure)
         pure.flush()
-        success, _, err = run('pay', '-i', GAME, pure.name, '-o/dev/null')
+        success, _, err = run('pay', '-i', HARD_GAME, pure.name, '-o/dev/null')
         assert success, err
 
-        success, out, err = run('pay', pure.name, '-twelfare', input=GAME_STR)
+        success, out, err = run(
+            'pay', pure.name, '-twelfare', input=HARD_GAME_STR)
         assert success, err
         assert np.isclose(json.loads(out)[0], -315.4034577992763)
 
@@ -230,10 +268,12 @@ def test_payoff_mixed():
             'hft': {'noop': 1}}]
         json.dump(prof, mixed)
         mixed.flush()
-        success, _, err = run('pay', '-i', GAME, mixed.name, '-o/dev/null')
+        success, _, err = run('pay', '-i', HARD_GAME,
+                              mixed.name, '-o/dev/null')
         assert success, err
 
-        success, out, err = run('pay', mixed.name, '-twelfare', input=GAME_STR)
+        success, out, err = run(
+            'pay', mixed.name, '-twelfare', input=HARD_GAME_STR)
         assert success, err
         assert np.isclose(json.loads(out)[0], -315.4034577992763)
 
@@ -246,9 +286,9 @@ def test_payoff_pure_single():
             'hft': {'noop': 1}}
         json.dump(prof, pure)
         pure.flush()
-        success, out, err = run('pay', '-i', GAME, pure.name)
+        success, out, err = run('pay', '-i', HARD_GAME, pure.name)
         assert success, err
-        assert np.allclose(SERIAL.from_payoff_json(json.loads(out)[0]),
+        assert np.allclose(HARD_SERIAL.from_payoff_json(json.loads(out)[0]),
                            [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
@@ -259,22 +299,25 @@ def test_payoff_pure_string():
             'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
         'hft': {'noop': 1}}
     profstr = json.dumps(prof)
-    success, out, err = run('pay', '-i', GAME, profstr)
+    success, out, err = run('pay', '-i', HARD_GAME, profstr)
     assert success, err
-    assert np.allclose(SERIAL.from_payoff_json(json.loads(out)[0]),
+    assert np.allclose(HARD_SERIAL.from_payoff_json(json.loads(out)[0]),
                        [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
 def test_reduction_1():
-    success, out, err = run('red', 'background:2,hft:1', input=GAME_STR)
+    success, out, err = run('red', 'background:2,hft:1', input=HARD_GAME_STR)
     assert success, err
     game, serial = gamereader.read(json.loads(out))
-    assert serial == serialize.gameserializer_copy(SERIAL)
-    assert game == dpr.reduce_game(GAME_DATA, [2, 1])
+    assert serial == serialize.gameserializer_copy(HARD_SERIAL)
+    assert game == dpr.reduce_game(HARD_GAME_DATA, [2, 1])
 
 
 def test_reduction_3():
-    success, out, err = run('red', '-thr', '-s', '2,1', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('red', '-thr', '-s', '2,1', '-i', game.name)
     assert success, err
     game, serial = gamereader.read(json.loads(out))
     assert serial == serialize.gameserializer_copy(SERIAL)
@@ -282,7 +325,10 @@ def test_reduction_3():
 
 
 def test_reduction_4():
-    success, out, err = run('red', '-ttr', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('red', '-ttr', '-i', game.name)
     assert success, err
     game, serial = gamereader.read(json.loads(out))
     assert serial == serialize.gameserializer_copy(SERIAL)
@@ -291,7 +337,10 @@ def test_reduction_4():
 
 def test_reduction_5():
     """Test identity reduction"""
-    success, out, err = run('red', '-tidr', '-i', GAME)
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run('red', '-tidr', '-i', game.name)
     assert success, err
     game, serial = gamereader.read(json.loads(out))
     assert serial == serialize.gameserializer_copy(SERIAL)
@@ -316,17 +365,19 @@ def test_regret_pure():
             'hft': {'noop': 1}}
         json.dump([prof], pure)
         pure.flush()
-        success, out, err = run('reg', '-i', GAME, pure.name)
+        success, out, err = run('reg', '-i', HARD_GAME, pure.name)
         assert success, err
         assert np.isclose(json.loads(out)[0], 7747.618428)
 
-        success, out, err = run('reg', pure.name, '-tgains', input=GAME_STR)
+        success, out, err = run(
+            'reg', pure.name, '-tgains', input=HARD_GAME_STR)
         assert success, err
         dev_pay = json.loads(out)[0]
         for role, strats in dev_pay.items():
             prof_strats = prof[role]
             assert prof_strats.keys() == strats.keys()
-            role_strats = set(SERIAL.strat_names[SERIAL.role_index(role)])
+            role_strats = set(
+                HARD_SERIAL.strat_names[HARD_SERIAL.role_index(role)])
             for strat, dev_strats in strats.items():
                 rstrats = role_strats.copy()
                 rstrats.remove(strat)
@@ -341,13 +392,13 @@ def test_regret_mixed():
             'hft': {'noop': 1}}]
         json.dump(prof, mixed)
         mixed.flush()
-        success, out, err = run('reg', '-i', GAME, mixed.name)
+        success, out, err = run('reg', '-i', HARD_GAME, mixed.name)
         assert success, err
         assert np.isclose(json.loads(out)[0], 7747.618428)
 
-        success, out, err = run('reg', mixed.name, '-tgains', input=GAME_STR)
+        success, out, err = run('reg', mixed.name, '-tgains', '-i', HARD_GAME)
         assert success, err
-        assert np.allclose(SERIAL.from_payoff_json(json.loads(out)[0]),
+        assert np.allclose(HARD_SERIAL.from_payoff_json(json.loads(out)[0]),
                            [581.18996992, 0., 0., 4696.19261, 3716.207196,
                             7747.618428, 4569.842172, 4191.665254,
                             4353.146694])
@@ -361,72 +412,71 @@ def test_regret_single():
             'hft': {'noop': 1}}
         json.dump(prof, pure)
         pure.flush()
-        success, out, err = run('reg', '-i', GAME, pure.name)
+        success, out, err = run('reg', '-i', HARD_GAME, pure.name)
         assert success, err
         assert np.isclose(json.loads(out)[0], 7747.618428)
 
 
 def test_subgame_detect():
-    success, out, err = run('sub', '-nd', '-i', GAME)
+    success, out, err = run('sub', '-nd', '-i', HARD_GAME)
     assert success, err
-    assert SERIAL.from_subgame_json(json.loads(out)[0]).all()
+    assert HARD_SERIAL.from_subgame_json(json.loads(out)[0]).all()
 
 
 def test_subgame_extract_1():
     success, out, err = run(
         'sub', '-n', '-t', 'background',
         'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9', 'hft', 'noop',
-        '-s', '0', '3', '4', input=GAME_STR)
+        '-s', '0', '3', '4', '-i', HARD_GAME)
     assert success, err
 
     expected = {utils.hash_array([False,  True,  True, False, False, False,
                                   False, False, False]),
                 utils.hash_array([True, False, False,  True,  True, False,
                                   False, False, False])}
-    assert {utils.hash_array(SERIAL.from_subgame_json(s))
+    assert {utils.hash_array(HARD_SERIAL.from_subgame_json(s))
             for s in json.loads(out)} == expected
 
 
 def test_subgame_extract_2():
-    with tempfile.NamedTemporaryFile('w') as sub:
-        subg = [False, True, True, False, False, False, False, False, False]
+    with tempfile.NamedTemporaryFile('w') as sub, \
+            tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        subg = [False, True, True, True, False]
         json.dump([SERIAL.to_subgame_json(subg)], sub)
         sub.flush()
-        success, out, err = run('sub', '-i', GAME, '-f', sub.name)
+        success, out, err = run('sub', '-i', game.name, '-f', sub.name)
         assert success, err
         game, serial = gamereader.read(json.loads(out)[0])
         assert serial == SERIAL.subserial(subg)
         assert game == GAME_DATA.subgame(subg)
 
 
-def test_analysis_1():
+def test_analysis_output():
     success, out, err = run('analyze', input=GAME_STR)
     assert success, err
     start = '''Game Analysis
 =============
-SampleGame:
-    Roles: background, hft
+Game:
+    Roles: r0, r1
     Players:
-        6x background
-        1x hft
+        3x r0
+        2x r1
     Strategies:
-        background:
-            markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6
-            markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9
-        hft:
-            noop
-            trend:trendLength_5_profitDemanded_100_expiration_100
-            trend:trendLength_5_profitDemanded_20_expiration_100
-            trend:trendLength_5_profitDemanded_50_expiration_50
-            trend:trendLength_8_profitDemanded_100_expiration_50
-            trend:trendLength_8_profitDemanded_20_expiration_50
-            trend:trendLength_8_profitDemanded_50_expiration_50
-payoff data for 49 out of 49 profiles'''
+        r0:
+            s0
+            s1
+        r1:
+            s0
+            s1
+            s2
+payoff data for 24 out of 24 profiles'''
     assert out.startswith(start)
     assert 'Social Welfare\n--------------' in out
     assert 'Maximum social welfare profile:' in out
-    assert 'Maximum "background" welfare profile:' in out
-    assert 'Maximum "hft" welfare profile:' in out
+    assert 'Maximum "r0" welfare profile:' in out
+    assert 'Maximum "r1" welfare profile:' in out
     assert 'Equilibria\n----------' in out
     assert 'No-equilibria Subgames\n----------------------' in out
     assert ('Unconfirmed Candidate Equilibria\n'
@@ -437,9 +487,15 @@ payoff data for 49 out of 49 profiles'''
 
 
 def test_analysis_2():
-    run('analyze', '-i', GAME, '-o/dev/null', '--subgames', '--dominance',
-        '--dpr', 'background:6,hft:1', '-p1', '--dist-thresh', '1e-3',
-        '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000', '-c1e-8')
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, _, err = run(
+            'analyze', '-i', game.name, '-o/dev/null', '--subgames',
+            '--dominance', '--dpr', 'r0:3,r1:2', '-p1', '--dist-thresh',
+            '1e-3', '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000',
+            '-c1e-8')
+        assert success, err
 
 
 def test_analysis_3():
@@ -532,40 +588,44 @@ def test_learning_output():
     assert success, err
     start = '''Game Learning
 =============
-SampleGame:
-    Roles: background, hft
+Game:
+    Roles: r0, r1
     Players:
-        6x background
-        1x hft
+        3x r0
+        2x r1
     Strategies:
-        background:
-            markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6
-            markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9
-        hft:
-            noop
-            trend:trendLength_5_profitDemanded_100_expiration_100
-            trend:trendLength_5_profitDemanded_20_expiration_100
-            trend:trendLength_5_profitDemanded_50_expiration_50
-            trend:trendLength_8_profitDemanded_100_expiration_50
-            trend:trendLength_8_profitDemanded_20_expiration_50
-            trend:trendLength_8_profitDemanded_50_expiration_50
-payoff data for 49 out of 49 profiles'''
+        r0:
+            s0
+            s1
+        r1:
+            s0
+            s1
+            s2
+payoff data for 24 out of 24 profiles'''
     assert out.startswith(start)
     assert 'Social Welfare\n--------------' in out
     assert 'Maximum social welfare profile:' in out
-    assert 'Maximum "background" welfare profile:' in out
-    assert 'Maximum "hft" welfare profile:' in out
+    assert 'Maximum "r0" welfare profile:' in out
+    assert 'Maximum "r1" welfare profile:' in out
     assert 'Equilibria\n----------' in out
     assert 'Json Data\n=========' in out
 
 
 def test_learning_args():
-    run('learning', '-i', GAME, '-o/dev/null', '-p1', '--dist-thresh', '1e-3',
-        '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000', '-c1e-8')
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, _, err = run(
+            'learning', '-i', game.name, '-o/dev/null', '-p1', '--dist-thresh',
+            '1e-3', '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000',
+            '-c1e-8')
+        assert success, err
 
 
 def test_learning_nn():
-    run('learning', '-i', GAME, '-o/dev/null', '-p1', '--nn')
+    success, _, err = run('learning', '-o/dev/null',
+                          '-p1', '--nn', input=GAME_STR)
+    assert success, err
 
 
 def test_sgboot_1():
@@ -622,13 +682,16 @@ def test_sampboot_reg():
             for strat in strats:
                 inp.append({'role': role, 'strategy': strat,
                             'payoff': random.random()})
-    with tempfile.NamedTemporaryFile('w') as mixed:
+    with tempfile.NamedTemporaryFile('w') as mixed, \
+            tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
         json.dump(SERIAL.to_mix_json(GAME_DATA.random_mixtures()), mixed)
         mixed.flush()
 
         success, out, err = run(
-            'sampboot', '--regret', GAME, mixed.name, '-n21', '-p', '5', '95',
-            '-m', input=json.dumps(inp))
+            'sampboot', '--regret', game.name, mixed.name, '-n21', '-p', '5',
+            '95', '-m', input=json.dumps(inp))
         assert success, err
 
         data = json.loads(out)
@@ -643,13 +706,16 @@ def test_sampboot_dev_surp():
             for strat in strats:
                 inp.append({'role': role, 'strategy': strat,
                             'payoff': random.random()})
-    with tempfile.NamedTemporaryFile('w') as mixed:
+    with tempfile.NamedTemporaryFile('w') as mixed, \
+            tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
         json.dump(SERIAL.to_mix_json(GAME_DATA.random_mixtures()), mixed)
         mixed.flush()
 
         success, out, err = run(
-            'sampboot', '--dev-surplus', GAME, mixed.name, '-n21', '-p', '5',
-            '95', '-m', input=json.dumps(inp))
+            'sampboot', '--dev-surplus', game.name, mixed.name, '-n21', '-p',
+            '5', '95', '-m', input=json.dumps(inp))
         assert success, err
 
         data = json.loads(out)
@@ -665,16 +731,16 @@ def test_samp():
             'hft': {'noop': 1}}
         json.dump(prof, mixed)
         mixed.flush()
-        success, out, err = run('samp', '-i', GAME, '-m', mixed.name)
+        success, out, err = run('samp', '-i', HARD_GAME, '-m', mixed.name)
         assert success, err
-        prof = SERIAL.from_prof_json(json.loads(out))
-        assert GAME_DATA.is_profile(prof)
+        prof = HARD_SERIAL.from_prof_json(json.loads(out))
+        assert HARD_GAME_DATA.is_profile(prof)
 
         success, out, err = run('samp', '-m', mixed.name, '-n2', '-d',
-                                input=GAME_STR)
+                                input=HARD_GAME_STR)
         assert success, err
         lines = out[:-1].split('\n')
         assert len(lines) == 2 * 9
         for line in lines:
-            prof = SERIAL.from_prof_json(json.loads(line)['profile'])
-            assert GAME_DATA.is_profile(prof)
+            prof = HARD_SERIAL.from_prof_json(json.loads(line)['profile'])
+            assert HARD_GAME_DATA.is_profile(prof)

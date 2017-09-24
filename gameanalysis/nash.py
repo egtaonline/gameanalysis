@@ -104,8 +104,7 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
         np.minimum(minp, np.minimum.reduceat(dev_pays, game.role_starts), minp)
         np.maximum(maxp, np.maximum.reduceat(dev_pays, game.role_starts), maxp)
         resid = slack * (maxp - minp)
-        # TODO Change == 0 to < tol
-        resid[resid == 0] = slack
+        resid[np.isclose(resid, 0)] = slack
         offset = np.repeat(minp - resid, game.num_role_strats)
         mix *= dev_pays - offset
         mix /= np.add.reduceat(
@@ -138,8 +137,7 @@ def regret_minimize(game, mix, *, gtol=1e-8):
     """
     scale = np.repeat(game.max_role_payoffs() - game.min_role_payoffs(),
                       game.num_role_strats)
-    # TODO should probably be scale < tol instead of == 0
-    scale[scale == 0] = 1  # In case payoffs are the same
+    scale[np.isclose(scale, 0)] = 1  # In case payoffs are the same
     offset = game.min_role_payoffs().repeat(game.num_role_strats)
     penalty = 1
 

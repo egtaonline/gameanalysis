@@ -401,11 +401,16 @@ def test_random_role_game(players, strategies, functions):
 
 
 @pytest.mark.parametrize('players,strategies,functions', [
-    ([5, 5], 2, 3),
+    ([1, 2], 2, 3),
 ])
 @pytest.mark.parametrize('by_role', [False, True])
 def test_nash_finding(players, strategies, functions, by_role):
-    game = agggen.random_aggfn(players, strategies, functions, by_role=by_role)
+    # This distribution tends to have `easier` nash equilibria, and we only
+    # want to test that it functionally works.
+    dist = agggen.random_poly_dist(
+        lambda d: np.random.normal(0, 10.0**(1 - d)), [0.1, 0.8, 0.1])
+    game = agggen.random_aggfn(
+        players, strategies, functions, func_dist=dist, by_role=by_role)
     eqa = nash.mixed_nash(game)
     assert eqa.size > 0, "didn't find any equilibria"
 
