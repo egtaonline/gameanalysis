@@ -478,6 +478,7 @@ class _BaseGame(_StratArray):
     - `get_payoffs()`
     - `deviation_payoffs()`
     - `subgame()`
+    - `normalize()`
     - `__contains__()`
     - `num_profiles`
     - `num_complete_profiles`
@@ -790,6 +791,7 @@ class _BaseGame(_StratArray):
             self.num_role_strats)
 
 
+# FIXME Remove verify?
 class Game(_BaseGame):
     """Role-symmetric game representation
 
@@ -995,6 +997,15 @@ class Game(_BaseGame):
 
         dev_jac[nan_mask] = np.nan
         return devs, dev_jac
+
+    def normalize(self):
+        """Return a normalized game"""
+        scale = self.max_role_payoffs() - self.min_role_payoffs()
+        scale[np.isclose(scale, 0)] = 1
+        offset = np.repeat(self.min_role_payoffs(), self.num_role_strats)
+        payoffs = (self.payoffs - offset) / scale.repeat(self.num_role_strats)
+        payoffs[self.profiles == 0] = 0
+        return game_replace(self, self.profiles, payoffs, verify=False)
 
     def subgame(self, subgame_mask):
         """Remove possible strategies from consideration"""
@@ -1281,6 +1292,18 @@ class SampleGame(Game):
         return np.concatenate([
             np.rollaxis(pay, 2, 1).reshape((-1, self.num_strats))
             for pay in self.sample_payoffs])
+
+    def normalize(self):
+        """Return a normalized SampleGame"""
+        scale = self.max_role_payoffs() - self.min_role_payoffs()
+        scale[np.isclose(scale, 0)] = 1
+        scale = scale.repeat(self.num_role_strats)[:, None]
+        offset = self.min_role_payoffs().repeat(self.num_role_strats)[:, None]
+        spayoffs = [(pays - offset) / scale for pays in self.sample_payoffs]
+        for profs, pays in zip(np.split(self.profiles, self.sample_starts[1:]),
+                               spayoffs):
+            pays[profs == 0] = 0
+        return samplegame_replace(self, self.profiles, spayoffs, verify=False)
 
     def subgame(self, subgame_mask):
         """Remove possible strategies from consideration"""

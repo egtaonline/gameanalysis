@@ -131,10 +131,7 @@ def main(args):
     game, serial = _TYPES[args.type].create(args)
 
     if args.normalize:
-        game = gamegen.normalize(game)
-        # FIXME Should normalize be a thing that games implement to prevent
-        # payoff copies
-        serial = serialize.gameserializer_copy(serial)
+        game = game.normalize()
 
     json.dump(serial.to_json(game), args.output)
     args.output.write('\n')

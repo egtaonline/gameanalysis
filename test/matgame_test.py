@@ -23,6 +23,20 @@ def test_random_min_max(strats):
     assert np.allclose(matg.max_strat_payoffs(), game.max_strat_payoffs())
 
 
+@pytest.mark.parametrize('strats', [
+    [3],
+    [2, 3],
+    [1, 2, 3],
+    [2, 3, 1],
+])
+def test_random_normalize(strats):
+    payoffs = rand.random(tuple(strats) + (len(strats),))
+    matg = matgame.matgame(payoffs).normalize()
+
+    assert np.allclose(matg.min_role_payoffs(), 0)
+    assert np.allclose(matg.max_role_payoffs(), 1)
+
+
 def test_compress_profiles():
     matg = matgame.matgame(rand.random((2, 3, 4, 3)))
     prof = [0, 1, 0, 1, 0, 1, 0, 0, 0]

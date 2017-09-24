@@ -180,6 +180,12 @@ class MatrixGame(rsgame._CompleteGame):
             matrix = matrix[(slice(None),) * i + (mask,)]
         return matgame(matrix.copy())
 
+    def normalize(self):
+        """Return a normalized MatGame"""
+        scale = self.max_role_payoffs() - self.min_role_payoffs()
+        scale[np.isclose(scale, 0)] = 1
+        return matgame((self.payoff_matrix - self.min_role_payoffs()) / scale)
+
     @utils.memoize
     def __hash__(self):
         return super().__hash__()

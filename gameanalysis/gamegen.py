@@ -141,7 +141,7 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
 
 def prisoners_dilemma(distribution=default_distribution):
     """Return a random prisoners dilemma game"""
-    return normalize(sym_2p2s_game(2, 0, 3, 1, distribution))
+    return sym_2p2s_game(2, 0, 3, 1, distribution).normalize()
 
 
 def sym_2p2s_known_eq(eq_prob):
@@ -241,17 +241,6 @@ def travellers_dilemma(players=2, max_value=100):
     lowest_pays = mins + 4
     lowest_pays[ties] -= 2
     payoffs[rows, mins] = lowest_pays
-    return rsgame.game_replace(game, profiles, payoffs, verify=False)
-
-
-def normalize(game, new_min=0, new_max=1):
-    """Return a normalized game"""
-    profiles = game.profiles
-    scale = np.repeat(game.max_role_payoffs() -
-                      game.min_role_payoffs(), game.num_role_strats)
-    offset = np.repeat(game.min_role_payoffs(), game.num_role_strats)
-    payoffs = (game.payoffs - offset) / scale * (new_max - new_min) + new_min
-    payoffs *= profiles > 0
     return rsgame.game_replace(game, profiles, payoffs, verify=False)
 
 

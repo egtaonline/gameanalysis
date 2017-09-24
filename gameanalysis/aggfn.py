@@ -53,18 +53,6 @@ class _AgfnGame(rsgame._CompleteGame):
                 == (self.num_functions, self.num_strats))
         assert (self._function_inputs.shape
                 == (self.num_strats, self.num_functions))
-        # FIXME The way subgame works right now these first two asserts can be
-        # false for a subgame if we don't remove the corresponding functions.
-        # However, there's no way for subserial to know that functions are
-        # removed without knowing the aggfn structure. Either these checks
-        # should be removed or games and serializers need to be merged to
-        # account for this fact.
-        assert self._function_inputs.any(0).all(), \
-            "not every function get input"
-        assert np.any(self._action_weights != 0, 1).all(), \
-            "not every function used"
-        assert np.any(self._action_weights != 0, 0).all(), \
-            "strategy doesn't get payoff"
 
         # Pre-compute derivative info
         self._dinputs = np.zeros(
@@ -87,29 +75,77 @@ class _AgfnGame(rsgame._CompleteGame):
     def min_strat_payoffs(self):
         """Returns a lower bound on the payoffs."""
         node_table = self._function_table.reshape((self.num_functions, -1))
-        minima = node_table.min(1, keepdims=True).repeat(
-            self.num_strats, 1)
-        minima[self._action_weights <= 0] = 0
-        maxima = node_table.max(1, keepdims=True).repeat(
-            self.num_strats, 1)
-        maxima[self._action_weights >= 0] = 0
-        mins = np.sum((minima + maxima) * self._action_weights, 0)
+        minima = node_table.min(1, keepdims=True)
+        maxima = node_table.max(1, keepdims=True)
+        eff_min = np.where(self._action_weights > 0, minima, maxima)
+        # Don't use min/max if function is effectively constant
+        always = self._function_inputs.all(0)
+        if always.any():
+            eff_min[always] = node_table[always, -1]
+        never = ~self._function_inputs.any(0)
+        if never.any():
+            eff_min[never] = node_table[never, 0]
+        mins = np.sum(eff_min * self._action_weights, 0)
         mins.setflags(write=False)
-        return mins
+        return mins.view()
 
     @utils.memoize
     def max_strat_payoffs(self):
         """Returns an upper bound on the payoffs."""
         node_table = self._function_table.reshape((self.num_functions, -1))
-        minima = node_table.min(1, keepdims=True).repeat(
-            self.num_strats, 1)
-        minima[self._action_weights >= 0] = 0
-        maxima = node_table.max(1, keepdims=True).repeat(
-            self.num_strats, 1)
-        maxima[self._action_weights <= 0] = 0
-        maxs = np.sum((minima + maxima) * self._action_weights, 0)
+        minima = node_table.min(1, keepdims=True)
+        maxima = node_table.max(1, keepdims=True)
+        eff_max = np.where(self._action_weights > 0, maxima, minima)
+        # Don't use min/max if function is effectively constant
+        always = self._function_inputs.all(0)
+        if always.any():
+            eff_max[always] = node_table[always, -1]
+        never = ~self._function_inputs.any(0)
+        if never.any():
+            eff_max[never] = node_table[never, 0]
+        maxs = np.sum(eff_max * self._action_weights, 0)
         maxs.setflags(write=False)
-        return maxs
+        return maxs.view()
+
+    def normalize(self):
+        """Return a normalized AgfnGame"""
+        # To normalize an aggfn, we need the help of a constant function. This
+        # first step attempts to identify one if it already exists, or adds a
+        # new function if it doesn't.
+        scale = self.max_role_payoffs() - self.min_role_payoffs()
+        scale[np.isclose(scale, 0)] = 1
+
+        norm_ftab = self._function_table.reshape((self.num_functions, -1))
+        # We could use allclose here to capture almost constant functions, but
+        # it's not that expensive to just add one more, so this seems "better"
+        eq_value = np.all(norm_ftab[:, 0, None] == norm_ftab[:, 1:], 1)
+        eq_inp = np.all(self._function_inputs[0] == self._function_inputs[1:],
+                        0)
+        if eq_value.any() or eq_inp.any():  # existing constant function
+            if eq_value.any():  # Function with constant value exists
+                const_func = eq_value.nonzero()[0][0]
+                ind = 0
+            else:  # Only one value from func_table is used
+                const_func = eq_inp.nonzero()[0][0]
+                ind = -1 if self._function_inputs[0, const_func] else 0
+            # Here we do some normalization for the constant function
+            action_weights = self._action_weights.copy()
+            action_weights[const_func] *= norm_ftab[const_func, ind]
+            function_inputs = self._function_inputs
+            function_table = self._function_table.copy()
+            function_table[const_func] = 1
+        else:  # Must add constant function
+            const_func = self.num_functions
+            action_weights = np.insert(self._action_weights, const_func, 0, 0)
+            function_inputs = np.insert(
+                self._function_inputs, const_func, False, 1)
+            function_table = np.insert(self._function_table, const_func, 1, 0)
+
+        action_weights[const_func] -= self.min_role_payoffs().repeat(
+            self.num_role_strats)
+        return aggfn_replace(
+            self, action_weights / scale.repeat(self.num_role_strats),
+            function_inputs, function_table)
 
     def subgame(self, subgame_mask):
         subgame_mask = np.asarray(subgame_mask, bool)
@@ -451,8 +487,7 @@ def aggfn_funcs(num_role_players, num_role_strats, action_weights,
             for p in itertools.product(*map(range, base.num_role_players + 1)):
                 tab[p] = func(*p)
 
-    return aggfn(num_role_players, num_role_strats, action_weights,
-                 function_inputs, function_table)
+    return aggfn_replace(base, action_weights, function_inputs, function_table)
 
 
 class AgfnGameSerializer(serialize._BaseSerializer):

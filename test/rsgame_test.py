@@ -1304,6 +1304,23 @@ def test_random_min_max_payoffs(role_players, role_strats):
         game.num_role_strats))[mask].all()
 
 
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_game_normalize(role_players, role_strats):
+    base = rsgame.emptygame(role_players, role_strats)
+    num_profs = np.random.randint(1, base.num_all_profiles + 1)
+    sample = np.random.choice(base.num_all_profiles, num_profs, False)
+    profiles = base.all_profiles()[sample]
+    if not np.all(np.sum(profiles > 0, 0) > 1):
+        return  # not enough data
+    payoffs = rand.random(profiles.shape)
+    mask = profiles > 0
+    payoffs *= mask
+    game = rsgame.game_replace(base, profiles, payoffs).normalize()
+
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
+
+
 def test_get_payoffs():
     profs = [[2, 0, 0, 2, 1],
              [1, 1, 0, 0, 3]]
@@ -1922,6 +1939,24 @@ def test_get_sample_payoffs():
         game.get_sample_payoffs([2, 1, 2])
     with pytest.raises(AssertionError):
         game.get_sample_payoffs([2, 0, 2, 0])
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_samplegame_normalize(role_players, role_strats):
+    base = rsgame.emptygame(role_players, role_strats)
+    num_profs = np.random.randint(1, base.num_all_profiles + 1)
+    sample = np.random.choice(base.num_all_profiles, num_profs, False)
+    profiles = base.all_profiles()[sample]
+    if not np.all(np.sum(profiles > 0, 0) > 1):
+        return  # not enough data
+    payoffs = rand.random(profiles.shape)
+    mask = profiles > 0
+    payoffs *= mask
+    game = rsgame.samplegame_replace(
+        base, profiles, [payoffs[..., None]]).normalize()
+
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
 
 
 def test_samplegame_hash_eq():

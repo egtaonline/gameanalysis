@@ -7,21 +7,42 @@ from gameanalysis import nash
 from gameanalysis import rsgame
 
 
+SUM_GAME = aggfn.aggfn(
+    [2, 1], [2, 3],
+    [[-1, 0, 1, 2, 3],
+     [0, 1, 0, 1, 0],
+     [1, 1, 1, 1, 1],
+     [0, 0, 1, 1, 1]],
+    [[True, True, True, True],
+     [False, True, True, False],
+     [True, False, True, True],
+     [False, False, False, False],
+     [True, False, False, True]],
+    [[0, 1, 2, 3],
+     [0, 3, 2, 1],
+     [9, 4, 1, 0],
+     [3, 0, 0, 3]])
+
+ROLE_GAME = aggfn.aggfn(
+    [2, 1], [2, 3],
+    [[-1, 0, 1, 2, 3],
+     [0, 1, 0, 1, 0],
+     [1, 1, 1, 1, 1],
+     [0, 0, 1, 1, 1]],
+    [[True, True, True, True],
+     [False, True, True, False],
+     [True, False, True, True],
+     [False, False, False, False],
+     [True, False, False, True]],
+    [[[0, 1], [1, 3], [2, 0]],
+     [[0, 0], [3, 2], [2, 4]],
+     [[9, 7], [4, 1], [1, 4]],
+     [[3, 6], [0, -1], [3, 4]]])
+
+
+# TODO Split up into separate tests
 def test_sum_aggfn():
-    functab = [[0, 1, 2, 3],
-               [0, 3, 2, 1],
-               [9, 4, 1, 0],
-               [3, 0, 0, 3]]
-    funcinps = [[True, True, True, True],
-                [False, True, True, False],
-                [True, False, True, True],
-                [False, False, False, False],
-                [True, False, False, True]]
-    actw = [[-1, 0, 1, 2, 3],
-            [0, 1, 0, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1]]
-    game = aggfn.aggfn([2, 1], [2, 3], actw, funcinps, functab)
+    game = SUM_GAME
     assert game.num_functions == 4
     assert game.num_profiles == 9
     assert game.is_complete()
@@ -82,24 +103,9 @@ def test_sum_aggfn():
                        funcinpsp, functabp)
     assert perm == game
 
-    verify_aggfn(game)
-
 
 def test_sum_aggfn_subgame():
-    functab = [[0, 1, 2, 3],
-               [0, 3, 2, 1],
-               [9, 4, 1, 0],
-               [3, 0, 0, 3]]
-    funcinps = [[True, True, True, True],
-                [False, True, True, False],
-                [True, False, True, True],
-                [False, False, False, False],
-                [True, False, False, True]]
-    actw = [[-1, 0, 1, 2, 3],
-            [0, 1, 0, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1]]
-    game = aggfn.aggfn([2, 1], [2, 3], actw, funcinps, functab)
+    game = SUM_GAME
     mask = [True, False, True, True, False]
     sfuncinps = [[True, True, True, True],
                  [True, False, True, True],
@@ -108,25 +114,14 @@ def test_sum_aggfn_subgame():
              [0, 0, 1],
              [1, 1, 1],
              [0, 1, 1]]
-    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps, functab)
+    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps,
+                        SUM_GAME._function_table)
     assert sgame == game.subgame(mask)
 
 
+# TODO Split up into separate tests
 def test_role_aggfn():
-    functab = [[[0, 1], [1, 3], [2, 0]],
-               [[0, 0], [3, 2], [2, 4]],
-               [[9, 7], [4, 1], [1, 4]],
-               [[3, 6], [0, -1], [3, 4]]]
-    funcinps = [[True, True, True, True],
-                [False, True, True, False],
-                [True, False, True, True],
-                [False, False, False, False],
-                [True, False, False, True]]
-    actw = [[-1, 0, 1, 2, 3],
-            [0, 1, 0, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1]]
-    game = aggfn.aggfn([2, 1], [2, 3], actw, funcinps, functab)
+    game = ROLE_GAME
     assert game.num_functions == 4
     assert game.num_profiles == 9
     assert game.is_complete()
@@ -187,24 +182,9 @@ def test_role_aggfn():
                        funcinpsp, functabp)
     assert perm == game
 
-    verify_aggfn(game)
-
 
 def test_role_aggfn_subgame():
-    functab = [[[0, 1], [1, 3], [2, 0]],
-               [[0, 0], [3, 2], [2, 4]],
-               [[9, 7], [4, 1], [1, 4]],
-               [[3, 6], [0, -1], [3, 4]]]
-    funcinps = [[True, True, True, True],
-                [False, True, True, False],
-                [True, False, True, True],
-                [False, False, False, False],
-                [True, False, False, True]]
-    actw = [[-1, 0, 1, 2, 3],
-            [0, 1, 0, 1, 0],
-            [1, 1, 1, 1, 1],
-            [0, 0, 1, 1, 1]]
-    game = aggfn.aggfn([2, 1], [2, 3], actw, funcinps, functab)
+    game = ROLE_GAME
     mask = [False, True, True, False, True]
     sfuncinps = [[False, True, True, False],
                  [True, False, True, True],
@@ -213,8 +193,129 @@ def test_role_aggfn_subgame():
              [1, 0, 0],
              [1, 1, 1],
              [0, 1, 1]]
-    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps, functab)
+    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps,
+                        ROLE_GAME._function_table)
     assert sgame == game.subgame(mask)
+
+
+def test_normalize_const_sum_aggfn():
+    game = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [0, 0, 1, 1, 1]],
+        [[True, True, True, True],
+         [False, True, True, False],
+         [True, False, True, True],
+         [False, False, False, False],
+         [True, False, False, True]],
+        [[0, 1, 2, 3],
+         [0, 3, 2, 1],
+         [9, 4, 1, 0],
+         [2, 2, 2, 2]]).normalize()
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
+
+
+def test_normalize_const_role_aggfn():
+    game = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [0, 0, 1, 1, 1]],
+        [[True, True, True, True],
+         [False, True, True, False],
+         [True, False, True, True],
+         [False, False, False, False],
+         [True, False, False, True]],
+        [[[0, 1], [1, 3], [2, 0]],
+         [[0, 0], [3, 2], [2, 4]],
+         [[9, 7], [4, 1], [1, 4]],
+         [[2, 2], [2, 2], [2, 2]]]).normalize()
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
+
+
+def test_normalize_always_sum_aggfn():
+    game = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [0, 0, 1, 1, 1]],
+        [[True, True, True, True],
+         [False, True, True, True],
+         [True, False, True, True],
+         [False, False, False, True],
+         [True, False, False, True]],
+        [[0, 1, 2, 3],
+         [0, 3, 2, 1],
+         [9, 4, 1, 0],
+         [3, 0, 0, 3]]).normalize()
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
+
+
+def test_normalize_never_sum_aggfn():
+    game = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [0, 0, 1, 1, 1]],
+        [[True, True, True, False],
+         [False, True, True, False],
+         [True, False, True, False],
+         [False, False, False, False],
+         [True, False, False, False]],
+        [[0, 1, 2, 3],
+         [0, 3, 2, 1],
+         [9, 4, 1, 0],
+         [3, 0, 0, 3]]).normalize()
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
+
+
+def test_normalize_always_role_aggfn():
+    game = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [0, 0, 1, 1, 1]],
+        [[True, True, True, True],
+         [False, True, True, True],
+         [True, False, True, True],
+         [False, False, False, True],
+         [True, False, False, True]],
+        [[[0, 1], [1, 3], [2, 0]],
+         [[0, 0], [3, 2], [2, 4]],
+         [[9, 7], [4, 1], [1, 4]],
+         [[3, 6], [0, -1], [3, 4]]]).normalize()
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
+
+
+def test_normalize_never_role_aggfn():
+    game = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 1, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [0, 0, 1, 1, 1]],
+        [[True, True, True, False],
+         [False, True, True, False],
+         [True, False, True, False],
+         [False, False, False, False],
+         [True, False, False, False]],
+        [[[0, 1], [1, 3], [2, 0]],
+         [[0, 0], [3, 2], [2, 4]],
+         [[9, 7], [4, 1], [1, 4]],
+         [[3, 6], [0, -1], [3, 4]]]).normalize()
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.allclose(game.max_role_payoffs(), 1)
 
 
 def verify_aggfn(game):
@@ -222,6 +323,11 @@ def verify_aggfn(game):
     payoff_game = rsgame.game_copy(game)
     assert not game.is_empty()
     assert game.is_complete()
+
+    ngame = game.normalize()
+    assert np.allclose(ngame.max_role_payoffs() - ngame.min_role_payoffs(), 1)
+    assert np.allclose(ngame.min_role_payoffs(), 0)
+    assert np.allclose(ngame.max_role_payoffs(), 1)
 
     # Check accuracy of min and max payoffs
     assert np.all(
@@ -259,10 +365,9 @@ def verify_aggfn(game):
 
 
 @pytest.mark.parametrize('players,strategies,functions', [
-    (2 * [1], 1, 1),
     (2 * [1], 2, 2),
-    (2 * [2], 1, 2),
     (2 * [2], 2, 2),
+    (5 * [1], 2, 1),
     (5 * [1], 2, 3),
     (2 * [1], 5, 3),
     (2 * [2], 5, 4),
@@ -273,15 +378,14 @@ def verify_aggfn(game):
 ])
 def test_random_sum_game(players, strategies, functions):
     """Test that deviation payoff formulation is accurate"""
-    game = agggen.random_aggfn(players, strategies, functions)
+    game = agggen.random_aggfn(players, strategies, functions, by_role=False)
     verify_aggfn(game)
 
 
 @pytest.mark.parametrize('players,strategies,functions', [
-    (2 * [1], 1, 1),
     (2 * [1], 2, 2),
-    (2 * [2], 1, 2),
     (2 * [2], 2, 2),
+    (5 * [1], 2, 1),
     (5 * [1], 2, 3),
     (2 * [1], 5, 3),
     (2 * [2], 5, 4),
