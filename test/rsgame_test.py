@@ -574,7 +574,6 @@ def test_samplegame_from_matrix(players, strategies, samples):
 
 # Test sample game with different number of samples
 def test_different_samples():
-    base = rsgame.basegame(1, [1, 2])
     profiles = [
         [1, 1, 0],
         [1, 0, 1],
@@ -587,8 +586,7 @@ def test_different_samples():
             [[5, 6], [0, 0], [2, 3]],
         ],
     ]
-
-    game = rsgame.samplegame_copy(base, profiles, payoffs)
+    game = rsgame.samplegame(1, [1, 2], profiles, payoffs)
 
     assert np.all([1, 2] == game.num_samples), \
         "didn't get both sample sizes"
@@ -604,6 +602,38 @@ def test_deviation_payoffs_jacobian():
                              [1., 0., -1.],
                              [-1., 1., 0.]])
     assert np.allclose(dpj, expected_jac)
+
+
+def test_flat_profile_payoffs():
+    profiles = [
+        [1, 1, 0],
+        [1, 0, 1],
+    ]
+    payoffs = [
+        [
+            [[5], [2], [0]],
+        ],
+        [
+            [[5, 6], [0, 0], [2, 3]],
+        ],
+    ]
+    game = rsgame.samplegame(1, [1, 2], profiles, payoffs)
+
+    expected_profs = np.array([
+        [1, 1, 0],
+        [1, 0, 1],
+        [1, 0, 1],
+    ])
+    expected_pays = np.array([
+        [5, 2, 0],
+        [5, 0, 2],
+        [6, 0, 3],
+    ], float)
+
+    assert np.all(game.flat_profiles[np.lexsort(game.flat_profiles.T)] ==
+                  expected_profs[np.lexsort(expected_profs.T)])
+    assert np.allclose(game.flat_payoffs[np.lexsort(game.flat_payoffs.T)],
+                       expected_pays[np.lexsort(expected_pays.T)])
 
 
 def test_trim_mixture_support():
@@ -756,3 +786,18 @@ def test_json_copy_samplegame(game_size, samples):
     assert np.allclose(game1.payoffs, game2.payoffs)
     for spay1, spay2 in zip(game1.sample_payoffs, game2.sample_payoffs):
         assert np.allclose(spay1, spay2)
+
+
+@pytest.mark.parametrize('game_params', testutils.games)
+@pytest.mark.parametrize('num_devs', range(5))
+def test_nearby_profiles(game_params, num_devs):
+    base = rsgame.basegame(*game_params)
+    prof = base.random_profiles()
+    nearby = base.nearby_profs(prof, num_devs)
+    diff = nearby - prof
+    devs_from = base.role_reduce((diff < 0) * -diff)
+    devs_to = base.role_reduce((diff > 0) * diff)
+    assert np.all(devs_to.sum(1) <= num_devs)
+    assert np.all(devs_from.sum(1) <= num_devs)
+    assert np.all(devs_to == devs_from)
+    assert np.all(base.verify_profile(nearby))

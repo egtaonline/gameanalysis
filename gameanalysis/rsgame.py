@@ -19,6 +19,7 @@ Most game objects have attributes that start with num, these will always be an
 attribute or a property, not a method, so to get the number of profiles, it's
 just `num_profiles` not `num_profiles()`. These will also only be numbers,
 either a single int, or an array of them depending on the attribute."""
+import functools
 import itertools
 
 import numpy as np
@@ -594,6 +595,32 @@ class BaseGame(StratArray):
                          for num_play, num_strats
                          in zip(self.num_players, self.num_strategies)]
         return utils.acartesian2(*role_profiles)
+
+    def nearby_profs(self, prof, num_devs):
+        """Returns profiles reachable by at most num_devs deviations"""
+        # TODO This is pretty slow and could probably be sped up
+        assert num_devs >= 0
+        dev_players = utils.acomb(self.num_roles, num_devs, True)
+        mask = np.all(dev_players <= self.num_players, 1)
+        dev_players = dev_players[mask]
+        supp = prof > 0
+        sub_strats = np.add.reduceat(supp, self.role_starts)
+
+        profs = [prof[None]]
+        for players in dev_players:
+            to_dev_profs = basegame(
+                players, self.num_strategies).all_profiles()
+            sub = basegame(players, sub_strats)
+            from_dev_profs = np.zeros((sub.num_all_profiles,
+                                       self.num_role_strats), int)
+            from_dev_profs[:, supp] = sub.all_profiles()
+            before_devs = prof - from_dev_profs
+            before_devs = before_devs[np.all(before_devs >= 0, 1)]
+            before_devs = utils.unique_axis(before_devs)
+            nearby = before_devs[:, None] + to_dev_profs
+            nearby.shape = (-1, self.num_role_strats)
+            profs.append(utils.unique_axis(nearby))
+        return utils.unique_axis(np.concatenate(profs))
 
     def random_profiles(self, num_samples=None, mixture=None):
         """Sample profiles from a mixture
@@ -1194,6 +1221,21 @@ class SampleGame(Game):
             return np.empty((0, self.num_role_strats), float)
         else:
             return self._sample_profile_map[hashed].T
+
+    @property
+    @functools.lru_cache(maxsize=1)
+    def flat_profiles(self):
+        """Profiles in parallel with flat_payoffs"""
+        return self.profiles.repeat(
+            self.num_samples.repeat(self.num_sample_profs), 0)
+
+    @property
+    @functools.lru_cache(maxsize=1)
+    def flat_payoffs(self):
+        """All sample payoffs linearly concatenated together"""
+        return np.concatenate([
+            np.rollaxis(pay, 2, 1).reshape((-1, self.num_role_strats))
+            for pay in self.sample_payoffs])
 
     def __hash__(self):
         return super().__hash__()

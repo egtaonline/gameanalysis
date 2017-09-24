@@ -14,6 +14,8 @@ setuptools.setup(
         'numpy~=1.13',
         'scipy~=0.19',
         'scikit-learn~=0.18',
+        'Keras~=2.0',
+        'tensorflow~=1.3',
     ],
     packages=[
         'gameanalysis',

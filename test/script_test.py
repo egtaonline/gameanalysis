@@ -501,7 +501,7 @@ def test_analysis_4():
     assert 'Found no complete subgames' in out
 
 
-def test_learning_1():
+def test_learning_output():
     success, out, err = run('learning', input=GAME_STR)
     assert success, err
     start = '''Game Learning
@@ -533,9 +533,13 @@ payoff data for 49 out of 49 profiles'''
     assert 'Json Data\n=========' in out
 
 
-def test_learning_2():
+def test_learning_args():
     run('learning', '-i', GAME, '-o/dev/null', '-p1', '--dist-thresh', '1e-3',
         '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000', '-c1e-8')
+
+
+def test_learning_nn():
+    run('learning', '-i', GAME, '-o/dev/null', '-p1', '--nn')
 
 
 def test_sgboot_1():

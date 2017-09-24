@@ -4,9 +4,9 @@ import json
 import sys
 
 from gameanalysis import gameio
+from gameanalysis import gamelearning
 from gameanalysis import nash
 from gameanalysis import regret
-from gameanalysis import gpgame
 
 
 def add_parser(subparsers):
@@ -52,14 +52,23 @@ def add_parser(subparsers):
         '--one', action='store_true', help="""If specified, run a potentially
         expensive algorithm to guarantee an approximate equilibrium, if none
         are found via other methods.""")
+    # FIXME This is almost certainly not the way we want to call this, but it
+    # does serve as a test
+    parser.add_argument(
+        '--nn', action='store_true', help="""If specified an neutral mnetwork
+        model will be used instead of a gaussian process model.""")
     return parser
 
 
 def main(args):
     game, serial = gameio.read_game(json.load(args.input))
 
-    # create gpgame
-    lgame = gpgame.PointGPGame(game)
+    # create regression game
+    # FIXME We probably don't need to keep game around and can use lgame for
+    # everything
+    # FIXME This is almost certainly not what we want
+    lgame = gamelearning.RegressionGame(
+        game, 'nn' if args.nn else 'gp', 'point')
 
     # mixed strategy nash equilibria search
     methods = {'replicator': {'max_iters': args.max_iters,
