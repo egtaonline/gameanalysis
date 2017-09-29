@@ -194,6 +194,21 @@ def regret_minimize(game, mix, *, gtol=1e-8):
     return result
 
 
+def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-8):
+    """Run fictitious play on a mixture
+
+    In fictitious play, players continually best respond to the empirical
+    distribution of their opponents at each round.
+    """
+    empirical = mix.copy()
+    for i in range(2, max_iters + 2):
+        update = (game.best_response(empirical) - empirical) / i
+        empirical += update
+        if np.linalg.norm(update) < converge_thresh:
+            break
+    return empirical
+
+
 def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
     """Uses fixed point method to find nash eqm
 
@@ -239,6 +254,7 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
 
 _AVAILABLE_METHODS = {
     'replicator': replicator_dynamics,
+    'fictitious': fictitious_play,
     'optimize': regret_minimize,
     'scarf': scarfs_algorithm,
 }
@@ -290,7 +306,7 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         method with increasingly smaller tolerances until an equilibrium with
         small regret is found. This may take an exceedingly long time to
         converge, so use with caution.
-    **methods : {'replicator', 'optimize', 'scarf'}={options}
+    **methods : {'replicator', 'optimize', 'scarf', 'fictitious'}={options}
         All methods to use can be specified as key word arguments to additional
         options for that method, e.g. mixed_nash(game,
         replicator={'max_iters':100}). To use the default options for a method,
@@ -323,7 +339,7 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
     chunksize = len(initial_points) if processes == 1 else 4
 
     # Initialize pickleable methods
-    methods = methods or {'replicator': None, 'optimize': None}
+    methods = methods or {'replicator': {}, 'optimize': {}}
     methods = (_PickleableEqaFinding(_AVAILABLE_METHODS[meth], game,
                                      (opts or {}))
                for meth, opts in methods.items())

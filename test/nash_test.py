@@ -14,7 +14,7 @@ from gameanalysis import rsgame
 from test import testutils
 
 
-METHS = [('optimize', {}), ('replicator', {})]
+METHS = [('optimize', {}), ('replicator', {}), ('fictitious', {})]
 METHODS = [{k: v} for k, v in METHS]
 ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
     itertools.combinations(METHS, i)
@@ -98,7 +98,7 @@ def test_minreg_rand_roshambo():
 
 
 @testutils.warnings_filter()
-@pytest.mark.parametrize('methods', ALL_METHODS)
+@pytest.mark.parametrize('methods', METHODS)
 def test_mixed_roshambo(methods):
     game = gamegen.rock_paper_scissors()
     eqa = nash.mixed_nash(game, dist_thresh=1e-2, **methods)

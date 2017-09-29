@@ -637,6 +637,18 @@ class _BaseGame(_StratArray):
             deviations[mix < self.zero_prob.repeat(self.num_role_strats)] = 0
             return np.add.reduceat(mix * deviations, self.role_starts)
 
+    def best_response(self, mix):
+        """Returns the best response to a mixture
+
+        The result is a new mixture with uniform support over all best
+        deviating strategies.
+        """
+        responses = self.deviation_payoffs(mix)
+        bests = np.maximum.reduceat(responses, self.role_starts)
+        best_resps = responses == bests.repeat(self.num_role_strats)
+        return best_resps / np.add.reduceat(
+            best_resps, self.role_starts).repeat(self.num_role_strats)
+
     def is_profile(self, prof, *, axis=-1):
         """Verify that a profile is valid for game"""
         prof = np.asarray(prof, int)
