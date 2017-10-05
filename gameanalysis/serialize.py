@@ -1,6 +1,5 @@
 """Utility module that contains code for parsing legacy game formats"""
 import itertools
-import warnings
 from collections import abc
 
 import numpy as np
@@ -29,9 +28,12 @@ class _BaseSerializer(rsgame._StratArray):
         self.role_names = role_names
         self.strat_names = strat_names
 
-        if not all(map(utils.is_sorted, self.strat_names)):
-            warnings.warn("If strategies aren't sorted, some functions "
-                          "won't work as intended")
+        assert utils.is_sorted(self.role_names), \
+            ("If roles aren't sorted, equality between games isn't "
+             "guaranteed before and after serialization")
+        assert all(map(utils.is_sorted, self.strat_names)), \
+            ("If strategies aren't sorted, some functions won't work as "
+             "intended")
         self._named_role_index = {r: i for i, r in enumerate(self.role_names)}
         role_strats = itertools.chain.from_iterable(
             ((r, s) for s in strats) for r, strats
@@ -529,9 +531,13 @@ class _BaseSerializer(rsgame._StratArray):
         """Read a BaseGame from json"""
         num_role_players = np.empty(self.num_roles, int)
         if 'roles' in game:
+            assert len(game['roles']) == self.num_roles, \
+                "number of roles in game didn't match number of roles"
             for role in game['roles']:
                 num_role_players[self.role_index(role['name'])] = role['count']
         elif 'players' in game:
+            assert len(game['players']) == self.num_roles, \
+                "number of roles in game didn't match number of roles"
             for role, count in game['players'].items():
                 num_role_players[self.role_index(role)] = count
         else:
@@ -540,6 +546,10 @@ class _BaseSerializer(rsgame._StratArray):
 
     def to_json(self, game):
         """Format basegame as json"""
+        assert game.num_roles == self.num_roles, \
+            "game didn't have the same number of roles"
+        assert np.all(self.num_role_strats == game.num_role_strats), \
+            "game didn't have the same number of strategies"
         return {
             'players': dict(zip(self.role_names,
                                 map(int, game.num_role_players))),
@@ -639,15 +649,14 @@ def gameserializer_json(json):
         {<role>: [<strat>]}}.
     """
     if 'roles' in json:
-        desc = json['roles']
-        role_names = [j['name'] for j in desc]
-        strat_names = [j['strategies'] for j in desc]
+        desc = [(j['name'], j['strategies']) for j in json['roles']]
     elif 'strategies' in json:
-        desc = sorted(json['strategies'].items())
-        role_names = [r for r, _ in desc]
-        strat_names = [s for _, s in desc]
+        desc = list(json['strategies'].items())
     else:
         raise ValueError("unparsable json")
+    desc.sort()
+    role_names = [r for r, _ in desc]
+    strat_names = [sorted(s) for _, s in desc]
     return gameserializer(role_names, strat_names)
 
 

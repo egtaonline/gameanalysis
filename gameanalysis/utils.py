@@ -3,6 +3,8 @@ import inspect
 import itertools
 import math
 import operator
+import random
+import string
 import warnings
 from collections import abc
 
@@ -347,10 +349,44 @@ def random_con_bitmask(prob, shape, mins=1):
     return mask
 
 
+def iunique(iterable):
+    """Return an iterable of unique items ordered by first occurrence"""
+    seen = set()
+    for item in iterable:
+        if item not in seen:
+            seen.add(item)
+            yield item
+
+
+def random_strings(min_length, max_length=None, digits=string.ascii_lowercase):
+    """Return a random string
+
+    Parameters
+    ----------
+    min_length : int
+        The minimum length string to return.
+    max_length : int, optional
+        The maximum length string to return. If None or unspecified, this is
+        the same as min_length.
+    num : int, optional
+        The number of strings to return. If None or unspecified this returns a
+        single string, otherwise it returns a generator with length `num`.
+    digits : str, optional
+        The optional digits to select from.
+    """
+    if max_length is None:
+        max_length = min_length
+    assert min_length <= max_length, \
+        "max_length can't be less than min_length"
+    while True:
+        length = random.randint(min_length, max_length)
+        yield ''.join(random.choice(digits) for _ in range(length))
+
+
 def prefix_strings(prefix, num):
     """Returns a list of prefixed integer strings"""
     padding = int(math.log10(max(num - 1, 1))) + 1
-    return ['{}{:0{:d}d}'.format(prefix, i, padding) for i in range(num)]
+    return ('{}{:0{:d}d}'.format(prefix, i, padding) for i in range(num))
 
 
 def is_sorted(iterable, *, key=None, reverse=False):

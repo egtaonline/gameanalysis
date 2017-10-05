@@ -143,10 +143,11 @@ def local_effect(num_players, num_strategies, edge_prob=.2,
 
 def serializer(game):
     """Generate a random serializer from an AgfnGame"""
-    role_names = ['all'] if game.is_symmetric(
-    ) else utils.prefix_strings('r', game.num_roles)
-    strat_names = [utils.prefix_strings('s', s) for s in game.num_role_strats]
-    function_names = utils.prefix_strings('f', game.num_functions)
+    role_names = ('all',) if game.is_symmetric(
+    ) else tuple(utils.prefix_strings('r', game.num_roles))
+    strat_names = tuple(tuple(utils.prefix_strings('s', s)) for s
+                        in game.num_role_strats)
+    function_names = tuple(utils.prefix_strings('f', game.num_functions))
     return aggfn.aggfnserializer(role_names, strat_names, function_names)
 
 
@@ -155,12 +156,12 @@ def function_serializer(game):
 
     Generates strategy names that describe the fucntions they input to. Useful
     for congestion games"""
-    role_names = ['all'] if game.is_symmetric(
-    ) else utils.prefix_strings('r', game.num_roles)
-    function_names = utils.prefix_strings('f', game.num_functions)
-    strat_names = [
-        ['_'.join(f for f, i in zip(function_names, inp) if i)
-         for inp in role_inps]
+    role_names = ('all',) if game.is_symmetric(
+    ) else tuple(utils.prefix_strings('r', game.num_roles))
+    function_names = tuple(utils.prefix_strings('f', game.num_functions))
+    strat_names = tuple(
+        tuple('_'.join(f for f, i in zip(function_names, inp) if i)
+              for inp in role_inps)
         for role_inps
-        in np.split(game._function_inputs, game.role_starts[1:], -1)]
+        in np.split(game._function_inputs, game.role_starts[1:], -1))
     return aggfn.aggfnserializer(role_names, strat_names, function_names)

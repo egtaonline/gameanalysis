@@ -207,7 +207,21 @@ def test_random_con_bitmask_default(_):
             mask.shape[dim], -1).any(1).all()
 
 
-def test_prefix_strings_test():
+def test_iunique():
+    items = ['a', 'd', 'b', 'd', 'c', 'c', 'a']
+    expected = ['a', 'd', 'b', 'c']
+    actual = list(utils.iunique(items))
+    assert expected == actual
+
+
+def test_random_strings():
+    assert next(utils.random_strings(5, digits='a')) == 'aaaaa'
+    assert len(next(utils.random_strings(6))) == 6
+    assert all(5 <= len(s) <= 10 for s
+               in itertools.islice(utils.random_strings(5, 10), 40))
+
+
+def test_prefix_strings():
     assert utils.is_sorted(utils.prefix_strings('', 13))
 
 
@@ -244,7 +258,7 @@ def test_deprecation():
 
     try:
         func(None, None)
-        assert False, "should throw DeprecationWarning"  # pragma: no cover
+        raise ValueError("This should never be reached")  # pragma: no cover
     except:
         pass
 

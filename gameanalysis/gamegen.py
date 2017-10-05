@@ -521,7 +521,8 @@ def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
 
 def serializer(game):
     """Generate a GameSerializer from a game"""
-    role_names = (['all'] if game.is_symmetric()
-                  else utils.prefix_strings('r', game.num_roles))
-    strat_names = [utils.prefix_strings('s', s) for s in game.num_role_strats]
+    role_names = (('all',) if game.is_symmetric()
+                  else tuple(utils.prefix_strings('r', game.num_roles)))
+    strat_names = tuple(tuple(utils.prefix_strings('s', s)) for s
+                        in game.num_role_strats)
     return serialize.gameserializer(role_names, strat_names)

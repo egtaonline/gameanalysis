@@ -824,6 +824,64 @@ def test_big_game_functions():
     assert np.all(game.profile_id(game.random_profiles(1000)) >= 0)
 
 
+def test_best_response_pure():
+    profiles = [[1, 0, 2, 0],
+                [1, 0, 1, 1],
+                [1, 0, 0, 2],
+                [0, 1, 2, 0],
+                [0, 1, 1, 1],
+                [0, 1, 0, 2]]
+    payoffs = [[1, 0, 2, 0],
+               [3, 0, 4, 5],
+               [6, 0, 0, 7],
+               [0, 8, 9, 0],
+               [0, 10, 11, 12],
+               [0, 13, 0, 14]]
+    game = rsgame.game([1, 2], 2, profiles, payoffs)
+
+    br = game.best_response([1, 0, 1, 0])
+    assert np.allclose(br, [0, 1, 0, 1])
+    br = game.best_response([0, 1, 0, 1])
+    assert np.allclose(br, [0, 1, 0, 1])
+
+
+def test_best_response_mixed():
+    profiles = [[2, 0],
+                [1, 1],
+                [0, 2]]
+    payoffs = [[0, 0],
+               [0.4, 0.6],
+               [0, 0]]
+    game = rsgame.game(2, 2, profiles, payoffs)
+
+    br = game.best_response([1, 0])
+    assert np.allclose(br, [0, 1])
+    br = game.best_response([0, 1])
+    assert np.allclose(br, [1, 0])
+    br = game.best_response([0.4, 0.6])
+    assert np.allclose(br, [0.5, 0.5])
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_best_response(role_players, role_strats):
+    base = rsgame.emptygame(role_players, role_strats)
+    profiles = base.all_profiles()
+    payoffs = rand.random(profiles.shape)
+    mask = profiles > 0
+    payoffs *= mask
+    game = rsgame.game_replace(base, profiles, payoffs)
+
+    for mix in game.random_mixtures(20):
+        br = game.best_response(mix)
+        supp = br > 0
+        sub_starts = np.insert(
+            np.add.reduceat(supp, game.role_starts)[:-1].cumsum(), 0, 0)
+        devs = game.deviation_payoffs(mix)
+        avg = np.add.reduceat(br * devs, game.role_starts)
+        mx = np.maximum.reduceat(devs[supp], sub_starts)
+        assert np.allclose(avg, mx)
+
+
 def test_is_profile():
     game = rsgame.emptygame([2, 3], [3, 2])
     assert game.is_profile([1, 0, 1, 2, 1])

@@ -1089,7 +1089,10 @@ def emptygame_copy(copy_game):
     copy_game : BaseGame
         Game to copy info from.
     """
-    return emptygame(copy_game.num_role_players, copy_game.num_role_strats)
+    profiles = np.empty((0, copy_game.num_strats), int)
+    payoffs = np.empty((0, copy_game.num_strats), float)
+    return Game(copy_game.num_role_players, copy_game.num_role_strats,
+                profiles, payoffs)
 
 
 def game(num_role_players, num_role_strats, profiles, payoffs):

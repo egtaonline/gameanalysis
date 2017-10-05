@@ -923,9 +923,10 @@ def test_load_empty_observations():
     assert np.allclose(payoff, [np.nan, 0, np.nan], equal_nan=True)
 
 
-def test_sorted_strategy_warning():
-    with pytest.raises(UserWarning), warnings.catch_warnings():
-        warnings.simplefilter('error')
+def test_sorted_errors():
+    with pytest.raises(AssertionError):
+        serialize.gameserializer(['b', 'a'], [['a', 'b'], ['a', 'b']])
+    with pytest.raises(AssertionError):
         serialize.gameserializer(['role'], [['b', 'a']])
 
 
