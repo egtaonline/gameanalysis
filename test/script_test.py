@@ -34,6 +34,7 @@ GAME_STR = json.dumps(GAME_JSON)
 
 MATGAME = gamegen.independent_game([2, 3])
 MSERIAL = matgame.matgameserializer_copy(gamegen.serializer(MATGAME))
+MATGAME_STR = json.dumps(MSERIAL.to_json(MATGAME))
 
 
 def run(*cmd, fail=False, input=''):
@@ -744,3 +745,79 @@ def test_samp():
         for line in lines:
             prof = HARD_SERIAL.from_prof_json(json.loads(line)['profile'])
             assert HARD_GAME_DATA.is_profile(prof)
+
+
+def test_conv_game_empty():
+    success, _, err = run('conv', '-temptygame', '-o/dev/null', input=GAME_STR)
+    assert success, err
+
+
+def test_conv_game_def():
+    success, _, err = run('conv', '-o/dev/null', '-i', HARD_GAME)
+    assert success, err
+
+
+def test_conv_game_game():
+    success, _, err = run('conv', '-tgame', '-o/dev/null', input=GAME_STR)
+    assert success, err
+
+
+def test_conv_game_sgame():
+    success, _, err = run(
+        'conv', '-tsamplegame', '-o/dev/null', input=GAME_STR)
+    assert success, err
+
+
+def test_conv_game_mat():
+    success, _, err = run('conv', '-tmatgame', '-o/dev/null', input=GAME_STR)
+    assert success, err
+
+
+def test_conv_mat_empty():
+    success, _, err = run(
+        'conv', '-temptygame', '-o/dev/null', input=MATGAME_STR)
+    assert success, err
+
+
+def test_conv_mat_def():
+    success, _, err = run('conv', '-o/dev/null', input=MATGAME_STR)
+    assert success, err
+
+
+def test_conv_mat_game():
+    success, _, err = run('conv', '-tgame', '-o/dev/null', input=MATGAME_STR)
+    assert success, err
+
+
+def test_conv_mat_sgame():
+    success, _, err = run(
+        'conv', '-tsamplegame', '-o/dev/null', input=MATGAME_STR)
+    assert success, err
+
+
+def test_conv_mat_mat():
+    success, _, err = run(
+        'conv', '-tmatgame', '-o/dev/null', input=MATGAME_STR)
+    assert success, err
+
+
+def test_conv_game_mat_inv():
+    success, out, err = run('conv', '-tmatgame', input=GAME_STR)
+    assert success, err
+    success, out, err = run('conv', '-tgame', input=out)
+    assert success, err
+    game, serial = gamereader.read(json.loads(out))
+    assert game == rsgame.game_copy(matgame.matgame_copy(GAME_DATA))
+    expected = serialize.gameserializer_copy(matgame.matgameserializer_copy(
+        SERIAL, GAME_DATA.num_role_players))
+    assert serial == expected
+
+
+def test_conv_mat_game_inv():
+    success, out, err = run('conv', '-tgame', input=MATGAME_STR)
+    assert success, err
+    success, out, err = run('conv', '-tmatgame', input=out)
+    assert success, err
+    game, serial = gamereader.read(json.loads(out))
+    assert game == MATGAME
+    assert serial == MSERIAL

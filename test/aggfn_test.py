@@ -325,9 +325,13 @@ def verify_aggfn(game):
     assert game.is_complete()
 
     ngame = game.normalize()
-    assert np.allclose(ngame.max_role_payoffs() - ngame.min_role_payoffs(), 1)
+    assert np.all(
+        np.isclose(ngame.max_role_payoffs() - ngame.min_role_payoffs(), 1) |
+        (ngame.num_role_strats == 1))
     assert np.allclose(ngame.min_role_payoffs(), 0)
-    assert np.allclose(ngame.max_role_payoffs(), 1)
+    assert np.all(
+        np.isclose(ngame.max_role_payoffs(), 1) |
+        (ngame.num_role_strats == 1))
 
     # Check accuracy of min and max payoffs
     assert np.all(
