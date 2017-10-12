@@ -68,8 +68,9 @@ def add_parser(subparsers):
         `--min`""")
     parser.add_argument(
         '--processes', '-p', type=int, metavar='<num-processes>', default=None,
-        help="""The number of processes to use when finding a mixed nahs using
-        replicator dynamics.  (default: num-cores)""")
+        help="""The number of processes to use when finding a mixed nash.
+        Setting to zero will cause nash finding to occur in the main process,
+        which is useful when games are not pickleable. (default: num-cores)""")
     parser.add_argument(
         '--grid-points', '-g', metavar='<num-grid-points>', type=int,
         default=2, help="""Number of grid points to use per dimension on the

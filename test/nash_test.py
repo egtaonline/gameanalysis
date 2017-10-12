@@ -183,7 +183,7 @@ def test_mixed_nash_multi_process(methods, strategies):
     ]))
 def test_mixed_nash_best(methods, strategies):
     game = gamegen.role_symmetric_game(1, strategies)
-    eqa = nash.mixed_nash(game, processes=1, min_reg=True, **methods)
+    eqa = nash.mixed_nash(game, min_reg=True, **methods)
     assert eqa.size, "didn't return something"
 
 
@@ -201,7 +201,7 @@ def test_mixed_nash_best(methods, strategies):
     ]))
 def test_mixed_nash_at_least_one(methods, strategies):  # pragma: no cover
     game = gamegen.role_symmetric_game(1, strategies)
-    eqa = nash.mixed_nash(game, processes=1, at_least_one=True, **methods)
+    eqa = nash.mixed_nash(game, at_least_one=True, **methods)
     assert eqa.size, "didn't return at least one equilibria"
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 

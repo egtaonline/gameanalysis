@@ -273,35 +273,40 @@ class _PickleableEqaFinding(object):
 
 
 def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
-               random_restarts=0, processes=1, min_reg=False,
+               random_restarts=0, processes=0, min_reg=False,
                at_least_one=False, **methods):
     """Finds role-symmetric mixed Nash equilibria
 
     This is the intended front end for nash equilibria finding, wrapping the
     individual methods in a convenient front end that also support parallel
-    execution.
+    execution. Scipy optimize, and hence nash finding with the optimize method
+    is NOT thread safe. This can be mitigated by running nash finding in a
+    separate process (by setting processes > 0) if the game is pickleable.
 
     Arguments
     ---------
-    regret_thresh : float
+    regret_thresh : float, optional
         The threshold to consider an equilibrium found.
-    dist_thresh : float
+    dist_thresh : float, optional
         The threshold for considering equilibria distinct.
-    grid_points : int > 1
+    grid_points : int > 1, optional
         The number of grid points to use for mixture seeds. two implies just
         pure mixtures, more will be denser, but scales exponentially with the
         dimension.
-    random_restarts : int
+    random_restarts : int, optional
         The number of random initializations.
-    processes : int or None
-        Number of processes to use when finding Nash equilibria. If greater
-        than one, the game will need to be pickleable. Passing None will use
-        the number of current processors.
-    min_reg : bool
+    processes : int or None, optional
+        Number of processes to use when finding Nash equilibria. If 0 (default)
+        run nash finding in the current process. This will work with any game
+        but is not thread safe for the optimize method. If greater than zero or
+        none, the game must be pickleable and nash finding will be run in
+        `processes` processes. Passing None will use the number of current
+        processors.
+    min_reg : bool, optional
         If True, and no equilibria are found with the methods specified, return
         the point with the lowest empirical regret. This is ignored if
         at_least_one is True
-    at_least_one : bool
+    at_least_one : bool, optional
         If True, always return an equilibrium. This will use the fixed point
         method with increasingly smaller tolerances until an equilibrium with
         small regret is found. This may take an exceedingly long time to
@@ -324,6 +329,8 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
         `regret_thresh` and have norm difference of at least `dist_thresh`.
     """
     assert game.is_complete(), "Nash finding only works on complete games"""
+    assert processes is None or processes >= 0, \
+        "processes must be non-negative or None"
     assert all(m in _AVAILABLE_METHODS for m in methods), \
         "specified a invalid method {}".format(methods)
 
@@ -351,7 +358,7 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
             equilibria.add(eqm, reg)
         best[:] = min(best, [reg, i, eqm])
 
-    if processes == 1:
+    if processes == 0:
         for i, (meth, init) in enumerate(itertools.product(
                 methods, initial_points)):
             process(i, meth(init))

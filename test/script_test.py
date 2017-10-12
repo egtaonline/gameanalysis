@@ -625,7 +625,7 @@ def test_learning_args():
 
 def test_learning_nn():
     success, _, err = run('learning', '-o/dev/null',
-                          '-p1', '--nn', input=GAME_STR)
+                          '-p0', '--nn', input=GAME_STR)
     assert success, err
 
 
