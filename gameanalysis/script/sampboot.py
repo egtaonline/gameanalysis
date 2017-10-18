@@ -61,12 +61,12 @@ def _unpack_datum(role, strategy, payoff, **_):
     return role, strategy, payoff
 
 
-def load_devs(game, serial, data):
+def load_devs(game, data):
     devs = np.empty((len(data) // game.num_strats, game.num_strats))
     inds = np.zeros(game.num_strats, int)
     for datum in data:
         role, strat, pay = _unpack_datum(**datum)
-        sind = serial.role_strat_index(role, strat)
+        sind = game.role_strat_index(role, strat)
         devs[inds[sind], sind] = pay
         inds[sind] += 1
     return devs
@@ -75,10 +75,10 @@ def load_devs(game, serial, data):
 def main(args):
     data = json.load(args.input)
     if args.regret is not None:
-        game, serial = gamereader.read(json.load(args.regret[0]))
+        game = gamereader.read(json.load(args.regret[0]))
         game = rsgame.emptygame_copy(game)  # gc any extra data
-        mix = serial.from_mix_json(json.load(args.regret[1]))
-        devs = load_devs(game, serial, data)
+        mix = game.from_mix_json(json.load(args.regret[1]))
+        devs = load_devs(game, data)
         expect = np.add.reduceat(devs * mix, game.role_starts, 1)
         result = bootstrap.sample_regret(game, expect, devs,
                                          args.num_bootstraps,
@@ -90,10 +90,10 @@ def main(args):
             mean = np.max(mdevs - mexpect)
 
     elif args.dev_surplus is not None:
-        game, serial = gamereader.read(json.load(args.dev_surplus[0]))
+        game = gamereader.read(json.load(args.dev_surplus[0]))
         game = rsgame.emptygame_copy(game)  # gc any extra data
-        mix = serial.from_mix_json(json.load(args.dev_surplus[1]))
-        devs = load_devs(game, serial, data)
+        mix = game.from_mix_json(json.load(args.dev_surplus[1]))
+        devs = load_devs(game, data)
         surpluses = np.sum(
             devs * mix * game.num_role_players.repeat(game.num_role_strats), 1)
         result = bootstrap.mean(surpluses, args.num_bootstraps,

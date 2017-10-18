@@ -10,6 +10,7 @@ def test_weighted_similarity():
     simset.add(2, 1)
     simset.add(0, .5)
     assert len(simset) == 1
+    assert len(simset) == 1  # computed not
     assert [(1, 0)] == list(simset)
     repr(simset)
 
@@ -34,6 +35,10 @@ def test_dynamic_array():
     assert np.all(darray.pop() == [6, 7, 8])
     darray.compact()
     assert np.all(darray.pop(2) == [[0, 1, 2], [3, 4, 5]])
+
+    darray = collect.DynamicArray([3], dtype=int)
+    darray.append([0, 1, 2])
+    assert len(darray) == 1
 
 
 def test_dynamic_array_failure():

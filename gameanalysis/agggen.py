@@ -43,6 +43,7 @@ def random_poly_dist(coef_dist, degree_dist):
     return table_func
 
 
+# TODO Make this random_poly_aggfn
 def random_aggfn(num_role_players, num_role_strats, num_functions,
                  input_dist=lambda s: utils.random_con_bitmask(.2, s),
                  weight_dist=lambda s: np.random.normal(0, 1, s) *
@@ -83,6 +84,14 @@ def congestion(num_players, num_facilities, num_required, degree=2,
                coef_dist=lambda d: -np.random.exponential(10. ** (1 - d))):
     """Generate a congestion game
 
+    A congestion game is a symmetric game, where there are a given number of
+    facilities, and each player must choose to use some amount of them. The
+    payoff for each facility generally goes down as more players use it, and a
+    players utility is the sum of the utilities for every facility.
+
+    In this formulation, facility payoffs are random polynomials of the number
+    of people using said facility.
+
     Parameters
     ----------
     num_players : int
@@ -98,8 +107,11 @@ def congestion(num_players, num_facilities, num_required, degree=2,
     function_inputs = utils.acomb(num_facilities, num_required)
     table_dist = random_poly_dist(coef_dist, np.insert(np.zeros(degree), 2, 1))
     functions = table_dist((num_facilities, num_players + 1))
-    return aggfn.aggfn(num_players, function_inputs.shape[0],
-                       function_inputs.T, function_inputs, functions)
+    facs = tuple(utils.prefix_strings('', num_facilities))
+    strats = tuple('_'.join(facs[i] for i, m in enumerate(mask) if m)
+                   for mask in function_inputs)
+    return aggfn.aggfn_names(['all'], num_players, [strats], facs,
+                             function_inputs.T, function_inputs, functions)
 
 
 def local_effect(num_players, num_strategies, edge_prob=.2,
@@ -108,6 +120,13 @@ def local_effect(num_players, num_strategies, edge_prob=.2,
                  other_dist=random_poly_dist(
                      lambda d: np.random.normal(0, 10. ** (-d)), [0, 0, 1])):
     """Generate a local effect game
+
+    In a local effect game, strategies are connected by a graph, and utilities
+    are a function of the number of players playing our strategy and the number
+    of players playing a neighboring strategy, hence local effect.
+
+    In this formulation, payoffs for others playing our strategy are negative
+    quadratics, and payoffs for playing other strategies are positive cubics.
 
     Parameters
     ----------
@@ -139,29 +158,3 @@ def local_effect(num_players, num_strategies, edge_prob=.2,
         (num_functions - num_strategies, num_players + 1))
     return aggfn.aggfn(num_players, num_strategies, action_weights,
                        function_inputs, function_table)
-
-
-def serializer(game):
-    """Generate a random serializer from an AgfnGame"""
-    role_names = ('all',) if game.is_symmetric(
-    ) else tuple(utils.prefix_strings('r', game.num_roles))
-    strat_names = tuple(tuple(utils.prefix_strings('s', s)) for s
-                        in game.num_role_strats)
-    function_names = tuple(utils.prefix_strings('f', game.num_functions))
-    return aggfn.aggfnserializer(role_names, strat_names, function_names)
-
-
-def function_serializer(game):
-    """Generate a random serializer from an AgfnGame
-
-    Generates strategy names that describe the fucntions they input to. Useful
-    for congestion games"""
-    role_names = ('all',) if game.is_symmetric(
-    ) else tuple(utils.prefix_strings('r', game.num_roles))
-    function_names = tuple(utils.prefix_strings('f', game.num_functions))
-    strat_names = tuple(
-        tuple('_'.join(f for f, i in zip(function_names, inp) if i)
-              for inp in role_inps)
-        for role_inps
-        in np.split(game._function_inputs, game.role_starts[1:], -1))
-    return aggfn.aggfnserializer(role_names, strat_names, function_names)

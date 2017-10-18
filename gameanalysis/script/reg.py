@@ -21,7 +21,7 @@ def is_pure_profile(game, prof):
     return pure
 
 
-def reg(game, serial, prof):
+def reg(game, prof):
     """the regret of the profile"""
     if is_pure_profile(game, prof):
         return regret.pure_strategy_regret(game, np.asarray(prof, int)).item()
@@ -29,15 +29,15 @@ def reg(game, serial, prof):
         return regret.mixture_regret(game, prof).item()
 
 
-def gains(game, serial, prof):
+def gains(game, prof):
     """the gains from deviating from profile"""
     if is_pure_profile(game, prof):
         prof = np.asarray(prof, int)
         gains = regret.pure_strategy_deviation_gains(game, prof)
-        return serial.to_dev_payoff_json(gains, prof)
+        return game.to_dev_payoff_json(gains, prof)
     else:
         gains = regret.mixture_deviation_gains(game, prof)
-        return serial.to_payoff_json(gains)
+        return game.to_payoff_json(gains)
 
 
 TYPE = {
@@ -72,11 +72,9 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
     prof_func = TYPE[args.type]
-    regrets = [prof_func(game, serial,
-                         serial.from_mix_json(prof, verify=False))
+    regrets = [prof_func(game, game.from_mix_json(prof, verify=False))
                for prof in scriptutils.load_profiles(args.profiles)]
-
     json.dump(regrets, args.output)
     args.output.write('\n')

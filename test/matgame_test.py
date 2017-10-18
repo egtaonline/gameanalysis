@@ -7,9 +7,17 @@ import pytest
 
 from gameanalysis import gamegen
 from gameanalysis import matgame
+from gameanalysis import paygame
 from gameanalysis import rsgame
-from gameanalysis import serialize
 from gameanalysis import utils
+
+
+def full_game(role_names, role_players, strat_names):
+    base = rsgame.emptygame_names(
+        role_names, role_players, strat_names)
+    return paygame.game_replace(
+        base, base.all_profiles(),
+        np.zeros((base.num_all_profiles, base.num_strats)))
 
 
 @pytest.mark.parametrize('strats', [
@@ -22,7 +30,7 @@ from gameanalysis import utils
 def test_random_min_max(strats):
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
-    game = rsgame.game_copy(matg)
+    game = paygame.game_copy(matg)
 
     assert np.allclose(matg.min_strat_payoffs(), game.min_strat_payoffs())
     assert np.allclose(matg.max_strat_payoffs(), game.max_strat_payoffs())
@@ -57,7 +65,7 @@ def test_compress_profiles():
 
 def test_profiles_payoffs():
     matg = matgame.matgame([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
-    copy = rsgame.game_copy(matg)
+    copy = paygame.game_copy(matg)
     profs = [[1, 0, 1, 0],
              [1, 0, 0, 1],
              [0, 1, 1, 0],
@@ -66,7 +74,7 @@ def test_profiles_payoffs():
             [3, 0, 0, 4],
             [0, 5, 6, 0],
             [0, 7, 0, 8]]
-    game = rsgame.game([1, 1], 2, profs, pays)
+    game = paygame.game([1, 1], 2, profs, pays)
     assert copy == game
 
 
@@ -137,7 +145,7 @@ def test_random_get_payoffs(strats):
 def test_random_deviations(strats):
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
-    game = rsgame.game_copy(matg)
+    game = paygame.game_copy(matg)
 
     mix = matg.random_mixtures()
     matdev = matg.deviation_payoffs(mix)
@@ -187,14 +195,18 @@ def test_is_constant_sum():
 
 
 def test_submatgame():
-    matg = matgame.matgame(rand.random((2, 3, 4, 3)))
+    matrix = rand.random((2, 3, 4, 3))
+    matg = matgame.matgame(matrix)
     mask = [True, True, True, False, True, False, False, True, True]
-    smatg = matgame.matgame(matg.payoff_matrix[:, [0, 2]][:, :, 2:].copy())
+    submat = matrix[:, [0, 2]][:, :, 2:].copy()
+    smatg = matgame.matgame_names(
+        ['r0', 'r1', 'r2'], [['s0', 's1'], ['s2', 's4'], ['s7', 's8']], submat)
     assert smatg == matg.subgame(mask)
 
     matg = matgame.matgame([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
     mask = [True, True, True, False]
-    matg = matgame.matgame([[[1, 2]], [[5, 6]]])
+    matg = matgame.matgame_names(
+        ['r0', 'r1'], [['s0', 's1'], ['s2']], [[[1, 2]], [[5, 6]]])
 
 
 @pytest.mark.parametrize('strats', [
@@ -212,7 +224,7 @@ def test_random_matgame_hash_eq(strats):
     assert hash(copy) == hash(matg)
     assert copy == matg
 
-    game = rsgame.game_copy(matg)
+    game = paygame.game_copy(matg)
     copy = matgame.matgame_copy(game)
     assert hash(copy) == hash(matg)
     assert copy == matg
@@ -252,70 +264,45 @@ def test_random_matgame_copy(players, strats):
     assert np.allclose(mpays, pays)
 
 
-def test_serializer_copy():
-    game = matgame.matgame(np.random.random((2, 3, 4, 3)))
-    serial = matgame.matgameserializer_copy(gamegen.serializer(game))
-    expected = ("MatGameSerializer(('r0', 'r1', 'r2'), (('s0', 's1'), "
-                "('s0', 's1', 's2'), ('s0', 's1', 's2', 's3')))")
-    assert repr(serial) == expected
-
-    jgame = serial.to_json(game)
-    copy = serial.from_json(jgame)
-    assert game == copy
-    copy, scopy = matgame.read_matgame(jgame)
-    assert serial == scopy
-    assert game == copy
-
-    mask = [True, False, True, False, False, True, True, False, False]
-    sserial = matgame.matgameserializer(
-        ['r0', 'r1', 'r2'], [['s0'], ['s0'], ['s0', 's1']])
-    assert sserial == serial.subserial(mask)
-
-
 def test_serialize_copy_role_lengths():
-    serial = serialize.gameserializer(
-        ['a', 'b'], [['1', '2'], ['3', '4', '5']])
+    game = full_game(
+        ['a', 'b'], [1, 1], [['1', '2'], ['3', '4', '5']])
+    matg = matgame.matgame_copy(game)
+    expected = matgame.matgame_names(
+        ['a', 'b'], [['1', '2'], ['3', '4', '5']], np.zeros((2, 3, 2)))
+    assert utils.is_sorted(matg.role_names)
+    assert matg == expected
 
-    mserial = matgame.matgameserializer_copy(serial)
-    expected = matgame.matgameserializer(
-        ['a', 'b'], [['1', '2'], ['3', '4', '5']])
-    assert utils.is_sorted(mserial.role_names)
-    assert mserial == expected
-
-    mserial = matgame.matgameserializer_copy(serial, [1, 1])
-    expected = matgame.matgameserializer(
-        ['a', 'b'], [['1', '2'], ['3', '4', '5']])
-    assert utils.is_sorted(mserial.role_names)
-    assert mserial == expected
-
-    mserial = matgame.matgameserializer_copy(serial, [2, 1])
-    expected = matgame.matgameserializer(
-        ['ap0', 'ap1', 'bp0'],
-        [['1', '2'], ['1', '2'], ['3', '4', '5']])
-    assert utils.is_sorted(mserial.role_names)
-    assert mserial == expected
+    game = full_game(
+        ['a', 'b'], [2, 1], [['1', '2'], ['3', '4', '5']])
+    matg = matgame.matgame_copy(game)
+    expected = matgame.matgame_names(
+        ['ap0', 'ap1', 'bp0'], [['1', '2'], ['1', '2'], ['3', '4', '5']],
+        np.zeros((2, 2, 3, 3)))
+    assert utils.is_sorted(matg.role_names)
+    assert matg == expected
 
 
 def test_serialize_copy_role_lengths_natural():
-    serial = serialize.gameserializer(
-        ['q', 'qq'], [['1', '2'], ['3', '4', '5']])
-    mserial = matgame.matgameserializer_copy(serial, [2, 1])
-    expected = matgame.matgameserializer(
-        ['qp0', 'qp1', 'qqp0'],
-        [['1', '2'], ['1', '2'], ['3', '4', '5']])
-    assert utils.is_sorted(mserial.role_names)
-    assert mserial == expected
+    game = full_game(
+        ['q', 'qq'], [2, 1], [['1', '2'], ['3', '4', '5']])
+    matg = matgame.matgame_copy(game)
+    expected = matgame.matgame_names(
+        ['qp0', 'qp1', 'qqp0'], [['1', '2'], ['1', '2'], ['3', '4', '5']],
+        np.zeros((2, 2, 3, 3)))
+    assert utils.is_sorted(matg.role_names)
+    assert matg == expected
 
 
 def test_serialize_copy_role_lengths_unlikely():
-    serial = serialize.gameserializer(
-        ['a', 'aa'], [['1', '2'], ['3', '4', '5']])
-    mserial = matgame.matgameserializer_copy(serial, [2, 1])
-    expected = matgame.matgameserializer(
-        ['0_ap0', '0_ap1', '1aap0'],
-        [['1', '2'], ['1', '2'], ['3', '4', '5']])
-    assert utils.is_sorted(mserial.role_names)
-    assert mserial == expected
+    game = full_game(
+        ['a', 'aa'], [2, 1], [['1', '2'], ['3', '4', '5']])
+    matg = matgame.matgame_copy(game)
+    expected = matgame.matgame_names(
+        ['0_ap0', '0_ap1', '1aap0'], [['1', '2'], ['1', '2'], ['3', '4', '5']],
+        np.zeros((2, 2, 3, 3)))
+    assert utils.is_sorted(matg.role_names)
+    assert matg == expected
 
 
 def random_names(num):
@@ -330,7 +317,41 @@ def test_random_serialize_copy_role_lengths(_):
     roles = random_names(num_roles)
     strats = tuple(random_names(random.randint(2, 4))
                    for _ in range(num_roles))
-    serial = serialize.gameserializer(roles, strats)
     players = [random.randint(1, 3) for _ in range(num_roles)]
-    mserial = matgame.matgameserializer_copy(serial, players)
-    assert utils.is_sorted(mserial.role_names)
+    game = full_game(roles, players, strats)
+    matg = matgame.matgame_copy(game)
+    assert utils.is_sorted(matg.role_names)
+
+
+def test_to_from_json():
+    matg = matgame.matgame(
+        [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]])
+    mjson = {
+        'players': {'r0': 1, 'r1': 1},
+        'strategies': {
+            'r0': ['s0', 's1', 's2'],
+            'r1': ['s3', 's4']},
+        'payoffs': {
+            's0': {'s3': {'r0': 1, 'r1': 2},
+                   's4': {'r0': 3, 'r1': 4}},
+            's1': {'s3': {'r0': 5, 'r1': 6},
+                   's4': {'r0': 7, 'r1': 8}},
+            's2': {'s3': {'r0': 9, 'r1': 10},
+                   's4': {'r0': 11, 'r1': 12}}},
+        'type': 'matrix.1'}
+    assert matg.to_json() == mjson
+    assert matg == matgame.matgame_json(mjson)
+
+
+@pytest.mark.parametrize('strats', [
+    [1],
+    [3],
+    [2, 3],
+    [1, 2, 3],
+    [2, 3, 1],
+])
+def test_random_to_from_json(strats):
+    payoffs = rand.random(tuple(strats) + (len(strats),))
+    matg = matgame.matgame(payoffs)
+    copy = matgame.matgame_json(matg.to_json())
+    assert matg == copy

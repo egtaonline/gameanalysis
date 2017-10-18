@@ -61,7 +61,7 @@ def test_sample_regret(players, strategies):
     dev_profs.shape = (-1, game.num_strats)
     inds = np.broadcast_to(np.arange(game.num_strats),
                            (n, game.num_strats)).flat
-    dev_payoffs = np.fromiter(
+    dev_payoffs = np.fromiter(  # pragma: no cover
         (game.get_payoffs(p)[i] for p, i in zip(dev_profs, inds)),
         float, n * game.num_strats)
     dev_payoffs.shape = (n, game.num_strats)

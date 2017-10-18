@@ -5,8 +5,6 @@ import sys
 
 from gameanalysis import gamegen
 from gameanalysis import gamereader
-from gameanalysis import matgame
-from gameanalysis import serialize
 
 
 class ZeroSum(object):
@@ -25,9 +23,7 @@ class ZeroSum(object):
 
     @staticmethod
     def create(args):
-        game = gamegen.two_player_zero_sum_game(args.num_strats)
-        serial = matgame.matgameserializer_copy(gamegen.serializer(game))
-        return game, serial
+        return gamegen.two_player_zero_sum_game(args.num_strats)
 
 
 class RoleSymmetric(object):
@@ -50,10 +46,7 @@ class RoleSymmetric(object):
     def create(args):
         assert len(args.pands) % 2 == 0, \
             'Must specify matching sets of players and strategies'
-        game = gamegen.role_symmetric_game(args.pands[::2],
-                                           args.pands[1::2])
-        serial = gamegen.serializer(game)
-        return game, serial
+        return gamegen.role_symmetric_game(args.pands[::2], args.pands[1::2])
 
 
 class Noise(object):
@@ -94,11 +87,10 @@ class Noise(object):
 
     @staticmethod
     def create(args):
-        game, serial = gamereader.read(json.load(args.input))
+        game = gamereader.read(json.load(args.input))
         dist = Noise.distributions[args.distribution]
-        return (gamegen.add_noise_width(game, args.num_samples, args.max_width,
-                                        dist),
-                serialize.samplegameserializer_copy(serial))
+        return gamegen.add_noise_width(
+            game, args.num_samples, args.max_width, dist)
 
 
 _TYPES = {}
@@ -128,10 +120,5 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = _TYPES[args.type].create(args)
-
-    if args.normalize:
-        game = game.normalize()
-
-    json.dump(serial.to_json(game), args.output)
+    json.dump(_TYPES[args.type].create(args).to_json(), args.output)
     args.output.write('\n')

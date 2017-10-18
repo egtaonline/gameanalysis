@@ -3,6 +3,7 @@ import numpy.random as rand
 import pytest
 
 from gameanalysis import gamegen
+from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import utils
 from gameanalysis.reduction import deviation_preserving as dpr
@@ -36,18 +37,18 @@ def test_random_dpr(keep_prob, game_desc, _):
                             red_players))
 
     # Assert that reducing all profiles covers reduced game
-    reduced_profiles = utils.axis_to_elem(red_game.profiles)
+    reduced_profiles = utils.axis_to_elem(red_game.profiles())
     reduced_full_profiles = utils.axis_to_elem(
-        dpr.reduce_profiles(red_game, game.profiles))
+        dpr.reduce_profiles(red_game, game.profiles()))
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game, we need to first filter for complete profiles
-    full_profiles = utils.axis_to_elem(game.profiles)
-    complete_profs = ~np.isnan(red_game.payoffs).any(1)
+    full_profiles = utils.axis_to_elem(game.profiles())
+    complete_profs = ~np.isnan(red_game.payoffs()).any(1)
     full_reduced_profiles = utils.axis_to_elem(
-        dpr.expand_profiles(game, red_game.profiles[complete_profs]))
+        dpr.expand_profiles(game, red_game.profiles()[complete_profs]))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
 
@@ -60,7 +61,7 @@ def test_empty_dpr_1():
     payoffs = [
         [1, 2],
     ]
-    game = rsgame.game(6, 2, profiles, payoffs)
+    game = paygame.game(6, 2, profiles, payoffs)
     red_game = dpr.reduce_game(game, 2)
     assert np.all(red_game.num_role_players == [2])
     assert red_game.is_empty()
@@ -74,10 +75,10 @@ def test_empty_dpr_2():
     payoffs = [
         [1, 2],
     ]
-    game = rsgame.game(4, 2, profiles, payoffs)
+    game = paygame.game(4, 2, profiles, payoffs)
     red_game = dpr.reduce_game(game, 2)
     assert np.all(red_game.num_role_players == [2])
-    assert np.all(red_game.profiles == [[1, 1]])
+    assert np.all(red_game.profiles() == [[1, 1]])
     assert [1, 1] not in red_game  # incomplete profiles don't register
 
 
@@ -102,17 +103,17 @@ def test_random_twins(players, strategies, keep_prob, _):
 
     # Assert that reducing all profiles covers reduced game
     reduced_full_profiles = utils.axis_to_elem(
-        tr.reduce_profiles(red_game, game.profiles))
-    reduced_profiles = utils.axis_to_elem(red_game.profiles)
+        tr.reduce_profiles(red_game, game.profiles()))
+    reduced_profiles = utils.axis_to_elem(red_game.profiles())
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game. We need to remove partial profiles first
-    full_profiles = utils.axis_to_elem(game.profiles)
-    complete_profs = ~np.isnan(red_game.payoffs).any(1)
+    full_profiles = utils.axis_to_elem(game.profiles())
+    complete_profs = ~np.isnan(red_game.payoffs()).any(1)
     full_reduced_profiles = utils.axis_to_elem(
-        tr.expand_profiles(game, red_game.profiles[complete_profs]))
+        tr.expand_profiles(game, red_game.profiles()[complete_profs]))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
 
@@ -140,16 +141,16 @@ def test_random_hierarchical(keep_prob, players, strategies, red_players, _):
 
     # Assert that reducing all profiles covers reduced game
     reduced_full_profiles = utils.axis_to_elem(
-        hr.reduce_profiles(red_game, game.profiles))
-    reduced_profiles = utils.axis_to_elem(red_game.profiles)
+        hr.reduce_profiles(red_game, game.profiles()))
+    reduced_profiles = utils.axis_to_elem(red_game.profiles())
     assert np.setxor1d(reduced_profiles, reduced_full_profiles).size == 0, \
         "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game. Since hr doesn't add any incomplete profiles, it can't produce any
-    full_profiles = utils.axis_to_elem(game.profiles)
+    full_profiles = utils.axis_to_elem(game.profiles())
     full_reduced_profiles = utils.axis_to_elem(
-        hr.expand_profiles(game, red_game.profiles))
+        hr.expand_profiles(game, red_game.profiles()))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
 
@@ -171,7 +172,7 @@ def test_random_identity(keep_prob, game_desc, _):
     # Create game and reduction
     game = gamegen.add_profiles(
         rsgame.emptygame(players, strategies), keep_prob)
-    assert (rsgame.emptygame(players, strategies) ==
+    assert (paygame.game_copy(rsgame.emptygame(players, strategies)) ==
             ir.reduce_game(rsgame.emptygame(players, strategies)))
 
     # Try to reduce game
@@ -179,14 +180,14 @@ def test_random_identity(keep_prob, game_desc, _):
 
     # Assert that reducing all profiles covers reduced game
     reduced_full_profiles = utils.axis_to_elem(
-        ir.reduce_profiles(red_game, game.profiles))
-    reduced_profiles = utils.axis_to_elem(red_game.profiles)
+        ir.reduce_profiles(red_game, game.profiles()))
+    reduced_profiles = utils.axis_to_elem(red_game.profiles())
     assert np.setxor1d(reduced_full_profiles, reduced_profiles).size == 0, \
         "reduced game didn't match full game"
 
-    full_profiles = utils.axis_to_elem(game.profiles)
+    full_profiles = utils.axis_to_elem(game.profiles())
     full_reduced_profiles = utils.axis_to_elem(
-        ir.expand_profiles(game, red_game.profiles))
+        ir.expand_profiles(game, red_game.profiles()))
     assert np.setxor1d(full_profiles, full_reduced_profiles).size == 0, \
         "full game did not match reduced game"
 
@@ -517,7 +518,7 @@ def test_dpr_incomplete_profile():
     payoffs = [[1, 0, 0, 2],
                [3, 4, 5, 0],
                [6, 7, 8, 0]]
-    game = rsgame.game([4, 9], 2, profiles, payoffs)
+    game = paygame.game([4, 9], 2, profiles, payoffs)
     red_game = dpr.reduce_game(game, [2, 3])
     actual = red_game.get_payoffs([2, 0, 0, 3])
     assert np.allclose(actual, [1, 0, 0, 2])
@@ -541,22 +542,22 @@ def test_remove_dpr_profiles_with_no_data():
                 [3, 1]]
     payoffs = [[3, 4],
                [6, np.nan]]
-    game = dpr.reduce_game(rsgame.game(4, 2, profiles, payoffs), 2)
+    game = dpr.reduce_game(paygame.game(4, 2, profiles, payoffs), 2)
     assert game.num_profiles == 1
 
     profiles = [[1, 3],
                 [3, 1]]
     payoffs = [[np.nan, 4],
                [6, np.nan]]
-    game = dpr.reduce_game(rsgame.game(4, 2, profiles, payoffs), 2)
+    game = dpr.reduce_game(paygame.game(4, 2, profiles, payoffs), 2)
     assert game.is_empty()
 
     profiles = [[1, 3]]
     payoffs = [[3, 4]]
-    game = dpr.reduce_game(rsgame.game(4, 2, profiles, payoffs), 2)
+    game = dpr.reduce_game(paygame.game(4, 2, profiles, payoffs), 2)
     assert game.num_profiles == 1
 
     profiles = [[1, 3]]
     payoffs = [[np.nan, 4]]
-    game = dpr.reduce_game(rsgame.game(4, 2, profiles, payoffs), 2)
+    game = dpr.reduce_game(paygame.game(4, 2, profiles, payoffs), 2)
     assert game.is_empty()

@@ -63,30 +63,30 @@ def add_parser(subparsers):
     return parser
 
 
-def parse_text_spec(serial, spec):
+def parse_text_spec(game, spec):
     current_role = '<undefined role>'
-    subg = np.zeros(serial.num_strats, bool)
-    roles = set(serial.role_names)
+    subg = np.zeros(game.num_strats, bool)
+    roles = frozenset(game.role_names)
     for role_strat in spec:
         if role_strat in roles:
             current_role = role_strat
         else:
-            subg[serial.role_strat_index(current_role, role_strat)] = True
-    assert serial.is_subgame(subg), \
+            subg[game.role_strat_index(current_role, role_strat)] = True
+    assert game.is_subgame(subg), \
         "\"{}\" does not define a valid subgame".format(' '.join(spec))
     return subg
 
 
-def parse_index_spec(serial, spec):
-    subg = np.zeros(serial.num_strats, bool)
+def parse_index_spec(game, spec):
+    subg = np.zeros(game.num_strats, bool)
     subg[spec] = True
-    assert serial.is_subgame(subg), \
+    assert game.is_subgame(subg), \
         "\"{}\" does not define a valid subgame".format(' '.join(spec))
     return subg
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
 
     # Collect all subgames
     subgames = []
@@ -94,17 +94,15 @@ def main(args):
         subgames.extend(subgame.maximal_subgames(game))
 
     for sub_file in args.subgame_file:
-        subgames.extend(serial.from_subgame_json(spec)
+        subgames.extend(game.from_subgame_json(spec)
                         for spec in json.load(sub_file))
 
-    subgames.extend(parse_text_spec(serial, spec) for spec in args.text_spec)
-    subgames.extend(parse_index_spec(serial, spec) for spec in args.index_spec)
+    subgames.extend(parse_text_spec(game, spec) for spec in args.text_spec)
+    subgames.extend(parse_index_spec(game, spec) for spec in args.index_spec)
 
     if args.no_extract:
-        json.dump([serial.to_subgame_json(sub) for sub in subgames],
-                  args.output)
+        json.dump([game.to_subgame_json(sub) for sub in subgames], args.output)
     else:
-        json.dump([
-            serial.subserial(sub).to_json(game.subgame(sub))
-            for sub in subgames], args.output)
+        json.dump([game.subgame(sub).to_json() for sub in subgames],
+                  args.output)
     args.output.write('\n')

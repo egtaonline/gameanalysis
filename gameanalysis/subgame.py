@@ -9,6 +9,11 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# TODO Recently this has been called a restricted game to remove confusion with
+# the extensive form game concept. This change in nomenclature should probably
+# happen at some point.
+
+
 def num_deviation_profiles(game, subgame_mask):
     """Returns the number of deviation profiles
 

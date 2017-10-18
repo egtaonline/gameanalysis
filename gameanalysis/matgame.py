@@ -5,47 +5,51 @@ import itertools
 import numpy as np
 
 from gameanalysis import rsgame
-from gameanalysis import serialize
 from gameanalysis import utils
 
 
-class MatrixGame(rsgame._CompleteGame):
+class MatrixGame(rsgame.CompleteGame):
     """Matrix game representation
 
-    This represents a dense independent game as a matrix of payoffs.
+    This represents a complete independent game more compactly than a Game, but
+    only works for complete independent games.
 
     Parameters
     ----------
-    matrix : ndarray-like
+    role_names : (str,)
+        The name of each role.
+    strat_names : ((str,),)
+        The name of each strategy per role.
+    payoff_matrix : ndarray
         The matrix of payoffs for an asymmetric game. The last axis is the
         payoffs for each player, the first axes are the strategies for each
         player. matrix.shape[:-1] must correspond to the number of strategies
-        for each player. matrix.ndim - 1 must equal matrix.shape[-1]. This must
-        be specified by itself.
+        for each player. matrix.ndim - 1 must equal matrix.shape[-1].
     """
 
-    def __init__(self, payoff_matrix):
-        super().__init__(np.ones(payoff_matrix.shape[-1], int),
-                         np.asarray(payoff_matrix.shape[:-1], int))
-        assert payoff_matrix.shape[-1] == payoff_matrix.ndim - 1, \
-            "matrix shape is inconsistent with a matrix game {}".format(
-                payoff_matrix.shape)
-        self.payoff_matrix = payoff_matrix
-        self.payoff_matrix.setflags(write=False)
+    def __init__(self, role_names, strat_names, payoff_matrix):
+        super().__init__(role_names, strat_names,
+                         np.ones(len(role_names), int))
+        self._payoff_matrix = payoff_matrix
+        self._payoff_matrix.setflags(write=False)
 
         self._prof_offset = np.zeros(self.num_strats, int)
         self._prof_offset[self.role_starts] = 1
         self._prof_offset.setflags(write=False)
 
-        self._payoff_view = self.payoff_matrix.view()
+        self._payoff_view = self._payoff_matrix.view()
         self._payoff_view.shape = (self.num_profiles, self.num_roles)
+
+    def payoff_matrix(self):
+        """Return the payoff matrix"""
+        return self._payoff_matrix.view()
 
     @utils.memoize
     def min_strat_payoffs(self):
         """Returns the minimum payoff for each role"""
         mpays = np.empty(self.num_strats)
         for r, (pays, min_pays, n) in enumerate(zip(
-                np.rollaxis(self.payoff_matrix, -1),
+                np.rollaxis(self._payoff_matrix, -1),
                 np.split(mpays, self.role_starts[1:]),
                 self.num_role_strats)):
             np.rollaxis(pays, r).reshape((n, -1)).min(1, min_pays)
@@ -57,24 +61,22 @@ class MatrixGame(rsgame._CompleteGame):
         """Returns the minimum payoff for each role"""
         mpays = np.empty(self.num_strats)
         for r, (pays, max_pays, n) in enumerate(zip(
-                np.rollaxis(self.payoff_matrix, -1),
+                np.rollaxis(self._payoff_matrix, -1),
                 np.split(mpays, self.role_starts[1:]),
                 self.num_role_strats)):
             np.rollaxis(pays, r).reshape((n, -1)).max(1, max_pays)
         mpays.setflags(write=False)
         return mpays
 
-    @property
     @functools.lru_cache(maxsize=1)
     def profiles(self):
         return self.all_profiles()
 
-    @property
     @functools.lru_cache(maxsize=1)
     def payoffs(self):
-        profiles = self.profiles
+        profiles = self.profiles()
         payoffs = np.zeros(profiles.shape)
-        payoffs[profiles > 0] = self.payoff_matrix.flat
+        payoffs[profiles > 0] = self._payoff_matrix.flat
         return payoffs
 
     def compress_profile(self, profile):
@@ -105,7 +107,7 @@ class MatrixGame(rsgame._CompleteGame):
         """Returns an array of profile payoffs"""
         profile = np.asarray(profile, int)
         ids = self.profile_id(profile)
-        payoffs = np.zeros(profile.shape[:-1] + (self.num_strats,))
+        payoffs = np.zeros_like(profile, float)
         payoffs[profile > 0] = self._payoff_view[ids].flat
         return payoffs
 
@@ -135,7 +137,7 @@ class MatrixGame(rsgame._CompleteGame):
         for r, (out, n) in enumerate(zip(
                 np.split(devpays, self.role_starts[1:]),
                 self.num_role_strats)):
-            pays = self.payoff_matrix[..., r].copy()
+            pays = self._payoff_matrix[..., r].copy()
             for m in rmix[:r]:
                 pays *= m
             for m in rmix[r + 1:]:
@@ -154,7 +156,7 @@ class MatrixGame(rsgame._CompleteGame):
                     self.num_role_strats)):
                 if r == d:
                     continue
-                pays = self.payoff_matrix[..., r].copy()
+                pays = self._payoff_matrix[..., r].copy()
                 f, s = min(r, d), max(r, d)
                 for m in rmix[:f]:
                     pays *= m
@@ -171,114 +173,19 @@ class MatrixGame(rsgame._CompleteGame):
         return devpays, jac
 
     def subgame(self, subgame_mask):
-        subgame_mask = np.asarray(subgame_mask, bool)
-        assert self.is_subgame(subgame_mask), \
-            "subgame_mask must be valid"
-        matrix = self.payoff_matrix
+        base = super().subgame(subgame_mask)
+        matrix = self._payoff_matrix
         for i, mask in enumerate(np.split(subgame_mask, self.role_starts[1:])):
             matrix = matrix[(slice(None),) * i + (mask,)]
-        return matgame(matrix.copy())
+        return MatrixGame(base.role_names, base.strat_names, matrix.copy())
 
     def normalize(self):
         """Return a normalized MatGame"""
         scale = self.max_role_payoffs() - self.min_role_payoffs()
         scale[np.isclose(scale, 0)] = 1
-        return matgame((self.payoff_matrix - self.min_role_payoffs()) / scale)
-
-    @utils.memoize
-    def __hash__(self):
-        return super().__hash__()
-
-    def __eq__(self, other):
-        return (super().__eq__(other) and
-                # Identical payoffs
-                np.allclose(self.payoff_matrix, other.payoff_matrix))
-
-    def __repr__(self):
-        return '{}({})'.format(
-            self.__class__.__name__,
-            self.num_role_strats)
-
-
-def matgame(payoff_matrix):
-    """Create a game from a dense matrix
-
-    Parameters
-    ----------
-    payoff_matrix : ndarray-like
-        The matrix of payoffs for an asymmetric game. The last axis is the
-        payoffs for each player, the first axes are the strategies for each
-        player. matrix.shape[:-1] must correspond to the number of strategies
-        for each player. matrix.ndim - 1 must equal matrix.shape[-1]. This must
-        be specified by itself.
-    """
-    return MatrixGame(np.asarray(payoff_matrix, float))
-
-
-def matgame_copy(copy_game):
-    """Copy a matrix game from an existing game
-
-    Parameters
-    ----------
-    copy_game : BaseGame
-        Game to copy payoff out of. This game must be complete.
-    """
-    assert copy_game.is_complete()
-
-    if hasattr(copy_game, 'payoff_matrix'):
-        # Matrix Game
-        return matgame(copy_game.payoff_matrix)
-    else:
-        num_role_strats = copy_game.num_role_strats.repeat(
-            copy_game.num_role_players)
-        shape = tuple(num_role_strats) + (num_role_strats.size,)
-        payoff_matrix = np.empty(shape, float)
-        offset = copy_game.role_starts.repeat(copy_game.num_role_players)
-        for profile, payoffs in zip(copy_game.profiles, copy_game.payoffs):
-            # TODO Is is possible to do this with array logic?
-            inds = itertools.product(*[
-                set(itertools.permutations(np.arange(s.size).repeat(s))) for s
-                in np.split(profile, copy_game.role_starts[1:])])
-            for nested in inds:
-                ind = tuple(itertools.chain.from_iterable(nested))
-                payoff_matrix[ind] = payoffs[ind + offset]
-        return matgame(payoff_matrix)
-
-
-class MatGameSerializer(serialize._BaseSerializer):
-    """A serializer for agfn games
-
-    Parameters
-    ----------
-    role_names : [str]
-        Names of each role.
-    strat_names : [[str]]
-        Names of each strategy for each role.
-    """
-    # XXX A lot of this logic relies on the fact that serializer roles are
-    # always sorted, and will fail badly if that assumption does not hold.
-
-    def __init__(self, role_names, strat_names):
-        super().__init__(role_names, strat_names)
-
-    def _mat_from_json(self, dic, matrix, depth):
-        """Copy roles to a matrix representation"""
-        if depth == self.num_roles:
-            for role, payoff in dic.items():
-                matrix[self.role_index(role)] = payoff
-        else:
-            role = self.role_names[depth]
-            offset = self.role_starts[depth]
-            depth += 1
-            for strat, subdic in dic.items():
-                ind = self.role_strat_index(role, strat) - offset
-                self._mat_from_json(subdic, matrix[ind], depth)
-
-    def from_json(self, game):
-        matrix = np.empty(tuple(self.num_role_strats) + (self.num_roles,),
-                          float)
-        self._mat_from_json(game['payoffs'], matrix, 0)
-        return matgame(matrix)
+        return MatrixGame(
+            self.role_names, self.strat_names,
+            (self._payoff_matrix - self.min_role_payoffs()) / scale)
 
     def _mat_to_json(self, matrix, role_index):
         """Convert a sub matrix into json representation"""
@@ -291,84 +198,156 @@ class MatGameSerializer(serialize._BaseSerializer):
             return {strat: self._mat_to_json(mat, role_index)
                     for strat, mat in zip(strats, matrix)}
 
-    def to_json(self, game):
-        res = super().to_json(game)
-        res['payoffs'] = self._mat_to_json(game.payoff_matrix, 0)
+    def to_json(self):
+        res = super().to_json()
+        res['payoffs'] = self._mat_to_json(self._payoff_matrix, 0)
         res['type'] = 'matrix.1'
         return res
 
-    def subserial(self, subgame_mask):
-        """Restrict possible strategies"""
-        subgame_mask = np.asarray(subgame_mask, bool)
-        assert self.is_subgame(subgame_mask), \
-            "subgame_mask must be valid"
-        strat_names = [[s for s, m in zip(strats, mask) if m]
-                       for strats, mask
-                       in zip(self.strat_names,
-                              np.split(subgame_mask, self.role_starts[1:]))]
-        return matgameserializer(self.role_names, strat_names)
+    @utils.memoize
+    def __hash__(self):
+        return super().__hash__()
+
+    def __eq__(self, other):
+        return (super().__eq__(other) and
+                # Identical payoffs
+                np.allclose(self._payoff_matrix, other._payoff_matrix))
+
+    def __repr__(self):
+        return '{}({})'.format(
+            self.__class__.__name__,
+            self.num_role_strats)
 
 
-def matgameserializer(role_names, strat_names):
-    """Static constructor for AgfnGameSerializer
+def matgame(payoff_matrix):
+    """Create a game from a dense matrix with default names
+
+    Parameters
+    ----------
+    payoff_matrix : ndarray-like
+        The matrix of payoffs for an asymmetric game.
+    """
+    payoff_matrix = np.asarray(payoff_matrix, float)
+    return matgame_replace(
+        rsgame.emptygame(
+            np.ones(payoff_matrix.ndim - 1, int),
+            np.array(payoff_matrix.shape[:-1], int)),
+        payoff_matrix)
+
+
+def matgame_names(role_names, strat_names, payoff_matrix):
+    """Create a game from a payoff matrix with names
 
     Parameters
     ----------
     role_names : [str]
+        The name of each role.
     strat_names : [[str]]
-    function_names : [str]
+        The name of each strategy for each role.
+    payoff_matrix : ndarray-like
+        The matrix mapping strategy indices to payoffs for each player.
     """
-    return MatGameSerializer(
-        tuple(role_names), tuple(map(tuple, strat_names)))
+    return matgame_replace(
+        rsgame.emptygame_names(
+            role_names, np.ones(len(role_names), int), strat_names),
+        payoff_matrix)
 
 
-def matgameserializer_json(json):
-    """Static constructor for AgfnGameSerializer
+def _mat_from_json(base, dic, matrix, depth):
+    """Copy roles to a matrix representation"""
+    if depth == base.num_roles:
+        for role, payoff in dic.items():
+            matrix[base.role_index(role)] = payoff
+    else:
+        role = base.role_names[depth]
+        offset = base.role_starts[depth]
+        depth += 1
+        for strat, subdic in dic.items():
+            ind = base.role_strat_index(role, strat) - offset
+            _mat_from_json(base, subdic, matrix[ind], depth)
 
-    Takes a game that would be loaded from json and determines field names.
+
+def matgame_json(json):
+    """Read a matrix game from json
+
+    In general, the json will have 'type': 'matrix...' to indicate that it's a
+    matrix game, but if the other fields are correct, this will still succeed.
+    """
+    # This uses the fact that roles are always in lexicographic order
+    base = rsgame.emptygame_json(json)
+
+    matrix = np.empty(tuple(base.num_role_strats) + (base.num_roles,),
+                      float)
+    _mat_from_json(base, json['payoffs'], matrix, 0)
+    return matgame_replace(base, matrix)
+
+
+def matgame_copy(copy_game):
+    """Copy a matrix game from an existing game
 
     Parameters
     ----------
-    json : json
-        A json format of a base AgfnGame. One standard output is the one output
-        by to_agfngame_json. {strategies: {<role>: [<strat>]}, function_names:
-        [<func>]}
+    copy_game : RsGame
+        Game to copy payoff data out of. This game must be complete.
     """
-    return matgameserializer_copy(serialize.gameserializer_json(json))
+    assert copy_game.is_complete()
 
+    if hasattr(copy_game, 'payoff_matrix'):
+        return matgame_replace(copy_game, copy_game.payoff_matrix())
 
-def matgameserializer_copy(serial, players=None):
-    """Copy a MatGameSerializer from a serializer
+    # Get payoff matrix
+    num_role_strats = copy_game.num_role_strats.repeat(
+        copy_game.num_role_players)
+    shape = tuple(num_role_strats) + (num_role_strats.size,)
+    payoff_matrix = np.empty(shape, float)
+    offset = copy_game.role_starts.repeat(copy_game.num_role_players)
+    for profile, payoffs in zip(copy_game.profiles(), copy_game.payoffs()):
+        # TODO Is is possible to do this with array logic?
+        inds = itertools.product(*[
+            set(itertools.permutations(np.arange(s.size).repeat(s))) for s
+            in np.split(profile, copy_game.role_starts[1:])])
+        for nested in inds:
+            ind = tuple(itertools.chain.from_iterable(nested))
+            payoff_matrix[ind] = payoffs[ind + offset]
 
-    If players is unspecified, we assume the game serializer this came from
-    only had one player per role. If not, the serializer is repeated to match
-    the number of the players.
-    """
-    assert players is None or len(players) == serial.num_roles, \
-        "can't specify a different number of players than roles"
-    if players is None or all(p == 1 for p in players):
-        return MatGameSerializer(serial.role_names, serial.strat_names)
+    # Get role names
+    if np.all(copy_game.num_role_players == 1):
+        roles = copy_game.role_names
+        strats = copy_game.strat_names
     else:
-        if utils.is_sorted(r + 'p' for r in serial.role_names):
+        # When we expand names, we need to make sure they stay sorted
+        if utils.is_sorted(r + 'p' for r in copy_game.role_names):
             # We can naively append player numbers
-            role_names = serial.role_names
+            role_names = copy_game.role_names
         else:
             # We have to prefix to preserve role order
-            maxlen = max(map(len, serial.role_names))
-            role_names = (p + '_' * (maxlen - len(r)) + r
-                          for r, p
-                          in zip(serial.role_names,
-                                 utils.prefix_strings('', serial.num_roles)))
+            maxlen = max(map(len, copy_game.role_names))
+            role_names = (
+                p + '_' * (maxlen - len(r)) + r for r, p
+                in zip(copy_game.role_names,
+                       utils.prefix_strings('', copy_game.num_roles)))
         roles = tuple(itertools.chain.from_iterable(
             (r + s for s in utils.prefix_strings('p', p))
-            for r, p in zip(role_names, players)))
+            for r, p in zip(role_names, copy_game.num_role_players)))
         strats = tuple(itertools.chain.from_iterable(
             itertools.repeat(s, p) for s, p
-            in zip(serial.strat_names, players)))
-        return MatGameSerializer(roles, strats)
+            in zip(copy_game.strat_names, copy_game.num_role_players)))
+    return MatrixGame(roles, strats, payoff_matrix)
 
 
-def read_matgame(json):
-    """Read a matgame and its associate serializer from json"""
-    serial = matgameserializer_json(json)
-    return serial.from_json(json), serial
+def matgame_replace(base, payoff_matrix):
+    """Replace an existing game with a new payoff matrix
+
+    Parameters
+    ----------
+    base : RsGame
+        Game to take structure out of.
+    payoff_matrix : ndarray-like
+        The new payoff matrix."""
+    payoff_matrix = np.asarray(payoff_matrix, float)
+    assert np.all(base.num_role_players == 1), \
+        "replaced game must be independent"
+    assert payoff_matrix.shape == (tuple(base.num_role_strats) +
+                                   (base.num_roles,)), \
+        "payoff matrix not consistent shape with game"
+    return MatrixGame(base.role_names, base.strat_names, payoff_matrix)

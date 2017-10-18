@@ -62,7 +62,7 @@ def pure_social_welfare(game, profile):
 
 def mixed_social_welfare(game, mix):
     """Returns the social welfare of a mixed strategy profile"""
-    return game.get_expected_payoffs(mix).dot(game.num_role_players)
+    return game.expected_payoffs(mix).dot(game.num_role_players)
 
 
 class _SocialWelfareOptimizer(object):
@@ -85,7 +85,7 @@ class _SocialWelfareOptimizer(object):
 
         # Because deviation payoffs uses log space, we max with 0 just for the
         # payoff calculation
-        ep, ep_jac = self.game.get_expected_payoffs(
+        ep, ep_jac = self.game.expected_payoffs(
             np.maximum(0, mix), jacobian=True)
         # Normalize so payoffs are effectively in [0, 1]
         ep = (ep - self.offset) / self.scale
@@ -181,10 +181,10 @@ def max_pure_social_welfare(game, *, by_role=False):
             # TODO technically you could have no complete profiles, but full
             # payoff data for all roles
             welfares = np.add.reduceat(
-                game.profiles * game.payoffs, game.role_starts, 1)
+                game.profiles() * game.payoffs(), game.role_starts, 1)
             prof_inds = np.nanargmax(welfares, 0)
             return (welfares[prof_inds, np.arange(game.num_roles)],
-                    game.profiles[prof_inds])
+                    game.profiles()[prof_inds])
         else:
             welfares = np.empty(game.num_roles)
             welfares.fill(np.nan)
@@ -194,8 +194,8 @@ def max_pure_social_welfare(game, *, by_role=False):
 
     else:
         if game.num_complete_profiles:
-            welfares = np.sum(game.profiles * game.payoffs, 1)
+            welfares = np.sum(game.profiles() * game.payoffs(), 1)
             prof_ind = np.nanargmax(welfares)
-            return welfares[prof_ind], game.profiles[prof_ind]
+            return welfares[prof_ind], game.profiles()[prof_ind]
         else:
             return np.nan, None

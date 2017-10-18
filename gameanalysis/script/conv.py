@@ -5,35 +5,16 @@ import sys
 
 from gameanalysis import gamereader
 from gameanalysis import matgame
+from gameanalysis import paygame
 from gameanalysis import rsgame
-from gameanalysis import serialize
-
-
-def emptygame_json(game, serial):
-    return serialize.gameserializer_copy(serial).to_json(
-        rsgame.emptygame_copy(game))
-
-
-def game_json(game, serial):
-    return serialize.gameserializer_copy(serial).to_json(
-        rsgame.game_copy(game))
-
-
-def samplegame_json(game, serial):
-    return serialize.samplegameserializer_copy(serial).to_json(
-        rsgame.samplegame_copy(game))
-
-
-def matgame_json(game, serial):
-    mserial = matgame.matgameserializer_copy(serial, game.num_role_players)
-    return mserial.to_json(matgame.matgame_copy(game))
 
 
 _TYPES = {
-    'emptygame': emptygame_json,
-    'game': game_json,
-    'samplegame': samplegame_json,
-    'matgame': matgame_json,
+    'emptygame': rsgame.emptygame_copy,
+    'game': paygame.game_copy,
+    'samplegame': paygame.samplegame_copy,
+    'matgame': matgame.matgame_copy,
+    'norm': lambda game: game.normalize(),
 }
 
 
@@ -57,6 +38,6 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
-    json.dump(_TYPES[args.type](game, serial), args.output)
+    game = gamereader.read(json.load(args.input))
+    json.dump(_TYPES[args.type](game).to_json(), args.output)
     args.output.write('\n')

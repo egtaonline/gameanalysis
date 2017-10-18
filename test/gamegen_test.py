@@ -43,12 +43,6 @@ def test_role_symmetric_game(players, strategies):
     assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
 
-    conv = gamegen.serializer(game)
-    assert conv.role_names == ('all',) or all(
-        r.startswith('r') for r in conv.role_names)
-    assert all(all(s.startswith('s') for s in strats)
-               for strats in conv.strat_names)
-
 
 @pytest.mark.parametrize('players,strategies', [
     ([1], [1]),
@@ -211,60 +205,6 @@ def test_empty_add_noise():
     assert game.is_empty()
 
 
-@pytest.mark.parametrize('players,strategies', [
-    (1, 1),
-    ([1] * 3, 2),
-    (3, 2),
-    ([2, 2], 3),
-    ([1, 2], 2),
-    (2, [1, 2]),
-    ([1, 2], [1, 2]),
-] * 20)
-def test_drop_profiles(players, strategies):
-    game = gamegen.role_symmetric_game(players, strategies)
-    # Since independent drops might drop nothing, we keep nothing
-    dropped = gamegen.drop_profiles(game, 0)
-    assert dropped.is_empty(), "didn't drop any profiles"
-    # 40% mean even one profile games will be incomplete
-    dropped = gamegen.drop_profiles(game, 0.4, independent=False)
-    assert not dropped.is_complete(), "didn't drop any profiles"
-
-    sgame = gamegen.add_noise(game, 3)
-    dropped = gamegen.drop_profiles(sgame, 0)
-    assert dropped.is_empty(), "didn't drop any profiles"
-    # 40% mean even one profile games will be incomplete
-    dropped = gamegen.drop_profiles(sgame, 0.4, independent=False)
-    assert not dropped.is_complete(), "didn't drop any profiles"
-
-
-@pytest.mark.parametrize('players,strategies', [
-    (1, 1),
-    ([1] * 3, 2),
-    (3, 2),
-    ([2] * 2, 3),
-    ([1, 2], 2),
-    (2, [1, 2]),
-    ([1, 2], [1, 2]),
-] * 20)
-def test_drop_samples(players, strategies):
-    game = gamegen.role_symmetric_game(players, strategies)
-    num_samples = 10000 // game.num_profiles
-    game = gamegen.add_noise(game, num_samples)
-    # Since independent drops might drop nothing, we keep nothing
-    dropped = gamegen.drop_samples(game, 0)
-    assert dropped.is_empty(), "didn't drop any profiles"
-    # 40% mean even one profile games will be incomplete
-    dropped = gamegen.drop_samples(game, 1)
-    assert (dropped.is_complete() and
-            np.all(dropped.num_samples == [num_samples]))
-    # We drop half of samples, meaning is highly unlikely the game is complete
-    # or empty, but these "can" still happen
-    dropped = gamegen.drop_samples(game, .5)
-    assert (not dropped.is_complete() or
-            not np.all(dropped.num_samples == [num_samples]))
-    assert not dropped.is_empty()
-
-
 def _first(val):
     """Retrun first val if its an iterable"""
     if isinstance(val, abc.Iterable):
@@ -281,8 +221,8 @@ def _first(val):
     (1, [-2, -2, -3]),
 ])
 def test_rock_paper_scissors(win, loss):
-    game, conv = gamegen.rock_paper_scissors(win, loss, return_serial=True)
-    assert conv.strat_names == (('paper', 'rock', 'scissors'),)
+    game = gamegen.rock_paper_scissors(win, loss)
+    assert game.strat_names == (('paper', 'rock', 'scissors'),)
     assert np.allclose(game.get_payoffs([1, 1, 0]),
                        [_first(loss), _first(win), 0])
 

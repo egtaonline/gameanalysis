@@ -214,9 +214,9 @@ def test_empty_game():
 
 def test_hard_nash():
     with open('test/hard_nash_game_1.json') as f:
-        game, serial = gamereader.read(json.load(f))
+        game = gamereader.read(json.load(f))
     eqa = nash.mixed_nash(game)
-    expected = serial.from_mix_json({
+    expected = game.from_mix_json({
         'background': {
             'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
             0.5407460907477768,

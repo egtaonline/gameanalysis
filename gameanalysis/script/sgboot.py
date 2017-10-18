@@ -63,8 +63,8 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
-    profiles = np.concatenate([serial.from_prof_json(p)[None] for p
+    game = gamereader.read(json.load(args.input))
+    profiles = np.concatenate([game.from_prof_json(p)[None] for p
                                in scriptutils.load_profiles(args.profiles)])
     bootf, meanf = CHOICES[args.type]
     results = bootf(game, profiles, args.num_bootstraps,

@@ -80,12 +80,13 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
 
     if args.type == 'pure':
         equilibria = nash.pure_nash(game, epsilon=args.regret)
         if args.one and not equilibria:
             equilibria = nash.min_regret_profile(game)[None]
+        json.dump([game.to_prof_json(eqm) for eqm in equilibria], args.output)
 
     elif args.type == 'mixed':
         rep_args = {
@@ -97,27 +98,30 @@ def main(args):
             random_restarts=args.random_mixtures, grid_points=args.grid_points,
             min_reg=args.min, at_least_one=args.one, processes=args.processes,
             replicator=rep_args, optimize={})
-        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
+        json.dump([game.to_mix_json(eqm, supp_thresh=args.support) for eqm
+                   in equilibria], args.output)
 
     elif args.type == 'min-reg-prof':
-        equilibria = nash.min_regret_profile(game)[None]
+        prof = nash.min_regret_profile(game)
+        json.dump([game.to_prof_json(prof)], args.output)
 
     elif args.type == 'min-reg-grid':
-        equilibria = nash.min_regret_grid_mixture(
-            game, args.grid_points)[None]
-        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
+        mix = nash.min_regret_grid_mixture(
+            game, args.grid_points)
+        json.dump([game.to_mix_json(mix, supp_thresh=args.support)],
+                  args.output)
 
     elif args.type == 'min-reg-rand':
-        equilibria = nash.min_regret_rand_mixture(
-            game, args.random_mixtures)[None]
-        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
+        mix = nash.min_regret_rand_mixture(game, args.random_mixtures)
+        json.dump([game.to_mix_json(mix, supp_thresh=args.support)],
+                  args.output)
 
     elif args.type == 'rand':
-        equilibria = game.random_mixtures(args.random_mixtures)
-        equilibria = game.trim_mixture_support(equilibria, thresh=args.support)
+        mixes = game.random_mixtures(args.random_mixtures)
+        json.dump([game.to_mix_json(mix, supp_thresh=args.support) for mix
+                   in mixes], args.output)
 
     else:
         raise ValueError('Unknown command given: {0}'.format(args.type))  # pragma: no cover # noqa
 
-    json.dump([serial.to_mix_json(eqm) for eqm in equilibria], args.output)
     args.output.write('\n')

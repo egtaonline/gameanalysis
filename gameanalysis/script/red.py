@@ -6,30 +6,29 @@ import sys
 import numpy as np
 
 from gameanalysis import gamereader
-from gameanalysis import serialize
 from gameanalysis.reduction import deviation_preserving as dpr
 from gameanalysis.reduction import hierarchical as hr
 from gameanalysis.reduction import identity as idr
 from gameanalysis.reduction import twins as tr
 
 
-def parse_sorted(red, serial):
+def parse_sorted(red, game):
     """Parser reduction input for roles in sorted order"""
     players = red.split(',')
-    assert len(players) == serial.num_roles, \
+    assert len(players) == game.num_roles, \
         'Must input a reduced count for every role'
     return np.fromiter(map(int, players), int, len(players))
 
 
-def parse_inorder(red, serial):
+def parse_inorder(red, game):
     """Parser input for role number pairs"""
     players = red.split(',')
-    assert len(players) == serial.num_roles, \
+    assert len(players) == game.num_roles, \
         'Must input a reduced count for every role'
-    red_players = np.zeros(serial.num_roles, int)
+    red_players = np.zeros(game.num_roles, int)
     for p in players:
         s, c = p.split(':')
-        red_players[serial.role_index(s)] = int(c)
+        red_players[game.role_index(s)] = int(c)
     return red_players
 
 
@@ -77,12 +76,11 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
     reduced_players = (
         None if not args.reduction
-        else PLAYERS[args.sorted_roles](args.reduction, serial))
+        else PLAYERS[args.sorted_roles](args.reduction, game))
 
     reduced = REDUCTIONS[args.type].reduce_game(game, reduced_players)
-    rserial = serialize.gameserializer_copy(serial)
-    json.dump(rserial.to_json(reduced), args.output)
+    json.dump(reduced.to_json(), args.output)
     args.output.write('\n')

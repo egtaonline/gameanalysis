@@ -5,8 +5,7 @@ help:
 	@echo "usage: make <tag>"
 	@echo
 	@echo "setup    - setup environment for developing"
-	@echo "test     - run the tests, add file=<file> to run on a specific file e.g. file=rsgame"
-	@echo "coverage - run the tests and print coverage, add file=<file> to run on specific file"
+	@echo "test     - run the tests and print coverage"
 	@echo "check    - check code for style"
 	@echo "format   - try to autoformat code"
 	@echo "todo     - list all XXX, TODO and FIXME flags"
@@ -15,22 +14,7 @@ help:
 	@echo "ubuntu-reqs - install necessary packages on ubuntu (requires root)"
 
 test:
-ifdef file
-	bin/pytest test/$(file)_test.py
-else
-	bin/pytest test
-endif
-
-coverage:
-ifeq ($(file),script)
-	bin/pytest test/$(file)_test.py --cov gameanalysis.script --cov gameanalysis.scriptutils --cov gameanalysis/$(file) --cov test.$(file)_test 2>/dev/null
-else
-ifdef file
-	bin/pytest test/$(file)_test.py --cov gameanalysis.$(file) --cov test.$(file)_test 2>/dev/null
-else
 	bin/pytest test --cov gameanalysis --cov test 2>/dev/null
-endif
-endif
 
 check:
 	bin/flake8 $(FILES)
@@ -62,4 +46,4 @@ upload:
 clean:
 	rm -rf bin include lib lib64 share pyvenv.cfg
 
-.PHONY: test big docs
+.PHONY: test docs

@@ -61,7 +61,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
 
     # create regression game
     # FIXME We probably don't need to keep game around and can use lgame for
@@ -86,7 +86,7 @@ def main(args):
     # Output game
     args.output.write('Game Learning\n')
     args.output.write('=============\n')
-    args.output.write(serial.to_printstr(game))
+    args.output.write(str(game))
     args.output.write('\n\n')
 
     # Output social welfare
@@ -95,16 +95,16 @@ def main(args):
     welfare, profile = regret.max_pure_social_welfare(game)
 
     args.output.write('\nMaximum social welfare profile:\n')
-    args.output.write(serial.to_prof_printstr(profile))
+    args.output.write(game.to_prof_str(profile))
     args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
 
     if game.num_roles > 1:
         for role, welfare, profile in zip(
-                serial.role_names,
+                game.role_names,
                 *regret.max_pure_social_welfare(game, by_role=True)):
             args.output.write('Maximum "{}" welfare profile:\n'.format(
                 role))
-            args.output.write(serial.to_prof_printstr(profile))
+            args.output.write(game.to_prof_str(profile))
             args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
 
     args.output.write('\n')
@@ -118,7 +118,7 @@ def main(args):
             len(equilibria), 'um' if len(equilibria) == 1 else 'a'))
         for i, (eqm, reg) in enumerate(equilibria, 1):
             args.output.write('Equilibrium {:d}:\n'.format(i))
-            args.output.write(serial.to_mix_printstr(eqm))
+            args.output.write(game.to_mix_str(eqm))
             args.output.write('Regret: {:.4f}\n\n'.format(reg))
     else:
         args.output.write('Found no equilibria\n\n')  # pragma: no cover
@@ -128,6 +128,6 @@ def main(args):
     args.output.write('Json Data\n')
     args.output.write('=========\n')
     json_data = {
-        'equilibria': [serial.to_mix_json(eqm) for eqm, _ in equilibria]}
+        'equilibria': [game.to_mix_json(eqm) for eqm, _ in equilibria]}
     json.dump(json_data, args.output)
     args.output.write('\n')

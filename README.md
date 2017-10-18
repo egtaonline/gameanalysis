@@ -89,4 +89,6 @@ To Do
 - Some functions in `dominance` could probably be more efficient.
 - Using array set operations would allow for convenient array operations like, "are all of these profiles present", however, it requires sorting of large void types which is very expensive, less so than just hashing the data. Maybe with pandas?
   Or maybe numpy will implement these more efficiently in c.
-- Use `--durations=N` to find slowest tests and fix them / speed them up.
+- It may be possible to be excessively clever, where we subclass ndarray with our own "profile-esqe" class.
+  This class will necessarily retain a reference to the game it refers to, but is otherwise an ndarray. It could have to_json and str representations, where internally it would check the dimension and dtype to determine if this is one or several and a mixture profile or subgame.
+  This seems really cool, but may be more clever than helpful.

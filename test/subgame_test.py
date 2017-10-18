@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from gameanalysis import gamegen
+from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import subgame
 from gameanalysis import utils
@@ -23,10 +24,6 @@ def test_subgame():
     assert (game.subgame(subg2).num_all_profiles ==
             adds + game.subgame(subg).num_all_profiles), \
         "additional profiles didn't return the proper amount"
-
-    serial = gamegen.serializer(game)
-    sub_serial = serial.subserial(subg)
-    assert game.subgame(subg).num_strats == sub_serial.num_strats
 
 
 @pytest.mark.parametrize('players,strategies', testutils.games)
@@ -61,7 +58,7 @@ def test_missing_data_maximal_subgames(players, strategies, prob):
                 game, sub, dev)
             assert not all(p in game for p in devprofs), \
                 "Maximal subgame could be bigger {} {}".format(
-                    dev, sub)
+                    dev, sub)  # pragma: no cover
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -125,7 +122,7 @@ def test_maximal_subgames_partial_profiles():
     payoffs = [[1, 0],
                [np.nan, 2],
                [0, 3]]
-    game = rsgame.game([2], [2], profiles, payoffs)
+    game = paygame.game([2], [2], profiles, payoffs)
     subs = subgame.maximal_subgames(game)
     expected = utils.axis_to_elem(np.array([
         [True, False],

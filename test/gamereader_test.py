@@ -8,31 +8,18 @@ from gameanalysis import agggen
 from gameanalysis import matgame
 from gameanalysis import gamegen
 from gameanalysis import rsgame
-from gameanalysis import serialize
 
 
-GAME = gamegen.add_profiles(rsgame.emptygame([3, 4], [4, 3]), 0.5)
-SERIAL = gamegen.serializer(GAME)
-
-SGAME = gamegen.add_noise(GAME, 1, 3)
-SSERIAL = serialize.samplegameserializer_copy(SERIAL)
-
-AGG = agggen.random_aggfn([3, 4], [4, 3], 10)
-ASERIAL = agggen.serializer(AGG)
-
-MAT = matgame.matgame(np.random.random((4, 3, 2, 3)))
-MSERIAL = matgame.matgameserializer_copy(gamegen.serializer(MAT))
+egame = rsgame.emptygame([3, 4], [4, 3])
+game = gamegen.add_profiles(egame, 0.5)
+sgame = gamegen.add_noise(game, 1, 3)
+agg = agggen.random_aggfn([3, 4], [4, 3], 10)
+mat = matgame.matgame(np.random.random((4, 3, 2, 3)))
 
 
-@pytest.mark.parametrize('game,serial', [
-    (GAME, SERIAL),
-    (SGAME, SSERIAL),
-    (AGG, ASERIAL),
-    (MAT, MSERIAL),
-])
-def test_automatic_deserialization(game, serial):
+@pytest.mark.parametrize('game', [egame, game, sgame, agg, mat])
+def test_automatic_deserialization(game):
     """Test that we can serialize and deserialize arbitrary games"""
-    jgame = json.dumps(serial.to_json(game))
-    copy, scopy = gamereader.read(json.loads(jgame))
+    jgame = json.dumps(game.to_json())
+    copy = gamereader.read(json.loads(jgame))
     assert game == copy
-    assert serial == scopy

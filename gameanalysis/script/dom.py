@@ -37,15 +37,12 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
     sub_mask = dominance.iterated_elimination(
         game, args.criterion, conditional=args.unconditional)
     if args.strategies:
-        res = {r: list(s) for r, s in serial.to_subgame_json(sub_mask).items()}
-        json.dump(res, args.output)
+        json.dump(game.to_subgame_json(sub_mask), args.output)
     else:
-        sub_game = game.subgame(sub_mask)
-        sub_serial = serial.subserial(sub_mask)
-        json.dump(sub_serial.to_json(sub_game), args.output)
+        json.dump(game.subgame(sub_mask).to_json(), args.output)
 
     args.output.write('\n')

@@ -1,9 +1,13 @@
+"""Package for learning complete games from data
+
+This package is not stable"""
 import itertools
 
 import numpy as np
 import scipy.special as sps
-from sklearn.gaussian_process import GaussianProcessRegressor, kernels
+from sklearn import gaussian_process as gp
 
+from gameanalysis import paygame
 from gameanalysis import rsgame
 
 
@@ -85,7 +89,7 @@ class RegressionPayoffs(object):
 class GPPayoffs(RegressionPayoffs):
     def __init__(self, game_to_learn, **gp_args):
         self.game = rsgame.emptygame_copy(game_to_learn)
-        self.learn_payoffs(game_to_learn.profiles, game_to_learn.payoffs,
+        self.learn_payoffs(game_to_learn.profiles(), game_to_learn.payoffs(),
                            _train_gp, gp_args)
 
 
@@ -93,9 +97,9 @@ class NNPayoffs(RegressionPayoffs):
     def __init__(self, game_to_learn, **nn_args):
         self.game = rsgame.emptygame_copy(game_to_learn)
         self.regressors = []
-        sgame = rsgame.samplegame_copy(game_to_learn)
-        profiles = sgame.flat_profiles
-        payoffs = sgame.flat_payoffs
+        sgame = paygame.samplegame_copy(game_to_learn)
+        profiles = sgame.flat_profiles()
+        payoffs = sgame.flat_payoffs()
 
         # normalize payoffs to [0,1]
         # TODO allow specification of an arbitrary payoff range, is this only
@@ -133,19 +137,19 @@ class NNPayoffs(RegressionPayoffs):
 
 # FIXME This should be removed in favor of just "copying" the payoffs from the
 # game with something like game_copy
-class FullGameEVs(rsgame._BaseGame):
+class FullGameEVs(rsgame.RsGame):
     def __init__(self, regression_model, **args):
         self.regression_model = regression_model
         self.game = self.regression_model.game
         profiles = self.game.all_profiles()
         payoffs = self.regression_model.get_payoffs(profiles)
-        self.full_game = rsgame.game_replace(self.game, profiles, payoffs)
+        self.full_game = paygame.game_replace(self.game, profiles, payoffs)
 
     def deviation_payoffs(self, mix, *args, **kwds):
         return self.full_game.deviation_payoffs(mix, *args, **kwds)
 
 
-class SampleEVs(rsgame._BaseGame):
+class SampleEVs(rsgame.RsGame):
     def __init__(self, regression_model, num_samples=1000):
         self.regression_model = regression_model
         self.game = self.regression_model.game
@@ -159,7 +163,7 @@ class SampleEVs(rsgame._BaseGame):
         return self.regression_model.get_mean_dev_payoffs(profs)
 
 
-class PointEVs(rsgame._BaseGame):
+class PointEVs(rsgame.RsGame):
     def __init__(self, regression_model):
         self.regression_model = regression_model
         self.game = self.regression_model.game
@@ -172,7 +176,7 @@ class PointEVs(rsgame._BaseGame):
         return self.regression_model.get_mean_dev_payoffs(dev_profs[:, None])
 
 
-class NeighborEVs(rsgame._BaseGame):
+class NeighborEVs(rsgame.RsGame):
     def __init__(self, regression_model, num_devs=2):
         self.regression_model = regression_model
         self.game = self.regression_model.game
@@ -218,7 +222,7 @@ _EV_METHODS = {
 # the ev method, while a second called reggame_learn uses the payoff data of
 # the game to lean a new game. In this case you could use the payoff daya from
 # one regression game to learn a new one.
-class RegressionGame(rsgame._CompleteGame):
+class RegressionGame(rsgame.CompleteGame):
     def __init__(self, game_to_learn, regression_method, EV_method,
                  regression_args={}, EV_args={}):
         """A Game that uses a regression model to compute payoffs
@@ -233,8 +237,8 @@ class RegressionGame(rsgame._CompleteGame):
             "invalid EV_method: {}. options: {}".format(
                 EV_method, ', '.join(_EV_METHODS))
         self.EV_method = _EV_METHODS[EV_method.lower()]
-        super().__init__(game_to_learn.num_role_players,
-                         game_to_learn.num_role_strats)
+        super().__init__(game_to_learn.role_names, game_to_learn.strat_names,
+                         game_to_learn.num_role_players)
 
         if isinstance(game_to_learn, RegressionGame):
             # shallow copy trained models
@@ -282,7 +286,7 @@ GP_PARAMS = {'n_restarts_optimizer': 10, 'normalize_y': True}
 
 # FIXME why are funcs, params, and weights passed independently instead of just
 # as one kernel? What does this save?
-def _train_gp(x, y, kernel_funcs=[kernels.RBF, kernels.WhiteKernel],
+def _train_gp(x, y, kernel_funcs=[gp.kernels.RBF, gp.kernels.WhiteKernel],
               kernel_params=[RBF_PARAMS, NOISE_PARAMS],
               kernel_weights=[1.0, 1.0], gp_params=GP_PARAMS):
     """Train a gaussian process regressor
@@ -299,12 +303,12 @@ def _train_gp(x, y, kernel_funcs=[kernels.RBF, kernels.WhiteKernel],
         Parameters with which to initialize the GaussianProcessRegressor.
     """
     k = _build_kernel(kernel_funcs, kernel_params, kernel_weights)
-    gp = GaussianProcessRegressor(kernel=k, **gp_params)
+    proc = gp.GaussianProcessRegressor(kernel=k, **gp_params)
     # FIXME This is throwing a divide by zero error somewhere and it probably
     # shouldn't just be ignored.
     with np.errstate(divide='ignore'):
-        gp.fit(x, y)
-    return gp
+        proc.fit(x, y)
+    return proc
 
 
 def _build_kernel(kernels, params, weights=itertools.repeat(1)):

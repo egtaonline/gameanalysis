@@ -36,24 +36,23 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
-    game = rsgame.emptygame_copy(game)  # gc any data
-    mix = serial.from_mix_json(json.load(args.mix))
+    game = rsgame.emptygame_copy(gamereader.read(json.load(args.input)))
+    mix = game.from_mix_json(json.load(args.mix))
 
     if args.deviations:
         profs = (game.random_deviator_profiles(mix, args.num)
                  .reshape((-1, game.num_strats)))
         dev_names = itertools.cycle(itertools.chain.from_iterable(
             ((r, s) for s in ses) for r, ses
-            in zip(serial.role_names, serial.strat_names)))
+            in zip(game.role_names, game.strat_names)))
         for prof, (devrole, devstrat) in zip(profs, dev_names):
             json.dump(dict(
                 devrole=devrole,
                 devstrat=devstrat,
-                profile=serial.to_prof_json(prof)), args.output)
+                profile=game.to_prof_json(prof)), args.output)
             args.output.write('\n')
 
     else:
         for prof in game.random_profiles(args.num, mix):
-            json.dump(serial.to_prof_json(prof), args.output)
+            json.dump(game.to_prof_json(prof), args.output)
             args.output.write('\n')

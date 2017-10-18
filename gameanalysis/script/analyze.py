@@ -10,7 +10,6 @@ from gameanalysis import dominance
 from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import regret
-from gameanalysis import serialize
 from gameanalysis import subgame
 from gameanalysis.reduction import deviation_preserving as dpr
 
@@ -75,28 +74,23 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
 
     if args.dpr:
         red_players = np.zeros(game.num_roles, int)
         for r in args.dpr.split(','):
             s, c = r.split(':')
-            red_players[serial.role_index(s)] = int(c)
-        redgame = dpr.reduce_game(game, red_players)
-        redserial = serialize.gameserializer_copy(serial)
-    else:
-        redgame = game
-        redserial = serial
+            red_players[game.role_index(s)] = int(c)
+        game = dpr.reduce_game(game, red_players)
 
     if args.dominance:
-        domsub = dominance.iterated_elimination(redgame, 'strictdom')
-        redgame = redgame.subgame(domsub)
-        redserial = redserial.subserial(domsub)
+        domsub = dominance.iterated_elimination(game, 'strictdom')
+        game = game.subgame(domsub)
 
     if args.subgames:
-        subgames = subgame.maximal_subgames(redgame)
+        subgames = subgame.maximal_subgames(game)
     else:
-        subgames = np.ones(redgame.num_strats, bool)[None]
+        subgames = np.ones(game.num_strats, bool)[None]
 
     methods = {
         'replicator': {
@@ -106,7 +100,7 @@ def main(args):
     noeq_subgames = []
     candidates = []
     for submask in subgames:
-        subg = redgame.subgame(submask)
+        subg = game.subgame(submask)
         subeqa = nash.mixed_nash(
             subg, regret_thresh=args.regret_thresh,
             dist_thresh=args.dist_thresh, processes=args.processes,
@@ -126,8 +120,8 @@ def main(args):
     unexplored = []
     for eqm in candidates:
         support = eqm > 0
-        gains = regret.mixture_deviation_gains(redgame, eqm)
-        role_gains = np.fmax.reduceat(gains, redgame.role_starts)
+        gains = regret.mixture_deviation_gains(game, eqm)
+        role_gains = np.fmax.reduceat(gains, game.role_starts)
         gain = np.nanmax(role_gains)
 
         if np.isnan(gains).any() and gain <= args.regret_thresh:
@@ -137,9 +131,9 @@ def main(args):
         elif np.any(role_gains > args.regret_thresh):
             # There are deviations, did we explore them?
             dev_inds = ([np.argmax(gs == mg) for gs, mg
-                         in zip(np.split(gains, redgame.role_starts[1:]),
+                         in zip(np.split(gains, game.role_starts[1:]),
                                 role_gains)] +
-                        redgame.role_starts)[role_gains > args.regret_thresh]
+                        game.role_starts)[role_gains > args.regret_thresh]
             for dind in dev_inds:
                 devsupp = support.copy()
                 devsupp[dind] = True
@@ -153,7 +147,7 @@ def main(args):
     # Output Game
     args.output.write('Game Analysis\n')
     args.output.write('=============\n')
-    args.output.write(serial.to_printstr(game))
+    args.output.write(str(game))
     args.output.write('\n\n')
     if args.dpr is not None:
         args.output.write('With DPR reduction: ')
@@ -164,7 +158,7 @@ def main(args):
         if num:
             args.output.write('Found {:d} dominated strateg{}\n'.format(
                 num, 'y' if num == 1 else 'ies'))
-            args.output.write(serial.to_subgame_printstr(~domsub))
+            args.output.write(game.to_subgame_str(~domsub))
             args.output.write('\n')
         else:
             args.output.write('Found no dominated strategies\n\n')
@@ -186,16 +180,16 @@ def main(args):
         args.output.write('There was no profile with complete payoff data\n\n')
     else:
         args.output.write('\nMaximum social welfare profile:\n')
-        args.output.write(serial.to_prof_printstr(profile))
+        args.output.write(game.to_prof_str(profile))
         args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
 
         if game.num_roles > 1:
             for role, welfare, profile in zip(
-                    serial.role_names,
+                    game.role_names,
                     *regret.max_pure_social_welfare(game, by_role=True)):
                 args.output.write('Maximum "{}" welfare profile:\n'.format(
                     role))
-                args.output.write(serial.to_prof_printstr(profile))
+                args.output.write(game.to_prof_str(profile))
                 args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
 
     args.output.write('\n')
@@ -208,7 +202,7 @@ def main(args):
             len(equilibria), 'um' if len(equilibria) == 1 else 'a'))
         for i, (eqm, reg) in enumerate(equilibria, 1):
             args.output.write('Equilibrium {:d}:\n'.format(i))
-            args.output.write(redserial.to_mix_printstr(eqm))
+            args.output.write(game.to_mix_str(eqm))
             args.output.write('Regret: {:.4f}\n\n'.format(reg))
     else:
         args.output.write('Found no equilibria\n\n')  # pragma: no cover
@@ -223,7 +217,7 @@ def main(args):
         noeq_subgames.sort(key=lambda x: x.sum())
         for i, subg in enumerate(noeq_subgames, 1):
             args.output.write('No-equilibria subgame {:d}:\n'.format(i))
-            args.output.write(redserial.to_subgame_printstr(subg))
+            args.output.write(game.to_subgame_str(subg))
             args.output.write('\n')
     else:
         args.output.write('Found no no-equilibria subgames\n\n')
@@ -238,7 +232,7 @@ def main(args):
         unconfirmed.sort(key=lambda x: ((x[0] > 0).sum(), x[1]))
         for i, (eqm, reg_bound) in enumerate(unconfirmed, 1):
             args.output.write('Unconfirmed candidate {:d}:\n'.format(i))
-            args.output.write(redserial.to_mix_printstr(eqm))
+            args.output.write(game.to_mix_str(eqm))
             args.output.write('Regret at least: {:.4f}\n\n'.format(reg_bound))
     else:
         args.output.write('Found no unconfirmed candidate equilibria\n\n')
@@ -259,10 +253,10 @@ def main(args):
         unexplored.sort(key=lambda x: (x[0].sum(), -x[2]))
         for i, (sub, dev, gain, eqm) in enumerate(unexplored, 1):
             args.output.write('Unexplored subgame {:d}:\n'.format(i))
-            args.output.write(redserial.to_subgame_printstr(sub))
+            args.output.write(game.to_subgame_str(sub))
             args.output.write('{:.4f} for deviating to {} from:\n'.format(
-                gain, redserial.strat_name(dev)))
-            args.output.write(redserial.to_mix_printstr(eqm))
+                gain, game.strat_name(dev)))
+            args.output.write(game.to_mix_str(eqm))
             args.output.write('\n')
     else:
         args.output.write('Found no unexplored best-response subgames\n\n')
@@ -272,6 +266,6 @@ def main(args):
     args.output.write('Json Data\n')
     args.output.write('=========\n')
     json_data = {
-        'equilibria': [redserial.to_mix_json(eqm) for eqm, _ in equilibria]}
+        'equilibria': [game.to_mix_json(eqm) for eqm, _ in equilibria]}
     json.dump(json_data, args.output)
     args.output.write('\n')

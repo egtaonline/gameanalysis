@@ -228,7 +228,17 @@ def test_prefix_strings():
 def test_is_sorted():
     assert utils.is_sorted([])
     assert utils.is_sorted([0])
+    assert utils.is_sorted([[0], [1], [2]], key=lambda x: x[0])
+    assert utils.is_sorted([3, 4])
+    assert utils.is_sorted([3, 4], strict=True)
     assert not utils.is_sorted([3, 4], reverse=True)
+    assert not utils.is_sorted([3, 4], reverse=True, strict=True)
+    assert utils.is_sorted([4, 3], reverse=True)
+    assert utils.is_sorted([4, 3], reverse=True, strict=True)
+    assert utils.is_sorted([3, 4, 4, 5])
+    assert not utils.is_sorted([3, 4, 4, 5], strict=True)
+    assert utils.is_sorted([5, 4, 4, 3], reverse=True)
+    assert not utils.is_sorted([5, 4, 4, 3], reverse=True, strict=True)
 
 
 def test_memoization():

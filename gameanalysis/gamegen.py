@@ -5,8 +5,8 @@ import numpy as np
 import numpy.random as rand
 import scipy.special as sps
 
-from gameanalysis import serialize
 from gameanalysis import matgame
+from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import utils
 
@@ -37,7 +37,7 @@ def role_symmetric_game(num_role_players, num_role_strats,
     mask = profiles > 0
     payoffs = np.zeros(profiles.shape)
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.game_replace(game, profiles, payoffs)
+    return paygame.game_replace(game, profiles, payoffs)
 
 
 def independent_game(num_role_strats, distribution=default_distribution):
@@ -136,12 +136,12 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
     payoffs.sort()
     counts = [[2, 0], [1, 1], [0, 2]]
     values = [[payoffs[a], 0], [payoffs[b], payoffs[c]], [0, payoffs[d]]]
-    return rsgame.game(2, 2, counts, values)
+    return paygame.game(2, 2, counts, values)
 
 
 def prisoners_dilemma(distribution=default_distribution):
     """Return a random prisoners dilemma game"""
-    return sym_2p2s_game(2, 0, 3, 1, distribution).normalize()
+    return sym_2p2s_game(2, 0, 3, 1, distribution)
 
 
 def sym_2p2s_known_eq(eq_prob):
@@ -152,9 +152,12 @@ def sym_2p2s_known_eq(eq_prob):
     """
     profiles = [[2, 0], [1, 1], [0, 2]]
     payoffs = [[0, 0], [eq_prob, 1 - eq_prob], [0, 0]]
-    return rsgame.game(2, 2, profiles, payoffs)
+    return paygame.game(2, 2, profiles, payoffs)
 
 
+# TODO There are nash finding methods that rely on approximating games as poly
+# matrix games. Potentially we can implement a polymatrix / rs polymatrix first
+# and then the nash will follow nicely from that
 def polymatrix_game(num_players, num_strats, matrix_game=independent_game,
                     players_per_matrix=2):
     """Creates a polymatrix game using the specified k-player matrix game function.
@@ -182,7 +185,7 @@ def polymatrix_game(num_players, num_strats, matrix_game=independent_game,
     for players in itertools.combinations(range(num_players),
                                           players_per_matrix):
         sub_payoffs = matgame.matgame_copy(matrix_game(
-            [num_strats] * players_per_matrix)).payoff_matrix
+            [num_strats] * players_per_matrix)).payoff_matrix()
         new_shape = np.array([1] * num_players + [players_per_matrix])
         new_shape[list(players)] = num_strats
         payoffs[..., list(players)] += sub_payoffs.reshape(new_shape)
@@ -190,7 +193,7 @@ def polymatrix_game(num_players, num_strats, matrix_game=independent_game,
     return matgame.matgame(payoffs)
 
 
-def rock_paper_scissors(win=1, loss=-1, return_serial=False):
+def rock_paper_scissors(win=1, loss=-1):
     """Return an instance of rock paper scissors"""
     if isinstance(win, abc.Iterable):
         win = list(win)
@@ -214,13 +217,8 @@ def rock_paper_scissors(win=1, loss=-1, return_serial=False):
                [0., 0., 0.],
                [0., loss[2], win[2]],
                [0., 0., 0.]]
-    game = rsgame.game(2, 3, profiles, payoffs)
-    if not return_serial:
-        return game
-    else:
-        serial = serialize.gameserializer(['all'],
-                                          [['paper', 'rock', 'scissors']])
-        return game, serial
+    return paygame.game_names(['all'], 2, [['paper', 'rock', 'scissors']],
+                              profiles, payoffs)
 
 
 def travellers_dilemma(players=2, max_value=100):
@@ -241,7 +239,7 @@ def travellers_dilemma(players=2, max_value=100):
     lowest_pays = mins + 4
     lowest_pays[ties] -= 2
     payoffs[rows, mins] = lowest_pays
-    return rsgame.game_replace(game, profiles, payoffs)
+    return paygame.game_replace(game, profiles, payoffs)
 
 
 def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
@@ -283,6 +281,7 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
         inds = rand.choice(num_profs, num, replace=False)
         profiles = game.all_profiles()[inds]
     else:
+        # TODO use a set and hashed arrays instead?
         profiles = np.empty((0, game.num_strats), int)
         num_per = max(round(float(ratio * num_profs)), num)  # Max => underflow
         mix = game.uniform_mixture()
@@ -297,71 +296,15 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
     payoffs[mask] = distribution(mask.sum())
-    return rsgame.game_replace(game, profiles, payoffs)
+    return paygame.game_replace(game, profiles, payoffs)
 
 
-def drop_profiles(game, prob, independent=True):
-    """Drop profiles from a game
-
-    If independent then each profile has prob of being removed, if not
-    independent, then `num_profiles * prob` profiles will be kept."""
-    if independent:
-        selection = rand.random(game.num_profiles) < prob
-    else:
-        inds = rand.choice(np.arange(game.num_profiles),
-                           round(game.num_profiles * prob), replace=False)
-        selection = np.zeros(game.num_profiles, bool)
-        selection[inds] = True
-
-    if isinstance(game, rsgame.SampleGame):
-        new_profiles = game.profiles[selection]
-        new_sample_payoffs = [
-            payoffs[mask] for payoffs, mask
-            in zip(game.sample_payoffs,
-                   np.split(selection, game.sample_starts[1:]))
-            if np.any(mask)]
-        return rsgame.samplegame_replace(game, new_profiles,
-                                         new_sample_payoffs)
-    else:
-        new_profiles = game.profiles[selection]
-        new_payoffs = game.payoffs[selection]
-        return rsgame.game_replace(game, new_profiles, new_payoffs)
-
-
-def drop_samples(game, prob):
-    """Drop samples from a sample game
-
-    Samples are dropped independently with probability prob."""
-    sample_map = {}
-    for prof, pays in zip(np.split(game.profiles, game.sample_starts[1:]),
-                          game.sample_payoffs):
-        num_profiles, _, num_samples = pays.shape
-        perm = rand.permutation(num_profiles)
-        prof = prof[perm]
-        pays = pays[perm]
-        new_samples, counts = np.unique(
-            rand.binomial(num_samples, prob, num_profiles), return_counts=True)
-        splits = counts[:-1].cumsum()
-        for num, prof_samp, pay_samp in zip(
-                new_samples, np.split(prof, splits), np.split(pays, splits)):
-            if num == 0:
-                continue
-            prof, pays = sample_map.setdefault(num, ([], []))
-            prof.append(prof_samp)
-            pays.append(pay_samp[..., :num])
-
-    if sample_map:
-        profiles = np.concatenate(list(itertools.chain.from_iterable(
-            x[0] for x in sample_map.values())), 0)
-        sample_payoffs = tuple(np.concatenate(x[1]) for x
-                               in sample_map.values())
-    else:  # No data
-        profiles = np.empty((0, game.num_strats), dtype=int)
-        sample_payoffs = []
-
-    return rsgame.samplegame_replace(game, profiles, sample_payoffs)
-
-
+# TODO This would probably be more "cohesive" if instead of num_samples, this
+# was sample prob, and the number of samples was drawn from an exponential
+# distribution with prob. Doing this would require figuring out how to
+# efficiently sample from the distribution, of given that I pull N random
+# exponential variables, what's the histogram / how do I sample from the
+# histogram instead of doing N random draws.
 def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
     """Generate sample game by adding noise to game payoffs
 
@@ -380,12 +323,12 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
         preserve mixed equilibria, noise should also be zero mean (aka
         unbiased)
     """
-    if game.num_profiles == 0:
-        return rsgame.samplegame_copy(game)
+    if game.is_empty():
+        return paygame.samplegame_copy(game)
 
     perm = rand.permutation(game.num_profiles)
-    profiles = game.profiles[perm]
-    payoffs = game.payoffs[perm]
+    profiles = game.profiles()[perm]
+    payoffs = game.payoffs()[perm]
     if max_samples is None:
         max_samples = min_samples
     assert 0 <= min_samples <= max_samples, "invalid sample numbers"
@@ -403,11 +346,10 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
                               np.split(payoffs, splits)):
         if num == 0:
             continue
-        mask = prof > 0
-        spay = np.zeros(pay.shape + (num,))
-        pview = spay.view()
-        pview.shape = (-1, num)
-        pview[mask.ravel()] = pay[mask, None] + noise((mask.sum(), num))
+        supp = prof > 0
+        spay = np.zeros((pay.shape[0], num, game.num_strats))
+        pview = np.rollaxis(spay, 1, 3)
+        pview[supp] = pay[supp, None] + noise((supp.sum(), num))
 
         new_profiles.append(prof)
         sample_payoffs.append(spay)
@@ -416,7 +358,7 @@ def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
         new_profiles = np.concatenate(new_profiles)
     else:  # No data
         new_profiles = np.empty((0, game.num_strats), dtype=int)
-    return rsgame.samplegame_replace(game, new_profiles, sample_payoffs)
+    return paygame.samplegame_replace(game, new_profiles, sample_payoffs)
 
 
 def width_gaussian(max_width, num_profiles, num_samples):
@@ -511,18 +453,8 @@ def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
         Several default versions are specified in gamegen, and they're all
         prefixed with `width_`. By default, this uses `width_gaussian`.
     """
-    spayoffs = game.payoffs[..., None].repeat(num_samples, -1)
-    mask = game.profiles > 0
-    samples = noise(max_width, mask.sum(), num_samples)
-    expand_mask = np.broadcast_to(mask[..., None], mask.shape + (num_samples,))
-    spayoffs[expand_mask] += samples.flat
-    return rsgame.samplegame_replace(game, game.profiles, [spayoffs])
-
-
-def serializer(game):
-    """Generate a GameSerializer from a game"""
-    role_names = (('all',) if game.is_symmetric()
-                  else tuple(utils.prefix_strings('r', game.num_roles)))
-    strat_names = tuple(tuple(utils.prefix_strings('s', s)) for s
-                        in game.num_role_strats)
-    return serialize.gameserializer(role_names, strat_names)
+    spayoffs = game.payoffs()[:, None].repeat(num_samples, 1)
+    supp = game.profiles() > 0
+    view = np.rollaxis(spayoffs, 1, 3)
+    view[supp] += noise(max_width, supp.sum(), num_samples)
+    return paygame.samplegame_replace(game, game.profiles(), [spayoffs])

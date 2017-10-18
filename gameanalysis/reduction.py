@@ -2,6 +2,7 @@
 import numpy as np
 
 from gameanalysis import rsgame
+from gameanalysis import paygame
 from gameanalysis import subgame
 from gameanalysis import utils
 
@@ -32,8 +33,8 @@ class hierarchical(object):
         if full_game.is_empty():
             return red_game
         elif full_game.num_profiles < red_game.num_all_profiles:
-            profiles = full_game.profiles
-            payoffs = full_game.payoffs
+            profiles = full_game.profiles()
+            payoffs = full_game.payoffs()
         else:
             profiles = hierarchical.expand_profiles(
                 full_game, red_game.all_profiles())
@@ -44,7 +45,7 @@ class hierarchical(object):
 
         red_profiles, mask = hierarchical._reduce_profiles(
             full_game, red_game.num_role_players[None], profiles)
-        return rsgame.game_replace(red_game, red_profiles, payoffs[mask])
+        return paygame.game_replace(red_game, red_profiles, payoffs[mask])
 
     def _reduce_profiles(sarr, reduced_players, profiles):
         """Hierarchically reduces several role symmetric array profiles
@@ -253,8 +254,8 @@ class deviation_preserving(object):
         if full_game.is_empty():
             return red_game
         elif full_game.num_profiles < red_game.num_all_dpr_profiles:
-            full_profiles = full_game.profiles
-            full_payoffs = full_game.payoffs
+            full_profiles = full_game.profiles()
+            full_payoffs = full_game.payoffs()
         else:
             full_profiles = deviation_preserving.expand_profiles(
                 full_game, red_game.all_profiles())
@@ -289,8 +290,8 @@ class deviation_preserving(object):
         unknown = (red_profiles > 0) & (red_payoff_counts == 0)
         red_payoffs[unknown] = np.nan
         valid = ~np.all((red_profiles == 0) | np.isnan(red_payoffs), 1)
-        return rsgame.game_replace(red_game, red_profiles[valid],
-                                   red_payoffs[valid])
+        return paygame.game_replace(red_game, red_profiles[valid],
+                                    red_payoffs[valid])
 
     @staticmethod
     def expand_profiles(full_game, profiles, *, return_contributions=False):
@@ -540,7 +541,7 @@ class identity(object):
         assert (red_players is None or
                 np.all(full_game.num_role_players == red_players)), \
             "identity reduction must have same number of players"
-        return rsgame.game_copy(full_game)
+        return paygame.game_copy(full_game)
 
     @staticmethod
     def expand_profiles(full_game, profiles):

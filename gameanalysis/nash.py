@@ -16,7 +16,7 @@ _TINY = np.finfo(float).tiny
 
 def pure_nash(game, *, epsilon=0):
     """Returns an array of all pure nash profiles"""
-    eqa = [prof[None] for prof in game.profiles
+    eqa = [prof[None] for prof in game.profiles()
            if regret.pure_strategy_regret(game, prof) <= epsilon]
     if eqa:
         return np.concatenate(eqa)
@@ -30,8 +30,8 @@ def min_regret_profile(game):
     An error will be raised if there are no profiles with a defined regret.
     """
     regs = np.fromiter((regret.pure_strategy_regret(game, prof)
-                        for prof in game.profiles), float, game.num_profiles)
-    return game.profiles[np.nanargmin(regs)]
+                        for prof in game.profiles()), float, game.num_profiles)
+    return game.profiles()[np.nanargmin(regs)]
 
 
 def min_regret_grid_mixture(game, points):
@@ -60,6 +60,7 @@ def min_regret_rand_mixture(game, mixtures):
     mixtures : int > 0
         Number of mixtures to evaluate the regret of.
     """
+    assert mixtures > 0, "mixtures must be greater than 0"
     mixes = game.random_mixtures(mixtures)
     regs = np.fromiter((regret.mixture_regret(game, mix)
                         for mix in mixes), float, mixtures)

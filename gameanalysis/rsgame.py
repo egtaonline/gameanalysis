@@ -1,26 +1,30 @@
-"""Module for Role Symmetric Game data structures
+"""Module for base role symmetric game structures
 
-There are three types of games:
-    BaseGame   - Abstract class of game, with a few functions that should be
-                 provided by implementing classes.
-    Game       - Contains payoff data at a profile level, but that data can be
-                 sparse.
-    SampleGame - Contain several samples of payoffs for every profile. Access
-                 to the sample data is relatively limited and intended mostly
-                 for other functions that operate on the entire game at once.
+Role symmetric games have a number of common attributes and functions that are
+defined in the RsGame class that actual RsGame interfaces should support. In
+addition, an implementation of an EmptyGame is provided for convenience
+purposes. Note, that the constructor to EmptyGame (and most games) should not
+be called, and instead, various convenience functions to create EmptyGames that
+start with the prefix `emptygame` should be called instead.
 
-Everything internally is represented as an array. Most methods will take any
-dimensional array as input, treating the last axis as a profile  / payoff /
-etc, and treating all other axes as multiple data points, but this isn't
-universal.
+Most structures in a role symmetric game are an array of length
+game.num_strats, that lists a value for every strategy in the game. In this
+form, each roles strategies are contiguous. To aggregate elements by role, it
+is helpful to use numpy ufuncs, such as `np.add.reduceat(profile,
+game.role_starts)` will add up all of the players in each role of a profile.
+`np.split(profile, game.role_starts[1:])` will return a list where each element
+is that role's data. To convert a role array into a strategy array, one can do
+something like `role_array.repeat(game.num_role_strats)`.
 
-Most game objects have attributes that start with num, these will always be an
-attribute or a property, not a method, so to get the number of profiles, it's
-just `num_profiles` not `num_profiles()`. These will also only be numbers,
-either a single int, or an array of them depending on the attribute."""
-import functools
+As a general rule, any attribute of a game that begins with `num_` is an actual
+attribute instead of a getter function. Attributes that have the world role in
+them tend to be arrays of size `num_roles` and attributes that have `strat` in
+the name tend to be arrays of size `num_strats`.
+"""
 import itertools
+import string
 import warnings
+from collections import abc
 
 import numpy as np
 import numpy.random as rand
@@ -29,25 +33,50 @@ import scipy.special as sps
 from gameanalysis import utils
 
 
-_TINY = np.finfo(float).tiny
-
-
-class _StratArray(object):
+class StratArray(object):
     """A class with knowledge of the number of strategies per role
 
     This has methods common to working with strategy arrays, which essentially
     represent points in a simplotope (a cross product of simplicies), or points
     in a discretized simplotope.
+
+    Parameters
+    ----------
+    role_names : (str,)
+        The name of each role. Names must be unique, sorted, and can only
+        contain printable ascii characters less semi-colon and colon.
+    strat_names : ((str,),)
+        The name of each strategy for each role. Must be the same length as
+        role_names. Names must be sorted and unique per role, and can only
+        contain printable ascii characters less semi-colon and comma. Must have
+        at lease one strategy per role.
     """
 
-    def __init__(self, num_role_strats):
-        assert num_role_strats.ndim == 1
-        assert np.all(num_role_strats > 0)
-        self.num_roles = num_role_strats.size
-        self.num_strats = num_role_strats.sum()
-        self.num_role_strats = num_role_strats
-        self.role_starts = np.insert(num_role_strats[:-1].cumsum(), 0, 0)
-        self.role_indices = np.arange(self.num_roles).repeat(num_role_strats)
+    def __init__(self, role_names, strat_names):
+        self.num_roles = len(role_names)
+        self.num_role_strats = np.fromiter(
+            (len(s) for s in strat_names), int, self.num_roles)
+        self.num_strats = self.num_role_strats.sum()
+        self.role_starts = np.insert(self.num_role_strats[:-1].cumsum(), 0, 0)
+        self.role_indices = np.arange(self.num_roles).repeat(
+            self.num_role_strats)
+
+        self.role_names = role_names
+        self.strat_names = strat_names
+        self._named_role_index = {r: i for i, r in enumerate(self.role_names)}
+        self._role_strat_index = {
+            (r, s): i for i, (r, s)
+            in enumerate(itertools.chain.from_iterable(
+                ((r, s) for s in strats) for r, strats
+                in zip(self.role_names, self.strat_names)))}
+        self._role_strat_dev_index = {
+            (r, s, d): i for i, (r, s, d)
+            in enumerate(itertools.chain.from_iterable(
+                itertools.chain.from_iterable(
+                    ((r, s, d) for d in strats if d != s)
+                    for s in strats)
+                for r, strats
+                in zip(self.role_names, self.strat_names)))}
 
         self.num_role_strats.setflags(write=False)
         self.role_starts.setflags(write=False)
@@ -219,6 +248,7 @@ class _StratArray(object):
 
     def trim_mixture_support(self, mixture, *, thresh=1e-3, axis=-1):
         """Trims strategies played less than supp_thresh from the support"""
+        mixture = np.asarray(mixture, float)
         assert mixture.shape[axis] == self.num_strats
         mixture *= mixture >= thresh
         mixture /= np.add.reduceat(mixture, self.role_starts,
@@ -247,6 +277,16 @@ class _StratArray(object):
         uses the ray tracing homotopy. The uniform mixtures are aligned, and
         then rays are extended to the edges to convert proportionally along
         those rays on each object.
+
+        Notes
+        -----
+        This uses a simple ray alignment algorithm. First line up the uniform
+        simplex and the uniform mixture, then define a vector in the mixture as
+        all but the last probabilities in each role. Now trace a line from the
+        uniform mixture to the current mixture to the edge of the mixture, and
+        record what proportion of along that vector the point of interest was.
+        Copy that gradient to the simplex, trace it to the boundary, and take
+        the point the proportion of the way to the edge.
         """
         # This is relatively simple despite looking verbose. It's going to
         # store the ray as the direction from the uniform mixture to the
@@ -329,7 +369,7 @@ class _StratArray(object):
         return center + ratio * grad
 
     def uniform_mixture(self):
-        """Returns a uniform mixed profile"""
+        """Returns the uniform mixed profile"""
         return np.repeat(1 / self.num_role_strats, self.num_role_strats)
 
     def random_mixtures(self, num_samples=None, *, alpha=1):
@@ -447,70 +487,344 @@ class _StratArray(object):
                          for num_strats in self.num_role_strats]
         return utils.acartesian2(*role_mixtures)
 
+    def role_index(self, role):
+        """Return the index of a role by name"""
+        return self._named_role_index[role]
 
-class _BaseGame(_StratArray):
+    def role_strat_index(self, role, strat):
+        """Return the index of a role strat pair"""
+        return self._role_strat_index[role, strat]
+
+    def role_strat_dev_index(self, role, strat, dev):
+        """Return the index of a role strat deviating strat pair
+
+        `dev` and `strat` must both be strategies in role, and be distinct."""
+        return self._role_strat_dev_index[role, strat, dev]
+
+    def strat_name(self, role_strat_index):
+        """Get the strategy name from a full index"""
+        role_index = self.role_indices[role_strat_index]
+        return self.strat_names[role_index][role_strat_index -
+                                            self.role_starts[role_index]]
+
+    def from_mix_json(self, mix, dest=None, verify=True):
+        """Read a json mixture into an array"""
+        if dest is None:
+            dest = np.empty(self.num_strats, float)
+        dest.fill(0)
+
+        for role, strats in mix.items():
+            for strat, prob in strats.items():
+                dest[self.role_strat_index(role, strat)] = prob
+
+        assert not verify or self.is_mixture(dest), \
+            "\"{}\" does not define a valid mixture".format(mix)
+        return dest
+
+    def _to_arr_json(self, arr):
+        """Convert array to json"""
+        return {role: {strat: val.item() for strat, val
+                       in zip(strats, values) if val > 0}
+                for values, role, strats
+                in zip(np.split(arr, self.role_starts[1:]),
+                       self.role_names, self.strat_names)}
+
+    def to_mix_json(self, mix, supp_thresh=1e-3):
+        """Convert a mixture array to json"""
+        return self._to_arr_json(
+            self.trim_mixture_support(mix, thresh=supp_thresh))
+
+    def _from_arr_repr(self, arr_str, dtype, dest=None):
+        """Read an array from a string"""
+        if dest is None:
+            dest = np.empty(self.num_strats, dtype)
+        dest.fill(0)
+        for role_str in arr_str.split('; '):
+            role, strats = role_str.split(': ', 1)
+            for strat_str in strats.split(', '):
+                val, strat = strat_str.split(' ', 1)
+                dest[self.role_strat_index(role, strat)] = val
+        return dest
+
+    def from_mix_repr(self, mix_str, dest=None, verify=True):
+        """Read a mixture from it's repr"""
+        mix = self._from_arr_repr(mix_str, float, dest)
+        assert not verify or self.is_mixture(mix), \
+            "\"{}\" is not a valid mixture".format(mix_str)
+        return mix
+
+    def _to_arr_repr(self, arr, fmt):
+        """Convert an array to a string"""
+        return '; '.join(
+            '{}: {}'.format(role, ', '.join(
+                '{:{}} {}'.format(val, fmt, strat)
+                for strat, val in zip(strats, values) if val > 0))
+            for role, strats, values
+            in zip(self.role_names, self.strat_names,
+                   np.split(arr, self.role_starts[1:])))
+
+    def to_mix_repr(self, mix, supp_thresh=1e-3):
+        """Convert a mixture to a string"""
+        return self._to_arr_repr(
+            self.trim_mixture_support(mix, thresh=supp_thresh), 'g')
+
+    def _from_arr_str(self, arr_str, dtype, parse, dest=None):
+        if dest is None:
+            dest = np.empty(self.num_strats, dtype)
+        dest.fill(0)
+
+        role = None
+        for line in arr_str.split('\n'):
+            if line[0] != ' ':
+                role = line[:-1]
+            else:
+                strat, val_str = line[4:].split(':', 1)
+                dest[self.role_strat_index(role, strat)] = parse(val_str)
+        return dest
+
+    def from_mix_str(self, mix_str, dest=None, verify=True):
+        """Read a mixture from a verbose string"""
+        mix = self._from_arr_str(mix_str, float, _parse_percent, dest)
+        assert not verify or self.is_mixture(mix), \
+            "\"{}\" is not a valid mixture".format(mix_str)
+        return mix
+
+    def _to_arr_str(self, arr, fmt):
+        """Convert an array to a printable string"""
+        return '\n'.join(
+            '{}:\n{}'.format(role, '\n'.join(
+                '    {}: {:{}}'.format(s, p, fmt)
+                for p, s in zip(probs, strats)
+                if p > 0))
+            for probs, role, strats
+            in zip(np.split(arr, self.role_starts[1:]),
+                   self.role_names, self.strat_names))
+
+    def to_mix_str(self, mix):
+        """Convert a mixture to a printable string"""
+        return self._to_arr_str(self.trim_mixture_support(mix, thresh=1e-4),
+                                '>7.2%')
+
+    def from_subgame_json(self, subg, dest=None, verify=True):
+        """Read a json subgame into an array"""
+        if dest is None:
+            dest = np.empty(self.num_strats, bool)
+        dest.fill(False)
+
+        for role, strats in subg.items():
+            for strat in strats:
+                dest[self.role_strat_index(role, strat)] = True
+
+        assert not verify or self.is_subgame(dest), \
+            "\"{}\" does not define a valid subgame".format(subg)
+        return dest
+
+    def to_subgame_json(self, subg):
+        """Convert a subgame array to json"""
+        return {role: [strat for strat, inc in zip(strats, mask) if inc]
+                for mask, role, strats
+                in zip(np.split(subg, self.role_starts[1:]),
+                       self.role_names, self.strat_names)}
+
+    def from_subgame_repr(self, subg_str, dest=None, verify=True):
+        """Read a subgame from a string"""
+        if dest is None:
+            dest = np.empty(self.num_strats, bool)
+        dest.fill(False)
+        for role_str in subg_str.split('; '):
+            role, strats = role_str.split(': ', 1)
+            for strat in strats.split(', '):
+                dest[self.role_strat_index(role, strat)] = True
+        assert not verify or self.is_subgame(dest), \
+            "\"{}\" does not define a valid subgame".format(subg_str)
+        return dest
+
+    def to_subgame_repr(self, subg):
+        """Convert a subgame to a string"""
+        return '; '.join(
+            '{}: {}'.format(role, ', '.join(
+                strat for strat, inc
+                in zip(strats, mask) if inc > 0))
+            for role, strats, mask
+            in zip(self.role_names, self.strat_names,
+                   np.split(subg, self.role_starts[1:])))
+
+    def from_subgame_str(self, subg_str, dest=None, verify=True):
+        """Read a subgame from a readable string"""
+        if dest is None:
+            dest = np.empty(self.num_strats, bool)
+        dest.fill(False)
+
+        role = None
+        for line in subg_str.split('\n'):
+            if line[0] != ' ':
+                role = line[:-1]
+            else:
+                dest[self.role_strat_index(role, line[4:])] = True
+        assert not verify or self.is_subgame(dest), \
+            "\"{}\" does not define a valid subgame".format(subg_str)
+        return dest
+
+    def to_subgame_str(self, subg):
+        """Convert a subgame to a printable string"""
+        return '\n'.join(
+            '{}:\n{}'.format(role, '\n'.join(
+                '    {}'.format(s)
+                for m, s in zip(mask, strats)
+                if m))
+            for mask, role, strats
+            in zip(np.split(np.asarray(subg), self.role_starts[1:]),
+                   self.role_names, self.strat_names))
+
+    def from_role_json(self, role_json, dest=None, dtype=float):
+        """Format role data as array"""
+        if dest is None:
+            dest = np.empty(self.num_roles, dtype)
+        for role, val in role_json.items():
+            dest[self.role_index(role)] = val
+        return dest
+
+    def to_role_json(self, role_info):
+        """Format role data as json"""
+        return {role: info.item() for role, info
+                in zip(self.role_names, np.asarray(role_info))}
+
+    @utils.memoize
+    def __hash__(self):
+        return hash((type(self), self.num_roles,
+                     self.num_role_strats.tobytes(),
+                     self.role_names,
+                     self.strat_names))
+
+    def __eq__(self, other):
+        return (type(self) is type(other) and
+                self.num_roles == other.num_roles and
+                np.all(self.num_role_strats == other.num_role_strats) and
+                self.role_names == other.role_names and
+                self.strat_names == other.strat_names)
+
+
+class RsGame(StratArray):
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
-    game, and does not contain methods to operate on game data.
+    game, without defining how payoff data is generated / accessed.
 
     Parameters
     ----------
+    role_names : (str,)
+        The name of each role.
+    strat_names : ((str,),)
+        The name of each strategy for each role.
     num_role_players :  ndarray
-        The number of players in each role in order, or the number of players
-        per role if identical (will be broadcast to match the number of roles).
-    num_role_strats : ndarray
-        The number of strategies in each role in order, or the number of
-        strategies per role if identical (will be broadcast to match the number
-        of roles).
-
-    Notes
-    -----
-    The number of roles is deduced from the number of entries in
-    num_role_players and num_role_strats. If either is an integer or has length
-    1, the other is used; if both are integers or have length 1, the game will
-    have one role.
-
-    A few functions should be provided by subclasses:
-    - `max_strat_payoffs()`
-    - `min_strat_payoffs()`
-    - `get_payoffs()`
-    - `deviation_payoffs()`
-    - `subgame()`
-    - `normalize()`
-    - `__contains__()`
-    - `num_profiles`
-    - `num_complete_profiles`
-    - `profiles`
-    - `payoffs`
-
-    Attributes
-    ----------
-    num_role_players : ndarray, int, (num_roles,)
-        The number of players in each role.
-    num_players : int
-        The total number of players.
-    num_role_strats : ndarray, int, (num_roles,)
-        The number of strategies in each role.
-    num_role_strats : int
-        The total number of strategies.
-    zero_prob : ndarray, float, (num_roles,)
-        The probability of a mixture for a role, below which it should be
-        considered zero.
+        The number of players in each role. Must contain non-negative integers.
     """
 
-    def __init__(self, num_role_players, num_role_strats):
-        assert num_role_players.ndim == 1
-        assert num_role_players.shape == num_role_strats.shape
-        # This test for equality because we get games with zero players when
-        # deviating, in the same way that 1 strategy is technically degenerate
-        assert np.all(num_role_players >= 0)
-        super().__init__(num_role_strats)
+    def __init__(self, role_names, strat_names, num_role_players):
+        super().__init__(role_names, strat_names)
         self.num_role_players = num_role_players
         self.num_role_players.setflags(write=False)
-        self.num_players = self.num_role_players.sum()
+        self.num_players = num_role_players.sum()
+
         self.zero_prob = np.finfo(float).tiny * (self.num_role_players + 1)
         self.zero_prob.setflags(write=False)
+
+        self._num_profiles = None
+        self._num_complete_profiles = None
+
+    # ----------------
+    # Abstract Methods
+    # ----------------
+
+    @property
+    def num_profiles(self):
+        """The number of profiles with any payoff information"""
+        if self._num_profiles is not None:
+            return self._num_profiles
+        raise NotImplementedError("num_profiles not implemented by {}".format(
+            self.__class__.__name__))
+
+    @property
+    def num_complete_profiles(self):
+        """The number of profiles with complete payoff information"""
+        if self._num_complete_profiles is not None:
+            return self._num_complete_profiles
+        raise NotImplementedError(
+            "num_complete_profiles not implemented by {}".format(
+                self.__class__.__name__))
+
+    def profiles(self):
+        """An array all of the profiles with any data"""
+        raise NotImplementedError("profiles not implemented by {}".format(
+            self.__class__.__name__))
+
+    def payoffs(self):
+        """An array with all of the payoff corresponding to profiles()"""
+        raise NotImplementedError("payoffs not implemented by {}".format(
+            self.__class__.__name__))
+
+    def max_strat_payoffs(self):
+        """An upper bound on the payoff for each strategy"""
+        raise NotImplementedError(
+            "max_strat_payoffs not implemented by {}".format(
+                self.__class__.__name__))
+
+    def min_strat_payoffs(self):
+        """A lower bound on the payoff for each strategy"""
+        raise NotImplementedError(
+            "min_strat_payoffs not implemented by {}".format(
+                self.__class__.__name__))
+
+    def get_payoffs(self, profile):
+        """The payoffs for all profiles"""
+        raise NotImplementedError("get_payoffs not implemented by {}".format(
+            self.__class__.__name__))
+
+    def deviation_payoffs(self, mixture, *, jacobian=False):
+        """The payoffs for deviating from mixture
+
+        Optionally with the jacobian with respect to mixture. This is the
+        primary method that needs to implemented for nash finding."""
+        raise NotImplementedError(
+            "deviation_payoffs not implemented by {}".format(
+                self.__class__.__name__))
+
+    def subgame(self, sub_mask):
+        """Return a new game omitting strategies where sub_mask is false"""
+        assert self.is_subgame(sub_mask)
+        new_strats = tuple(
+            tuple(s for s, m in zip(strats, mask) if m)
+            for strats, mask in zip(
+                self.strat_names, np.split(sub_mask, self.role_starts[1:])))
+        return RsGame(self.role_names, new_strats, self.num_role_players)
+
+    def normalize(self):
+        """Return a new game where the max payoff is 1 and min payoff is 0"""
+        raise NotImplementedError("normalize not implemented by {}".format(
+            self.__class__.__name__))
+
+    def __contains__(self, profile):
+        """Return true if full payoff data for profile exists"""
+        raise NotImplementedError("contains not implemented by {}".format(
+            self.__class__.__name__))
+
+    # --------------------
+    # End Abstract Methods
+    # --------------------
+
+    @num_profiles.setter
+    def num_profiles(self, num_profs):
+        """Setter for num_profiles"""
+        assert self._num_profiles is None, \
+            "num_profiles can only be set once"
+        self._num_profiles = num_profs
+
+    @num_complete_profiles.setter
+    def num_complete_profiles(self, num_profs):
+        """Setter for num_complete_profiles"""
+        assert self._num_complete_profiles is None, \
+            "num_complete_profiles can only be set once"
+        self._num_complete_profiles = num_profs
 
     def min_role_payoffs(self):
         """Returns the minimum payoff for each role"""
@@ -536,7 +850,8 @@ class _BaseGame(_StratArray):
         # check for overflow, but there is no check for overflow on array
         # operations, so we have to do this manually. Another option would be
         # to cast as a float and then for overflow on returning to an int, but
-        # this seems more straightforward
+        # this seems more straightforward. Currently, python integers don't
+        # overflow, so we just make sure that the product is done with them.
         return self.num_all_role_profiles.astype(object).prod()
 
     @property
@@ -545,7 +860,7 @@ class _BaseGame(_StratArray):
         """The number of payoffs in all profiles"""
         dev_players = self.num_role_players - np.eye(self.num_roles, dtype=int)
         return np.sum(utils.game_size(dev_players, self.num_role_strats)
-                      .prod(1) * self.num_role_strats)
+                      .astype(object).prod(1) * self.num_role_strats)
 
     @property
     @utils.memoize
@@ -584,8 +899,17 @@ class _BaseGame(_StratArray):
         if self.is_empty():
             return True
         else:
-            profile_sums = np.sum(self.profiles * self.payoffs, 1)
+            profile_sums = np.sum(self.profiles() * self.payoffs(), 1)
             return np.allclose(profile_sums, profile_sums[0])
+
+    @property
+    @utils.memoize
+    def _prof_id_base(self):
+        # XXX Base is reversed so that profile_ids are ascending
+        rprofs = self.num_all_role_profiles
+        if self.num_all_profiles > np.iinfo(int).max:
+            rprofs = rprofs.astype(object)
+        return np.insert(rprofs[:0:-1].cumprod()[::-1], self.num_roles - 1, 1)
 
     # TODO Implement inverse
     def profile_id(self, profiles):
@@ -596,19 +920,14 @@ class _BaseGame(_StratArray):
         rev_arange = -np.ones(self.num_strats, int)
         rev_arange[self.role_starts] += self.num_role_strats
         rev_arange = rev_arange.cumsum()
-        rprofs = self.num_all_role_profiles
         sizes = utils.game_size(rev_arange, profiles)
         if self.num_all_profiles > np.iinfo(int).max:
-            rprofs = rprofs.astype(object)
             sizes = sizes.astype(object)
 
-        # TODO Base should probably be cached
-        # XXX Base is reversed so that profile_ids are ascending
-        base = np.insert(rprofs[:0:-1].cumprod()[::-1], self.num_roles - 1, 1)
-        return np.add.reduceat(sizes, self.role_starts, -1).dot(base)
+        return np.add.reduceat(sizes, self.role_starts, -1).dot(
+            self._prof_id_base)
 
-    def get_expected_payoffs(self, mix, *, jacobian=False,
-                             deviations=None):
+    def expected_payoffs(self, mix, *, jacobian=False, deviations=None):
         """Returns the payoff of each role under mixture
 
         If the payoffs for deviating from `mix` is already known, that an be
@@ -646,8 +965,9 @@ class _BaseGame(_StratArray):
         responses = self.deviation_payoffs(mix)
         bests = np.maximum.reduceat(responses, self.role_starts)
         best_resps = responses == bests.repeat(self.num_role_strats)
-        return best_resps / np.add.reduceat(
-            best_resps, self.role_starts).repeat(self.num_role_strats)
+        with np.errstate(invalid='ignore'):  # nan
+            return best_resps / np.add.reduceat(
+                best_resps, self.role_starts).repeat(self.num_role_strats)
 
     def is_profile(self, prof, *, axis=-1):
         """Verify that a profile is valid for game"""
@@ -786,17 +1106,143 @@ class _BaseGame(_StratArray):
         """Returns true if this game is asymmetric"""
         return np.all(self.num_role_players == 1)
 
-    @utils.memoize
-    def __hash__(self):
-        return hash((type(self), self.num_roles,
-                     self.num_role_strats.tobytes(),
-                     self.num_role_players.tobytes()))
+    def from_prof_json(self, prof, dest=None, verify=True):
+        """Read a profile from json
 
-    def __eq__(self, other):
-        return (type(self) is type(other) and
-                self.num_roles == other.num_roles and
-                np.all(self.num_role_strats == other.num_role_strats) and
-                np.all(self.num_role_players == other.num_role_players))
+        Parameters
+        ----------
+        prof : {role: {strat: count}}
+            A description of a profile.
+        dest : ndarray, optional
+            If supplied, ``dest`` will be written to instead of allocating a
+            new array.
+        verify : bool, optional
+            If true, verify that a proepr profile for this game was read.
+        """
+        if dest is None:
+            dest = np.empty(self.num_strats, int)
+        dest.fill(0)
+
+        for role, strats in prof.items():
+            for strat, count in strats.items():
+                dest[self.role_strat_index(role, strat)] = count
+
+        assert not verify or self.is_profile(dest), \
+            "\"{}\" is not a valid profile".format(prof)
+        return dest
+
+    def from_payoff_json(self, pays, dest=None):
+        """Read a payoff from json
+
+        Parameters
+        ----------
+        pays : {role: {strat: payoff}}
+            A description of a payoff.
+        dest : ndarray, optional
+            If supplied, ``dest`` will be written to instead of allocating a
+            new array.
+        """
+        if dest is None:
+            dest = np.empty(self.num_strats, float)
+        dest.fill(0)
+
+        for role, strats in pays.items():
+            for strat, pay in strats.items():
+                dest[self.role_strat_index(role, strat)] = _mean(pay)
+
+        return dest
+
+    def to_prof_json(self, prof):
+        """Convert a profile array to json"""
+        return self._to_arr_json(prof)
+
+    def to_payoff_json(self, payoffs, prof=None):
+        """Format payoffs as json
+
+        If an optional profile is specified, the json will be sparsified to
+        only strategies with at least one player.
+
+        Parameters
+        ----------
+        payoffs : ndarray
+            The payoffs to serialize.
+        prof : ndarray, optional
+            The profile the payoffs correspond to, specifying it allows the
+            written json to omit strategies that aren't played.
+        """
+        if prof is None:
+            prof = np.broadcast_to(True, self.num_strats)
+        return {role: {strat: pay.mean() for strat, count, pay
+                       in zip(strats, counts, pays) if count > 0}
+                for role, strats, counts, pays
+                in zip(self.role_names, self.strat_names,
+                       np.split(prof, self.role_starts[1:]),
+                       np.split(payoffs, self.role_starts[1:]))}
+
+    def from_prof_repr(self, prof_str, dest=None, verify=True):
+        """Read a profile from a string"""
+        if dest is None:
+            dest = np.empty(self.num_strats, int)
+        dest.fill(0)
+        for role_str in prof_str.split('; '):
+            role, strats = role_str.split(': ', 1)
+            for strat_str in strats.split(', '):
+                count, strat = strat_str.split(' ', 1)
+                dest[self.role_strat_index(role, strat)] = count
+        assert not verify or self.is_profile(dest), \
+            "\"{}\" does not define a profile".format(prof_str)
+        return dest
+
+    def to_prof_repr(self, prof):
+        """Convert a profile to a string"""
+        return self._to_arr_repr(prof, 'd')
+
+    def from_prof_str(self, prof_str, dest=None, verify=True):
+        prof = self._from_arr_str(prof_str, int, int, dest)
+        assert not verify or self.is_profile(prof), \
+            "\"{}\" is not a valid profile".format(prof_str)
+        return prof
+
+    def to_prof_str(self, prof):
+        """Convert a profile to a printable string"""
+        return self._to_arr_str(prof, 'd')
+
+    def from_dev_payoff_json(self, deviations, dest=None):
+        if dest is None:
+            dest = np.empty(self.num_devs)
+        dest.fill(0)
+
+        for role, strats in deviations.items():
+            for strat, devs in strats.items():
+                for dev, val in devs.items():
+                    dest[self.role_strat_dev_index(role, strat, dev)] = val
+
+        return dest
+
+    def to_dev_payoff_json(self, payoffs, profile=None):
+        """Format a profile and deviation payoffs as json"""
+        payoffs = np.asarray(payoffs, float)
+        supp = (np.ones(self.num_strats, bool) if profile is None
+                else np.asarray(profile, bool))
+        return {r: {s: {d: float(pay) for pay, d
+                        in zip(spays, (d for d in ses if d != s))}
+                    for spays, s, su
+                    in zip(np.split(rpay, n), ses, sup)
+                    if su}
+                for r, ses, n, rpay, sup
+                in zip(self.role_names, self.strat_names,
+                       self.num_role_strats,
+                       np.split(payoffs, self.dev_role_starts[1:]),
+                       np.split(supp, self.role_starts[1:]))}
+
+    def to_json(self):
+        """Format game as json"""
+        return {
+            'players': dict(zip(self.role_names,
+                                map(int, self.num_role_players))),
+            'strategies': dict(zip(self.role_names,
+                                   map(list, self.strat_names)))
+        }
 
     def __repr__(self):
         return '{}({}, {})'.format(
@@ -804,259 +1250,99 @@ class _BaseGame(_StratArray):
             self.num_role_players,
             self.num_role_strats)
 
-
-class Game(_BaseGame):
-    """Role-symmetric game representation
-
-    This representation uses a sparse mapping from profiles to payoffs for role
-    symmetric games. Payoffs for specific players in a profile can be nan to
-    indicate they are missing. The profiles will not be listed in
-    `num_complete_profiles` or counted as `in` the game, but their data can be
-    accessed via `get_payoffs`, and they will be used for calculating deviation
-    payoffs if possible.
-
-    Parameters
-    ----------
-    num_role_players : ndarray or int
-        The number of players per role. See BaseGame.
-    num_role_strats : ndarray or int or
-        The number of strategies per role.
-    profiles : ndarray-like, (num_payoffs, num_role_strats)
-        The profiles for the game.
-    payoffs : ndarray-like, (num_payoffs, num_role_strats)
-        The payoffs for the game.
-
-    Attributes
-    ----------
-    profiles : ndarray, int
-        All of the profiles
-    payoffs : ndarray, float
-        All of the payoffs
-    num_profiles : int
-        Number of profiles with at least partial data.
-    num_complete_profiles : int
-        Number of profiles with complete data.
-    """
-
-    def __init__(self, num_role_players, num_role_strats, profiles, payoffs):
-        super().__init__(num_role_players, num_role_strats)
-
-        assert profiles.shape == payoffs.shape, \
-            "profiles and payoffs must be the same shape {} {}".format(
-                profiles.shape, payoffs.shape)
-        assert profiles.shape[1:] == (self.num_strats,), \
-            "profiles must have proper end shape : expected {} but was {}" \
-            .format((self.num_strats,), profiles.shape[1:])
-        assert np.all(profiles >= 0), "profiles was negative"
-        assert np.all(
-            np.add.reduceat(profiles, self.role_starts, 1) ==
-            self.num_role_players), \
-            "not all profiles equaled player total"
-        assert np.all(payoffs[profiles == 0] == 0), \
-            "there were nonzero payoffs for strategies without players"
-        assert not np.all(np.isnan(payoffs) | (profiles == 0), 1).any(), \
-            "A profile had entirely nan payoffs"
-
-        self.profiles = profiles
-        self.profiles.setflags(write=False)
-        self.payoffs = payoffs
-        self.payoffs.setflags(write=False)
-        self.num_profiles = profiles.shape[0]
-
-        # compute log dev reps
-        player_factorial = np.sum(sps.gammaln(self.profiles + 1), 1)
-        totals = (np.sum(sps.gammaln(self.num_role_players + 1)) -
-                  player_factorial)
-        with np.errstate(divide='ignore'):
-            self._dev_reps = (
-                totals[:, None] + np.log(self.profiles) -
-                np.log(self.num_role_players).repeat(self.num_role_strats))
-        self._dev_reps.setflags(write=False)
-
-        # Add profile lookup
-        self._profile_map = dict(zip(map(utils.hash_array, self.profiles),
-                                     self.payoffs))
-        if np.isnan(self.payoffs).any():
-            self._complete_profiles = frozenset(
-                prof for prof, pay in self._profile_map.items()
-                if not np.isnan(pay).any())
-        else:  # Don't need to store duplicate lookup object
-            self._complete_profiles = self._profile_map
-        self.num_complete_profiles = len(self._complete_profiles)
-        assert len(self._profile_map) == self.num_profiles, \
-            "There was at least one duplicate profile"
-
-    @utils.memoize
-    def min_strat_payoffs(self):
-        """Returns the minimum payoff for each role"""
-        if not self.num_profiles:
-            pays = np.empty(self.num_strats)
-            pays.fill(np.nan)
-        else:
-            pays = np.fmin.reduce(np.where(
-                self.profiles > 0, self.payoffs, np.nan), 0)
-        pays.setflags(write=False)
-        return pays
-
-    @utils.memoize
-    def max_strat_payoffs(self):
-        """Returns the maximum payoff for each role"""
-        if not self.num_profiles:
-            pays = np.empty(self.num_strats)
-            pays.fill(np.nan)
-        else:
-            pays = np.fmax.reduce(np.where(
-                self.profiles > 0, self.payoffs, np.nan), 0)
-        pays.setflags(write=False)
-        return pays
-
-    def get_payoffs(self, profiles):
-        """Returns an array of profile payoffs
-
-        If profile is not in game, an array of nans is returned where profile
-        has support."""
-        profiles = np.asarray(profiles, int)
-        assert self.is_profile(profiles).all()
-        prof_view = profiles.reshape((-1, self.num_strats))
-        payoffs = np.empty(prof_view.shape, float)
-        for prof, pay in zip(prof_view, payoffs):
-            hashed = utils.hash_array(prof)
-            if hashed not in self._profile_map:
-                pay[prof == 0] = 0
-                pay[prof > 0] = np.nan
-            else:
-                np.copyto(pay, self._profile_map[hashed])
-        return payoffs.reshape(profiles.shape)
-
-    def deviation_payoffs(self, mix, *, jacobian=False):
-        """Computes the expected value of each pure strategy played against all
-        opponents playing mix.
-
-        Parameters
-        ----------
-        mix : ndarray
-            The mix all other players are using
-        jacobian : bool
-            If true, the second returned argument will be the jacobian of the
-            deviation payoffs with respect to the mixture. The first axis is
-            the deviating strategy, the second axis is the strategy in the mix
-            the jacobian is taken with respect to. The values that are marked
-            nan are not very aggressive, so don't rely on accurate nan values
-            in the jacobian.
-        """
-        # TODO It wouldn't be hard to extend this to multiple mixtures, which
-        # would allow array calculation of mixture regret. Support would have
-        # to be iterative though.
-        mix = np.asarray(mix, float)
-        nan_mask = np.empty_like(mix, dtype=bool)
-
-        # Fill out mask where we don't have data
-        if self.is_complete():
-            nan_mask.fill(False)
-        elif self.is_empty():
-            nan_mask.fill(True)
-        else:
-            # These calculations are approximate, but for games we can do
-            # anything with, the size is bounded, and so numeric methods are
-            # actually exact.
-            support = mix > 0
-            strats = np.add.reduceat(support, self.role_starts)
-            devs = self.profiles[:, ~support]
-            num_supp = utils.game_size(self.num_role_players, strats).prod()
-            dev_players = self.num_role_players - \
-                np.eye(self.num_roles, dtype=int)
-            role_num_dev = utils.game_size(dev_players, strats).prod(1)
-            num_dev = role_num_dev.repeat(self.num_role_strats)[~support]
-
-            nan_mask[support] = np.all(devs == 0, 1).sum() < num_supp
-            nan_mask[~support] = devs[devs.sum(1) == 1].sum(0) < num_dev
-
-        # Compute values
-        if not nan_mask.all():
-            # zero_prob effectively makes 0^0=1 and 0/0=0.
-            log_mix = np.log(mix + _TINY)
-            prof_prob = np.sum(self.profiles * log_mix, 1, keepdims=True)
-            with np.errstate(under='ignore'):
-                # Ignore underflow caused when profile probability is not
-                # representable in floating point.
-                probs = np.exp(prof_prob + self._dev_reps - log_mix)
-            zero_prob = _TINY * self.num_players
-            # Mask out nans
-            weighted_payoffs = probs * np.where(probs > zero_prob,
-                                                self.payoffs, 0)
-            devs = np.sum(weighted_payoffs, 0)
-
-        else:
-            devs = np.empty(self.num_strats)
-
-        devs[nan_mask] = np.nan
-
-        if not jacobian:
-            return devs
-
-        if not nan_mask.all():
-            tmix = mix + self.zero_prob.repeat(self.num_role_strats)
-            product_rule = self.profiles[:, None] / tmix - np.diag(1 / tmix)
-            dev_jac = np.sum(weighted_payoffs[..., None] * product_rule, 0)
-            dev_jac -= np.repeat(
-                np.add.reduceat(dev_jac, self.role_starts, 1) /
-                self.num_role_strats, self.num_role_strats, 1)
-        else:
-            dev_jac = np.empty((self.num_strats, self.num_strats))
-
-        dev_jac[nan_mask] = np.nan
-        return devs, dev_jac
-
-    def normalize(self):
-        """Return a normalized game"""
-        scale = self.max_role_payoffs() - self.min_role_payoffs()
-        scale[np.isclose(scale, 0)] = 1
-        offset = np.repeat(self.min_role_payoffs(), self.num_role_strats)
-        payoffs = (self.payoffs - offset) / scale.repeat(self.num_role_strats)
-        payoffs[self.profiles == 0] = 0
-        return game_replace(self, self.profiles, payoffs)
-
-    def subgame(self, subgame_mask):
-        """Remove possible strategies from consideration"""
-        subgame_mask = np.asarray(subgame_mask, bool)
-        assert self.is_subgame(subgame_mask), \
-            "subgame_mask must be a valid subgame"
-        num_strats = np.add.reduceat(subgame_mask, self.role_starts)
-        prof_mask = ~np.any(self.profiles * ~subgame_mask, 1)
-        profiles = self.profiles[prof_mask][:, subgame_mask]
-        payoffs = self.payoffs[prof_mask][:, subgame_mask]
-        return game(self.num_role_players, num_strats, profiles, payoffs)
-
-    def __contains__(self, profile):
-        """Returns true if all data for that profile exists"""
-        return (utils.hash_array(np.asarray(profile, int))
-                in self._complete_profiles)
+    def __str__(self):
+        """Format game as a printable string"""
+        return (
+            ('{}:\n    Roles: {}\n    Players:\n        {}\n    '
+             'Strategies:\n        {}').format(
+                 self.__class__.__name__,
+                 ', '.join(self.role_names),
+                 '\n        '.join(
+                     '{:d}x {}'.format(count, role)
+                     for role, count
+                     in zip(self.role_names, self.num_role_players)),
+                 '\n        '.join(
+                     '{}:\n            {}'.format(
+                         role, '\n            '.join(strats))
+                     for role, strats
+                     in zip(self.role_names, self.strat_names))))
 
     @utils.memoize
     def __hash__(self):
-        return hash((super().__hash__(), self.num_profiles,
-                     self.num_complete_profiles))
+        return hash((super().__hash__(), self.num_role_players.tobytes()))
 
     def __eq__(self, other):
         return (super().__eq__(other) and
-                # Identical profiles
-                self.num_profiles == other.num_profiles and
-                self.num_complete_profiles == other.num_complete_profiles and
-                not np.setxor1d(utils.axis_to_elem(self.profiles),
-                                utils.axis_to_elem(other.profiles)).size and
-                # Identical payoffs
-                all(np.allclose(pay, other.get_payoffs(prof), equal_nan=True)
-                    for prof, pay in zip(self.profiles, self.payoffs)))
+                np.all(self.num_role_players == other.num_role_players))
 
-    def __repr__(self):
-        return '{old}, {data:d} / {total:d})'.format(
-            old=super().__repr__()[:-1],
-            data=self.num_profiles,
-            total=self.num_all_profiles)
+
+class EmptyGame(RsGame):
+    """A game with no payoff data"""
+
+    def __init__(self, role_names, strat_names, num_role_players):
+        super().__init__(role_names, strat_names, num_role_players)
+        self.num_profiles = self.num_complete_profiles = 0
+
+    def profiles(self):
+        return np.empty((0, self.num_strats), int)
+
+    def payoffs(self):
+        return np.empty((0, self.num_strats), float)
+
+    def _nan_array(self):
+        arr = np.empty(self.num_strats)
+        arr.fill(np.nan)
+        return arr
+
+    @utils.memoize
+    def max_strat_payoffs(self):
+        maxs = self._nan_array()
+        maxs.setflags(write=False)
+        return maxs.view()
+
+    @utils.memoize
+    def min_strat_payoffs(self):
+        mins = self._nan_array()
+        mins.setflags(write=False)
+        return mins.view()
+
+    def get_payoffs(self, profile):
+        assert self.is_profile(profile)
+        pays = self._nan_array()
+        pays[0 == profile] = 0
+        pays.setflags(write=False)
+        return pays.view()
+
+    def deviation_payoffs(self, mixture, *, jacobian=False):
+        assert self.is_mixture(mixture)
+        if not jacobian:
+            return self._nan_array()
+
+        jac = np.empty((self.num_strats, self.num_strats))
+        jac.fill(np.nan)
+        return self._nan_array(), jac
+
+    def subgame(self, sub_mask):
+        return emptygame_copy(super().subgame(sub_mask))
+
+    def normalize(self):
+        return self
+
+    def __contains__(self, profile):
+        assert self.is_profile(profile)
+        return False
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def to_json(self):
+        res = super().to_json()
+        res['type'] = 'emptygame.1'
+        return res
 
 
 def emptygame(num_role_players, num_role_strats):
-    """Create an empty game
+    """Create an empty game with default names
 
     Parameters
     ----------
@@ -1070,354 +1356,147 @@ def emptygame(num_role_players, num_role_strats):
     """
     num_role_players = np.asarray(num_role_players, int)
     num_role_strats = np.asarray(num_role_strats, int)
+    assert np.all(0 <= num_role_players), \
+        "can't have a negative number of players"
+    assert np.all(0 < num_role_strats), \
+        "must have at least one strategy per role"
     num_roles = max(num_role_players.size, num_role_strats.size)
     num_role_players = np.broadcast_to(num_role_players, num_roles)
     num_role_strats = np.broadcast_to(num_role_strats, num_roles)
-    num_strats = num_role_strats.sum()
-    profiles = np.empty((0, num_strats), int)
-    payoffs = np.empty((0, num_strats), float)
-    return Game(num_role_players, num_role_strats, profiles, payoffs)
+    role_names = tuple(utils.prefix_strings('r', num_roles))
+    strats = utils.prefix_strings('s', num_role_strats.sum())
+    strat_names = tuple(tuple(itertools.islice(strats, int(n)))
+                        for n in num_role_strats)
+    return EmptyGame(role_names, strat_names, num_role_players)
+
+
+def emptygame_names(role_names, num_role_players, strat_names):
+    """Create an empty game with names
+
+    PArameters
+    ----------
+    roles_names : [str]
+        The name for each role.
+    num_role_players : ndarray, int, [int]
+        The number of players in each role.
+    strat_names : [[str]]
+        The name of each strategy for each role.
+    """
+    assert len(role_names) == len(strat_names), \
+        "number of roles must be consistent"
+    for role in role_names:
+        assert isinstance(role, str), "role {} is not a string".format(role)
+    for strats in strat_names:
+        for strat in strats:
+            assert isinstance(strat, str), \
+                "strategy {} is not a string".format(strat)
+    assert utils.is_sorted(role_names, strict=True), \
+        "role names must be sorted"
+    for i, strats in enumerate(strat_names):
+        assert utils.is_sorted(strats, strict=True), \
+            "strategies in role {:d} must be sorted".format(i)
+    for i, strats in enumerate(strat_names):
+        assert strats, "role {:d} must have at least one strategy".format(i)
+    num_role_players = np.broadcast_to(np.asarray(num_role_players, int),
+                                       len(role_names))
+    # This test for equality because we get games with zero players when
+    # deviating, in the same way that 1 strategy is technically degenerate
+    assert np.all(0 <= num_role_players), \
+        "number of players must be non-negative"
+    for role in role_names:
+        assert _leg_role.issuperset(role), \
+            "role {} contains illegal characters".format(role)
+    for strats in strat_names:
+        for strat in strats:
+            assert _leg_strat.issuperset(strat), \
+                "strategy {} contains illegal characters".format(strat)
+    return EmptyGame(tuple(role_names), tuple(map(tuple, strat_names)),
+                     num_role_players)
+
+
+def emptygame_json(json):
+    """Read a EmptyGame from json
+
+    Parameters
+    ----------
+    json : {...}
+        A json representation of a basic game with names. Must either be
+        {roles: [{name: <role>, strategies: [<strat>]}]}, or {strategies:
+        {<role>: [<strat>]}}.
+    """
+    if 'roles' in json:
+        desc = [(j['name'], j['count'], sorted(j['strategies']))
+                for j in json['roles']]
+    elif {'strategies', 'players'}.issubset(json):
+        players = json['players']
+        desc = [(r, players[r], sorted(s)) for r, s
+                in json['strategies'].items()]
+    else:
+        raise ValueError("\"{}\" does not describe a game".format(json))
+    desc.sort()
+    role_names = tuple(r for r, _, _ in desc)
+    strat_names = tuple(tuple(sorted(s)) for _, _, s in desc)
+    num_role_players = np.fromiter((c for _, c, _ in desc), int, len(desc))
+    assert all(isinstance(r, str) for r in role_names), \
+        "role names must be strings"
+    assert all(all(isinstance(s, str) for s in strats)
+               for strats in strat_names), \
+        "strategy names must be strings"
+    assert all(len(s) > 0 for s in strat_names), \
+        "must have at least one strategy per role"
+    assert np.all(0 <= num_role_players), \
+        "number of players must be non-negative"
+    assert all(_leg_role.issuperset(r) for r in role_names)
+    assert all(all(_leg_strat.issuperset(s) for s in strats)
+               for strats in strat_names)
+    return EmptyGame(role_names, strat_names, num_role_players)
 
 
 def emptygame_copy(copy_game):
     """Copy parameters of a game into an empty game
 
-    Useful to keep convenience methods of game without attached data.
+    This method is useful to keep convenience methods of game without attached
+    data.
 
     Parameters
     ----------
-    copy_game : BaseGame
+    copy_game : RsGame
         Game to copy info from.
     """
-    profiles = np.empty((0, copy_game.num_strats), int)
-    payoffs = np.empty((0, copy_game.num_strats), float)
-    return Game(copy_game.num_role_players, copy_game.num_role_strats,
-                profiles, payoffs)
+    return EmptyGame(copy_game.role_names, copy_game.strat_names,
+                     copy_game.num_role_players)
 
 
-def game(num_role_players, num_role_strats, profiles, payoffs):
-    """Static game constructor
+class CompleteGame(RsGame):
+    """A game that defines everything for complete games
 
-    Parameters
-    ----------
-    num_role_players : ndarray-like, int,
-        The number of players per role. See emptygame.
-    num_role_strats : ndarray-like, int,
-        The number of strategies per role.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
-    payoffs : ndarray-like, float, (num_profiles, num_strats)
-        The payoffs for the game.
-    """
-    return game_replace(emptygame(num_role_players, num_role_strats), profiles,
-                        payoffs)
+    Extend this if your game by default has payoff data for every profile."""
 
-
-def game_copy(copy_game):
-    """Copy structure and payoffs from an existing game
-
-    Parameters
-    ----------
-    copy_game : BaseGame
-        Game to copy data from
-    """
-    return game_replace(copy_game, copy_game.profiles, copy_game.payoffs)
-
-
-def game_replace(copy_game, profiles, payoffs):
-    """Copy structure from an existing game with new data
-
-    Parameters
-    ----------
-    copy_game : Game
-        Game to copy information out of.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
-    payoffs : ndarray-like, float, (num_profiles, num_strats)
-        The payoffs for the game.
-    """
-    return Game(copy_game.num_role_players, copy_game.num_role_strats,
-                np.asarray(profiles, int), np.asarray(payoffs, float))
-
-
-class SampleGame(Game):
-    """A Role Symmetric Game that has multiple samples per observation
-
-    This behaves the same as a normal Game object, except that it has a
-    `resample` method, which will resample the used payoffs from the empirical
-    distribution of payoffs, allowing bootstrapping over arbitrary statistics,
-    and a `get_sample_payoffs` method that will return all of the sample
-    payoffs.
-
-    Parameters
-    ----------
-    num_role_players : ndarray, int
-        The number of players per role.
-    num_role_strats : ndarray, int
-        The number of strategies per role.
-    profiles : ndarray-like
-        The profiles for the game.
-    sample_payoffs : [ndarray-like]
-        The sample payoffs for the game. Each element of the list is a set of
-        payoff observations grouped by number of observations and parallel with
-        profiles.
-
-    Attributes
-    ----------
-    sample_payoffs : [ndarray]
-        This structure contains all of the sample payoffs grouped by number of
-        observations and alligned with `profiles`. Each element array is
-        indexed by profile, then strategy, then observation number.
-    """
-
-    def __init__(self, num_role_players, num_role_strats, profiles,
-                 sample_payoffs):
-        assert len(set(x.shape[1] for x in sample_payoffs)) <= 1, \
-            "Not all sample payoffs had compatible numbers of strategies"
-        assert not any(pays.size == 0 for pays in sample_payoffs), \
-            "Sample payoffs can't be empty"
-
-        # In case an empty list is passed
-        if sample_payoffs:
-            payoffs = np.concatenate([s.mean(2) for s in sample_payoffs])
-        else:
-            payoffs = np.empty((0, profiles.shape[1]))
-
-        super().__init__(num_role_players, num_role_strats, profiles, payoffs)
-
-        self.sample_payoffs = sample_payoffs
-        for spay in self.sample_payoffs:
-            spay.setflags(write=False)
-        self.num_sample_profs = np.fromiter(
-            (x.shape[0] for x in self.sample_payoffs),
-            int, len(self.sample_payoffs))
-        self.sample_starts = np.insert(self.num_sample_profs[:-1].cumsum(), 0,
-                                       0)
-        self.num_samples = np.fromiter(
-            (v.shape[2] for v in self.sample_payoffs),
-            int, len(self.sample_payoffs))
-        assert self.num_samples.size == np.unique(self.num_samples).size, \
-            "Each set of observations must have a unique number or be merged"
-
-        assert not self.sample_payoffs or all(
-            (samp[np.broadcast_to(count[..., None], samp.shape) == 0] == 0)
-            .all() for count, samp
-            in zip(np.split(self.profiles, self.sample_starts[1:]),
-                   self.sample_payoffs)), \
-            "some sample payoffs were nonzero for invalid payoffs"
-
-        self._sample_profile_map = None
-
-    def resample(self, num_resamples=None, *, independent_profile=False,
-                 independent_role=False, independent_strategy=False):
-        """Overwrite payoff values with a bootstrap resample
-
-        Keyword Arguments
-        -----------------
-        num_resamples:        The number of resamples to take for each realized
-                              payoff. By default this is equal to the number of
-                              observations for that profile.
-        independent_profile:  Sample each profile independently. In general,
-                              only profiles with a different number of
-                              observations will be resampled independently.
-                              (default: False)
-        independent_role:     Sample each role independently. Within a profile,
-                              the payoffs for each role will be drawn
-                              independently. (default: False)
-        independent_strategy: Sample each strategy independently. Within a
-                              profile, the payoffs for each strategy will be
-                              drawn independently. (default: False)
-
-        Each of the `independent_` arguments will increase the time to do a
-        resample. `independent_strategy` doesn't make any particular sense.
-        """
-        if independent_role and independent_strategy:
-            dim2 = self.num_strats
-        elif independent_role:
-            dim2 = self.num_roles
-        elif independent_strategy:
-            dim2 = self.num_role_strats.max()
-            rep_inds = np.arange(self.num_strats) - \
-                self.role_starts[self.role_indices]
-        else:
-            dim2 = 1
-
-        payoffs = np.empty_like(self.payoffs)
-        for obs, pays in zip(self.sample_payoffs,
-                             np.split(payoffs, self.sample_starts[1:])):
-            num_samples = obs.shape[2]
-            num_obs_resamples = (num_samples if num_resamples is None
-                                 else num_resamples)
-            dim1 = obs.shape[0] if independent_profile else 1
-            sample = rand.multinomial(num_obs_resamples,
-                                      np.ones(num_samples) / num_samples,
-                                      (dim1, dim2))
-            if independent_role and not independent_strategy:
-                sample = sample.repeat(self.num_role_strats, 1)
-            elif independent_strategy and not independent_role:
-                sample = sample[:, rep_inds]
-            np.copyto(pays, (np.mean(obs * sample, 2) * (num_samples /
-                                                         num_obs_resamples)))
-        return Game(self.num_role_players, self.num_role_strats, self.profiles,
-                    payoffs)
-
-    def get_sample_payoffs(self, profile):
-        """Get sample payoffs associated with a profile
-
-        This returns an array of shape (num_observations, num_role_strats). If
-        profile has no data, num_observations will be 0."""
-        if self._sample_profile_map is None:
-            self._sample_profile_map = dict(zip(
-                map(utils.hash_array, self.profiles),
-                itertools.chain.from_iterable(self.sample_payoffs)))
-        profile = np.asarray(profile, int)
-        assert self.is_profile(profile)
-        hashed = utils.hash_array(profile)
-        if hashed not in self._sample_profile_map:
-            return np.empty((0, self.num_strats), float)
-        else:
-            return self._sample_profile_map[hashed].T
-
-    @property
-    @functools.lru_cache(maxsize=1)
-    def flat_profiles(self):
-        """Profiles in parallel with flat_payoffs"""
-        return self.profiles.repeat(
-            self.num_samples.repeat(self.num_sample_profs), 0)
-
-    @property
-    @functools.lru_cache(maxsize=1)
-    def flat_payoffs(self):
-        """All sample payoffs linearly concatenated together"""
-        return np.concatenate([
-            np.rollaxis(pay, 2, 1).reshape((-1, self.num_strats))
-            for pay in self.sample_payoffs])
-
-    def normalize(self):
-        """Return a normalized SampleGame"""
-        scale = self.max_role_payoffs() - self.min_role_payoffs()
-        scale[np.isclose(scale, 0)] = 1
-        scale = scale.repeat(self.num_role_strats)[:, None]
-        offset = self.min_role_payoffs().repeat(self.num_role_strats)[:, None]
-        spayoffs = [(pays - offset) / scale for pays in self.sample_payoffs]
-        for profs, pays in zip(np.split(self.profiles, self.sample_starts[1:]),
-                               spayoffs):
-            pays[profs == 0] = 0
-        return samplegame_replace(self, self.profiles, spayoffs)
-
-    def subgame(self, subgame_mask):
-        """Remove possible strategies from consideration"""
-        subgame_mask = np.asarray(subgame_mask, bool)
-        assert self.is_subgame(subgame_mask), \
-            "subgame_mask must be a valid subgame"
-        num_strats = np.add.reduceat(subgame_mask, self.role_starts)
-        prof_mask = ~np.any(self.profiles * ~subgame_mask, 1)
-        profiles = self.profiles[prof_mask][:, subgame_mask]
-        sample_payoffs = [pays[pmask][:, subgame_mask]
-                          for pays, pmask
-                          in zip(self.sample_payoffs,
-                                 np.split(prof_mask, self.sample_starts[1:]))
-                          if pmask.any()]
-        return samplegame(self.num_role_players, num_strats, profiles,
-                          sample_payoffs)
-
-    @utils.memoize
-    def __hash__(self):
-        return hash((super().__hash__(), tuple(sorted(self.num_samples))))
-
-    def __eq__(self, other):
-        return (
-            super().__eq__(other) and
-            # Identical sample payoffs
-            all(_sample_payoffs_equal(pay.T, other.get_sample_payoffs(prof))
-                for prof, pay in zip(
-                    self.profiles,
-                    itertools.chain.from_iterable(self.sample_payoffs))))
-
-    def __repr__(self):
-        samples = self.num_samples
-        if samples.size == 0:
-            sample_str = '0'
-        elif samples.size == 1:
-            sample_str = str(samples[0])
-        else:
-            sample_str = '{:d} - {:d}'.format(samples.min(), samples.max())
-        return '{}, {})'.format(super().__repr__()[:-1], sample_str)
-
-
-def _sample_payoffs_equal(p1, p2):
-    """Returns true if two sample payoffs are almost equal"""
-    # FIXME Pathological payoffs will make this fail
-    return (p1.shape[0] == p2.shape[0] and
-            np.allclose(p1[np.lexsort(p1.T)], p2[np.lexsort(p2.T)],
-                        equal_nan=True))
-
-
-def samplegame(num_role_players, num_role_strats, profiles,
-               sample_payoffs):
-    """Static SampleGame constructor
-
-    Parameters
-    ----------
-    num_role_players : ndarray-like, int
-        The number of players per role. See emptygame.
-    num_role_strats : ndarray-like, int
-        The number of strategies per role. See emptygame.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
-    sample_payoffs : [ndarray-like, float]
-        The sample payoffs for the game. Each list element is a set of payoff
-        observations grouped by number of observations and parallel with
-        profiles. The shape of each element must be (num_profiles_i,
-        num_strats, num_obs_i), where num_profiles_i is the number of profiles
-        that have that observation count, and num_obs_i is the number of
-        observations for that bucket.
-    """
-    return samplegame_replace(emptygame(num_role_players, num_role_strats),
-                              profiles, sample_payoffs)
-
-
-def samplegame_copy(copy_game):
-    """Construct SampleGame from a copy
-
-    Parameters
-    ----------
-    copy_game : Game
-        Game to copy data from.
-    """
-    if hasattr(copy_game, 'sample_payoffs'):
-        sample_payoffs = copy_game.sample_payoffs
-    elif not copy_game.is_empty():
-        sample_payoffs = [copy_game.payoffs[..., None]]
-    else:
-        sample_payoffs = []
-    return samplegame_replace(copy_game, copy_game.profiles, sample_payoffs)
-
-
-def samplegame_replace(copy_game, profiles, sample_payoffs):
-    """Construct SampleGame from base game
-
-    Parameters
-    ----------
-    copy_game : BaseGame, optional
-        Game to copy information out of.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
-    sample_payoffs : [ndarray-like, float]
-        The sample payoffs for the game. See samplegame.
-    """
-    return SampleGame(copy_game.num_role_players, copy_game.num_role_strats,
-                      np.asarray(profiles, int),
-                      tuple(np.asarray(p, float) for p in sample_payoffs))
-
-
-class _CompleteGame(_BaseGame):
-    """A game that defines everything for complete games"""
-
-    def __init__(self, num_role_players, num_role_strats):
-        super().__init__(num_role_players, num_role_strats)
+    def __init__(self, role_names, strat_names, num_role_players):
+        super().__init__(role_names, strat_names, num_role_players)
         self.num_profiles = self.num_complete_profiles = self.num_all_profiles
 
     def __contains__(self, profile):
         assert self.is_profile(profile)
         return True
+
+
+# Legal characters for roles and strategies
+_leg_role = frozenset(set(string.printable) - set(';:'))
+_leg_strat = frozenset(set(string.printable) - set(';,'))
+
+
+def _parse_percent(perc):
+    return float(perc[:-1]) / 100
+
+
+def _mean(vals):
+    if isinstance(vals, abc.Iterable):
+        count = 0
+        mean = 0
+        for v in vals:
+            count += 1
+            mean += (v - mean) / count
+        return mean if count > 0 else float('nan')
+    else:
+        return vals

@@ -4,10 +4,10 @@ import pytest
 from gameanalysis import aggfn
 from gameanalysis import agggen
 from gameanalysis import nash
-from gameanalysis import rsgame
+from gameanalysis import paygame
 
 
-SUM_GAME = aggfn.aggfn(
+_sum_game = aggfn.aggfn(
     [2, 1], [2, 3],
     [[-1, 0, 1, 2, 3],
      [0, 1, 0, 1, 0],
@@ -23,7 +23,7 @@ SUM_GAME = aggfn.aggfn(
      [9, 4, 1, 0],
      [3, 0, 0, 3]])
 
-ROLE_GAME = aggfn.aggfn(
+_role_game = aggfn.aggfn(
     [2, 1], [2, 3],
     [[-1, 0, 1, 2, 3],
      [0, 1, 0, 1, 0],
@@ -40,20 +40,25 @@ ROLE_GAME = aggfn.aggfn(
      [[3, 6], [0, -1], [3, 4]]])
 
 
-# TODO Split up into separate tests
-def test_sum_aggfn():
-    game = SUM_GAME
+def test_sum_aggfn_prop():
+    game = _sum_game
     assert game.num_functions == 4
     assert game.num_profiles == 9
     assert game.is_complete()
     assert not game.is_empty()
     assert repr(game) == 'SumAgfnGame([2 1], [2 3], 4)'
 
+
+def test_sum_aggfn_min_max():
+    game = _sum_game
     mins = [-3, 0, 0, 0, 0]
     assert np.all(mins == game.min_strat_payoffs())
     maxs = [9, 12, 15, 21, 21]
     assert np.all(maxs == game.max_strat_payoffs())
 
+
+def test_sum_aggfn_payoffs():
+    game = _sum_game
     payoffs = [0, 3, 0, 5, 0]
     assert np.allclose(payoffs, game.get_payoffs([1, 1, 0, 1, 0]))
     payoffs = [0, 2, 1, 0, 0]
@@ -61,10 +66,16 @@ def test_sum_aggfn():
     payoffs = [0, 3, 0, 6, 0]
     assert np.allclose(payoffs, game.get_payoffs([0, 2, 0, 1, 0]))
 
+
+def test_sum_aggfn_dev_pays():
+    game = _sum_game
     mix = [0.5, 0.5, 0.5, 0.5, 0]
     payoffs = [-1.5, 2.5, 2.75, 5.75, 7.75]
     assert np.allclose(payoffs, game.deviation_payoffs(mix))
 
+
+def test_sum_aggfn_payoff_vals():
+    game = _sum_game
     profiles = [[2, 0, 1, 0, 0],
                 [2, 0, 0, 1, 0],
                 [2, 0, 0, 0, 1],
@@ -83,9 +94,12 @@ def test_sum_aggfn():
                [0, 2, 1, 0, 0],
                [0, 3, 0, 6, 0],
                [0, 3, 0, 0, 4]]
-    copy = rsgame.game_replace(game, profiles, payoffs)
-    assert rsgame.game_copy(game) == copy
+    copy = paygame.game_replace(game, profiles, payoffs)
+    assert paygame.game_copy(game) == copy
 
+
+def test_sum_aggfn_function_permutation():
+    game = _sum_game
     functabp = [[9, 4, 1, 0],
                 [0, 3, 2, 1],
                 [0, 1, 2, 3],
@@ -105,7 +119,7 @@ def test_sum_aggfn():
 
 
 def test_sum_aggfn_subgame():
-    game = SUM_GAME
+    game = _sum_game
     mask = [True, False, True, True, False]
     sfuncinps = [[True, True, True, True],
                  [True, False, True, True],
@@ -114,25 +128,90 @@ def test_sum_aggfn_subgame():
              [0, 0, 1],
              [1, 1, 1],
              [0, 1, 1]]
-    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps,
-                        SUM_GAME._function_table)
+    sgame = aggfn.aggfn_names(['r0', 'r1'], [2, 1], [['s0'], ['s2', 's3']],
+                              game.function_names, sactw, sfuncinps,
+                              game._function_table)
     assert sgame == game.subgame(mask)
 
 
-# TODO Split up into separate tests
-def test_role_aggfn():
-    game = ROLE_GAME
+def test_subgame_function_removal():
+    game = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 0, 0, 1, 0],
+         [1, 1, 1, 1, 1],
+         [0, 0, 1, 1, 1]],
+        [[True, True, True, True],
+         [False, True, True, False],
+         [True, False, True, True],
+         [False, False, False, False],
+         [True, False, False, True]],
+        [[0, 1, 2, 3],
+         [0, 3, 2, 1],
+         [9, 4, 1, 0],
+         [3, 0, 0, 3]])
+    sub = game.subgame([True, True, True, False, True])
+    expected = aggfn.aggfn_names(
+        ['r0', 'r1'], [2, 1], [['s0', 's1'], ['s2', 's4']],
+        ['f0', 'f2', 'f3'],
+        [[-1, 0, 1, 3],
+         [1, 1, 1, 1],
+         [0, 0, 1, 1]],
+        [[True, True, True],
+         [False, True, False],
+         [True, True, True],
+         [True, False, True]],
+        [[0, 1, 2, 3],
+         [9, 4, 1, 0],
+         [3, 0, 0, 3]])
+    assert sub == expected
+
+
+def test_sum_aggfn_to_json():
+    game = _sum_game
+    jgame = {
+        'players': {'r0': 2, 'r1': 1},
+        'strategies': {'r0': ['s0', 's1'], 'r1': ['s2', 's3', 's4']},
+        'action_weights': {
+            'r0': {'s0': {'f0': -1, 'f2': 1},
+                   's1': {'f1': 1, 'f2': 1}},
+            'r1': {'s2': {'f0': 1, 'f2': 1, 'f3': 1},
+                   's3': {'f0': 2, 'f1': 1, 'f2': 1, 'f3': 1},
+                   's4': {'f0': 3, 'f2': 1, 'f3': 1}}},
+        'function_inputs': {
+            'f0': {'r0': ['s0'], 'r1': ['s2', 's4']},
+            'f1': {'r0': ['s0', 's1']},
+            'f2': {'r0': ['s0', 's1'], 'r1': ['s2']},
+            'f3': {'r0': ['s0'], 'r1': ['s2', 's4']}},
+        'function_tables': {
+            'f0': [0, 1, 2, 3],
+            'f1': [0, 3, 2, 1],
+            'f2': [9, 4, 1, 0],
+            'f3': [3, 0, 0, 3]},
+        'type': 'aggfn.1'}
+    assert game.to_json() == jgame
+    assert aggfn.aggfn_json(jgame) == game
+
+
+def test_role_aggfn_props():
+    game = _role_game
     assert game.num_functions == 4
     assert game.num_profiles == 9
     assert game.is_complete()
     assert not game.is_empty()
     assert repr(game) == 'RoleAgfnGame([2 1], [2 3], 4)'
 
+
+def test_role_aggfn_min_max():
+    game = _role_game
     mins = [-2, 1, 0, 0, 0]
     assert np.all(mins == game.min_strat_payoffs())
     maxs = [9, 13, 18, 25, 24]
     assert np.all(maxs == game.max_strat_payoffs())
 
+
+def test_role_aggfn_get_payoffs():
+    game = _role_game
     payoffs = [0, 3, 0, 5, 0]
     assert np.allclose(payoffs, game.get_payoffs([1, 1, 0, 1, 0]))
     payoffs = [0, 6, 11, 0, 0]
@@ -140,10 +219,16 @@ def test_role_aggfn():
     payoffs = [0, 3, 0, 6, 0]
     assert np.allclose(payoffs, game.get_payoffs([0, 2, 0, 1, 0]))
 
+
+def test_role_aggfn_dev_pays():
+    game = _role_game
     mix = [0.5, 0.5, 0.5, 0.5, 0]
     payoffs = [1, 4.5, 7.75, 6.5, 8.25]
     assert np.allclose(payoffs, game.deviation_payoffs(mix))
 
+
+def test_role_aggfn_payoff_vals():
+    game = _role_game
     profiles = [[2, 0, 1, 0, 0],
                 [2, 0, 0, 1, 0],
                 [2, 0, 0, 0, 1],
@@ -162,9 +247,12 @@ def test_role_aggfn():
                [0, 6, 11, 0, 0],
                [0, 3, 0, 6, 0],
                [0, 3, 0, 0, 10]]
-    copy = rsgame.game_replace(game, profiles, payoffs)
-    assert rsgame.game_copy(game) == copy
+    copy = paygame.game_replace(game, profiles, payoffs)
+    assert paygame.game_copy(game) == copy
 
+
+def test_role_aggfn_function_perm():
+    game = _role_game
     functabp = [[[9, 7], [4, 1], [1, 4]],
                 [[0, 0], [3, 2], [2, 4]],
                 [[0, 1], [1, 3], [2, 0]],
@@ -184,7 +272,7 @@ def test_role_aggfn():
 
 
 def test_role_aggfn_subgame():
-    game = ROLE_GAME
+    game = _role_game
     mask = [False, True, True, False, True]
     sfuncinps = [[False, True, True, False],
                  [True, False, True, True],
@@ -193,9 +281,36 @@ def test_role_aggfn_subgame():
              [1, 0, 0],
              [1, 1, 1],
              [0, 1, 1]]
-    sgame = aggfn.aggfn([2, 1], [1, 2], sactw, sfuncinps,
-                        ROLE_GAME._function_table)
+    sgame = aggfn.aggfn_names(['r0', 'r1'], [2, 1], [['s1'], ['s2', 's4']],
+                              game.function_names, sactw, sfuncinps,
+                              game._function_table)
     assert sgame == game.subgame(mask)
+
+
+def test_role_aggfn_to_json():
+    game = _role_game
+    jgame = {
+        'players': {'r0': 2, 'r1': 1},
+        'strategies': {'r0': ['s0', 's1'], 'r1': ['s2', 's3', 's4']},
+        'action_weights': {
+            'r0': {'s0': {'f0': -1, 'f2': 1},
+                   's1': {'f1': 1, 'f2': 1}},
+            'r1': {'s2': {'f0': 1, 'f2': 1, 'f3': 1},
+                   's3': {'f0': 2, 'f1': 1, 'f2': 1, 'f3': 1},
+                   's4': {'f0': 3, 'f2': 1, 'f3': 1}}},
+        'function_inputs': {
+            'f0': {'r0': ['s0'], 'r1': ['s2', 's4']},
+            'f1': {'r0': ['s0', 's1']},
+            'f2': {'r0': ['s0', 's1'], 'r1': ['s2']},
+            'f3': {'r0': ['s0'], 'r1': ['s2', 's4']}},
+        'function_tables': {
+            'f0': [[0, 1], [1, 3], [2, 0]],
+            'f1': [[0, 0], [3, 2], [2, 4]],
+            'f2': [[9, 7], [4, 1], [1, 4]],
+            'f3': [[3, 6], [0, -1], [3, 4]]},
+        'type': 'aggfn.1'}
+    assert game.to_json() == jgame
+    assert aggfn.aggfn_json(jgame) == game
 
 
 def test_normalize_const_sum_aggfn():
@@ -320,7 +435,7 @@ def test_normalize_never_role_aggfn():
 
 def verify_aggfn(game):
     """Verify that aggfn matches the expanded version"""
-    payoff_game = rsgame.game_copy(game)
+    payoff_game = paygame.game_copy(game)
     assert not game.is_empty()
     assert game.is_complete()
 
@@ -335,11 +450,11 @@ def verify_aggfn(game):
 
     # Check accuracy of min and max payoffs
     assert np.all(
-        (payoff_game.payoffs >= game.min_strat_payoffs() - 1e-6) |
-        (payoff_game.profiles == 0))
+        (payoff_game.payoffs() >= game.min_strat_payoffs() - 1e-6) |
+        (payoff_game.profiles() == 0))
     assert np.all(
-        (payoff_game.payoffs <= game.max_strat_payoffs() + 1e-6) |
-        (payoff_game.profiles == 0))
+        (payoff_game.payoffs() <= game.max_strat_payoffs() + 1e-6) |
+        (payoff_game.profiles() == 0))
 
     # Test that get payoffs works for multiple dimensions
     profiles = game.random_profiles(20).reshape((4, 5, -1))
@@ -436,24 +551,11 @@ def test_from_function():
 
 
 @pytest.mark.parametrize('by_role', [False, True])
-def test_serializer(by_role):
+def test_serialization(by_role):
     game = agggen.random_aggfn([5, 4], [4, 3], 3, by_role=by_role)
-    serial = agggen.serializer(game)
-    expected = ("AgfnGameSerializer(('r0', 'r1'), (('s0', 's1', 's2', 's3'), "
-                "('s0', 's1', 's2')), ('f0', 'f1', 'f2'))")
-    assert repr(serial) == expected
-
-    jgame = serial.to_json(game)
-    copy = serial.from_json(jgame)
+    jgame = game.to_json()
+    copy = aggfn.aggfn_json(jgame)
     assert game == copy
-    copy, scopy = aggfn.read_aggfn(jgame)
-    assert serial == scopy
-    assert game == copy
-
-    mask = [True, False, True, False, False, True, True]
-    sserial = aggfn.aggfnserializer(['r0', 'r1'], [['s0', 's2'], ['s1', 's2']],
-                                    ['f0', 'f1', 'f2'])
-    assert sserial == serial.subserial(mask)
 
 
 def test_aggfn_repr():
@@ -464,3 +566,9 @@ def test_aggfn_repr():
     game = agggen.random_aggfn([5, 4], [4, 3], 3)
     expected = 'SumAgfnGame([5 4], [4 3], 3)'
     assert repr(game) == expected
+
+
+def test_function_index():
+    game = _sum_game
+    for i in range(game.num_functions):
+        assert game.function_index('f{:d}'.format(i)) == i

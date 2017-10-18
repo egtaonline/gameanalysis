@@ -389,26 +389,32 @@ def prefix_strings(prefix, num):
     return ('{}{:0{:d}d}'.format(prefix, i, padding) for i in range(num))
 
 
-def is_sorted(iterable, *, key=None, reverse=False):
+def is_sorted(iterable, *, key=None, reverse=False, strict=False):
     """Returns true if iterable is sorted
 
+    Parameters
+    ----------
+    iterable : iterable
+        The iterable to check for sorted-ness.
+    key : x -> y, optional
+        Apply mapping function key to iterable prior to checking. This can be
+        done before calling, but this ensures identical calls as sorted.
+    reverse : bool, optional
     `key` and `reverse` function as they for `sorted`"""
-    if key is None:
-        def key(x):
-            return x
-    if reverse:
-        def comp(a, b):
-            return a < b
-    else:
-        def comp(a, b):
-            return a > b
+    if key is not None:
+        iterable = map(key, iterable)
 
-    ai, bi = itertools.tee(map(key, iterable))
+    ai, bi = itertools.tee(iterable)
     next(bi, None)  # Don't throw error if empty
-    for a, b in zip(ai, bi):
-        if comp(a, b):
-            return False
-    return True
+
+    if strict and reverse:
+        return all(a > b for a, b in zip(ai, bi))
+    elif reverse:
+        return all(a >= b for a, b in zip(ai, bi))
+    elif strict:
+        return all(a < b for a, b in zip(ai, bi))
+    else:
+        return all(a <= b for a, b in zip(ai, bi))
 
 
 def memoize(member_function):

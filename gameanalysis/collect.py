@@ -37,6 +37,7 @@ class WeightedSimilaritySet(object):
             for w, _, i in self._items:
                 if all(not self._is_similar(i, j) for j, _ in self._set):
                     self._set.append((i, w))
+            self._computed = True
 
     def __len__(self):
         self._satisfy()
@@ -63,7 +64,7 @@ class DynamicArray(object):
         assert grow_fraction > 1
         if not isinstance(item_shape, abc.Sized):
             item_shape = (item_shape,)
-        self._data = np.empty((initial_room,) + item_shape, dtype)
+        self._data = np.empty((initial_room,) + tuple(item_shape), dtype)
         self._length = 0
         self._grow_fraction = 2
 

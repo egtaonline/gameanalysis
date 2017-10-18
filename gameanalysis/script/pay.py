@@ -21,16 +21,16 @@ def is_pure_profile(game, prof):
     return pure
 
 
-def payoffs(game, serial, prof):
+def payoffs(game, prof):
     """get payoffs to every agent or role"""
     if is_pure_profile(game, prof):
         prof = np.asarray(prof, int)
-        return serial.to_payoff_json(game.get_payoffs(prof), prof)
+        return game.to_payoff_json(game.get_payoffs(prof), prof)
     else:
-        return serial.to_role_json(game.get_expected_payoffs(prof))
+        return game.to_role_json(game.expected_payoffs(prof))
 
 
-def welfare(game, serial, prof):
+def welfare(game, prof):
     """get the welfare of a profile or mixture"""
     if is_pure_profile(game, prof):
         return regret.pure_social_welfare(game, np.asarray(prof, int)).item()
@@ -70,11 +70,9 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game, serial = gamereader.read(json.load(args.input))
+    game = gamereader.read(json.load(args.input))
     prof_func = TYPE[args.type]
-    payoffs = [prof_func(game, serial,
-                         serial.from_mix_json(prof, verify=False))
+    payoffs = [prof_func(game, game.from_mix_json(prof, verify=False))
                for prof in scriptutils.load_profiles(args.profiles)]
-
     json.dump(payoffs, args.output)
     args.output.write('\n')

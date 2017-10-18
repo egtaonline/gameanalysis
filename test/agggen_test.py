@@ -17,8 +17,7 @@ from gameanalysis import agggen
     ([3, 4], [2, 3], 6),
 ])
 def test_random_sum_game(players, strategies, functions):
-    game = agggen.random_aggfn(players, strategies, functions)
-    agggen.serializer(game)
+    agggen.random_aggfn(players, strategies, functions)
 
 
 @pytest.mark.parametrize('players,strategies,functions', [
@@ -35,8 +34,7 @@ def test_random_sum_game(players, strategies, functions):
     ([3, 4], [2, 3], 6),
 ])
 def test_random_role_game(players, strategies, functions):
-    game = agggen.random_aggfn(players, strategies, functions, by_role=True)
-    agggen.serializer(game)
+    agggen.random_aggfn(players, strategies, functions, by_role=True)
 
 
 @pytest.mark.parametrize('players,facilities,required', [
@@ -50,10 +48,9 @@ def test_random_role_game(players, strategies, functions):
 ])
 def test_congestion_game(players, facilities, required):
     game = agggen.congestion(players, facilities, required)
-    serial = agggen.function_serializer(game)
     # Check that function serial has the right format
     assert all(sum(c == '_' for c in strat) == required - 1
-               for strat in serial.strat_names[0])
+               for strat in game.strat_names[0])
 
 
 @pytest.mark.parametrize('players,strategies', [
