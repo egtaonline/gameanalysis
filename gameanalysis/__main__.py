@@ -1,6 +1,7 @@
 import argparse
 import pkgutil
 
+import gameanalysis
 from gameanalysis import script
 
 
@@ -9,6 +10,8 @@ def create_parser():
                in pkgutil.iter_modules(script.__path__)]
     parser = argparse.ArgumentParser(
         description="""Command line access to the game analysis toolkit.""")
+    parser.add_argument('-V', '--version', action='version',
+                        version='%(prog)s {}'.format(gameanalysis.__version__))
     subparsers = parser.add_subparsers(
         title='commands', dest='command', metavar='<command>', help="""The
         commands to execute. Available commands are:""")

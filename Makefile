@@ -27,7 +27,9 @@ todo:
 
 setup:
 	$(PYTHON) -m venv .
-	bin/pip install -U pip setuptools -r requirements.txt -e .
+	bin/pip install -U pip setuptools
+	bin/pip install -e .
+	bin/pip install -r requirements.txt
 
 ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv moreutils jq
@@ -44,6 +46,6 @@ upload:
 	bin/python setup.py sdist bdist_wheel upload; mv ~/.pypirc.bak~ ~/.pypirc
 
 clean:
-	rm -rf bin include lib lib64 share pyvenv.cfg
+	rm -rf bin build dist include lib lib64 share pyvenv.cfg gameanalysis.egg-info pip-selfcheck.json __pycache__ site-packages
 
-.PHONY: test docs
+.PHONY: test big docs clean

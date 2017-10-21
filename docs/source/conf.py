@@ -18,9 +18,9 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import datetime
 import mock
-import os
-import setuptools
 import sys
+from os import path
+from setuptools import config
 
 from sphinx import apidoc
 
@@ -46,11 +46,11 @@ for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = OrderingMock()
 
 # Add actual modules to path
-sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
+sys.path.insert(0, path.abspath(path.join('..', '..')))
 
 # Run api-doc automatically
 for module in ['gameanalysis']:
-    apidoc.main(['<prog-name>', '-f', '-o', '.', os.path.join('..', '..', module)])
+    apidoc.main(['<prog-name>', '-f', '-o', '.', path.join('..', '..', module)])
 
 # -- General configuration ------------------------------------------------
 
@@ -88,13 +88,11 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # Extract info from setup.py
-with mock.patch.object(setuptools, 'setup') as mock_setup:
-    import setup as _  # don't conflict with sphinx
-_, project_info = mock_setup.call_args
+project_info = config.read_configuration(path.join('..', '..', 'setup.cfg'))
 
 # General information about the project.
 project = 'Game Analysis'
-author = project_info['author']
+author = project_info['metadata']['author']
 copyright = '{:d}, {}'.format(datetime.datetime.now().year, author)
 
 # The version info for the project you're documenting, acts as replacement for
@@ -102,7 +100,7 @@ copyright = '{:d}, {}'.format(datetime.datetime.now().year, author)
 # built documents.
 #
 # The full version, including alpha/beta/rc tags.
-release = project_info['version']
+release = project_info['metadata']['version']
 # The short X.Y version.
 version = '.'.join(release.split('.')[:2])
 
