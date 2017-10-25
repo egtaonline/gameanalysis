@@ -1,6 +1,5 @@
 """sample profiles from a mixture"""
 import argparse
-import itertools
 import json
 import sys
 
@@ -27,11 +26,7 @@ def add_parser(subparsers):
     parser.add_argument(
         '--num', '-n', metavar='<num-samples>', default=1, type=int,
         help="""The number of samples to gather.  (default: %(default)d)""")
-    parser.add_argument(
-        '--deviations', '-d', action='store_true', help="""Sample deviation
-        profiles instead of general mixture profiles.  This will sample `num`
-        profiles from each deviation. The output will be a stream of json
-        objects with a devrole, devstrat, and profile field.""")
+    # TODO add an option for classic profile?
     return parser
 
 
@@ -39,20 +34,6 @@ def main(args):
     game = rsgame.emptygame_copy(gamereader.read(json.load(args.input)))
     mix = game.from_mix_json(json.load(args.mix))
 
-    if args.deviations:
-        profs = (game.random_deviator_profiles(mix, args.num)
-                 .reshape((-1, game.num_strats)))
-        dev_names = itertools.cycle(itertools.chain.from_iterable(
-            ((r, s) for s in ses) for r, ses
-            in zip(game.role_names, game.strat_names)))
-        for prof, (devrole, devstrat) in zip(profs, dev_names):
-            json.dump(dict(
-                devrole=devrole,
-                devstrat=devstrat,
-                profile=game.to_prof_json(prof)), args.output)
-            args.output.write('\n')
-
-    else:
-        for prof in game.random_profiles(args.num, mix):
-            json.dump(game.to_prof_json(prof), args.output)
-            args.output.write('\n')
+    for prof in game.random_profiles(args.num, mix):
+        json.dump(game.to_prof_json(prof), args.output)
+        args.output.write('\n')

@@ -243,7 +243,7 @@ def test_is_sorted():
 
 def test_memoization():
     # We need an object we can memoize
-    class O(object):
+    class Obj(object):
         pass
 
     called = [0]
@@ -252,7 +252,7 @@ def test_memoization():
     def func(obj):
         called[0] += 1
 
-    obj = O()
+    obj = Obj()
     assert called[0] == 0
     assert func(obj) is None
     assert called[0] == 1
@@ -269,7 +269,7 @@ def test_deprecation():
     try:
         func(None, None)
         raise ValueError("This should never be reached")  # pragma: no cover
-    except:
+    except DeprecationWarning:
         pass
 
     with warnings.catch_warnings(record=True) as warns:

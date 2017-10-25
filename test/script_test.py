@@ -1,5 +1,4 @@
 import json
-import random
 import subprocess
 import tempfile
 from os import path
@@ -619,7 +618,7 @@ def test_learning_nn():
     assert success, err
 
 
-def test_sgboot_1():
+def test_boot_1():
     with tempfile.NamedTemporaryFile('w') as mixed, \
             tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
@@ -631,10 +630,10 @@ def test_sgboot_1():
         json.dump(profs, mixed)
         mixed.flush()
 
-        run('sgboot', '-i', game.name, mixed.name, '-o/dev/null')
+        run('boot', '-i', game.name, mixed.name, '-o/dev/null')
 
 
-def test_sgboot_2():
+def test_boot_2():
     with tempfile.NamedTemporaryFile('w') as mixed:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
                                   20)
@@ -645,71 +644,12 @@ def test_sgboot_2():
         mixed.flush()
 
         success, out, err = run(
-            'sgboot', mixed.name, '-tsurplus', '--processes', '1', '-n21',
-            '-p', '5', '95', '-m', input=game_str)
+            'boot', mixed.name, '-tsurplus', '--processes', '1', '-n21',
+            '-p', '5', '95', input=game_str)
         assert success, err
         data = json.loads(out)
         assert all(j.keys() == {'5', '95', 'mean'} for j in data)
         assert all(j['5'] <= j['95'] for j in data)
-
-
-def test_sampboot():
-    inp = json.dumps([random.random() for _ in range(10)])
-    success, out, err = run('sampboot', '-n21', '-m', input=inp)
-    assert success, err
-    data = json.loads(out)
-    keys = list(map(str, range(0, 101, 5)))
-    assert data.keys() == set(keys + ['mean'])
-    ordered = [data[k] for k in keys]
-    assert all(a <= b for a, b in zip(ordered[:-1], ordered[1:]))
-
-
-def test_sampboot_reg():
-    inp = []
-    for _ in range(10):
-        for role, strats in zip(GAME_DATA.role_names, GAME_DATA.strat_names):
-            for strat in strats:
-                inp.append({'role': role, 'strategy': strat,
-                            'payoff': random.random()})
-    with tempfile.NamedTemporaryFile('w') as mixed, \
-            tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        json.dump(GAME_DATA.to_mix_json(GAME_DATA.random_mixtures()), mixed)
-        mixed.flush()
-
-        success, out, err = run(
-            'sampboot', '--regret', game.name, mixed.name, '-n21', '-p', '5',
-            '95', '-m', input=json.dumps(inp))
-        assert success, err
-
-        data = json.loads(out)
-        assert data.keys() == {'5', '95', 'mean'}
-        assert data['5'] <= data['95']
-
-
-def test_sampboot_dev_surp():
-    inp = []
-    for _ in range(10):
-        for role, strats in zip(GAME_DATA.role_names, GAME_DATA.strat_names):
-            for strat in strats:
-                inp.append({'role': role, 'strategy': strat,
-                            'payoff': random.random()})
-    with tempfile.NamedTemporaryFile('w') as mixed, \
-            tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        json.dump(GAME_DATA.to_mix_json(GAME_DATA.random_mixtures()), mixed)
-        mixed.flush()
-
-        success, out, err = run(
-            'sampboot', '--dev-surplus', game.name, mixed.name, '-n21', '-p',
-            '5', '95', '-m', input=json.dumps(inp))
-        assert success, err
-
-        data = json.loads(out)
-        assert data.keys() == {'5', '95', 'mean'}
-        assert data['5'] <= data['95']
 
 
 def test_samp():
@@ -724,15 +664,6 @@ def test_samp():
         assert success, err
         prof = HARD_GAME_DATA.from_prof_json(json.loads(out))
         assert HARD_GAME_DATA.is_profile(prof)
-
-        success, out, err = run('samp', '-m', mixed.name, '-n2', '-d',
-                                input=HARD_GAME_STR)
-        assert success, err
-        lines = out[:-1].split('\n')
-        assert len(lines) == 2 * 9
-        for line in lines:
-            prof = HARD_GAME_DATA.from_prof_json(json.loads(line)['profile'])
-            assert HARD_GAME_DATA.is_profile(prof)
 
 
 def test_conv_game_empty():

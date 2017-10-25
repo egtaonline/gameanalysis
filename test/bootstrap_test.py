@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.random as rand
 import pytest
 
 from gameanalysis import bootstrap
@@ -34,48 +33,6 @@ GAMES = SMALL_GAMES + [
     ([3, 4], [2, 3]),
     ([2, 3, 4], [4, 3, 2]),
 ]
-
-
-def test_mean():
-    means = rand.random(100)
-    min_val = means.min()
-    max_val = means.max()
-    boots = bootstrap.mean(means, 200)
-    assert boots.shape == (200,)
-    assert np.all(boots >= min_val)
-    assert np.all(boots <= max_val)
-
-    perc_boots = bootstrap.mean(means, 200, percentiles=[2.5, 97.5])
-    assert perc_boots.shape == (2,)
-    assert np.all(perc_boots >= min_val)
-    assert np.all(perc_boots <= max_val)
-
-
-@pytest.mark.parametrize('players,strategies', GAMES)
-def test_sample_regret(players, strategies):
-    n = 100
-    game = gamegen.role_symmetric_game(players, strategies)
-    max_regret = np.max(game.max_role_payoffs() - game.min_role_payoffs())
-    mix = game.random_mixtures()
-    dev_profs = game.random_deviator_profiles(mix, n)
-    dev_profs.shape = (-1, game.num_strats)
-    inds = np.broadcast_to(np.arange(game.num_strats),
-                           (n, game.num_strats)).flat
-    dev_payoffs = np.fromiter(  # pragma: no cover
-        (game.get_payoffs(p)[i] for p, i in zip(dev_profs, inds)),
-        float, n * game.num_strats)
-    dev_payoffs.shape = (n, game.num_strats)
-    mix_payoffs = np.add.reduceat(dev_payoffs * mix, game.role_starts, 1)
-    boots = bootstrap.sample_regret(game, mix_payoffs, dev_payoffs, 200)
-    assert boots.shape == (200,)
-    assert np.all(boots <= max_regret)
-    assert np.all(boots >= 0)
-
-    perc_boots = bootstrap.sample_regret(game, mix_payoffs, dev_payoffs, 200,
-                                         percentiles=[2.5, 97.5])
-    assert perc_boots.shape == (2,)
-    assert np.all(perc_boots <= max_regret)
-    assert np.all(perc_boots >= 0)
 
 
 @pytest.mark.parametrize('players,strategies', GAMES)

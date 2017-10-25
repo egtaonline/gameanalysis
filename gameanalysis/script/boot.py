@@ -19,11 +19,12 @@ CHOICES = {
 
 def add_parser(subparsers):
     parser = subparsers.add_parser(
-        'sgboot', help="""Bootstrap on sample games""", description="""Compute
-        bootstrap statistics using a sample game with data for every profile in
-        the support of the subgame and potentially deviations. The return value
-        is a list with an entry for each mixture in order. Each element is a
-        dictionary mapping percentile to value.""")
+        'bootstrap', aliases=['boot'], help="""Bootstrap on sample games""",
+        description="""Compute bootstrap statistics using a sample game with
+        data for every profile in the support of the subgame and potentially
+        deviations. The return value is a list with an entry for each mixture
+        in order. Each element is a dictionary mapping percentile to value,
+        plus 'mean' to the mean.""")
     parser.add_argument(
         '--input', '-i', metavar='<input-file>', default=sys.stdin,
         type=argparse.FileType('r'), help="""Input sample game to run bootstrap
@@ -55,14 +56,12 @@ def add_parser(subparsers):
         be a multiple of this number minus 1, otherwise there will be some
         error due to linear interpolation between points.  (default:
         %(default)s)""")
-    parser.add_argument(
-        '--mean', '-m', action='store_true', help="""Also compute the mean
-        statistic and return it as well. This will be in each dictionary with
-        the key 'mean'.""")
     return parser
 
 
 def main(args):
+    # TODO Profiles that aren't in support of mixtures or single deviations
+    # could be safely pruned.
     game = gamereader.read(json.load(args.input))
     profiles = np.concatenate([game.from_prof_json(p)[None] for p
                                in scriptutils.load_profiles(args.profiles)])
@@ -75,9 +74,8 @@ def main(args):
                           for p in args.percentiles]
     jresults = [{p: v.item() for p, v in zip(percentile_strings, boots)}
                 for boots in results]
-    if args.mean:
-        for jres, mix in zip(jresults, profiles):
-            jres['mean'] = meanf(game, mix)
+    for jres, mix in zip(jresults, profiles):
+        jres['mean'] = meanf(game, mix)
 
     json.dump(jresults, args.output)
     args.output.write('\n')
