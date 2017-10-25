@@ -10,6 +10,12 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# TODO Using array set operations would allow for convenient array operations
+# like, "are all of these profiles in the game", however, it requires sorting
+# of large void types which is very expensive, less so than just hashing the
+# data. Maybe pandas or other libraries have more efficient variants?
+
+
 class Game(rsgame.RsGame):
     """Role-symmetric data game representation
 

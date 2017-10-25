@@ -210,6 +210,11 @@ def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-8):
     return empirical
 
 
+# TODO Implement regret based equilibria finding, i.e. running a zero regret
+# algorithm on payoffs.
+# TODO Implement other equilibria finding methods that are found in gambit
+
+
 def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
     """Uses fixed point method to find nash eqm
 

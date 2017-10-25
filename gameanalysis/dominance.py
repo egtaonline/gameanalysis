@@ -4,6 +4,8 @@ import numpy as np
 from gameanalysis import regret
 
 
+# TODO Some of these functions could probably be more efficient.
+
 def _dev_inds(num_strats):
     """Returns the deviation strategy indices for a deviation array"""
     sizes = num_strats.repeat(num_strats)

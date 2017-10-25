@@ -33,6 +33,15 @@ import scipy.special as sps
 from gameanalysis import utils
 
 
+# TODO It may be possible to be excessively clever, where we subclass ndarray
+# with our own "profile-esqe" class. This class will necessarily retain a
+# reference to the game it refers to, but is otherwise an ndarray. It could
+# have to_json and str representations, where internally it would check the
+# dimension and dtype to determine if this is one or several and a mixture
+# profile or subgame. This seems really cool, but may be more clever than
+# helpful.
+
+
 class StratArray(object):
     """A class with knowledge of the number of strategies per role
 
