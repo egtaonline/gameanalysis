@@ -82,6 +82,18 @@ def test_empty_dpr_2():
     assert [1, 1] not in red_game  # incomplete profiles don't register
 
 
+def test_dpr_names():
+    base = rsgame.emptygame(3, 2)
+    game = paygame.game_names(
+        ['role'], 3, [['a', 'b']], base.all_profiles(),
+        np.zeros((base.num_all_profiles, base.num_strats)))
+    redgame = dpr.reduce_game(game, 2)
+    expected = paygame.game_names(
+        ['role'], 2, [['a', 'b']], redgame.all_profiles(),
+        np.zeros((redgame.num_all_profiles, base.num_strats)))
+    assert redgame == expected
+
+
 @pytest.mark.parametrize('keep_prob', [0.6, 0.9, 1])
 @pytest.mark.parametrize('players,strategies', [
     ([1], [1]),
@@ -116,6 +128,18 @@ def test_random_twins(players, strategies, keep_prob, _):
         tr.expand_profiles(game, red_game.profiles()[complete_profs]))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
+
+
+def test_twins_names():
+    base = rsgame.emptygame(3, 2)
+    game = paygame.game_names(
+        ['role'], 3, [['a', 'b']], base.all_profiles(),
+        np.zeros((base.num_all_profiles, base.num_strats)))
+    redgame = tr.reduce_game(game)
+    expected = paygame.game_names(
+        ['role'], 2, [['a', 'b']], redgame.all_profiles(),
+        np.zeros((redgame.num_all_profiles, base.num_strats)))
+    assert redgame == expected
 
 
 @pytest.mark.parametrize('keep_prob', [0.6, 0.9, 1])
@@ -155,6 +179,18 @@ def test_random_hierarchical(keep_prob, players, strategies, red_players, _):
         "full game did not have data for all profiles required of reduced"
 
 
+def test_hierarchical_names():
+    base = rsgame.emptygame(4, 2)
+    game = paygame.game_names(
+        ['role'], 4, [['a', 'b']], base.all_profiles(),
+        np.zeros((base.num_all_profiles, base.num_strats)))
+    redgame = hr.reduce_game(game, 2)
+    expected = paygame.game_names(
+        ['role'], 2, [['a', 'b']], redgame.all_profiles(),
+        np.zeros((redgame.num_all_profiles, base.num_strats)))
+    assert redgame == expected
+
+
 @pytest.mark.parametrize('keep_prob', [0, 0.6, 1])
 @pytest.mark.parametrize('game_desc', [
     ([1], [1]),
@@ -190,6 +226,18 @@ def test_random_identity(keep_prob, game_desc, _):
         ir.expand_profiles(game, red_game.profiles()))
     assert np.setxor1d(full_profiles, full_reduced_profiles).size == 0, \
         "full game did not match reduced game"
+
+
+def test_identity_names():
+    base = rsgame.emptygame(3, 2)
+    game = paygame.game_names(
+        ['role'], 3, [['a', 'b']], base.all_profiles(),
+        np.zeros((base.num_all_profiles, base.num_strats)))
+    redgame = ir.reduce_game(game)
+    expected = paygame.game_names(
+        ['role'], 3, [['a', 'b']], redgame.all_profiles(),
+        np.zeros((redgame.num_all_profiles, base.num_strats)))
+    assert redgame == expected
 
 
 def test_expand_tie_breaking():

@@ -23,7 +23,8 @@ class hierarchical(object):
             The reduced number of players for each role. This will be coerced
             into the proper shape if necessary.
         """
-        red_game = rsgame.emptygame(red_players, full_game.num_role_strats)
+        red_game = rsgame.emptygame_names(
+            full_game.role_names, red_players, full_game.strat_names)
         assert np.all(red_game.num_role_players > 0), \
             "all reduced players must be greater than zero"
         assert np.all(full_game.num_role_players >=
@@ -243,7 +244,8 @@ class deviation_preserving(object):
             The reduced number of players for each role. This will be coerced
             into the proper shape if necessary.
         """
-        red_game = rsgame.emptygame(red_players, full_game.num_role_strats)
+        red_game = rsgame.emptygame_names(
+            full_game.role_names, red_players, full_game.strat_names)
         assert np.all((red_game.num_role_players > 1) |
                       (full_game.num_role_players == 1)), \
             "all reduced players must be greater than zero"
