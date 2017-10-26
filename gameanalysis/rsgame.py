@@ -543,7 +543,7 @@ class StratArray(object):
         return self._to_arr_json(
             self.trim_mixture_support(mix, thresh=supp_thresh))
 
-    def _from_arr_repr(self, arr_str, dtype, dest=None):
+    def _from_arr_repr(self, arr_str, dtype, parse, dest=None):
         """Read an array from a string"""
         if dest is None:
             dest = np.empty(self.num_strats, dtype)
@@ -552,12 +552,12 @@ class StratArray(object):
             role, strats = role_str.split(': ', 1)
             for strat_str in strats.split(', '):
                 val, strat = strat_str.split(' ', 1)
-                dest[self.role_strat_index(role, strat)] = val
+                dest[self.role_strat_index(role, strat)] = parse(val)
         return dest
 
     def from_mix_repr(self, mix_str, dest=None, verify=True):
         """Read a mixture from it's repr"""
-        mix = self._from_arr_repr(mix_str, float, dest)
+        mix = self._from_arr_repr(mix_str, float, _parse_percent, dest)
         assert not verify or self.is_mixture(mix), \
             "\"{}\" is not a valid mixture".format(mix_str)
         return mix
@@ -572,10 +572,10 @@ class StratArray(object):
             in zip(self.role_names, self.strat_names,
                    np.split(arr, self.role_starts[1:])))
 
-    def to_mix_repr(self, mix, supp_thresh=1e-3):
+    def to_mix_repr(self, mix, supp_thresh=1e-4):
         """Convert a mixture to a string"""
         return self._to_arr_repr(
-            self.trim_mixture_support(mix, thresh=supp_thresh), 'g')
+            self.trim_mixture_support(mix, thresh=supp_thresh), '.2%')
 
     def _from_arr_str(self, arr_str, dtype, parse, dest=None):
         if dest is None:
@@ -1190,17 +1190,10 @@ class RsGame(StratArray):
 
     def from_prof_repr(self, prof_str, dest=None, verify=True):
         """Read a profile from a string"""
-        if dest is None:
-            dest = np.empty(self.num_strats, int)
-        dest.fill(0)
-        for role_str in prof_str.split('; '):
-            role, strats = role_str.split(': ', 1)
-            for strat_str in strats.split(', '):
-                count, strat = strat_str.split(' ', 1)
-                dest[self.role_strat_index(role, strat)] = count
-        assert not verify or self.is_profile(dest), \
+        prof = self._from_arr_repr(prof_str, int, int, dest)
+        assert not verify or self.is_profile(prof), \
             "\"{}\" does not define a profile".format(prof_str)
-        return dest
+        return prof
 
     def to_prof_repr(self, prof):
         """Convert a profile to a string"""

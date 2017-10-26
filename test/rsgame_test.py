@@ -714,7 +714,7 @@ def test_to_from_mix_json():
 def test_to_from_mix_repr():
     sarr = stratarray([2, 1])
     mix = [.6, .4, 1]
-    expected = "a: 0.6 a, 0.4 b; b: 1 c"
+    expected = "a: 60.00% a, 40.00% b; b: 100.00% c"
     assert sarr.to_mix_repr(mix) == expected
     new_mix = sarr.from_mix_repr(expected)
     assert np.allclose(new_mix, mix)
