@@ -376,8 +376,8 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
                 process(i, eqm)
 
     if at_least_one and not equilibria:
-        eqm = scarfs_algorithm(game, game.uniform_mixture(),
-                               regret_thresh=regret_thresh)
+        # Initialize at best found
+        eqm = scarfs_algorithm(game, best[2], regret_thresh=regret_thresh)
         reg = regret.mixture_regret(game, eqm)
         equilibria.add(eqm, reg)
     elif min_reg and not equilibria:
