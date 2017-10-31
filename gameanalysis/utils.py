@@ -9,7 +9,7 @@ import warnings
 from collections import abc
 
 import numpy as np
-import scipy.misc as spm
+import scipy.special as sps
 
 
 _TINY = np.finfo(float).tiny
@@ -25,16 +25,16 @@ def prod(collection):
 
 
 def comb(n, k):
-    res = np.rint(spm.comb(n, k, False))
+    res = np.rint(sps.comb(n, k, False))
     if np.all(res < _MAX_INT_FLOAT):
         return res.astype(int)
     elif isinstance(n, abc.Iterable) or isinstance(k, abc.Iterable):
         broad = np.broadcast(np.asarray(n), np.asarray(k))
         res = np.empty(broad.shape, dtype=object)
-        res.flat = [spm.comb(n_, k_, True) for n_, k_ in broad]
+        res.flat = [sps.comb(n_, k_, True) for n_, k_ in broad]
         return res
     else:
-        return spm.comb(n, k, True)
+        return sps.comb(n, k, True)
 
 
 def game_size(players, strategies):
@@ -85,7 +85,7 @@ def acomb(n, k, repetition=False):
 def _acombr(n, k):
     """Combinations with repetitions"""
     # This uses dynamic programming to compute everything
-    num = spm.comb(n, k, repetition=True, exact=True)
+    num = sps.comb(n, k, repetition=True, exact=True)
     grid = np.zeros((num, n), dtype=int)
     memoized = {}
 
@@ -107,7 +107,7 @@ def _acombr(n, k):
         for ki in range(k, -1, -1):
             n_ = n - 1
             k_ = k - ki
-            m = spm.comb(n_, k_, repetition=True, exact=True)
+            m = sps.comb(n_, k_, repetition=True, exact=True)
             region[o:o + m, 0] = ki
             fill_region(n_, k_, region[o:o + m, 1:])
             o += m
@@ -122,7 +122,7 @@ def _acomb(n, k):
         return np.zeros((1, n), bool)
 
     # This uses dynamic programming to compute everything
-    num = spm.comb(n, k, exact=True)
+    num = sps.comb(n, k, exact=True)
     grid = np.empty((num, n), dtype=bool)
     memoized = {}
 
@@ -142,7 +142,7 @@ def _acomb(n, k):
             return
 
         memoized[n, k] = region
-        trues = spm.comb(n - 1, k - 1, exact=True)
+        trues = sps.comb(n - 1, k - 1, exact=True)
         region[:trues, 0] = True
         fill_region(n - 1, k - 1, region[:trues, 1:])
         region[trues:, 0] = False
