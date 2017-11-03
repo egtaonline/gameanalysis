@@ -666,6 +666,39 @@ def test_samp():
         assert HARD_GAME_DATA.is_profile(prof)
 
 
+def test_samp_seed():
+    with tempfile.NamedTemporaryFile('w') as mixed:
+        prof = {
+            'background': {
+                'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
+                0.5,
+                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 0.5},
+            'hft': {'noop': 1}}
+        json.dump(prof, mixed)
+        mixed.flush()
+        success, out1, err = run(
+            'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100', '--seed',
+            '1234')
+        assert success, err
+        for line in out1[:-1].split('\n'):
+            prof = HARD_GAME_DATA.from_prof_json(json.loads(line))
+            assert HARD_GAME_DATA.is_profile(prof)
+
+        # Setting seed produces identical output
+        success, out2, err = run(
+            'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100', '--seed',
+            '1234')
+        assert success, err
+        assert out1 == out2
+
+        # Not setting it causes failure
+        # XXX This can technically fail, but the probability is very small
+        success, out3, err = run(
+            'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100')
+        assert success, err
+        assert out1 != out3
+
+
 def test_conv_game_empty():
     success, _, err = run('conv', '-temptygame', '-o/dev/null', input=GAME_STR)
     assert success, err
