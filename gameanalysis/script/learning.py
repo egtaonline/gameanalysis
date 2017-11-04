@@ -3,7 +3,7 @@ import argparse
 import json
 import sys
 
-from gameanalysis import gamelearning
+from gameanalysis import learning
 from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import regret
@@ -12,7 +12,7 @@ from gameanalysis import regret
 def add_parser(subparsers):
     parser = subparsers.add_parser(
         'learning', help="""Analyze game using learning""",
-        description="""Perform game analysis""")
+        description="""Perform game analysis with learned model""")
     parser.add_argument(
         '--input', '-i', metavar='<input-file>', default=sys.stdin,
         type=argparse.FileType('r'), help="""Input file for script.  (default:
@@ -52,35 +52,23 @@ def add_parser(subparsers):
         '--one', action='store_true', help="""If specified, run a potentially
         expensive algorithm to guarantee an approximate equilibrium, if none
         are found via other methods.""")
-    # FIXME This is almost certainly not the way we want to call this, but it
-    # does serve as a test
-    parser.add_argument(
-        '--nn', action='store_true', help="""If specified an neutral mnetwork
-        model will be used instead of a gaussian process model.""")
     return parser
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
-
-    # create regression game
-    # FIXME We probably don't need to keep game around and can use lgame for
-    # everything
-    # FIXME This is almost certainly not what we want
-    lgame = gamelearning.RegressionGame(
-        game, 'nn' if args.nn else 'gp', 'point')
-
+    game = learning.rbfgame_train(gamereader.read(json.load(args.input)))
     # mixed strategy nash equilibria search
+    # FIXME Add optimize when we have jacobian
     methods = {'replicator': {'max_iters': args.max_iters,
                               'converge_thresh': args.converge_thresh}}
 
     mixed_equilibria = game.trim_mixture_support(
-        nash.mixed_nash(lgame, regret_thresh=args.regret_thresh,
+        nash.mixed_nash(game, regret_thresh=args.regret_thresh,
                         dist_thresh=args.dist_thresh, processes=args.processes,
                         at_least_one=args.one, **methods),
         thresh=args.supp_thresh)
 
-    equilibria = [(eqm, regret.mixture_regret(lgame, eqm))
+    equilibria = [(eqm, regret.mixture_regret(game, eqm))
                   for eqm in mixed_equilibria]
 
     # Output game
@@ -88,26 +76,6 @@ def main(args):
     args.output.write('=============\n')
     args.output.write(str(game))
     args.output.write('\n\n')
-
-    # Output social welfare
-    args.output.write('Social Welfare\n')
-    args.output.write('--------------\n')
-    welfare, profile = regret.max_pure_social_welfare(game)
-
-    args.output.write('\nMaximum social welfare profile:\n')
-    args.output.write(game.to_prof_str(profile))
-    args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
-
-    if game.num_roles > 1:
-        for role, welfare, profile in zip(
-                game.role_names,
-                *regret.max_pure_social_welfare(game, by_role=True)):
-            args.output.write('Maximum "{}" welfare profile:\n'.format(
-                role))
-            args.output.write(game.to_prof_str(profile))
-            args.output.write('Welfare: {:.4f}\n\n'.format(welfare))
-
-    args.output.write('\n')
 
     # Output Equilibria
     args.output.write('Equilibria\n')
@@ -119,7 +87,7 @@ def main(args):
         for i, (eqm, reg) in enumerate(equilibria, 1):
             args.output.write('Equilibrium {:d}:\n'.format(i))
             args.output.write(game.to_mix_str(eqm))
-            args.output.write('Regret: {:.4f}\n\n'.format(reg))
+            args.output.write('\nRegret: {:.4f}\n\n'.format(reg))
     else:
         args.output.write('Found no equilibria\n\n')  # pragma: no cover
     args.output.write('\n')

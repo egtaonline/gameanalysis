@@ -11,6 +11,7 @@ Welcome to Game Analysis's documentation!
 
    gameanalysis
    profile_counts
+   cont_approx
 
 
 Indices and tables

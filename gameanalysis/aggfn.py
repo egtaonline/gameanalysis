@@ -43,7 +43,7 @@ class AgfnGame(rsgame.CompleteGame):
         each nodes inputs as distinct, and so each function maps from the
         number of inputs from each role.
     """
-    # TODO Currently the only way to apply an affine transformation to payoffs
+    # FIXME Currently the only way to apply an affine transformation to payoffs
     # is to add a constant function, i.e. one that's not a function of the
     # number of players. While a fine solution, it also means that now we must
     # allow there to be a function with either all true or all false function

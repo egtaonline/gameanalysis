@@ -5,20 +5,22 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-def random_poly_dist(coef_dist, degree_dist):
+# TODO These parameters could be more intelligently set with player knowledge
+def random_poly_dist(degree_dist,
+                     coef_dist=lambda d: np.random.normal(0, 10. ** (1 - d))):
     """Generate a function table distribution from a polynomial
 
     Parameters
     ----------
-    coef_dist : ndarray int -> ndarray float
-        Distribution that maps an array of degrees for a polynomial to a
-        coefficient of that degree, e.g. `lambda d: np.random.normal(0,
-        10.0**(1 - d))`
     degree_dist : ndarray
         Probability that a polynomial will have a specific degree starting from
         zero. [0.1, 0.4, 0.5] means each function has a 10% chance of being
         constant, 40% chance of being linear, and a 50% chance of being
         quadratic.
+    coef_dist : ndarray int -> ndarray float
+        Distribution that maps an array of degrees for a polynomial to a
+        coefficient of that degree, e.g. `lambda d: np.random.normal(0,
+        10.0**(1 - d))`
 
     Notes
     -----
@@ -43,7 +45,39 @@ def random_poly_dist(coef_dist, degree_dist):
     return table_func
 
 
-# TODO Make this random_poly_aggfn
+def random_sin_dist(width_dist=np.random.random, coef_dist=np.random.random,
+                    offset_dist=None):
+    """Create a table function for random sinusoidal functions
+
+    Functions will be `coef * sin(offset + width * num_players)`
+    
+    Parameters
+    ----------
+    width_dist : (shape) -> array, optional
+        Distribution to generate function widths.
+    coef_dist : (shape) -> array, optional
+        Distribution to generate function coefficients.
+    offset_dist : (shape) -> array, optional
+        Distribution to generate function offsets. If unspecified, it will be
+        the same as width_dist.
+    """
+    if offset_dist is None:
+        offset_dist = width_dist
+
+    def table_func(shape):
+        funcs, *players = shape
+        table = np.ones(shape, float)
+        for d, play in enumerate(players):
+            widths = width_dist((funcs, play))
+            offsets = offset_dist((funcs, play))
+            coefs = coef_dist((funcs,))[:, None]
+            values = coefs * np.sin(widths * np.arange(play) + offsets)
+            values.shape += (1,) * (len(players) - 1)
+            table *= np.rollaxis(values, 1, d + 2)
+        return table
+    return table_func
+
+
 def random_aggfn(num_role_players, num_role_strats, num_functions,
                  input_dist=lambda s: utils.random_con_bitmask(.2, s),
                  weight_dist=lambda s: np.random.normal(0, 1, s) *
@@ -105,7 +139,7 @@ def congestion(num_players, num_facilities, num_required, degree=2,
         true congestion game.
     """
     function_inputs = utils.acomb(num_facilities, num_required)
-    table_dist = random_poly_dist(coef_dist, np.insert(np.zeros(degree), 2, 1))
+    table_dist = random_poly_dist(np.insert(np.zeros(degree), 2, 1), coef_dist)
     functions = table_dist((num_facilities, num_players + 1))
     facs = tuple(utils.prefix_strings('', num_facilities))
     strats = tuple('_'.join(facs[i] for i, m in enumerate(mask) if m)
@@ -116,9 +150,9 @@ def congestion(num_players, num_facilities, num_required, degree=2,
 
 def local_effect(num_players, num_strategies, edge_prob=.2,
                  self_dist=random_poly_dist(
-                     lambda d: -np.random.exponential(10. ** (1 - d)), [0, 1]),
+                     [0, 1], lambda d: -np.random.exponential(10. ** (1 - d))),
                  other_dist=random_poly_dist(
-                     lambda d: np.random.normal(0, 10. ** (-d)), [0, 0, 1])):
+                     [0, 0, 1], lambda d: np.random.normal(0, 10. ** (-d)))):
     """Generate a local effect game
 
     In a local effect game, strategies are connected by a graph, and utilities

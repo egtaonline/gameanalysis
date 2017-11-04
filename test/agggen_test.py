@@ -16,8 +16,9 @@ from gameanalysis import agggen
     (2, [1, 2], 4),
     ([3, 4], [2, 3], 6),
 ])
-def test_random_sum_game(players, strategies, functions):
-    agggen.random_aggfn(players, strategies, functions)
+@pytest.mark.parametrize('by_role', [False, True])
+def test_random_game(players, strategies, functions, by_role):
+    agggen.random_aggfn(players, strategies, functions, by_role=by_role)
 
 
 @pytest.mark.parametrize('players,strategies,functions', [
@@ -33,8 +34,29 @@ def test_random_sum_game(players, strategies, functions):
     (2, [1, 2], 4),
     ([3, 4], [2, 3], 6),
 ])
-def test_random_role_game(players, strategies, functions):
-    agggen.random_aggfn(players, strategies, functions, by_role=True)
+@pytest.mark.parametrize('by_role', [False, True])
+def test_random_poly_game(players, strategies, functions, by_role):
+    agggen.random_aggfn(players, strategies, functions, by_role=by_role,
+                        func_dist=agggen.random_poly_dist([0, 0.5, 0.3, 0.2]))
+
+
+@pytest.mark.parametrize('players,strategies,functions', [
+    (2 * [1], 1, 1),
+    (2 * [1], 2, 2),
+    (2 * [2], 1, 2),
+    (2 * [2], 2, 2),
+    (5 * [1], 2, 3),
+    (2 * [1], 5, 3),
+    (2 * [2], 5, 4),
+    ([1, 2], 2, 5),
+    ([1, 2], [2, 1], 4),
+    (2, [1, 2], 4),
+    ([3, 4], [2, 3], 6),
+])
+@pytest.mark.parametrize('by_role', [False, True])
+def test_random_sin_game(players, strategies, functions, by_role):
+    agggen.random_aggfn(players, strategies, functions, by_role=by_role,
+                        func_dist=agggen.random_sin_dist())
 
 
 @pytest.mark.parametrize('players,facilities,required', [

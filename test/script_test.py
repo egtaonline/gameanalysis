@@ -578,7 +578,7 @@ def test_learning_output():
     assert success, err
     start = '''Game Learning
 =============
-Game:
+RbfGpGame:
     Roles: r0, r1
     Players:
         3x r0
@@ -591,12 +591,8 @@ Game:
             s2
             s3
             s4
-payoff data for 24 out of 24 profiles'''
+'''
     assert out.startswith(start)
-    assert 'Social Welfare\n--------------' in out
-    assert 'Maximum social welfare profile:' in out
-    assert 'Maximum "r0" welfare profile:' in out
-    assert 'Maximum "r1" welfare profile:' in out
     assert 'Equilibria\n----------' in out
     assert 'Json Data\n=========' in out
 
@@ -610,12 +606,6 @@ def test_learning_args():
             '1e-3', '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000',
             '-c1e-8')
         assert success, err
-
-
-def test_learning_nn():
-    success, _, err = run('learning', '-o/dev/null',
-                          '-p0', '--nn', input=GAME_STR)
-    assert success, err
 
 
 def test_boot_1():

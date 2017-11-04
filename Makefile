@@ -28,7 +28,7 @@ todo:
 setup:
 	$(PYTHON) -m venv .
 	bin/pip install -U pip setuptools
-	bin/pip install -e '.[dev]'
+	bin/pip install -e '.[dev,nn]'
 
 ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv moreutils jq

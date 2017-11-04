@@ -133,10 +133,13 @@ def additional_strategy_profiles(game, subgame_mask, role_strat_ind):
 def translate(profiles, subgame_mask):
     """Translate a mixture or profile from a subgame to the full game"""
     assert profiles.shape[-1] == subgame_mask.sum()
-    new_profs = np.zeros(profiles.shape[:-1] + (subgame_mask.size,),
-                         profiles.dtype)
-    new_profs[..., subgame_mask] = profiles
-    return new_profs
+    if subgame_mask.all():
+        return profiles
+    else:
+        new_profs = np.zeros(profiles.shape[:-1] + (subgame_mask.size,),
+                             profiles.dtype)
+        new_profs[..., subgame_mask] = profiles
+        return new_profs
 
 
 def to_id(game, subgame_mask):
