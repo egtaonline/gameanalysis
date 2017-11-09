@@ -478,19 +478,29 @@ payoff data for 24 out of 24 profiles'''
     assert 'Json Data\n=========' in out
 
 
-def test_analysis_2():
+def test_analysis_dpr():
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
-        success, _, err = run(
-            'analyze', '-i', game.name, '-o/dev/null', '--subgames',
-            '--dominance', '--dpr', 'r0:3,r1:2', '-p1', '--dist-thresh',
-            '1e-3', '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000',
-            '-c1e-8')
-        assert success, err
+        success, out, err = run(
+            'analyze', '-i', game.name, '--subgames', '--dominance', '--dpr',
+            'r0:3,r1:2', '-p1', '--dist-thresh', '1e-3', '-r1e-3', '-t1e-3',
+            '--rand-restarts', '0', '-m10000', '-c1e-8')
+    assert success, err
+    assert 'With deviation preserving reduction: r0:3 r1:2' in out
 
 
-def test_analysis_3():
+def test_analysis_hr():
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run(
+            'analyze', '-i', game.name, '--hr', 'r0:3,r1:2', '-p1')
+    assert success, err
+    assert 'With hierarchical reduction: r0:3 r1:2' in out
+
+
+def test_analysis_equilibria():
     profiles = [
         # Complete deviations but unexplored
         [4, 0, 0, 0, 0],
@@ -563,7 +573,7 @@ def test_analysis_3():
     assert 'Found 1 unexplored best-response subgame' in out
 
 
-def test_analysis_4():
+def test_analysis_no_data():
     game = paygame.game([2], [2], [[1, 1]], [[5, float('nan')]])
     game_str = json.dumps(game.to_json())
 

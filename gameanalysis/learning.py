@@ -260,7 +260,8 @@ class RbfGpGame(DevRegressionGame):
             det = 1 - players * np.add.reduceat(
                 smix ** 2 / diag, self._role_starts)
             cov_diag = np.add.reduceat(diff ** 2 / diag, self._role_starts, 1)
-            cov_outer = np.add.reduceat(smix / diag * diff, self._role_starts, 1)
+            cov_outer = np.add.reduceat(
+                smix / diag * diff, self._role_starts, 1)
             exp = np.exp(-.5 * np.sum(
                 cov_diag + players / det * cov_outer ** 2, 1))
             coef = np.exp(np.log(scale).sum() - .5 * np.log(diag).sum() -

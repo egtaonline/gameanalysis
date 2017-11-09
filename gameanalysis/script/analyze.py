@@ -9,9 +9,9 @@ from numpy import linalg
 from gameanalysis import dominance
 from gameanalysis import gamereader
 from gameanalysis import nash
+from gameanalysis import reduction
 from gameanalysis import regret
 from gameanalysis import subgame
-from gameanalysis.reduction import deviation_preserving as dpr
 
 
 def add_parser(subparsers):
@@ -57,12 +57,6 @@ def add_parser(subparsers):
         '--one', action='store_true', help="""If specified, run a potentially
         expensive algorithm to guarantee an approximate equilibrium, if none
         are found via other methods.""")
-    # TODO I want metavar to be '<role>:<count>[,<role>:<count>]...' but
-    # currently argparse can't handle metavars with anything in square
-    # brackets.
-    parser.add_argument(
-        '--dpr', metavar='<role>:<count>,...', help="""Apply a
-        DPR reduction to the game, with reduced counts per role specified.""")
     parser.add_argument(
         '--dominance', '-d', action='store_true', help="""Remove dominated
         strategies.""")
@@ -70,18 +64,33 @@ def add_parser(subparsers):
         '--subgames', '-s', action='store_true', help="""Extract maximal
         subgames, and analyze each individually instead of considering the game
         as a whole.""")
+    reductions = parser.add_mutually_exclusive_group()
+    reductions.add_argument(
+        '--dpr', metavar='<role:count,role:count,...>', help="""Specify a
+        deviation preserving reduction.""")
+    reductions.add_argument(
+        '--hr', metavar='<role:count,role:count,...>', help="""Specify a
+        hierarchical reduction.""")
     return parser
+
+
+def parse_reduction(game, red):
+    reduced_players = np.empty(game.num_roles, int)
+    for role_red in red.strip().split(','):
+        role, count = role_red.strip().split(':')
+        reduced_players[game.role_index(role.strip())] = int(count)
+    return reduced_players
 
 
 def main(args):
     game = gamereader.read(json.load(args.input))
 
-    if args.dpr:
-        red_players = np.zeros(game.num_roles, int)
-        for r in args.dpr.split(','):
-            s, c = r.split(':')
-            red_players[game.role_index(s)] = int(c)
-        game = dpr.reduce_game(game, red_players)
+    if args.dpr is not None:
+        red_players = parse_reduction(game, args.dpr)
+        game = reduction.deviation_preserving.reduce_game(game, red_players)
+    elif args.hr is not None:
+        red_players = parse_reduction(game, args.hr)
+        game = reduction.hierarchical.reduce_game(game, red_players)
 
     if args.dominance:
         domsub = dominance.iterated_elimination(game, 'strictdom')
@@ -150,8 +159,12 @@ def main(args):
     args.output.write(str(game))
     args.output.write('\n\n')
     if args.dpr is not None:
-        args.output.write('With DPR reduction: ')
+        args.output.write('With deviation preserving reduction: ')
         args.output.write(' '.join(args.dpr.split(',')))
+        args.output.write('\n\n')
+    elif args.hr is not None:
+        args.output.write('With hierarchical reduction: ')
+        args.output.write(' '.join(args.hr.split(',')))
         args.output.write('\n\n')
     if args.dominance:
         num = np.sum(~domsub)

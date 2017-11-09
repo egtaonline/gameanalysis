@@ -50,7 +50,7 @@ def random_sin_dist(width_dist=np.random.random, coef_dist=np.random.random,
     """Create a table function for random sinusoidal functions
 
     Functions will be `coef * sin(offset + width * num_players)`
-    
+
     Parameters
     ----------
     width_dist : (shape) -> array, optional
