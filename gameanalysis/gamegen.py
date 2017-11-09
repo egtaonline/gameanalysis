@@ -242,19 +242,18 @@ def travellers_dilemma(players=2, max_value=100):
     return paygame.game_replace(game, profiles, payoffs)
 
 
+# TODO We could implement this with drop_profiles if we made a "RandomGame"
+# class where all payoffs were simply drawn from distribution
 def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     """Add profiles to a base game
 
     Parameters
     ----------
-    distribution : (shape) -> ndarray, optional
-        Distribution function to draw profiles from.
     prob_or_count : float or int, optional
         If a float, the probability to add a profile from the full game. If an
         int, the number of profiles to add.
-    independent : bool, optional
-        If true then each profile has `prob` probability of being added, else
-        `num_all_profiles * prob` profiles will be kept.
+    distribution : (shape) -> ndarray, optional
+        Distribution function to draw payoffs from.
     """
     # First turn input into number of profiles to compute
     num_profs = game.num_all_profiles
@@ -296,6 +295,58 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
     payoffs[mask] = distribution(mask.sum())
+    return paygame.game_replace(game, profiles, payoffs)
+
+
+def drop_profiles(game, keep_prob_or_count=1.0):
+    """Drop profiles from an existing game
+
+    Parameters
+    ----------
+    keep_prob_or_count : float or int, optional
+        If a float, the probability to keep a profile from the full game. If an
+        int, the number of profiles to keep.
+    """
+    # First turn input into number of profiles to compute
+    num_profs = game.num_profiles
+    if isinstance(keep_prob_or_count, float):
+        assert 0 <= keep_prob_or_count <= 1
+        if num_profs <= np.iinfo(int).max:
+            num = rand.binomial(num_profs, keep_prob_or_count)
+        else:
+            num = round(float(num_profs * keep_prob_or_count))
+    else:
+        assert 0 <= keep_prob_or_count <= num_profs
+        num = keep_prob_or_count
+
+    # Generate profiles based number and size of game
+
+    # Ratio of the expected number of profiles we'd have to draw at random to
+    # produce num unique relative to the number of total profiles
+    ratio = sps.digamma(float(num_profs)) - sps.digamma(float(num_profs - num))
+    if num == num_profs:
+        profiles = game.profiles()
+        payoffs = game.payoffs()
+    elif num == 0:
+        profiles = np.empty((0, game.num_strats), int)
+        payoffs = np.empty((0, game.num_strats))
+    elif ratio >= 1:
+        inds = rand.choice(num_profs, num, replace=False)
+        profiles = game.profiles()[inds]
+        payoffs = game.payoffs()[inds]
+    else:
+        # TODO use a set and hashed arrays instead?
+        profiles = np.empty((0, game.num_strats), int)
+        num_per = max(round(float(ratio * num_profs)), num)  # Max => underflow
+        mix = game.uniform_mixture()
+        while profiles.shape[0] < num:
+            profiles = np.concatenate([profiles,
+                                       game.random_profiles(num_per, mix)])
+            profiles = utils.unique_axis(profiles)
+        inds = rand.choice(profiles.shape[0], num, replace=False)
+        profiles = profiles[inds]
+        payoffs = game.get_payoffs(profiles)
+
     return paygame.game_replace(game, profiles, payoffs)
 
 

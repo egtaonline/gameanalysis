@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from collections import abc
 
+from gameanalysis import agggen
 from gameanalysis import gamegen
 from gameanalysis import regret
 from gameanalysis import rsgame
@@ -74,6 +75,34 @@ def test_add_profiles(players, strategies):
 def test_add_profiles_large_game():
     base = rsgame.emptygame([100] * 2, 30)
     game = gamegen.add_profiles(base, 1e-55)
+    assert game.num_profiles == 363
+
+
+@pytest.mark.parametrize('players,strategies', [
+    ([3], [2]),
+    ([2, 4], [3, 3]),
+    ([1, 4], [2, 2]),
+    ([2, 4], [1, 2]),
+    ([1, 4], [1, 2]),
+] * 20)
+def test_drop_profiles(players, strategies):
+    base = rsgame.emptygame(players, strategies)
+    game = gamegen.add_profiles(base)
+    test = gamegen.drop_profiles(game, 4)
+    assert test.num_profiles == 4
+
+    test = gamegen.drop_profiles(game, 0.0)
+    assert test.is_empty(), "didn't generate a full game"
+    test = gamegen.drop_profiles(game, 0)
+    assert test.is_empty(), "didn't generate a full game"
+
+    gamegen.drop_profiles(game, 0.5)
+
+
+def test_drop_profiles_large_game():
+    # TODO Switch to a "RandomGame" when implemented
+    base = agggen.random_aggfn([100] * 2, 30, 10)
+    game = gamegen.drop_profiles(base, 1e-55)
     assert game.num_profiles == 363
 
 
