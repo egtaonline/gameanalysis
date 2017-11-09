@@ -265,10 +265,13 @@ def test_continuous_approximation(_):
     reggame = learning.rbfgame_train(game)
     full = paygame.game_copy(reggame)
 
+    jac_errors = 0
     for mix in game.grid_mixtures(11):
-        truth = full.deviation_payoffs(mix)
-        approx = reggame.deviation_payoffs(mix)
+        truth, tjac = full.deviation_payoffs(mix, jacobian=True)
+        approx, ajac = reggame.deviation_payoffs(mix, jacobian=True)
         assert np.allclose(approx, truth, rtol=0.1, atol=0.2)
+        jac_errors += np.sum(~np.isclose(ajac, tjac, rtol=0.5, atol=0.5))
+    assert jac_errors < 1000
 
 
 def test_continuous_approximation_one_players():

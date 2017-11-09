@@ -246,9 +246,9 @@ class RbfGpGame(DevRegressionGame):
     # TODO Add derivatives for other functions
 
     def deviation_payoffs(self, mix, *, jacobian=False):
-        # FIXME Add jacobian
-        assert not jacobian, "jacobian not supported yet"
         payoffs = np.empty(self.num_strats)
+        if jacobian:
+            jac = np.empty((self.num_strats,) * 2)
         for i, (players, scale, x, kinvy, zdiag) in enumerate(zip(
                 self._dev_players.repeat(self.num_role_strats, 0),
                 self._rbf_scales, self._train_data, self._alphas,
@@ -265,8 +265,31 @@ class RbfGpGame(DevRegressionGame):
                 players / det * cov_outer ** 2, 1)))
             coef = np.exp(np.log(scale).sum() - .5 * np.log(diag).sum() -
                           .5 * np.log(det).sum())
-            payoffs[i] = coef * kinvy.dot(exp)
-        return payoffs * self._coefs * self._scale + self._offset
+            avg = kinvy.dot(exp)
+            payoffs[i] = coef * avg
+
+            if jacobian:
+                beta = 1 - players.repeat(self.num_role_strats) * mix / diag
+                jac_coef = ((beta ** 2 - 1) / det.repeat(self.num_role_strats)
+                            * avg)
+                delta = np.repeat(cov_outer / det, self.num_role_strats, 1)
+                jac_exp = exp[:, None] * (
+                    (delta - 1) ** 2 - (delta * beta - diff / diag - 1) ** 2)
+                jac_avg = (players.repeat(self.num_role_strats) *
+                           kinvy.dot(jac_exp))
+                jac[i] = -0.5 * coef * (jac_coef + jac_avg)
+                # Normalize jacobian to be in mixture subspace
+                jac[i] -= np.repeat(
+                    np.add.reduceat(jac[i], self.role_starts) /
+                    self.num_role_strats, self.num_role_strats)
+
+        payoffs *= self._coefs * self._scale
+        payoffs += self._offset
+        if jacobian:
+            jac *= (self._coefs * self._scale)[:, None]
+            return payoffs, jac
+        else:
+            return payoffs
 
     # TODO Add function that creates sample game which draws payoffs from the
     # gp distribution

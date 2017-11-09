@@ -57,10 +57,9 @@ def add_parser(subparsers):
 
 def main(args):
     game = learning.rbfgame_train(gamereader.read(json.load(args.input)))
-    # mixed strategy nash equilibria search
-    # FIXME Add optimize when we have jacobian
     methods = {'replicator': {'max_iters': args.max_iters,
-                              'converge_thresh': args.converge_thresh}}
+                              'converge_thresh': args.converge_thresh},
+               'optimize': {}}
 
     mixed_equilibria = game.trim_mixture_support(
         nash.mixed_nash(game, regret_thresh=args.regret_thresh,

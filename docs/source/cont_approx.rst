@@ -58,6 +58,14 @@ Plugging these into the equation for :math:`\operatorname{devpayoff}` yields
     \operatorname{devpayoff}(\mathbf p) &= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ \gamma_r } \mathbf q_r \mathbf q_r^\top \right) (\mathbf X_{jr} - n_r \mathbf p_r) \right) \right\} \\
     &= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( \left( \sum_{s_r} \frac{(X_{jrs_r} - n_r p_{rs_r})^2}{d_{rs_r}} \right) + \frac{n_r}{\gamma_r} \left( \sum_{s_r} \frac{p_{rs_r}}{d_{rs_r}} (X_{jrs_r} - n_r p_{rs_r}) \right)^2 \right) \right\}
 
+The derivative with respect to one element of the mixture :math:`p_{\rho i}` is
+
+.. math::
+    \frac{\partial}{\partial p_{\rho i}} \operatorname{devpayoff}(\mathbf p) &= -\frac{1}{2} \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \left [ \gamma_{\rho}^{-1} \left( \beta_{\rho i}^2 - 1 \right) \sum_j \alpha_j \exp \left\{ \cdot \right\} + n_{\rho} \sum_j \alpha_j \exp \left\{ \cdot \right\} \left( \left( \delta_{j \rho} - 1 \right)^2 - \left( \delta_{j \rho} \beta_{\rho i} - \xi_{j \rho i} \right)^2 \right) \right] \\
+    \delta_{j \rho} &= \gamma_{\rho}^{-1} \sum_{s_{\rho}} \frac{p_{\rho s_{\rho}}}{d_{\rho s_{\rho}}} \left( X_{j \rho s_{\rho}} - n_{\rho} p_{\rho s_{\rho}} \right) \\
+    \beta_{\rho i} &= 1 - \frac{n_{\rho} p_{\rho i}}{d_{\rho i}} \\
+    \xi_{j \rho i} &= 1 + \frac{X_{j \rho i} - n_{\rho} p_{\rho i}}{d_{\rho i}}
+
 
 Definitions, Notations and Identities
 -------------------------------------
