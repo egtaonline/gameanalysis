@@ -93,6 +93,13 @@ class StratArray(object):
 
     @property
     @utils.memoize
+    def role_strat_names(self):
+        return tuple(itertools.chain.from_iterable(
+            ((r, s) for s in ses) for r, ses
+            in zip(self.role_names, self.strat_names)))
+
+    @property
+    @utils.memoize
     def num_all_subgames(self):
         """Number of unique subgames"""
         return np.prod(2 ** self.num_role_strats - 1)

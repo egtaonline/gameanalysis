@@ -695,6 +695,8 @@ def test_indices():
     assert 5 == sarr.role_strat_dev_index('a', 'c', 'b')
     assert 6 == sarr.role_strat_dev_index('b', 'd', 'e')
     assert 7 == sarr.role_strat_dev_index('b', 'e', 'd')
+    rs_names = (('a', 'a'), ('a', 'b'), ('a', 'c'), ('b', 'd'), ('b', 'e'))
+    assert rs_names == sarr.role_strat_names
 
 
 def test_to_from_mix_json():
