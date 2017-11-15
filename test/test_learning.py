@@ -87,6 +87,7 @@ def test_skltrain():
         reggame.random_dev_profiles(reggame.random_mixtures()))))
 
 
+# TODO Test other sizes
 @pytest.mark.parametrize('_', range(20))
 def test_rbfgame_subgame(_):
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
@@ -107,6 +108,12 @@ def test_rbfgame_subgame(_):
         sub_dev_profs, sub_mask))[sub_mask]
     assert np.allclose(sub_pays, pays)
 
+    for mix in subreg.random_mixtures(20):
+        dev_pay = subreg.deviation_payoffs(mix)
+        full_pay = reggame.deviation_payoffs(subgame.translate(
+            mix, sub_mask))[sub_mask]
+        assert np.allclose(dev_pay, full_pay)
+
     assert len(subreg._regressors) == subreg.num_strats
     assert subreg._offset.shape == (subreg.num_strats,)
     assert subreg._scale.shape == (subreg.num_strats,)
@@ -125,6 +132,7 @@ def test_rbfgame_subgame(_):
     assert subsubreg._sub_mask.shape == (game.num_strats,)
 
 
+# TODO Test other sizes
 @pytest.mark.parametrize('_', range(20))
 def test_rbfgame_normalize(_):
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
@@ -235,9 +243,13 @@ def test_neighbor(_):
     assert learning.neighbor(reggame, reggame._num_devs) == reggame
 
 
+@pytest.mark.parametrize('players,strats', [
+    [[1, 5], [2, 2]],
+    [[2, 3], [3, 2]],
+])
 @pytest.mark.parametrize('_', range(20))
-def test_continuous_approximation(_):
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+def test_rbfgame_min_max_payoffs(players, strats, _):
+    game = gamegen.add_profiles(rsgame.emptygame(players, strats), 10)
     reggame = learning.rbfgame_train(game)
     full = paygame.game_copy(reggame)
 
@@ -246,33 +258,17 @@ def test_continuous_approximation(_):
     assert np.all(full.max_strat_payoffs() <=
                   reggame.max_strat_payoffs() + 1e-4)
 
-    errors = np.zeros(game.num_strats)
-    mixes = game.grid_mixtures(11) * .9 + game.uniform_mixture() * .1
-    for i, mix in enumerate(mixes, 1):
+
+@pytest.mark.parametrize('_', range(20))
+def test_continuous_approximation(_):
+    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    reggame = learning.rbfgame_train(game)
+    full = paygame.game_copy(reggame)
+
+    for mix in game.grid_mixtures(11):
         truth = full.deviation_payoffs(mix)
         approx = reggame.deviation_payoffs(mix)
-        avg_err = np.abs(truth - approx)
-        errors += (avg_err - errors) / i
-    assert np.all(avg_err < 0.1)
-
-    submask = game.random_subgames()
-    subreg = reggame.subgame(submask)
-    subfull = full.subgame(submask)
-    assert np.allclose(subreg.get_payoffs(subfull.profiles()),
-                       subfull.payoffs())
-
-    mixes = subreg.grid_mixtures(11) * .9 + subreg.uniform_mixture() * .1
-    errors = np.zeros(subreg.num_strats)
-    for i, mix in enumerate(mixes, 1):
-        truth = subfull.deviation_payoffs(mix)
-        approx = subreg.deviation_payoffs(mix)
-        avg_err = np.abs(truth - approx)
-        errors += (avg_err - errors) / i
-    assert np.all(avg_err < 0.5)
-
-    norm = reggame.normalize()
-    assert np.allclose(norm.min_role_payoffs(), 0)
-    assert np.allclose(norm.max_role_payoffs(), 1)
+        assert np.allclose(approx, truth, rtol=0.1, atol=0.2)
 
 
 def test_continuous_approximation_one_players():
@@ -280,25 +276,7 @@ def test_continuous_approximation_one_players():
     reggame = learning.rbfgame_train(game)
     full = paygame.game_copy(reggame)
 
-    assert np.all(full.min_strat_payoffs() >=
-                  reggame.min_strat_payoffs() - 1e-4)
-    assert np.all(full.max_strat_payoffs() <=
-                  reggame.max_strat_payoffs() + 1e-4)
-
-    errors = np.zeros(game.num_strats)
-    for i, mix in enumerate(game.grid_mixtures(11), 1):
+    for mix in game.grid_mixtures(11):
         truth = full.deviation_payoffs(mix)
         approx = reggame.deviation_payoffs(mix)
-        avg_err = np.abs(truth - approx)
-        errors += (avg_err - errors) / i
-    assert np.all(avg_err < 0.1)
-
-    submask = game.random_subgames()
-    subreg = reggame.subgame(submask)
-    subfull = full.subgame(submask)
-    assert np.allclose(subreg.get_payoffs(subfull.profiles()),
-                       subfull.payoffs())
-
-    norm = reggame.normalize()
-    assert np.allclose(norm.min_role_payoffs(), 0)
-    assert np.allclose(norm.max_role_payoffs(), 1)
+        assert np.allclose(approx, truth, rtol=0.1, atol=0.2)

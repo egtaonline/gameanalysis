@@ -225,7 +225,8 @@ class RbfGpGame(DevRegressionGame):
     """
 
     def __init__(self, game, regressors, offset, scale, min_payoffs,
-                 max_payoffs, sub_mask, coefs, rbf_scales, train_data, alphas):
+                 max_payoffs, sub_mask, coefs, rbf_scales, train_data, alphas,
+                 zero_diags):
         super().__init__(game, regressors, offset, scale, min_payoffs,
                          max_payoffs, sub_mask)
         self._coefs = coefs
@@ -234,36 +235,34 @@ class RbfGpGame(DevRegressionGame):
         self._rbf_scales.setflags(write=False)
         self._train_data = train_data
         self._alphas = alphas
+        self._zero_diags = zero_diags
 
         self._dev_players = self.num_role_players - np.eye(
             self.num_roles, dtype=int)
         self._dev_players.setflags(write=False)
-        self._role_starts = np.argmax(
-            self.role_starts[:, None] < sub_mask.cumsum(), 1)
-        self._role_starts.setflags(write=False)
 
+    # TODO Implement regressors natively, since we have all info anyway and
+    # we're storing compact subgame data
     # TODO Add derivatives for other functions
 
     def deviation_payoffs(self, mix, *, jacobian=False):
         # FIXME Add jacobian
         assert not jacobian, "jacobian not supported yet"
-        smix = subgame.translate(mix, self._sub_mask)
         payoffs = np.empty(self.num_strats)
-        for i, (players, scale, x, kinvy) in enumerate(zip(
+        for i, (players, scale, x, kinvy, zdiag) in enumerate(zip(
                 self._dev_players.repeat(self.num_role_strats, 0),
-                self._rbf_scales, self._train_data, self._alphas)):
-            avg_prof = subgame.translate(
-                players.repeat(self.num_role_strats) * mix,
-                self._sub_mask)
+                self._rbf_scales, self._train_data, self._alphas,
+                self._zero_diags)):
+            avg_prof = players.repeat(self.num_role_strats) * mix
             diag = scale ** 2 + avg_prof
             diff = x - avg_prof
             det = 1 - players * np.add.reduceat(
-                smix ** 2 / diag, self._role_starts)
-            cov_diag = np.add.reduceat(diff ** 2 / diag, self._role_starts, 1)
+                mix ** 2 / diag, self.role_starts)
+            cov_diag = np.sum(diff ** 2 / diag, 1) + zdiag
             cov_outer = np.add.reduceat(
-                smix / diag * diff, self._role_starts, 1)
-            exp = np.exp(-.5 * np.sum(
-                cov_diag + players / det * cov_outer ** 2, 1))
+                mix / diag * diff, self.role_starts, 1)
+            exp = np.exp(-.5 * (cov_diag + np.sum(
+                players / det * cov_outer ** 2, 1)))
             coef = np.exp(np.log(scale).sum() - .5 * np.log(diag).sum() -
                           .5 * np.log(det).sum())
             payoffs[i] = coef * kinvy.dot(exp)
@@ -274,20 +273,26 @@ class RbfGpGame(DevRegressionGame):
 
     def subgame(self, sub_mask):
         base = super().subgame(sub_mask)
-        new_data = tuple(d for d, m in zip(self._train_data, sub_mask) if m)
-        new_alphas = tuple(a for a, m in zip(self._alphas, sub_mask) if m)
+        data = tuple(
+            d[:, sub_mask] for d, m in zip(self._train_data, sub_mask) if m)
+        alphas = tuple(a for a, m in zip(self._alphas, sub_mask) if m)
+        zero_diags = tuple(
+            c + np.sum((d[:, ~sub_mask] / s[~sub_mask]) ** 2, 1)
+            for c, d, s, m
+            in zip(self._zero_diags, self._train_data, self._rbf_scales,
+                   sub_mask) if m)
         return RbfGpGame(
             base, base._regressors, base._offset, base._scale,
             base._min_payoffs, base._max_payoffs, base._sub_mask,
-            self._coefs[sub_mask], self._rbf_scales[sub_mask], new_data,
-            new_alphas)
+            self._coefs[sub_mask], self._rbf_scales[sub_mask][:, sub_mask],
+            data, alphas, zero_diags)
 
     def normalize(self):
         base = super().normalize()
         return RbfGpGame(
             base, base._regressors, base._offset, base._scale,
             base._min_payoffs, base._max_payoffs, base._sub_mask, self._coefs,
-            self._rbf_scales, self._train_data, self._alphas)
+            self._rbf_scales, self._train_data, self._alphas, self._zero_diags)
 
 
 def rbfgame_train(game, num_restarts=3):
@@ -335,6 +340,8 @@ def rbfgame_train(game, num_restarts=3):
         means[i] = pay_mean
         coefs[i] = reg.kernel_.k1.k1.constant_value
         rbf_scales[i] = reg.kernel_.k1.k2.length_scale
+        # TODO If these scales are at the boundary (1 or dev_players) then it's
+        # likely a poor fit and we should warn...
         train_data.append(profs)
         alphas.append(reg.alpha_)
         regs.append(reg)
@@ -348,7 +355,7 @@ def rbfgame_train(game, num_restarts=3):
     return RbfGpGame(
         game, tuple(regs), means, np.ones(game.num_strats),
         mins, maxs, np.ones(game.num_strats, bool), coefs, rbf_scales,
-        tuple(train_data), tuple(alphas))
+        tuple(train_data), tuple(alphas), (0,) * game.num_strats)
 
 
 class _DeviationGame(rsgame.CompleteGame):
