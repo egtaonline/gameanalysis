@@ -32,23 +32,31 @@ Our goal is to estimate the expected deviation payoff from a mixture :math:`\mat
     &= \int_{\mathbf x} C \sum_j \alpha_j \prod_r \mathcal N \left(\mathbf X_{jr}; n_r \mathbf p_r, \mathbf L_r + n_r \mathbf M_r \right) \mathcal N (\mathbf x_r; \boldsymbol \mu_r, \boldsymbol \Sigma_r) \\
     &= C \sum_j \alpha_j \prod_r \mathcal N \left(\mathbf X_{jr}; n_r \mathbf p_r, \mathbf L_r + n_r \mathbf M_r \right) \\
     &= C \sum_j \alpha_j \prod_r \left| 2 \pi \left(\mathbf L_r + n_r \mathbf M_r\right) \right| ^{-\frac{1}{2}} \exp \left\{ -\frac{1}{2} (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\mathbf L_r + n_r \mathbf M_r\right)^{-1} (\mathbf X_{jr} - n_r \mathbf p_r) \right\} \\
-    &= \prod_r \left( \prod_{s_r} \ell_{rs_r} \right) \left| \left(\mathbf L_r + \frac{1}{n_r} \mathbf M_r\right) \right| ^{-\frac{1}{2}} \sum_j \alpha_j \exp \left\{ -\frac{1}{2} (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\mathbf L_r + n_r \mathbf M_r\right)^{-1} (\mathbf X_{jr} - n_r \mathbf p_r) \right\}
+    &= \left( \prod_r \left( \prod_{s_r} \ell_{rs_r} \right) \left| \left(\mathbf L_r + \frac{1}{n_r} \mathbf M_r\right) \right| ^{-\frac{1}{2}} \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\mathbf L_r + n_r \mathbf M_r\right)^{-1} (\mathbf X_{jr} - n_r \mathbf p_r) \right\}
 
 The approximation comes from approximating a sum over the multinomial distribution with an integral over a Gaussian approximation.
 The next step is to derive simplifications for the determinant and the inverse of :math:`\mathbf L_r + n_r \mathbf M_r`.
-First, we define :math:`d_{rs_r} = \ell_{rs_r}^2 + n_r p_{rs_r}` because :math:`\mathbf L_r + n_r \mathbf M_r = \operatorname{diag}_{s_r}(d_{rs_r}) - n_r\mathbf p_r \mathbf p_r^\top`.
+First, we need to define a few helpful variables:
+
+.. math::
+    d_{rs_r} &= \ell_{rs_r}^2 + n_r p_{rs_r} \\
+    \gamma_r &= 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}}
+
+Then
 
 .. math::
     \left| \mathbf L_r + n_r \mathbf M_r \right| &= \left| \operatorname{diag}_{s_r}(d_{rs_r}) - n_r \mathbf p_r \mathbf p_r^\top \right| \\
     &= \left( 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}} \right) \prod_{s_r} d_{rs_r} \\
+    &= \gamma_r \prod_{s_r} d_{rs_r} \\
     \left( \mathbf L_r + n_r \mathbf M_r \right)^{-1} &= \left( \operatorname{diag}_{s_r}(d_{rs_r}) - n_r \mathbf p_r \mathbf p_r^\top \right)^{-1} \\
-    &= \operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}} } \mathbf q_r \mathbf q_r^\top,\ q_{rs_r} = \frac{p_{rs_r}}{d_{rs_r}}
+    &= \operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}} } \mathbf q_r \mathbf q_r^\top,\ q_{rs_r} = \frac{p_{rs_r}}{d_{rs_r}} \\
+    &= \operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{\gamma_r} \mathbf q_r \mathbf q_r^\top
 
 Plugging these into the equation for :math:`\operatorname{devpayoff}` yields
 
 .. math::
-    \operatorname{devpayoff}(\mathbf p) &= \prod_r \frac{1}{\sqrt{1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}}}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \sum_j \alpha_j \exp \left\{ -\frac{1}{2} (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}} } \mathbf q_r \mathbf q_r^\top \right) (\mathbf X_{jr} - n_r \mathbf p_r) \right\} \\
-    &= \prod_r \frac{1}{ \sqrt{1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}}}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \left( \sum_{s_r} \frac{(X_{jrs_r} - n_r p_{rs_r})^2}{d_{rs_r}} \right) - \frac{1}{2} \frac{n_r}{ 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}} } \left( \sum_{s_r} \frac{p_{rs_r}}{d_{rs_r}} (X_{jrs_r} - n_r p_{rs_r}) \right)^2 \right\}
+    \operatorname{devpayoff}(\mathbf p) &= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ \gamma_r } \mathbf q_r \mathbf q_r^\top \right) (\mathbf X_{jr} - n_r \mathbf p_r) \right) \right\} \\
+    &= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( \left( \sum_{s_r} \frac{(X_{jrs_r} - n_r p_{rs_r})^2}{d_{rs_r}} \right) + \frac{n_r}{\gamma_r} \left( \sum_{s_r} \frac{p_{rs_r}}{d_{rs_r}} (X_{jrs_r} - n_r p_{rs_r}) \right)^2 \right) \right\}
 
 
 Definitions, Notations and Identities
