@@ -199,7 +199,7 @@ def test_mixed_nash_best(methods, strategies):
         [4, 4, 4],
         [1, 3],
     ]))
-def test_mixed_nash_at_least_one(methods, strategies):  # pragma: no cover
+def test_mixed_nash_at_least_one(methods, strategies):
     game = gamegen.role_symmetric_game(1, strategies)
     eqa = nash.mixed_nash(game, at_least_one=True, **methods)
     assert eqa.size, "didn't return at least one equilibria"
@@ -236,7 +236,7 @@ def test_hard_nash():
 
 @pytest.mark.slow
 @pytest.mark.parametrize('_', range(20))
-def test_at_least_one_big(_):  # pragma: no cover
+def test_at_least_one_big(_):
     num_roles = np.random.randint(1, 4)
     players = np.random.randint(2, 5, num_roles)
     strategies = np.random.randint(2, 5, num_roles)

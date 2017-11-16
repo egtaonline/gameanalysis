@@ -89,7 +89,7 @@ def main(args):
             args.output.write(game.to_mix_str(eqm))
             args.output.write('\nRegret: {:.4f}\n\n'.format(reg))
     else:
-        args.output.write('Found no equilibria\n\n')  # pragma: no cover
+        args.output.write('Found no equilibria\n\n')
     args.output.write('\n')
 
     # Output json data

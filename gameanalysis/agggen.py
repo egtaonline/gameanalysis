@@ -148,7 +148,8 @@ def congestion(num_players, num_facilities, num_required, degree=2,
                              function_inputs.T, function_inputs, functions)
 
 
-def local_effect(num_players, num_strategies, edge_prob=.2,
+def local_effect(num_players, num_strategies,  # pragma: no cover
+                 edge_prob=.2,
                  self_dist=random_poly_dist(
                      [0, 1], lambda d: -np.random.exponential(10. ** (1 - d))),
                  other_dist=random_poly_dist(

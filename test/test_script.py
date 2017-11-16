@@ -5,6 +5,7 @@ from os import path
 
 import numpy as np
 
+from gameanalysis import agggen
 from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import matgame
@@ -39,6 +40,12 @@ def run(*cmd, input=''):
     out = res.stdout.decode('utf-8')
     err = res.stderr.decode('utf-8')
     return not res.returncode, out, err
+
+
+def test_from_module():
+    python = path.join(DIR, '..', 'bin', 'python')
+    proc = subprocess.run([python, '-m', 'gameanalysis', '--help'])
+    assert not proc.returncode
 
 
 def test_help():
@@ -177,7 +184,7 @@ def test_nash_2():
 def test_nash_3():
     success, out, err = run('nash', '-tpure', '-i', HARD_GAME)
     assert success, err
-    assert any(  # pragma: no cover
+    assert any(  # pragma: no branch
         np.all(HARD_GAME_DATA.from_prof_json(prof) ==
                [4, 2, 0, 0, 0, 1, 0, 0, 0])
         for prof in json.loads(out))
@@ -186,7 +193,7 @@ def test_nash_3():
 def test_nash_4():
     success, out, err = run('nash', '-tmin-reg-prof', '-i', HARD_GAME)
     assert success, err
-    assert any(  # pragma: no cover
+    assert any(  # pragma: no branch
         np.all(HARD_GAME_DATA.from_prof_json(prof) ==
                [4, 2, 0, 0, 0, 1, 0, 0, 0])
         for prof in json.loads(out))
@@ -195,7 +202,7 @@ def test_nash_4():
 def test_nash_5():
     success, out, err = run('nash', '-tmin-reg-grid', '-i', HARD_GAME)
     assert success, err
-    assert any(  # pragma: no cover
+    assert any(  # pragma: no branch
         np.allclose(HARD_GAME_DATA.from_mix_json(
             mix), [0, 1, 0, 0, 0, 1, 0, 0, 0])
         for mix in json.loads(out))
@@ -573,6 +580,70 @@ def test_analysis_equilibria():
     assert 'Found 1 unexplored best-response subgame' in out
 
 
+def test_analysis_dup_equilibria():
+    # Two subgames, but dominated, so identical equilibria
+    profiles = [
+        [2, 0, 0, 0],
+        [1, 1, 0, 0],
+        [1, 0, 1, 0],
+        [0, 2, 0, 0],
+        [0, 1, 1, 0],
+        [0, 0, 2, 0],
+        [0, 1, 0, 1],
+        [0, 0, 1, 1],
+        [0, 0, 0, 2],
+    ]
+    payoffs = [
+        [0, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 0],
+        [0, 1, 1, 0],
+        [0, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 0],
+    ]
+    game = paygame.game(2, 4, profiles, payoffs)
+    game_str = json.dumps(game.to_json())
+
+    success, out, err = run('analyze', '-s', input=game_str)
+    assert success, err
+    assert "Found 2 maximal complete subgames" in out
+
+
+def test_analysis_dev_explored():
+    # Beneficial deviation to an already explored subgame
+    profiles = [
+        [2, 0, 0, 0],
+        [1, 1, 0, 0],
+        [1, 0, 1, 0],
+        [0, 2, 0, 0],
+        [0, 1, 1, 0],
+        [0, 0, 2, 0],
+        [0, 1, 0, 1],
+        [0, 0, 1, 1],
+        [0, 0, 0, 2],
+    ]
+    payoffs = [
+        [0, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 0],
+        [0, 1, 1, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 0, 0],
+    ]
+    game = paygame.game(2, 4, profiles, payoffs)
+    game_str = json.dumps(game.to_json())
+
+    success, out, err = run('analyze', '-s', input=game_str)
+    assert success, err
+    assert "Found no unexplored best-response subgames" in out
+
+
 def test_analysis_no_data():
     game = paygame.game([2], [2], [[1, 1]], [[5, float('nan')]])
     game_str = json.dumps(game.to_json())
@@ -581,6 +652,18 @@ def test_analysis_no_data():
     assert success, err
     assert 'There was no profile with complete payoff data' in out
     assert 'Found no complete subgames' in out
+
+
+def test_analysis_no_eqa():
+    with tempfile.NamedTemporaryFile('w') as game:
+        game.write(GAME_STR)
+        game.flush()
+        success, out, err = run(
+            'analyze', '-i', game.name, '--subgames', '--dominance', '--dpr',
+            'r0:3,r1:2', '-p1', '-r0', '-m0')
+    assert success, err
+    assert "Found no equilibria" in out
+    assert "Found 1 no-equilibria subgame" in out
 
 
 def test_learning_output():
@@ -618,6 +701,16 @@ def test_learning_args():
         assert success, err
 
 
+def test_learning_no_eqa():
+    data = agggen.congestion(10, 3, 1)
+    with tempfile.NamedTemporaryFile('w') as game:
+        json.dump(data.to_json(), game)
+        game.flush()
+        success, out, err = run('learning', '-i', game.name, '-m0', '-r0')
+    assert success, err
+    assert "Found no equilibria" in out
+
+
 def test_boot_1():
     with tempfile.NamedTemporaryFile('w') as mixed, \
             tempfile.NamedTemporaryFile('w') as game:
@@ -649,6 +742,26 @@ def test_boot_2():
         assert success, err
         data = json.loads(out)
         assert all(j.keys() == {'5', '95', 'mean'} for j in data)
+        assert all(j['5'] <= j['95'] for j in data)
+
+
+def test_boot_3():
+    with tempfile.NamedTemporaryFile('w') as mixed:
+        sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
+                                  20)
+        game_str = json.dumps(sgame.to_json())
+
+        profs = [sgame.to_prof_json(sgame.random_profiles())]
+        json.dump(profs, mixed)
+        mixed.flush()
+
+        success, out, err = run(
+            'boot', mixed.name, '-tsurplus', '--processes', '1', '-n21',
+            input=game_str)
+        assert success, err
+        data = json.loads(out)
+        expected = {'mean'}.union(set(map(str, range(0, 101, 5))))
+        assert all(j.keys() == expected for j in data)
         assert all(j['5'] <= j['95'] for j in data)
 
 
@@ -769,3 +882,13 @@ def test_conv_mat_game_inv():
     assert success, err
     game = gamereader.read(json.loads(out))
     assert game == MATGAME
+
+
+def test_conv_norm_empty():
+    success, out, err = run(
+        'conv', '-tnorm', input=MATGAME_STR)
+    assert success, err
+    game = gamereader.read(json.loads(out))
+    assert np.all(game.min_role_payoffs() == 0)
+    assert np.all((game.max_role_payoffs() == 1) |
+                  (game.max_role_payoffs() == 0))

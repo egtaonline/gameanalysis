@@ -29,7 +29,7 @@ def min_regret_profile(game):
 
     An error will be raised if there are no profiles with a defined regret.
     """
-    regs = np.fromiter((regret.pure_strategy_regret(game, prof)
+    regs = np.fromiter((regret.pure_strategy_regret(game, prof)  # pragma: no branch # noqa
                         for prof in game.profiles()), float, game.num_profiles)
     return game.profiles()[np.nanargmin(regs)]
 
@@ -45,7 +45,7 @@ def min_regret_grid_mixture(game, points):
         Number of points per dimension to search.
     """
     mixes = game.grid_mixtures(points)
-    regs = np.fromiter((regret.mixture_regret(game, mix)
+    regs = np.fromiter((regret.mixture_regret(game, mix)  # pragma: no branch
                         for mix in mixes), float, mixes.shape[0])
     return mixes[np.nanargmin(regs)]
 
@@ -62,7 +62,7 @@ def min_regret_rand_mixture(game, mixtures):
     """
     assert mixtures > 0, "mixtures must be greater than 0"
     mixes = game.random_mixtures(mixtures)
-    regs = np.fromiter((regret.mixture_regret(game, mix)
+    regs = np.fromiter((regret.mixture_regret(game, mix)  # pragma: no branch
                         for mix in mixes), float, mixtures)
     return mixes[np.nanargmin(regs)]
 

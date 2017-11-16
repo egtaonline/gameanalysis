@@ -1189,8 +1189,8 @@ def test_samplegame_different_samples():
 
     assert not np.setxor1d([1, 2], sgame.num_samples).size
     # This could technically fail, but it's extremely unlikely
-    assert any(game != sgame.resample()
-               for _ in range(1000))  # pragma: no cover
+    assert any(game != sgame.resample()  # pragma: no branch
+               for _ in range(1000))
 
 
 def test_samplegame_subgame():

@@ -35,6 +35,12 @@ def test_pure_strategy_deviation_gains():
     assert np.allclose(gains, [9, -9, 4, -4])
 
 
+def test_empty_pure_strategy_deviation_gains():
+    game = rsgame.emptygame(2, [2, 2])
+    gains = regret.pure_strategy_deviation_gains(game, [2, 0, 2, 0])
+    assert np.allclose(gains, [np.nan, 0, np.nan, 0], equal_nan=True)
+
+
 @pytest.mark.parametrize('_', range(20))
 def test_pure_prisoners_dilemma(_):
     game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma

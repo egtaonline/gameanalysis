@@ -24,7 +24,7 @@ EPS = 5 * np.finfo(float).eps
 
 def stratarray(num_strats):
     roles = tuple(chr(97 + i) for i in range(len(num_strats)))
-    sit = (chr(97 + i) for i in range(sum(num_strats)))  # pragma: no cover
+    sit = (chr(97 + i) for i in range(sum(num_strats)))  # pragma: no branch
     strats = tuple(tuple(itertools.islice(sit, s)) for s in num_strats)
     return rsgame.StratArray(roles, strats)
 
@@ -1031,7 +1031,7 @@ def test_num_all_dpr_profiles():
 def test_random_profile_counts(role_players, role_strats):
     game = rsgame.emptygame(role_players, role_strats)
 
-    num_role_profiles = np.fromiter(  # pragma: no cover
+    num_role_profiles = np.fromiter(  # pragma: no branch
         (rsgame.emptygame(p, s).all_profiles().shape[0] for p, s
          in zip(game.num_role_players, game.num_role_strats)),
         int, game.num_roles)

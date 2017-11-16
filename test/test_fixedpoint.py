@@ -35,7 +35,7 @@ def test_ndim_progressive_fixed_point(dim, disc):
 
 @pytest.mark.slow
 @pytest.mark.parametrize('tol', [1e-3, 1e-4, 1e-6])
-def test_rps_fixed_point(tol):  # pragma: no cover
+def test_rps_fixed_point(tol):
     """Test that it computes a fixed point for bad shapley triangles"""
     start = utils.simplex_project(np.random.rand(3))
     weights = 1 + 3 * np.random.random(3)

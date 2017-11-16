@@ -63,7 +63,7 @@ class StratArray(object):
 
     def __init__(self, role_names, strat_names):
         self.num_roles = len(role_names)
-        self.num_role_strats = np.fromiter(
+        self.num_role_strats = np.fromiter(  # pragma: no branch
             (len(s) for s in strat_names), int, self.num_roles)
         self.num_strats = self.num_role_strats.sum()
         self.role_starts = np.insert(self.num_role_strats[:-1].cumsum(), 0, 0)
@@ -1233,7 +1233,7 @@ class RsGame(StratArray):
         payoffs = np.asarray(payoffs, float)
         supp = (np.ones(self.num_strats, bool) if profile is None
                 else np.asarray(profile, bool))
-        return {r: {s: {d: float(pay) for pay, d
+        return {r: {s: {d: float(pay) for pay, d  # pragma: no branch
                         in zip(spays, (d for d in ses if d != s))}
                     for spays, s, su
                     in zip(np.split(rpay, n), ses, sup)
@@ -1445,7 +1445,7 @@ def emptygame_json(json):
     desc.sort()
     role_names = tuple(r for r, _, _ in desc)
     strat_names = tuple(tuple(sorted(s)) for _, _, s in desc)
-    num_role_players = np.fromiter((c for _, c, _ in desc), int, len(desc))
+    num_role_players = np.fromiter((c for _, c, _ in desc), int, len(desc))  # pragma: no branch # noqa
     assert all(isinstance(r, str) for r in role_names), \
         "role names must be strings"
     assert all(all(isinstance(s, str) for s in strats)

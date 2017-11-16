@@ -266,11 +266,8 @@ def test_deprecation():
     def func(a, b):
         return a, b
 
-    try:
+    with pytest.raises(DeprecationWarning):
         func(None, None)
-        raise ValueError("This should never be reached")  # pragma: no cover
-    except DeprecationWarning:
-        pass
 
     with warnings.catch_warnings(record=True) as warns:
         warnings.simplefilter('always', DeprecationWarning)

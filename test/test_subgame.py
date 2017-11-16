@@ -56,9 +56,9 @@ def test_missing_data_maximal_subgames(players, strategies, prob):
         for dev in np.nonzero(~sub)[0]:
             devprofs = subgame.additional_strategy_profiles(
                 game, sub, dev)
-            assert not all(p in game for p in devprofs), \
+            assert not all(p in game for p in devprofs), (  # pragma: no branch
                 "Maximal subgame could be bigger {} {}".format(
-                    dev, sub)  # pragma: no cover
+                    dev, sub))
 
 
 @pytest.mark.parametrize('_', range(20))

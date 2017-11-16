@@ -1,3 +1,4 @@
+import numpy.random as rand
 import pytest
 
 from gameanalysis import agggen
@@ -55,8 +56,12 @@ def test_random_poly_game(players, strategies, functions, by_role):
 ])
 @pytest.mark.parametrize('by_role', [False, True])
 def test_random_sin_game(players, strategies, functions, by_role):
-    agggen.random_aggfn(players, strategies, functions, by_role=by_role,
-                        func_dist=agggen.random_sin_dist())
+    agggen.random_aggfn(
+        players, strategies, functions, by_role=by_role,
+        func_dist=agggen.random_sin_dist())
+    agggen.random_aggfn(
+        players, strategies, functions, by_role=by_role,
+        func_dist=agggen.random_sin_dist(offset_dist=rand.random))
 
 
 @pytest.mark.parametrize('players,facilities,required', [

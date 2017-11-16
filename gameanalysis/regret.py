@@ -18,7 +18,7 @@ def pure_strategy_deviation_gains(game, profile):
     dev_profs[np.arange(game.num_devs), game.dev_to_indices] += 1
 
     pays = game.get_payoffs(profile)
-    return np.fromiter(
+    return np.fromiter(  # pragma: no branch
         (game.get_payoffs(prof)[t] - pays[f] if np.all(prof >= 0) else 0
          for prof, f, t
          in zip(dev_profs, game.dev_from_indices, game.dev_to_indices)),
@@ -78,7 +78,7 @@ class _SocialWelfareOptimizer(object):
         self.offset = game.min_role_payoffs()
         self.gtol = gtol
 
-    def obj_func(self, mix, penalty):  # pragma: no cover
+    def obj_func(self, mix, penalty):
         # We assume that the initial point is in a constant sum subspace, and
         # so project the gradient so that any gradient step maintains that
         # constant step. Thus, sum to 1 is not one of the penalty terms
@@ -105,7 +105,7 @@ class _SocialWelfareOptimizer(object):
                               self.game.num_role_strats)
         return welfare, dwelfare
 
-    def __call__(self, mix):  # pragma: no cover
+    def __call__(self, mix):
         # Pass in lambda, and make penalty not a member
 
         result = None
@@ -133,7 +133,7 @@ class _SocialWelfareOptimizer(object):
 
 
 def max_mixed_social_welfare(game, *, grid_points=2, random_restarts=0,
-                             processes=None, **swopt_args):
+                             processes=0, **swopt_args):
     """Returns the maximum role symmetric mixed social welfare profile
 
     Arguments
@@ -159,14 +159,21 @@ def max_mixed_social_welfare(game, *, grid_points=2, random_restarts=0,
         game.random_mixtures(random_restarts)))
     chunksize = len(initial_points) if processes == 1 else 4
 
-    best = (-np.inf, -1, None)
+    best = [-np.inf, -1, None]
+
+    def process(i, mix):
+        welfare = mixed_social_welfare(game, mix)
+        best[:] = max(best, [welfare, i, mix])
 
     opt = _SocialWelfareOptimizer(game, **swopt_args)
-    with multiprocessing.Pool(processes) as pool:
-        for i, mix in enumerate(pool.imap_unordered(
-                opt, initial_points, chunksize=chunksize)):
-            welfare = mixed_social_welfare(game, mix)
-            best = max(best, (welfare, i, mix))
+    if processes == 0:
+        for i, init in enumerate(initial_points):
+            process(i, opt(init))
+    else:
+        with multiprocessing.Pool(processes) as pool:
+            for i, mix in enumerate(pool.imap_unordered(
+                    opt, initial_points, chunksize=chunksize)):
+                process(i, mix)
 
     return best[0], best[2]
 

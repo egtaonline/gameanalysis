@@ -122,7 +122,7 @@ def main(args):
                            for eq in candidates):
                     candidates.append(eqm)
         else:
-            noeq_subgames.append(submask)  # pragma: no cover
+            noeq_subgames.append(submask)
 
     equilibria = []
     unconfirmed = []
@@ -218,13 +218,13 @@ def main(args):
             args.output.write(game.to_mix_str(eqm))
             args.output.write('\nRegret: {:.4f}\n\n'.format(reg))
     else:
-        args.output.write('Found no equilibria\n\n')  # pragma: no cover
+        args.output.write('Found no equilibria\n\n')
     args.output.write('\n')
 
     # Output No-equilibria Subgames
     args.output.write('No-equilibria Subgames\n')
     args.output.write('----------------------\n')
-    if noeq_subgames:  # pragma: no cover
+    if noeq_subgames:
         args.output.write('Found {:d} no-equilibria subgame{}\n\n'.format(
             len(noeq_subgames), '' if len(noeq_subgames) == 1 else 's'))
         noeq_subgames.sort(key=lambda x: x.sum())

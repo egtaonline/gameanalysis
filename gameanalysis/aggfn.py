@@ -206,7 +206,7 @@ class AgfnGame(rsgame.CompleteGame):
                 if not np.allclose(strat_acts, 0)}
         res['action_weights'] = act_weights
 
-        res['function_tables'] = dict(zip(
+        res['function_tables'] = dict(zip(  # pragma: no branch
             self.function_names, (tab.tolist() for tab in
                                   self._function_table)))
         res['type'] = 'aggfn.1'
@@ -592,8 +592,8 @@ def aggfn_funcs(num_role_players, num_role_strats, action_weights,
     """
     assert functions, "must have at least one function"
     num_functions = len(functions)
-    num_params = _num_args_safe(functions[0])
-    assert all(num_params == _num_args_safe(f) for f in functions), \
+    num_params = _num_args(functions[0])
+    assert all(num_params == _num_args(f) for f in functions), \
         "all functions must take the same number of parameters"
 
     base = rsgame.emptygame(num_role_players, num_role_strats)
@@ -657,11 +657,3 @@ def _num_args(func):
     """Helper to get the number of args of a function"""
     return sum(1 for p in inspect.signature(func).parameters.values()
                if p.default is p.empty)
-
-
-def _num_args_safe(func):
-    """Get the number of arguments of a function or function object"""
-    try:
-        return _num_args(func)
-    except AttributeError:  # pragma: no cover
-        return _num_args(func.__call__)

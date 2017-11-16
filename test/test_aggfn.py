@@ -549,6 +549,21 @@ def test_from_function():
     assert len(game._function_table.shape) == 3
 
 
+def test_from_function_call():
+
+    class func:
+        def __call__(self, x):
+            return x
+
+    game = aggfn.aggfn_funcs([2, 2], 2, [[1, 2, 3, 4]],
+                             [[True], [True], [True], [True]], [func()])
+    assert len(game._function_table.shape) == 2
+    game = aggfn.aggfn_funcs(
+        [2, 2], 2, [[1, 2, 3, 4]], [[True], [True], [True], [True]],
+        [lambda x, y: x + y])
+    assert len(game._function_table.shape) == 3
+
+
 @pytest.mark.parametrize('by_role', [False, True])
 def test_serialization(by_role):
     game = agggen.random_aggfn([5, 4], [4, 3], 3, by_role=by_role)

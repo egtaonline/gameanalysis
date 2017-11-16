@@ -572,14 +572,14 @@ class SampleGame(Game):
         for spay in self._sample_payoffs:
             spay.setflags(write=False)
 
-        self.num_sample_profs = np.fromiter(
+        self.num_sample_profs = np.fromiter(  # pragma: no branch
             (x.shape[0] for x in sample_payoffs),
             int, len(sample_payoffs))
         self.num_sample_profs.setflags(write=False)
         self.sample_starts = np.insert(
             self.num_sample_profs[:-1].cumsum(), 0, 0)
         self.sample_starts.setflags(write=False)
-        self.num_samples = np.fromiter(
+        self.num_samples = np.fromiter(  # pragma: no branch
             (v.shape[1] for v in sample_payoffs),
             int, len(sample_payoffs))
         self.num_samples.setflags(write=False)
