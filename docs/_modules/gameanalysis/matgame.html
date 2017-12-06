@@ -1,0 +1,440 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.matgame &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for gameanalysis.matgame</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;module for complete independent games&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">rsgame</span>
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
+
+
+<div class="viewcode-block" id="MatrixGame"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame">[docs]</a><span class="k">class</span> <span class="nc">MatrixGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">CompleteGame</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Matrix game representation</span>
+
+<span class="sd">    This represents a complete independent game more compactly than a Game, but</span>
+<span class="sd">    only works for complete independent games.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_names : (str,)</span>
+<span class="sd">        The name of each role.</span>
+<span class="sd">    strat_names : ((str,),)</span>
+<span class="sd">        The name of each strategy per role.</span>
+<span class="sd">    payoff_matrix : ndarray</span>
+<span class="sd">        The matrix of payoffs for an asymmetric game. The last axis is the</span>
+<span class="sd">        payoffs for each player, the first axes are the strategies for each</span>
+<span class="sd">        player. matrix.shape[:-1] must correspond to the number of strategies</span>
+<span class="sd">        for each player. matrix.ndim - 1 must equal matrix.shape[-1].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span>
+                         <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">role_names</span><span class="p">),</span> <span class="nb">int</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span> <span class="o">=</span> <span class="n">payoff_matrix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prof_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prof_offset</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prof_offset</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_view</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MatrixGame.payoff_matrix"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.payoff_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">payoff_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the payoff matrix&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="o">.</span><span class="n">view</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MatrixGame.min_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.min_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">min_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the minimum payoff for each role&quot;&quot;&quot;</span>
+        <span class="n">mpays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="p">(</span><span class="n">pays</span><span class="p">,</span> <span class="n">min_pays</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">mpays</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)):</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">pays</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_pays</span><span class="p">)</span>
+        <span class="n">mpays</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mpays</span></div>
+
+<div class="viewcode-block" id="MatrixGame.max_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.max_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">max_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the minimum payoff for each role&quot;&quot;&quot;</span>
+        <span class="n">mpays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="p">(</span><span class="n">pays</span><span class="p">,</span> <span class="n">max_pays</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">mpays</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)):</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">pays</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_pays</span><span class="p">)</span>
+        <span class="n">mpays</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mpays</span></div>
+
+<div class="viewcode-block" id="MatrixGame.profiles"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.profiles">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MatrixGame.payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.payoffs">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span>
+        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">payoffs</span><span class="p">[</span><span class="n">profiles</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="o">.</span><span class="n">flat</span>
+        <span class="k">return</span> <span class="n">payoffs</span></div>
+
+<div class="viewcode-block" id="MatrixGame.compress_profile"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.compress_profile">[docs]</a>    <span class="k">def</span> <span class="nf">compress_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compress profile in array of ints</span>
+
+<span class="sd">        Normal profiles are an array of number of players playing a strategy.</span>
+<span class="sd">        Since matrix games always have one player per role, this compresses</span>
+<span class="sd">        each roles counts into a single int representing the played strategy</span>
+<span class="sd">        per role.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prof_offset</span> <span class="o">-</span> <span class="n">profile</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MatrixGame.uncompress_profile"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.uncompress_profile">[docs]</a>    <span class="k">def</span> <span class="nf">uncompress_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comp_prof</span><span class="p">):</span>
+        <span class="n">comp_prof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">comp_prof</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">comp_prof</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+            <span class="n">comp_prof</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">comp_prof</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,),</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">comp_prof</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">))</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span> <span class="o">*</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">comp_prof</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])))[:,</span> <span class="kc">None</span><span class="p">])</span>
+        <span class="n">profile</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">profile</span></div>
+
+<div class="viewcode-block" id="MatrixGame.get_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.get_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns an array of profile payoffs&quot;&quot;&quot;</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_id</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="n">payoffs</span><span class="p">[</span><span class="n">profile</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_view</span><span class="p">[</span><span class="n">ids</span><span class="p">]</span><span class="o">.</span><span class="n">flat</span>
+        <span class="k">return</span> <span class="n">payoffs</span></div>
+
+<div class="viewcode-block" id="MatrixGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Computes the expected value of each pure strategy played against all</span>
+<span class="sd">        opponents playing mix.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mix : ndarray</span>
+<span class="sd">            The mix all other players are using</span>
+<span class="sd">        jacobian : bool</span>
+<span class="sd">            If true, the second returned argument will be the jacobian of the</span>
+<span class="sd">            deviation payoffs with respect to the mixture. The first axis is</span>
+<span class="sd">            the deviating strategy, the second axis is the strategy in the mix</span>
+<span class="sd">            the jacobian is taken with respect to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO This has a lot of for loops. It might be able to be more</span>
+        <span class="c1"># efficient if we add _TINY to the mixture so we can just divide, or</span>
+        <span class="c1"># potentially reshape payoff_matrix, but I&#39;m not really sure.</span>
+        <span class="n">rmix</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span>
+            <span class="n">shape</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">rmix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">))</span>
+        <span class="n">devpays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">devpays</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)):</span>
+            <span class="n">pays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">rmix</span><span class="p">[:</span><span class="n">r</span><span class="p">]:</span>
+                <span class="n">pays</span> <span class="o">*=</span> <span class="n">m</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">rmix</span><span class="p">[</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
+                <span class="n">pays</span> <span class="o">*=</span> <span class="n">m</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">pays</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">jacobian</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">devpays</span>
+
+        <span class="n">jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="p">(</span><span class="n">jout</span><span class="p">,</span> <span class="n">nr</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jac</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">r</span> <span class="o">==</span> <span class="n">d</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">pays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">r</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">f</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">d</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">rmix</span><span class="p">[:</span><span class="n">f</span><span class="p">]:</span>
+                    <span class="n">pays</span> <span class="o">*=</span> <span class="n">m</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">rmix</span><span class="p">[</span><span class="n">f</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">s</span><span class="p">]:</span>
+                    <span class="n">pays</span> <span class="o">*=</span> <span class="n">m</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">rmix</span><span class="p">[</span><span class="n">s</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]:</span>
+                    <span class="n">pays</span> <span class="o">*=</span> <span class="n">m</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">pays</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="n">d</span> <span class="o">+</span> <span class="p">(</span><span class="n">r</span> <span class="o">&gt;</span> <span class="n">d</span><span class="p">),</span>
+                            <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">nr</span><span class="p">,</span> <span class="n">nd</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">)</span>
+
+        <span class="c1"># Normalize</span>
+        <span class="n">jac</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">jac</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">devpays</span><span class="p">,</span> <span class="n">jac</span></div>
+
+<div class="viewcode-block" id="MatrixGame.subgame"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.subgame">[docs]</a>    <span class="k">def</span> <span class="nf">subgame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subgame_mask</span><span class="p">):</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">subgame</span><span class="p">(</span><span class="n">subgame_mask</span><span class="p">)</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mask</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">subgame_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
+            <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),)</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="p">(</span><span class="n">mask</span><span class="p">,)]</span>
+        <span class="k">return</span> <span class="n">MatrixGame</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">matrix</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="MatrixGame.normalize"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a normalized MatGame&quot;&quot;&quot;</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_role_payoffs</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span>
+        <span class="n">scale</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">MatrixGame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">())</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_mat_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">role_index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a sub matrix into json representation&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">role_index</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">role</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">pay</span><span class="p">)</span> <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">pay</span>
+                    <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">matrix</span><span class="p">)}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">strats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">[</span><span class="n">role_index</span><span class="p">]</span>
+            <span class="n">role_index</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">strat</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mat_to_json</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">role_index</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">mat</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">strats</span><span class="p">,</span> <span class="n">matrix</span><span class="p">)}</span>
+
+<div class="viewcode-block" id="MatrixGame.to_json"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;payoffs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mat_to_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;matrix.1&#39;</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="c1"># Identical payoffs</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matgame"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame">[docs]</a><span class="k">def</span> <span class="nf">matgame</span><span class="p">(</span><span class="n">payoff_matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a game from a dense matrix with default names</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    payoff_matrix : ndarray-like</span>
+<span class="sd">        The matrix of payoffs for an asymmetric game.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">payoff_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">payoff_matrix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">matgame_replace</span><span class="p">(</span>
+        <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">payoff_matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">payoff_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">)),</span>
+        <span class="n">payoff_matrix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matgame_names"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_names">[docs]</a><span class="k">def</span> <span class="nf">matgame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a game from a payoff matrix with names</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_names : [str]</span>
+<span class="sd">        The name of each role.</span>
+<span class="sd">    strat_names : [[str]]</span>
+<span class="sd">        The name of each strategy for each role.</span>
+<span class="sd">    payoff_matrix : ndarray-like</span>
+<span class="sd">        The matrix mapping strategy indices to payoffs for each player.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">matgame_replace</span><span class="p">(</span>
+        <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_names</span><span class="p">(</span>
+            <span class="n">role_names</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">role_names</span><span class="p">),</span> <span class="nb">int</span><span class="p">),</span> <span class="n">strat_names</span><span class="p">),</span>
+        <span class="n">payoff_matrix</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_mat_from_json</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">dic</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">depth</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copy roles to a matrix representation&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">depth</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">payoff</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">matrix</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">role_index</span><span class="p">(</span><span class="n">role</span><span class="p">)]</span> <span class="o">=</span> <span class="n">payoff</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">role</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="n">depth</span><span class="p">]</span>
+        <span class="n">depth</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">subdic</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">role_strat_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">)</span> <span class="o">-</span> <span class="n">offset</span>
+            <span class="n">_mat_from_json</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">subdic</span><span class="p">,</span> <span class="n">matrix</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">depth</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="matgame_json"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_json">[docs]</a><span class="k">def</span> <span class="nf">matgame_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a matrix game from json</span>
+
+<span class="sd">    In general, the json will have &#39;type&#39;: &#39;matrix...&#39; to indicate that it&#39;s a</span>
+<span class="sd">    matrix game, but if the other fields are correct, this will still succeed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># This uses the fact that roles are always in lexicographic order</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">(</span><span class="n">json</span><span class="p">)</span>
+
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,),</span>
+                      <span class="nb">float</span><span class="p">)</span>
+    <span class="n">_mat_from_json</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;payoffs&#39;</span><span class="p">],</span> <span class="n">matrix</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">matgame_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">matrix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matgame_copy"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_copy">[docs]</a><span class="k">def</span> <span class="nf">matgame_copy</span><span class="p">(</span><span class="n">copy_game</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copy a matrix game from an existing game</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    copy_game : RsGame</span>
+<span class="sd">        Game to copy payoff data out of. This game must be complete.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">is_complete</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="s1">&#39;payoff_matrix&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">matgame_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">payoff_matrix</span><span class="p">())</span>
+
+    <span class="c1"># Get payoff matrix</span>
+    <span class="n">num_role_strats</span> <span class="o">=</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">num_role_strats</span><span class="o">.</span><span class="n">size</span><span class="p">,)</span>
+    <span class="n">payoff_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">role_starts</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">profile</span><span class="p">,</span> <span class="n">payoffs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">profiles</span><span class="p">(),</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">payoffs</span><span class="p">()):</span>
+        <span class="c1"># TODO Is is possible to do this with array logic?</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="p">[</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">s</span><span class="p">)))</span> <span class="k">for</span> <span class="n">s</span>
+            <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])])</span>
+        <span class="k">for</span> <span class="n">nested</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">:</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">nested</span><span class="p">))</span>
+            <span class="n">payoff_matrix</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">payoffs</span><span class="p">[</span><span class="n">ind</span> <span class="o">+</span> <span class="n">offset</span><span class="p">]</span>
+
+    <span class="c1"># Get role names</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span>
+        <span class="n">strats</span> <span class="o">=</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># When we expand names, we need to make sure they stay sorted</span>
+        <span class="k">if</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_sorted</span><span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="s1">&#39;p&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">):</span>
+            <span class="c1"># We can naively append player numbers</span>
+            <span class="n">role_names</span> <span class="o">=</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># We have to prefix to preserve role order</span>
+            <span class="n">maxlen</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">))</span>
+            <span class="n">role_names</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">p</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">maxlen</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">))</span> <span class="o">+</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span>
+                <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+                       <span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)))</span>
+        <span class="n">roles</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)))</span>
+        <span class="n">strats</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+            <span class="n">itertools</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span>
+            <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">MatrixGame</span><span class="p">(</span><span class="n">roles</span><span class="p">,</span> <span class="n">strats</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="matgame_replace"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_replace">[docs]</a><span class="k">def</span> <span class="nf">matgame_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Replace an existing game with a new payoff matrix</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    base : RsGame</span>
+<span class="sd">        Game to take structure out of.</span>
+<span class="sd">    payoff_matrix : ndarray-like</span>
+<span class="sd">        The new payoff matrix.&quot;&quot;&quot;</span>
+    <span class="n">payoff_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">payoff_matrix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">==</span> <span class="mi">1</span><span class="p">),</span> \
+        <span class="s2">&quot;replaced game must be independent&quot;</span>
+    <span class="k">assert</span> <span class="n">payoff_matrix</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">+</span>
+                                   <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,)),</span> \
+        <span class="s2">&quot;payoff matrix not consistent shape with game&quot;</span>
+    <span class="k">return</span> <span class="n">MatrixGame</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

@@ -46,11 +46,11 @@ for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = OrderingMock()
 
 # Add actual modules to path
-sys.path.insert(0, path.abspath(path.join('..', '..')))
+sys.path.insert(0, path.abspath('..'))
 
 # Run api-doc automatically
 for module in ['gameanalysis']:
-    apidoc.main(['<prog-name>', '-f', '-o', '.', path.join('..', '..', module)])
+    apidoc.main(['<prog-name>', '-f', '-o', '.', path.join('..', module)])
 
 # -- General configuration ------------------------------------------------
 
@@ -88,7 +88,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # Extract info from setup.py
-project_info = config.read_configuration(path.join('..', '..', 'setup.cfg'))
+project_info = config.read_configuration(path.join('..', 'setup.cfg'))
 
 # General information about the project.
 project = 'Game Analysis'
@@ -162,7 +162,7 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'haiku'
+html_theme = 'nature'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -196,7 +196,7 @@ html_theme = 'haiku'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied

@@ -1,0 +1,295 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.regret &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for gameanalysis.regret</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;A module for computing regret and social welfare of profiles&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">optimize</span>
+
+
+<div class="viewcode-block" id="pure_strategy_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.pure_strategy_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the pure strategy deviations gains</span>
+
+<span class="sd">    The result is a compact array of deviation gains. Each element corresponds</span>
+<span class="sd">    to the deviation from strategy i to strategy j ordered by (i, j) for all</span>
+<span class="sd">    valid deviations.&quot;&quot;&quot;</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">dev_profs</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_devs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">dev_profs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_devs</span><span class="p">),</span> <span class="n">game</span><span class="o">.</span><span class="n">dev_from_indices</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+    <span class="n">dev_profs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_devs</span><span class="p">),</span> <span class="n">game</span><span class="o">.</span><span class="n">dev_to_indices</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">pays</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span>  <span class="c1"># pragma: no branch</span>
+        <span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">prof</span><span class="p">)[</span><span class="n">t</span><span class="p">]</span> <span class="o">-</span> <span class="n">pays</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">prof</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+         <span class="k">for</span> <span class="n">prof</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">t</span>
+         <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">dev_profs</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">dev_from_indices</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">dev_to_indices</span><span class="p">)),</span>
+        <span class="nb">float</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_devs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pure_strategy_regret"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.pure_strategy_regret">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the regret of a pure strategy profile</span>
+
+<span class="sd">    If prof has more than one dimension, the last dimension is taken as a set</span>
+<span class="sd">    of profiles and returned as a new array.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mixture_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.mixture_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns all the gains from deviation from a mixed strategy</span>
+
+<span class="sd">    The result is ordered by role, then strategy.&quot;&quot;&quot;</span>
+    <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">strategy_evs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span>
+    <span class="c1"># strategy_evs is nan where there&#39;s no data, however, if it&#39;s not played in</span>
+    <span class="c1"># the mix, it doesn&#39;t effect the role_evs</span>
+    <span class="n">masked</span> <span class="o">=</span> <span class="n">strategy_evs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">masked</span><span class="p">[</span><span class="n">mix</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">role_evs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
+        <span class="n">masked</span> <span class="o">*</span> <span class="n">mix</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">strategy_evs</span> <span class="o">-</span> <span class="n">role_evs</span></div>
+
+
+<div class="viewcode-block" id="mixture_regret"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.mixture_regret">[docs]</a><span class="k">def</span> <span class="nf">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the regret of a mixture profile&quot;&quot;&quot;</span>
+    <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the social welfare of a pure strategy profile in game&quot;&quot;&quot;</span>
+    <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mixed_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.mixed_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the social welfare of a mixed strategy profile&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">expected_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">_SocialWelfareOptimizer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A pickleable object to find maximal social welfare</span>
+
+<span class="sd">    This method uses constrained convex optimization to to attempt to maximize</span>
+<span class="sd">    mixed social welfare.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">game</span><span class="p">,</span> <span class="n">gtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">game</span> <span class="o">=</span> <span class="n">game</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">max_role_payoffs</span><span class="p">()</span> <span class="o">-</span> <span class="n">game</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># In case payoffs are the same</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gtol</span> <span class="o">=</span> <span class="n">gtol</span>
+
+    <span class="k">def</span> <span class="nf">obj_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="n">penalty</span><span class="p">):</span>
+        <span class="c1"># We assume that the initial point is in a constant sum subspace, and</span>
+        <span class="c1"># so project the gradient so that any gradient step maintains that</span>
+        <span class="c1"># constant step. Thus, sum to 1 is not one of the penalty terms</span>
+
+        <span class="c1"># Because deviation payoffs uses log space, we max with 0 just for the</span>
+        <span class="c1"># payoff calculation</span>
+        <span class="n">ep</span><span class="p">,</span> <span class="n">ep_jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">expected_payoffs</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">mix</span><span class="p">),</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Normalize so payoffs are effectively in [0, 1]</span>
+        <span class="n">ep</span> <span class="o">=</span> <span class="p">(</span><span class="n">ep</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span>
+        <span class="n">ep_jac</span> <span class="o">/=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="c1"># Compute normalized negative walfare (minimization)</span>
+        <span class="n">welfare</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ep</span><span class="p">)</span>
+        <span class="n">dwelfare</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">ep_jac</span><span class="p">)</span>
+
+        <span class="c1"># Add penalty for negative mixtures</span>
+        <span class="n">welfare</span> <span class="o">+=</span> <span class="n">penalty</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">dwelfare</span> <span class="o">+=</span> <span class="n">penalty</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Project grad so steps stay in the simplex (more or less)</span>
+        <span class="n">dwelfare</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">dwelfare</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
+                              <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">welfare</span><span class="p">,</span> <span class="n">dwelfare</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+        <span class="c1"># Pass in lambda, and make penalty not a member</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">penalty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">):</span>
+            <span class="c1"># First get an unconstrained result from the optimization</span>
+            <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">over</span><span class="o">=</span><span class="s1">&#39;raise&#39;</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;raise&#39;</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">opt</span> <span class="o">=</span> <span class="n">optimize</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_func</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">penalty</span><span class="p">),</span> <span class="n">mix</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;CG&#39;</span><span class="p">,</span>
+                        <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;gtol&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gtol</span><span class="p">})</span>
+                <span class="k">except</span> <span class="ne">FloatingPointError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                    <span class="n">penalty</span> <span class="o">*=</span> <span class="mi">2</span>
+                    <span class="k">continue</span>
+
+            <span class="n">mix</span> <span class="o">=</span> <span class="n">opt</span><span class="o">.</span><span class="n">x</span>
+            <span class="c1"># Project it onto the simplex, it might not be due to the penalty</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="o">.</span><span class="n">mixture_project</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="c1"># Increase constraint penalty</span>
+            <span class="n">penalty</span> <span class="o">*=</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+
+<div class="viewcode-block" id="max_mixed_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.max_mixed_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">max_mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">grid_points</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">random_restarts</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                             <span class="n">processes</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">swopt_args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the maximum role symmetric mixed social welfare profile</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ---------</span>
+<span class="sd">    grid_points : int &gt; 1, optional</span>
+<span class="sd">        The number of grid points to use for mixture seeds. two implies just</span>
+<span class="sd">        pure mixtures, more will be denser, but scales exponentially with the</span>
+<span class="sd">        dimension.</span>
+<span class="sd">    random_restarts : int, optional</span>
+<span class="sd">        The number of random initializations.</span>
+<span class="sd">    processes : int, optional</span>
+<span class="sd">        Number of processes to use when finding Nash equilibria. The game needs</span>
+<span class="sd">        to be pickleable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">game</span><span class="o">.</span><span class="n">is_complete</span><span class="p">(),</span> \
+        <span class="s2">&quot;Max welfare finding only works on complete games&quot;&quot;&quot;</span>
+
+    <span class="n">initial_points</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">game</span><span class="o">.</span><span class="n">uniform_mixture</span><span class="p">()],</span>
+        <span class="n">game</span><span class="o">.</span><span class="n">grid_mixtures</span><span class="p">(</span><span class="n">grid_points</span><span class="p">),</span>
+        <span class="n">game</span><span class="o">.</span><span class="n">biased_mixtures</span><span class="p">(),</span>
+        <span class="n">game</span><span class="o">.</span><span class="n">role_biased_mixtures</span><span class="p">(),</span>
+        <span class="n">game</span><span class="o">.</span><span class="n">random_mixtures</span><span class="p">(</span><span class="n">random_restarts</span><span class="p">)))</span>
+    <span class="n">chunksize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">initial_points</span><span class="p">)</span> <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">4</span>
+
+    <span class="n">best</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+        <span class="n">welfare</span> <span class="o">=</span> <span class="n">mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span>
+        <span class="n">best</span><span class="p">[:]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="p">[</span><span class="n">welfare</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">mix</span><span class="p">])</span>
+
+    <span class="n">opt</span> <span class="o">=</span> <span class="n">_SocialWelfareOptimizer</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">**</span><span class="n">swopt_args</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">init</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">initial_points</span><span class="p">):</span>
+            <span class="n">process</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">opt</span><span class="p">(</span><span class="n">init</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">processes</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mix</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">imap_unordered</span><span class="p">(</span>
+                    <span class="n">opt</span><span class="p">,</span> <span class="n">initial_points</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="n">chunksize</span><span class="p">)):</span>
+                <span class="n">process</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">best</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">best</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="max_pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.max_pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">max_pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">by_role</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the maximum social welfare over the known profiles.</span>
+
+<span class="sd">    If by_role is specified, then max social welfare applies to each role</span>
+<span class="sd">    independently.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">by_role</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">game</span><span class="o">.</span><span class="n">num_complete_profiles</span><span class="p">:</span>
+            <span class="c1"># TODO technically you could have no complete profiles, but full</span>
+            <span class="c1"># payoff data for all roles</span>
+            <span class="n">welfares</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
+                <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span> <span class="o">*</span> <span class="n">game</span><span class="o">.</span><span class="n">payoffs</span><span class="p">(),</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">prof_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">welfares</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">welfares</span><span class="p">[</span><span class="n">prof_inds</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)],</span>
+                    <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[</span><span class="n">prof_inds</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">welfares</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span>
+            <span class="n">welfares</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+            <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+            <span class="n">profiles</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">welfares</span><span class="p">,</span> <span class="n">profiles</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">game</span><span class="o">.</span><span class="n">num_complete_profiles</span><span class="p">:</span>
+            <span class="n">welfares</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span> <span class="o">*</span> <span class="n">game</span><span class="o">.</span><span class="n">payoffs</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">prof_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">welfares</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">welfares</span><span class="p">[</span><span class="n">prof_ind</span><span class="p">],</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[</span><span class="n">prof_ind</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="kc">None</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

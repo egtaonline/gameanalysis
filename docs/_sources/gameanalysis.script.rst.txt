@@ -1,0 +1,110 @@
+gameanalysis\.script package
+============================
+
+Submodules
+----------
+
+gameanalysis\.script\.analyze module
+------------------------------------
+
+.. automodule:: gameanalysis.script.analyze
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.boot module
+---------------------------------
+
+.. automodule:: gameanalysis.script.boot
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.conv module
+---------------------------------
+
+.. automodule:: gameanalysis.script.conv
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.dom module
+--------------------------------
+
+.. automodule:: gameanalysis.script.dom
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.gen module
+--------------------------------
+
+.. automodule:: gameanalysis.script.gen
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.learning module
+-------------------------------------
+
+.. automodule:: gameanalysis.script.learning
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.nash module
+---------------------------------
+
+.. automodule:: gameanalysis.script.nash
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.pay module
+--------------------------------
+
+.. automodule:: gameanalysis.script.pay
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.red module
+--------------------------------
+
+.. automodule:: gameanalysis.script.red
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.reg module
+--------------------------------
+
+.. automodule:: gameanalysis.script.reg
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.sample module
+-----------------------------------
+
+.. automodule:: gameanalysis.script.sample
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gameanalysis\.script\.sub module
+--------------------------------
+
+.. automodule:: gameanalysis.script.sub
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: gameanalysis.script
+    :members:
+    :undoc-members:
+    :show-inheritance:
