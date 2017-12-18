@@ -11,6 +11,7 @@ Welcome to Game Analysis's documentation!
 
    gameanalysis
    gameanalysis.reduction
+   profile_nash
    profile_counts
    cont_approx
    endogenous_mix_eqa

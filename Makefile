@@ -8,6 +8,7 @@ help:
 	@echo "setup   - setup environment for developing"
 	@echo "test    - run the tests and print coverage"
 	@echo "check   - check code for style"
+	@echo "nash    - compute nash method profiling"
 	@echo "docs    - generate html for documentation"
 	@echo "publish - upload package to pypi"
 	@echo "clean   - remove build objects"
@@ -18,6 +19,9 @@ test:
 
 check:
 	bin/pylint $(PYLINT_ARGS) gameanalysis test
+
+nash:
+	bin/python test/profile_nash.py 10
 
 setup:
 	$(PYTHON) -m venv .
@@ -42,4 +46,4 @@ travis: PYTEST_ARGS += -n2
 travis: PYLINT_ARGS += -d fixme -j2
 travis: check test
 
-.PHONY: test check format todo setup ubuntu-reqs docs publish clean
+.PHONY: test check format todo nash setup ubuntu-reqs docs publish clean

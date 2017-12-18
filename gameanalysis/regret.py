@@ -2,6 +2,7 @@
 import numpy as np
 
 
+# FIXME Fix this to return 0 for devs to self
 def pure_strategy_deviation_gains(game, profile):
     """Returns the pure strategy deviations gains
 

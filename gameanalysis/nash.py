@@ -14,6 +14,12 @@ from gameanalysis import regret
 from gameanalysis import utils
 
 
+# FIXME Remove max updates in functions as maxs should be known ahead of time
+# FIXME Normalize game ahead of all regret methods...
+# FIXME Remove jacobian normalization, everywhere, and instead just normalize
+# it here...
+
+
 def pure_nash(game, *, epsilon=0):
     """Returns an array of all pure nash profiles"""
     eqa = [prof[None] for prof in game.profiles()
@@ -35,6 +41,7 @@ def min_regret_profile(game):
     return game.profiles()[np.nanargmin(regs)]
 
 
+# TODO Remove
 def min_regret_grid_mixture(game, points):
     """Finds the mixed profile with the confirmed lowest regret
 
@@ -51,6 +58,7 @@ def min_regret_grid_mixture(game, points):
     return mixes[np.nanargmin(regs)]
 
 
+# TODO Remove
 def min_regret_rand_mixture(game, mixtures):
     """Finds the mixed profile with the confirmed lowest regret
 
@@ -115,6 +123,69 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
 
     # Probabilities are occasionally negative
     return game.mixture_project(mix)
+
+
+# FIXME Test that this works for a game where the only correlated equilibrium
+# is also a nash, potentially one that is not symmetric.
+def regret_matching(game, profile, max_iters=10000, slack=0.1,
+                    converge_thresh=1e-8):
+    """Regret matching
+
+    Run regret matching. FIXME
+
+    Arguments
+    ---------
+    game : Game
+        The game to run replicator dynamics on. Game must support
+        `deviation_payoffs`. FIXME
+    FIXME
+    """
+    profile = np.asarray(profile, int)
+    mean_gains = np.zeros(game.num_devs)
+    mean_profile = np.zeros(game.num_strats)
+    max_devs = (game.max_strat_payoffs()[game.dev_to_indices] -
+                game.min_strat_payoffs().repeat(game.num_strat_devs))
+    mus = np.maximum.reduceat(
+        np.add.reduceat(np.maximum(max_devs, slack), game.dev_strat_starts),
+        game.role_starts) * (1 + slack) * game.num_role_players
+
+    for i in range(1, max_iters + 1):
+        update = (profile - mean_profile) / i
+        mean_profile += update
+        if linalg.norm(update) <= converge_thresh:
+            break
+        gains = regret.pure_strategy_deviation_gains(game, profile)
+        gains *= profile.repeat(game.num_strat_devs)
+
+        empirical_gains = np.maximum.reduceat(
+            np.add.reduceat(np.maximum(gains, 0), game.dev_strat_starts),
+            game.role_starts) * (1 + slack)
+        np.maximum(mus, empirical_gains, mus)
+        mean_gains += (gains - mean_gains) / i
+        new_profile = np.zeros(game.num_strats, int)
+
+        # For each strategy sample from regret matching distribution
+        # FIXME Better variable names
+        for gs, prof, nprof, mu, ns in zip(
+                np.split(mean_gains, game.dev_role_starts[1:]),
+                np.split(profile, game.role_starts[1:]),
+                np.split(new_profile, game.role_starts[1:]),
+                mus,
+                game.num_role_strats):
+            probs = np.insert(np.maximum(gs, 0), np.arange(0, ns * ns, ns),
+                              0).reshape((ns, ns))
+            probs /= mu
+            probs[np.diag_indices(ns)] = 1 - probs.sum(1)
+            for n, prob in zip(prof, probs):
+                nprof += np.random.multinomial(n, prob)
+        profile = new_profile
+
+    return mean_profile / game.num_role_players.repeat(game.num_role_strats)
+
+
+def _regret_matching_mix(game, mix, **kwargs):
+    """Regret matching that takes a mixture"""
+    return regret_matching(game, game.max_prob_prof(mix), **kwargs)
 
 
 def regret_minimize(game, mix, *, gtol=1e-8):
@@ -194,6 +265,10 @@ def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-8):
 
     In fictitious play, players continually best respond to the empirical
     distribution of their opponents at each round.
+
+    Parameters
+    ----------
+    FIXME
     """
     empirical = mix.copy()
     for i in range(2, max_iters + 2):
@@ -204,8 +279,65 @@ def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-8):
     return empirical
 
 
-# TODO Implement regret based equilibria finding, i.e. running a zero regret
-# algorithm on payoffs.
+def multiplicative_weights_dist(
+        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8):
+    """FIXME"""
+    empirical = mix.copy()
+    weights = mix.copy()
+    for i in range(2, max_iters + 2):
+        pays = game.deviation_payoffs(weights)
+        weights *= (1 + epsilon) ** pays
+        weights /= np.add.reduceat(weights, game.role_starts).repeat(
+            game.num_role_strats)
+        update = (weights - empirical) / i
+        empirical += update
+        if np.linalg.norm(update) < converge_thresh:
+            break
+    return empirical
+
+
+def multiplicative_weights_stoch(
+        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8):
+    """FIXME"""
+    empirical = mix.copy()
+    weights = mix.copy()
+    players = game.num_role_players.repeat(game.num_role_strats)
+    for i in range(2, max_iters + 2):
+        profile = game.random_profiles(None, weights)
+        pays = 0 # FIXME Appropriate thing here...
+        weights *= (1 + epsilon) ** pays
+        weights /= np.add.reduceat(weights, game.role_starts).repeat(
+            game.num_role_strats)
+        update = (profile / players - empirical) / i
+        empirical += update
+        if np.linalg.norm(update) < converge_thresh:
+            break
+    return empirical
+
+
+def multiplicative_weights_bandit(
+        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8):
+    """FIXME"""
+    empirical = mix.copy()
+    weights = mix.copy()
+    players = game.num_role_players.repeat(game.num_role_strats)
+    for i in range(2, max_iters + 2):
+        # FIXME Is this necessary
+        mix = game.trim_mixture_support(weights)
+        profile = game.random_profiles(None, mix)
+        pays = game.get_payoffs(profile)
+        supp = profile > 0
+        weights[supp] *= (1 + epsilon) ** (
+            pays[supp] * players[supp] / mix[supp])
+        weights /= np.add.reduceat(weights, game.role_starts).repeat(
+            game.num_role_strats)
+        update = (profile / players - empirical) / i
+        empirical += update
+        if np.linalg.norm(update) < converge_thresh:
+            break
+    return empirical
+
+
 # TODO Implement other equilibria finding methods that are found in gambit
 
 
@@ -256,8 +388,11 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
 _AVAILABLE_METHODS = {
     'replicator': replicator_dynamics,
     'fictitious': fictitious_play,
+    'matching': _regret_matching_mix,
     'optimize': regret_minimize,
-    'scarf': scarfs_algorithm,
+    'regret': multiplicative_weights_dist,
+    'regret_dev': multiplicative_weights_stoch,
+    'regret_pay': multiplicative_weights_bandit,
 }
 
 

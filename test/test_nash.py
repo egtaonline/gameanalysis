@@ -14,6 +14,7 @@ from gameanalysis import rsgame
 from test import utils # pylint: disable=wrong-import-order
 
 
+# FIXME Other methods?
 _METHODS = [('optimize', {}), ('replicator', {}), ('fictitious', {})]
 
 
