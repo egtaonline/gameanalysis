@@ -42,8 +42,6 @@ def comb(n, k):
         return sps.comb(n, k, True)
 
 
-# TODO This does a linear scan from an approximate lower bound. This can be
-# done with a logarithmic scan
 def comb_inv(cmb, k):
     """Return the inverse of `comb`
     
@@ -56,13 +54,27 @@ def comb_inv(cmb, k):
     na.shape = (n.size,)
     cmba = np.broadcast_to(cmb, n.size)
     ka = np.broadcast_to(k, n.size)
-    mask = ka > 0
+    step = ka.copy()
+    mask = step > 0
     na[~mask] = 0
     na[mask] = np.ceil((ka[mask] / np.e * cmba[mask] ** (1 / ka[mask])).astype(float))
-    mask[mask] = comb(na[mask] + 1, ka[mask]) <= cmba[mask]
-    while mask.any():
-        na[mask] += 1
-        mask[mask] = comb(na[mask] + 1, ka[mask]) <= cmba[mask]
+
+    # If we didn't approximate the lower bound, then there are at most k values
+    # to check. This does a poor mans binary search with some wasted effort,
+    # however for small k, it's negligible, and we should see performance
+    # benefits for large k.
+    while np.any(mask):
+        valid = comb(na[mask] + step[mask], ka[mask]) <= cmba[mask]
+        
+        inc = mask.copy()
+        inc[mask] = valid
+        na[inc] += step[inc]
+
+        red = mask.copy()
+        red[mask] = ~valid
+        step[red] //= 2
+
+        mask = step > 0
     if n.ndim == 0:
         return n.item()
     else:
