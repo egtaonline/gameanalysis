@@ -106,7 +106,7 @@ class MatrixGame(rsgame.CompleteGame):
     def get_payoffs(self, profile):
         """Returns an array of profile payoffs"""
         profile = np.asarray(profile, int)
-        ids = self.profile_id(profile)
+        ids = self.profile_to_id(profile)
         payoffs = np.zeros_like(profile, float)
         payoffs[profile > 0] = self._payoff_view[ids].flat
         return payoffs

@@ -1058,21 +1058,28 @@ def test_profile_id():
               [3, 0, 3, 0]],
              [[1, 2, 1, 2],
               [2, 1, 1, 2]]]
-    res = game.profile_id(profs)
-    assert res.shape == (3, 2)
-    assert np.all((0 <= res) & (res < game.num_all_profiles))
+    ids = game.profile_to_id(profs)
+    assert ids.shape == (3, 2)
+    assert np.all((0 <= ids) & (ids < game.num_all_profiles))
+
+    game = rsgame.emptygame(3, [1, 2])
+    prof = [3, 1, 2]
+    assert game.profile_to_id(prof) == 2
+    assert np.all(game.profile_from_id(2) == prof)
 
 
 def test_profile_id_big():
     game = rsgame.emptygame([20, 20], 20)
     profile = np.zeros(40, int)
     profile[[19, 39]] = 20
-    assert game.profile_id(profile) == 4750416376930772648099
+    assert game.profile_to_id(profile) == 4750416376930772648099
+    assert np.all(game.profile_from_id(4750416376930772648099) == profile)
 
     game = rsgame.emptygame(40, 40)
     profile = np.zeros(40, int)
     profile[39] = 40
-    assert game.profile_id(profile) == 53753604366668088230809
+    assert game.profile_to_id(profile) == 53753604366668088230809
+    assert np.all(game.profile_from_id(53753604366668088230809) == profile)
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
@@ -1081,7 +1088,7 @@ def test_random_profile_id(role_players, role_strats):
     # order of id
     game = rsgame.emptygame(role_players, role_strats)
     expected = np.arange(game.num_all_profiles)
-    actual = game.profile_id(game.all_profiles())
+    actual = game.profile_to_id(game.all_profiles())
     assert np.all(expected == actual)
 
 
@@ -1090,7 +1097,7 @@ def test_big_game_functions():
     game = rsgame.emptygame([100, 100], [30, 30])
     assert game.num_all_profiles > np.iinfo(int).max
     assert game.num_all_dpr_profiles > np.iinfo(int).max
-    assert np.all(game.profile_id(game.random_profiles(1000)) >= 0)
+    assert np.all(game.profile_to_id(game.random_profiles(1000)) >= 0)
 
 
 def test_is_profile():

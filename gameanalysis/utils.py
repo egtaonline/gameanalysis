@@ -25,6 +25,11 @@ def prod(collection):
 
 
 def comb(n, k):
+    """Return n choose k
+
+    This function works on arrays, and will properly return a python integer
+    object if the number is too large to be stored in a 64 bit integer.
+    """
     res = np.rint(sps.comb(n, k, False))
     if np.all(res < _MAX_INT_FLOAT):
         return res.astype(int)
@@ -37,9 +42,46 @@ def comb(n, k):
         return sps.comb(n, k, True)
 
 
+# TODO This does a linear scan from an approximate lower bound. This can be
+# done with a logarithmic scan
+def comb_inv(cmb, k):
+    """Return the inverse of `comb`
+    
+    Given a number of combinations, and the size of subset we're choosing,
+    compute the integer lower bound, i.e. return n* such that `comb(n*, k) <=
+    cmb < comb(n* + 1, k)`.
+    """
+    n = np.empty(np.broadcast(cmb, k).shape, int)
+    na = n.view()
+    na.shape = (n.size,)
+    cmba = np.broadcast_to(cmb, n.size)
+    ka = np.broadcast_to(k, n.size)
+    mask = ka > 0
+    na[~mask] = 0
+    na[mask] = np.ceil((ka[mask] / np.e * cmba[mask] ** (1 / ka[mask])).astype(float))
+    mask[mask] = comb(na[mask] + 1, ka[mask]) <= cmba[mask]
+    while mask.any():
+        na[mask] += 1
+        mask[mask] = comb(na[mask] + 1, ka[mask]) <= cmba[mask]
+    if n.ndim == 0:
+        return n.item()
+    else:
+        return n
+
+
 def game_size(players, strategies):
     """Number of profiles in a symmetric game with players and strategies"""
-    return comb(players + strategies - 1, players)
+    return comb(np.asarray(players) + strategies - 1, players)
+
+
+def game_size_inv(size, players):
+    """Inverse of game_size
+    
+    Given a game size and a number of players, return a lower bound on the
+    number of strategies s* such that game_size(players, s*) <= size <
+    game_size(players, s* + 1)`.
+    """
+    return comb_inv(size, players) - players + 1
 
 
 def only(iterable):

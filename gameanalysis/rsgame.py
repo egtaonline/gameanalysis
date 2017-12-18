@@ -93,6 +93,11 @@ class StratArray(object):
 
     @property
     @utils.memoize
+    def role_ends(self):
+        return np.append(self.role_starts[1:], self.num_strats) - 1
+
+    @property
+    @utils.memoize
     def role_strat_names(self):
         return tuple(itertools.chain.from_iterable(
             ((r, s) for s in ses) for r, ses
@@ -927,21 +932,53 @@ class RsGame(StratArray):
             rprofs = rprofs.astype(object)
         return np.insert(rprofs[:0:-1].cumprod()[::-1], self.num_roles - 1, 1)
 
-    # TODO Implement inverse
+    @property
+    @utils.memoize
+    def _id_play(self):
+        rev = -np.ones(self.num_strats, int)
+        rev[self.role_starts] += self.num_role_strats
+        return rev.cumsum()
+
+    # TODO Remove in next version
+    @utils.deprecated
     def profile_id(self, profiles):
+        return self.profile_to_id(profiles)
+
+    def profile_to_id(self, profiles):
         """Return a unique integer representing a profile"""
         profiles = -np.asarray(profiles, int)
         profiles[..., self.role_starts] += self.num_role_players
         profiles = profiles.cumsum(-1)
-        rev_arange = -np.ones(self.num_strats, int)
-        rev_arange[self.role_starts] += self.num_role_strats
-        rev_arange = rev_arange.cumsum()
-        sizes = utils.game_size(rev_arange, profiles)
+        sizes = utils.game_size(self._id_play, profiles)
+        sizes[..., self.role_ends]
         if self.num_all_profiles > np.iinfo(int).max:
             sizes = sizes.astype(object)
 
         return np.add.reduceat(sizes, self.role_starts, -1).dot(
             self._prof_id_base)
+
+    def profile_from_id(self, ids):
+        """Return a profile from its integer representation"""
+        ids = np.asarray(ids)
+        role_ids = ids[..., None] // self._prof_id_base % self.num_all_role_profiles
+        dec_profs = np.zeros(ids.shape + (self.num_strats,), int)
+
+        role_ids_iter = role_ids.view()
+        role_ids_iter.shape = (-1, self.num_roles)
+        dec_profs_iter = dec_profs.view()
+        dec_profs_iter.shape = (-1, self.num_strats)
+
+        # XXX This can't be vectroized further, because the sizes are dependent
+        for sizes, profs in zip(
+                role_ids_iter.T, np.split(dec_profs_iter.T, self.role_starts[1:])):
+            for prof, n in zip(profs[:-1], range(profs.shape[0] - 1, 0, -1)):
+                np.copyto(prof, utils.game_size_inv(sizes, n))
+                sizes -= utils.game_size(n, prof)
+        profiles = np.delete(np.diff(
+            np.insert(dec_profs, self.role_starts, 0, -1),
+            1, -1), self.role_starts[1:], -1)
+        profiles[..., self.role_starts] -= self.num_role_players
+        return -profiles
 
     def expected_payoffs(self, mix, *, jacobian=False, deviations=None):
         """Returns the payoff of each role under mixture
