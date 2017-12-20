@@ -1067,6 +1067,10 @@ def test_profile_id():
     assert game.profile_to_id(prof) == 2
     assert np.all(game.profile_from_id(2) == prof)
 
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DeprecationWarning)
+        assert game.profile_id(prof) == 2
+
 
 def test_profile_id_big():
     game = rsgame.emptygame([20, 20], 20)

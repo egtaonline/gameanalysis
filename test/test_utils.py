@@ -18,13 +18,15 @@ def test_comb():
     assert utils.comb(100, 10) == 17310309456440
     assert utils.comb(100, 20) == 535983370403809682970
     assert utils.comb([100], 20)[0] == 535983370403809682970
-    assert np.all(utils.comb(100, [10, 20]) == [17310309456440, 535983370403809682970])
+    assert np.all(utils.comb(100, [10, 20]) ==
+                  [17310309456440, 535983370403809682970])
     assert utils.comb_inv(535983370403809682970, 20) == 100
     combs = utils.comb(100, [0, 1, 2, 10])
     # k of 0 is unrecoverable, so it must return 0
     assert np.all(utils.comb_inv(combs, [0, 1, 2, 10]) == [0, 100, 100, 100])
     combs = utils.comb([0, 1, 3, 5, 3, 2], [0, 0, 2, 2, 3, 1])
-    assert np.all(utils.comb_inv(combs, [0, 0, 2, 2, 3, 1]) == [0, 0, 3, 5, 3, 2])
+    assert np.all(utils.comb_inv(combs, [0, 0, 2, 2, 3, 1]) ==
+                  [0, 0, 3, 5, 3, 2])
     assert np.all(utils.comb_inv(100, [1, 2, 5, 10]) == [100, 14, 8, 12])
 
 
@@ -41,13 +43,20 @@ def test_only():
 
 def test_game_size():
     assert utils.game_size(2000, 10) == 1442989326579174917694151
-    assert np.all(utils.game_size([10, 20, 100], 10) == [92378, 10015005, 4263421511271])
-    assert np.all(utils.game_size(10, [10, 20, 100]) == [92378, 20030010, 42634215112710])
-    assert np.all(utils.game_size([100, 20, 10], [10, 20, 100]) == [4263421511271, 68923264410, 42634215112710])
+    assert np.all(utils.game_size([10, 20, 100], 10) ==
+                  [92378, 10015005, 4263421511271])
+    assert np.all(utils.game_size(10, [10, 20, 100]) ==
+                  [92378, 20030010, 42634215112710])
+    assert np.all(utils.game_size([100, 20, 10], [10, 20, 100]) ==
+                  [4263421511271, 68923264410, 42634215112710])
     assert utils.game_size_inv(1442989326579174917694151, 2000) == 10
-    assert np.all(utils.game_size_inv([92378, 10015005, 4263421511271], [10, 20, 100]) == 10)
-    assert np.all(utils.game_size_inv([92378, 20030010, 42634215112710], 10) == [10, 20, 100])
-    assert np.all(utils.game_size_inv([4263421511271, 68923264410, 42634215112710], [100, 20, 10]) == [10, 20, 100])
+    assert np.all(utils.game_size_inv(
+        [92378, 10015005, 4263421511271], [10, 20, 100]) == 10)
+    assert np.all(utils.game_size_inv(
+        [92378, 20030010, 42634215112710], 10) == [10, 20, 100])
+    assert np.all(utils.game_size_inv(
+        [4263421511271, 68923264410, 42634215112710],
+        [100, 20, 10]) == [10, 20, 100])
     assert np.all(utils.game_size_inv(100, [1, 5, 20]) == [100, 4, 2])
 
 

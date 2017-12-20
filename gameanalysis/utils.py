@@ -44,7 +44,7 @@ def comb(n, k):
 
 def comb_inv(cmb, k):
     """Return the inverse of `comb`
-    
+
     Given a number of combinations, and the size of subset we're choosing,
     compute the integer lower bound, i.e. return n* such that `comb(n*, k) <=
     cmb < comb(n* + 1, k)`.
@@ -57,15 +57,16 @@ def comb_inv(cmb, k):
     step = ka.copy()
     mask = step > 0
     na[~mask] = 0
-    na[mask] = np.ceil((ka[mask] / np.e * cmba[mask] ** (1 / ka[mask])).astype(float))
+    na[mask] = np.ceil((ka[mask] / np.e *
+                        cmba[mask] ** (1 / ka[mask])).astype(float))
 
     # If we didn't approximate the lower bound, then there are at most k values
     # to check. This does a poor mans binary search with some wasted effort,
-    # however for small k, it's negligible, and we should see performance
-    # benefits for large k.
+    # however for small k, it's negligible, and we see performance improvements
+    # over linear search in general.
     while np.any(mask):
         valid = comb(na[mask] + step[mask], ka[mask]) <= cmba[mask]
-        
+
         inc = mask.copy()
         inc[mask] = valid
         na[inc] += step[inc]
@@ -88,7 +89,7 @@ def game_size(players, strategies):
 
 def game_size_inv(size, players):
     """Inverse of game_size
-    
+
     Given a game size and a number of players, return a lower bound on the
     number of strategies s* such that game_size(players, s*) <= size <
     game_size(players, s* + 1)`.

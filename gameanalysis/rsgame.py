@@ -960,7 +960,8 @@ class RsGame(StratArray):
     def profile_from_id(self, ids):
         """Return a profile from its integer representation"""
         ids = np.asarray(ids)
-        role_ids = ids[..., None] // self._prof_id_base % self.num_all_role_profiles
+        role_ids = (ids[..., None] // self._prof_id_base %
+                    self.num_all_role_profiles)
         dec_profs = np.zeros(ids.shape + (self.num_strats,), int)
 
         role_ids_iter = role_ids.view()
@@ -970,7 +971,8 @@ class RsGame(StratArray):
 
         # XXX This can't be vectroized further, because the sizes are dependent
         for sizes, profs in zip(
-                role_ids_iter.T, np.split(dec_profs_iter.T, self.role_starts[1:])):
+                role_ids_iter.T,
+                np.split(dec_profs_iter.T, self.role_starts[1:])):
             for prof, n in zip(profs[:-1], range(profs.shape[0] - 1, 0, -1)):
                 np.copyto(prof, utils.game_size_inv(sizes, n))
                 sizes -= utils.game_size(n, prof)
