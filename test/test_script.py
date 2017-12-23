@@ -185,7 +185,7 @@ def test_nash_3():
     success, out, err = run('nash', '-tpure', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
-        np.all(HARD_GAME_DATA.from_prof_json(prof) ==
+        np.all(HARD_GAME_DATA.profile_from_json(prof) ==
                [4, 2, 0, 0, 0, 1, 0, 0, 0])
         for prof in json.loads(out))
 
@@ -194,7 +194,7 @@ def test_nash_4():
     success, out, err = run('nash', '-tmin-reg-prof', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
-        np.all(HARD_GAME_DATA.from_prof_json(prof) ==
+        np.all(HARD_GAME_DATA.profile_from_json(prof) ==
                [4, 2, 0, 0, 0, 1, 0, 0, 0])
         for prof in json.loads(out))
 
@@ -203,7 +203,7 @@ def test_nash_5():
     success, out, err = run('nash', '-tmin-reg-grid', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
-        np.allclose(HARD_GAME_DATA.from_mix_json(
+        np.allclose(HARD_GAME_DATA.mixture_from_json(
             mix), [0, 1, 0, 0, 0, 1, 0, 0, 0])
         for mix in json.loads(out))
 
@@ -216,7 +216,7 @@ def test_nash_6():
                                 '-m10', '-i', game.name)
     assert success, err
     for mix in json.loads(out):
-        GAME_DATA.from_mix_json(mix)
+        GAME_DATA.mixture_from_json(mix)
 
 
 def test_nash_7():
@@ -226,7 +226,7 @@ def test_nash_7():
         success, out, err = run('nash', '-trand', '-m10', '-i', game.name)
     assert success, err
     for mix in json.loads(out):
-        GAME_DATA.from_mix_json(mix)
+        GAME_DATA.mixture_from_json(mix)
 
 
 def test_nash_8():
@@ -292,7 +292,7 @@ def test_payoff_pure_single():
         pure.flush()
         success, out, err = run('pay', '-i', HARD_GAME, pure.name)
         assert success, err
-        assert np.allclose(HARD_GAME_DATA.from_payoff_json(json.loads(out)[0]),
+        assert np.allclose(HARD_GAME_DATA.payoff_from_json(json.loads(out)[0]),
                            [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
@@ -305,7 +305,7 @@ def test_payoff_pure_string():
     profstr = json.dumps(prof)
     success, out, err = run('pay', '-i', HARD_GAME, profstr)
     assert success, err
-    assert np.allclose(HARD_GAME_DATA.from_payoff_json(json.loads(out)[0]),
+    assert np.allclose(HARD_GAME_DATA.payoff_from_json(json.loads(out)[0]),
                        [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
@@ -398,7 +398,7 @@ def test_regret_mixed():
 
         success, out, err = run('reg', mixed.name, '-tgains', '-i', HARD_GAME)
         assert success, err
-        assert np.allclose(HARD_GAME_DATA.from_payoff_json(json.loads(out)[0]),
+        assert np.allclose(HARD_GAME_DATA.payoff_from_json(json.loads(out)[0]),
                            [581.18996992, 0., 0., 4696.19261, 3716.207196,
                             7747.618428, 4569.842172, 4191.665254,
                             4353.146694])
@@ -420,7 +420,7 @@ def test_regret_single():
 def test_subgame_detect():
     success, out, err = run('sub', '-nd', '-i', HARD_GAME)
     assert success, err
-    assert HARD_GAME_DATA.from_subgame_json(json.loads(out)[0]).all()
+    assert HARD_GAME_DATA.subgame_from_json(json.loads(out)[0]).all()
 
 
 def test_subgame_extract_1():
@@ -434,7 +434,7 @@ def test_subgame_extract_1():
                                   False, False, False]),
                 utils.hash_array([True, False, False,  True,  True, False,
                                   False, False, False])}
-    assert {utils.hash_array(HARD_GAME_DATA.from_subgame_json(s))
+    assert {utils.hash_array(HARD_GAME_DATA.subgame_from_json(s))
             for s in json.loads(out)} == expected
 
 
@@ -444,7 +444,7 @@ def test_subgame_extract_2():
         game.write(GAME_STR)
         game.flush()
         subg = [False, True, True, True, False]
-        json.dump([GAME_DATA.to_subgame_json(subg)], sub)
+        json.dump([GAME_DATA.subgame_to_json(subg)], sub)
         sub.flush()
         success, out, err = run('sub', '-i', game.name, '-f', sub.name)
         assert success, err
@@ -719,7 +719,7 @@ def test_boot_1():
         json.dump(sgame.to_json(), game)
         game.flush()
 
-        profs = [sgame.to_prof_json(sgame.uniform_mixture())]
+        profs = [sgame.profile_to_json(sgame.uniform_mixture())]
         json.dump(profs, mixed)
         mixed.flush()
 
@@ -732,7 +732,7 @@ def test_boot_2():
                                   20)
         game_str = json.dumps(sgame.to_json())
 
-        profs = [sgame.to_prof_json(sgame.random_profiles())]
+        profs = [sgame.profile_to_json(sgame.random_profile())]
         json.dump(profs, mixed)
         mixed.flush()
 
@@ -751,7 +751,7 @@ def test_boot_3():
                                   20)
         game_str = json.dumps(sgame.to_json())
 
-        profs = [sgame.to_prof_json(sgame.random_profiles())]
+        profs = [sgame.profile_to_json(sgame.random_profile())]
         json.dump(profs, mixed)
         mixed.flush()
 
@@ -775,7 +775,7 @@ def test_samp():
         mixed.flush()
         success, out, err = run('samp', '-i', HARD_GAME, '-m', mixed.name)
         assert success, err
-        prof = HARD_GAME_DATA.from_prof_json(json.loads(out))
+        prof = HARD_GAME_DATA.profile_from_json(json.loads(out))
         assert HARD_GAME_DATA.is_profile(prof)
 
 
@@ -794,7 +794,7 @@ def test_samp_seed():
             '1234')
         assert success, err
         for line in out1[:-1].split('\n'):
-            prof = HARD_GAME_DATA.from_prof_json(json.loads(line))
+            prof = HARD_GAME_DATA.profile_from_json(json.loads(line))
             assert HARD_GAME_DATA.is_profile(prof)
 
         # Setting seed produces identical output

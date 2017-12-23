@@ -85,7 +85,7 @@ def main(args):
             len(equilibria), 'um' if len(equilibria) == 1 else 'a'))
         for i, (eqm, reg) in enumerate(equilibria, 1):
             args.output.write('Equilibrium {:d}:\n'.format(i))
-            args.output.write(game.to_mix_str(eqm))
+            args.output.write(game.mixture_to_str(eqm))
             args.output.write('\nRegret: {:.4f}\n\n'.format(reg))
     else:
         args.output.write('Found no equilibria\n\n')
@@ -95,6 +95,6 @@ def main(args):
     args.output.write('Json Data\n')
     args.output.write('=========\n')
     json_data = {
-        'equilibria': [game.to_mix_json(eqm) for eqm, _ in equilibria]}
+        'equilibria': [game.mixture_to_json(eqm) for eqm, _ in equilibria]}
     json.dump(json_data, args.output)
     args.output.write('\n')

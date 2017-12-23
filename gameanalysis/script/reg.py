@@ -34,10 +34,10 @@ def gains(game, prof):
     if is_pure_profile(game, prof):
         prof = np.asarray(prof, int)
         gains = regret.pure_strategy_deviation_gains(game, prof)
-        return game.to_dev_payoff_json(gains, prof)
+        return game.devpay_to_json(gains, prof)
     else:
         gains = regret.mixture_deviation_gains(game, prof)
-        return game.to_payoff_json(gains)
+        return game.payoff_to_json(gains)
 
 
 TYPE = {
@@ -74,7 +74,7 @@ def add_parser(subparsers):
 def main(args):
     game = gamereader.read(json.load(args.input))
     prof_func = TYPE[args.type]
-    regrets = [prof_func(game, game.from_mix_json(prof, verify=False))
+    regrets = [prof_func(game, game.mixture_from_json(prof, verify=False))
                for prof in scriptutils.load_profiles(args.profiles)]
     json.dump(regrets, args.output)
     args.output.write('\n')

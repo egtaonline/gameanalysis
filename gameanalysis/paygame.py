@@ -229,7 +229,12 @@ class Game(rsgame.RsGame):
         return (utils.hash_array(np.asarray(profile, int))
                 in self._complete_profiles)
 
+    # TODO Remove
+    @utils.deprecated
     def from_prof_json(self, prof, dest=None, verify=True):
+        return self.profile_from_json(prof, dest, verify=verify)
+
+    def profile_from_json(self, prof, dest=None, *, verify=True):
         """Read a profile from json
 
         A profile is an assignment from role-strategy pairs to counts. This
@@ -253,16 +258,21 @@ class Game(rsgame.RsGame):
 
         try:
             # To parse as format that contains both data types
-            self.from_profpay_json(prof, dest_prof=dest, verify=False)
+            self.profpay_from_json(prof, dest_prof=dest, verify=False)
         except ValueError:
             # Only remaining format is straight dictionary
-            super().from_prof_json(prof, dest=dest, verify=False)
+            super().profile_from_json(prof, dest=dest, verify=False)
 
         assert not verify or self.is_profile(dest), \
             "\"{}\" is not a valid profile".format(prof)
         return dest
 
+    # TODO
+    @utils.deprecated
     def from_payoff_json(self, pays, dest=None, verify=True):
+        return self.payoff_from_json(pays, dest, verify=verify)
+
+    def payoff_from_json(self, pays, dest=None, *, verify=True):
         """Read a set of payoffs from json
 
         Parameters
@@ -279,14 +289,21 @@ class Game(rsgame.RsGame):
 
         try:
             # To parse as format that contains both data types
-            self.from_profpay_json(pays, dest_pays=dest, verify=verify)
+            self.profpay_from_json(pays, dest_pays=dest, verify=verify)
         except ValueError:
             # Only remaining format is straight dictionary
-            super().from_payoff_json(pays, dest=dest)
+            super().payoff_from_json(pays, dest=dest)
 
         return dest
 
+    # TODO Remove
+    @utils.deprecated
     def from_profpay_json(self, prof, dest_prof=None, dest_pays=None,
+                          verify=True):
+        return self.profpay_from_json(
+            prof, dest_prof, dest_pays, verify=verify)
+
+    def profpay_from_json(self, prof, dest_prof=None, dest_pays=None, *,
                           verify=True):
         """Read json as a profile and a payoff"""
         if dest_prof is None:
@@ -371,7 +388,12 @@ class Game(rsgame.RsGame):
             "\"{}\" does not define a valid profile".format(prof)
         return dest_prof, dest_pays
 
+    # TODO Remove
+    @utils.deprecated
     def to_profpay_json(self, payoffs, prof):
+        return self.profpay_to_json(payoffs, prof)
+
+    def profpay_to_json(self, payoffs, prof):
         """Format a profile and payoffs as json"""
         return {role: [(strat, int(count), float(pay)) for strat, count, pay
                        in zip(strats, counts, pays) if count > 0]
@@ -400,7 +422,7 @@ class Game(rsgame.RsGame):
     def to_json(self):
         """Fromat a Game as json"""
         res = super().to_json()
-        res['profiles'] = [self.to_profpay_json(pay, prof) for prof, pay
+        res['profiles'] = [self.profpay_to_json(pay, prof) for prof, pay
                            in zip(self._profiles, self._payoffs)]
         res['type'] = 'game.1'
         return res
@@ -476,7 +498,7 @@ def game_json(json):
     profs = np.empty((num_profs, base.num_strats), int)
     pays = np.empty((num_profs, base.num_strats), float)
     for profj, prof, pay in zip(profiles, profs, pays):
-        base.from_profpay_json(profj, prof, pay)
+        base.profpay_from_json(profj, prof, pay)
     return game_replace(base, profs, pays)
 
 
@@ -722,7 +744,12 @@ class SampleGame(Game):
         return SampleGame(base.role_names, base.strat_names,
                           base.num_role_players, profiles, sample_payoffs)
 
+    # TODO Remove
+    @utils.deprecated
     def from_samplepay_json(self, prof, dest=None):
+        return self.samplepay_from_json(prof, dest)
+
+    def samplepay_from_json(self, prof, dest=None):
         """Read a set of payoff samples
 
         Parameters
@@ -737,7 +764,7 @@ class SampleGame(Game):
         """
         try:
             # samplepay format with profile too
-            _, dest = self.from_profsamplepay_json(prof, dest_samplepay=dest)
+            _, dest = self.profsamplepay_from_json(prof, dest_samplepay=dest)
 
         except ValueError:
             # Must be {role: {strat: [pay]}}
@@ -758,7 +785,12 @@ class SampleGame(Game):
 
         return dest
 
+    # TODO Remove
+    @utils.deprecated
     def to_samplepay_json(self, samplepay, prof=None):
+        return self.samplepay_to_json(samplepay, prof)
+
+    def samplepay_to_json(self, samplepay, prof=None):
         """Format sample payoffs as json
 
         If prof is specified, the resulting json will omit payoffs for
@@ -773,7 +805,13 @@ class SampleGame(Game):
                        np.split(prof, self.role_starts[1:]),
                        np.split(samplepay, self.role_starts[1:], 1))}
 
+    # TODO Remove
+    @utils.deprecated
     def from_profsamplepay_json(self, prof, dest_prof=None,
+                                dest_samplepay=None):
+        return self.profsamplepay_from_json(prof, dest_prof, dest_samplepay)
+
+    def profsamplepay_from_json(self, prof, dest_prof=None,
                                 dest_samplepay=None):
         """Convert json into a profile and an observation"""
         if dest_prof is None:
@@ -854,7 +892,12 @@ class SampleGame(Game):
 
         return dest_prof, dest
 
+    # TODO Remove
+    @utils.deprecated
     def to_profsamplepay_json(self, samplepay, prof):
+        return self.profsamplepay_to_json(samplepay, prof)
+
+    def profsamplepay_to_json(self, samplepay, prof):
         """Convery profile and observations to prof obs output"""
         return {role: [(strat, int(count), list(map(float, pay)))
                        for strat, count, pay
@@ -881,7 +924,7 @@ class SampleGame(Game):
         """Fromat a SampleGame as json"""
         res = super().to_json()
         res['profiles'] = [
-            self.to_profsamplepay_json(pay, prof) for prof, pay
+            self.profsamplepay_to_json(pay, prof) for prof, pay
             in zip(self._profiles,
                    itertools.chain.from_iterable(self._sample_payoffs))]
         res['type'] = 'samplegame.1'
@@ -973,7 +1016,7 @@ def samplegame_json(json):
 
     sample_map = {}
     for profile in profiles:
-        prof, spay = base.from_profsamplepay_json(profile)
+        prof, spay = base.profsamplepay_from_json(profile)
         num_samps = spay.shape[0]
         profls, payls = sample_map.setdefault(num_samps, ([], []))
         profls.append(prof[None])

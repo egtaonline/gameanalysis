@@ -89,7 +89,7 @@ def test_random_compress_profiles(strats):
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
 
-    prof = matg.random_profiles()
+    prof = matg.random_profile()
     copy_prof = matg.uncompress_profile(matg.compress_profile(prof))
     assert np.all(prof == copy_prof)
 
@@ -147,12 +147,12 @@ def test_random_deviations(strats):
     matg = matgame.matgame(payoffs)
     game = paygame.game_copy(matg)
 
-    mix = matg.random_mixtures()
+    mix = matg.random_mixture()
     matdev = matg.deviation_payoffs(mix)
     gamedev = game.deviation_payoffs(mix)
     assert np.allclose(matdev, gamedev)
 
-    mix = matg.random_mixtures()
+    mix = matg.random_mixture()
     matdev, matjac = matg.deviation_payoffs(mix, jacobian=True)
     gamedev, gamejac = game.deviation_payoffs(mix, jacobian=True)
     assert np.allclose(matdev, gamedev)
@@ -178,7 +178,7 @@ def test_random_invariants(strats):
     assert not matg.is_empty()
     assert matg.is_complete()
 
-    prof = matg.random_profiles()
+    prof = matg.random_profile()
     assert prof in matg
     for prof in matg.random_profiles(20):
         assert prof in matg

@@ -439,7 +439,7 @@ class SampleDeviationGame(_DeviationGame):
         # TODO It could be possible to set the random seed each time we get
         # samples in a way that makes this somewhat smooth.
         assert not jacobian, "SampleEVs doesn't support jacobian"
-        profs = self.random_dev_profiles(mix, self._num_samples)
+        profs = self.random_role_deviation_profiles(self._num_samples, mix)
         return self._model.get_mean_dev_payoffs(profs)
 
     def subgame(self, sub_mask):

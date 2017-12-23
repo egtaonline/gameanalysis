@@ -241,17 +241,17 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
         `game.num_strats - game.num_roles + 1` possible starting points.
     """
     def eqa_func(mixture):
-        mixture = game.from_simplex(mixture)
+        mixture = game.mixture_from_simplex(mixture)
         gains = np.maximum(regret.mixture_deviation_gains(game, mixture), 0)
         result = (mixture + gains) / (1 + np.add.reduceat(
             gains, game.role_starts).repeat(game.num_role_strats))
-        return game.to_simplex(result)
+        return game.mixture_to_simplex(result)
 
     disc = min(disc, 8)
     reg = regret.mixture_regret(game, mix)
     while reg > regret_thresh:
-        mix = game.from_simplex(fixedpoint.fixed_point(
-            eqa_func, game.to_simplex(mix), disc=disc))
+        mix = game.mixture_from_simplex(fixedpoint.fixed_point(
+            eqa_func, game.mixture_to_simplex(mix), disc=disc))
         reg = regret.mixture_regret(game, mix)
         disc *= 2
 

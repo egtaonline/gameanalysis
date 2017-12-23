@@ -16,7 +16,7 @@ def test_rbfgame_members():
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
     reggame = learning.rbfgame_train(game)
 
-    prof = reggame.random_profiles()
+    prof = reggame.random_profile()
     assert prof.shape == (game.num_strats,)
     pay = reggame.get_payoffs(prof)
     assert prof.shape == pay.shape
@@ -28,13 +28,13 @@ def test_rbfgame_members():
     assert profs.shape == pays.shape
     assert np.all((profs > 0) | (pays == 0))
 
-    mix = reggame.random_mixtures()
-    dev_prof = reggame.random_dev_profiles(mix)
+    mix = reggame.random_mixture()
+    dev_prof = reggame.random_role_deviation_profile(mix)
     assert dev_prof.shape == (game.num_roles, game.num_strats)
     pay = reggame.get_mean_dev_payoffs(dev_prof)
     assert pay.shape == (game.num_strats,)
 
-    dev_profs = reggame.random_dev_profiles(mix, 20)
+    dev_profs = reggame.random_role_deviation_profiles(20, mix)
     assert dev_profs.shape == (20, game.num_roles, game.num_strats)
     pay = reggame.get_mean_dev_payoffs(dev_profs)
     assert pay.shape == (game.num_strats,)
@@ -57,9 +57,9 @@ def test_nntrain():
         reggame = learning.nngame_train(game)
     assert np.all((reggame.profiles() > 0) | (reggame.payoffs() == 0))
     assert not np.any(np.isnan(reggame.get_payoffs(
-        reggame.random_profiles())))
+        reggame.random_profile())))
     assert not np.any(np.isnan(reggame.get_mean_dev_payoffs(
-        reggame.random_dev_profiles(reggame.random_mixtures()))))
+        reggame.random_role_deviation_profile())))
 
 
 def test_nntrain_no_dropout():
@@ -70,9 +70,9 @@ def test_nntrain_no_dropout():
         reggame = learning.nngame_train(game, dropout=0)
     assert np.all((reggame.profiles() > 0) | (reggame.payoffs() == 0))
     assert not np.any(np.isnan(reggame.get_payoffs(
-        reggame.random_profiles())))
+        reggame.random_profile())))
     assert not np.any(np.isnan(reggame.get_mean_dev_payoffs(
-        reggame.random_dev_profiles(reggame.random_mixtures()))))
+        reggame.random_role_deviation_profile())))
 
 
 def test_skltrain():
@@ -82,9 +82,9 @@ def test_skltrain():
     reggame = learning.sklgame_train(game, model)
     assert np.all((reggame.profiles() > 0) | (reggame.payoffs() == 0))
     assert not np.any(np.isnan(reggame.get_payoffs(
-        reggame.random_profiles())))
+        reggame.random_profile())))
     assert not np.any(np.isnan(reggame.get_mean_dev_payoffs(
-        reggame.random_dev_profiles(reggame.random_mixtures()))))
+        reggame.random_role_deviation_profile())))
 
 
 # TODO Test other sizes
@@ -93,7 +93,7 @@ def test_rbfgame_subgame(_):
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
     reggame = learning.rbfgame_train(game)
 
-    sub_mask = game.random_subgames()
+    sub_mask = game.random_subgame()
     subreg = reggame.subgame(sub_mask)
 
     subpays = subreg.payoffs()
@@ -101,8 +101,8 @@ def test_rbfgame_subgame(_):
         subreg.profiles(), sub_mask))[:, sub_mask]
     assert np.allclose(subpays, fullpays)
 
-    mix = subreg.random_mixtures()
-    sub_dev_profs = subreg.random_dev_profiles(mix, 20)
+    mix = subreg.random_mixture()
+    sub_dev_profs = subreg.random_role_deviation_profiles(20, mix)
     sub_pays = subreg.get_mean_dev_payoffs(sub_dev_profs)
     pays = reggame.get_mean_dev_payoffs(subgame.translate(
         sub_dev_profs, sub_mask))[sub_mask]
@@ -121,7 +121,7 @@ def test_rbfgame_subgame(_):
     assert subreg._max_payoffs.shape == (subreg.num_strats,)
     assert subreg._sub_mask.shape == (game.num_strats,)
 
-    subsubmask = subreg.random_subgames()
+    subsubmask = subreg.random_subgame()
     subsubreg = subreg.subgame(subsubmask)
 
     assert len(subsubreg._regressors) == subsubreg.num_strats
@@ -155,8 +155,8 @@ def test_rbfgame_normalize(_):
     norm_pays[reggame.profiles() == 0] = 0
     assert np.allclose(reg_pays, norm_pays)
 
-    mix = game.random_mixtures()
-    dev_profs = reggame.random_dev_profiles(mix, 20)
+    mix = game.random_mixture()
+    dev_profs = reggame.random_role_deviation_profiles(20, mix)
     reg_pays = reggame.get_mean_dev_payoffs(dev_profs)
     norm_pays = normreg.get_mean_dev_payoffs(dev_profs) * scale + offset
     assert np.allclose(reg_pays, norm_pays)
@@ -176,7 +176,7 @@ def test_sample(_):
         errors += (avg_err - errors) / i
     assert np.all(avg_err < 0.1)
 
-    submask = game.random_subgames()
+    submask = game.random_subgame()
     subreg = reggame.subgame(submask)
     subfull = full.subgame(submask)
     assert np.allclose(subreg.get_payoffs(subfull.profiles()),
@@ -203,7 +203,7 @@ def test_point(_):
         errors += (avg_err - errors) / i
     assert np.all(avg_err < 0.1)
 
-    submask = game.random_subgames()
+    submask = game.random_subgame()
     subreg = reggame.subgame(submask)
     subfull = full.subgame(submask)
     assert np.allclose(subreg.get_payoffs(subfull.profiles()),
@@ -230,7 +230,7 @@ def test_neighbor(_):
         errors += (avg_err - errors) / i
     assert np.all(avg_err < 0.1)
 
-    submask = game.random_subgames()
+    submask = game.random_subgame()
     subreg = reggame.subgame(submask)
     subfull = full.subgame(submask)
     assert np.allclose(subreg.get_payoffs(subfull.profiles()),

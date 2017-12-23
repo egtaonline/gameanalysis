@@ -94,14 +94,14 @@ def main(args):
         subgames.extend(subgame.maximal_subgames(game))
 
     for sub_file in args.subgame_file:
-        subgames.extend(game.from_subgame_json(spec)
+        subgames.extend(game.subgame_from_json(spec)
                         for spec in json.load(sub_file))
 
     subgames.extend(parse_text_spec(game, spec) for spec in args.text_spec)
     subgames.extend(parse_index_spec(game, spec) for spec in args.index_spec)
 
     if args.no_extract:
-        json.dump([game.to_subgame_json(sub) for sub in subgames], args.output)
+        json.dump([game.subgame_to_json(sub) for sub in subgames], args.output)
     else:
         json.dump([game.subgame(sub).to_json() for sub in subgames],
                   args.output)

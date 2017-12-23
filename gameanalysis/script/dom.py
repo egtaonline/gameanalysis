@@ -41,7 +41,7 @@ def main(args):
     sub_mask = dominance.iterated_elimination(
         game, args.criterion, conditional=args.unconditional)
     if args.strategies:
-        json.dump(game.to_subgame_json(sub_mask), args.output)
+        json.dump(game.subgame_to_json(sub_mask), args.output)
     else:
         json.dump(game.subgame(sub_mask).to_json(), args.output)
 

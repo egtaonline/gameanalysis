@@ -171,7 +171,7 @@ def main(args):
         if num:
             args.output.write('Found {:d} dominated strateg{}\n'.format(
                 num, 'y' if num == 1 else 'ies'))
-            args.output.write(game.to_subgame_str(~domsub))
+            args.output.write(game.subgame_to_str(~domsub))
             args.output.write('\n\n')
         else:
             args.output.write('Found no dominated strategies\n\n')
@@ -193,7 +193,7 @@ def main(args):
         args.output.write('There was no profile with complete payoff data\n\n')
     else:
         args.output.write('\nMaximum social welfare profile:\n')
-        args.output.write(game.to_prof_str(profile))
+        args.output.write(game.profile_to_str(profile))
         args.output.write('\nWelfare: {:.4f}\n\n'.format(welfare))
 
         if game.num_roles > 1:
@@ -202,7 +202,7 @@ def main(args):
                     *regret.max_pure_social_welfare(game, by_role=True)):
                 args.output.write('Maximum "{}" welfare profile:\n'.format(
                     role))
-                args.output.write(game.to_prof_str(profile))
+                args.output.write(game.profile_to_str(profile))
                 args.output.write('\nWelfare: {:.4f}\n\n'.format(welfare))
 
     args.output.write('\n')
@@ -215,7 +215,7 @@ def main(args):
             len(equilibria), 'um' if len(equilibria) == 1 else 'a'))
         for i, (eqm, reg) in enumerate(equilibria, 1):
             args.output.write('Equilibrium {:d}:\n'.format(i))
-            args.output.write(game.to_mix_str(eqm))
+            args.output.write(game.mixture_to_str(eqm))
             args.output.write('\nRegret: {:.4f}\n\n'.format(reg))
     else:
         args.output.write('Found no equilibria\n\n')
@@ -230,7 +230,7 @@ def main(args):
         noeq_subgames.sort(key=lambda x: x.sum())
         for i, subg in enumerate(noeq_subgames, 1):
             args.output.write('No-equilibria subgame {:d}:\n'.format(i))
-            args.output.write(game.to_subgame_str(subg))
+            args.output.write(game.subgame_to_str(subg))
             args.output.write('\n\n')
     else:
         args.output.write('Found no no-equilibria subgames\n\n')
@@ -245,7 +245,7 @@ def main(args):
         unconfirmed.sort(key=lambda x: ((x[0] > 0).sum(), x[1]))
         for i, (eqm, reg_bound) in enumerate(unconfirmed, 1):
             args.output.write('Unconfirmed candidate {:d}:\n'.format(i))
-            args.output.write(game.to_mix_str(eqm))
+            args.output.write(game.mixture_to_str(eqm))
             args.output.write('\nRegret at least: {:.4f}\n\n'.format(
                 reg_bound))
     else:
@@ -267,10 +267,10 @@ def main(args):
         unexplored.sort(key=lambda x: (x[0].sum(), -x[2]))
         for i, (sub, dev, gain, eqm) in enumerate(unexplored, 1):
             args.output.write('Unexplored subgame {:d}:\n'.format(i))
-            args.output.write(game.to_subgame_str(sub))
+            args.output.write(game.subgame_to_str(sub))
             args.output.write('\n{:.4f} for deviating to {} from:\n'.format(
                 gain, game.strat_name(dev)))
-            args.output.write(game.to_mix_str(eqm))
+            args.output.write(game.mixture_to_str(eqm))
             args.output.write('\n\n')
     else:
         args.output.write('Found no unexplored best-response subgames\n\n')
@@ -280,6 +280,6 @@ def main(args):
     args.output.write('Json Data\n')
     args.output.write('=========\n')
     json_data = {
-        'equilibria': [game.to_mix_json(eqm) for eqm, _ in equilibria]}
+        'equilibria': [game.mixture_to_json(eqm) for eqm, _ in equilibria]}
     json.dump(json_data, args.output)
     args.output.write('\n')

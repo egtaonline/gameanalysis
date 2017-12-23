@@ -65,7 +65,7 @@ def test_missing_data_maximal_subgames(players, strategies, prob):
 @pytest.mark.parametrize('players,strategies', testutils.games)
 def test_deviation_profile_count(players, strategies, _):
     game = rsgame.emptygame(players, strategies)
-    mask = game.random_subgames()
+    mask = game.random_subgame()
 
     devs = subgame.deviation_profiles(game, mask)
     assert devs.shape[0] == subgame.num_deviation_profiles(game, mask), \
@@ -97,7 +97,7 @@ def test_subgame_preserves_completeness(players, strategies, _):
     game = gamegen.role_symmetric_game(players, strategies)
     assert game.is_complete(), "gamegen didn't create complete game"
 
-    mask = game.random_subgames()
+    mask = game.random_subgame()
     sub_game = game.subgame(mask)
     assert sub_game.is_complete(), "subgame didn't preserve game completeness"
 

@@ -38,7 +38,7 @@ def add_parser(subparsers):
 
 def main(args):
     game = rsgame.emptygame_copy(gamereader.read(json.load(args.input)))
-    mix = game.from_mix_json(json.load(args.mix))
+    mix = game.mixture_from_json(json.load(args.mix))
 
     if args.seed:
         rand.seed(args.seed)
@@ -48,6 +48,6 @@ def main(args):
         # This technically shouldn't be necessary, but on the off chance that a
         # simulator depends on the order, we want to make sure we produce
         # identical results.
-        json.dump(game.to_prof_json(prof), args.output,
+        json.dump(game.profile_to_json(prof), args.output,
                   sort_keys=args.seed is not None)
         args.output.write('\n')

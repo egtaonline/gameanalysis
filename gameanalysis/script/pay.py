@@ -25,9 +25,9 @@ def payoffs(game, prof):
     """get payoffs to every agent or role"""
     if is_pure_profile(game, prof):
         prof = np.asarray(prof, int)
-        return game.to_payoff_json(game.get_payoffs(prof), prof)
+        return game.payoff_to_json(game.get_payoffs(prof), prof)
     else:
-        return game.to_role_json(game.expected_payoffs(prof))
+        return game.role_to_json(game.expected_payoffs(prof))
 
 
 def welfare(game, prof):
@@ -72,7 +72,7 @@ def add_parser(subparsers):
 def main(args):
     game = gamereader.read(json.load(args.input))
     prof_func = TYPE[args.type]
-    payoffs = [prof_func(game, game.from_mix_json(prof, verify=False))
+    payoffs = [prof_func(game, game.mixture_from_json(prof, verify=False))
                for prof in scriptutils.load_profiles(args.profiles)]
     json.dump(payoffs, args.output)
     args.output.write('\n')
