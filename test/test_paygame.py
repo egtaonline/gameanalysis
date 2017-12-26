@@ -1,4 +1,6 @@
 import collections
+import itertools
+import json
 import warnings
 
 import numpy as np
@@ -860,8 +862,19 @@ def test_load_empty_observations():
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_game_json_identity(role_players, role_strats):
     game = random_game(role_players, role_strats)
-    copy = paygame.game_json(game.to_json())
+    jgame = json.dumps(game.to_json())
+    copy = paygame.game_json(json.loads(jgame))
     assert game == copy
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_profpay_serialize(role_players, role_strats):
+    game = random_game(role_players, role_strats)
+    for prof, pay in zip(game.profiles(), game.payoffs()):
+        jprofpay = json.dumps(game.profpay_to_json(pay, prof))
+        profc, payc = game.profpay_from_json(json.loads(jprofpay))
+        assert np.all(profc == prof)
+        assert np.allclose(payc, pay)
 
 
 def test_game_hash_eq():
@@ -951,12 +964,12 @@ def test_game_from_json():
         [[0, 0],
          [10, 20],
          [0, 30]])
-    for json in [_game_json, _samplegame_json, _summary_json,
-                 _observations_json, _full_json]:
-        assert game == paygame.game_json(json)
+    for js in [_game_json, _samplegame_json, _summary_json,
+               _observations_json, _full_json]:
+        assert game == paygame.game_json(js)
     game = paygame.game_copy(rsgame.emptygame_copy(game))
-    for json in [_emptygame_json, _noprofs_json]:
-        assert game == paygame.game_json(json)
+    for js in [_emptygame_json, _noprofs_json]:
+        assert game == paygame.game_json(js)
 
 
 # ----------
@@ -1097,14 +1110,17 @@ def test_random_samplegame_normalize(role_players, role_strats):
 
 def test_to_from_samplepay_json():
     game = paygame.samplegame_copy(rsgame.emptygame([3, 4], [2, 1]))
-    prof = [3, 0, 4]
     spay = [[3, 0, 7], [4, 0, 8], [5, 0, 9]]
     json_spay = {'r0': {'s0': [3, 4, 5]}, 'r1': {'s2': [7, 8, 9]}}
     json_spay_0 = {'r0': {'s0': [3, 4, 5], 's1': [0, 0, 0]},
                    'r1': {'s2': [7, 8, 9]}}
-    assert game.samplepay_to_json(spay, prof) == json_spay
-    assert game.samplepay_to_json(spay) == json_spay_0
+    assert game.samplepay_to_json(spay) == json_spay
     assert np.allclose(game.samplepay_from_json(json_spay), spay)
+    assert np.allclose(game.samplepay_from_json(json_spay_0), spay)
+
+    spay0 = [[0, 0, 0], [0, 0, 0]]
+    jspay0 = game.samplepay_to_json(spay0)
+    assert np.allclose(game.samplepay_from_json(jspay0), spay0)
 
     with pytest.raises(AssertionError):
         game.samplepay_from_json(
@@ -1253,8 +1269,30 @@ def test_samplegame_subgame():
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_samplegame_json_identity(role_players, role_strats):
     sgame = random_samplegame(role_players, role_strats)
-    copy = paygame.samplegame_json(sgame.to_json())
+    jgame = json.dumps(sgame.to_json())
+    copy = paygame.samplegame_json(json.loads(jgame))
     assert sgame == copy
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_samplepay_serialize(role_players, role_strats):
+    sgame = random_samplegame(role_players, role_strats)
+    for spay in itertools.chain.from_iterable(sgame.sample_payoffs()):
+        jspay = json.dumps(sgame.samplepay_to_json(spay))
+        spayc = sgame.samplepay_from_json(json.loads(jspay))
+        assert np.allclose(spayc, spay)
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_profsamplepay_serialize(role_players, role_strats):
+    sgame = random_samplegame(role_players, role_strats)
+    for prof, spay in zip(
+            sgame.profiles(),
+            itertools.chain.from_iterable(sgame.sample_payoffs())):
+        jprofspay = json.dumps(sgame.profsamplepay_to_json(spay, prof))
+        profc, spayc = sgame.profsamplepay_from_json(json.loads(jprofspay))
+        assert np.all(profc == prof)
+        assert np.allclose(spayc, spay)
 
 
 def test_samplegame_repr():
@@ -1421,14 +1459,14 @@ def test_samplegame_from_json():
              [[9, 21], [10, 20], [11, 19]]],
             [[[0, 32], [0, 28], [0, 30], [0, 30]]],
         ])
-    for json in [_samplegame_json, _observations_json, _full_json]:
-        assert game == paygame.samplegame_json(json)
+    for js in [_samplegame_json, _observations_json, _full_json]:
+        assert game == paygame.samplegame_json(js)
     game = paygame.samplegame_copy(paygame.game_copy(game))
-    for json in [_game_json, _summary_json]:
-        assert game == paygame.samplegame_json(json)
+    for js in [_game_json, _summary_json]:
+        assert game == paygame.samplegame_json(js)
     game = paygame.samplegame_copy(rsgame.emptygame_copy(game))
-    for json in [_emptygame_json, _noprofs_json]:
-        assert game == paygame.samplegame_json(json)
+    for js in [_emptygame_json, _noprofs_json]:
+        assert game == paygame.samplegame_json(js)
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
@@ -1441,7 +1479,7 @@ def test_deprecated_functions(role_players, role_strats):
         assert np.all(sgame.from_prof_json(profj) == prof)
         pay = np.random.random(sgame.num_strats)
         pay[prof == 0] = 0
-        payj = sgame.payoff_to_json(pay, prof)
+        payj = sgame.payoff_to_json(pay)
         assert np.allclose(sgame.from_payoff_json(payj), pay)
         profpayj = sgame.profpay_to_json(pay, prof)
         assert profpayj == sgame.to_profpay_json(pay, prof)
@@ -1450,7 +1488,7 @@ def test_deprecated_functions(role_players, role_strats):
         assert np.allclose(payd, pay)
 
         spay = pay[None]
-        spayj = sgame.samplepay_to_json(spay, prof)
+        spayj = sgame.samplepay_to_json(spay)
         assert spayj == sgame.to_samplepay_json(spay, prof)
         assert np.allclose(sgame.from_samplepay_json(spayj), spay)
         profspayj = sgame.profsamplepay_to_json(spay, prof)

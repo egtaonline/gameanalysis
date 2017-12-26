@@ -374,36 +374,6 @@ class hash_array(object):
                 np.all(self.array == other.array))
 
 
-def random_con_bitmask(prob, shape, mins=1):
-    """Generate a random bitmask with constraints
-
-    The functions allows specifying the minimum number of True values along a
-    single dimension while counting over the other ones. `mins` can be a scalar
-    or a tuple for each dimension and must be less than the product of the size
-    of the other dimensions.
-
-    If you just want a random bitmask use np.random.random(shape) < prob"""
-    assert len(shape) > 1
-    vals = np.random.random(shape)
-    mask = vals < prob
-    total = vals.size
-
-    if isinstance(mins, abc.Sequence):
-        assert len(mins) == vals.ndim
-        assert all(0 < s <= total // m for s, m in zip(mins, vals.shape))
-    else:
-        assert mins > 0
-        mins = tuple(min(mins, total // m) for m in vals.shape)
-
-    for dim, num in enumerate(mins):
-        aligned = np.rollaxis(vals, dim).reshape(vals.shape[dim], -1)
-        thresh = np.partition(aligned, num - 1, 1)[:, num - 1]
-        thresh.shape += (1,) * (vals.ndim - dim - 1)
-        mask |= vals <= thresh
-
-    return mask
-
-
 def iunique(iterable):
     """Return an iterable of unique items ordered by first occurrence"""
     seen = set()

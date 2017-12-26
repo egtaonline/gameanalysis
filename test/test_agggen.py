@@ -1,13 +1,13 @@
-import numpy.random as rand
+import json
+
 import pytest
 
+from gameanalysis import aggfn
 from gameanalysis import agggen
 
 
-@pytest.mark.parametrize('players,strategies,functions', [
-    (2 * [1], 1, 1),
+_sizes = [
     (2 * [1], 2, 2),
-    (2 * [2], 1, 2),
     (2 * [2], 2, 2),
     (5 * [1], 2, 3),
     (2 * [1], 5, 3),
@@ -16,72 +16,72 @@ from gameanalysis import agggen
     ([1, 2], [2, 1], 4),
     (2, [1, 2], 4),
     ([3, 4], [2, 3], 6),
-])
-@pytest.mark.parametrize('by_role', [False, True])
-def test_random_game(players, strategies, functions, by_role):
-    agggen.random_aggfn(players, strategies, functions, by_role=by_role)
+]
+_probs = [
+    (0.2, 0.2),
+    (0.5, 0.5),
+    (0.9, 0.9),
+    (0.3, 0.8),
+    (0.8, 0.3),
+]
 
 
-@pytest.mark.parametrize('players,strategies,functions', [
-    (2 * [1], 1, 1),
-    (2 * [1], 2, 2),
-    (2 * [2], 1, 2),
-    (2 * [2], 2, 2),
-    (5 * [1], 2, 3),
-    (2 * [1], 5, 3),
-    (2 * [2], 5, 4),
-    ([1, 2], 2, 5),
-    ([1, 2], [2, 1], 4),
-    (2, [1, 2], 4),
-    ([3, 4], [2, 3], 6),
-])
-@pytest.mark.parametrize('by_role', [False, True])
-def test_random_poly_game(players, strategies, functions, by_role):
-    agggen.random_aggfn(players, strategies, functions, by_role=by_role,
-                        func_dist=agggen.random_poly_dist([0, 0.5, 0.3, 0.2]))
+# TODO Expand this
+def verify(game):
+    jgame = json.dumps(game.to_json())
+    copy = aggfn.aggfn_json(json.loads(jgame))
+    assert game == copy
 
 
-@pytest.mark.parametrize('players,strategies,functions', [
-    (2 * [1], 1, 1),
-    (2 * [1], 2, 2),
-    (2 * [2], 1, 2),
-    (2 * [2], 2, 2),
-    (5 * [1], 2, 3),
-    (2 * [1], 5, 3),
-    (2 * [2], 5, 4),
-    ([1, 2], 2, 5),
-    ([1, 2], [2, 1], 4),
-    (2, [1, 2], 4),
-    ([3, 4], [2, 3], 6),
-])
-@pytest.mark.parametrize('by_role', [False, True])
-def test_random_sin_game(players, strategies, functions, by_role):
-    agggen.random_aggfn(
-        players, strategies, functions, by_role=by_role,
-        func_dist=agggen.random_sin_dist())
-    agggen.random_aggfn(
-        players, strategies, functions, by_role=by_role,
-        func_dist=agggen.random_sin_dist(offset_dist=rand.random))
+@pytest.mark.parametrize('players,strategies,functions', _sizes)
+@pytest.mark.parametrize('inp,weight', _probs)
+def test_normal_game(players, strategies, functions, inp, weight):
+    verify(agggen.normal_aggfn(players, strategies, functions))
+    verify(agggen.normal_aggfn(players, strategies, functions, input_prob=inp,
+                               weight_prob=weight))
+
+
+@pytest.mark.parametrize('players,strategies,functions', _sizes)
+@pytest.mark.parametrize('inp,weight', _probs)
+@pytest.mark.parametrize('deg', [1, 2, 4, [0.1, 0.5, 0.4], [0, 0, 1]])
+def test_random_poly_game(players, strategies, functions, inp, weight, deg):
+    verify(agggen.poly_aggfn(players, strategies, functions))
+    verify(agggen.poly_aggfn(players, strategies, functions, input_prob=inp,
+                             weight_prob=weight, degree=deg))
+
+
+@pytest.mark.parametrize('players,strategies,functions', _sizes)
+@pytest.mark.parametrize('inp,weight', _probs)
+@pytest.mark.parametrize('mi,ma', [(0.5, None), (1, 4), (5, 5)])
+def test_random_sine_game(players, strategies, functions, inp, weight, mi, ma):
+    verify(agggen.sine_aggfn(players, strategies, functions))
+    verify(agggen.sine_aggfn(players, strategies, functions, input_prob=inp,
+                             weight_prob=weight, min_period=mi, max_period=ma))
 
 
 @pytest.mark.parametrize('players,facilities,required', [
-    (1, 1, 1),
     (2, 2, 1),
-    (2, 2, 2),
     (2, 3, 2),
     (3, 4, 2),
     (4, 3, 2),
     (5, 6, 4),
 ])
-def test_congestion_game(players, facilities, required):
+@pytest.mark.parametrize('deg', [1, 2, 4])
+def test_congestion_game(players, facilities, required, deg):
     game = agggen.congestion(players, facilities, required)
+    verify(game)
+    # Check that function serial has the right format
+    assert all(sum(c == '_' for c in strat) == required - 1
+               for strat in game.strat_names[0])
+
+    game = agggen.congestion(players, facilities, required, degree=deg)
+    verify(game)
     # Check that function serial has the right format
     assert all(sum(c == '_' for c in strat) == required - 1
                for strat in game.strat_names[0])
 
 
 @pytest.mark.parametrize('players,strategies', [
-    (1, 1),
     (2, 2),
     (2, 2),
     (2, 3),
@@ -89,6 +89,8 @@ def test_congestion_game(players, facilities, required):
     (4, 3),
     (5, 6),
 ])
-def test_local_effect_game(players, strategies):
+@pytest.mark.parametrize('prob', [0, 0.1, 0.5, 0.9, 1])
+def test_local_effect_game(players, strategies, prob):
     """Test that deviation payoff formulation is accurate"""
-    agggen.local_effect(players, strategies)
+    verify(agggen.local_effect(players, strategies))
+    verify(agggen.local_effect(players, strategies, edge_prob=prob))

@@ -24,8 +24,7 @@ def is_pure_profile(game, prof):
 def payoffs(game, prof):
     """get payoffs to every agent or role"""
     if is_pure_profile(game, prof):
-        prof = np.asarray(prof, int)
-        return game.payoff_to_json(game.get_payoffs(prof), prof)
+        return game.payoff_to_json(game.get_payoffs(prof))
     else:
         return game.role_to_json(game.expected_payoffs(prof))
 

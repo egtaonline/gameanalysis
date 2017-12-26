@@ -86,7 +86,8 @@ def main(args):
         equilibria = nash.pure_nash(game, epsilon=args.regret)
         if args.one and not equilibria:
             equilibria = nash.min_regret_profile(game)[None]
-        json.dump([game.profile_to_json(eqm) for eqm in equilibria], args.output)
+        json.dump([game.profile_to_json(eqm) for eqm in equilibria],
+                  args.output)
 
     elif args.type == 'mixed':
         rep_args = {

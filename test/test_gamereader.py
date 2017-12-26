@@ -13,7 +13,7 @@ from gameanalysis import rsgame
 egame = rsgame.emptygame([3, 4], [4, 3])
 game = gamegen.add_profiles(egame, 0.5)
 sgame = gamegen.add_noise(game, 1, 3)
-agg = agggen.random_aggfn([3, 4], [4, 3], 10)
+agg = agggen.normal_aggfn([3, 4], [4, 3], 10)
 mat = matgame.matgame(np.random.random((4, 3, 2, 3)))
 
 

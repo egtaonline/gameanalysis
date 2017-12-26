@@ -593,6 +593,9 @@ class StratArray(object):
         """Read a json mixture into an array"""
         if dest is None:
             dest = np.empty(self.num_strats, float)
+        else:
+            assert dest.dtype.kind == 'f'
+            assert dest.shape == (self.num_strats,)
         dest.fill(0)
 
         for role, strats in mix.items():
@@ -606,10 +609,11 @@ class StratArray(object):
     def _to_arr_json(self, arr):
         """Convert array to json"""
         return {role: {strat: val.item() for strat, val
-                       in zip(strats, values) if val > 0}
+                       in zip(strats, values) if val != 0}
                 for values, role, strats
                 in zip(np.split(arr, self.role_starts[1:]),
-                       self.role_names, self.strat_names)}
+                       self.role_names, self.strat_names)
+                if np.any(values != 0)}
 
     # TODO Remove
     @utils.deprecated
@@ -625,6 +629,9 @@ class StratArray(object):
         """Read an array from a string"""
         if dest is None:
             dest = np.empty(self.num_strats, dtype)
+        else:
+            assert dest.dtype.kind == np.dtype(dtype).kind
+            assert dest.shape == (self.num_strats,)
         dest.fill(0)
         for role_str in arr_str.split('; '):
             role, strats = role_str.split(': ', 1)
@@ -669,6 +676,9 @@ class StratArray(object):
     def _from_arr_str(self, arr_str, dtype, parse, dest=None):
         if dest is None:
             dest = np.empty(self.num_strats, dtype)
+        else:
+            assert dest.dtype.kind == np.dtype(dtype).kind
+            assert dest.shape == (self.num_strats,)
         dest.fill(0)
 
         role = None
@@ -722,6 +732,9 @@ class StratArray(object):
         """Read a json subgame into an array"""
         if dest is None:
             dest = np.empty(self.num_strats, bool)
+        else:
+            assert dest.dtype.kind == 'b'
+            assert dest.shape == (self.num_strats,)
         dest.fill(False)
 
         for role, strats in subg.items():
@@ -742,7 +755,8 @@ class StratArray(object):
         return {role: [strat for strat, inc in zip(strats, mask) if inc]
                 for mask, role, strats
                 in zip(np.split(subg, self.role_starts[1:]),
-                       self.role_names, self.strat_names)}
+                       self.role_names, self.strat_names)
+                if mask.any()}
 
     # TODO Remove
     @utils.deprecated
@@ -753,6 +767,9 @@ class StratArray(object):
         """Read a subgame from a string"""
         if dest is None:
             dest = np.empty(self.num_strats, bool)
+        else:
+            assert dest.dtype.kind == 'b'
+            assert dest.shape == (self.num_strats,)
         dest.fill(False)
         for role_str in subg_str.split('; '):
             role, strats = role_str.split(': ', 1)
@@ -786,6 +803,9 @@ class StratArray(object):
         """Read a subgame from a readable string"""
         if dest is None:
             dest = np.empty(self.num_strats, bool)
+        else:
+            assert dest.dtype.kind == 'b'
+            assert dest.shape == (self.num_strats,)
         dest.fill(False)
 
         role = None
@@ -823,6 +843,9 @@ class StratArray(object):
         """Format role data as array"""
         if dest is None:
             dest = np.empty(self.num_roles, dtype)
+        else:
+            assert dest.dtype.kind == np.dtype(dtype).kind
+            assert dest.shape == (self.num_roles,)
         for role, val in role_json.items():
             dest[self.role_index(role)] = val
         return dest
@@ -835,7 +858,8 @@ class StratArray(object):
     def role_to_json(self, role_info):
         """Format role data as json"""
         return {role: info.item() for role, info
-                in zip(self.role_names, np.asarray(role_info))}
+                in zip(self.role_names, np.asarray(role_info))
+                if info != 0}
 
     @utils.memoize
     def __hash__(self):
@@ -1334,6 +1358,9 @@ class RsGame(StratArray):
         """
         if dest is None:
             dest = np.empty(self.num_strats, int)
+        else:
+            assert dest.dtype.kind == 'i'
+            assert dest.shape == (self.num_strats,)
         dest.fill(0)
 
         for role, strats in prof.items():
@@ -1362,6 +1389,9 @@ class RsGame(StratArray):
         """
         if dest is None:
             dest = np.empty(self.num_strats, float)
+        else:
+            assert dest.dtype.kind == 'f'
+            assert dest.shape == (self.num_strats,)
         dest.fill(0)
 
         for role, strats in pays.items():
@@ -1382,30 +1412,17 @@ class RsGame(StratArray):
     # TODO Remove
     @utils.deprecated
     def to_payoff_json(self, payoffs, prof=None):
-        return self.payoff_to_json(payoffs, prof)
+        return self.payoff_to_json(payoffs)
 
-    def payoff_to_json(self, payoffs, prof=None):
+    def payoff_to_json(self, payoffs):
         """Format payoffs as json
-
-        If an optional profile is specified, the json will be sparsified to
-        only strategies with at least one player.
 
         Parameters
         ----------
         payoffs : ndarray
             The payoffs to serialize.
-        prof : ndarray, optional
-            The profile the payoffs correspond to, specifying it allows the
-            written json to omit strategies that aren't played.
         """
-        if prof is None:
-            prof = np.broadcast_to(True, self.num_strats)
-        return {role: {strat: pay.mean() for strat, count, pay
-                       in zip(strats, counts, pays) if count > 0}
-                for role, strats, counts, pays
-                in zip(self.role_names, self.strat_names,
-                       np.split(prof, self.role_starts[1:]),
-                       np.split(payoffs, self.role_starts[1:]))}
+        return self._to_arr_json(payoffs)
 
     # TODO Remove
     @utils.deprecated
@@ -1456,6 +1473,9 @@ class RsGame(StratArray):
     def devpay_from_json(self, deviations, dest=None):
         if dest is None:
             dest = np.empty(self.num_devs)
+        else:
+            assert dest.dtype.kind == 'f'
+            assert dest.shape == (self.num_devs,)
         dest.fill(0)
 
         for role, strats in deviations.items():
@@ -1468,23 +1488,22 @@ class RsGame(StratArray):
     # TODO Remove
     @utils.deprecated
     def to_dev_payoff_json(self, payoffs, profile=None):
-        return self.devpay_to_json(payoffs, profile)
+        return self.devpay_to_json(payoffs)
 
-    def devpay_to_json(self, payoffs, profile=None):
+    def devpay_to_json(self, payoffs):
         """Format a profile and deviation payoffs as json"""
         payoffs = np.asarray(payoffs, float)
-        supp = (np.ones(self.num_strats, bool) if profile is None
-                else np.asarray(profile, bool))
-        return {r: {s: {d: float(pay) for pay, d  # pragma: no branch
-                        in zip(spays, (d for d in ses if d != s))}
-                    for spays, s, su
-                    in zip(np.split(rpay, n), ses, sup)
-                    if su}
-                for r, ses, n, rpay, sup
+        return {r: {s: {d: pay.item() for pay, d  # pragma: no branch
+                        in zip(spays, (d for d in ses if d != s))
+                        if pay != 0}
+                    for spays, s
+                    in zip(np.split(rpay, n), ses)
+                    if np.any(spays != 0)}
+                for r, ses, n, rpay
                 in zip(self.role_names, self.strat_names,
                        self.num_role_strats,
-                       np.split(payoffs, self.dev_role_starts[1:]),
-                       np.split(supp, self.role_starts[1:]))}
+                       np.split(payoffs, self.dev_role_starts[1:]))
+                if np.any(rpay != 0)}
 
     def to_json(self):
         """Format game as json"""

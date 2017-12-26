@@ -1,4 +1,5 @@
 import itertools
+import json
 import random
 
 import numpy as np
@@ -340,6 +341,7 @@ def test_to_from_json():
                    's4': {'r0': 11, 'r1': 12}}},
         'type': 'matrix.1'}
     assert matg.to_json() == mjson
+    assert json.loads(json.dumps(matg.to_json())) == mjson
     assert matg == matgame.matgame_json(mjson)
 
 
@@ -353,5 +355,6 @@ def test_to_from_json():
 def test_random_to_from_json(strats):
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
-    copy = matgame.matgame_json(matg.to_json())
+    jgame = json.dumps(matg.to_json())
+    copy = matgame.matgame_json(json.loads(jgame))
     assert matg == copy

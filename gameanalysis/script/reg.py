@@ -32,9 +32,8 @@ def reg(game, prof):
 def gains(game, prof):
     """the gains from deviating from profile"""
     if is_pure_profile(game, prof):
-        prof = np.asarray(prof, int)
         gains = regret.pure_strategy_deviation_gains(game, prof)
-        return game.devpay_to_json(gains, prof)
+        return game.devpay_to_json(gains)
     else:
         gains = regret.mixture_deviation_gains(game, prof)
         return game.payoff_to_json(gains)

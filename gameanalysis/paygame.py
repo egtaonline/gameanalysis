@@ -254,6 +254,9 @@ class Game(rsgame.RsGame):
         """
         if dest is None:
             dest = np.empty(self.num_strats, int)
+        else:
+            assert dest.dtype.kind == 'i'
+            assert dest.shape == (self.num_strats,)
         dest.fill(0)
 
         try:
@@ -285,6 +288,9 @@ class Game(rsgame.RsGame):
         """
         if dest is None:
             dest = np.empty(self.num_strats, float)
+        else:
+            assert dest.dtype.kind == 'f'
+            assert dest.shape == (self.num_strats,)
         dest.fill(0)
 
         try:
@@ -775,7 +781,8 @@ class SampleGame(Game):
             if dest is None:
                 dest = np.empty((num, self.num_strats), float)
             else:
-                assert dest.shape[0] >= num, \
+                assert dest.dtype.kind == 'f'
+                assert dest.shape == (num, self.num_strats), \
                     "dest_samplepay not large enough for observations"
             dest.fill(0)
 
@@ -788,22 +795,26 @@ class SampleGame(Game):
     # TODO Remove
     @utils.deprecated
     def to_samplepay_json(self, samplepay, prof=None):
-        return self.samplepay_to_json(samplepay, prof)
+        return self.samplepay_to_json(samplepay)
 
-    def samplepay_to_json(self, samplepay, prof=None):
-        """Format sample payoffs as json
-
-        If prof is specified, the resulting json will omit payoffs for
-        strategies that aren't played.
-        """
-        if prof is None:
-            prof = np.broadcast_to(1, self.num_strats)
-        return {role: {strat: list(map(float, pay)) for strat, count, pay
-                       in zip(strats, counts, pays.T) if count > 0}
-                for role, strats, counts, pays
-                in zip(self.role_names, self.strat_names,
-                       np.split(prof, self.role_starts[1:]),
-                       np.split(samplepay, self.role_starts[1:], 1))}
+    def samplepay_to_json(self, samplepay):
+        """Format sample payoffs as json"""
+        # XXX In a really weird degenerate case, if all payoffs are 0, we'll
+        # write out an empty dictionary, which loses information about the
+        # number of samples. In that case we arbitrarily write out the first
+        # strategy with zero payoffs.
+        samplepay = np.asarray(samplepay, float)
+        if np.all(samplepay == 0):
+            return {self.role_names[0]: {
+                self.strat_names[0][0]: [0] * samplepay.shape[0]}}
+        else:
+            return {role: {strat: pay.tolist() for strat, pay
+                           in zip(strats, pays)
+                           if np.any(pay != 0)}
+                    for role, strats, pays
+                    in zip(self.role_names, self.strat_names,
+                           np.split(samplepay.T, self.role_starts[1:]))
+                    if np.any(pays != 0)}
 
     # TODO Remove
     @utils.deprecated

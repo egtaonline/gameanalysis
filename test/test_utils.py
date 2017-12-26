@@ -1,5 +1,4 @@
 import itertools
-import random
 import warnings
 
 import numpy as np
@@ -197,39 +196,6 @@ def test_hash_array():
     assert utils.hash_array([3, 4, 5]) in arrayset
     assert utils.hash_array([6, 7]) in arrayset
     assert utils.hash_array([3, 4, 6]) not in arrayset
-
-
-@pytest.mark.parametrize('_', range(100))
-def test_random_bipartite(_):
-    shape = (random.randint(1, 5), random.randint(1, 5))
-    mins = (random.randint(1, shape[1]), random.randint(1, shape[0]))
-    mask = utils.random_con_bitmask(.2, shape, mins)
-    assert np.all(mask.sum(0) >= mins[1])
-    assert np.all(mask.sum(1) >= mins[0])
-
-
-@pytest.mark.parametrize('_', range(100))
-def test_random_con_bitmask(_):
-    ndim = random.randint(2, 4)
-    shape = tuple(random.randint(1, 5) for _ in range(ndim))
-    total = utils.prod(shape)
-    mins = tuple(random.randint(1, total // d) for d in shape)
-    mask = utils.random_con_bitmask(.2, shape, mins)
-
-    for dim, min_in in enumerate(mins):
-        assert np.all(np.rollaxis(mask, dim).reshape(
-            mask.shape[dim], -1).sum(1) >= min_in)
-
-
-@pytest.mark.parametrize('_', range(100))
-def test_random_con_bitmask_default(_):
-    ndim = random.randint(2, 4)
-    shape = tuple(random.randint(1, 5) for _ in range(ndim))
-    mask = utils.random_con_bitmask(.2, shape)
-
-    for dim in range(ndim):
-        assert np.rollaxis(mask, dim).reshape(
-            mask.shape[dim], -1).any(1).all()
 
 
 def test_iunique():

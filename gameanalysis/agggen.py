@@ -5,142 +5,207 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-# TODO These parameters could be more intelligently set with player knowledge
-def random_poly_dist(degree_dist,
-                     coef_dist=lambda d: np.random.normal(0, 10. ** (1 - d))):
-    """Generate a function table distribution from a polynomial
+def _random_mask(prob, num_funcs, num_strats):
+    """Returns a random mask that is valid
+
+    Valid means that each row of the mast is neither all false or all true.
 
     Parameters
     ----------
-    degree_dist : ndarray
-        Probability that a polynomial will have a specific degree starting from
-        zero. [0.1, 0.4, 0.5] means each function has a 10% chance of being
-        constant, 40% chance of being linear, and a 50% chance of being
-        quadratic.
-    coef_dist : ndarray int -> ndarray float
-        Distribution that maps an array of degrees for a polynomial to a
-        coefficient of that degree, e.g. `lambda d: np.random.normal(0,
-        10.0**(1 - d))`
+    prob : float
+        The probability of a strategy. Note, that this will actually be shifted
+        slightly towards 0.5 because we ensure there are no rows with all false
+        and all true.
+    num_funcs : int
+        The number of functions to return.
+    num_strats : int
+        The number of strategies to return.
 
-    Notes
-    -----
-    Table distributions take a shape and return a random matrix of that shape,
-    where the first axis is the number of functions, and the other axes are the
-    number of players from each role."""
-    degree_dist = np.asarray(degree_dist, float)
-    assert np.all(degree_dist >= 0) and np.sum(degree_dist[:-1]) <= 1
-    degrees = np.arange(degree_dist.size)
-    degree_dist = np.insert(degree_dist[:-1], 0, 0).cumsum()
-
-    def table_func(shape):
-        funcs, *players = shape
-        table = np.ones(shape, float)
-        for d, play in enumerate(players):
-            polys = coef_dist(np.broadcast_to(degrees, (funcs, degrees.size)))
-            dmask = np.random.random(funcs)[:, None] > degree_dist
-            values = np.dot(polys * dmask, np.arange(play) ** degrees[:, None])
-            values.shape += (1,) * (len(players) - 1)
-            table *= np.rollaxis(values, 1, d + 2)
-        return table
-    return table_func
-
-
-def random_sin_dist(width_dist=np.random.random, coef_dist=np.random.random,
-                    offset_dist=None):
-    """Create a table function for random sinusoidal functions
-
-    Functions will be `coef * sin(offset + width * num_players)`
-
-    Parameters
-    ----------
-    width_dist : (shape) -> array, optional
-        Distribution to generate function widths.
-    coef_dist : (shape) -> array, optional
-        Distribution to generate function coefficients.
-    offset_dist : (shape) -> array, optional
-        Distribution to generate function offsets. If unspecified, it will be
-        the same as width_dist.
+    Returns
+    -------
+    mask : ndarray, shape (num_funcs, num_strats)
+        The resulting balid mask.
     """
-    if offset_dist is None:
-        offset_dist = width_dist
-
-    def table_func(shape):
-        funcs, *players = shape
-        table = np.ones(shape, float)
-        for d, play in enumerate(players):
-            widths = width_dist((funcs, play))
-            offsets = offset_dist((funcs, play))
-            coefs = coef_dist((funcs,))[:, None]
-            values = coefs * np.sin(widths * np.arange(play) + offsets)
-            values.shape += (1,) * (len(players) - 1)
-            table *= np.rollaxis(values, 1, d + 2)
-        return table
-    return table_func
+    vals = np.random.random((num_funcs, num_strats))
+    mask = vals < prob
+    inds = np.arange(num_funcs)
+    mask[inds, vals.argmin(1)] = True
+    mask[inds, vals.argmax(1)] = False
+    return mask
 
 
-def random_aggfn(num_role_players, num_role_strats, num_functions,
-                 input_dist=lambda s: utils.random_con_bitmask(.2, s),
-                 weight_dist=lambda s: np.random.normal(0, 1, s) *
-                 utils.random_con_bitmask(.2, s),
-                 func_dist=lambda s: np.random.normal(0, 1, s),
-                 by_role=False):
-    """Generate a random AgfnGame
+def normal_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
+                 weight_prob=0.2):
+    """Generate a random normal AgfnGame
+
+    Each function value is an i.i.d Gaussian draw. For large numbers of players
+    and small numbers of functions, this still produces relatively smooth
+    deviation payoffs.
 
     Parameters
     ----------
-    num_role_players : int or ndarray
-    num_role_strats : int or ndarray
-    num_functions : int
-    input_dist : f(shape) -> ndarray, bool, optional
-        Function that takes a shape and redurns a boolean ndarray with the same
-        shape representing the function inputs.
-    weight_dist : f(shape) -> ndarray, float, optional
-        Function that takes a shape and returns a float array with the same
-        shape representing the action weights.
-    func_dist : f(shape) ndarray, float, optional
-        Function that takes a shape and returns a float array with the same
-        shape representing the function table. To create polynomial functions
-        use `random_poly_dist`.
-    by_role : bool, optional
-        Generate a role form AgfnGame. A role form game uses functions of the
-        number of activations for each role, instead of just the total number
-        of activations."""
-    base = rsgame.emptygame(num_role_players, num_role_strats)
-    weights = weight_dist((num_functions, base.num_strats))
-    inputs = input_dist((base.num_strats, num_functions))
-    shape = ((num_functions,) + tuple(base.num_role_players + 1)
-             if by_role else (num_functions, base.num_players + 1))
-    func_table = func_dist(shape)
-    return aggfn.aggfn_replace(base, weights, inputs, func_table)
+    role_players : int or ndarray
+        The number of players per role.
+    role_strats : int or ndarray
+        The number of strategies per role.
+    functions : int
+        The number of functions to generate.
+    input_prob : float, optional
+        The probability of a strategy counting towards a function value.
+    weight_prob : float, optional
+        The probability of a function producing non-zero payoffs to a strategy.
+    """
+    base = rsgame.emptygame(role_players, role_strats)
+    inputs = _random_mask(input_prob, functions, base.num_strats).T
+    weights = (_random_mask(weight_prob, functions, base.num_strats) *
+               np.random.normal(0, 1, (functions, base.num_strats)))
+    shape = (functions,) + tuple(base.num_role_players + 1)
+    funcs = np.random.normal(0, 1, shape)
+    return aggfn.aggfn_replace(base, weights, inputs, funcs)
 
 
-def congestion(num_players, num_facilities, num_required, degree=2,
-               coef_dist=lambda d: -np.random.exponential(10. ** (1 - d))):
+def _random_aggfn(role_players, role_strats, functions, input_prob,
+                  weight_prob, role_dist):
+    """Base form for structured random aggfn generation
+
+    role_dist takes a number of functions and a number of players and returns
+    an ndarray of the function values.
+    """
+    base = rsgame.emptygame(role_players, role_strats)
+    inputs = _random_mask(input_prob, functions, base.num_strats).T
+    weights = (_random_mask(weight_prob, functions, base.num_strats) *
+               np.random.normal(0, 1, (functions, base.num_strats)))
+
+    funcs = np.ones((functions,) + tuple(base.num_role_players + 1))
+    base_shape = [functions] + [1] * base.num_roles
+    for r, p in enumerate(base.num_role_players):
+        role_funcs = role_dist(functions, p)
+        shape = base_shape.copy()
+        shape[r + 1] = p + 1
+        role_funcs.shape = shape
+        funcs *= role_funcs
+    return aggfn.aggfn_replace(base, weights, inputs, funcs)
+
+
+def poly_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
+               weight_prob=0.2, degree=3):
+    """Generate a random polynomial AgfnGame
+
+    Functions are generated by generating `degree` zeros in [0, num_players] to
+    serve as a polynomial functions.
+
+    Parameters
+    ----------
+    role_players : int or ndarray
+        The number of players per role.
+    role_strats : int or ndarray
+        The number of strategies per role.
+    functions : int
+        The number of functions to generate.
+    input_prob : float, optional
+        The probability of a strategy counting towards a function value.
+    weight_prob : float, optional
+        The probability of a function producing non-zero payoffs to a strategy.
+    degree : int or [float], optional
+        Either an integer specifying the degree or a list of the probabilities
+        of degrees starting from one, e.g. 3 is the same as [0, 0, 1].
+    """
+    if isinstance(degree, int):
+        degree = (0,) * (degree - 1) + (1,)
+    max_degree = len(degree)
+
+    def role_dist(functions, p):
+        zeros = np.random.random((functions, max_degree)) * p
+        terms = np.arange(p + 1)[:, None] - zeros[:, None]
+        choices = np.random.choice(
+            max_degree, (functions, p + 1), True, degree)
+        terms[choices[..., None] < np.arange(max_degree)] = 1
+        return terms.prod(2) / p ** choices
+
+    return _random_aggfn(role_players, role_strats, functions, input_prob,
+                         weight_prob, role_dist)
+
+
+def sine_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
+               weight_prob=0.2, min_period=4, max_period=None):
+    """Generate a random sinusodial AgfnGame
+
+    Functions are generated by generating sinusoids with uniform random shifts
+    and n periods in 0 to num_players, where n is chosen randomle between min_
+    and max_period.
+
+    Parameters
+    ----------
+    role_players : int or ndarray
+        The number of players per role.
+    role_strats : int or ndarray
+        The number of strategies per role.
+    functions : int
+        The number of functions to generate.
+    input_prob : float, optional
+        The probability of a strategy counting towards a function value.
+    weight_prob : float, optional
+        The probability of a function producing non-zero payoffs to a strategy.
+    min_period : int, optional
+        The minimum number of periods to generate.
+    max_period : int, optional
+        The maximum number of periods to generate. If omitted or None, defaults
+        to double min_period.
+    """
+    if max_period is None:
+        max_period = min_period * 2
+
+    def role_dist(functions, p):
+        periods = (np.random.random(functions) * (max_period - min_period) +
+                   min_period)
+        offset = np.random.random(functions) * np.pi
+        return np.sin((np.arange(p + 1)[:, None] * 2 * np.pi / p + offset) *
+                      periods)
+
+    return _random_aggfn(role_players, role_strats, functions, input_prob,
+                         weight_prob, role_dist)
+
+
+def _random_monotone_polynomial(functions, players, degree):
+    """Generates a random monotone polynomial table"""
+    coefs = (np.random.random((functions, degree + 1)) /
+             players ** np.arange(degree + 1))
+    powers = np.arange(players + 1) ** np.arange(degree + 1)[:, None]
+    return coefs.dot(powers)
+
+
+def congestion(num_players, num_facilities, num_required, *, degree=2):
     """Generate a congestion game
 
     A congestion game is a symmetric game, where there are a given number of
     facilities, and each player must choose to use some amount of them. The
-    payoff for each facility generally goes down as more players use it, and a
-    players utility is the sum of the utilities for every facility.
+    payoff for each facility decreases as more players use it, and a players
+    utility is the sum of the utilities for every facility.
 
     In this formulation, facility payoffs are random polynomials of the number
     of people using said facility.
 
     Parameters
     ----------
-    num_players : int
-    num_facilities : int
-    num_required : int
-    degree : int, optional
-        Degree of payoff polynomials
-    coef_dist : f(int) -> float, optional
-        Numpy compatible function for generating random coefficients
-        conditioned on degree. Leading degree must be negative to generate a
-        true congestion game.
+    num_players : int > 1
+        The number of players.
+    num_facilities : int > 1
+        The number of facilities.
+    num_required : 0 < int < num_facilities
+        The number of required facilities.
+    degree : int > 0, optional
+        Degree of payoff polynomials.
     """
+    assert num_players > 1, "must have more than one player"
+    assert num_facilities > 1, "must have more than one facility"
+    assert 0 < num_required < num_facilities, \
+        "must require more than zero but less than num_facilities"
+    assert degree > 0, "degree must be greater than zero"
+
     function_inputs = utils.acomb(num_facilities, num_required)
-    table_dist = random_poly_dist(np.insert(np.zeros(degree), 2, 1), coef_dist)
-    functions = table_dist((num_facilities, num_players + 1))
+    functions = -_random_monotone_polynomial(num_facilities, num_players,
+                                             degree)
+
     facs = tuple(utils.prefix_strings('', num_facilities))
     strats = tuple('_'.join(facs[i] for i, m in enumerate(mask) if m)
                    for mask in function_inputs)
@@ -148,12 +213,7 @@ def congestion(num_players, num_facilities, num_required, degree=2,
                              function_inputs.T, function_inputs, functions)
 
 
-def local_effect(num_players, num_strategies,  # pragma: no cover
-                 edge_prob=.2,
-                 self_dist=random_poly_dist(
-                     [0, 1], lambda d: -np.random.exponential(10. ** (1 - d))),
-                 other_dist=random_poly_dist(
-                     [0, 0, 1], lambda d: np.random.normal(0, 10. ** (-d)))):
+def local_effect(num_players, num_strategies, *, edge_prob=0.2):
     """Generate a local effect game
 
     In a local effect game, strategies are connected by a graph, and utilities
@@ -165,19 +225,21 @@ def local_effect(num_players, num_strategies,  # pragma: no cover
 
     Parameters
     ----------
-    num_players : int
-    num_strategies : int
+    num_players : int > 1
+        The number of players.
+    num_strategies : int > 1
+        The number of strategies.
     edge_prob : float, optional
-    self_dist : f(shape) -> ndarray, float, optional
-        Table distribution for self functions, e.g. payoff effect for being on
-        the same node.
-    other_dist : f(shape) -> ndarray, float, optional
-        Table distribution for functions affecting other strategies.
+        The probability that one strategy affects another.
     """
+    assert num_players > 1, "can't generate a single player game"
+    assert num_strategies > 1, "can't generate a single strategy game"
+
     local_effect_graph = np.random.rand(
         num_strategies, num_strategies) < edge_prob
     np.fill_diagonal(local_effect_graph, False)
-    num_functions = local_effect_graph.sum() + num_strategies
+    num_neighbors = local_effect_graph.sum()
+    num_functions = num_neighbors + num_strategies
 
     action_weights = np.eye(num_functions, num_strategies, dtype=float)
     function_inputs = np.eye(num_strategies, num_functions, dtype=bool)
@@ -187,9 +249,9 @@ def local_effect(num_players, num_strategies,  # pragma: no cover
     action_weights[func_inds, out_act] = 1
 
     function_table = np.empty((num_functions, num_players + 1), float)
-    function_table[:num_strategies] = self_dist(
-        (num_strategies, num_players + 1))
-    function_table[num_strategies:] = self_dist(
-        (num_functions - num_strategies, num_players + 1))
+    function_table[:num_strategies] = -_random_monotone_polynomial(
+        num_strategies, num_players, 2)
+    function_table[num_strategies:] = _random_monotone_polynomial(
+        num_neighbors, num_players, 3)
     return aggfn.aggfn(num_players, num_strategies, action_weights,
                        function_inputs, function_table)

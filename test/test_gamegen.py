@@ -100,8 +100,10 @@ def test_drop_profiles(players, strategies):
 
 
 def test_drop_profiles_large_game():
-    # TODO Switch to a "RandomGame" when implemented
-    base = agggen.random_aggfn([100] * 2, 30, 10)
+    # TODO Switch to a "RandomGame" when implemented, essentially we need a
+    # complete game that doesn't store all of it's profiles, currently aggfn
+    # are the only ones that do that.
+    base = agggen.normal_aggfn([100] * 2, 30, 10)
     game = gamegen.drop_profiles(base, 1e-55)
     assert game.num_profiles == 363
 

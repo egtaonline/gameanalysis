@@ -6,11 +6,11 @@ from gameanalysis import rsgame
 
 
 _TYPE_MAP = {
-    'emptygame.1': rsgame.emptygame_json,
-    'game.1': paygame.game_json,
-    'samplegame.1': paygame.samplegame_json,
-    'aggfn.1': aggfn.aggfn_json,
-    'matrix.1': matgame.matgame_json,
+    'emptygame': rsgame.emptygame_json,
+    'game': paygame.game_json,
+    'samplegame': paygame.samplegame_json,
+    'aggfn': aggfn.aggfn_json,
+    'matrix': matgame.matgame_json,
 }
 
 
@@ -23,4 +23,4 @@ def read(json):
         The python object representation of a game encoded as json. Any valid
         game will be read and returned.
     """
-    return _TYPE_MAP[json.get('type', 'samplegame.1')](json)
+    return _TYPE_MAP[json.get('type', 'samplegame.').split('.', 1)[0]](json)

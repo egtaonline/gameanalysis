@@ -713,6 +713,17 @@ def test_to_mixture_from_json():
     assert new_mix.dtype == float
 
 
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_mixture_serialization(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    mixes = game.random_mixtures(20)
+    copies = np.empty(mixes.shape)
+    for mix, copy in zip(mixes, copies):
+        jmix = json.dumps(game.mixture_to_json(mix))
+        game.mixture_from_json(json.loads(jmix), copy)
+    assert np.allclose(copies, mixes)
+
+
 def test_to_from_mix_repr():
     sarr = stratarray([2, 1])
     mix = [.6, .4, 1]
@@ -761,6 +772,17 @@ def test_to_from_subgame_json():
     assert new_sub.dtype == bool
 
 
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_subgame_serialization(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    subs = game.random_subgames(20)
+    copies = np.empty(subs.shape, bool)
+    for sub, copy in zip(subs, copies):
+        jsub = json.dumps(game.subgame_to_json(sub))
+        game.subgame_from_json(json.loads(jsub), copy)
+    assert np.all(copies == subs)
+
+
 def test_to_from_subgame_repr():
     sarr = stratarray([2, 1])
     sub = [True, False, True]
@@ -806,6 +828,17 @@ def test_to_from_role_json():
     sarr.role_from_json(json_role, dest=arr)
     assert np.allclose(arr, role)
     assert arr.dtype == float
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_role_serialization(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    roles = np.random.random((20, game.num_roles))
+    copies = np.empty(roles.shape)
+    for role, copy in zip(roles, copies):
+        jrole = json.dumps(game.role_to_json(role))
+        game.role_from_json(json.loads(jrole), copy)
+    assert np.allclose(copies, roles)
 
 
 # ------
@@ -1393,6 +1426,17 @@ def test_to_from_prof_json():
     assert new_prof.dtype == int
 
 
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_profile_serialization(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    profs = game.random_profiles(20)
+    copies = np.empty(profs.shape, int)
+    for prof, copy in zip(profs, copies):
+        jprof = json.dumps(game.profile_to_json(prof))
+        game.profile_from_json(json.loads(jprof), copy)
+    assert np.all(copies == profs)
+
+
 def test_to_from_payoff_json():
     game = rsgame.emptygame([11, 3], [2, 1])
     pay = [1, 2, 3]
@@ -1413,15 +1457,25 @@ def test_to_from_payoff_json():
     assert new_pay.dtype == float
 
     pay = [1, 0, 3]
-    prof = [11, 0, 3]
     json_pay = {'r0': {'s0': 1}, 'r1': {'s2': 3}}
     json_pay0 = {'r0': {'s1': 0, 's0': 1}, 'r1': {'s2': 3}}
-    assert game.payoff_to_json(pay) == json_pay0
-    assert game.payoff_to_json(pay, prof) == json_pay
+    assert game.payoff_to_json(pay) == json_pay
     new_pay = game.payoff_from_json(json_pay)
     assert np.allclose(new_pay, pay)
     new_pay = game.payoff_from_json(json_pay0)
     assert np.allclose(new_pay, pay)
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_payoff_serialization(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    pays = np.random.random((20, game.num_strats))
+    pays *= pays < 0.8
+    copies = np.empty(pays.shape)
+    for pay, copy in zip(pays, copies):
+        jpay = json.dumps(game.payoff_to_json(pay))
+        game.payoff_from_json(json.loads(jpay), copy)
+    assert np.allclose(copies, pays)
 
 
 def test_to_from_prof_repr():
@@ -1452,30 +1506,40 @@ r1:
 
 def test_dev_payoff_json():
     game = rsgame.emptygame([11, 3], [2, 1])
-    prof = [3, 0, 4]
     devpay = [5, 0]
-    json_devpay = {'r0': {'s0': {'s1': 5}}, 'r1': {'s2': {}}}
+    json_devpay = {'r0': {'s0': {'s1': 5}}}
     json_devpay2 = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 0}}, 'r1': {'s2': {}}}
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        assert game.devpay_to_json(devpay, prof) == json_devpay
-        assert game.devpay_to_json(devpay) == json_devpay2
-        dest = np.empty(game.num_devs)
-        game.devpay_from_json(json_devpay, dest)
-        assert np.allclose(dest, devpay)
-        assert np.allclose(game.devpay_from_json(json_devpay), devpay)
-
-    prof = [2, 1, 4]
-    devpay = [5, 4]
-    json_devpay = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 4}}, 'r1': {'s2': {}}}
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        assert game.devpay_to_json(devpay, prof) == json_devpay
         assert game.devpay_to_json(devpay) == json_devpay
         dest = np.empty(game.num_devs)
         game.devpay_from_json(json_devpay, dest)
         assert np.allclose(dest, devpay)
         assert np.allclose(game.devpay_from_json(json_devpay), devpay)
+        assert np.allclose(game.devpay_from_json(json_devpay2), devpay)
+
+    devpay = [5, 4]
+    json_devpay = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 4}}}
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        assert game.devpay_to_json(devpay) == json_devpay
+        dest = np.empty(game.num_devs)
+        game.devpay_from_json(json_devpay, dest)
+        assert np.allclose(dest, devpay)
+        assert np.allclose(game.devpay_from_json(json_devpay), devpay)
+
+
+@pytest.mark.parametrize('role_players', [1, 2, 3, [3, 2, 1]])
+@pytest.mark.parametrize('role_strats', [2, 4, [2, 3, 4]])
+def test_random_devpay_serialization(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    pays = np.random.random((20, game.num_devs))
+    pays *= pays < 0.8
+    copies = np.empty(pays.shape)
+    for pay, copy in zip(pays, copies):
+        jpay = json.dumps(game.devpay_to_json(pay))
+        game.devpay_from_json(json.loads(jpay), copy)
+    assert np.allclose(copies, pays)
 
 
 def test_is_symmetric():
@@ -1513,12 +1577,20 @@ def test_to_from_json():
                             'strategies': ['s3', 's4', 's5', 's6'],
                             'count': 3}]}
     assert game.to_json() == jgame
+    assert json.loads(json.dumps(game.to_json())) == jgame
     assert rsgame.emptygame_json(jgame) == game
     assert rsgame.emptygame_json(old_jgame) == game
-    json.dumps(game.to_json())  # serializable
 
     with pytest.raises(ValueError):
         rsgame.emptygame_json({})
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_json_serialization(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    jgame = json.dumps(game.to_json())
+    copy = rsgame.emptygame_json(json.loads(jgame))
+    assert copy == game
 
 
 def test_emptygame_hash_eq():
