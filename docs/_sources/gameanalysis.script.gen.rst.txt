@@ -1,0 +1,7 @@
+gameanalysis\.script\.gen module
+================================
+
+.. automodule:: gameanalysis.script.gen
+    :members:
+    :undoc-members:
+    :show-inheritance:

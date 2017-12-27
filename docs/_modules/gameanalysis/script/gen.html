@@ -54,10 +54,10 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">gamereader</span>
 
 
-<div class="viewcode-block" id="ZeroSum"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.ZeroSum">[docs]</a><span class="k">class</span> <span class="nc">ZeroSum</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="ZeroSum"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.ZeroSum">[docs]</a><span class="k">class</span> <span class="nc">ZeroSum</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;two player zero sum game&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ZeroSum.add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.ZeroSum.add_parser">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ZeroSum.add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.ZeroSum.add_parser">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
         <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
             <span class="s1">&#39;uzs&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;zs&#39;</span><span class="p">],</span> <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">base</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Two-player</span>
@@ -68,15 +68,15 @@
 <span class="s2">            of strategies to use in generating the zero sum game&quot;&quot;&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">parser</span></div>
 
-<div class="viewcode-block" id="ZeroSum.create"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.ZeroSum.create">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="ZeroSum.create"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.ZeroSum.create">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">gamegen</span><span class="o">.</span><span class="n">two_player_zero_sum_game</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span></div></div>
 
 
-<div class="viewcode-block" id="RoleSymmetric"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.RoleSymmetric">[docs]</a><span class="k">class</span> <span class="nc">RoleSymmetric</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="RoleSymmetric"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.RoleSymmetric">[docs]</a><span class="k">class</span> <span class="nc">RoleSymmetric</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;independent uniform role symmetric game&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="RoleSymmetric.add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.RoleSymmetric.add_parser">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="RoleSymmetric.add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.RoleSymmetric.add_parser">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
         <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
             <span class="s1">&#39;ursym&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;rs&#39;</span><span class="p">],</span> <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">base</span><span class="p">],</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Construct a</span>
@@ -89,14 +89,14 @@
 <span class="s2">            has 3 players and 2 strategies.&quot;&quot;&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">parser</span></div>
 
-<div class="viewcode-block" id="RoleSymmetric.create"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.RoleSymmetric.create">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="RoleSymmetric.create"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.RoleSymmetric.create">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">pands</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> \
             <span class="s1">&#39;Must specify matching sets of players and strategies&#39;</span>
         <span class="k">return</span> <span class="n">gamegen</span><span class="o">.</span><span class="n">role_symmetric_game</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">pands</span><span class="p">[::</span><span class="mi">2</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">pands</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span></div></div>
 
 
-<div class="viewcode-block" id="Noise"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.Noise">[docs]</a><span class="k">class</span> <span class="nc">Noise</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Noise"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.Noise">[docs]</a><span class="k">class</span> <span class="nc">Noise</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;add experimental noise to a given game&quot;&quot;&quot;</span>
 
     <span class="n">distributions</span> <span class="o">=</span> <span class="p">{</span>
@@ -106,7 +106,7 @@
         <span class="s1">&#39;gumbel&#39;</span><span class="p">:</span> <span class="n">gamegen</span><span class="o">.</span><span class="n">width_gumbel</span><span class="p">,</span>
     <span class="p">}</span>
 
-<div class="viewcode-block" id="Noise.add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.Noise.add_parser">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Noise.add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.Noise.add_parser">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">,</span> <span class="n">base</span><span class="p">):</span>
         <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
             <span class="s1">&#39;noise&#39;</span><span class="p">,</span> <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="n">base</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Add Noise&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Add</span>
@@ -132,7 +132,7 @@
 <span class="s2">            number of samples to draw for every payoff.&quot;&quot;&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">parser</span></div>
 
-<div class="viewcode-block" id="Noise.create"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.Noise.create">[docs]</a>    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Noise.create"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.Noise.create">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
         <span class="n">game</span> <span class="o">=</span> <span class="n">gamereader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">))</span>
         <span class="n">dist</span> <span class="o">=</span> <span class="n">Noise</span><span class="o">.</span><span class="n">distributions</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">distribution</span><span class="p">]</span>
@@ -143,7 +143,7 @@
 <span class="n">_TYPES</span> <span class="o">=</span> <span class="p">{}</span>
 
 
-<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">base</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s1">&#39;--output&#39;</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;&lt;output-file&gt;&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span>
@@ -166,7 +166,7 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.gen.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.gen.html#gameanalysis.script.gen.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">_TYPES</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">type</span><span class="p">]</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="o">.</span><span class="n">to_json</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
     <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
 </pre></div>

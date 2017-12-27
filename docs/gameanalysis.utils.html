@@ -1,0 +1,345 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.utils module &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reduction Profile Counting" href="profile_counts.html" />
+    <link rel="prev" title="gameanalysis.subgame module" href="gameanalysis.subgame.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="profile_counts.html" title="Reduction Profile Counting"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.subgame.html" title="gameanalysis.subgame module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.utils">
+<span id="gameanalysis-utils-module"></span><h1>gameanalysis.utils module<a class="headerlink" href="#module-gameanalysis.utils" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="gameanalysis.utils.acartesian2">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">acartesian2</code><span class="sig-paren">(</span><em>*arrays</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#acartesian2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.acartesian2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Array cartesian product in 2d</p>
+<p>Produces a new ndarray that has the cartesian product of every row in the
+input arrays. The number of columns is the sum of the number of columns in
+each input. The number of rows is the product of the number of rows in each
+input.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*arrays</strong> (<em>[</em><em>ndarray</em><em> (</em><em>xi</em><em>, </em><em>s</em><em>)</em><em>]</em>) – </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.acomb">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">acomb</code><span class="sig-paren">(</span><em>n</em>, <em>k</em>, <em>repetition=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#acomb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.acomb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute an array of all n choose k options</p>
+<p>The result will be an array shape (m, n) where m is n choose k optionally
+with repetitions.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.axis_to_elem">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">axis_to_elem</code><span class="sig-paren">(</span><em>array</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#axis_to_elem"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.axis_to_elem" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an axis of an array into a unique element</p>
+<p>In general, this returns a copy of the array, unless the data is
+contiguous. This usually requires that the last axis is the one being
+merged.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>array</strong> (<em>ndarray</em>) – The array to convert an axis to a view.</li>
+<li><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – The axis to convert into a single element. Defaults to the last axis.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.comb">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">comb</code><span class="sig-paren">(</span><em>n</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#comb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.comb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return n choose k</p>
+<p>This function works on arrays, and will properly return a python integer
+object if the number is too large to be stored in a 64 bit integer.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.comb_inv">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">comb_inv</code><span class="sig-paren">(</span><em>cmb</em>, <em>k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#comb_inv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.comb_inv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the inverse of <cite>comb</cite></p>
+<p>Given a number of combinations, and the size of subset we’re choosing,
+compute the integer lower bound, i.e. return n* such that <cite>comb(n*, k) &lt;=
+cmb &lt; comb(n* + 1, k)</cite>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.deprecated">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">deprecated</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#deprecated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.deprecated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mark a function as deprecated</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.elem_to_axis">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">elem_to_axis</code><span class="sig-paren">(</span><em>array</em>, <em>dtype</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#elem_to_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.elem_to_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts and array of axis elements back to an axis</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.game_size">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">game_size</code><span class="sig-paren">(</span><em>players</em>, <em>strategies</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#game_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.game_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of profiles in a symmetric game with players and strategies</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.game_size_inv">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">game_size_inv</code><span class="sig-paren">(</span><em>size</em>, <em>players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#game_size_inv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.game_size_inv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inverse of game_size</p>
+<p>Given a game size and a number of players, return a lower bound on the
+number of strategies s* such that game_size(players, s*) &lt;= size &lt;
+game_size(players, s* + 1)`.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.utils.hash_array">
+<em class="property">class </em><code class="descclassname">gameanalysis.utils.</code><code class="descname">hash_array</code><span class="sig-paren">(</span><em>array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#hash_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.hash_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.is_sorted">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">is_sorted</code><span class="sig-paren">(</span><em>iterable</em>, <em>*</em>, <em>key=None</em>, <em>reverse=False</em>, <em>strict=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#is_sorted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.is_sorted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if iterable is sorted</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>iterable</strong> (<em>iterable</em>) – The iterable to check for sorted-ness.</li>
+<li><strong>key</strong> (<em>x -&gt; y</em><em>, </em><em>optional</em>) – Apply mapping function key to iterable prior to checking. This can be
+done before calling, but this ensures identical calls as sorted.</li>
+<li><strong>reverse</strong> (<em>bool</em><em>, </em><em>optional</em>) – </li>
+<li><strong>and reverse function as they for sorted</strong> (<em>key</em>) – </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.iunique">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">iunique</code><span class="sig-paren">(</span><em>iterable</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#iunique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.iunique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an iterable of unique items ordered by first occurrence</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.memoize">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">memoize</code><span class="sig-paren">(</span><em>member_function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#memoize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.memoize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Memoize computation of single object functions</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.multinomial_mode">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">multinomial_mode</code><span class="sig-paren">(</span><em>p</em>, <em>n</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#multinomial_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.multinomial_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the mode of n samples from multinomial distribution p.</p>
+<p class="rubric">Notes</p>
+<p>Algorithm from <a class="footnote-reference" href="#id3" id="id1">[3]</a>, notation follows <a class="footnote-reference" href="#id4" id="id2">[4]</a>.</p>
+<table class="docutils footnote" frame="void" id="id3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[3]</a></td><td>Finucan 1964. The mode of a multinomial distribution.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[4]</a></td><td>Gall 2003. Determination of the modes of a Multinomial distribution.</td></tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.one_line">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">one_line</code><span class="sig-paren">(</span><em>string</em>, <em>line_width=80</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#one_line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.one_line" title="Permalink to this definition">¶</a></dt>
+<dd><p>If string s is longer than line width, cut it off and append “…”</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.only">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">only</code><span class="sig-paren">(</span><em>iterable</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#only"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.only" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the only element of an iterable</p>
+<p>Throws a value error if the iterable doesn’t contain only one element</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.prefix_strings">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">prefix_strings</code><span class="sig-paren">(</span><em>prefix</em>, <em>num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#prefix_strings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.prefix_strings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of prefixed integer strings</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.prod">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">prod</code><span class="sig-paren">(</span><em>collection</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#prod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.prod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Product of all elements in the collection</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.random_strings">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">random_strings</code><span class="sig-paren">(</span><em>min_length</em>, <em>max_length=None</em>, <em>digits='abcdefghijklmnopqrstuvwxyz'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#random_strings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.random_strings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a random string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>min_length</strong> (<em>int</em>) – The minimum length string to return.</li>
+<li><strong>max_length</strong> (<em>int</em><em>, </em><em>optional</em>) – The maximum length string to return. If None or unspecified, this is
+the same as min_length.</li>
+<li><strong>num</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of strings to return. If None or unspecified this returns a
+single string, otherwise it returns a generator with length <cite>num</cite>.</li>
+<li><strong>digits</strong> (<em>str</em><em>, </em><em>optional</em>) – The optional digits to select from.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.simplex_project">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">simplex_project</code><span class="sig-paren">(</span><em>array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#simplex_project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.simplex_project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the projection onto the simplex</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.unique_axis">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">unique_axis</code><span class="sig-paren">(</span><em>array</em>, <em>axis=-1</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#unique_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.unique_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find unique axis elements</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>array</strong> (<em>ndarray</em>) – The array to find unique axis elements of</li>
+<li><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – The axis to find unique elements of. Defaults to the last axis.</li>
+<li><strong>**kwargs</strong> (<em>flags</em>) – The flags to pass to numpys unique function</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>uniques</strong> (<em>ndarray</em>) – The unique axes as rows of a two dimensional array.</li>
+<li><em>*args</em> – Any other results of the unique functions due to flags</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.subgame.html"
+                        title="previous chapter">gameanalysis.subgame module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="profile_counts.html"
+                        title="next chapter">Reduction Profile Counting</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.utils.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="profile_counts.html" title="Reduction Profile Counting"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.subgame.html" title="gameanalysis.subgame module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

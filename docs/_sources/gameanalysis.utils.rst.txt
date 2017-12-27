@@ -1,0 +1,7 @@
+gameanalysis\.utils module
+==========================
+
+.. automodule:: gameanalysis.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:

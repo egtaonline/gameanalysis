@@ -1,0 +1,7 @@
+gameanalysis\.subgame module
+============================
+
+.. automodule:: gameanalysis.subgame
+    :members:
+    :undoc-members:
+    :show-inheritance:

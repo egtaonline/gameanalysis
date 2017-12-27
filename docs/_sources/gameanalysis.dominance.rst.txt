@@ -1,0 +1,7 @@
+gameanalysis\.dominance module
+==============================
+
+.. automodule:: gameanalysis.dominance
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,7 @@
+gameanalysis\.script\.sample module
+===================================
+
+.. automodule:: gameanalysis.script.sample
+    :members:
+    :undoc-members:
+    :show-inheritance:

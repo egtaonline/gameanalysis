@@ -1,4 +1,4 @@
 /modules.rst
 /gameanalysis.rst
-/gameanalysis.script.rst
+/gameanalysis.*.rst
 *.pyr

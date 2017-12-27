@@ -55,7 +55,7 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<div class="viewcode-block" id="MatrixGame"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame">[docs]</a><span class="k">class</span> <span class="nc">MatrixGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">CompleteGame</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame">[docs]</a><span class="k">class</span> <span class="nc">MatrixGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">CompleteGame</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Matrix game representation</span>
 
 <span class="sd">    This represents a complete independent game more compactly than a Game, but</span>
@@ -87,11 +87,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_view</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span>
 
-<div class="viewcode-block" id="MatrixGame.payoff_matrix"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.payoff_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">payoff_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.payoff_matrix"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.payoff_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">payoff_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return the payoff matrix&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="o">.</span><span class="n">view</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="MatrixGame.min_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.min_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+<div class="viewcode-block" id="MatrixGame.min_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.min_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">min_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the minimum payoff for each role&quot;&quot;&quot;</span>
         <span class="n">mpays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
@@ -103,7 +103,7 @@
         <span class="n">mpays</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mpays</span></div>
 
-<div class="viewcode-block" id="MatrixGame.max_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.max_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+<div class="viewcode-block" id="MatrixGame.max_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.max_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">max_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the minimum payoff for each role&quot;&quot;&quot;</span>
         <span class="n">mpays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
@@ -115,18 +115,18 @@
         <span class="n">mpays</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mpays</span></div>
 
-<div class="viewcode-block" id="MatrixGame.profiles"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.profiles">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="viewcode-block" id="MatrixGame.profiles"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.profiles">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="MatrixGame.payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.payoffs">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<div class="viewcode-block" id="MatrixGame.payoffs"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.payoffs">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">profiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="n">payoffs</span><span class="p">[</span><span class="n">profiles</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="o">.</span><span class="n">flat</span>
         <span class="k">return</span> <span class="n">payoffs</span></div>
 
-<div class="viewcode-block" id="MatrixGame.compress_profile"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.compress_profile">[docs]</a>    <span class="k">def</span> <span class="nf">compress_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.compress_profile"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.compress_profile">[docs]</a>    <span class="k">def</span> <span class="nf">compress_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Compress profile in array of ints</span>
 
 <span class="sd">        Normal profiles are an array of number of players playing a strategy.</span>
@@ -139,7 +139,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prof_offset</span> <span class="o">-</span> <span class="n">profile</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
                                <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MatrixGame.uncompress_profile"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.uncompress_profile">[docs]</a>    <span class="k">def</span> <span class="nf">uncompress_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comp_prof</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.uncompress_profile"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.uncompress_profile">[docs]</a>    <span class="k">def</span> <span class="nf">uncompress_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comp_prof</span><span class="p">):</span>
         <span class="n">comp_prof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">comp_prof</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">comp_prof</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
             <span class="n">comp_prof</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
@@ -150,15 +150,15 @@
         <span class="n">profile</span><span class="o">.</span><span class="n">flat</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">profile</span></div>
 
-<div class="viewcode-block" id="MatrixGame.get_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.get_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.get_payoffs"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.get_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns an array of profile payoffs&quot;&quot;&quot;</span>
         <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_id</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile_to_id</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
         <span class="n">payoffs</span><span class="p">[</span><span class="n">profile</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_view</span><span class="p">[</span><span class="n">ids</span><span class="p">]</span><span class="o">.</span><span class="n">flat</span>
         <span class="k">return</span> <span class="n">payoffs</span></div>
 
-<div class="viewcode-block" id="MatrixGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Computes the expected value of each pure strategy played against all</span>
 <span class="sd">        opponents playing mix.</span>
 
@@ -219,14 +219,14 @@
                          <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">devpays</span><span class="p">,</span> <span class="n">jac</span></div>
 
-<div class="viewcode-block" id="MatrixGame.subgame"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.subgame">[docs]</a>    <span class="k">def</span> <span class="nf">subgame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subgame_mask</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.subgame"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.subgame">[docs]</a>    <span class="k">def</span> <span class="nf">subgame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subgame_mask</span><span class="p">):</span>
         <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">subgame</span><span class="p">(</span><span class="n">subgame_mask</span><span class="p">)</span>
         <span class="n">matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mask</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">subgame_mask</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
             <span class="n">matrix</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),)</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="p">(</span><span class="n">mask</span><span class="p">,)]</span>
         <span class="k">return</span> <span class="n">MatrixGame</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">matrix</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="MatrixGame.normalize"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.normalize"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Return a normalized MatGame&quot;&quot;&quot;</span>
         <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_role_payoffs</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span>
         <span class="n">scale</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
@@ -245,7 +245,7 @@
             <span class="k">return</span> <span class="p">{</span><span class="n">strat</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mat_to_json</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">role_index</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">mat</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">strats</span><span class="p">,</span> <span class="n">matrix</span><span class="p">)}</span>
 
-<div class="viewcode-block" id="MatrixGame.to_json"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.MatrixGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MatrixGame.to_json"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.MatrixGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
         <span class="n">res</span><span class="p">[</span><span class="s1">&#39;payoffs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mat_to_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_payoff_matrix</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">res</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;matrix.1&#39;</span>
@@ -266,7 +266,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="matgame"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame">[docs]</a><span class="k">def</span> <span class="nf">matgame</span><span class="p">(</span><span class="n">payoff_matrix</span><span class="p">):</span>
+<div class="viewcode-block" id="matgame"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.matgame">[docs]</a><span class="k">def</span> <span class="nf">matgame</span><span class="p">(</span><span class="n">payoff_matrix</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a game from a dense matrix with default names</span>
 
 <span class="sd">    Parameters</span>
@@ -282,7 +282,7 @@
         <span class="n">payoff_matrix</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="matgame_names"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_names">[docs]</a><span class="k">def</span> <span class="nf">matgame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">):</span>
+<div class="viewcode-block" id="matgame_names"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.matgame_names">[docs]</a><span class="k">def</span> <span class="nf">matgame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a game from a payoff matrix with names</span>
 
 <span class="sd">    Parameters</span>
@@ -314,7 +314,7 @@
             <span class="n">_mat_from_json</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">subdic</span><span class="p">,</span> <span class="n">matrix</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">depth</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="matgame_json"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_json">[docs]</a><span class="k">def</span> <span class="nf">matgame_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
+<div class="viewcode-block" id="matgame_json"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.matgame_json">[docs]</a><span class="k">def</span> <span class="nf">matgame_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a matrix game from json</span>
 
 <span class="sd">    In general, the json will have &#39;type&#39;: &#39;matrix...&#39; to indicate that it&#39;s a</span>
@@ -329,7 +329,7 @@
     <span class="k">return</span> <span class="n">matgame_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">matrix</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="matgame_copy"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_copy">[docs]</a><span class="k">def</span> <span class="nf">matgame_copy</span><span class="p">(</span><span class="n">copy_game</span><span class="p">):</span>
+<div class="viewcode-block" id="matgame_copy"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.matgame_copy">[docs]</a><span class="k">def</span> <span class="nf">matgame_copy</span><span class="p">(</span><span class="n">copy_game</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Copy a matrix game from an existing game</span>
 
 <span class="sd">    Parameters</span>
@@ -382,7 +382,7 @@
     <span class="k">return</span> <span class="n">MatrixGame</span><span class="p">(</span><span class="n">roles</span><span class="p">,</span> <span class="n">strats</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="matgame_replace"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.matgame.matgame_replace">[docs]</a><span class="k">def</span> <span class="nf">matgame_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">):</span>
+<div class="viewcode-block" id="matgame_replace"><a class="viewcode-back" href="../../gameanalysis.matgame.html#gameanalysis.matgame.matgame_replace">[docs]</a><span class="k">def</span> <span class="nf">matgame_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">payoff_matrix</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Replace an existing game with a new payoff matrix</span>
 
 <span class="sd">    Parameters</span>

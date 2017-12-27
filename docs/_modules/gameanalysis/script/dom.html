@@ -54,7 +54,7 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">gamereader</span>
 
 
-<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.dom.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.dom.html#gameanalysis.script.dom.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s1">&#39;dominance&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;dom&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Computed dominated strategies&quot;&quot;&quot;</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Compute dominated strategies, or subgames with only</span>
@@ -83,12 +83,12 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.dom.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.dom.html#gameanalysis.script.dom.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">game</span> <span class="o">=</span> <span class="n">gamereader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">))</span>
     <span class="n">sub_mask</span> <span class="o">=</span> <span class="n">dominance</span><span class="o">.</span><span class="n">iterated_elimination</span><span class="p">(</span>
         <span class="n">game</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">criterion</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">unconditional</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">strategies</span><span class="p">:</span>
-        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">to_subgame_json</span><span class="p">(</span><span class="n">sub_mask</span><span class="p">),</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">subgame_to_json</span><span class="p">(</span><span class="n">sub_mask</span><span class="p">),</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">subgame</span><span class="p">(</span><span class="n">sub_mask</span><span class="p">)</span><span class="o">.</span><span class="n">to_json</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
 

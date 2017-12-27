@@ -1,0 +1,302 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.matgame module &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.nash module" href="gameanalysis.nash.html" />
+    <link rel="prev" title="gameanalysis.learning module" href="gameanalysis.learning.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.learning.html" title="gameanalysis.learning module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.matgame">
+<span id="gameanalysis-matgame-module"></span><h1>gameanalysis.matgame module<a class="headerlink" href="#module-gameanalysis.matgame" title="Permalink to this headline">¶</a></h1>
+<p>module for complete independent games</p>
+<dl class="class">
+<dt id="gameanalysis.matgame.MatrixGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.matgame.</code><code class="descname">MatrixGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>payoff_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.CompleteGame" title="gameanalysis.rsgame.CompleteGame"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.rsgame.CompleteGame</span></code></a></p>
+<p>Matrix game representation</p>
+<p>This represents a complete independent game more compactly than a Game, but
+only works for complete independent games.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_names</strong> (<em>(</em><em>str</em><em>,</em><em>)</em>) – The name of each role.</li>
+<li><strong>strat_names</strong> (<em>(</em><em>(</em><em>str</em><em>,</em><em>)</em><em>,</em><em>)</em>) – The name of each strategy per role.</li>
+<li><strong>payoff_matrix</strong> (<em>ndarray</em>) – The matrix of payoffs for an asymmetric game. The last axis is the
+payoffs for each player, the first axes are the strategies for each
+player. matrix.shape[:-1] must correspond to the number of strategies
+for each player. matrix.ndim - 1 must equal matrix.shape[-1].</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.compress_profile">
+<code class="descname">compress_profile</code><span class="sig-paren">(</span><em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.compress_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.compress_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compress profile in array of ints</p>
+<p>Normal profiles are an array of number of players playing a strategy.
+Since matrix games always have one player per role, this compresses
+each roles counts into a single int representing the played strategy
+per role.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.deviation_payoffs">
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the expected value of each pure strategy played against all
+opponents playing mix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mix</strong> (<em>ndarray</em>) – The mix all other players are using</li>
+<li><strong>jacobian</strong> (<em>bool</em>) – If true, the second returned argument will be the jacobian of the
+deviation payoffs with respect to the mixture. The first axis is
+the deviating strategy, the second axis is the strategy in the mix
+the jacobian is taken with respect to.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.get_payoffs">
+<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array of profile payoffs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.max_strat_payoffs">
+<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum payoff for each role</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.min_strat_payoffs">
+<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum payoff for each role</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.normalize">
+<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a normalized MatGame</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.payoff_matrix">
+<code class="descname">payoff_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.payoff_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.payoff_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the payoff matrix</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.matgame.MatrixGame.payoffs">
+<code class="descname">payoffs</code><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.matgame.MatrixGame.profiles">
+<code class="descname">profiles</code><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.subgame">
+<code class="descname">subgame</code><span class="sig-paren">(</span><em>subgame_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.to_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.matgame.MatrixGame.uncompress_profile">
+<code class="descname">uncompress_profile</code><span class="sig-paren">(</span><em>comp_prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#MatrixGame.uncompress_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.MatrixGame.uncompress_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.matgame.matgame">
+<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame</code><span class="sig-paren">(</span><em>payoff_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a game from a dense matrix with default names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The matrix of payoffs for an asymmetric game.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.matgame.matgame_copy">
+<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_copy</code><span class="sig-paren">(</span><em>copy_game</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy a matrix game from an existing game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>copy_game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to copy payoff data out of. This game must be complete.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.matgame.matgame_json">
+<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_json</code><span class="sig-paren">(</span><em>json</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a matrix game from json</p>
+<p>In general, the json will have ‘type’: ‘matrix…’ to indicate that it’s a
+matrix game, but if the other fields are correct, this will still succeed.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.matgame.matgame_names">
+<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_names</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>payoff_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a game from a payoff matrix with names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name of each role.</li>
+<li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</li>
+<li><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The matrix mapping strategy indices to payoffs for each player.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.matgame.matgame_replace">
+<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_replace</code><span class="sig-paren">(</span><em>base</em>, <em>payoff_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace an existing game with a new payoff matrix</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>base</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to take structure out of.</li>
+<li><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The new payoff matrix.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.learning.html"
+                        title="previous chapter">gameanalysis.learning module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.nash.html"
+                        title="next chapter">gameanalysis.nash module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.matgame.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.learning.html" title="gameanalysis.learning module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

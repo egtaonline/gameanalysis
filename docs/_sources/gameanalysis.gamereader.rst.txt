@@ -1,0 +1,7 @@
+gameanalysis\.gamereader module
+===============================
+
+.. automodule:: gameanalysis.gamereader
+    :members:
+    :undoc-members:
+    :show-inheritance:

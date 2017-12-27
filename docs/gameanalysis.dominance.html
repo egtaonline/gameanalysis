@@ -1,0 +1,160 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.dominance module &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.fixedpoint module" href="gameanalysis.fixedpoint.html" />
+    <link rel="prev" title="gameanalysis.collect module" href="gameanalysis.collect.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.fixedpoint.html" title="gameanalysis.fixedpoint module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.collect.html" title="gameanalysis.collect module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.dominance">
+<span id="gameanalysis-dominance-module"></span><h1>gameanalysis.dominance module<a class="headerlink" href="#module-gameanalysis.dominance" title="Permalink to this headline">¶</a></h1>
+<p>Module for computing dominated strategies</p>
+<dl class="function">
+<dt id="gameanalysis.dominance.iterated_elimination">
+<code class="descclassname">gameanalysis.dominance.</code><code class="descname">iterated_elimination</code><span class="sig-paren">(</span><em>game</em>, <em>criterion</em>, <em>*</em>, <em>conditional=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/dominance.html#iterated_elimination"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.dominance.iterated_elimination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a subgame mask resulting from iterated elimination of strategies</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game to run iterated elimination on</li>
+<li><strong>criterion</strong> (<em>str</em><em>, </em><em>{'weakdom'</em><em>, </em><em>'strictdom'</em><em>, </em><em>'neverbr'}</em>) – The criterion to use to eliminated strategies.</li>
+<li><strong>conditional</strong> (<em>bool</em>) – Whether to use conditional criteria. In general, conditional set to
+true will assume that unobserved payoffs are large. See the other
+methods for a more detailed explanation</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.dominance.never_best_response">
+<code class="descclassname">gameanalysis.dominance.</code><code class="descname">never_best_response</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>conditional=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/dominance.html#never_best_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.dominance.never_best_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a mask of the strategies that are never a best response</p>
+<p>If conditional, then missing data is treated as a best response. The
+counted best response will be the largest deviation that has data.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.dominance.strictly_dominated">
+<code class="descclassname">gameanalysis.dominance.</code><code class="descname">strictly_dominated</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>conditional=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/dominance.html#strictly_dominated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.dominance.strictly_dominated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a mask of the strategies that are strictly dominated</p>
+<p>If conditional, then missing data will be treated as dominating.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.dominance.weakly_dominated">
+<code class="descclassname">gameanalysis.dominance.</code><code class="descname">weakly_dominated</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>conditional=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/dominance.html#weakly_dominated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.dominance.weakly_dominated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a mask of the strategies that are weakly dominated</p>
+<p>If conditional, then missing data will be treated as dominating.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.collect.html"
+                        title="previous chapter">gameanalysis.collect module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.fixedpoint.html"
+                        title="next chapter">gameanalysis.fixedpoint module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.dominance.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.fixedpoint.html" title="gameanalysis.fixedpoint module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.collect.html" title="gameanalysis.collect module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

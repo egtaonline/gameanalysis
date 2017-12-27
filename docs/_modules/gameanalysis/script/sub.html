@@ -56,7 +56,7 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">subgame</span>
 
 
-<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.sub.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.sub.html#gameanalysis.script.sub.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s1">&#39;subgame&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sub&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Compute and select subgames&quot;&quot;&quot;</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Extract subgames and optionally detects all complete</span>
@@ -110,7 +110,7 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-<div class="viewcode-block" id="parse_text_spec"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.sub.parse_text_spec">[docs]</a><span class="k">def</span> <span class="nf">parse_text_spec</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_text_spec"><a class="viewcode-back" href="../../../gameanalysis.script.sub.html#gameanalysis.script.sub.parse_text_spec">[docs]</a><span class="k">def</span> <span class="nf">parse_text_spec</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
     <span class="n">current_role</span> <span class="o">=</span> <span class="s1">&#39;&lt;undefined role&gt;&#39;</span>
     <span class="n">subg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">roles</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">role_names</span><span class="p">)</span>
@@ -124,7 +124,7 @@
     <span class="k">return</span> <span class="n">subg</span></div>
 
 
-<div class="viewcode-block" id="parse_index_spec"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.sub.parse_index_spec">[docs]</a><span class="k">def</span> <span class="nf">parse_index_spec</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_index_spec"><a class="viewcode-back" href="../../../gameanalysis.script.sub.html#gameanalysis.script.sub.parse_index_spec">[docs]</a><span class="k">def</span> <span class="nf">parse_index_spec</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
     <span class="n">subg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">subg</span><span class="p">[</span><span class="n">spec</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="k">assert</span> <span class="n">game</span><span class="o">.</span><span class="n">is_subgame</span><span class="p">(</span><span class="n">subg</span><span class="p">),</span> \
@@ -132,7 +132,7 @@
     <span class="k">return</span> <span class="n">subg</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.sub.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.sub.html#gameanalysis.script.sub.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">game</span> <span class="o">=</span> <span class="n">gamereader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">))</span>
 
     <span class="c1"># Collect all subgames</span>
@@ -141,14 +141,14 @@
         <span class="n">subgames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">subgame</span><span class="o">.</span><span class="n">maximal_subgames</span><span class="p">(</span><span class="n">game</span><span class="p">))</span>
 
     <span class="k">for</span> <span class="n">sub_file</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">subgame_file</span><span class="p">:</span>
-        <span class="n">subgames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">from_subgame_json</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">subgames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">subgame_from_json</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
                         <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">sub_file</span><span class="p">))</span>
 
     <span class="n">subgames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parse_text_spec</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">text_spec</span><span class="p">)</span>
     <span class="n">subgames</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">parse_index_spec</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">index_spec</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">no_extract</span><span class="p">:</span>
-        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">([</span><span class="n">game</span><span class="o">.</span><span class="n">to_subgame_json</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">subgames</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">([</span><span class="n">game</span><span class="o">.</span><span class="n">subgame_to_json</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">subgames</span><span class="p">],</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">([</span><span class="n">game</span><span class="o">.</span><span class="n">subgame</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span> <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">subgames</span><span class="p">],</span>
                   <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>

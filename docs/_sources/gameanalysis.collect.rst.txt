@@ -1,0 +1,7 @@
+gameanalysis\.collect module
+============================
+
+.. automodule:: gameanalysis.collect
+    :members:
+    :undoc-members:
+    :show-inheritance:

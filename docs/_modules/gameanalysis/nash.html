@@ -61,7 +61,7 @@
 <span class="n">_TINY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span>
 
 
-<div class="viewcode-block" id="pure_nash"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.pure_nash">[docs]</a><span class="k">def</span> <span class="nf">pure_nash</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="pure_nash"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.pure_nash">[docs]</a><span class="k">def</span> <span class="nf">pure_nash</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns an array of all pure nash profiles&quot;&quot;&quot;</span>
     <span class="n">eqa</span> <span class="o">=</span> <span class="p">[</span><span class="n">prof</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="k">for</span> <span class="n">prof</span> <span class="ow">in</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span>
            <span class="k">if</span> <span class="n">regret</span><span class="o">.</span><span class="n">pure_strategy_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">epsilon</span><span class="p">]</span>
@@ -71,7 +71,7 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="min_regret_profile"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.min_regret_profile">[docs]</a><span class="k">def</span> <span class="nf">min_regret_profile</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
+<div class="viewcode-block" id="min_regret_profile"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.min_regret_profile">[docs]</a><span class="k">def</span> <span class="nf">min_regret_profile</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Finds the profile with the confirmed lowest regret</span>
 
 <span class="sd">    An error will be raised if there are no profiles with a defined regret.</span>
@@ -81,7 +81,7 @@
     <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">regs</span><span class="p">)]</span></div>
 
 
-<div class="viewcode-block" id="min_regret_grid_mixture"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.min_regret_grid_mixture">[docs]</a><span class="k">def</span> <span class="nf">min_regret_grid_mixture</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
+<div class="viewcode-block" id="min_regret_grid_mixture"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.min_regret_grid_mixture">[docs]</a><span class="k">def</span> <span class="nf">min_regret_grid_mixture</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Finds the mixed profile with the confirmed lowest regret</span>
 
 <span class="sd">    The search is done over a grid with `points` per dimensions.</span>
@@ -97,7 +97,7 @@
     <span class="k">return</span> <span class="n">mixes</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">regs</span><span class="p">)]</span></div>
 
 
-<div class="viewcode-block" id="min_regret_rand_mixture"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.min_regret_rand_mixture">[docs]</a><span class="k">def</span> <span class="nf">min_regret_rand_mixture</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">):</span>
+<div class="viewcode-block" id="min_regret_rand_mixture"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.min_regret_rand_mixture">[docs]</a><span class="k">def</span> <span class="nf">min_regret_rand_mixture</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Finds the mixed profile with the confirmed lowest regret</span>
 
 <span class="sd">    The search is done over a random sampling of `mixtures` mixed profiles.</span>
@@ -114,7 +114,7 @@
     <span class="k">return</span> <span class="n">mixes</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">regs</span><span class="p">)]</span></div>
 
 
-<div class="viewcode-block" id="replicator_dynamics"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.replicator_dynamics">[docs]</a><span class="k">def</span> <span class="nf">replicator_dynamics</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">converge_thresh</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span>
+<div class="viewcode-block" id="replicator_dynamics"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.replicator_dynamics">[docs]</a><span class="k">def</span> <span class="nf">replicator_dynamics</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">converge_thresh</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">,</span>
                         <span class="n">slack</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Replicator Dynamics</span>
 
@@ -164,7 +164,7 @@
     <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">mixture_project</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="regret_minimize"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.regret_minimize">[docs]</a><span class="k">def</span> <span class="nf">regret_minimize</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">gtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">):</span>
+<div class="viewcode-block" id="regret_minimize"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.regret_minimize">[docs]</a><span class="k">def</span> <span class="nf">regret_minimize</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">gtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A pickleable object to find Nash equilibria</span>
 
 <span class="sd">    This method uses constrained convex optimization to to attempt to solve a</span>
@@ -242,7 +242,7 @@
     <span class="k">return</span> <span class="n">result</span></div>
 
 
-<div class="viewcode-block" id="fictitious_play"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.fictitious_play">[docs]</a><span class="k">def</span> <span class="nf">fictitious_play</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">converge_thresh</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">):</span>
+<div class="viewcode-block" id="fictitious_play"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.fictitious_play">[docs]</a><span class="k">def</span> <span class="nf">fictitious_play</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_iters</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">converge_thresh</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Run fictitious play on a mixture</span>
 
 <span class="sd">    In fictitious play, players continually best respond to the empirical</span>
@@ -262,7 +262,7 @@
 <span class="c1"># TODO Implement other equilibria finding methods that are found in gambit</span>
 
 
-<div class="viewcode-block" id="scarfs_algorithm"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.scarfs_algorithm">[docs]</a><span class="k">def</span> <span class="nf">scarfs_algorithm</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">disc</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<div class="viewcode-block" id="scarfs_algorithm"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.scarfs_algorithm">[docs]</a><span class="k">def</span> <span class="nf">scarfs_algorithm</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">disc</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Uses fixed point method to find nash eqm</span>
 
 <span class="sd">    This is guaranteed to find an equilibrium with regret below regret_thresh,</span>
@@ -288,17 +288,17 @@
 <span class="sd">        `game.num_strats - game.num_roles + 1` possible starting points.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">eqa_func</span><span class="p">(</span><span class="n">mixture</span><span class="p">):</span>
-        <span class="n">mixture</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">from_simplex</span><span class="p">(</span><span class="n">mixture</span><span class="p">)</span>
+        <span class="n">mixture</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">mixture_from_simplex</span><span class="p">(</span><span class="n">mixture</span><span class="p">)</span>
         <span class="n">gains</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mixture</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="n">mixture</span> <span class="o">+</span> <span class="n">gains</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
             <span class="n">gains</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">to_simplex</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">mixture_to_simplex</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
     <span class="n">disc</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">disc</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
     <span class="n">reg</span> <span class="o">=</span> <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span>
     <span class="k">while</span> <span class="n">reg</span> <span class="o">&gt;</span> <span class="n">regret_thresh</span><span class="p">:</span>
-        <span class="n">mix</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">from_simplex</span><span class="p">(</span><span class="n">fixedpoint</span><span class="o">.</span><span class="n">fixed_point</span><span class="p">(</span>
-            <span class="n">eqa_func</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">to_simplex</span><span class="p">(</span><span class="n">mix</span><span class="p">),</span> <span class="n">disc</span><span class="o">=</span><span class="n">disc</span><span class="p">))</span>
+        <span class="n">mix</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">mixture_from_simplex</span><span class="p">(</span><span class="n">fixedpoint</span><span class="o">.</span><span class="n">fixed_point</span><span class="p">(</span>
+            <span class="n">eqa_func</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">mixture_to_simplex</span><span class="p">(</span><span class="n">mix</span><span class="p">),</span> <span class="n">disc</span><span class="o">=</span><span class="n">disc</span><span class="p">))</span>
         <span class="n">reg</span> <span class="o">=</span> <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span>
         <span class="n">disc</span> <span class="o">*=</span> <span class="mi">2</span>
 
@@ -325,7 +325,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="mixed_nash"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.nash.mixed_nash">[docs]</a><span class="k">def</span> <span class="nf">mixed_nash</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">dist_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">grid_points</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<div class="viewcode-block" id="mixed_nash"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.mixed_nash">[docs]</a><span class="k">def</span> <span class="nf">mixed_nash</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">dist_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">grid_points</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                <span class="n">random_restarts</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">min_reg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                <span class="n">at_least_one</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">methods</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Finds role-symmetric mixed Nash equilibria</span>

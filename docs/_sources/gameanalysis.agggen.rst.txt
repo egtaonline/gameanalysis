@@ -1,0 +1,7 @@
+gameanalysis\.agggen module
+===========================
+
+.. automodule:: gameanalysis.agggen
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,7 @@
+gameanalysis\.paygame module
+============================
+
+.. automodule:: gameanalysis.paygame
+    :members:
+    :undoc-members:
+    :show-inheritance:

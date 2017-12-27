@@ -50,7 +50,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
-<div class="viewcode-block" id="WeightedSimilaritySet"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.WeightedSimilaritySet">[docs]</a><span class="k">class</span> <span class="nc">WeightedSimilaritySet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="WeightedSimilaritySet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.WeightedSimilaritySet">[docs]</a><span class="k">class</span> <span class="nc">WeightedSimilaritySet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A set of non-similar elements prioritized by weight</span>
 
 <span class="sd">    Allows adding a bunch of weighted elements, and when iterated, only</span>
@@ -65,14 +65,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_computed</span> <span class="o">=</span> <span class="kc">True</span>
 
-<div class="viewcode-block" id="WeightedSimilaritySet.add"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.WeightedSimilaritySet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">weight</span><span class="p">):</span>
+<div class="viewcode-block" id="WeightedSimilaritySet.add"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.WeightedSimilaritySet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">weight</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_computed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">weight</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_i</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="WeightedSimilaritySet.clear"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.WeightedSimilaritySet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="WeightedSimilaritySet.clear"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.WeightedSimilaritySet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
@@ -103,7 +103,7 @@
                                  <span class="bp">self</span><span class="o">.</span><span class="n">_is_similar</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="DynamicArray"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.DynamicArray">[docs]</a><span class="k">class</span> <span class="nc">DynamicArray</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicArray"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.DynamicArray">[docs]</a><span class="k">class</span> <span class="nc">DynamicArray</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A object with a backed array that also allows adding data&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_room</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
@@ -115,7 +115,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_grow_fraction</span> <span class="o">=</span> <span class="mi">2</span>
 
-<div class="viewcode-block" id="DynamicArray.append"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.DynamicArray.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicArray.append"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.DynamicArray.append">[docs]</a>    <span class="k">def</span> <span class="nf">append</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Append an array&quot;&quot;&quot;</span>
         <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
@@ -134,7 +134,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid shape for append&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="DynamicArray.pop"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.DynamicArray.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicArray.pop"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.DynamicArray.pop">[docs]</a>    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Pop one or several arrays&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;can&#39;t pop from an empty array&quot;</span>
@@ -151,7 +151,7 @@
         <span class="sd">&quot;&quot;&quot;A view of all of the data&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">]</span>
 
-<div class="viewcode-block" id="DynamicArray.ensure_capacity"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.DynamicArray.ensure_capacity">[docs]</a>    <span class="k">def</span> <span class="nf">ensure_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_capacity</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicArray.ensure_capacity"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.DynamicArray.ensure_capacity">[docs]</a>    <span class="k">def</span> <span class="nf">ensure_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_capacity</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Make sure the array has a least new_capacity&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">new_capacity</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
             <span class="n">growth</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grow_fraction</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
@@ -161,7 +161,7 @@
             <span class="n">new_data</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">new_data</span></div>
 
-<div class="viewcode-block" id="DynamicArray.compact"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.DynamicArray.compact">[docs]</a>    <span class="k">def</span> <span class="nf">compact</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DynamicArray.compact"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.DynamicArray.compact">[docs]</a>    <span class="k">def</span> <span class="nf">compact</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Trim underlying storage to hold only valid data&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
@@ -179,7 +179,7 @@
         <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="BitSet"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.BitSet">[docs]</a><span class="k">class</span> <span class="nc">BitSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="BitSet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.BitSet">[docs]</a><span class="k">class</span> <span class="nc">BitSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Set of bitmasks</span>
 
 <span class="sd">    A bitmask is in the set if all of the true bits have been added&quot;&quot;&quot;</span>
@@ -189,7 +189,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_masks</span> <span class="o">=</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="BitSet.add"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.BitSet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitmask</span><span class="p">):</span>
+<div class="viewcode-block" id="BitSet.add"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.BitSet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitmask</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_masks</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">bitmask</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">bitmask</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
@@ -200,7 +200,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="BitSet.clear"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.BitSet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="BitSet.clear"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.BitSet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_masks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitmask</span><span class="p">):</span>
@@ -216,7 +216,7 @@
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{!r}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_masks</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="MixtureSet"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.MixtureSet">[docs]</a><span class="k">class</span> <span class="nc">MixtureSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="MixtureSet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MixtureSet">[docs]</a><span class="k">class</span> <span class="nc">MixtureSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A set of mixtures</span>
 
 <span class="sd">    Elements are only kept if the norm of their difference is greater than the</span>
@@ -226,14 +226,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_tol</span> <span class="o">=</span> <span class="n">tolerance</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mixtures</span> <span class="o">=</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="MixtureSet.add"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.MixtureSet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>
+<div class="viewcode-block" id="MixtureSet.add"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MixtureSet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">mixture</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mixtures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mixture</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="MixtureSet.clear"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.collect.MixtureSet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="MixtureSet.clear"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MixtureSet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mixtures</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>

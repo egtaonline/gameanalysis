@@ -66,12 +66,17 @@
 <span class="c1"># XXX A lot of these are candidates for cython</span>
 
 
-<div class="viewcode-block" id="prod"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.prod">[docs]</a><span class="k">def</span> <span class="nf">prod</span><span class="p">(</span><span class="n">collection</span><span class="p">):</span>
+<div class="viewcode-block" id="prod"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.prod">[docs]</a><span class="k">def</span> <span class="nf">prod</span><span class="p">(</span><span class="n">collection</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Product of all elements in the collection&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">collection</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="comb"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.comb">[docs]</a><span class="k">def</span> <span class="nf">comb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+<div class="viewcode-block" id="comb"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.comb">[docs]</a><span class="k">def</span> <span class="nf">comb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return n choose k</span>
+
+<span class="sd">    This function works on arrays, and will properly return a python integer</span>
+<span class="sd">    object if the number is too large to be stored in a 64 bit integer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">sps</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">res</span> <span class="o">&lt;</span> <span class="n">_MAX_INT_FLOAT</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
@@ -84,12 +89,62 @@
         <span class="k">return</span> <span class="n">sps</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="game_size"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.game_size">[docs]</a><span class="k">def</span> <span class="nf">game_size</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strategies</span><span class="p">):</span>
+<div class="viewcode-block" id="comb_inv"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.comb_inv">[docs]</a><span class="k">def</span> <span class="nf">comb_inv</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the inverse of `comb`</span>
+
+<span class="sd">    Given a number of combinations, and the size of subset we&#39;re choosing,</span>
+<span class="sd">    compute the integer lower bound, i.e. return n* such that `comb(n*, k) &lt;=</span>
+<span class="sd">    cmb &lt; comb(n* + 1, k)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">na</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
+    <span class="n">na</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">size</span><span class="p">,)</span>
+    <span class="n">cmba</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">cmb</span><span class="p">,</span> <span class="n">n</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">ka</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">ka</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">na</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">na</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">ka</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span>
+                        <span class="n">cmba</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ka</span><span class="p">[</span><span class="n">mask</span><span class="p">]))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+
+    <span class="c1"># If we didn&#39;t approximate the lower bound, then there are at most k values</span>
+    <span class="c1"># to check. This does a poor mans binary search with some wasted effort,</span>
+    <span class="c1"># however for small k, it&#39;s negligible, and we see performance improvements</span>
+    <span class="c1"># over linear search in general.</span>
+    <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">comb</span><span class="p">(</span><span class="n">na</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+</span> <span class="n">step</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">ka</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">cmba</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="n">inc</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">inc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">valid</span>
+        <span class="n">na</span><span class="p">[</span><span class="n">inc</span><span class="p">]</span> <span class="o">+=</span> <span class="n">step</span><span class="p">[</span><span class="n">inc</span><span class="p">]</span>
+
+        <span class="n">red</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">red</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="o">~</span><span class="n">valid</span>
+        <span class="n">step</span><span class="p">[</span><span class="n">red</span><span class="p">]</span> <span class="o">//=</span> <span class="mi">2</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">n</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">n</span></div>
+
+
+<div class="viewcode-block" id="game_size"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.game_size">[docs]</a><span class="k">def</span> <span class="nf">game_size</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strategies</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Number of profiles in a symmetric game with players and strategies&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">comb</span><span class="p">(</span><span class="n">players</span> <span class="o">+</span> <span class="n">strategies</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">players</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">comb</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">players</span><span class="p">)</span> <span class="o">+</span> <span class="n">strategies</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">players</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="only"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.only">[docs]</a><span class="k">def</span> <span class="nf">only</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+<div class="viewcode-block" id="game_size_inv"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.game_size_inv">[docs]</a><span class="k">def</span> <span class="nf">game_size_inv</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">players</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inverse of game_size</span>
+
+<span class="sd">    Given a game size and a number of players, return a lower bound on the</span>
+<span class="sd">    number of strategies s* such that game_size(players, s*) &lt;= size &lt;</span>
+<span class="sd">    game_size(players, s* + 1)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">comb_inv</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">players</span><span class="p">)</span> <span class="o">-</span> <span class="n">players</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="only"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.only">[docs]</a><span class="k">def</span> <span class="nf">only</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return the only element of an iterable</span>
 
 <span class="sd">    Throws a value error if the iterable doesn&#39;t contain only one element</span>
@@ -108,7 +163,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Input was empty&#39;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="one_line"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.one_line">[docs]</a><span class="k">def</span> <span class="nf">one_line</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="mi">80</span><span class="p">):</span>
+<div class="viewcode-block" id="one_line"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.one_line">[docs]</a><span class="k">def</span> <span class="nf">one_line</span><span class="p">(</span><span class="n">string</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="mi">80</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;If string s is longer than line width, cut it off and append &quot;...&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">string</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
@@ -118,7 +173,7 @@
     <span class="k">return</span> <span class="n">string</span></div>
 
 
-<div class="viewcode-block" id="acomb"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.acomb">[docs]</a><span class="k">def</span> <span class="nf">acomb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">repetition</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="acomb"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.acomb">[docs]</a><span class="k">def</span> <span class="nf">acomb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">repetition</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute an array of all n choose k options</span>
 
 <span class="sd">    The result will be an array shape (m, n) where m is n choose k optionally</span>
@@ -199,7 +254,7 @@
     <span class="k">return</span> <span class="n">grid</span>
 
 
-<div class="viewcode-block" id="acartesian2"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.acartesian2">[docs]</a><span class="k">def</span> <span class="nf">acartesian2</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">):</span>
+<div class="viewcode-block" id="acartesian2"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.acartesian2">[docs]</a><span class="k">def</span> <span class="nf">acartesian2</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Array cartesian product in 2d</span>
 
 <span class="sd">    Produces a new ndarray that has the cartesian product of every row in the</span>
@@ -234,7 +289,7 @@
     <span class="k">return</span> <span class="n">result</span></div>
 
 
-<div class="viewcode-block" id="simplex_project"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.simplex_project">[docs]</a><span class="k">def</span> <span class="nf">simplex_project</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+<div class="viewcode-block" id="simplex_project"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.simplex_project">[docs]</a><span class="k">def</span> <span class="nf">simplex_project</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return the projection onto the simplex&quot;&quot;&quot;</span>
     <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> \
@@ -252,7 +307,7 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">array</span> <span class="o">+</span> <span class="n">lam</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="multinomial_mode"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.multinomial_mode">[docs]</a><span class="k">def</span> <span class="nf">multinomial_mode</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<div class="viewcode-block" id="multinomial_mode"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.multinomial_mode">[docs]</a><span class="k">def</span> <span class="nf">multinomial_mode</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute the mode of n samples from multinomial distribution p.</span>
 
 <span class="sd">    Notes</span>
@@ -291,7 +346,7 @@
     <span class="k">return</span> <span class="n">result</span></div>
 
 
-<div class="viewcode-block" id="axis_to_elem"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.axis_to_elem">[docs]</a><span class="k">def</span> <span class="nf">axis_to_elem</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="axis_to_elem"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.axis_to_elem">[docs]</a><span class="k">def</span> <span class="nf">axis_to_elem</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts an axis of an array into a unique element</span>
 
 <span class="sd">    In general, this returns a copy of the array, unless the data is</span>
@@ -315,7 +370,7 @@
     <span class="k">return</span> <span class="n">elems</span></div>
 
 
-<div class="viewcode-block" id="elem_to_axis"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.elem_to_axis">[docs]</a><span class="k">def</span> <span class="nf">elem_to_axis</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="elem_to_axis"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.elem_to_axis">[docs]</a><span class="k">def</span> <span class="nf">elem_to_axis</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts and array of axis elements back to an axis&quot;&quot;&quot;</span>
     <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
     <span class="n">new_shape</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">//</span> <span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span><span class="p">,)</span>
@@ -323,7 +378,7 @@
                        <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="unique_axis"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.unique_axis">[docs]</a><span class="k">def</span> <span class="nf">unique_axis</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="unique_axis"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.unique_axis">[docs]</a><span class="k">def</span> <span class="nf">unique_axis</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Find unique axis elements</span>
 
 <span class="sd">    Parameters</span>
@@ -351,7 +406,7 @@
         <span class="k">return</span> <span class="n">elem_to_axis</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="hash_array"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.hash_array">[docs]</a><span class="k">class</span> <span class="nc">hash_array</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="hash_array"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.hash_array">[docs]</a><span class="k">class</span> <span class="nc">hash_array</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
@@ -366,37 +421,7 @@
                 <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">array</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="random_con_bitmask"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.random_con_bitmask">[docs]</a><span class="k">def</span> <span class="nf">random_con_bitmask</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">mins</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate a random bitmask with constraints</span>
-
-<span class="sd">    The functions allows specifying the minimum number of True values along a</span>
-<span class="sd">    single dimension while counting over the other ones. `mins` can be a scalar</span>
-<span class="sd">    or a tuple for each dimension and must be less than the product of the size</span>
-<span class="sd">    of the other dimensions.</span>
-
-<span class="sd">    If you just want a random bitmask use np.random.random(shape) &lt; prob&quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
-    <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">vals</span> <span class="o">&lt;</span> <span class="n">prob</span>
-    <span class="n">total</span> <span class="o">=</span> <span class="n">vals</span><span class="o">.</span><span class="n">size</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mins</span><span class="p">,</span> <span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">mins</span><span class="p">)</span> <span class="o">==</span> <span class="n">vals</span><span class="o">.</span><span class="n">ndim</span>
-        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">s</span> <span class="o">&lt;=</span> <span class="n">total</span> <span class="o">//</span> <span class="n">m</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mins</span><span class="p">,</span> <span class="n">vals</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">mins</span> <span class="o">&gt;</span> <span class="mi">0</span>
-        <span class="n">mins</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">mins</span><span class="p">,</span> <span class="n">total</span> <span class="o">//</span> <span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">vals</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">num</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mins</span><span class="p">):</span>
-        <span class="n">aligned</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">thresh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="n">aligned</span><span class="p">,</span> <span class="n">num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="n">num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">thresh</span><span class="o">.</span><span class="n">shape</span> <span class="o">+=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">mask</span> <span class="o">|=</span> <span class="n">vals</span> <span class="o">&lt;=</span> <span class="n">thresh</span>
-
-    <span class="k">return</span> <span class="n">mask</span></div>
-
-
-<div class="viewcode-block" id="iunique"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.iunique">[docs]</a><span class="k">def</span> <span class="nf">iunique</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+<div class="viewcode-block" id="iunique"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.iunique">[docs]</a><span class="k">def</span> <span class="nf">iunique</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return an iterable of unique items ordered by first occurrence&quot;&quot;&quot;</span>
     <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
@@ -405,7 +430,7 @@
             <span class="k">yield</span> <span class="n">item</span></div>
 
 
-<div class="viewcode-block" id="random_strings"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.random_strings">[docs]</a><span class="k">def</span> <span class="nf">random_strings</span><span class="p">(</span><span class="n">min_length</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">):</span>
+<div class="viewcode-block" id="random_strings"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.random_strings">[docs]</a><span class="k">def</span> <span class="nf">random_strings</span><span class="p">(</span><span class="n">min_length</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a random string</span>
 
 <span class="sd">    Parameters</span>
@@ -430,13 +455,13 @@
         <span class="k">yield</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="prefix_strings"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.prefix_strings">[docs]</a><span class="k">def</span> <span class="nf">prefix_strings</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+<div class="viewcode-block" id="prefix_strings"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.prefix_strings">[docs]</a><span class="k">def</span> <span class="nf">prefix_strings</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a list of prefixed integer strings&quot;&quot;&quot;</span>
     <span class="n">padding</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">{:0</span><span class="si">{:d}</span><span class="s1">d}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="is_sorted"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.is_sorted">[docs]</a><span class="k">def</span> <span class="nf">is_sorted</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="is_sorted"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.is_sorted">[docs]</a><span class="k">def</span> <span class="nf">is_sorted</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns true if iterable is sorted</span>
 
 <span class="sd">    Parameters</span>
@@ -464,7 +489,7 @@
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="n">bi</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">member_function</span><span class="p">):</span>
+<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">member_function</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Memoize computation of single object functions&quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">member_function</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> \
         <span class="s2">&quot;Can only memoize single object functions&quot;</span>
@@ -479,7 +504,7 @@
     <span class="k">return</span> <span class="n">new_member_function</span></div>
 
 
-<div class="viewcode-block" id="deprecated"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.utils.deprecated">[docs]</a><span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<div class="viewcode-block" id="deprecated"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.deprecated">[docs]</a><span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Mark a function as deprecated&quot;&quot;&quot;</span>
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>

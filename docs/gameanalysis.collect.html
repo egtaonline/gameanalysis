@@ -1,0 +1,211 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.collect module &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.dominance module" href="gameanalysis.dominance.html" />
+    <link rel="prev" title="gameanalysis.bootstrap module" href="gameanalysis.bootstrap.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.dominance.html" title="gameanalysis.dominance module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.bootstrap.html" title="gameanalysis.bootstrap module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.collect">
+<span id="gameanalysis-collect-module"></span><h1>gameanalysis.collect module<a class="headerlink" href="#module-gameanalysis.collect" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="gameanalysis.collect.BitSet">
+<em class="property">class </em><code class="descclassname">gameanalysis.collect.</code><code class="descname">BitSet</code><a class="reference internal" href="_modules/gameanalysis/collect.html#BitSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.BitSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Set of bitmasks</p>
+<p>A bitmask is in the set if all of the true bits have been added</p>
+<dl class="method">
+<dt id="gameanalysis.collect.BitSet.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>bitmask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#BitSet.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.BitSet.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.collect.BitSet.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#BitSet.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.BitSet.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.collect.DynamicArray">
+<em class="property">class </em><code class="descclassname">gameanalysis.collect.</code><code class="descname">DynamicArray</code><span class="sig-paren">(</span><em>item_shape</em>, <em>dtype=None</em>, <em>initial_room=8</em>, <em>grow_fraction=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#DynamicArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.DynamicArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A object with a backed array that also allows adding data</p>
+<dl class="method">
+<dt id="gameanalysis.collect.DynamicArray.append">
+<code class="descname">append</code><span class="sig-paren">(</span><em>array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#DynamicArray.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.DynamicArray.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append an array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.collect.DynamicArray.compact">
+<code class="descname">compact</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#DynamicArray.compact"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.DynamicArray.compact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trim underlying storage to hold only valid data</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.collect.DynamicArray.data">
+<code class="descname">data</code><a class="headerlink" href="#gameanalysis.collect.DynamicArray.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>A view of all of the data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.collect.DynamicArray.ensure_capacity">
+<code class="descname">ensure_capacity</code><span class="sig-paren">(</span><em>new_capacity</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#DynamicArray.ensure_capacity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.DynamicArray.ensure_capacity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make sure the array has a least new_capacity</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.collect.DynamicArray.pop">
+<code class="descname">pop</code><span class="sig-paren">(</span><em>num=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#DynamicArray.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.DynamicArray.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pop one or several arrays</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.collect.MixtureSet">
+<em class="property">class </em><code class="descclassname">gameanalysis.collect.</code><code class="descname">MixtureSet</code><span class="sig-paren">(</span><em>tolerance</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#MixtureSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.MixtureSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A set of mixtures</p>
+<p>Elements are only kept if the norm of their difference is greater than the
+tolerance.</p>
+<dl class="method">
+<dt id="gameanalysis.collect.MixtureSet.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>mixture</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#MixtureSet.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.MixtureSet.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.collect.MixtureSet.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#MixtureSet.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.MixtureSet.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.collect.WeightedSimilaritySet">
+<em class="property">class </em><code class="descclassname">gameanalysis.collect.</code><code class="descname">WeightedSimilaritySet</code><span class="sig-paren">(</span><em>is_similar</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#WeightedSimilaritySet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.WeightedSimilaritySet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A set of non-similar elements prioritized by weight</p>
+<p>Allows adding a bunch of weighted elements, and when iterated, only
+iterates over dissimilar elements with the lowest weights. Adding new
+elements that are similar to the existing set, but with higher weights
+won’t change the set returned.</p>
+<dl class="method">
+<dt id="gameanalysis.collect.WeightedSimilaritySet.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>item</em>, <em>weight</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#WeightedSimilaritySet.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.WeightedSimilaritySet.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.collect.WeightedSimilaritySet.clear">
+<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#WeightedSimilaritySet.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.WeightedSimilaritySet.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.bootstrap.html"
+                        title="previous chapter">gameanalysis.bootstrap module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.dominance.html"
+                        title="next chapter">gameanalysis.dominance module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.collect.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.dominance.html" title="gameanalysis.dominance module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.bootstrap.html" title="gameanalysis.bootstrap module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

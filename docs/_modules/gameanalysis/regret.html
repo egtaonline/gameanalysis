@@ -53,7 +53,7 @@
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">optimize</span>
 
 
-<div class="viewcode-block" id="pure_strategy_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.pure_strategy_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+<div class="viewcode-block" id="pure_strategy_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.pure_strategy_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the pure strategy deviations gains</span>
 
 <span class="sd">    The result is a compact array of deviation gains. Each element corresponds</span>
@@ -72,7 +72,7 @@
         <span class="nb">float</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_devs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="pure_strategy_regret"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.pure_strategy_regret">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+<div class="viewcode-block" id="pure_strategy_regret"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.pure_strategy_regret">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the regret of a pure strategy profile</span>
 
 <span class="sd">    If prof has more than one dimension, the last dimension is taken as a set</span>
@@ -80,7 +80,7 @@
     <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="mixture_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.mixture_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+<div class="viewcode-block" id="mixture_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.mixture_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns all the gains from deviation from a mixed strategy</span>
 
 <span class="sd">    The result is ordered by role, then strategy.&quot;&quot;&quot;</span>
@@ -95,19 +95,19 @@
     <span class="k">return</span> <span class="n">strategy_evs</span> <span class="o">-</span> <span class="n">role_evs</span></div>
 
 
-<div class="viewcode-block" id="mixture_regret"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.mixture_regret">[docs]</a><span class="k">def</span> <span class="nf">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+<div class="viewcode-block" id="mixture_regret"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.mixture_regret">[docs]</a><span class="k">def</span> <span class="nf">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return the regret of a mixture profile&quot;&quot;&quot;</span>
     <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+<div class="viewcode-block" id="pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the social welfare of a pure strategy profile in game&quot;&quot;&quot;</span>
     <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="mixed_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.mixed_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+<div class="viewcode-block" id="mixed_social_welfare"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.mixed_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the social welfare of a mixed strategy profile&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">expected_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span></div>
 
@@ -179,7 +179,7 @@
         <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="max_mixed_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.max_mixed_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">max_mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">grid_points</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">random_restarts</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<div class="viewcode-block" id="max_mixed_social_welfare"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.max_mixed_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">max_mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">grid_points</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">random_restarts</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                              <span class="n">processes</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">swopt_args</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the maximum role symmetric mixed social welfare profile</span>
 
@@ -225,7 +225,7 @@
     <span class="k">return</span> <span class="n">best</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">best</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="max_pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.regret.max_pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">max_pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">by_role</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="max_pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.max_pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">max_pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">by_role</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns the maximum social welfare over the known profiles.</span>
 
 <span class="sd">    If by_role is specified, then max social welfare applies to each role</span>

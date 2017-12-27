@@ -52,142 +52,207 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<span class="c1"># TODO These parameters could be more intelligently set with player knowledge</span>
-<div class="viewcode-block" id="random_poly_dist"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.agggen.random_poly_dist">[docs]</a><span class="k">def</span> <span class="nf">random_poly_dist</span><span class="p">(</span><span class="n">degree_dist</span><span class="p">,</span>
-                     <span class="n">coef_dist</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">10.</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">d</span><span class="p">))):</span>
-    <span class="sd">&quot;&quot;&quot;Generate a function table distribution from a polynomial</span>
+<span class="k">def</span> <span class="nf">_random_mask</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a random mask that is valid</span>
+
+<span class="sd">    Valid means that each row of the mast is neither all false or all true.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    degree_dist : ndarray</span>
-<span class="sd">        Probability that a polynomial will have a specific degree starting from</span>
-<span class="sd">        zero. [0.1, 0.4, 0.5] means each function has a 10% chance of being</span>
-<span class="sd">        constant, 40% chance of being linear, and a 50% chance of being</span>
-<span class="sd">        quadratic.</span>
-<span class="sd">    coef_dist : ndarray int -&gt; ndarray float</span>
-<span class="sd">        Distribution that maps an array of degrees for a polynomial to a</span>
-<span class="sd">        coefficient of that degree, e.g. `lambda d: np.random.normal(0,</span>
-<span class="sd">        10.0**(1 - d))`</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        The probability of a strategy. Note, that this will actually be shifted</span>
+<span class="sd">        slightly towards 0.5 because we ensure there are no rows with all false</span>
+<span class="sd">        and all true.</span>
+<span class="sd">    num_funcs : int</span>
+<span class="sd">        The number of functions to return.</span>
+<span class="sd">    num_strats : int</span>
+<span class="sd">        The number of strategies to return.</span>
 
-<span class="sd">    Notes</span>
-<span class="sd">    -----</span>
-<span class="sd">    Table distributions take a shape and return a random matrix of that shape,</span>
-<span class="sd">    where the first axis is the number of functions, and the other axes are the</span>
-<span class="sd">    number of players from each role.&quot;&quot;&quot;</span>
-    <span class="n">degree_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">degree_dist</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">degree_dist</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">degree_dist</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="mi">1</span>
-    <span class="n">degrees</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">degree_dist</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
-    <span class="n">degree_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">degree_dist</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="nf">table_func</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
-        <span class="n">funcs</span><span class="p">,</span> <span class="o">*</span><span class="n">players</span> <span class="o">=</span> <span class="n">shape</span>
-        <span class="n">table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">play</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">players</span><span class="p">):</span>
-            <span class="n">polys</span> <span class="o">=</span> <span class="n">coef_dist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">degrees</span><span class="p">,</span> <span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="n">degrees</span><span class="o">.</span><span class="n">size</span><span class="p">)))</span>
-            <span class="n">dmask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">funcs</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">degree_dist</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">polys</span> <span class="o">*</span> <span class="n">dmask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">play</span><span class="p">)</span> <span class="o">**</span> <span class="n">degrees</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">shape</span> <span class="o">+=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">players</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">table</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">table</span>
-    <span class="k">return</span> <span class="n">table_func</span></div>
-
-
-<div class="viewcode-block" id="random_sin_dist"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.agggen.random_sin_dist">[docs]</a><span class="k">def</span> <span class="nf">random_sin_dist</span><span class="p">(</span><span class="n">width_dist</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">,</span> <span class="n">coef_dist</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">,</span>
-                    <span class="n">offset_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a table function for random sinusoidal functions</span>
-
-<span class="sd">    Functions will be `coef * sin(offset + width * num_players)`</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    width_dist : (shape) -&gt; array, optional</span>
-<span class="sd">        Distribution to generate function widths.</span>
-<span class="sd">    coef_dist : (shape) -&gt; array, optional</span>
-<span class="sd">        Distribution to generate function coefficients.</span>
-<span class="sd">    offset_dist : (shape) -&gt; array, optional</span>
-<span class="sd">        Distribution to generate function offsets. If unspecified, it will be</span>
-<span class="sd">        the same as width_dist.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mask : ndarray, shape (num_funcs, num_strats)</span>
+<span class="sd">        The resulting balid mask.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">offset_dist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">offset_dist</span> <span class="o">=</span> <span class="n">width_dist</span>
-
-    <span class="k">def</span> <span class="nf">table_func</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
-        <span class="n">funcs</span><span class="p">,</span> <span class="o">*</span><span class="n">players</span> <span class="o">=</span> <span class="n">shape</span>
-        <span class="n">table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">play</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">players</span><span class="p">):</span>
-            <span class="n">widths</span> <span class="o">=</span> <span class="n">width_dist</span><span class="p">((</span><span class="n">funcs</span><span class="p">,</span> <span class="n">play</span><span class="p">))</span>
-            <span class="n">offsets</span> <span class="o">=</span> <span class="n">offset_dist</span><span class="p">((</span><span class="n">funcs</span><span class="p">,</span> <span class="n">play</span><span class="p">))</span>
-            <span class="n">coefs</span> <span class="o">=</span> <span class="n">coef_dist</span><span class="p">((</span><span class="n">funcs</span><span class="p">,))[:,</span> <span class="kc">None</span><span class="p">]</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">coefs</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">widths</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">play</span><span class="p">)</span> <span class="o">+</span> <span class="n">offsets</span><span class="p">)</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">shape</span> <span class="o">+=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">players</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">table</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">d</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">table</span>
-    <span class="k">return</span> <span class="n">table_func</span></div>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">))</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">vals</span> <span class="o">&lt;</span> <span class="n">prob</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_funcs</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">inds</span><span class="p">,</span> <span class="n">vals</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">inds</span><span class="p">,</span> <span class="n">vals</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">mask</span>
 
 
-<div class="viewcode-block" id="random_aggfn"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.agggen.random_aggfn">[docs]</a><span class="k">def</span> <span class="nf">random_aggfn</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">num_functions</span><span class="p">,</span>
-                 <span class="n">input_dist</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">utils</span><span class="o">.</span><span class="n">random_con_bitmask</span><span class="p">(</span><span class="o">.</span><span class="mi">2</span><span class="p">,</span> <span class="n">s</span><span class="p">),</span>
-                 <span class="n">weight_dist</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span>
-                 <span class="n">utils</span><span class="o">.</span><span class="n">random_con_bitmask</span><span class="p">(</span><span class="o">.</span><span class="mi">2</span><span class="p">,</span> <span class="n">s</span><span class="p">),</span>
-                 <span class="n">func_dist</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="p">),</span>
-                 <span class="n">by_role</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Generate a random AgfnGame</span>
+<div class="viewcode-block" id="normal_aggfn"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.normal_aggfn">[docs]</a><span class="k">def</span> <span class="nf">normal_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                 <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random normal AgfnGame</span>
+
+<span class="sd">    Each function value is an i.i.d Gaussian draw. For large numbers of players</span>
+<span class="sd">    and small numbers of functions, this still produces relatively smooth</span>
+<span class="sd">    deviation payoffs.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    num_role_players : int or ndarray</span>
-<span class="sd">    num_role_strats : int or ndarray</span>
-<span class="sd">    num_functions : int</span>
-<span class="sd">    input_dist : f(shape) -&gt; ndarray, bool, optional</span>
-<span class="sd">        Function that takes a shape and redurns a boolean ndarray with the same</span>
-<span class="sd">        shape representing the function inputs.</span>
-<span class="sd">    weight_dist : f(shape) -&gt; ndarray, float, optional</span>
-<span class="sd">        Function that takes a shape and returns a float array with the same</span>
-<span class="sd">        shape representing the action weights.</span>
-<span class="sd">    func_dist : f(shape) ndarray, float, optional</span>
-<span class="sd">        Function that takes a shape and returns a float array with the same</span>
-<span class="sd">        shape representing the function table. To create polynomial functions</span>
-<span class="sd">        use `random_poly_dist`.</span>
-<span class="sd">    by_role : bool, optional</span>
-<span class="sd">        Generate a role form AgfnGame. A role form game uses functions of the</span>
-<span class="sd">        number of activations for each role, instead of just the total number</span>
-<span class="sd">        of activations.&quot;&quot;&quot;</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">)</span>
-    <span class="n">weights</span> <span class="o">=</span> <span class="n">weight_dist</span><span class="p">((</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
-    <span class="n">inputs</span> <span class="o">=</span> <span class="n">input_dist</span><span class="p">((</span><span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_functions</span><span class="p">))</span>
-    <span class="n">shape</span> <span class="o">=</span> <span class="p">((</span><span class="n">num_functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-             <span class="k">if</span> <span class="n">by_role</span> <span class="k">else</span> <span class="p">(</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-    <span class="n">func_table</span> <span class="o">=</span> <span class="n">func_dist</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">func_table</span><span class="p">)</span></div>
+<span class="sd">    role_players : int or ndarray</span>
+<span class="sd">        The number of players per role.</span>
+<span class="sd">    role_strats : int or ndarray</span>
+<span class="sd">        The number of strategies per role.</span>
+<span class="sd">    functions : int</span>
+<span class="sd">        The number of functions to generate.</span>
+<span class="sd">    input_prob : float, optional</span>
+<span class="sd">        The probability of a strategy counting towards a function value.</span>
+<span class="sd">    weight_prob : float, optional</span>
+<span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">)</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_random_mask</span><span class="p">(</span><span class="n">input_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="p">(</span><span class="n">_random_mask</span><span class="p">(</span><span class="n">weight_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span> <span class="o">*</span>
+               <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)))</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">funcs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">funcs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="congestion"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.agggen.congestion">[docs]</a><span class="k">def</span> <span class="nf">congestion</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_required</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-               <span class="n">coef_dist</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">exponential</span><span class="p">(</span><span class="mf">10.</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">d</span><span class="p">))):</span>
+<span class="k">def</span> <span class="nf">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span>
+                  <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base form for structured random aggfn generation</span>
+
+<span class="sd">    role_dist takes a number of functions and a number of players and returns</span>
+<span class="sd">    an ndarray of the function values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">)</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_random_mask</span><span class="p">(</span><span class="n">input_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="p">(</span><span class="n">_random_mask</span><span class="p">(</span><span class="n">weight_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span> <span class="o">*</span>
+               <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)))</span>
+
+    <span class="n">funcs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">base_shape</span> <span class="o">=</span> <span class="p">[</span><span class="n">functions</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span>
+    <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">):</span>
+        <span class="n">role_funcs</span> <span class="o">=</span> <span class="n">role_dist</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">base_shape</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">shape</span><span class="p">[</span><span class="n">r</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">role_funcs</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+        <span class="n">funcs</span> <span class="o">*=</span> <span class="n">role_funcs</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">funcs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="poly_aggfn"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.poly_aggfn">[docs]</a><span class="k">def</span> <span class="nf">poly_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+               <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random polynomial AgfnGame</span>
+
+<span class="sd">    Functions are generated by generating `degree` zeros in [0, num_players] to</span>
+<span class="sd">    serve as a polynomial functions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_players : int or ndarray</span>
+<span class="sd">        The number of players per role.</span>
+<span class="sd">    role_strats : int or ndarray</span>
+<span class="sd">        The number of strategies per role.</span>
+<span class="sd">    functions : int</span>
+<span class="sd">        The number of functions to generate.</span>
+<span class="sd">    input_prob : float, optional</span>
+<span class="sd">        The probability of a strategy counting towards a function value.</span>
+<span class="sd">    weight_prob : float, optional</span>
+<span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
+<span class="sd">    degree : int or [float], optional</span>
+<span class="sd">        Either an integer specifying the degree or a list of the probabilities</span>
+<span class="sd">        of degrees starting from one, e.g. 3 is the same as [0, 0, 1].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">degree</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">degree</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span>
+    <span class="n">max_degree</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">degree</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">role_dist</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">zeros</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">functions</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">))</span> <span class="o">*</span> <span class="n">p</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">zeros</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">choices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="n">max_degree</span><span class="p">,</span> <span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="kc">True</span><span class="p">,</span> <span class="n">degree</span><span class="p">)</span>
+        <span class="n">terms</span><span class="p">[</span><span class="n">choices</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_degree</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">terms</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">p</span> <span class="o">**</span> <span class="n">choices</span>
+
+    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span>
+                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sine_aggfn"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.sine_aggfn">[docs]</a><span class="k">def</span> <span class="nf">sine_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+               <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">min_period</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">max_period</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random sinusodial AgfnGame</span>
+
+<span class="sd">    Functions are generated by generating sinusoids with uniform random shifts</span>
+<span class="sd">    and n periods in 0 to num_players, where n is chosen randomle between</span>
+<span class="sd">    min_period and max_period.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_players : int or ndarray</span>
+<span class="sd">        The number of players per role.</span>
+<span class="sd">    role_strats : int or ndarray</span>
+<span class="sd">        The number of strategies per role.</span>
+<span class="sd">    functions : int</span>
+<span class="sd">        The number of functions to generate.</span>
+<span class="sd">    input_prob : float, optional</span>
+<span class="sd">        The probability of a strategy counting towards a function value.</span>
+<span class="sd">    weight_prob : float, optional</span>
+<span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
+<span class="sd">    min_period : int, optional</span>
+<span class="sd">        The minimum number of periods to generate.</span>
+<span class="sd">    max_period : int, optional</span>
+<span class="sd">        The maximum number of periods to generate. If omitted or None, defaults</span>
+<span class="sd">        to double min_period.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">max_period</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_period</span> <span class="o">=</span> <span class="n">min_period</span> <span class="o">*</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="nf">role_dist</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">periods</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_period</span> <span class="o">-</span> <span class="n">min_period</span><span class="p">)</span> <span class="o">+</span>
+                   <span class="n">min_period</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">p</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span> <span class="o">*</span>
+                      <span class="n">periods</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span>
+                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_random_monotone_polynomial</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">players</span><span class="p">,</span> <span class="n">degree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates a random monotone polynomial table&quot;&quot;&quot;</span>
+    <span class="n">coefs</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">functions</span><span class="p">,</span> <span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span>
+             <span class="n">players</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">coefs</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">powers</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="congestion"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.congestion">[docs]</a><span class="k">def</span> <span class="nf">congestion</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_required</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generate a congestion game</span>
 
 <span class="sd">    A congestion game is a symmetric game, where there are a given number of</span>
 <span class="sd">    facilities, and each player must choose to use some amount of them. The</span>
-<span class="sd">    payoff for each facility generally goes down as more players use it, and a</span>
-<span class="sd">    players utility is the sum of the utilities for every facility.</span>
+<span class="sd">    payoff for each facility decreases as more players use it, and a players</span>
+<span class="sd">    utility is the sum of the utilities for every facility.</span>
 
 <span class="sd">    In this formulation, facility payoffs are random polynomials of the number</span>
 <span class="sd">    of people using said facility.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    num_players : int</span>
-<span class="sd">    num_facilities : int</span>
-<span class="sd">    num_required : int</span>
-<span class="sd">    degree : int, optional</span>
-<span class="sd">        Degree of payoff polynomials</span>
-<span class="sd">    coef_dist : f(int) -&gt; float, optional</span>
-<span class="sd">        Numpy compatible function for generating random coefficients</span>
-<span class="sd">        conditioned on degree. Leading degree must be negative to generate a</span>
-<span class="sd">        true congestion game.</span>
+<span class="sd">    num_players : int &gt; 1</span>
+<span class="sd">        The number of players.</span>
+<span class="sd">    num_facilities : int &gt; 1</span>
+<span class="sd">        The number of facilities.</span>
+<span class="sd">    num_required : 0 &lt; int &lt; num_facilities</span>
+<span class="sd">        The number of required facilities.</span>
+<span class="sd">    degree : int &gt; 0, optional</span>
+<span class="sd">        Degree of payoff polynomials.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;must have more than one player&quot;</span>
+    <span class="k">assert</span> <span class="n">num_facilities</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;must have more than one facility&quot;</span>
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">num_required</span> <span class="o">&lt;</span> <span class="n">num_facilities</span><span class="p">,</span> \
+        <span class="s2">&quot;must require more than zero but less than num_facilities&quot;</span>
+    <span class="k">assert</span> <span class="n">degree</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;degree must be greater than zero&quot;</span>
+
     <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">acomb</span><span class="p">(</span><span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_required</span><span class="p">)</span>
-    <span class="n">table_dist</span> <span class="o">=</span> <span class="n">random_poly_dist</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">degree</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">coef_dist</span><span class="p">)</span>
-    <span class="n">functions</span> <span class="o">=</span> <span class="n">table_dist</span><span class="p">((</span><span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">functions</span> <span class="o">=</span> <span class="o">-</span><span class="n">_random_monotone_polynomial</span><span class="p">(</span><span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span>
+                                             <span class="n">degree</span><span class="p">)</span>
+
     <span class="n">facs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">num_facilities</span><span class="p">))</span>
     <span class="n">strats</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">facs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span><span class="p">)</span>
                    <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">function_inputs</span><span class="p">)</span>
@@ -195,12 +260,7 @@
                              <span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">functions</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="local_effect"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.agggen.local_effect">[docs]</a><span class="k">def</span> <span class="nf">local_effect</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span>  <span class="c1"># pragma: no cover</span>
-                 <span class="n">edge_prob</span><span class="o">=.</span><span class="mi">2</span><span class="p">,</span>
-                 <span class="n">self_dist</span><span class="o">=</span><span class="n">random_poly_dist</span><span class="p">(</span>
-                     <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">exponential</span><span class="p">(</span><span class="mf">10.</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">d</span><span class="p">))),</span>
-                 <span class="n">other_dist</span><span class="o">=</span><span class="n">random_poly_dist</span><span class="p">(</span>
-                     <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">10.</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">d</span><span class="p">)))):</span>
+<div class="viewcode-block" id="local_effect"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.local_effect">[docs]</a><span class="k">def</span> <span class="nf">local_effect</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">edge_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generate a local effect game</span>
 
 <span class="sd">    In a local effect game, strategies are connected by a graph, and utilities</span>
@@ -212,19 +272,21 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    num_players : int</span>
-<span class="sd">    num_strategies : int</span>
+<span class="sd">    num_players : int &gt; 1</span>
+<span class="sd">        The number of players.</span>
+<span class="sd">    num_strategies : int &gt; 1</span>
+<span class="sd">        The number of strategies.</span>
 <span class="sd">    edge_prob : float, optional</span>
-<span class="sd">    self_dist : f(shape) -&gt; ndarray, float, optional</span>
-<span class="sd">        Table distribution for self functions, e.g. payoff effect for being on</span>
-<span class="sd">        the same node.</span>
-<span class="sd">    other_dist : f(shape) -&gt; ndarray, float, optional</span>
-<span class="sd">        Table distribution for functions affecting other strategies.</span>
+<span class="sd">        The probability that one strategy affects another.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t generate a single player game&quot;</span>
+    <span class="k">assert</span> <span class="n">num_strategies</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t generate a single strategy game&quot;</span>
+
     <span class="n">local_effect_graph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
         <span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">edge_prob</span>
     <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">local_effect_graph</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="n">num_functions</span> <span class="o">=</span> <span class="n">local_effect_graph</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="n">num_strategies</span>
+    <span class="n">num_neighbors</span> <span class="o">=</span> <span class="n">local_effect_graph</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">num_functions</span> <span class="o">=</span> <span class="n">num_neighbors</span> <span class="o">+</span> <span class="n">num_strategies</span>
 
     <span class="n">action_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_functions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
@@ -234,10 +296,10 @@
     <span class="n">action_weights</span><span class="p">[</span><span class="n">func_inds</span><span class="p">,</span> <span class="n">out_act</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">num_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="n">function_table</span><span class="p">[:</span><span class="n">num_strategies</span><span class="p">]</span> <span class="o">=</span> <span class="n">self_dist</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-    <span class="n">function_table</span><span class="p">[</span><span class="n">num_strategies</span><span class="p">:]</span> <span class="o">=</span> <span class="n">self_dist</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">num_functions</span> <span class="o">-</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">function_table</span><span class="p">[:</span><span class="n">num_strategies</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">_random_monotone_polynomial</span><span class="p">(</span>
+        <span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">function_table</span><span class="p">[</span><span class="n">num_strategies</span><span class="p">:]</span> <span class="o">=</span> <span class="n">_random_monotone_polynomial</span><span class="p">(</span>
+        <span class="n">num_neighbors</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
                        <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">)</span></div>
 </pre></div>

@@ -56,7 +56,7 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">rsgame</span>
 
 
-<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.sample.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.sample.html#gameanalysis.script.sample.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;samp&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Sample profiles from a mixture.</span>
 <span class="s2">        This returns each profile on a new line, allowing streaming simulation</span>
@@ -83,9 +83,9 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.sample.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.sample.html#gameanalysis.script.sample.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">game</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_copy</span><span class="p">(</span><span class="n">gamereader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">)))</span>
-    <span class="n">mix</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">from_mix_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">mix</span><span class="p">))</span>
+    <span class="n">mix</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">mixture_from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">mix</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">:</span>
         <span class="n">rand</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
@@ -95,7 +95,7 @@
         <span class="c1"># This technically shouldn&#39;t be necessary, but on the off chance that a</span>
         <span class="c1"># simulator depends on the order, we want to make sure we produce</span>
         <span class="c1"># identical results.</span>
-        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">to_prof_json</span><span class="p">(</span><span class="n">prof</span><span class="p">),</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">profile_to_json</span><span class="p">(</span><span class="n">prof</span><span class="p">),</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
                   <span class="n">sort_keys</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
         <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>
 </pre></div>

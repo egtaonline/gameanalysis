@@ -1,0 +1,1209 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.rsgame module &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.scriptutils module" href="gameanalysis.scriptutils.html" />
+    <link rel="prev" title="gameanalysis.regret module" href="gameanalysis.regret.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.scriptutils.html" title="gameanalysis.scriptutils module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.regret.html" title="gameanalysis.regret module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.rsgame">
+<span id="gameanalysis-rsgame-module"></span><h1>gameanalysis.rsgame module<a class="headerlink" href="#module-gameanalysis.rsgame" title="Permalink to this headline">¶</a></h1>
+<p>Module for base role symmetric game structures</p>
+<p>Role symmetric games have a number of common attributes and functions that are
+defined in the RsGame class that actual RsGame interfaces should support. In
+addition, an implementation of an EmptyGame is provided for convenience
+purposes. Note, that the constructor to EmptyGame (and most games) should not
+be called, and instead, various convenience functions to create EmptyGames that
+start with the prefix <cite>emptygame</cite> should be called instead.</p>
+<p>Most structures in a role symmetric game are an array of length
+game.num_strats, that lists a value for every strategy in the game. In this
+form, each roles strategies are contiguous. To aggregate elements by role, it
+is helpful to use numpy ufuncs, such as <cite>np.add.reduceat(profile,
+game.role_starts)</cite> will add up all of the players in each role of a profile.
+<cite>np.split(profile, game.role_starts[1:])</cite> will return a list where each element
+is that role’s data. To convert a role array into a strategy array, one can do
+something like <cite>role_array.repeat(game.num_role_strats)</cite>.</p>
+<p>As a general rule, any attribute of a game that begins with <cite>num_</cite> is an actual
+attribute instead of a getter function. Attributes that have the world role in
+them tend to be arrays of size <cite>num_roles</cite> and attributes that have <cite>strat</cite> in
+the name tend to be arrays of size <cite>num_strats</cite>.</p>
+<dl class="class">
+<dt id="gameanalysis.rsgame.CompleteGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">CompleteGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#CompleteGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.CompleteGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
+<p>A game that defines everything for complete games</p>
+<p>Extend this if your game by default has payoff data for every profile.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.rsgame.EmptyGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">EmptyGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
+<p>A game with no payoff data</p>
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.deviation_payoffs">
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mixture</em>, <em>*</em>, <em>jacobian=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.get_payoffs">
+<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.max_strat_payoffs">
+<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.min_strat_payoffs">
+<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.normalize">
+<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.normalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.payoffs">
+<code class="descname">payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.profiles">
+<code class="descname">profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.subgame">
+<code class="descname">subgame</code><span class="sig-paren">(</span><em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.EmptyGame.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.to_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.rsgame.RsGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">RsGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.StratArray" title="gameanalysis.rsgame.StratArray"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.rsgame.StratArray</span></code></a></p>
+<p>Role-symmetric game representation</p>
+<p>This object only contains methods and information about definition of the
+game, without defining how payoff data is generated / accessed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_names</strong> (<em>(</em><em>str</em><em>,</em><em>)</em>) – The name of each role.</li>
+<li><strong>strat_names</strong> (<em>(</em><em>(</em><em>str</em><em>,</em><em>)</em><em>,</em><em>)</em>) – The name of each strategy for each role.</li>
+<li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players in each role. Must contain non-negative integers.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.all_profiles">
+<code class="descname">all_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.all_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.all_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all profiles</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.best_response">
+<code class="descname">best_response</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.best_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.best_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the best response to a mixture</p>
+<p>The result is a new mixture with uniform support over all best
+deviating strategies.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.deviation_payoffs">
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mixture</em>, <em>*</em>, <em>jacobian=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for deviating from mixture</p>
+<p>Optionally with the jacobian with respect to mixture. This is the
+primary method that needs to implemented for nash finding.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.devpay_from_json">
+<code class="descname">devpay_from_json</code><span class="sig-paren">(</span><em>deviations</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.devpay_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.devpay_from_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.devpay_to_json">
+<code class="descname">devpay_to_json</code><span class="sig-paren">(</span><em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.devpay_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.devpay_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format a profile and deviation payoffs as json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.expected_payoffs">
+<code class="descname">expected_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>deviations=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.expected_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.expected_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the payoff of each role under mixture</p>
+<p>If the payoffs for deviating from <cite>mix</cite> is already known, that an be
+passed in to save computation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.from_dev_payoff_json">
+<code class="descname">from_dev_payoff_json</code><span class="sig-paren">(</span><em>deviations</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.from_dev_payoff_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.from_dev_payoff_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.from_payoff_json">
+<code class="descname">from_payoff_json</code><span class="sig-paren">(</span><em>pays</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.from_payoff_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.from_payoff_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.from_prof_json">
+<code class="descname">from_prof_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.from_prof_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.from_prof_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.from_prof_repr">
+<code class="descname">from_prof_repr</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.from_prof_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.from_prof_repr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.from_prof_str">
+<code class="descname">from_prof_str</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.from_prof_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.from_prof_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.get_payoffs">
+<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for all profiles</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.is_asymmetric">
+<code class="descname">is_asymmetric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_asymmetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_asymmetric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if this game is asymmetric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.is_complete">
+<code class="descname">is_complete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_complete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if every profile has data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.is_constant_sum">
+<code class="descname">is_constant_sum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_constant_sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_constant_sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if this game is constant sum</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.is_empty">
+<code class="descname">is_empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if no profiles have data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.is_profile">
+<code class="descname">is_profile</code><span class="sig-paren">(</span><em>prof</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that a profile is valid for game</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.is_symmetric">
+<code class="descname">is_symmetric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_symmetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_symmetric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if this game is symmetric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.max_prob_prof">
+<code class="descname">max_prob_prof</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.max_prob_prof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.max_prob_prof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the pure strategy profile with highest probability.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.max_role_payoffs">
+<code class="descname">max_role_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.max_role_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.max_role_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the maximum payoff for each role</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.max_strat_payoffs">
+<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>An upper bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.min_role_payoffs">
+<code class="descname">min_role_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.min_role_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.min_role_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum payoff for each role</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.min_strat_payoffs">
+<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A lower bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.nearby_profiles">
+<code class="descname">nearby_profiles</code><span class="sig-paren">(</span><em>profile</em>, <em>num_devs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.nearby_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.nearby_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns profiles reachable by at most num_devs deviations</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.normalize">
+<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.RsGame.num_all_dpr_profiles">
+<code class="descname">num_all_dpr_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_dpr_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of unique dpr profiles</p>
+<p>This calculation takes time exponential in the number of roles.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.RsGame.num_all_payoffs">
+<code class="descname">num_all_payoffs</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of payoffs in all profiles</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.RsGame.num_all_profiles">
+<code class="descname">num_all_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total number of profiles in the game</p>
+<p>Not just the ones with data.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.RsGame.num_all_role_profiles">
+<code class="descname">num_all_role_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_role_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles in each role (independent of others)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.RsGame.num_complete_profiles">
+<code class="descname">num_complete_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_complete_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles with complete payoff information</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.RsGame.num_profiles">
+<code class="descname">num_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles with any payoff information</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.payoff_from_json">
+<code class="descname">payoff_from_json</code><span class="sig-paren">(</span><em>pays</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.payoff_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.payoff_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a payoff from json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pays</strong> (<em>{role: {strat: payoff}}</em>) – A description of a payoff.</li>
+<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal"><span class="pre">dest</span></code> will be written to instead of allocating a
+new array.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.payoff_to_json">
+<code class="descname">payoff_to_json</code><span class="sig-paren">(</span><em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.payoff_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.payoff_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format payoffs as json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>payoffs</strong> (<em>ndarray</em>) – The payoffs to serialize.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.payoffs">
+<code class="descname">payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array with all of the payoff corresponding to profiles()</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_from_id">
+<code class="descname">profile_from_id</code><span class="sig-paren">(</span><em>ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a profile from its integer representation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_from_json">
+<code class="descname">profile_from_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a profile from json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>prof</strong> (<em>{role: {strat: count}}</em>) – A description of a profile.</li>
+<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal"><span class="pre">dest</span></code> will be written to instead of allocating a
+new array.</li>
+<li><strong>verify</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, verify that a proepr profile for this game was read.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_from_repr">
+<code class="descname">profile_from_repr</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a profile from a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_from_str">
+<code class="descname">profile_from_str</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_id">
+<code class="descname">profile_id</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_to_id">
+<code class="descname">profile_to_id</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a unique integer representing a profile</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_to_json">
+<code class="descname">profile_to_json</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a profile array to json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_to_repr">
+<code class="descname">profile_to_repr</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a profile to a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profile_to_str">
+<code class="descname">profile_to_str</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a profile to a printable string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.profiles">
+<code class="descname">profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array all of the profiles with any data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.pure_profiles">
+<code class="descname">pure_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.pure_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.pure_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all pure profiles</p>
+<p>A pure profile is a profile where only one strategy is played per
+role.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_dev_profiles">
+<code class="descname">random_dev_profiles</code><span class="sig-paren">(</span><em>mixture</em>, <em>num_samples=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_dev_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_dev_profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_deviation_profile">
+<code class="descname">random_deviation_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_deviation_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_deviation_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_deviation_profiles">
+<code class="descname">random_deviation_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a profiles where one player is deviating from mix</p>
+<p>Resulting shape of profiles is (num_samples, num_role_strats,
+num_role_strats). The first dimension is the sample, the next is the
+deviating strategy, leaving the last dimension for the actual
+profile.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mixture</strong> (<em>ndarray</em>) – Mixture to sample from.</li>
+<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to return. If None or omitted, then a single
+sample, without a leading singleton dimension is returned.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_deviator_profiles">
+<code class="descname">random_deviator_profiles</code><span class="sig-paren">(</span><em>mixture</em>, <em>num_samples=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_deviator_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_deviator_profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_profile">
+<code class="descname">random_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_profiles">
+<code class="descname">random_profiles</code><span class="sig-paren">(</span><em>num_samples=None</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample profiles from a mixture</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to return. If None or omitted, then a single
+sample, without a leading singleton dimension is returned.</li>
+<li><strong>mixture</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Mixture to sample from, of None or omitted, then uses the uniform
+mixture.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_role_deviation_profile">
+<code class="descname">random_role_deviation_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_role_deviation_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_role_deviation_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.random_role_deviation_profiles">
+<code class="descname">random_role_deviation_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_role_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_role_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return partial profiles where dev player is missing</p>
+<p>Resulting shape of profiles is (num_samples, num_roles,
+num_role_strats). The first dimension is the sample, the next is the
+deviating role, leaving the last dimension for the partial profile.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mixture</strong> (<em>ndarray</em>) – Mixture to sample from.</li>
+<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to return. If None or omitted, then a single
+sample, without a leading singleton dimension is returned.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.subgame">
+<code class="descname">subgame</code><span class="sig-paren">(</span><em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new game omitting strategies where sub_mask is false</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.to_dev_payoff_json">
+<code class="descname">to_dev_payoff_json</code><span class="sig-paren">(</span><em>payoffs</em>, <em>profile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.to_dev_payoff_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.to_dev_payoff_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format game as json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.to_payoff_json">
+<code class="descname">to_payoff_json</code><span class="sig-paren">(</span><em>payoffs</em>, <em>prof=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.to_payoff_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.to_payoff_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.to_prof_json">
+<code class="descname">to_prof_json</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.to_prof_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.to_prof_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.to_prof_repr">
+<code class="descname">to_prof_repr</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.to_prof_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.to_prof_repr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.to_prof_str">
+<code class="descname">to_prof_str</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.to_prof_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.to_prof_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.rsgame.StratArray">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">StratArray</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A class with knowledge of the number of strategies per role</p>
+<p>This has methods common to working with strategy arrays, which essentially
+represent points in a simplotope (a cross product of simplicies), or points
+in a discretized simplotope.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_names</strong> (<em>(</em><em>str</em><em>,</em><em>)</em>) – The name of each role. Names must be unique, sorted, and can only
+contain printable ascii characters less semi-colon and colon.</li>
+<li><strong>strat_names</strong> (<em>(</em><em>(</em><em>str</em><em>,</em><em>)</em><em>,</em><em>)</em>) – The name of each strategy for each role. Must be the same length as
+role_names. Names must be sorted and unique per role, and can only
+contain printable ascii characters less semi-colon and comma. Must have
+at lease one strategy per role.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.all_subgames">
+<code class="descname">all_subgames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.all_subgames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.all_subgames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all valid subgames</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.biased_mixtures">
+<code class="descname">biased_mixtures</code><span class="sig-paren">(</span><em>bias=0.9</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.biased_mixtures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.biased_mixtures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates mixtures biased towards one strategy for each role</p>
+<p>Each role has one strategy played with probability bias; the reamaining
+1-bias probability is distributed uniformly over the remaining S or S-1
+strategies. If there’s only one strategy, it is played with probability
+1.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.dev_from_indices">
+<code class="descname">dev_from_indices</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.dev_from_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>The strategy deviating from for each deviation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.dev_role_starts">
+<code class="descname">dev_role_starts</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.dev_role_starts" title="Permalink to this definition">¶</a></dt>
+<dd><p>The start index for each role deviation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.dev_strat_starts">
+<code class="descname">dev_strat_starts</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.dev_strat_starts" title="Permalink to this definition">¶</a></dt>
+<dd><p>The start index for each strategy deviation</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.dev_to_indices">
+<code class="descname">dev_to_indices</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.dev_to_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>The strategy deviating to for each deviation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_mix_json">
+<code class="descname">from_mix_json</code><span class="sig-paren">(</span><em>mix</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_mix_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_mix_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_mix_repr">
+<code class="descname">from_mix_repr</code><span class="sig-paren">(</span><em>mix_str</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_mix_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_mix_repr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_mix_str">
+<code class="descname">from_mix_str</code><span class="sig-paren">(</span><em>mix_str</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_mix_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_mix_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_role_json">
+<code class="descname">from_role_json</code><span class="sig-paren">(</span><em>role_json</em>, <em>dest=None</em>, <em>dtype=&lt;class 'float'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_role_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_role_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_simplex">
+<code class="descname">from_simplex</code><span class="sig-paren">(</span><em>simp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_simplex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_subgame_json">
+<code class="descname">from_subgame_json</code><span class="sig-paren">(</span><em>subg</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_subgame_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_subgame_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_subgame_repr">
+<code class="descname">from_subgame_repr</code><span class="sig-paren">(</span><em>subg_str</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_subgame_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_subgame_repr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.from_subgame_str">
+<code class="descname">from_subgame_str</code><span class="sig-paren">(</span><em>subg_str</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.from_subgame_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.from_subgame_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.grid_mixtures">
+<code class="descname">grid_mixtures</code><span class="sig-paren">(</span><em>num_points</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.grid_mixtures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.grid_mixtures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all of the mixtures in a grid with n points</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num_points</strong> (<em>int &gt; 1</em>) – The number of points to have along one dimensions</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.is_mixture">
+<code class="descname">is_mixture</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.is_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.is_mixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that a mixture is valid for game</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.is_subgame">
+<code class="descname">is_subgame</code><span class="sig-paren">(</span><em>subg</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.is_subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.is_subgame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that a subgame or array of subgames are valid</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_from_json">
+<code class="descname">mixture_from_json</code><span class="sig-paren">(</span><em>mix</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a json mixture into an array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_from_repr">
+<code class="descname">mixture_from_repr</code><span class="sig-paren">(</span><em>mix_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_from_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_from_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a mixture from it’s repr</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_from_simplex">
+<code class="descname">mixture_from_simplex</code><span class="sig-paren">(</span><em>simp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_from_simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_from_simplex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convery a simplex back into a valid mixture</p>
+<p>This is the inverse function of to_simplex.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_from_str">
+<code class="descname">mixture_from_str</code><span class="sig-paren">(</span><em>mix_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_from_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_from_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a mixture from a verbose string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_project">
+<code class="descname">mixture_project</code><span class="sig-paren">(</span><em>mixture</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_project"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_project" title="Permalink to this definition">¶</a></dt>
+<dd><p>Project a mixture array onto the simplotope</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_to_json">
+<code class="descname">mixture_to_json</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>supp_thresh=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a mixture array to json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_to_repr">
+<code class="descname">mixture_to_repr</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_to_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_to_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a mixture to a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_to_simplex">
+<code class="descname">mixture_to_simplex</code><span class="sig-paren">(</span><em>mixture</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_to_simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_to_simplex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a mixture to a simplex</p>
+<p>The simplex will have dimension <cite>num_role_strats - num_roles + 1</cite>. This
+uses the ray tracing homotopy. The uniform mixtures are aligned, and
+then rays are extended to the edges to convert proportionally along
+those rays on each object.</p>
+<p class="rubric">Notes</p>
+<p>This uses a simple ray alignment algorithm. First line up the uniform
+simplex and the uniform mixture, then define a vector in the mixture as
+all but the last probabilities in each role. Now trace a line from the
+uniform mixture to the current mixture to the edge of the mixture, and
+record what proportion of along that vector the point of interest was.
+Copy that gradient to the simplex, trace it to the boundary, and take
+the point the proportion of the way to the edge.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.mixture_to_str">
+<code class="descname">mixture_to_str</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.mixture_to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.mixture_to_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a mixture to a printable string</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.num_all_subgames">
+<code class="descname">num_all_subgames</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.num_all_subgames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of unique subgames</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.num_devs">
+<code class="descname">num_devs</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.num_devs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total number of deviations</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.num_pure_subgames">
+<code class="descname">num_pure_subgames</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.num_pure_subgames" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of pure subgames</p>
+<p>A pure subgame is is one with only one strategy per role.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.num_role_devs">
+<code class="descname">num_role_devs</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.num_role_devs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of deviations for each role</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.num_strat_devs">
+<code class="descname">num_strat_devs</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.num_strat_devs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of deviations for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.pure_mixtures">
+<code class="descname">pure_mixtures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.pure_mixtures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.pure_mixtures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all mixtures where the probability is either 1 or 0.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.pure_subgames">
+<code class="descname">pure_subgames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.pure_subgames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.pure_subgames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns every pure subgame mask in a game</p>
+<p>A pure subgame is a subgame where each role only has one strategy. This
+returns the pure subgames in sorted order based off of role and
+strategy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.random_mixture">
+<code class="descname">random_mixture</code><span class="sig-paren">(</span><em>*</em>, <em>alpha=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.random_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.random_mixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a random mixture</p>
+<p>See random_mixtures</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.random_mixtures">
+<code class="descname">random_mixtures</code><span class="sig-paren">(</span><em>num_samples=None</em>, <em>*</em>, <em>alpha=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.random_mixtures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.random_mixtures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a random mixed profile</p>
+<p>Mixed profiles are sampled from a dirichlet distribution with parameter
+alpha. If alpha = 1 (the default) this is a uniform distribution over
+the simplex for each role. alpha in (0, 1) is baised towards high
+entropy mixtures, i.e. mixtures where one strategy is played in
+majority. alpha in (1, oo) is baised towards low entropy (uniform)
+mixtures. If <cite>num_samples</cite> is None, a single mixture is returned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.random_sparse_mixture">
+<code class="descname">random_sparse_mixture</code><span class="sig-paren">(</span><em>*</em>, <em>alpha=1</em>, <em>support_prob=None</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.random_sparse_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.random_sparse_mixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a random sparse mixture</p>
+<p>See random_sparse_mixtures</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.random_sparse_mixtures">
+<code class="descname">random_sparse_mixtures</code><span class="sig-paren">(</span><em>num_samples=None</em>, <em>*</em>, <em>alpha=1</em>, <em>support_prob=None</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.random_sparse_mixtures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.random_sparse_mixtures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a random sparse mixed profile</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of samples to be retuned, if None or unspecified, a
+single sample without the extra dimension is returned.</li>
+<li><strong>alpha</strong> (<em>float</em><em>, </em><em>optional</em><em>, </em><em>(</em><em>0</em><em>, </em><em>oo</em><em>)</em>) – Mixed profiles are sampled from a dirichlet distribution with
+parameter alpha. If alpha = 1 (the default) this is a uniform
+distribution over the simplex for each role. alpha in (0, 1) is
+baised towards high entropy mixtures, i.e. mixtures where one
+strategy is played in majority. alpha in (1, oo) is baised towards
+low entropy (uniform) mixtures.</li>
+<li><strong>support_prob</strong> (<em>float</em><em>, </em><em>ndarray</em><em>, </em><em>optional</em><em>, </em><em>(</em><em>0</em><em>, </em><em>1</em><em>)</em>) – The probability that a given strategy is in support. If support
+prob is None, supports will be sampled uniformly.</li>
+<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, the mixtures are normalized, so that the conditional
+probability of any strategy in support equals support prob. If
+true, the support_prob for any role must be at least <cite>1 /
+num_role_strats</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.random_subgame">
+<code class="descname">random_subgame</code><span class="sig-paren">(</span><em>*</em>, <em>strat_prob=None</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.random_subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.random_subgame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a random subgame</p>
+<p>See ranom_subgames</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.random_subgames">
+<code class="descname">random_subgames</code><span class="sig-paren">(</span><em>num_samples=None</em>, <em>strat_prob=None</em>, <em>normalize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.random_subgames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.random_subgames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return random subgames</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of samples to be retuned, if None or unspecified, a
+single sample without the extra dimension is returned.</li>
+<li><strong>strat_prob</strong> (<em>float</em><em>, </em><em>ndarray</em><em>, </em><em>optional</em><em>, </em><em>(</em><em>0</em><em>, </em><em>1</em><em>)</em>) – The probability that a given strategy is in support. If support
+prob is None, supports will be sampled uniformly. This can either
+be a scalar, or an ndarray of size <cite>num_roles</cite>.</li>
+<li><strong>normalize</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, the mixtures are normalized, so that the conditional
+probability of any strategy in support equals support prob. If
+true, the support_prob for any role must be at least <cite>1 /
+num_role_strats</cite>. Individual role probabilities are thresholded to
+this value.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.role_biased_mixtures">
+<code class="descname">role_biased_mixtures</code><span class="sig-paren">(</span><em>bias=0.9</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.role_biased_mixtures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_biased_mixtures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates mixtures where one role-strategy is played with bias</p>
+<p>If no roles have more than one strategy (a degenerate game), then this
+returns nothing.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.role_ends">
+<code class="descname">role_ends</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_ends" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.role_from_json">
+<code class="descname">role_from_json</code><span class="sig-paren">(</span><em>role_json</em>, <em>dest=None</em>, <em>dtype=&lt;class 'float'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.role_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format role data as array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.role_index">
+<code class="descname">role_index</code><span class="sig-paren">(</span><em>role</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.role_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the index of a role by name</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.role_strat_dev_index">
+<code class="descname">role_strat_dev_index</code><span class="sig-paren">(</span><em>role</em>, <em>strat</em>, <em>dev</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.role_strat_dev_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_strat_dev_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the index of a role strat deviating strat pair</p>
+<p><cite>dev</cite> and <cite>strat</cite> must both be strategies in role, and be distinct.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.role_strat_index">
+<code class="descname">role_strat_index</code><span class="sig-paren">(</span><em>role</em>, <em>strat</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.role_strat_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_strat_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the index of a role strat pair</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.StratArray.role_strat_names">
+<code class="descname">role_strat_names</code><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_strat_names" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.role_to_json">
+<code class="descname">role_to_json</code><span class="sig-paren">(</span><em>role_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.role_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.role_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format role data as json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.strat_name">
+<code class="descname">strat_name</code><span class="sig-paren">(</span><em>role_strat_index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.strat_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.strat_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the strategy name from a full index</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.subgame_from_json">
+<code class="descname">subgame_from_json</code><span class="sig-paren">(</span><em>subg</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.subgame_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.subgame_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a json subgame into an array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.subgame_from_repr">
+<code class="descname">subgame_from_repr</code><span class="sig-paren">(</span><em>subg_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.subgame_from_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.subgame_from_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a subgame from a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.subgame_from_str">
+<code class="descname">subgame_from_str</code><span class="sig-paren">(</span><em>subg_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.subgame_from_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.subgame_from_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a subgame from a readable string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.subgame_to_json">
+<code class="descname">subgame_to_json</code><span class="sig-paren">(</span><em>subg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.subgame_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.subgame_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a subgame array to json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.subgame_to_repr">
+<code class="descname">subgame_to_repr</code><span class="sig-paren">(</span><em>subg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.subgame_to_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.subgame_to_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a subgame to a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.subgame_to_str">
+<code class="descname">subgame_to_str</code><span class="sig-paren">(</span><em>subg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.subgame_to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.subgame_to_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a subgame to a printable string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_mix_json">
+<code class="descname">to_mix_json</code><span class="sig-paren">(</span><em>mix</em>, <em>supp_thresh=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_mix_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_mix_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_mix_repr">
+<code class="descname">to_mix_repr</code><span class="sig-paren">(</span><em>mix</em>, <em>supp_thresh=0.0001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_mix_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_mix_repr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_mix_str">
+<code class="descname">to_mix_str</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_mix_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_mix_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_role_json">
+<code class="descname">to_role_json</code><span class="sig-paren">(</span><em>role_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_role_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_role_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_simplex">
+<code class="descname">to_simplex</code><span class="sig-paren">(</span><em>mixture</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_simplex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_subgame_json">
+<code class="descname">to_subgame_json</code><span class="sig-paren">(</span><em>subg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_subgame_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_subgame_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_subgame_repr">
+<code class="descname">to_subgame_repr</code><span class="sig-paren">(</span><em>subg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_subgame_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_subgame_repr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.to_subgame_str">
+<code class="descname">to_subgame_str</code><span class="sig-paren">(</span><em>subg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.to_subgame_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.to_subgame_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.trim_mixture_precision">
+<code class="descname">trim_mixture_precision</code><span class="sig-paren">(</span><em>mixture</em>, <em>*</em>, <em>ndigits=3</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.trim_mixture_precision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.trim_mixture_precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce precision of mixture to ndigits</p>
+<p>By default, trim mixture so every component is only accurate to 1 out
+of 1000. This function returns a valid mixture with the minimum
+absolute error to the input mixture.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.trim_mixture_support">
+<code class="descname">trim_mixture_support</code><span class="sig-paren">(</span><em>mixture</em>, <em>*</em>, <em>thresh=0.001</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.trim_mixture_support"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.trim_mixture_support" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trims strategies played less than supp_thresh from the support</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.uniform_mixture">
+<code class="descname">uniform_mixture</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.uniform_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.uniform_mixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the uniform mixed profile</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.emptygame">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">emptygame</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#emptygame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.emptygame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an empty game with default names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of players in each role in order, or the number of players
+per role if identical (will be broadcast to match the number of roles).</li>
+<li><strong>num_role_strats</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of strategies in each role in order, or the number of
+strategies per role if identical (will be broadcast to match the number
+of roles).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.emptygame_copy">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">emptygame_copy</code><span class="sig-paren">(</span><em>copy_game</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#emptygame_copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.emptygame_copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy parameters of a game into an empty game</p>
+<p>This method is useful to keep convenience methods of game without attached
+data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>copy_game</strong> (<a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to copy info from.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.emptygame_json">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">emptygame_json</code><span class="sig-paren">(</span><em>json</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#emptygame_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.emptygame_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a EmptyGame from json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>json</strong> (<em>{...}</em>) – A json representation of a basic game with names. Must either be
+{roles: [{name: &lt;role&gt;, strategies: [&lt;strat&gt;]}]}, or {strategies:
+{&lt;role&gt;: [&lt;strat&gt;]}}.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.emptygame_names">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">emptygame_names</code><span class="sig-paren">(</span><em>role_names</em>, <em>num_role_players</em>, <em>strat_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#emptygame_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.emptygame_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an empty game with names</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>roles_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name for each role.</li>
+<li><strong>num_role_players</strong> (<em>ndarray</em><em>, </em><em>int</em><em>, </em><em>[</em><em>int</em><em>]</em>) – The number of players in each role.</li>
+<li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.regret.html"
+                        title="previous chapter">gameanalysis.regret module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.scriptutils.html"
+                        title="next chapter">gameanalysis.scriptutils module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.rsgame.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.scriptutils.html" title="gameanalysis.scriptutils module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.regret.html" title="gameanalysis.regret module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

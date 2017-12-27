@@ -1,0 +1,7 @@
+gameanalysis\.matgame module
+============================
+
+.. automodule:: gameanalysis.matgame
+    :members:
+    :undoc-members:
+    :show-inheritance:

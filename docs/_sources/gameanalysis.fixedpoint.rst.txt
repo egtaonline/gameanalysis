@@ -1,0 +1,7 @@
+gameanalysis\.fixedpoint module
+===============================
+
+.. automodule:: gameanalysis.fixedpoint
+    :members:
+    :undoc-members:
+    :show-inheritance:

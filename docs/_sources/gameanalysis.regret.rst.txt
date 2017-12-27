@@ -1,0 +1,7 @@
+gameanalysis\.regret module
+===========================
+
+.. automodule:: gameanalysis.regret
+    :members:
+    :undoc-members:
+    :show-inheritance:

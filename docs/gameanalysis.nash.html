@@ -1,0 +1,310 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.nash module &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.paygame module" href="gameanalysis.paygame.html" />
+    <link rel="prev" title="gameanalysis.matgame module" href="gameanalysis.matgame.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.paygame.html" title="gameanalysis.paygame module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.matgame.html" title="gameanalysis.matgame module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.nash">
+<span id="gameanalysis-nash-module"></span><h1>gameanalysis.nash module<a class="headerlink" href="#module-gameanalysis.nash" title="Permalink to this headline">¶</a></h1>
+<p>Module for computing nash equilibria</p>
+<dl class="function">
+<dt id="gameanalysis.nash.fictitious_play">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">fictitious_play</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>max_iters=10000</em>, <em>converge_thresh=1e-08</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#fictitious_play"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.fictitious_play" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run fictitious play on a mixture</p>
+<p>In fictitious play, players continually best respond to the empirical
+distribution of their opponents at each round.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.min_regret_grid_mixture">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">min_regret_grid_mixture</code><span class="sig-paren">(</span><em>game</em>, <em>points</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#min_regret_grid_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.min_regret_grid_mixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the mixed profile with the confirmed lowest regret</p>
+<p>The search is done over a grid with <cite>points</cite> per dimensions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>points</strong> (<em>int &gt; 1</em>) – Number of points per dimension to search.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.min_regret_profile">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">min_regret_profile</code><span class="sig-paren">(</span><em>game</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#min_regret_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.min_regret_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the profile with the confirmed lowest regret</p>
+<p>An error will be raised if there are no profiles with a defined regret.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.min_regret_rand_mixture">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">min_regret_rand_mixture</code><span class="sig-paren">(</span><em>game</em>, <em>mixtures</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#min_regret_rand_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.min_regret_rand_mixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the mixed profile with the confirmed lowest regret</p>
+<p>The search is done over a random sampling of <cite>mixtures</cite> mixed profiles.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mixtures</strong> (<em>int &gt; 0</em>) – Number of mixtures to evaluate the regret of.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.mixed_nash">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">mixed_nash</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>regret_thresh=0.001</em>, <em>dist_thresh=0.001</em>, <em>grid_points=2</em>, <em>random_restarts=0</em>, <em>processes=0</em>, <em>min_reg=False</em>, <em>at_least_one=False</em>, <em>**methods</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#mixed_nash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.mixed_nash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds role-symmetric mixed Nash equilibria</p>
+<p>This is the intended front end for nash equilibria finding, wrapping the
+individual methods in a convenient front end that also support parallel
+execution. Scipy optimize, and hence nash finding with the optimize method
+is NOT thread safe. This can be mitigated by running nash finding in a
+separate process (by setting processes &gt; 0) if the game is pickleable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>regret_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – The threshold to consider an equilibrium found.</li>
+<li><strong>dist_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – The threshold for considering equilibria distinct.</li>
+<li><strong>grid_points</strong> (<em>int &gt; 1</em><em>, </em><em>optional</em>) – The number of grid points to use for mixture seeds. two implies just
+pure mixtures, more will be denser, but scales exponentially with the
+dimension.</li>
+<li><strong>random_restarts</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of random initializations.</li>
+<li><strong>processes</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Number of processes to use when finding Nash equilibria. If 0 (default)
+run nash finding in the current process. This will work with any game
+but is not thread safe for the optimize method. If greater than zero or
+none, the game must be pickleable and nash finding will be run in
+<cite>processes</cite> processes. Passing None will use the number of current
+processors.</li>
+<li><strong>min_reg</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, and no equilibria are found with the methods specified, return
+the point with the lowest empirical regret. This is ignored if
+at_least_one is True</li>
+<li><strong>at_least_one</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, always return an equilibrium. This will use the fixed point
+method with increasingly smaller tolerances until an equilibrium with
+small regret is found. This may take an exceedingly long time to
+converge, so use with caution.</li>
+<li><strong>**methods</strong> (<em>{'replicator'</em><em>, </em><em>'optimize'</em><em>, </em><em>'scarf'</em><em>, </em><em>'fictitious'}={options}</em>) – All methods to use can be specified as key word arguments to additional
+options for that method, e.g. mixed_nash(game,
+replicator={‘max_iters’:100}). To use the default options for a method,
+simply pass a falsey value i.e. {}, None, False. If no methods are
+specified, this will use both replicator dynamics and regret
+optimization as they tend to be reasonably fast and find different
+equilibria. Scarfs algorithm is almost never recommended to be passed
+here, as it will be called if at_least_one is True and only after
+failing with a faster method and only called once.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>eqm</strong> – A two dimensional array with mixtures that have regret below
+<cite>regret_thresh</cite> and have norm difference of at least <cite>dist_thresh</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.pure_nash">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">pure_nash</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>epsilon=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#pure_nash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.pure_nash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array of all pure nash profiles</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.regret_minimize">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">regret_minimize</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>gtol=1e-08</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#regret_minimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.regret_minimize" title="Permalink to this definition">¶</a></dt>
+<dd><p>A pickleable object to find Nash equilibria</p>
+<p>This method uses constrained convex optimization to to attempt to solve a
+proxy for the nonconvex regret minimization. Since this may converge to a
+local optimum, it may return a mixture that is not an approximate
+equilibrium.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game to run replicator dynamics on. Game must support
+<cite>deviation_payoffs</cite>.</li>
+<li><strong>mix</strong> (<em>mixture</em>) – The mixture to initialize replicator dynamics with.</li>
+<li><strong>gtol</strong> (<em>float</em>) – The gradient tolerance used for optimization convergence. See
+<cite>scipy.optimize.minimize</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.replicator_dynamics">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">replicator_dynamics</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>max_iters=10000</em>, <em>converge_thresh=1e-08</em>, <em>slack=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#replicator_dynamics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.replicator_dynamics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replicator Dynamics</p>
+<p>Run replicator dynamics on a game starting at mix. Replicator dynamics may
+not converge, and so the resulting mixture may not actually represent a
+nash equilibrium.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game to run replicator dynamics on. Game must support
+<cite>deviation_payoffs</cite>.</li>
+<li><strong>mix</strong> (<em>mixture</em>) – The mixture to initialize replicator dynamics with.</li>
+<li><strong>max_iters</strong> (<em>int</em>) – Replicator dynamics may never converge and this prevents replicator
+dynamics from running forever.</li>
+<li><strong>converge_thresh</strong> (<em>float</em>) – This will terminate early if successive updates differ with a norm
+smaller than <cite>converge_thresh</cite>.</li>
+<li><strong>slack</strong> (<em>float</em>) – For repliactor dynamics to operate, it must know the minimum and
+maximum payoffs for a role such that deviations always have positive
+probability. This is the proportional slack that given relative to the
+minimum and maximum payoffs. This has an effect on convergence, but the
+actual effect isn’t really know.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.scarfs_algorithm">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">scarfs_algorithm</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>regret_thresh=0.001</em>, <em>disc=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#scarfs_algorithm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.scarfs_algorithm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses fixed point method to find nash eqm</p>
+<p>This is guaranteed to find an equilibrium with regret below regret_thresh,
+however, it’s guaranteed convergence is assured by potentially exponential
+running time, and therefore is not recommended unless you’re willing to
+wait. The underlying algorithm is solving for an approximate fixed point.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game to run replicator dynamics on. Game must support
+<cite>deviation_payoffs</cite>.</li>
+<li><strong>mix</strong> (<em>mixture</em>) – The mixture to initialize replicator dynamics with.</li>
+<li><strong>regret_thresh</strong> (<em>float</em>) – The maximum regret of the returned mixture.</li>
+<li><strong>disc</strong> (<em>int</em>) – The initial discretization of the mixture. A lower initial
+discretization means fewer possible starting points for search in the
+mixture space, but is likely to converge faster as the search at higher
+discretization will be seeded with an approximate equilibrium from a
+lower discretization. For example, with <cite>disc=2</cite> there are only
+<cite>game.num_strats - game.num_roles + 1</cite> possible starting points.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.matgame.html"
+                        title="previous chapter">gameanalysis.matgame module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.paygame.html"
+                        title="next chapter">gameanalysis.paygame module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.nash.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.paygame.html" title="gameanalysis.paygame module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.matgame.html" title="gameanalysis.matgame module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

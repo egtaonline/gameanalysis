@@ -1,0 +1,7 @@
+gameanalysis\.script\.conv module
+=================================
+
+.. automodule:: gameanalysis.script.conv
+    :members:
+    :undoc-members:
+    :show-inheritance:

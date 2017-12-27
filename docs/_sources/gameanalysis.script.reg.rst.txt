@@ -1,0 +1,7 @@
+gameanalysis\.script\.reg module
+================================
+
+.. automodule:: gameanalysis.script.reg
+    :members:
+    :undoc-members:
+    :show-inheritance:

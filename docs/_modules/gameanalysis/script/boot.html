@@ -64,7 +64,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.boot.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.boot.html#gameanalysis.script.boot.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s1">&#39;bootstrap&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;boot&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Bootstrap on sample games&quot;&quot;&quot;</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Compute bootstrap statistics using a sample game with</span>
@@ -106,11 +106,11 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.boot.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.boot.html#gameanalysis.script.boot.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="c1"># TODO Profiles that aren&#39;t in support of mixtures or single deviations</span>
     <span class="c1"># could be safely pruned.</span>
     <span class="n">game</span> <span class="o">=</span> <span class="n">gamereader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">))</span>
-    <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">game</span><span class="o">.</span><span class="n">from_prof_json</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="kc">None</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span>
+    <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">game</span><span class="o">.</span><span class="n">profile_from_json</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="kc">None</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span>
                                <span class="ow">in</span> <span class="n">scriptutils</span><span class="o">.</span><span class="n">load_profiles</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">profiles</span><span class="p">)])</span>
     <span class="n">bootf</span><span class="p">,</span> <span class="n">meanf</span> <span class="o">=</span> <span class="n">CHOICES</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">bootf</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_bootstraps</span><span class="p">,</span>

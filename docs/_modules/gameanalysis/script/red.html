@@ -59,7 +59,7 @@
 <span class="kn">from</span> <span class="nn">gameanalysis.reduction</span> <span class="k">import</span> <span class="n">twins</span> <span class="k">as</span> <span class="n">tr</span>
 
 
-<div class="viewcode-block" id="parse_sorted"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.red.parse_sorted">[docs]</a><span class="k">def</span> <span class="nf">parse_sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">game</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_sorted"><a class="viewcode-back" href="../../../gameanalysis.script.red.html#gameanalysis.script.red.parse_sorted">[docs]</a><span class="k">def</span> <span class="nf">parse_sorted</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">game</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parser reduction input for roles in sorted order&quot;&quot;&quot;</span>
     <span class="n">players</span> <span class="o">=</span> <span class="n">red</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">players</span><span class="p">)</span> <span class="o">==</span> <span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> \
@@ -67,7 +67,7 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">players</span><span class="p">),</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">players</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="parse_inorder"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.red.parse_inorder">[docs]</a><span class="k">def</span> <span class="nf">parse_inorder</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">game</span><span class="p">):</span>
+<div class="viewcode-block" id="parse_inorder"><a class="viewcode-back" href="../../../gameanalysis.script.red.html#gameanalysis.script.red.parse_inorder">[docs]</a><span class="k">def</span> <span class="nf">parse_inorder</span><span class="p">(</span><span class="n">red</span><span class="p">,</span> <span class="n">game</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Parser input for role number pairs&quot;&quot;&quot;</span>
     <span class="n">players</span> <span class="o">=</span> <span class="n">red</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">players</span><span class="p">)</span> <span class="o">==</span> <span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> \
@@ -92,7 +92,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.red.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.red.html#gameanalysis.script.red.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s1">&#39;reduce&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;red&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Reduce games&quot;&quot;&quot;</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Create reduced game files from input game files.&quot;&quot;&quot;</span><span class="p">)</span>
@@ -122,7 +122,7 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.red.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.red.html#gameanalysis.script.red.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">game</span> <span class="o">=</span> <span class="n">gamereader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">))</span>
     <span class="n">reduced_players</span> <span class="o">=</span> <span class="p">(</span>
         <span class="kc">None</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">reduction</span>

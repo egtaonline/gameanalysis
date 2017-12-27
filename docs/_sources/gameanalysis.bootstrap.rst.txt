@@ -1,0 +1,7 @@
+gameanalysis\.bootstrap module
+==============================
+
+.. automodule:: gameanalysis.bootstrap
+    :members:
+    :undoc-members:
+    :show-inheritance:

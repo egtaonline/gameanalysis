@@ -138,7 +138,7 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">inds</span><span class="p">,</span> <span class="n">is_br</span><span class="p">,</span> <span class="n">num_strats</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span>
 
 
-<div class="viewcode-block" id="weakly_dominated"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.dominance.weakly_dominated">[docs]</a><span class="k">def</span> <span class="nf">weakly_dominated</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="weakly_dominated"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.weakly_dominated">[docs]</a><span class="k">def</span> <span class="nf">weakly_dominated</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a mask of the strategies that are weakly dominated</span>
 
 <span class="sd">    If conditional, then missing data will be treated as dominating.&quot;&quot;&quot;</span>
@@ -146,7 +146,7 @@
                            <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="strictly_dominated"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.dominance.strictly_dominated">[docs]</a><span class="k">def</span> <span class="nf">strictly_dominated</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="strictly_dominated"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.strictly_dominated">[docs]</a><span class="k">def</span> <span class="nf">strictly_dominated</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a mask of the strategies that are strictly dominated</span>
 
 <span class="sd">    If conditional, then missing data will be treated as dominating.&quot;&quot;&quot;</span>
@@ -154,7 +154,7 @@
                              <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="never_best_response"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.dominance.never_best_response">[docs]</a><span class="k">def</span> <span class="nf">never_best_response</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="never_best_response"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.never_best_response">[docs]</a><span class="k">def</span> <span class="nf">never_best_response</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a mask of the strategies that are never a best response</span>
 
 <span class="sd">    If conditional, then missing data is treated as a best response. The</span>
@@ -170,7 +170,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="iterated_elimination"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.dominance.iterated_elimination">[docs]</a><span class="k">def</span> <span class="nf">iterated_elimination</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="iterated_elimination"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.iterated_elimination">[docs]</a><span class="k">def</span> <span class="nf">iterated_elimination</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a subgame mask resulting from iterated elimination of strategies</span>
 
 <span class="sd">    Parameters</span>

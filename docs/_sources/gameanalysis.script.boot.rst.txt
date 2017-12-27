@@ -1,0 +1,7 @@
+gameanalysis\.script\.boot module
+=================================
+
+.. automodule:: gameanalysis.script.boot
+    :members:
+    :undoc-members:
+    :show-inheritance:

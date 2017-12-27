@@ -1,160 +1,29 @@
 gameanalysis package
 ====================
 
-Subpackages
------------
-
-.. toctree::
-
-    gameanalysis.script
-
 Submodules
 ----------
 
-gameanalysis\.aggfn module
---------------------------
+.. toctree::
 
-.. automodule:: gameanalysis.aggfn
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.agggen module
----------------------------
-
-.. automodule:: gameanalysis.agggen
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.bootstrap module
-------------------------------
-
-.. automodule:: gameanalysis.bootstrap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.collect module
-----------------------------
-
-.. automodule:: gameanalysis.collect
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.dominance module
-------------------------------
-
-.. automodule:: gameanalysis.dominance
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.fixedpoint module
--------------------------------
-
-.. automodule:: gameanalysis.fixedpoint
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.gamegen module
-----------------------------
-
-.. automodule:: gameanalysis.gamegen
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.gamereader module
--------------------------------
-
-.. automodule:: gameanalysis.gamereader
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.learning module
------------------------------
-
-.. automodule:: gameanalysis.learning
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.matgame module
-----------------------------
-
-.. automodule:: gameanalysis.matgame
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.nash module
--------------------------
-
-.. automodule:: gameanalysis.nash
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.paygame module
-----------------------------
-
-.. automodule:: gameanalysis.paygame
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.reduction module
-------------------------------
-
-.. automodule:: gameanalysis.reduction
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.regret module
----------------------------
-
-.. automodule:: gameanalysis.regret
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.rsgame module
----------------------------
-
-.. automodule:: gameanalysis.rsgame
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.scriptutils module
---------------------------------
-
-.. automodule:: gameanalysis.scriptutils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.subgame module
-----------------------------
-
-.. automodule:: gameanalysis.subgame
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-gameanalysis\.utils module
---------------------------
-
-.. automodule:: gameanalysis.utils
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   gameanalysis.aggfn
+   gameanalysis.agggen
+   gameanalysis.bootstrap
+   gameanalysis.collect
+   gameanalysis.dominance
+   gameanalysis.fixedpoint
+   gameanalysis.gamegen
+   gameanalysis.gamereader
+   gameanalysis.learning
+   gameanalysis.matgame
+   gameanalysis.nash
+   gameanalysis.paygame
+   gameanalysis.reduction
+   gameanalysis.regret
+   gameanalysis.rsgame
+   gameanalysis.scriptutils
+   gameanalysis.subgame
+   gameanalysis.utils
 
 Module contents
 ---------------

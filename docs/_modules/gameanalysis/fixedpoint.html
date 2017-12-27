@@ -49,7 +49,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
-<div class="viewcode-block" id="fixed_point"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.fixedpoint.fixed_point">[docs]</a><span class="k">def</span> <span class="nf">fixed_point</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="fixed_point"><a class="viewcode-back" href="../../gameanalysis.fixedpoint.html#gameanalysis.fixedpoint.fixed_point">[docs]</a><span class="k">def</span> <span class="nf">fixed_point</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Compute an approximate fixed point of a function</span>
 
 <span class="sd">    Parameters</span>
@@ -67,7 +67,7 @@
         <span class="k">lambda</span> <span class="n">mix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">((</span><span class="n">mix</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">mix</span> <span class="o">+</span> <span class="n">func</span><span class="p">(</span><span class="n">mix</span><span class="p">)),</span> <span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="labeled_subsimplex"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.fixedpoint.labeled_subsimplex">[docs]</a><span class="k">def</span> <span class="nf">labeled_subsimplex</span><span class="p">(</span><span class="n">label_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">disc</span><span class="p">):</span>
+<div class="viewcode-block" id="labeled_subsimplex"><a class="viewcode-back" href="../../gameanalysis.fixedpoint.html#gameanalysis.fixedpoint.labeled_subsimplex">[docs]</a><span class="k">def</span> <span class="nf">labeled_subsimplex</span><span class="p">(</span><span class="n">label_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">disc</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Find approximate center of a fully labeled subsimplex</span>
 
 <span class="sd">    This runs once at the discretization provided. It is recommended that this</span>

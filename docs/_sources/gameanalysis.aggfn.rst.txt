@@ -1,0 +1,7 @@
+gameanalysis\.aggfn module
+==========================
+
+.. automodule:: gameanalysis.aggfn
+    :members:
+    :undoc-members:
+    :show-inheritance:

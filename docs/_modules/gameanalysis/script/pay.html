@@ -57,7 +57,7 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">scriptutils</span>
 
 
-<div class="viewcode-block" id="is_pure_profile"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.pay.is_pure_profile">[docs]</a><span class="k">def</span> <span class="nf">is_pure_profile</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+<div class="viewcode-block" id="is_pure_profile"><a class="viewcode-back" href="../../../gameanalysis.script.pay.html#gameanalysis.script.pay.is_pure_profile">[docs]</a><span class="k">def</span> <span class="nf">is_pure_profile</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns true of the profile is pure&quot;&quot;&quot;</span>
     <span class="c1"># For an asymmetric game, this will always return false, but then it</span>
     <span class="c1"># shouldn&#39;t be an issue, because pure strategy regret will be more</span>
@@ -68,16 +68,15 @@
     <span class="k">return</span> <span class="n">pure</span></div>
 
 
-<div class="viewcode-block" id="payoffs"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.pay.payoffs">[docs]</a><span class="k">def</span> <span class="nf">payoffs</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+<div class="viewcode-block" id="payoffs"><a class="viewcode-back" href="../../../gameanalysis.script.pay.html#gameanalysis.script.pay.payoffs">[docs]</a><span class="k">def</span> <span class="nf">payoffs</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;get payoffs to every agent or role&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">is_pure_profile</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
-        <span class="n">prof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">to_payoff_json</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">prof</span><span class="p">),</span> <span class="n">prof</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">prof</span><span class="p">))</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">to_role_json</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">expected_payoffs</span><span class="p">(</span><span class="n">prof</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">role_to_json</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">expected_payoffs</span><span class="p">(</span><span class="n">prof</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="welfare"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.pay.welfare">[docs]</a><span class="k">def</span> <span class="nf">welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+<div class="viewcode-block" id="welfare"><a class="viewcode-back" href="../../../gameanalysis.script.pay.html#gameanalysis.script.pay.welfare">[docs]</a><span class="k">def</span> <span class="nf">welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;get the welfare of a profile or mixture&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">is_pure_profile</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">regret</span><span class="o">.</span><span class="n">pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="nb">int</span><span class="p">))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
@@ -93,7 +92,7 @@
                      <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">TYPE</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
 
-<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.pay.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
+<div class="viewcode-block" id="add_parser"><a class="viewcode-back" href="../../../gameanalysis.script.pay.html#gameanalysis.script.pay.add_parser">[docs]</a><span class="k">def</span> <span class="nf">add_parser</span><span class="p">(</span><span class="n">subparsers</span><span class="p">):</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s1">&#39;payoffs&#39;</span><span class="p">,</span> <span class="n">aliases</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pay&#39;</span><span class="p">],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Compute payoffs&quot;&quot;&quot;</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;Compute payoff relative information in input game of</span>
@@ -116,10 +115,10 @@
     <span class="k">return</span> <span class="n">parser</span></div>
 
 
-<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.html#gameanalysis.script.pay.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../../../gameanalysis.script.pay.html#gameanalysis.script.pay.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">game</span> <span class="o">=</span> <span class="n">gamereader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">input</span><span class="p">))</span>
     <span class="n">prof_func</span> <span class="o">=</span> <span class="n">TYPE</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
-    <span class="n">payoffs</span> <span class="o">=</span> <span class="p">[</span><span class="n">prof_func</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">from_mix_json</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="n">payoffs</span> <span class="o">=</span> <span class="p">[</span><span class="n">prof_func</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">mixture_from_json</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
                <span class="k">for</span> <span class="n">prof</span> <span class="ow">in</span> <span class="n">scriptutils</span><span class="o">.</span><span class="n">load_profiles</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">profiles</span><span class="p">)]</span>
     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">payoffs</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
     <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span></div>

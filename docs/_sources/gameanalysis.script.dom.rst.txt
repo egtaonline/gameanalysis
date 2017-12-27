@@ -1,0 +1,7 @@
+gameanalysis\.script\.dom module
+================================
+
+.. automodule:: gameanalysis.script.dom
+    :members:
+    :undoc-members:
+    :show-inheritance:

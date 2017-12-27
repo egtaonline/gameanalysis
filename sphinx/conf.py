@@ -49,8 +49,8 @@ for mod_name in MOCK_MODULES:
 sys.path.insert(0, path.abspath('..'))
 
 # Run api-doc automatically
-for module in ['gameanalysis']:
-    apidoc.main(['<prog-name>', '-f', '-o', '.', path.join('..', module)])
+apidoc.main(['<prog-name>', '-efo', '.', path.join('..', 'gameanalysis'),
+             path.join('..', 'gameanalysis', 'script')])
 
 # -- General configuration ------------------------------------------------
 

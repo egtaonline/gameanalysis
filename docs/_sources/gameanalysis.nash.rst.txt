@@ -1,0 +1,7 @@
+gameanalysis\.nash module
+=========================
+
+.. automodule:: gameanalysis.nash
+    :members:
+    :undoc-members:
+    :show-inheritance:

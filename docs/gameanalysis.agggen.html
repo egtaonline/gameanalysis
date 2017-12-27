@@ -1,0 +1,242 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.agggen module &#8212; Game Analysis 4.1.2 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '4.1.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.bootstrap module" href="gameanalysis.bootstrap.html" />
+    <link rel="prev" title="gameanalysis.aggfn module" href="gameanalysis.aggfn.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.bootstrap.html" title="gameanalysis.bootstrap module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.aggfn.html" title="gameanalysis.aggfn module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.agggen">
+<span id="gameanalysis-agggen-module"></span><h1>gameanalysis.agggen module<a class="headerlink" href="#module-gameanalysis.agggen" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="gameanalysis.agggen.congestion">
+<code class="descclassname">gameanalysis.agggen.</code><code class="descname">congestion</code><span class="sig-paren">(</span><em>num_players</em>, <em>num_facilities</em>, <em>num_required</em>, <em>*</em>, <em>degree=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/agggen.html#congestion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.agggen.congestion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a congestion game</p>
+<p>A congestion game is a symmetric game, where there are a given number of
+facilities, and each player must choose to use some amount of them. The
+payoff for each facility decreases as more players use it, and a players
+utility is the sum of the utilities for every facility.</p>
+<p>In this formulation, facility payoffs are random polynomials of the number
+of people using said facility.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_players</strong> (<em>int &gt; 1</em>) – The number of players.</li>
+<li><strong>num_facilities</strong> (<em>int &gt; 1</em>) – The number of facilities.</li>
+<li><strong>num_required</strong> (<em>0 &lt; int &lt; num_facilities</em>) – The number of required facilities.</li>
+<li><strong>degree</strong> (<em>int &gt; 0</em><em>, </em><em>optional</em>) – Degree of payoff polynomials.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.agggen.local_effect">
+<code class="descclassname">gameanalysis.agggen.</code><code class="descname">local_effect</code><span class="sig-paren">(</span><em>num_players</em>, <em>num_strategies</em>, <em>*</em>, <em>edge_prob=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/agggen.html#local_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.agggen.local_effect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a local effect game</p>
+<p>In a local effect game, strategies are connected by a graph, and utilities
+are a function of the number of players playing our strategy and the number
+of players playing a neighboring strategy, hence local effect.</p>
+<p>In this formulation, payoffs for others playing our strategy are negative
+quadratics, and payoffs for playing other strategies are positive cubics.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_players</strong> (<em>int &gt; 1</em>) – The number of players.</li>
+<li><strong>num_strategies</strong> (<em>int &gt; 1</em>) – The number of strategies.</li>
+<li><strong>edge_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability that one strategy affects another.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.agggen.normal_aggfn">
+<code class="descclassname">gameanalysis.agggen.</code><code class="descname">normal_aggfn</code><span class="sig-paren">(</span><em>role_players</em>, <em>role_strats</em>, <em>functions</em>, <em>*</em>, <em>input_prob=0.2</em>, <em>weight_prob=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/agggen.html#normal_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.agggen.normal_aggfn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random normal AgfnGame</p>
+<p>Each function value is an i.i.d Gaussian draw. For large numbers of players
+and small numbers of functions, this still produces relatively smooth
+deviation payoffs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</li>
+<li><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</li>
+<li><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</li>
+<li><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</li>
+<li><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.agggen.poly_aggfn">
+<code class="descclassname">gameanalysis.agggen.</code><code class="descname">poly_aggfn</code><span class="sig-paren">(</span><em>role_players</em>, <em>role_strats</em>, <em>functions</em>, <em>*</em>, <em>input_prob=0.2</em>, <em>weight_prob=0.2</em>, <em>degree=3</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/agggen.html#poly_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.agggen.poly_aggfn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random polynomial AgfnGame</p>
+<p>Functions are generated by generating <cite>degree</cite> zeros in [0, num_players] to
+serve as a polynomial functions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</li>
+<li><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</li>
+<li><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</li>
+<li><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</li>
+<li><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</li>
+<li><strong>degree</strong> (<em>int</em><em> or </em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Either an integer specifying the degree or a list of the probabilities
+of degrees starting from one, e.g. 3 is the same as [0, 0, 1].</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.agggen.sine_aggfn">
+<code class="descclassname">gameanalysis.agggen.</code><code class="descname">sine_aggfn</code><span class="sig-paren">(</span><em>role_players</em>, <em>role_strats</em>, <em>functions</em>, <em>*</em>, <em>input_prob=0.2</em>, <em>weight_prob=0.2</em>, <em>min_period=4</em>, <em>max_period=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/agggen.html#sine_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.agggen.sine_aggfn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random sinusodial AgfnGame</p>
+<p>Functions are generated by generating sinusoids with uniform random shifts
+and n periods in 0 to num_players, where n is chosen randomle between
+min_period and max_period.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</li>
+<li><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</li>
+<li><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</li>
+<li><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</li>
+<li><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</li>
+<li><strong>min_period</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of periods to generate.</li>
+<li><strong>max_period</strong> (<em>int</em><em>, </em><em>optional</em>) – The maximum number of periods to generate. If omitted or None, defaults
+to double min_period.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.aggfn.html"
+                        title="previous chapter">gameanalysis.aggfn module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.bootstrap.html"
+                        title="next chapter">gameanalysis.bootstrap module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.agggen.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.bootstrap.html" title="gameanalysis.bootstrap module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.aggfn.html" title="gameanalysis.aggfn module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

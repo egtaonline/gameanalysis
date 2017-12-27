@@ -1,0 +1,7 @@
+gameanalysis\.gamegen module
+============================
+
+.. automodule:: gameanalysis.gamegen
+    :members:
+    :undoc-members:
+    :show-inheritance:

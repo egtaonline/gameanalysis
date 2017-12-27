@@ -53,15 +53,15 @@
 
 
 <span class="n">_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;emptygame.1&#39;</span><span class="p">:</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">,</span>
-    <span class="s1">&#39;game.1&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_json</span><span class="p">,</span>
-    <span class="s1">&#39;samplegame.1&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_json</span><span class="p">,</span>
-    <span class="s1">&#39;aggfn.1&#39;</span><span class="p">:</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_json</span><span class="p">,</span>
-    <span class="s1">&#39;matrix.1&#39;</span><span class="p">:</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame_json</span><span class="p">,</span>
+    <span class="s1">&#39;emptygame&#39;</span><span class="p">:</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">,</span>
+    <span class="s1">&#39;game&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_json</span><span class="p">,</span>
+    <span class="s1">&#39;samplegame&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_json</span><span class="p">,</span>
+    <span class="s1">&#39;aggfn&#39;</span><span class="p">:</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_json</span><span class="p">,</span>
+    <span class="s1">&#39;matrix&#39;</span><span class="p">:</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame_json</span><span class="p">,</span>
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="read"><a class="viewcode-back" href="../../gameanalysis.html#gameanalysis.gamereader.read">[docs]</a><span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
+<div class="viewcode-block" id="read"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.read">[docs]</a><span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a game in any form</span>
 
 <span class="sd">    Parameters</span>
@@ -70,7 +70,7 @@
 <span class="sd">        The python object representation of a game encoded as json. Any valid</span>
 <span class="sd">        game will be read and returned.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_TYPE_MAP</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;samplegame.1&#39;</span><span class="p">)](</span><span class="n">json</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">_TYPE_MAP</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;samplegame.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]](</span><span class="n">json</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
