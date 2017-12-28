@@ -52,11 +52,11 @@ def test_random_poly_game(players, strategies, functions, inp, weight, deg):
 
 @pytest.mark.parametrize('players,strategies,functions', _sizes)
 @pytest.mark.parametrize('inp,weight', _probs)
-@pytest.mark.parametrize('mi,ma', [(0.5, None), (1, 4), (5, 5)])
-def test_random_sine_game(players, strategies, functions, inp, weight, mi, ma):
+@pytest.mark.parametrize('period', [0.5, 1, 2, 10])
+def test_random_sine_game(players, strategies, functions, inp, weight, period):
     verify(agggen.sine_aggfn(players, strategies, functions))
     verify(agggen.sine_aggfn(players, strategies, functions, input_prob=inp,
-                             weight_prob=weight, min_period=mi, max_period=ma))
+                             weight_prob=weight, period=period))
 
 
 @pytest.mark.parametrize('players,facilities,required', [
