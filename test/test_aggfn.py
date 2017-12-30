@@ -4,9 +4,8 @@ import numpy as np
 import pytest
 
 from gameanalysis import aggfn
-from gameanalysis import agggen
-from gameanalysis import nash
 from gameanalysis import paygame
+from gameanalysis import rsgame
 
 
 _game = aggfn.aggfn(
@@ -24,6 +23,19 @@ _game = aggfn.aggfn(
      [[0, 0], [3, 2], [2, 4]],
      [[9, 7], [4, 1], [1, 4]],
      [[3, 6], [0, -1], [3, 4]]])
+
+
+def rand(players, strategies, functions):
+    base = rsgame.emptygame(players, strategies)
+    action_weights = np.random.normal(0, 1, (functions, base.num_strats))
+    function_inputs = np.random.random((base.num_strats, functions)) < .5
+    for func in function_inputs.T:
+        func[np.random.choice(base.num_strats, 2, False)] = [False, True]
+    function_table = np.random.normal(
+        0, 1, (functions,) + tuple(base.num_role_players + 1))
+    offsets = np.random.normal(0, 1, base.num_strats)
+    return aggfn.aggfn_replace(base, action_weights, function_inputs,
+                               function_table, offsets)
 
 
 def test_subgame_function_removal():
@@ -355,20 +367,7 @@ def verify_aggfn(game):
 ])
 def test_random_game(players, strategies, functions):
     """Test that deviation payoff formulation is accurate"""
-    game = agggen.normal_aggfn(players, strategies, functions)
-    verify_aggfn(game)
-
-
-@pytest.mark.parametrize('players,strategies,functions', [
-    ([1, 2], 2, 3),
-])
-def test_nash_finding(players, strategies, functions):
-    # This distribution tends to have `easier` nash equilibria, and we only
-    # want to test that it functionally works.
-    game = agggen.poly_aggfn(
-        players, strategies, functions)
-    eqa = nash.mixed_nash(game, processes=None)
-    assert eqa.size > 0, "didn't find any equilibria"
+    verify_aggfn(rand(players, strategies, functions))
 
 
 def test_alternate_constructors():
@@ -406,13 +405,11 @@ def test_from_function_call():
 
 
 def test_repr():
-    game = agggen.normal_aggfn(5, 4, 3)
     expected = 'AgfnGame([5], [4], 3)'
-    assert repr(game) == expected
+    assert repr(rand(5, 4, 3)) == expected
 
-    game = agggen.normal_aggfn([5, 4], [4, 3], 3)
     expected = 'AgfnGame([5 4], [4 3], 3)'
-    assert repr(game) == expected
+    assert repr(rand([5, 4], [4, 3], 3)) == expected
 
 
 def test_function_index():

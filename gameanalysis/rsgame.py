@@ -21,6 +21,7 @@ attribute instead of a getter function. Attributes that have the world role in
 them tend to be arrays of size `num_roles` and attributes that have `strat` in
 the name tend to be arrays of size `num_strats`.
 """
+import functools
 import itertools
 import string
 import warnings
@@ -1745,6 +1746,14 @@ class CompleteGame(RsGame):
     def __init__(self, role_names, strat_names, num_role_players):
         super().__init__(role_names, strat_names, num_role_players)
         self.num_profiles = self.num_complete_profiles = self.num_all_profiles
+
+    @functools.lru_cache(maxsize=1)
+    def profiles(self):
+        return self.all_profiles()
+
+    @functools.lru_cache(maxsize=1)
+    def payoffs(self):
+        return self.get_payoffs(self.profiles())
 
     def __contains__(self, profile):
         assert self.is_profile(profile)

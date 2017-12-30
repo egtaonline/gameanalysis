@@ -1,5 +1,4 @@
 """An action graph game with additive function nodes"""
-import functools
 import itertools
 
 import numpy as np
@@ -76,14 +75,6 @@ class AgfnGame(rsgame.CompleteGame):
     def function_index(self, func_name):
         """Get the index of a function by name"""
         return self._function_index[func_name]
-
-    @functools.lru_cache(maxsize=1)
-    def profiles(self):
-        return self.all_profiles()
-
-    @functools.lru_cache(maxsize=1)
-    def payoffs(self):
-        return self.get_payoffs(self.profiles())
 
     @utils.memoize
     def min_strat_payoffs(self):

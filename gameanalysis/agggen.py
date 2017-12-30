@@ -118,7 +118,13 @@ def poly_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
         choices = np.random.choice(
             max_degree, (functions, p + 1), True, degree)
         terms[choices[..., None] < np.arange(max_degree)] = 1
-        return terms.prod(2) / p ** choices
+        poly = terms.prod(2) / p ** choices
+
+        # The prevents too many small polynomials from making functions
+        # effectively constant
+        scale = poly.max() - poly.min()
+        offset = poly.min() + 1
+        return (poly - offset) / (1 if np.isclose(scale, 0) else scale)
 
     return _random_aggfn(role_players, role_strats, functions, input_prob,
                          weight_prob, role_dist)

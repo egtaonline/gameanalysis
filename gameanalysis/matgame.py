@@ -69,10 +69,6 @@ class MatrixGame(rsgame.CompleteGame):
         return mpays
 
     @functools.lru_cache(maxsize=1)
-    def profiles(self):
-        return self.all_profiles()
-
-    @functools.lru_cache(maxsize=1)
     def payoffs(self):
         profiles = self.profiles()
         payoffs = np.zeros(profiles.shape)

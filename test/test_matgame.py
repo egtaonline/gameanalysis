@@ -184,6 +184,8 @@ def test_random_invariants(strats):
     for prof in matg.random_profiles(20):
         assert prof in matg
 
+    assert np.allclose(matg.payoffs(), matg.get_payoffs(matg.profiles()))
+
 
 def test_is_constant_sum():
     payoffs = [[[2, -1], [0, 1]], [[5, -4], [0.5, 0.5]]]

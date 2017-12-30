@@ -41,13 +41,10 @@ def test_rbfgame_members():
 
     assert reggame.is_complete()
 
-    assert len(reggame._regressors) == game.num_strats
     assert reggame._offset.shape == (reggame.num_strats,)
-    assert reggame._scale.shape == (reggame.num_strats,)
+    assert reggame._coefs.shape == (reggame.num_strats,)
     assert reggame._min_payoffs.shape == (reggame.num_strats,)
     assert reggame._max_payoffs.shape == (reggame.num_strats,)
-    assert reggame._sub_mask.shape == (reggame.num_strats,)
-    assert reggame._sub_mask.all()
 
 
 def test_nntrain():
@@ -114,22 +111,18 @@ def test_rbfgame_subgame(_):
             mix, sub_mask))[sub_mask]
         assert np.allclose(dev_pay, full_pay)
 
-    assert len(subreg._regressors) == subreg.num_strats
     assert subreg._offset.shape == (subreg.num_strats,)
-    assert subreg._scale.shape == (subreg.num_strats,)
+    assert subreg._coefs.shape == (subreg.num_strats,)
     assert subreg._min_payoffs.shape == (subreg.num_strats,)
     assert subreg._max_payoffs.shape == (subreg.num_strats,)
-    assert subreg._sub_mask.shape == (game.num_strats,)
 
     subsubmask = subreg.random_subgame()
     subsubreg = subreg.subgame(subsubmask)
 
-    assert len(subsubreg._regressors) == subsubreg.num_strats
     assert subsubreg._offset.shape == (subsubreg.num_strats,)
-    assert subsubreg._scale.shape == (subsubreg.num_strats,)
+    assert subsubreg._coefs.shape == (subsubreg.num_strats,)
     assert subsubreg._min_payoffs.shape == (subsubreg.num_strats,)
     assert subsubreg._max_payoffs.shape == (subsubreg.num_strats,)
-    assert subsubreg._sub_mask.shape == (game.num_strats,)
 
 
 # TODO Test other sizes

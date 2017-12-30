@@ -15,6 +15,9 @@ from gameanalysis import utils
 # of large void types which is very expensive, less so than just hashing the
 # data. Maybe pandas or other libraries have more efficient variants?
 
+# TODO There may be places where we do `np.sum(a * b)` which can be more
+# efficient using np.einsum.
+
 
 class Game(rsgame.RsGame):
     """Role-symmetric data game representation
