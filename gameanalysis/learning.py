@@ -8,15 +8,16 @@ games. Learned games vary by the method, but generally expose methods for
 computing payoffs and may other features. Deviation games use learned games and
 different functions to compute deviation payoffs via various methods.
 """
+import itertools
+
 import numpy as np
-import scipy.special as sps
 import sklearn
 from sklearn import gaussian_process as gp
 
-from gameanalysis import paygame
-from gameanalysis import rsgame
-from gameanalysis import subgame
-from gameanalysis import utils
+from . import paygame
+from . import rsgame
+from . import subgame
+from . import utils
 
 
 _TINY = np.finfo(float).tiny
@@ -59,24 +60,19 @@ class DevRegressionGame(rsgame.CompleteGame):
                     profs, self._sub_mask)).ravel() * s + o
         return payoffs
 
-    def get_mean_dev_payoffs(self, profiles):
-        """Compute the mean payoff from deviating
+    def get_dev_payoffs(self, profiles):
+        """Compute the payoff for deviating
 
-        Given, potentially several partial profiles per role, compute the mean
-        payoff for deviating to each strategy.
-
-        Parameters
-        ----------
-        profiles : array-like, shape = (num_samples, num_roles, num_strats)
-            A list of partial profiles by role. This is the same structure as
-            returned by `random_dev_profiles`.
-        """
-        profiles = subgame.translate(profiles.reshape(
-            (-1, self.num_roles, self.num_strats)), self._sub_mask)
-        payoffs = np.empty(self.num_strats)
-        for i, (r, reg) in enumerate(zip(
-                self.role_indices, self._regressors)):
-            payoffs[i] = reg.predict(profiles[:, r]).mean()
+        This implementation is more efficient than the default since we don't
+        need to compute the payoff for non deviators."""
+        prof_view = np.rollaxis(subgame.translate(profiles.reshape(
+            (-1, self.num_roles, self.num_strats)), self._sub_mask), 1, 0)
+        payoffs = np.empty(profiles.shape[:-2] + (self.num_strats,))
+        pay_view = payoffs.reshape((-1, self.num_strats)).T
+        for pays, profs, reg in zip(
+                pay_view, utils.repeat(prof_view, self.num_role_strats),
+                self._regressors):
+            np.copyto(pays, reg.predict(profs))
         return payoffs * self._scale + self._offset
 
     def max_strat_payoffs(self):
@@ -84,13 +80,6 @@ class DevRegressionGame(rsgame.CompleteGame):
 
     def min_strat_payoffs(self):
         return self._min_payoffs.view()
-
-    # TODO There's a slightly more efficient way to get dpr payoffs than
-    # naively querying all payoffs, since you only need deviations. But that's
-    # mainly as a lower bound on the comparison to DPR, and so it probably
-    # doesn't matter how efficient that is. We could add a method for "get dpr
-    # payoffs" that would return nans for the non deviation payoffs in
-    # deviation profiles.
 
     def subgame(self, sub_mask):
         base = super().subgame(sub_mask)
@@ -138,6 +127,7 @@ def _dev_profpay(game):
         yield i, profs, pays[mask]
 
 
+# FIXME Remove train, add deprecated version for backward compatibility
 def nngame_train(game, epochs=100, layer_sizes=(32, 32), dropout=0.2,
                  verbosity=0, optimizer='sgd', loss='mean_squared_error'):
     """Train a neural network regression model
@@ -250,16 +240,37 @@ class RbfGpGame(rsgame.CompleteGame):
                 payoffs[mask, s] = coef * np.exp(-rbf / 2).dot(alpha) + off
         return payoffs
 
-    def get_mean_dev_payoffs(self, profiles):
-        profiles = profiles.reshape((-1, self.num_roles, self.num_strats))
-        payoffs = np.empty(self.num_strats)
-        for s, (r, length, data, alpha, zero) in enumerate(zip(
-                self.role_indices, self._lengths, self._train_data,
-                self._alphas, self._zero_diags)):
-            vec = (profiles[:, r, None] - data) / length
+    def get_dev_payoffs(self, profiles, *, jacobian=False):
+        prof_view = np.rollaxis(profiles.reshape(
+            (-1, self.num_roles, self.num_strats)), 1, 0)
+        pay_view = np.empty((self.num_strats, prof_view.shape[1]))
+        if jacobian:
+            jac_view = np.empty((self.num_strats, prof_view.shape[1],
+                                 self.num_strats))
+        else:
+            jac_view = itertools.repeat(None, self.num_strats)
+
+        for pays, profs, jac, length, data, alpha, zero in zip(
+                pay_view, utils.repeat(prof_view, self.num_role_strats),
+                jac_view, self._lengths, self._train_data, self._alphas,
+                self._zero_diags):
+            vec = (profs[:, None] - data) / length
             rbf = zero + np.einsum('ijk,ijk->ij', vec, vec)
-            payoffs[s] = np.exp(-rbf / 2).mean(0).dot(alpha)
-        return payoffs * self._coefs + self._offset
+            exp = np.exp(-rbf / 2)
+            exp.dot(alpha, out=pays)
+            if jacobian:
+                np.einsum('j,ij,ijk->ik', alpha, exp, vec / length, out=jac)
+
+        payoffs = (
+            pay_view.T.reshape((profiles.shape[:-2] + (self.num_strats,))) *
+            self._coefs + self._offset)
+
+        if jacobian:
+            jac = -np.rollaxis(jac_view, 1, 0).reshape(
+                (profiles.shape[:-2] + (self.num_strats,) * 2))
+            return payoffs, jac * self._coefs[:, None]
+        else:
+            return payoffs
 
     def max_strat_payoffs(self):
         return self._max_payoffs.view()
@@ -276,27 +287,27 @@ class RbfGpGame(rsgame.CompleteGame):
                 self._lengths, self._train_data, self._alphas,
                 self._zero_diags)):
             avg_prof = players.repeat(self.num_role_strats) * mix
-            diag = scale ** 2 + avg_prof
+            diag = 1 / (scale ** 2 + avg_prof)
             diff = x - avg_prof
-            det = 1 - players * np.add.reduceat(
-                mix ** 2 / diag, self.role_starts)
-            cov_diag = np.sum(diff ** 2 / diag, 1) + zdiag
+            det = 1 / (1 - players * np.add.reduceat(
+                mix ** 2 * diag, self.role_starts))
+            cov_diag = np.einsum('ij,ij,j->i', diff, diff, diag) + zdiag
             cov_outer = np.add.reduceat(
-                mix / diag * diff, self.role_starts, 1)
-            exp = np.exp(-.5 * (cov_diag + np.sum(
-                players / det * cov_outer ** 2, 1)))
-            coef = np.exp(np.log(scale).sum() - .5 * np.log(diag).sum() -
+                mix * diag * diff, self.role_starts, 1)
+            exp = np.exp(-.5 * (cov_diag + np.einsum(
+                'j,j,ij,ij->i', players, det, cov_outer, cov_outer)))
+            coef = np.exp(np.log(scale).sum() + .5 * np.log(diag).sum() +
                           .5 * np.log(det).sum())
             avg = kinvy.dot(exp)
             payoffs[i] = coef * avg
 
             if jacobian:
-                beta = 1 - players.repeat(self.num_role_strats) * mix / diag
-                jac_coef = ((beta ** 2 - 1) / det.repeat(self.num_role_strats)
+                beta = 1 - players.repeat(self.num_role_strats) * mix * diag
+                jac_coef = ((beta ** 2 - 1) * det.repeat(self.num_role_strats)
                             * avg)
-                delta = np.repeat(cov_outer / det, self.num_role_strats, 1)
+                delta = np.repeat(cov_outer * det, self.num_role_strats, 1)
                 jac_exp = exp[:, None] * (
-                    (delta - 1) ** 2 - (delta * beta - diff / diag - 1) ** 2)
+                    (delta - 1) ** 2 - (delta * beta - diff * diag - 1) ** 2)
                 jac_avg = (players.repeat(self.num_role_strats) *
                            kinvy.dot(jac_exp))
                 jac[i] = -0.5 * coef * (jac_coef + jac_avg)
@@ -323,10 +334,11 @@ class RbfGpGame(rsgame.CompleteGame):
             d[:, sub_mask] for d, m in zip(self._train_data, sub_mask) if m)
         alphas = tuple(a for a, m in zip(self._alphas, sub_mask) if m)
         zero_diags = tuple(
-            c + np.sum((d[:, ~sub_mask] / s[~sub_mask]) ** 2, 1)
+            c + np.einsum(
+                'ij,ij,j,j->i', d[:, ~sub_mask], d[:, ~sub_mask], s, s)
             for c, d, s, m
-            in zip(self._zero_diags, self._train_data, self._lengths,
-                   sub_mask) if m)
+            in zip(self._zero_diags, self._train_data,
+                   1 / self._lengths[:, ~sub_mask], sub_mask) if m)
         return RbfGpGame(
             base, self._offset[sub_mask], self._min_payoffs[sub_mask],
             self._max_payoffs[sub_mask], self._coefs[sub_mask],
@@ -351,7 +363,7 @@ class RbfGpGame(rsgame.CompleteGame):
                 all(np.allclose(a, b) for a, b in zip(
                     self._train_data, other._train_data)) and
                 all(np.allclose(a, b) for a, b in zip(
-                    self._alphas, other._alpha)) and
+                    self._alphas, other._alphas)) and
                 all(np.allclose(a, b) for a, b in zip(
                     self._zero_diags, other._zero_diags)))
 
@@ -382,8 +394,6 @@ def rbfgame_train(game, num_restarts=3):
     # TODO Add an alpha that is smaller for points near the edge of the
     # simplex, accounting for the importance of minimizing error at the
     # extrema.
-    # TODO As a boon to regularization, we may want our own RBF kernel that has
-    # a length for each role, but not each strategy.
     means = np.empty(game.num_strats)
     coefs = np.empty(game.num_strats)
     lengths = np.empty((game.num_strats, game.num_strats))
@@ -409,7 +419,7 @@ def rbfgame_train(game, num_restarts=3):
         train_data.append(profs)
         alphas.append(reg.alpha_)
 
-        minw = np.exp(-.5 * np.sum(dplay ** 2 / lengths[s]))
+        minw = np.exp(-.5 * np.einsum('i,i,i', dplay, dplay, 1 / lengths[s]))
         pos = reg.alpha_[reg.alpha_ > 0].sum()
         neg = reg.alpha_[reg.alpha_ < 0].sum()
         maxs[s] = coefs[s] * (pos + minw * neg) + pay_mean
@@ -464,22 +474,31 @@ class SampleDeviationGame(_DeviationGame):
     def __init__(self, model, num_samples=100):
         super().__init__(model)
         assert num_samples > 0
-        # TODO IT might be interesting to play with a sampel schedule, i.e.
+        # TODO It might be interesting to play with a sample schedule, i.e.
         # change the number of samples based off of the query number to
         # deviation payoffs (i.e. reduce variance as we get close to
         # convergence)
         self._num_samples = num_samples
 
     def deviation_payoffs(self, mix, *, jacobian=False):
-        # TODO We can compute deviations by assuming the samples we took are
-        # fixed, but now we're returning an importance sampled version of them
-        # from the mixture as a variable, and take the gradient with respect to
-        # that
-        # TODO It could be possible to set the random seed each time we get
-        # samples in a way that makes this somewhat smooth.
-        assert not jacobian, "SampleEVs doesn't support jacobian"
+        """Compute the deivation payoffs
+
+        The method computes the jacobian as if we were importance sampling the
+        results, i.e. the function is really always sample according to mixture
+        m', but then importance sample to get the actual result."""
         profs = self.random_role_deviation_profiles(self._num_samples, mix)
-        return self._model.get_mean_dev_payoffs(profs)
+        payoffs = self._model.get_dev_payoffs(profs)
+        dev_pays = payoffs.mean(0)
+        if not jacobian:
+            return dev_pays
+
+        weights = np.repeat(
+            np.where(np.isclose(mix, 0), 0, profs / (mix + _TINY)),
+            self.num_role_strats, 1)
+        jac = np.einsum('ij,ijk->jk', payoffs, weights) / self._num_samples
+        jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
+                         self.num_role_strats, self.num_role_strats, 1)
+        return dev_pays, jac
 
     def subgame(self, sub_mask):
         return SampleDeviationGame(self._model.subgame(sub_mask),
@@ -512,6 +531,11 @@ class PointDeviationGame(_DeviationGame):
     estimate of the mixture. It's fast but biased. This is accurate in the
     limit as the number of players goes to infinity.
 
+    For this work, the underlying implementation of get_dev_payoffs must
+    support floating point profiles, which only really makes sense for
+    regression games. For deviation payoffs to have a jacobian, the underlying
+    model must also support a jacobian for get_dev_payoffs.
+
     Parameters
     ----------
     model : DevRegressionGame
@@ -524,9 +548,15 @@ class PointDeviationGame(_DeviationGame):
             self.num_roles, dtype=int), self.num_role_strats, 1)
 
     def deviation_payoffs(self, mix, *, jacobian=False):
-        # TODO Computing this gradient should be trivial
-        assert not jacobian, "PointEVs doesn't support jacobian"
-        return self._model.get_mean_dev_payoffs(self._dev_players * mix)
+        if jacobian:
+            dev, jac = self._model.get_dev_payoffs(
+                self._dev_players * mix, jacobian=True)
+            jac *= self._dev_players.repeat(self.num_role_strats, 0)
+            jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
+                             self.num_role_strats, self.num_role_strats, 1)
+            return dev, jac
+        else:
+            return self._model.get_dev_payoffs(self._dev_players * mix)
 
     def subgame(self, sub_mask):
         return PointDeviationGame(self._model.subgame(sub_mask))
@@ -574,26 +604,18 @@ class NeighborDeviationGame(_DeviationGame):
         self._num_devs = num_devs
 
     def deviation_payoffs(self, mix, *, jacobian=False):
-        assert not jacobian, "NeighborEVs doesn't support jacobian"
-        # TODO This needs to be it's own math because we re-normalize, although
-        # hopefully there's some common aspect of payoff games we can exploit?
-        # Maybe a `compute_dev_payoffs` which we then numerically re-normalize
-        # since we know we have a complete game
+        # TODO This is not smooth because there are discontinuities when the
+        # maximum probability profile jumps at the boundary. If we wanted to
+        # make it smooth, one option would be to compute the smoother
+        # interpolation between this and lower probability profiles. All we
+        # need to ensure smoothness is that the weight at profile
+        # discontinuities is 0.
         profiles = self.nearby_profiles(
             self.max_prob_prof(mix), self._num_devs)
         payoffs = self.get_payoffs(profiles)
-
-        player_factorial = np.sum(sps.gammaln(profiles + 1), 1)[:, None]
-        tot_factorial = np.sum(sps.gammaln(self.num_role_players + 1))
-        log_mix = np.log(mix + _TINY)
-        prof_prob = np.sum(profiles * log_mix, 1, keepdims=True)
-        profile_probs = tot_factorial - player_factorial + prof_prob
-        denom = log_mix + np.log(self.num_role_players).repeat(
-            self.num_role_strats)
-        with np.errstate(divide='ignore'):
-            log_profs = np.log(profiles)
-        probs = np.exp(log_profs + profile_probs - denom)
-        return np.sum(payoffs * probs, 0) / probs.sum(0)
+        game = paygame.game_replace(self, profiles, payoffs)
+        return game.deviation_payoffs(mix, ignore_incomplete=True,
+                                      jacobian=jacobian)
 
     def subgame(self, sub_mask):
         return NeighborDeviationGame(

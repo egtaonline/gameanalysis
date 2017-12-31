@@ -100,9 +100,6 @@ def test_drop_profiles(players, strategies):
 
 
 def test_drop_profiles_large_game():
-    # TODO Switch to a "RandomGame" when implemented, essentially we need a
-    # complete game that doesn't store all of it's profiles, currently aggfn
-    # are the only ones that do that.
     base = agggen.normal_aggfn([100] * 2, 30, 10)
     game = gamegen.drop_profiles(base, 1e-55)
     assert game.num_profiles == 363
@@ -200,39 +197,38 @@ def test_polymatrix_game(players, strategies, matrix_players):
         "didn't generate correct number of strategies"
 
 
-@pytest.mark.parametrize('players,strategies,lower,upper', [
+@pytest.mark.parametrize('players,strategies,lower,prob', [
     (2 * [1], 1, 1, 1),
-    (2 * [1], 1, 0, 3),
+    (2 * [1], 1, 0, 1 / 3),
     (2 * [1], 2, 1, 1),
-    (2 * [1], 2, 0, 3),
+    (2 * [1], 2, 0, 1 / 3),
     (2 * [2], 1, 1, 1),
-    (2 * [2], 1, 0, 3),
+    (2 * [2], 1, 0, 1 / 3),
     (2 * [2], 2, 1, 1),
-    (2 * [2], 2, 0, 3),
+    (2 * [2], 2, 0, 1 / 3),
     ([3], 4, 1, 1),
-    ([3], 4, 0, 3),
+    ([3], 4, 0, 1 / 3),
 ] * 20)
-def test_add_noise(players, strategies, lower, upper):
+def test_add_noise(players, strategies, lower, prob):
     roles = max(np.array(players).size, np.array(strategies).size)
     base_game = gamegen.role_symmetric_game(players, strategies)
-    game = gamegen.add_noise(base_game, lower, upper)
+    game = gamegen.add_noise(base_game, prob, lower)
     assert lower == 0 or game.is_complete(), "didn't generate a full game"
     assert game.num_roles == roles, \
         "didn't generate correct number of players"
     assert np.all(strategies == game.num_role_strats), \
         "didn't generate correct number of strategies"
-    assert (np.all(game.num_samples >= min(lower, 1)) and
-            np.all(game.num_samples <= upper)), \
+    assert np.all(game.num_samples >= min(lower, 1)), \
         "didn't generate appropriate number of samples"
 
 
 def test_empty_add_noise():
     base_game = rsgame.emptygame([3, 3], [4, 4])
-    game = gamegen.add_noise(base_game, 1)
+    game = gamegen.add_noise(base_game)
     assert game.is_empty()
 
     base_game = gamegen.role_symmetric_game([3] * 3, 4)
-    game = gamegen.add_noise(base_game, 0)
+    game = gamegen.add_noise(base_game, 1, 0)
     assert game.is_empty()
 
 

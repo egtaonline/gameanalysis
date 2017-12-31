@@ -353,6 +353,25 @@ def test_random_get_payoffs(role_players, role_strats):
         assert np.allclose(pay, game.get_payoffs(prof))
 
 
+def test_get_dev_payoffs():
+    profs = [[2, 0, 0, 2, 1],
+             [1, 1, 0, 0, 3]]
+    pays = [[1, 0, 0, 2, 3],
+            [4, 5, 0, 0, np.nan]]
+    game = paygame.game([2, 3], [3, 2], profs, pays)
+
+    dpay = game.get_dev_payoffs([[1, 0, 0, 2, 1], [2, 0, 0, 2, 0]])
+    assert np.allclose([1, np.nan, np.nan, np.nan, 3], dpay, equal_nan=True)
+    dpay = game.get_dev_payoffs([[0, 1, 0, 0, 3], [1, 1, 0, 0, 2]])
+    assert np.allclose([4, np.nan, np.nan, np.nan, np.nan], dpay,
+                       equal_nan=True)
+    dpay = game.get_dev_payoffs([[[1, 0, 0, 2, 1], [2, 0, 0, 2, 0]],
+                                 [[0, 1, 0, 0, 3], [1, 1, 0, 0, 2]]])
+    assert np.allclose([[1, np.nan, np.nan, np.nan, 3],
+                        [4, np.nan, np.nan, np.nan, np.nan]],
+                       dpay, equal_nan=True)
+
+
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_empty_get_payoffs(role_players, role_strats):
     game = rsgame.emptygame(role_players, role_strats)
@@ -459,6 +478,64 @@ def test_deviation_payoffs_jacobian():
                              [1, 0, -1],
                              [-1, 1, 0]])
     assert np.allclose(dpj, expected_jac)
+
+
+@pytest.mark.parametrize('players,strats', testutils.games)
+def test_random_deviation_payoffs_ignore_incomplete(players, strats):
+    base = rsgame.emptygame(players, strats)
+    profs = base.all_profiles()
+    pays = np.random.random((base.num_all_profiles, base.num_strats))
+    pays[profs == 0] = 0
+    game = paygame.game_replace(base, profs, pays)
+    for mix in game.random_mixtures(20):
+        tdev, tjac = game.deviation_payoffs(mix, jacobian=True)
+        idev, ijac = game.deviation_payoffs(mix, jacobian=True,
+                                            ignore_incomplete=True)
+        assert np.allclose(idev, tdev)
+        assert np.allclose(ijac, tjac)
+
+
+def test_deviation_payoffs_ignore_incomplete():
+    # Check that as long as all deviations are known, this is still accurate.
+    # Note that we intentionally ignore strategies without support making the
+    # jacobian for sparse mixtures inherently inaccurate.
+    profiles = np.array([[3, 0, 2, 0, 0],
+                         [2, 1, 2, 0, 0],
+                         [3, 0, 1, 1, 0],
+                         [3, 0, 1, 0, 1]], int)
+    payoffs = np.random.random(profiles.shape)
+    payoffs[profiles == 0] = 0
+    game = paygame.game([3, 2], [2, 3], profiles, payoffs)
+    tdev = game.deviation_payoffs([1, 0, 1, 0, 0])
+    idev = game.deviation_payoffs([1, 0, 1, 0, 0], ignore_incomplete=True)
+    assert np.allclose(idev, tdev)
+
+    profiles = np.array([[3, 0, 0],
+                         [2, 1, 0],
+                         [1, 2, 0],
+                         [0, 3, 0],
+                         [2, 0, 1],
+                         [1, 1, 1],
+                         [0, 2, 1]])
+    payoffs = np.random.random(profiles.shape)
+    payoffs[profiles == 0] = 0
+    mixtures = np.random.random((20, 2))
+    mixtures /= mixtures.sum(1)[:, None]
+    mixtures = np.insert(mixtures, 2, 0, 1)
+
+    # Select one payoff from every combination of strategies to be nan, check
+    # that dev payoffs of non nan strategies still agree.
+    prof_inds = np.array([1, 2, 5])
+    power = (np.arange(2 ** 3)[:, None] // 2 ** np.arange(3) % 2).astype(bool)
+    for mask in power:
+        pays = payoffs.copy()
+        pays[prof_inds[mask], mask] = np.nan
+        game = paygame.game(3, 3, profiles, pays)
+        for mix in mixtures:
+            tdev = game.deviation_payoffs(mix)
+            idev = game.deviation_payoffs(mix, ignore_incomplete=True)
+            assert np.isnan(tdev[mask]).all()
+            assert np.allclose(idev[~mask], tdev[~mask])
 
 
 def test_flat_profile_payoffs():

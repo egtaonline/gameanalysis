@@ -189,8 +189,8 @@ class MixtureSet(object):
     def clear(self):
         self._mixtures.clear()
 
-    def __contains__(self, mixture):
-        return any(np.sum((mix - mixture) ** 2) <= self._tol for mix in self)
+    def __contains__(self, mix):
+        return any(np.dot(m - mix, m - mix) <= self._tol for m in self)
 
     def __bool__(self):
         return bool(self._mixtures)

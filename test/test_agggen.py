@@ -26,7 +26,6 @@ _probs = [
 ]
 
 
-# TODO Expand this
 def verify(game):
     jgame = json.dumps(game.to_json())
     copy = aggfn.aggfn_json(json.loads(jgame))

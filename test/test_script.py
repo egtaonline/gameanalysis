@@ -715,7 +715,7 @@ def test_boot_1():
     with tempfile.NamedTemporaryFile('w') as mixed, \
             tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
-                                  20)
+                                  0.05)
         json.dump(sgame.to_json(), game)
         game.flush()
 
@@ -729,7 +729,7 @@ def test_boot_1():
 def test_boot_2():
     with tempfile.NamedTemporaryFile('w') as mixed:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
-                                  20)
+                                  0.05)
         game_str = json.dumps(sgame.to_json())
 
         profs = [sgame.profile_to_json(sgame.random_profile())]
@@ -748,7 +748,7 @@ def test_boot_2():
 def test_boot_3():
     with tempfile.NamedTemporaryFile('w') as mixed:
         sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
-                                  20)
+                                  0.05)
         game_str = json.dumps(sgame.to_json())
 
         profs = [sgame.profile_to_json(sgame.random_profile())]
@@ -805,7 +805,7 @@ def test_samp_seed():
         assert out1 == out2
 
         # Not setting it causes failure
-        # XXX This can technically fail, but the probability is very small
+        # This can technically fail, but the probability is very small
         success, out3, err = run(
             'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100')
         assert success, err

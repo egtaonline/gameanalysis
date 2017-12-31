@@ -8,6 +8,9 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# FIXME Expose _members
+
+
 class AgfnGame(rsgame.CompleteGame):
     """Action graph with function nodes game
 
@@ -83,7 +86,8 @@ class AgfnGame(rsgame.CompleteGame):
         minima = node_table.min(1, keepdims=True)
         maxima = node_table.max(1, keepdims=True)
         eff_min = np.where(self._action_weights > 0, minima, maxima)
-        mins = np.sum(eff_min * self._action_weights, 0) + self._offsets
+        mins = np.einsum(
+            'ij,ij->j', eff_min, self._action_weights) + self._offsets
         mins.setflags(write=False)
         return mins.view()
 
@@ -94,7 +98,8 @@ class AgfnGame(rsgame.CompleteGame):
         minima = node_table.min(1, keepdims=True)
         maxima = node_table.max(1, keepdims=True)
         eff_max = np.where(self._action_weights > 0, maxima, minima)
-        maxs = np.sum(eff_max * self._action_weights, 0) + self._offsets
+        maxs = np.einsum(
+            'ij,ij->j', eff_max, self._action_weights) + self._offsets
         maxs.setflags(write=False)
         return maxs.view()
 
@@ -109,6 +114,9 @@ class AgfnGame(rsgame.CompleteGame):
         payoffs = function_outputs.dot(self._action_weights) + self._offsets
         payoffs[profile == 0] = 0
         return payoffs
+
+    # TODO override get_dev_payoffs to be more efficient, i.e. only compute the
+    # dev payoff.
 
     def deviation_payoffs(self, mix, *, jacobian=False):
         """Get the deviation payoffs"""
@@ -143,7 +151,7 @@ class AgfnGame(rsgame.CompleteGame):
             rdev_probs[rinps] = np.roll(rdev_probs[rinps], 1, role + 1)
         dev_vals = np.reshape(dev_probs * self._function_table,
                               (self.num_strats, self.num_functions, -1))
-        devs = (np.sum(np.sum(dev_vals, -1) * self._action_weights.T, -1) +
+        devs = (np.einsum('ijk,ji->i', dev_vals, self._action_weights) +
                 self._offsets)
 
         if not jacobian:
@@ -177,9 +185,8 @@ class AgfnGame(rsgame.CompleteGame):
             dev_deriv * self._function_table[:, None]
         dev_values.shape = (self.num_strats,
                             self.num_functions, self.num_roles, -1)
-        jac = np.sum(
-            np.sum(dev_values.sum(-1)[:, None] * self._dinputs, -1) *
-            self._action_weights.T[:, None], -1)
+        jac = np.einsum('iklm,jkl,ki->ij', dev_values, self._dinputs,
+                        self._action_weights)
         jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
                          self.num_role_strats, self.num_role_strats, 1)
         return devs, jac

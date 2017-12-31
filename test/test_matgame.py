@@ -153,16 +153,41 @@ def test_random_deviations(strats):
     gamedev = game.deviation_payoffs(mix)
     assert np.allclose(matdev, gamedev)
 
-    mix = matg.random_mixture()
     matdev, matjac = matg.deviation_payoffs(mix, jacobian=True)
     gamedev, gamejac = game.deviation_payoffs(mix, jacobian=True)
     assert np.allclose(matdev, gamedev)
     assert np.allclose(matjac, gamejac)
 
     for mix in matg.random_mixtures(20):
-        matdev = matg.deviation_payoffs(mix)
-        gamedev = game.deviation_payoffs(mix)
+        matdev, matjac = matg.deviation_payoffs(mix, jacobian=True)
+        gamedev, gamejac = game.deviation_payoffs(mix, jacobian=True)
         assert np.allclose(matdev, gamedev)
+        assert np.allclose(matjac, gamejac)
+
+
+@pytest.mark.parametrize('strats', [
+    [1],
+    [3],
+    [2, 3],
+    [1, 2, 3],
+    [2, 3, 1],
+])
+def test_random_sparse_deviations(strats):
+    payoffs = rand.random(tuple(strats) + (len(strats),))
+    matg = matgame.matgame(payoffs)
+    game = paygame.game_copy(matg)
+
+    mix = matg.random_sparse_mixture()
+    matdev, matjac = matg.deviation_payoffs(mix, jacobian=True)
+    gamedev, gamejac = game.deviation_payoffs(mix, jacobian=True)
+    assert np.allclose(matdev, gamedev)
+    assert np.allclose(matjac, gamejac)
+
+    for mix in matg.random_sparse_mixtures(20):
+        matdev, matjac = matg.deviation_payoffs(mix, jacobian=True)
+        gamedev, gamejac = game.deviation_payoffs(mix, jacobian=True)
+        assert np.allclose(matdev, gamedev)
+        assert np.allclose(matjac, gamejac)
 
 
 @pytest.mark.parametrize('strats', [

@@ -59,6 +59,12 @@ def test_game_size():
     assert np.all(utils.game_size_inv(100, [1, 5, 20]) == [100, 4, 2])
 
 
+def test_repeat():
+    assert [1, 1, 2, 2, 2] == list(utils.repeat([1, 2], [2, 3]))
+    assert [1, 1, 2, 2, 2] == list(utils.repeat([1, 2, 2], [2, 1, 2]))
+    assert [1, 2] == list(utils.repeat([1, 3, 2], [1, 0, 1]))
+
+
 def test_one_line():
     short = "This is a short string, so it won't get truncated"
     assert utils.one_line(short, 100) == short, \
@@ -162,6 +168,19 @@ def test_multinomial_mode():
     actual = utils.multinomial_mode([0.45, 0.45, 0.1], 5)
     expected = [[3, 2, 0], [2, 3, 0]]
     assert np.all(actual == expected, 1).any()
+
+
+def test_geometric_histogram():
+    res = utils.geometric_histogram(1, .2)
+    assert res.sum() == 1
+    assert np.all(0 <= res)
+    assert 0 < res[-1]
+
+    res = utils.geometric_histogram(10000, .5)
+    assert 0 < res[0]  # Fails with prob .5 ^ 10000
+    assert res.sum() == 10000
+    assert np.all(0 <= res)
+    assert 0 < res[-1]
 
 
 def test_elem_axis():

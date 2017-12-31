@@ -15,9 +15,6 @@ from gameanalysis import utils
 # of large void types which is very expensive, less so than just hashing the
 # data. Maybe pandas or other libraries have more efficient variants?
 
-# TODO There may be places where we do `np.sum(a * b)` which can be more
-# efficient using np.einsum.
-
 
 class Game(rsgame.RsGame):
     """Role-symmetric data game representation
@@ -125,7 +122,8 @@ class Game(rsgame.RsGame):
                 np.copyto(pay, self._profile_map[hashed])
         return payoffs.reshape(profiles.shape)
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False,
+                          ignore_incomplete=False):
         """Computes the expected value of deviating
 
         More specifically, this is the expected payoff of playing each pure
@@ -139,11 +137,15 @@ class Game(rsgame.RsGame):
             If true, the second returned argument will be the jacobian of the
             deviation payoffs with respect to the mixture. The first axis is
             the deviating strategy, the second axis is the strategy in the mix
-            the jacobian is taken with respect to. The values that are marked
-            nan are not very aggressive, so don't rely on accurate nan values
-            in the jacobian. Additionally, this uses sparse data, so jacobian
-            values for mixtures that are close to zero are intentionally
-            reported as zero instead of looking for data to support some value.
+            the derivative is taken with respect to. For this to be calculated
+            correctly, the game must be complete. Thus if the game is not
+            complete, this will be all nan.
+        ignore_incomplete : bool, optional
+            If True, a "best estimate" will be returned for incomplete data.
+            This means that instead of marking a payoff where all deviations
+            aren't known as nan, the probability will be renormalized by the
+            mass that is known, creating a biased estimate based of the data
+            that is present.
         """
         # TODO It wouldn't be hard to extend this to multiple mixtures, which
         # would allow array calculation of mixture regret. Support would have
@@ -152,7 +154,7 @@ class Game(rsgame.RsGame):
         nan_mask = np.empty_like(mix, dtype=bool)
 
         # Fill out mask where we don't have data
-        if self.is_complete():
+        if ignore_incomplete or self.is_complete():
             nan_mask.fill(False)
         elif self.is_empty():
             nan_mask.fill(True)
@@ -175,37 +177,53 @@ class Game(rsgame.RsGame):
         # Compute values
         if not nan_mask.all():
             # zero_prob effectively makes 0^0=1 and 0/0=0.
-            log_mix = np.log(mix + _TINY)
-            prof_prob = np.sum(self._profiles * log_mix, 1, keepdims=True)
+            zmix = mix + self.zero_prob.repeat(self.num_role_strats)
+            log_mix = np.log(zmix)
+            prof_prob = self._profiles.dot(log_mix)[:, None]
             with np.errstate(under='ignore'):
                 # Ignore underflow caused when profile probability is not
                 # representable in floating point.
                 probs = np.exp(prof_prob + self._dev_reps - log_mix)
-            zero_prob = _TINY * self.num_players
+
+            if ignore_incomplete:
+                # mask out nans
+                mask = np.isnan(self._payoffs)
+                payoffs = np.where(mask, 0, self._payoffs)
+                probs[mask] = 0
+            else:
+                payoffs = self._payoffs
+
             # Mask out nans
-            weighted_payoffs = probs * np.where(probs > zero_prob,
-                                                self._payoffs, 0)
-            devs = np.sum(weighted_payoffs, 0)
+            zp = self.zero_prob.dot(self.num_role_players)
+            devs = np.einsum(
+                'ij,ij->j', probs, np.where(probs > zp, payoffs, 0))
+            devs[nan_mask] = np.nan
 
         else:
             devs = np.empty(self.num_strats)
+            devs.fill(np.nan)
 
-        devs[nan_mask] = np.nan
+        if ignore_incomplete:
+            tprobs = probs.sum(0)
+            devs /= probs.sum(0)
 
         if not jacobian:
             return devs
 
-        if not nan_mask.all():
-            tmix = mix + self.zero_prob.repeat(self.num_role_strats)
-            product_rule = self._profiles[:, None] / tmix - np.diag(1 / tmix)
-            dev_jac = np.sum(weighted_payoffs[..., None] * product_rule, 0)
+        if ignore_incomplete or self.is_complete():
+            product_rule = self._profiles[:, None] / zmix - np.diag(1 / zmix)
+            dev_jac = np.einsum('ij,ij,ijk->jk', probs, payoffs, product_rule)
+            if ignore_incomplete:
+                dev_jac -= (np.einsum('ij,ijk->jk', probs, product_rule) *
+                            devs[:, None])
+                dev_jac /= tprobs[:, None]
             dev_jac -= np.repeat(
                 np.add.reduceat(dev_jac, self.role_starts, 1) /
                 self.num_role_strats, self.num_role_strats, 1)
         else:
             dev_jac = np.empty((self.num_strats, self.num_strats))
+            dev_jac.fill(np.nan)
 
-        dev_jac[nan_mask] = np.nan
         return devs, dev_jac
 
     def normalize(self):
@@ -273,7 +291,7 @@ class Game(rsgame.RsGame):
             "\"{}\" is not a valid profile".format(prof)
         return dest
 
-    # TODO
+    # TODO Remove
     @utils.deprecated
     def from_payoff_json(self, pays, dest=None, verify=True):
         return self.payoff_from_json(pays, dest, verify=verify)
@@ -555,7 +573,7 @@ def game_replace(copy_game, profiles, payoffs):
     assert not np.any((payoffs != 0) & (profiles == 0)), \
         "there were nonzero payoffs for strategies without players"
     assert not np.all(np.isnan(payoffs) | (profiles == 0), 1).any(), \
-        "a profile can't have etirely nan payoffs"
+        "a profile can't have entirely nan payoffs"
     assert profiles.shape[0] == np.unique(utils.axis_to_elem(profiles)).size, \
         "there can't be any duplicate profiles"
 
@@ -1115,9 +1133,6 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
 # ---------
 # Utilities
 # ---------
-
-
-_TINY = np.finfo(float).tiny
 
 
 def _mean(vals):

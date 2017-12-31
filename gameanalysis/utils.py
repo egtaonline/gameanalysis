@@ -116,6 +116,12 @@ def only(iterable):
         raise ValueError('Input was empty')
 
 
+def repeat(iterable, reps):
+    """Repeat each element of iterable reps times"""
+    return itertools.chain.from_iterable(
+        itertools.repeat(e, r) for e, r in zip(iterable, reps))
+
+
 def one_line(string, line_width=80):
     """If string s is longer than line width, cut it off and append "..."
     """
@@ -299,6 +305,28 @@ def multinomial_mode(p, n):
     return result
 
 
+def geometric_histogram(n, p):
+    """Return the histogram of n draws from a geometric distribution
+
+    This function computes values from the same distribution as
+    `np.bincount(np.random.geometric(p, n) - 1)` but does so more efficiently.
+    """
+    assert n > 0, "must take at least one sample"
+    assert 0 < p <= 1, "must use a valid probability in (0, 1]"
+    results = []
+    # This is a rough upper bound on the expectation of the extreme value of n
+    # geometrics with probability p
+    inc = math.ceil((np.log(n) + 1) * (1 / p - .5)) + 1
+    while n > 0:
+        res = np.random.multinomial(n, p * (1 - p) ** np.arange(inc))
+        results.append(res[:-1])
+        n = res[-1]
+    # Remove trailing zeros
+    last = results.pop()
+    results.append(last[:np.flatnonzero(last)[-1] + 1])
+    return np.concatenate(results)
+
+
 def axis_to_elem(array, axis=-1):
     """Converts an axis of an array into a unique element
 
@@ -446,13 +474,14 @@ def memoize(member_function):
     """Memoize computation of single object functions"""
     assert len(inspect.signature(member_function).parameters) == 1, \
         "Can only memoize single object functions"
-    member_name = '__' + member_function.__name__
 
     @functools.wraps(member_function)
     def new_member_function(obj):
-        if not hasattr(obj, member_name):
-            setattr(obj, member_name, member_function(obj))
-        return getattr(obj, member_name)
+        name = '__{}_{}'.format(
+            member_function.__name__, obj.__class__.__name__)
+        if not hasattr(obj, name):
+            setattr(obj, name, member_function(obj))
+        return getattr(obj, name)
 
     return new_member_function
 

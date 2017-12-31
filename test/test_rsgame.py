@@ -919,6 +919,18 @@ def test_random_emptygame_const_properties(role_players, role_strats):
     assert np.all(pays[0 == prof] == 0)
     assert pays.shape == (game.num_strats,)
 
+    dprof = game.random_role_deviation_profile()
+    assert dprof.shape == (game.num_roles, game.num_strats)
+    dpays = game.get_dev_payoffs(dprof)
+    assert dpays.shape == (game.num_strats,)
+    assert np.isnan(dpays).all()
+
+    dprofs = game.random_role_deviation_profiles(20)
+    assert dprofs.shape == (20, game.num_roles, game.num_strats)
+    dpays = game.get_dev_payoffs(dprofs)
+    assert dpays.shape == (20, game.num_strats)
+    assert np.isnan(dpays).all()
+
     mix = game.random_mixture()
     dev_pays = game.deviation_payoffs(mix)
     assert np.isnan(dev_pays).all()
@@ -1682,6 +1694,10 @@ def test_ramdom_complete_game(role_players, role_strats):
     assert game.num_profiles == game.num_all_profiles
     assert game.num_complete_profiles == game.num_all_profiles
     assert all(prof in game for prof in game.all_profiles())
+    assert np.all(game.profiles() == game.all_profiles())
+
+    with pytest.raises(NotImplementedError):
+        game.payoffs()  # Get payoffs no implemented
 
 
 @pytest.mark.parametrize('players', [1, 2, 3, [3, 2, 1]])

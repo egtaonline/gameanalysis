@@ -1007,6 +1007,22 @@ class RsGame(StratArray):
         """Returns the maximum payoff for each role"""
         return np.fmax.reduceat(self.max_strat_payoffs(), self.role_starts)
 
+    def get_dev_payoffs(self, dev_profs):
+        """Compute the payoffs for deviating
+
+        Given partial profiles per role, compute the mean
+        payoff for deviating to each strategy.
+
+        Parameters
+        ----------
+        dev_profs : array-like, shape = (num_samples, num_roles, num_strats)
+            A list of partial profiles by role. This is the same structure as
+            returned by `random_dev_profiles`.
+        """
+        return np.diagonal(self.get_payoffs(
+            np.repeat(dev_profs, self.num_role_strats, -2) +
+            np.eye(self.num_strats, dtype=int)), 0, -2, -1)
+
     @property
     @utils.memoize
     def num_all_role_profiles(self):
@@ -1072,7 +1088,8 @@ class RsGame(StratArray):
         if self.is_empty():
             return True
         else:
-            profile_sums = np.sum(self.profiles() * self.payoffs(), 1)
+            profile_sums = np.einsum(
+                'ij,ij->i', self.profiles(), self.payoffs())
             return np.allclose(profile_sums, profile_sums[0])
 
     @property
@@ -1232,6 +1249,8 @@ class RsGame(StratArray):
     def random_profile(self, mixture=None):
         return self.random_profiles(1, mixture)[0]
 
+    # TODO Allow mixture to be several mixtures. This might not be
+    # possible with the way multinomial is structured.
     def random_profiles(self, num_samples=None, mixture=None):
         """Sample profiles from a mixture
 
@@ -1578,8 +1597,9 @@ class EmptyGame(RsGame):
         return mins.view()
 
     def get_payoffs(self, profile):
-        assert self.is_profile(profile)
-        pays = self._nan_array()
+        assert self.is_profile(profile).all()
+        pays = np.empty(profile.shape)
+        pays.fill(np.nan)
         pays[0 == profile] = 0
         pays.setflags(write=False)
         return pays.view()

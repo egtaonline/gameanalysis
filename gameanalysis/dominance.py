@@ -4,8 +4,6 @@ import numpy as np
 from gameanalysis import regret
 
 
-# TODO Some of these functions could probably be more efficient.
-
 def _dev_inds(num_strats):
     """Returns the deviation strategy indices for a deviation array"""
     sizes = num_strats.repeat(num_strats)
@@ -26,7 +24,8 @@ def _gains(game):
          for prof in game.profiles()])
 
 
-# TODO Remove when reduceat is fixed
+# XXX Remove when reduceat is fixed to handle empty slices with identity
+# instead of the value at the start...
 def _reduceat(ufunc, a, indices, axis=0):
     """Fix for the way reduceat handles empty slices"""
     new_shape = list(a.shape)

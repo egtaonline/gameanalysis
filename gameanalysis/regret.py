@@ -96,8 +96,9 @@ class _SocialWelfareOptimizer(object):
         dwelfare = -self.game.num_role_players.dot(ep_jac)
 
         # Add penalty for negative mixtures
-        welfare += penalty * np.sum(np.minimum(mix, 0) ** 2) / 2
-        dwelfare += penalty * np.minimum(mix, 0)
+        neg_mix = np.minimum(mix, 0)
+        welfare += penalty * neg_mix.dot(neg_mix) / 2
+        dwelfare += penalty * neg_mix
 
         # Project grad so steps stay in the simplex (more or less)
         dwelfare -= np.repeat(np.add.reduceat(dwelfare, self.game.role_starts)
@@ -110,7 +111,7 @@ class _SocialWelfareOptimizer(object):
 
         result = None
         penalty = np.sum(self.game.num_role_players)
-        for _ in range(30):
+        for _ in range(30):  # pragma: no branch
             # First get an unconstrained result from the optimization
             with np.errstate(over='raise', invalid='raise'):
                 try:
@@ -201,7 +202,7 @@ def max_pure_social_welfare(game, *, by_role=False):
 
     else:
         if game.num_complete_profiles:
-            welfares = np.sum(game.profiles() * game.payoffs(), 1)
+            welfares = np.einsum('ij,ij->i', game.profiles(), game.payoffs())
             prof_ind = np.nanargmax(welfares)
             return welfares[prof_ind], game.profiles()[prof_ind]
         else:

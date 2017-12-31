@@ -162,16 +162,17 @@ def regret_minimize(game, mix, *, gtol=1e-8):
                 mixture * dev_pay,
                 game.role_starts).repeat(game.num_role_strats),
             0)
-        obj = np.sum(gains ** 2) / 2
+        obj = gains.dot(gains) / 2
 
         gains_jac = (dev_jac - dev_pay - np.add.reduceat(
             mixture[:, None] * dev_jac, game.role_starts).repeat(
                 game.num_role_strats, 0))
-        grad = np.sum(gains[:, None] * gains_jac, 0)
+        grad = gains.dot(gains_jac)
 
         # Penalty terms for obj and gradient
-        obj += penalty * np.sum(np.minimum(mixture, 0) ** 2) / 2
-        grad += penalty * np.minimum(mixture, 0)
+        neg_mix = np.minimum(mixture, 0)
+        obj += penalty * neg_mix.dot(neg_mix) / 2
+        grad += penalty * neg_mix
 
         # Project grad so steps stay in the appropriate space
         grad -= np.repeat(np.add.reduceat(grad, game.role_starts) /

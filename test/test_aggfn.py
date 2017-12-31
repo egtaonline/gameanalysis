@@ -327,21 +327,21 @@ def verify_aggfn(game):
     # game deviation payoff jacobian is inaccurate for sparse mixtures, so we
     # can't use it as ground truth
     for mix in game.random_mixtures(20):
-        dev = game.deviation_payoffs(mix)
-        tdev = payoff_game.deviation_payoffs(mix)
-        assert np.allclose(dev, tdev)
-
         dev, jac = game.deviation_payoffs(mix, jacobian=True)
         tdev, tjac = payoff_game.deviation_payoffs(mix, jacobian=True)
         assert np.allclose(dev, tdev)
         assert np.allclose(jac, tjac)
 
-    # Check that sparse mixtures don't result in nans since we don't have
-    # ground truth
+    # Check that sparse mixtures produce correct deviations
+    # TODO For some reason, the jacobians don't match with the jacobians for
+    # the standard payoff game when the mixture is sparse. My hunch is that the
+    # aggfn version has payoff effects clse to zero that aren't captured by
+    # simply recording the payoffs. However, this doesn't make a whole lot of
+    # sense.
     for mix in game.random_sparse_mixtures(20):
-        dev, jac = game.deviation_payoffs(mix, jacobian=True)
-        assert not np.isnan(dev).any()
-        assert not np.isnan(jac).any()
+        dev = game.deviation_payoffs(mix)
+        tdev = payoff_game.deviation_payoffs(mix)
+        assert np.allclose(dev, tdev)
 
     # Check that it serializes properly
     jgame = json.dumps(game.to_json())

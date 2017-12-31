@@ -93,9 +93,9 @@ def covariant_game(num_role_strats, mean_dist=lambda shape: np.zeros(shape),
 
     # The next couple of lines do multivariate Gaussian sampling for all
     # payoffs simultaneously
-    u, s, v = np.linalg.svd(var)
+    _, s, v = np.linalg.svd(var)
     payoffs = rand.normal(size=shape)
-    payoffs = (payoffs[..., None] * (np.sqrt(s)[..., None] * v)).sum(-2)
+    payoffs = np.einsum('...i,...i,...ij->...j', payoffs, np.sqrt(s), v)
     payoffs += mean_dist(shape)
     return matgame.matgame(payoffs)
 
@@ -155,9 +155,6 @@ def sym_2p2s_known_eq(eq_prob):
     return paygame.game(2, 2, profiles, payoffs)
 
 
-# TODO There are nash finding methods that rely on approximating games as poly
-# matrix games. Potentially we can implement a polymatrix / rs polymatrix first
-# and then the nash will follow nicely from that
 def polymatrix_game(num_players, num_strats, matrix_game=independent_game,
                     players_per_matrix=2):
     """Creates a polymatrix game using the specified k-player matrix game function.
@@ -242,8 +239,6 @@ def travellers_dilemma(players=2, max_value=100):
     return paygame.game_replace(game, profiles, payoffs)
 
 
-# TODO We could implement this with drop_profiles if we made a "RandomGame"
-# class where all payoffs were simply drawn from distribution
 def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
     """Add profiles to a base game
 
@@ -280,7 +275,6 @@ def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
         inds = rand.choice(num_profs, num, replace=False)
         profiles = game.all_profiles()[inds]
     else:
-        # TODO use a set and hashed arrays instead?
         profiles = np.empty((0, game.num_strats), int)
         num_per = max(round(float(ratio * num_profs)), num)  # Max => underflow
         mix = game.uniform_mixture()
@@ -335,7 +329,6 @@ def drop_profiles(game, keep_prob_or_count=1.0):
         profiles = game.profiles()[inds]
         payoffs = game.payoffs()[inds]
     else:
-        # TODO use a set and hashed arrays instead?
         profiles = np.empty((0, game.num_strats), int)
         num_per = max(round(float(ratio * num_profs)), num)  # Max => underflow
         mix = game.uniform_mixture()
@@ -350,45 +343,39 @@ def drop_profiles(game, keep_prob_or_count=1.0):
     return paygame.game_replace(game, profiles, payoffs)
 
 
-# TODO This would probably be more "cohesive" if instead of num_samples, this
-# was sample prob, and the number of samples was drawn from an exponential
-# distribution with prob. Doing this would require figuring out how to
-# efficiently sample from the distribution, of given that I pull N random
-# exponential variables, what's the histogram / how do I sample from the
-# histogram instead of doing N random draws.
-def add_noise(game, min_samples, max_samples=None, noise=default_distribution):
+def add_noise(game, prob=0.5, initial=1, noise=default_distribution):
     """Generate sample game by adding noise to game payoffs
 
     Arguments
     ---------
     game : Game
         A Game or SampleGame (only current payoffs are used)
-    min_samples : int
-        The minimum number of observations to create per profile
-    max_samples : int
-        The maximum number of observations to create per profile. If None, it's
-        the same as min_samples.
+    prob : float, optional
+        For every profile, draw a sample for each failed coin flip with prob
+        until a success.
+    initial : int, optional
+        The initial number of samples to always draw. If 0, the number of
+        samples will follow a zero based gemetric (the number of failed coin
+        flips), if 1, the number of samples will follow a one base geometric
+        (the number of coin flips until the first success). Other numbers can
+        be used for more samples.
     noise : shape -> ndarray
         A noise generating function. The function should take a single shape
         parameter, and return a number of samples equal to shape. In order to
         preserve mixed equilibria, noise should also be zero mean (aka
         unbiased)
     """
+    assert 0 < prob <= 1, "invalid probability"
+    assert 0 <= initial, "invalid initial number of samples"
     if game.is_empty():
         return paygame.samplegame_copy(game)
 
     perm = rand.permutation(game.num_profiles)
     profiles = game.profiles()[perm]
     payoffs = game.payoffs()[perm]
-    if max_samples is None:
-        max_samples = min_samples
-    assert 0 <= min_samples <= max_samples, "invalid sample numbers"
-    max_samples += 1
-    num_values = max_samples - min_samples
-    samples = rand.multinomial(profiles.shape[0],
-                               np.ones(num_values) / num_values)
+    samples = utils.geometric_histogram(profiles.shape[0], prob)
     mask = samples > 0
-    observations = np.arange(min_samples, max_samples)[mask]
+    observations = np.arange(samples.size)[mask] + initial
     splits = samples[mask][:-1].cumsum()
 
     sample_payoffs = []
@@ -421,6 +408,7 @@ def width_gaussian(max_width, num_profiles, num_samples):
     return rand.normal(0, widths, (num_samples, num_profiles)).T
 
 
+# TODO Remove
 def width_gaussian_old(scale=1):
     """Old gaussian width distribution
 
@@ -447,6 +435,7 @@ def width_bimodal(max_width, num_profiles, num_samples):
     return draws
 
 
+# TODO Remove
 def width_bimodal_old(scale=1):
     """Old bimodal width distribution
 
