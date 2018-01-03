@@ -9,7 +9,8 @@ import pytest
 
 from gameanalysis import paygame
 from gameanalysis import rsgame
-from test import testutils
+
+from . import testutils
 
 
 TINY = np.finfo(float).tiny
@@ -478,6 +479,20 @@ def test_deviation_payoffs_jacobian():
                              [1, 0, -1],
                              [-1, 1, 0]])
     assert np.allclose(dpj, expected_jac)
+
+
+@pytest.mark.parametrize('players,strats', testutils.games)
+def test_random_deviation_payoffs_jacobian(players, strats):
+    base = rsgame.emptygame(players, strats)
+    profs = base.all_profiles()
+    pays = np.random.random((base.num_all_profiles, base.num_strats))
+    pays[profs == 0] = 0
+    game = paygame.game_replace(base, profs, pays)
+    for mix in game.random_mixtures(20):
+        _, jac = game.deviation_payoffs(mix, jacobian=True)
+        tjac = testutils.mixture_jacobian_estimate(
+            game, game.deviation_payoffs, mix)
+        assert np.allclose(jac, tjac, rtol=0.05, atol=0.001)
 
 
 @pytest.mark.parametrize('players,strats', testutils.games)

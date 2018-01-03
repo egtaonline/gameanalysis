@@ -316,13 +316,16 @@ def test_continuous_approximation(_):
     reggame = learning.rbfgame_train(game)
     full = paygame.game_copy(reggame)
 
-    jac_errors = 0
     for mix in game.grid_mixtures(11):
-        truth, tjac = full.deviation_payoffs(mix, jacobian=True)
+        truth = full.deviation_payoffs(mix)
         approx, ajac = reggame.deviation_payoffs(mix, jacobian=True)
+        tjac = testutils.mixture_jacobian_estimate(
+            game, reggame.deviation_payoffs, mix)
         assert np.allclose(approx, truth, rtol=0.1, atol=0.2)
-        jac_errors += np.sum(~np.isclose(ajac, tjac, rtol=0.5, atol=0.5))
-    assert jac_errors < 1000
+        # FIXME How high these values are indicates that there is likely a
+        # problem with the jacobian computation. It's not uncommon for there
+        # error to be because of a sign flip, which is especially problematic.
+        assert np.allclose(ajac, tjac, rtol=1, atol=0.5)
 
 
 def test_continuous_approximation_one_players():

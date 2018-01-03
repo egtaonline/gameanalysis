@@ -37,10 +37,6 @@ def warnings_filter(status='ignore'):
     return decorator
 
 
-# FIXME Use this everywhere we don't have an actual ground truth for the
-# jacobian.
-
-
 def mixture_jacobian_estimate(game, function, mix, step=1e-6):
     """Estimate a jacobian from deviations
     
