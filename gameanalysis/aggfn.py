@@ -8,9 +8,6 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-# FIXME Expose _members
-
-
 class AgfnGame(rsgame.CompleteGame):
     """Action graph with function nodes game
 
@@ -50,20 +47,20 @@ class AgfnGame(rsgame.CompleteGame):
         super().__init__(role_names, strat_names, num_role_players)
         self.function_names = function_names
         self.num_functions = len(function_names)
-        self._action_weights = action_weights
-        self._action_weights.setflags(write=False)
-        self._function_inputs = function_inputs
-        self._function_inputs.setflags(write=False)
-        self._function_table = function_table
-        self._function_table.setflags(write=False)
-        self._offsets = offsets
-        self._offsets.setflags(write=False)
+        self.action_weights = action_weights
+        self.action_weights.setflags(write=False)
+        self.function_inputs = function_inputs
+        self.function_inputs.setflags(write=False)
+        self.function_table = function_table
+        self.function_table.setflags(write=False)
+        self.offsets = offsets
+        self.offsets.setflags(write=False)
 
         # Pre-compute derivative info
         self._dinputs = np.zeros(
             (self.num_strats, self.num_functions, self.num_roles), bool)
         self._dinputs[np.arange(self.num_strats), :, self.role_indices] = (
-            self._function_inputs)
+            self.function_inputs)
         self._dinputs.setflags(write=False)
 
         self._function_index = {f: i for i, f in enumerate(function_names)}
@@ -75,6 +72,30 @@ class AgfnGame(rsgame.CompleteGame):
         self._func_offset = (np.arange(self.num_functions) *
                              np.prod(self.num_role_players + 1))
 
+    # TODO Remove
+    @property
+    @utils.deprecated
+    def _action_weights(self):
+        return self.action_weights
+
+    # TODO Remove
+    @property
+    @utils.deprecated
+    def _function_inputs(self):
+        return self.function_inputs
+
+    # TODO Remove
+    @property
+    @utils.deprecated
+    def _function_table(self):
+        return self.function_table
+
+    # TODO Remove
+    @property
+    @utils.deprecated
+    def _offsets(self):
+        return self.offsets
+
     def function_index(self, func_name):
         """Get the index of a function by name"""
         return self._function_index[func_name]
@@ -82,24 +103,24 @@ class AgfnGame(rsgame.CompleteGame):
     @utils.memoize
     def min_strat_payoffs(self):
         """Returns a lower bound on the payoffs."""
-        node_table = self._function_table.reshape((self.num_functions, -1))
+        node_table = self.function_table.reshape((self.num_functions, -1))
         minima = node_table.min(1, keepdims=True)
         maxima = node_table.max(1, keepdims=True)
-        eff_min = np.where(self._action_weights > 0, minima, maxima)
+        eff_min = np.where(self.action_weights > 0, minima, maxima)
         mins = np.einsum(
-            'ij,ij->j', eff_min, self._action_weights) + self._offsets
+            'ij,ij->j', eff_min, self.action_weights) + self.offsets
         mins.setflags(write=False)
         return mins.view()
 
     @utils.memoize
     def max_strat_payoffs(self):
         """Returns an upper bound on the payoffs."""
-        node_table = self._function_table.reshape((self.num_functions, -1))
+        node_table = self.function_table.reshape((self.num_functions, -1))
         minima = node_table.min(1, keepdims=True)
         maxima = node_table.max(1, keepdims=True)
-        eff_max = np.where(self._action_weights > 0, maxima, minima)
+        eff_max = np.where(self.action_weights > 0, maxima, minima)
         maxs = np.einsum(
-            'ij,ij->j', eff_max, self._action_weights) + self._offsets
+            'ij,ij->j', eff_max, self.action_weights) + self.offsets
         maxs.setflags(write=False)
         return maxs.view()
 
@@ -107,11 +128,11 @@ class AgfnGame(rsgame.CompleteGame):
         """Returns an array of profile payoffs."""
         profile = np.asarray(profile, int)
         function_inputs = np.add.reduceat(
-            profile[..., None, :] * self._function_inputs.T,
+            profile[..., None, :] * self.function_inputs.T,
             self.role_starts, -1)
         inds = function_inputs.dot(self._basis) + self._func_offset
-        function_outputs = self._function_table.ravel()[inds]
-        payoffs = function_outputs.dot(self._action_weights) + self._offsets
+        function_outputs = self.function_table.ravel()[inds]
+        payoffs = function_outputs.dot(self.action_weights) + self.offsets
         payoffs[profile == 0] = 0
         return payoffs
 
@@ -122,7 +143,7 @@ class AgfnGame(rsgame.CompleteGame):
         """Get the deviation payoffs"""
         mix = np.asarray(mix, float)
         role_node_probs = np.minimum(
-            np.add.reduceat(mix[:, None] * self._function_inputs,
+            np.add.reduceat(mix[:, None] * self.function_inputs,
                             self.role_starts), 1)[..., None]
         table_probs = np.ones(
             (self.num_roles, self.num_functions) +
@@ -146,13 +167,13 @@ class AgfnGame(rsgame.CompleteGame):
 
         dev_probs = table_probs.repeat(self.num_role_strats, 0)
         for role, (rinps, rdev_probs) in enumerate(zip(
-                np.split(self._function_inputs, self.role_starts[1:], 0),
+                np.split(self.function_inputs, self.role_starts[1:], 0),
                 np.split(dev_probs, self.role_starts[1:], 0))):
             rdev_probs[rinps] = np.roll(rdev_probs[rinps], 1, role + 1)
-        dev_vals = np.reshape(dev_probs * self._function_table,
+        dev_vals = np.reshape(dev_probs * self.function_table,
                               (self.num_strats, self.num_functions, -1))
-        devs = (np.einsum('ijk,ji->i', dev_vals, self._action_weights) +
-                self._offsets)
+        devs = (np.einsum('ijk,ji->i', dev_vals, self.action_weights) +
+                self.offsets)
 
         if not jacobian:
             return devs
@@ -177,16 +198,16 @@ class AgfnGame(rsgame.CompleteGame):
 
         dev_deriv = np.rollaxis(deriv, 2, 1).repeat(self.num_role_strats, 0)
         for role, (rinps, rdev_deriv) in enumerate(zip(
-                np.split(self._function_inputs, self.role_starts[1:], 0),
+                np.split(self.function_inputs, self.role_starts[1:], 0),
                 np.split(dev_deriv, self.role_starts[1:], 0))):
             rdev_deriv[rinps] = np.roll(rdev_deriv[rinps], 1, role + 2)
 
         dev_values = dev_probs[:, :, None] * \
-            dev_deriv * self._function_table[:, None]
+            dev_deriv * self.function_table[:, None]
         dev_values.shape = (self.num_strats,
                             self.num_functions, self.num_roles, -1)
         jac = np.einsum('iklm,jkl,ki->ij', dev_values, self._dinputs,
-                        self._action_weights)
+                        self.action_weights)
         jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
                          self.num_role_strats, self.num_role_strats, 1)
         return devs, jac
@@ -196,37 +217,37 @@ class AgfnGame(rsgame.CompleteGame):
         scale = self.max_role_payoffs() - self.min_role_payoffs()
         scale[np.isclose(scale, 0)] = 1
         scale = scale.repeat(self.num_role_strats)
-        offsets = (self._offsets - self.min_role_payoffs().repeat(
+        offsets = (self.offsets - self.min_role_payoffs().repeat(
             self.num_role_strats)) / scale
 
         return AgfnGame(
             self.role_names, self.strat_names, self.num_role_players,
-            self.function_names, self._action_weights / scale,
-            self._function_inputs, self._function_table, offsets)
+            self.function_names, self.action_weights / scale,
+            self.function_inputs, self.function_table, offsets)
 
     def subgame(self, subgame_mask):
         subgame_mask = np.asarray(subgame_mask, bool)
         base = super().subgame(subgame_mask)
-        action_weights = self._action_weights[:, subgame_mask]
+        action_weights = self.action_weights[:, subgame_mask]
         func_mask = np.any(~np.isclose(action_weights, 0), 1)
         func_names = tuple(
             n for n, m in zip(self.function_names, func_mask) if m)
         return AgfnGame(
             base.role_names, base.strat_names, base.num_role_players,
             func_names, action_weights[func_mask],
-            self._function_inputs[:, func_mask][subgame_mask],
-            self._function_table[func_mask], self._offsets[subgame_mask])
+            self.function_inputs[:, func_mask][subgame_mask],
+            self.function_table[func_mask], self.offsets[subgame_mask])
 
     def to_json(self):
         res = super().to_json()
 
         res['function_inputs'] = {
             func: self.subgame_to_json(finp) for func, finp
-            in zip(self.function_names, self._function_inputs.T)}
+            in zip(self.function_names, self.function_inputs.T)}
 
         res['action_weights'] = {
             func: self.payoff_to_json(ws) for func, ws
-            in zip(self.function_names, self._action_weights)}
+            in zip(self.function_names, self.action_weights)}
 
         # XXX This will fail if a role has the name "value", do we care?
         res['function_tables'] = {
@@ -236,10 +257,10 @@ class AgfnGame(rsgame.CompleteGame):
                            tab.ravel(), *np.indices(tab.shape).reshape(
                                self.num_roles, -1))
                    if val != 0]
-            for name, tab in zip(self.function_names, self._function_table)}
+            for name, tab in zip(self.function_names, self.function_table)}
 
-        if not np.allclose(self._offsets, 0):
-            res['offsets'] = self.payoff_to_json(self._offsets)
+        if not np.allclose(self.offsets, 0):
+            res['offsets'] = self.payoff_to_json(self.offsets)
 
         res['type'] = 'aggfn.2'
         return res
@@ -251,19 +272,19 @@ class AgfnGame(rsgame.CompleteGame):
 
     def __eq__(self, other):
         selfp = np.lexsort(
-            self._function_table.reshape((self.num_functions, -1)).T)
+            self.function_table.reshape((self.num_functions, -1)).T)
         otherp = np.lexsort(
-            other._function_table.reshape((other.num_functions, -1)).T)
+            other.function_table.reshape((other.num_functions, -1)).T)
         return (super().__eq__(other) and
                 self.function_names == other.function_names and
-                self._function_table.shape == other._function_table.shape and
-                np.allclose(self._offsets, other._offsets) and
-                np.all(self._function_inputs[:, selfp]
-                       == other._function_inputs[:, otherp]) and
-                np.allclose(self._action_weights[selfp],
-                            other._action_weights[otherp]) and
-                np.allclose(self._function_table[selfp],
-                            other._function_table[otherp]))
+                self.function_table.shape == other.function_table.shape and
+                np.allclose(self.offsets, other.offsets) and
+                np.all(self.function_inputs[:, selfp]
+                       == other.function_inputs[:, otherp]) and
+                np.allclose(self.action_weights[selfp],
+                            other.action_weights[otherp]) and
+                np.allclose(self.function_table[selfp],
+                            other.function_table[otherp]))
 
     @utils.memoize
     def __hash__(self):

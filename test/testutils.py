@@ -37,7 +37,7 @@ def warnings_filter(status='ignore'):
 
 def mixture_jacobian_estimate(game, function, mix, step=1e-6):
     """Estimate a jacobian from deviations
-    
+
     Make small perturbations to a function of a mixture to estimate it's
     mixture jacobian.
 

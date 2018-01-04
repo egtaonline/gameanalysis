@@ -1,4 +1,5 @@
 import json
+import warnings
 
 import numpy as np
 import pytest
@@ -155,7 +156,7 @@ def test_subgame():
              [0, 1, 1]]
     sgame = aggfn.aggfn_names(['r0', 'r1'], [2, 1], [['s1'], ['s2', 's4']],
                               game.function_names, sactw, sfuncinps,
-                              game._function_table)
+                              game.function_table)
     assert sgame == game.subgame(mask)
 
 
@@ -378,11 +379,11 @@ def test_alternate_constructors():
 
 def test_from_function():
     game = aggfn.aggfn_funcs(2, 2, [[1, 2]], [[True], [False]], [lambda x: x])
-    assert len(game._function_table.shape) == 2
+    assert len(game.function_table.shape) == 2
     game = aggfn.aggfn_funcs(
         [2, 2], 2, [[1, 2, 3, 4]], [[True], [False], [False], [True]],
         [lambda x, y: x + y])
-    assert len(game._function_table.shape) == 3
+    assert len(game.function_table.shape) == 3
 
 
 def test_from_function_call():
@@ -393,7 +394,7 @@ def test_from_function_call():
 
     game = aggfn.aggfn_funcs(2, 2, [[1, 2]],
                              [[True], [False]], [func()])
-    assert len(game._function_table.shape) == 2
+    assert len(game.function_table.shape) == 2
 
     class func:
         def __call__(self, x, y):
@@ -401,7 +402,7 @@ def test_from_function_call():
 
     game = aggfn.aggfn_funcs([2, 2], 2, [[1, 2, 3, 4]],
                              [[True], [False], [False], [True]], [func()])
-    assert len(game._function_table.shape) == 3
+    assert len(game.function_table.shape) == 3
 
 
 def test_repr():
@@ -415,3 +416,12 @@ def test_repr():
 def test_function_index():
     for i in range(_game.num_functions):
         assert _game.function_index('f{:d}'.format(i)) == i
+
+
+def test_deprecation():
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DeprecationWarning)
+        assert np.all(_game.action_weights == _game._action_weights)
+        assert np.all(_game.function_inputs == _game._function_inputs)
+        assert np.all(_game.function_table == _game._function_table)
+        assert np.all(_game.offsets == _game._offsets)
