@@ -10,7 +10,7 @@ from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import subgame
 
-from . import testutils
+from test import testutils
 
 
 games = [

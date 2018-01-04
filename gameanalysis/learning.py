@@ -14,10 +14,10 @@ import numpy as np
 import sklearn
 from sklearn import gaussian_process as gp
 
-from . import paygame
-from . import rsgame
-from . import subgame
-from . import utils
+from gameanalysis import paygame
+from gameanalysis import rsgame
+from gameanalysis import subgame
+from gameanalysis import utils
 
 
 _TINY = np.finfo(float).tiny

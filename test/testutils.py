@@ -4,8 +4,6 @@ import warnings
 import numpy as np
 
 
-# FIXME Change all from test import and from gameanalysis import to from . import
-
 games = [
     ([1], [1]),
     ([1], [2]),

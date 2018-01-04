@@ -10,7 +10,7 @@ import pytest
 from gameanalysis import paygame
 from gameanalysis import rsgame
 
-from . import testutils
+from test import testutils
 
 
 TINY = np.finfo(float).tiny
