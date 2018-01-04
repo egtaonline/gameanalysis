@@ -127,7 +127,6 @@ def _dev_profpay(game):
         yield i, profs, pays[mask]
 
 
-# FIXME Remove train, add deprecated version for backward compatibility
 def nngame_train(game, epochs=100, layer_sizes=(32, 32), dropout=0.2,
                  verbosity=0, optimizer='sgd', loss='mean_squared_error'):
     """Train a neural network regression model
@@ -196,6 +195,7 @@ def sklgame_train(game, estimator):
         np.ones(game.num_strats, bool))
 
 
+# FIXME Add to/from json
 class RbfGpGame(rsgame.CompleteGame):
     """A regression game using RBF Gaussian processes
 
@@ -430,6 +430,7 @@ def rbfgame_train(game, num_restarts=3):
         tuple(alphas), (0,) * game.num_strats)
 
 
+# FIXME Add to/from json
 class _DeviationGame(rsgame.CompleteGame):
     """A game that adds deviation payoffs"""
 
