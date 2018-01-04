@@ -1,8 +1,6 @@
 import functools
 import warnings
 
-import numpy as np
-
 
 games = [
     ([1], [1]),
@@ -33,44 +31,3 @@ def warnings_filter(status='ignore'):
                 return func(*args, **kwargs)
         return wrapped
     return decorator
-
-
-def mixture_jacobian_estimate(game, function, mix, step=1e-6):
-    """Estimate a jacobian from deviations
-
-    Make small perturbations to a function of a mixture to estimate it's
-    mixture jacobian.
-
-    Parameters
-    ----------
-    game : RsGame
-        Game the mixtures come from.
-    function : (mixture) -> array
-        Function of a mixture that returns an array.
-    mix : mixture
-        The point to evaluate the jacobian at.
-    step : float, optional
-        The amount to perturb the mixture. Smaller values will tend to produce
-        better estimates of the jacobian but run a higher risk of encountering
-        numeric precision issues.
-    """
-    default = function(mix)
-    zero = np.zeros(game.num_strats)
-
-    num_base = game.num_role_strats - 1
-    offsets = np.zeros((game.num_strats,) * 2)
-    results = np.empty(offsets.shape)
-    for off, res, start, num in zip(
-            offsets, results, game.role_starts.repeat(num_base),
-            game.num_role_strats.repeat(num_base)):
-        offs = off[start:start + num]
-        shift = zero
-        while not game.is_mixture(shift):
-            np.copyto(offs, np.random.normal(0, step, num))
-            offs -= offs.sum() / num
-            shift = mix + off
-        np.copyto(res, function(mix + off) - default)
-    num_ind = num_base.sum()
-    offsets[num_ind:] = np.eye(game.num_roles).repeat(game.num_role_strats, 1)
-    results[num_ind:].fill(0)
-    return np.linalg.solve(offsets, results).T

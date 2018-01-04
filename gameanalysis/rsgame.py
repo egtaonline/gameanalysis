@@ -185,6 +185,7 @@ class StratArray(object):
                 self.role_starts.repeat(self.num_role_devs))
 
         # XXX The use of bincount here allows for one strategy roles
+        # FIXME This should be possible with .dot(np.eye().repeat)
         pos_offset = np.bincount(np.arange(self.num_strats) -
                                  self.role_starts.repeat(self.num_role_strats)
                                  + self.dev_strat_starts,

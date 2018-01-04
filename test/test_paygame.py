@@ -3,13 +3,14 @@ import itertools
 import json
 import warnings
 
+import autograd
+import autograd.numpy as anp
 import numpy as np
 import numpy.random as rand
 import pytest
 
 from gameanalysis import paygame
 from gameanalysis import rsgame
-
 from test import testutils
 
 
@@ -482,17 +483,46 @@ def test_deviation_payoffs_jacobian():
 
 
 @pytest.mark.parametrize('players,strats', testutils.games)
-def test_random_deviation_payoffs_jacobian(players, strats):
+@pytest.mark.parametrize('ignore', [False, True])
+@pytest.mark.parametrize('_', range(5))
+def test_random_deviation_payoffs_jacobian(players, strats, ignore, _):
     base = rsgame.emptygame(players, strats)
     profs = base.all_profiles()
-    pays = np.random.random((base.num_all_profiles, base.num_strats))
+    np.random.shuffle(profs)
+    if ignore:
+        num = -(-profs.shape[0] * 9 // 10)
+        profs = profs[:num]
+    pays = np.random.random(profs.shape)
     pays[profs == 0] = 0
     game = paygame.game_replace(base, profs, pays)
+
+    def devpays(mix):
+        zmix = mix + game.zero_prob.repeat(game.num_role_strats)
+        log_mix = anp.log(zmix)
+        prof_prob = anp.dot(game._profiles, log_mix)[:, None]
+        with np.errstate(under='ignore'):
+            probs = anp.exp(prof_prob + game._dev_reps - log_mix)
+        devs = anp.einsum('ij,ij->j', probs, game._payoffs)
+        return devs / probs.sum(0) if ignore else devs
+
+    jacobian = autograd.jacobian(devpays)
+
+    def devpays_jac(mix):
+        jac = jacobian(mix)
+        jac -= np.repeat(
+            np.add.reduceat(jac, game.role_starts, 1) /
+            game.num_role_strats, game.num_role_strats, 1)
+        return jac
+
     for mix in game.random_mixtures(20):
-        _, jac = game.deviation_payoffs(mix, jacobian=True)
-        tjac = testutils.mixture_jacobian_estimate(
-            game, game.deviation_payoffs, mix)
-        assert np.allclose(jac, tjac, rtol=0.05, atol=0.001)
+        dev, jac = game.deviation_payoffs(
+            mix, jacobian=True, ignore_incomplete=ignore)
+        tdev = devpays(mix)
+        tjac = devpays_jac(mix)
+        assert np.allclose(dev, tdev)
+        assert np.allclose(jac, tjac)
+
+    # FIXME Test sparse mixtures, which fail...
 
 
 @pytest.mark.parametrize('players,strats', testutils.games)

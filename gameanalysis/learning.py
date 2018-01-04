@@ -8,19 +8,18 @@ games. Learned games vary by the method, but generally expose methods for
 computing payoffs and may other features. Deviation games use learned games and
 different functions to compute deviation payoffs via various methods.
 """
-import itertools
-
 import numpy as np
 import sklearn
 from sklearn import gaussian_process as gp
 
+from gameanalysis import gamereader
 from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import subgame
 from gameanalysis import utils
 
 
-_TINY = np.finfo(float).tiny
+# TODO Replace np.fill with np.full
 
 
 class DevRegressionGame(rsgame.CompleteGame):
@@ -195,7 +194,6 @@ def sklgame_train(game, estimator):
         np.ones(game.num_strats, bool))
 
 
-# FIXME Add to/from json
 class RbfGpGame(rsgame.CompleteGame):
     """A regression game using RBF Gaussian processes
 
@@ -203,74 +201,73 @@ class RbfGpGame(rsgame.CompleteGame):
     continuous approximation of the multinomial distribution.
     """
 
-    def __init__(self, game, offset, min_payoffs, max_payoffs, coefs, lengths,
-                 train_data, alphas, zero_diags):
-        super().__init__(game.role_names, game.strat_names,
-                         game.num_role_players)
+    def __init__(self, role_names, strat_names, num_role_players, offset,
+                 coefs, lengths, sizes, profiles, alpha):
+        super().__init__(role_names, strat_names, num_role_players)
         self._offset = offset
         self._offset.setflags(write=False)
         self._coefs = coefs
         self._coefs.setflags(write=False)
         self._lengths = lengths
         self._lengths.setflags(write=False)
-        self._train_data = train_data
-        self._alphas = alphas
-        self._zero_diags = zero_diags
-        self._min_payoffs = min_payoffs
-        self._min_payoffs.setflags(write=False)
-        self._max_payoffs = max_payoffs
-        self._max_payoffs.setflags(write=False)
+        self._sizes = sizes
+        self._sizes.setflags(write=False)
+        self._size_starts = np.insert(self._sizes[:-1].cumsum(), 0, 0)
+        self._size_starts.setflags(write=False)
+        self._profiles = profiles
+        self._profiles.setflags(write=False)
+        self._alpha = alpha
+        self._alpha.setflags(write=False)
 
-        self._dev_players = self.num_role_players - np.eye(
-            self.num_roles, dtype=int)
+        # Useful member
+        self._dev_players = np.repeat(
+            self.num_role_players - np.eye(self.num_roles, dtype=int),
+            self.num_role_strats, 0)
         self._dev_players.setflags(write=False)
+
+        # Compute min and max payoffs
+        # TODO These are pretty conservative, and could maybe be made more
+        # accurate
+        sdp = self._dev_players.repeat(self.num_role_strats, 1)
+        max_rbf = np.einsum('ij,ij,ij->i', sdp, sdp, 1 / self._lengths)
+        minw = np.exp(-max_rbf / 2)
+        mask = self._alpha > 0
+        pos = np.add.reduceat(self._alpha * mask, self._size_starts)
+        neg = np.add.reduceat(self._alpha * ~mask, self._size_starts)
+        self._min_payoffs = self._coefs * (pos * minw + neg) + self._offset
+        self._min_payoffs.setflags(write=False)
+        self._max_payoffs = self._coefs * (pos + neg * minw) + self._offset
+        self._max_payoffs.setflags(write=False)
 
     def get_payoffs(self, profiles):
         assert self.is_profile(profiles).all(), "must pass valid profiles"
-        payoffs = np.zeros(profiles.shape)
-        for s, (off, coef, length, data, alpha, zero) in enumerate(zip(
-                self._offset, self._coefs, self._lengths, self._train_data,
-                self._alphas, self._zero_diags)):
-            mask = profiles[..., s] > 0
-            profs = profiles[mask]
-            profs[:, s] -= 1
-            if profs.size:
-                vec = (profs[:, None] - data) / length
-                rbf = zero + np.einsum('ijk,ijk->ij', vec, vec)
-                payoffs[mask, s] = coef * np.exp(-rbf / 2).dot(alpha) + off
+        dev_profiles = np.repeat(
+            profiles[..., None, :] - np.eye(self.num_strats, dtype=int),
+            self._sizes, -2)
+        vec = ((dev_profiles - self._profiles) /
+               self._lengths.repeat(self._sizes, 0))
+        rbf = np.einsum('...ij,...ij->...i', vec, vec)
+        payoffs = self._offset + self._coefs * np.add.reduceat(
+            np.exp(-rbf / 2) * self._alpha, self._size_starts, -1)
+        payoffs[profiles == 0] = 0
         return payoffs
 
     def get_dev_payoffs(self, profiles, *, jacobian=False):
-        prof_view = np.rollaxis(profiles.reshape(
-            (-1, self.num_roles, self.num_strats)), 1, 0)
-        pay_view = np.empty((self.num_strats, prof_view.shape[1]))
-        if jacobian:
-            jac_view = np.empty((self.num_strats, prof_view.shape[1],
-                                 self.num_strats))
-        else:
-            jac_view = itertools.repeat(None, self.num_strats)
+        dev_profiles = profiles.repeat(
+            np.add.reduceat(self._sizes, self.role_starts), -2)
+        vec = ((dev_profiles - self._profiles) /
+               self._lengths.repeat(self._sizes, 0))
+        rbf = np.einsum('...ij,...ij->...i', vec, vec)
+        exp = np.exp(-rbf / 2) * self._alpha
+        payoffs = self._offset + self._coefs * np.add.reduceat(
+            exp, self._size_starts, -1)
 
-        for pays, profs, jac, length, data, alpha, zero in zip(
-                pay_view, utils.repeat(prof_view, self.num_role_strats),
-                jac_view, self._lengths, self._train_data, self._alphas,
-                self._zero_diags):
-            vec = (profs[:, None] - data) / length
-            rbf = zero + np.einsum('ijk,ijk->ij', vec, vec)
-            exp = np.exp(-rbf / 2)
-            exp.dot(alpha, out=pays)
-            if jacobian:
-                np.einsum('j,ij,ijk->ik', alpha, exp, vec / length, out=jac)
-
-        payoffs = (
-            pay_view.T.reshape((profiles.shape[:-2] + (self.num_strats,))) *
-            self._coefs + self._offset)
-
-        if jacobian:
-            jac = -np.rollaxis(jac_view, 1, 0).reshape(
-                (profiles.shape[:-2] + (self.num_strats,) * 2))
-            return payoffs, jac * self._coefs[:, None]
-        else:
+        if not jacobian:
             return payoffs
+
+        jac = -(self._coefs[:, None] / self._lengths *
+                np.add.reduceat(exp[:, None] * vec, self._size_starts, 0))
+        return payoffs, jac
 
     def max_strat_payoffs(self):
         return self._max_payoffs.view()
@@ -279,50 +276,42 @@ class RbfGpGame(rsgame.CompleteGame):
         return self._min_payoffs.view()
 
     def deviation_payoffs(self, mix, *, jacobian=False):
-        payoffs = np.empty(self.num_strats)
-        if jacobian:
-            jac = np.empty((self.num_strats,) * 2)
-        for i, (players, scale, x, kinvy, zdiag) in enumerate(zip(
-                self._dev_players.repeat(self.num_role_strats, 0),
-                self._lengths, self._train_data, self._alphas,
-                self._zero_diags)):
-            avg_prof = players.repeat(self.num_role_strats) * mix
-            diag = 1 / (scale ** 2 + avg_prof)
-            diff = x - avg_prof
-            det = 1 / (1 - players * np.add.reduceat(
-                mix ** 2 * diag, self.role_starts))
-            cov_diag = np.einsum('ij,ij,j->i', diff, diff, diag) + zdiag
-            cov_outer = np.add.reduceat(
-                mix * diag * diff, self.role_starts, 1)
-            exp = np.exp(-.5 * (cov_diag + np.einsum(
-                'j,j,ij,ij->i', players, det, cov_outer, cov_outer)))
-            coef = np.exp(np.log(scale).sum() + .5 * np.log(diag).sum() +
-                          .5 * np.log(det).sum())
-            avg = kinvy.dot(exp)
-            payoffs[i] = coef * avg
+        players = self._dev_players.repeat(self.num_role_strats, 1)
+        avg_prof = players * mix
+        diag = 1 / (self._lengths ** 2 + avg_prof)
+        diag_sizes = diag.repeat(self._sizes, 0)
+        diff = self._profiles - avg_prof.repeat(self._sizes, 0)
+        det = 1 / (1 - self._dev_players * np.add.reduceat(
+            mix ** 2 * diag, self.role_starts, 1))
+        det_sizes = det.repeat(self._sizes, 0)
+        cov_diag = np.einsum('ij,ij,ij->i', diff, diff, diag_sizes)
+        cov_outer = np.add.reduceat(
+            mix * diag_sizes * diff, self.role_starts, 1)
+        sec_term = np.einsum(
+            'ij,ij,ij,ij->i', self._dev_players.repeat(self._sizes, 0),
+            det_sizes, cov_outer, cov_outer)
+        exp = np.exp(-(cov_diag + sec_term) / 2)
+        coef = self._lengths.prod(1) * np.sqrt(diag.prod(1) * det.prod(1))
+        avg = np.add.reduceat(self._alpha * exp, self._size_starts)
+        payoffs = self._coefs * coef * avg + self._offset
 
-            if jacobian:
-                beta = 1 - players.repeat(self.num_role_strats) * mix * diag
-                jac_coef = ((beta ** 2 - 1) * det.repeat(self.num_role_strats)
-                            * avg)
-                delta = np.repeat(cov_outer * det, self.num_role_strats, 1)
-                jac_exp = exp[:, None] * (
-                    (delta - 1) ** 2 - (delta * beta - diff * diag - 1) ** 2)
-                jac_avg = (players.repeat(self.num_role_strats) *
-                           kinvy.dot(jac_exp))
-                jac[i] = -0.5 * coef * (jac_coef + jac_avg)
-                # Normalize jacobian to be in mixture subspace
-                jac[i] -= np.repeat(
-                    np.add.reduceat(jac[i], self.role_starts) /
-                    self.num_role_strats, self.num_role_strats)
-
-        payoffs *= self._coefs
-        payoffs += self._offset
-        if jacobian:
-            jac *= self._coefs[:, None]
-            return payoffs, jac
-        else:
+        if not jacobian:
             return payoffs
+
+        beta = 1 - players * mix * diag
+        jac_coef = (
+            ((beta ** 2 - 1) * det.repeat(self.num_role_strats, 1) +
+             players * diag) * avg[:, None])
+        delta = np.repeat(cov_outer * det_sizes, self.num_role_strats, 1)
+        jac_exp = -self._alpha[:, None] * exp[:, None] * (
+            (delta * beta.repeat(self._sizes, 0) - diff * diag_sizes - 1) ** 2
+            - (delta - 1) ** 2)
+        jac_avg = (players * np.add.reduceat(jac_exp, self._size_starts, 0))
+        jac = -self._coefs[:, None] * coef[:, None] * (jac_coef + jac_avg) / 2
+        jac -= np.repeat(
+            np.add.reduceat(jac, self.role_starts, 1) /
+            self.num_role_strats, self.num_role_strats, 1)
+        return payoffs, jac
 
     # TODO Add function that creates sample game which draws payoffs from the
     # gp distribution
@@ -330,19 +319,27 @@ class RbfGpGame(rsgame.CompleteGame):
     def subgame(self, sub_mask):
         sub_mask = np.asarray(sub_mask, bool)
         base = super().subgame(sub_mask)
-        data = tuple(
-            d[:, sub_mask] for d, m in zip(self._train_data, sub_mask) if m)
-        alphas = tuple(a for a, m in zip(self._alphas, sub_mask) if m)
-        zero_diags = tuple(
-            c + np.einsum(
-                'ij,ij,j,j->i', d[:, ~sub_mask], d[:, ~sub_mask], s, s)
-            for c, d, s, m
-            in zip(self._zero_diags, self._train_data,
-                   1 / self._lengths[:, ~sub_mask], sub_mask) if m)
+
+        size_mask = sub_mask.repeat(self._sizes)
+        sizes = self._sizes[sub_mask]
+        profiles = self._profiles[size_mask]
+        lengths = self._lengths[sub_mask]
+        zeros = (profiles[:, ~sub_mask] /
+                 lengths[:, ~sub_mask].repeat(sizes, 0))
+        removed = np.exp(-np.einsum('ij,ij->i', zeros, zeros) / 2)
+        new_profs, inds = utils.unique_axis(
+            np.concatenate([np.arange(sub_mask.sum()).repeat(sizes)[:, None],
+                            profiles[:, sub_mask]], 1),
+            return_inverse=True)
+        new_alpha = np.bincount(inds, removed * self._alpha[size_mask])
+        new_sizes = np.diff(np.concatenate([
+            [-1], np.flatnonzero(np.diff(new_profs[:, 0])),
+            [new_alpha.size - 1]]))
+
         return RbfGpGame(
-            base, self._offset[sub_mask], self._min_payoffs[sub_mask],
-            self._max_payoffs[sub_mask], self._coefs[sub_mask],
-            self._lengths[sub_mask][:, sub_mask], data, alphas, zero_diags)
+            base.role_names, base.strat_names, base.num_role_players,
+            self._offset[sub_mask], self._coefs[sub_mask],
+            lengths[:, sub_mask], new_sizes, new_profs[:, 1:], new_alpha)
 
     def normalize(self):
         scale = (self.max_role_payoffs() - self.min_role_payoffs())
@@ -350,26 +347,63 @@ class RbfGpGame(rsgame.CompleteGame):
         scale = scale.repeat(self.num_role_strats)
         offset = self.min_role_payoffs().repeat(self.num_role_strats)
         return RbfGpGame(
-            self, (self._offset - offset) / scale,
-            (self._min_payoffs - offset) / scale,
-            (self._max_payoffs - offset) / scale, self._coefs / scale,
-            self._lengths, self._train_data, self._alphas, self._zero_diags)
+            self.role_names, self.strat_names, self.num_role_players,
+            (self._offset - offset) / scale, self._coefs / scale,
+            self._lengths, self._sizes, self._profiles, self._alpha)
+
+    def to_json(self):
+        base = super().to_json()
+        base['offsets'] = self.payoff_to_json(self._offset)
+        base['coefs'] = self.payoff_to_json(self._coefs)
+
+        lengths = {}
+        for role, strats, lens in zip(
+                self.role_names, self.strat_names,
+                np.split(self._lengths, self.role_starts[1:])):
+            lengths[role] = {s: self.payoff_to_json(l)
+                             for s, l in zip(strats, lens)}
+        base['lengths'] = lengths
+
+        profs = {}
+        for r, (role, strats, data) in enumerate(zip(
+                self.role_names, self.strat_names,
+                np.split(np.split(self._profiles, self._size_starts[1:]),
+                         self.role_starts[1:]))):
+            profs[role] = {strat: [self.profile_to_json(p) for p in dat]
+                           for strat, dat in zip(strats, data)}
+        base['profiles'] = profs
+
+        alphas = {}
+        for role, strats, alphs in zip(
+                self.role_names, self.strat_names,
+                np.split(np.split(self._alpha, self._size_starts[1:]),
+                         self.role_starts[1:])):
+            alphas[role] = {s: a.tolist() for s, a in zip(strats, alphs)}
+        base['alphas'] = alphas
+
+        base['type'] = 'rbf.1'
+        return base
 
     def __eq__(self, other):
-        return (super().__eq__(other) and
+        if not (super().__eq__(other) and
                 np.allclose(self._offset, other._offset) and
                 np.allclose(self._coefs, other._coefs) and
                 np.allclose(self._lengths, other._lengths) and
-                all(np.allclose(a, b) for a, b in zip(
-                    self._train_data, other._train_data)) and
-                all(np.allclose(a, b) for a, b in zip(
-                    self._alphas, other._alphas)) and
-                all(np.allclose(a, b) for a, b in zip(
-                    self._zero_diags, other._zero_diags)))
+                np.all(self._sizes == other._sizes)):
+            return False
+
+        orda = np.lexsort(np.concatenate([
+            np.arange(self.num_strats).repeat(self._sizes)[None],
+            self._profiles.T]))
+        ordb = np.lexsort(np.concatenate([
+            np.arange(other.num_strats).repeat(other._sizes)[None],
+            other._profiles.T]))
+        return (np.all(self._profiles[orda] == other._profiles[ordb]) and
+                np.allclose(self._alpha[orda], other._alpha[ordb]))
 
     @utils.memoize
     def __hash__(self):
-        return super().__hash__()
+        return hash((super().__hash__(), self._sizes.tobytes()))
 
 
 def rbfgame_train(game, num_restarts=3):
@@ -397,10 +431,9 @@ def rbfgame_train(game, num_restarts=3):
     means = np.empty(game.num_strats)
     coefs = np.empty(game.num_strats)
     lengths = np.empty((game.num_strats, game.num_strats))
-    train_data = []
-    alphas = []
-    mins = np.empty(game.num_strats)
-    maxs = np.empty(game.num_strats)
+    profiles = []
+    alpha = []
+    sizes = []
     for (s, profs, pays), bound, dplay in zip(
             _dev_profpay(game), bounds, dev_players):
         pay_mean = pays.mean()
@@ -416,21 +449,55 @@ def rbfgame_train(game, num_restarts=3):
         lengths[s] = reg.kernel_.k1.k2.length_scale
         # TODO If these scales are at the boundary (1 or dev_players) then it's
         # likely a poor fit and we should warn...
-        train_data.append(profs)
-        alphas.append(reg.alpha_)
-
-        minw = np.exp(-.5 * np.einsum('i,i,i', dplay, dplay, 1 / lengths[s]))
-        pos = reg.alpha_[reg.alpha_ > 0].sum()
-        neg = reg.alpha_[reg.alpha_ < 0].sum()
-        maxs[s] = coefs[s] * (pos + minw * neg) + pay_mean
-        mins[s] = coefs[s] * (minw * pos + neg) + pay_mean
+        uprofs, inds = utils.unique_axis(
+            profs, return_inverse=True)
+        profiles.append(uprofs)
+        alpha.append(np.bincount(inds, reg.alpha_))
+        sizes.append(inds.size)
 
     return RbfGpGame(
-        game, means, mins, maxs, coefs, lengths, tuple(train_data),
-        tuple(alphas), (0,) * game.num_strats)
+        game.role_names, game.strat_names, game.num_role_players, means, coefs,
+        lengths, np.array(sizes), np.concatenate(profiles),
+        np.concatenate(alpha))
 
 
-# FIXME Add to/from json
+def rbfgame_json(json):
+    """Read an rbf game from json"""
+    assert json['type'].split('.', 1)[0] == 'rbf', \
+        "incorrect type"
+    base = rsgame.emptygame_json(json)
+
+    offsets = base.payoff_from_json(json['offsets'])
+    coefs = base.payoff_from_json(json['coefs'])
+
+    lengths = np.empty((base.num_strats,) * 2)
+    for role, strats in json['lengths'].items():
+        for strat, pay in strats.items():
+            ind = base.role_strat_index(role, strat)
+            base.payoff_from_json(pay, lengths[ind])
+
+    profiles = [None] * base.num_strats
+    for role, strats in json['profiles'].items():
+        for strat, profs in strats.items():
+            ind = base.role_strat_index(role, strat)
+            profiles[ind] = np.stack([
+                base.profile_from_json(p, verify=False) for p in profs])
+
+    alphas = [None] * base.num_strats
+    for role, strats in json['alphas'].items():
+        for strat, alph in strats.items():
+            ind = base.role_strat_index(role, strat)
+            alphas[ind] = np.array(alph)
+
+    sizes = np.fromiter(  # pragma: no branch
+        (a.size for a in alphas), int, base.num_strats)
+
+    return RbfGpGame(
+        base.role_names, base.strat_names, base.num_role_players, offsets,
+        coefs, lengths, sizes, np.concatenate(profiles),
+        np.concatenate(alphas))
+
+
 class _DeviationGame(rsgame.CompleteGame):
     """A game that adds deviation payoffs"""
 
@@ -454,6 +521,11 @@ class _DeviationGame(rsgame.CompleteGame):
 
     def min_strat_payoffs(self):
         return self._model.min_strat_payoffs()
+
+    def to_json(self):
+        base = super().to_json()
+        base['model'] = self._model.to_json()
+        return base
 
 
 class SampleDeviationGame(_DeviationGame):
@@ -493,10 +565,11 @@ class SampleDeviationGame(_DeviationGame):
         if not jacobian:
             return dev_pays
 
-        weights = np.repeat(
-            np.where(np.isclose(mix, 0), 0, profs / (mix + _TINY)),
-            self.num_role_strats, 1)
-        jac = np.einsum('ij,ijk->jk', payoffs, weights) / self._num_samples
+        supp = mix > 0
+        weights = np.zeros(profs.shape)
+        weights[..., supp] = profs[..., supp] / mix[supp]
+        jac = np.einsum('ij,ijk->jk', payoffs, weights.repeat(
+            self.num_role_strats, 1)) / self._num_samples
         jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
                          self.num_role_strats, self.num_role_strats, 1)
         return dev_pays, jac
@@ -507,6 +580,12 @@ class SampleDeviationGame(_DeviationGame):
 
     def normalize(self):
         return SampleDeviationGame(self._model.normalize(), self._num_samples)
+
+    def to_json(self):
+        base = super().to_json()
+        base['samples'] = self._num_samples
+        base['type'] = 'sample.1'
+        return base
 
 
 def sample(game, num_samples=100):
@@ -523,6 +602,14 @@ def sample(game, num_samples=100):
     if hasattr(game, '_model'):
         game = game._model
     return SampleDeviationGame(game, num_samples=num_samples)
+
+
+def sample_json(json):
+    """Read sample game from json"""
+    assert json['type'].split('.', 1)[0] == 'sample', \
+        "incorrect type"
+    return SampleDeviationGame(gamereader.read(json['model']),
+                               num_samples=json['samples'])
 
 
 class PointDeviationGame(_DeviationGame):
@@ -565,6 +652,11 @@ class PointDeviationGame(_DeviationGame):
     def normalize(self):
         return PointDeviationGame(self._model.normalize())
 
+    def to_json(self):
+        base = super().to_json()
+        base['type'] = 'point.1'
+        return base
+
 
 def point(game):
     """Create a point game from a model
@@ -578,6 +670,13 @@ def point(game):
     if hasattr(game, '_model'):
         game = game._model
     return PointDeviationGame(game)
+
+
+def point_json(json):
+    """Read point game from json"""
+    assert json['type'].split('.', 1)[0] == 'point', \
+        "incorrect type"
+    return PointDeviationGame(gamereader.read(json['model']))
 
 
 class NeighborDeviationGame(_DeviationGame):
@@ -625,6 +724,12 @@ class NeighborDeviationGame(_DeviationGame):
     def normalize(self):
         return NeighborDeviationGame(self._model.normalize(), self._num_devs)
 
+    def to_json(self):
+        base = super().to_json()
+        base['devs'] = self._num_devs
+        base['type'] = 'neighbor.1'
+        return base
+
 
 def neighbor(game, num_devs=2):
     """Create a neighbor game from a model
@@ -640,3 +745,11 @@ def neighbor(game, num_devs=2):
     if hasattr(game, '_model'):
         game = game._model
     return NeighborDeviationGame(game, num_devs=num_devs)
+
+
+def neighbor_json(json):
+    """Read neighbor game from json"""
+    assert json['type'].split('.', 1)[0] == 'neighbor', \
+        "incorrect type"
+    return NeighborDeviationGame(gamereader.read(json['model']),
+                                 num_devs=json['devs'])

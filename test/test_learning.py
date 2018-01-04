@@ -1,5 +1,10 @@
+import itertools
+import json
+import random
 import warnings
 
+import autograd
+import autograd.numpy as anp
 import numpy as np
 import pytest
 from sklearn import gaussian_process as gp
@@ -10,8 +15,6 @@ from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import subgame
 
-from test import testutils
-
 
 games = [
     (4, 3),
@@ -20,9 +23,11 @@ games = [
 ]
 
 
-def test_rbfgame_members():
+@pytest.mark.parametrize('players,strats', games)
+@pytest.mark.parametrize('dist', range(5))
+def test_rbfgame_members(players, strats, dist):
     """Test that all functions can be called without breaking"""
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    game = gamegen.add_profiles(rsgame.emptygame(players, strats), 10)
     reggame = learning.rbfgame_train(game)
 
     prof = reggame.random_profile()
@@ -54,6 +59,10 @@ def test_rbfgame_members():
     assert reggame._coefs.shape == (reggame.num_strats,)
     assert reggame._min_payoffs.shape == (reggame.num_strats,)
     assert reggame._max_payoffs.shape == (reggame.num_strats,)
+
+    jgame = json.dumps(reggame.to_json())
+    copy = learning.rbfgame_json(json.loads(jgame))
+    assert copy == reggame
 
 
 def test_nntrain():
@@ -125,6 +134,10 @@ def test_rbfgame_subgame(players, strats, _):
     assert subreg._min_payoffs.shape == (subreg.num_strats,)
     assert subreg._max_payoffs.shape == (subreg.num_strats,)
 
+    jgame = json.dumps(subreg.to_json())
+    copy = learning.rbfgame_json(json.loads(jgame))
+    assert copy == subreg
+
     subsubmask = subreg.random_subgame()
     subsubreg = subreg.subgame(subsubmask)
 
@@ -132,6 +145,10 @@ def test_rbfgame_subgame(players, strats, _):
     assert subsubreg._coefs.shape == (subsubreg.num_strats,)
     assert subsubreg._min_payoffs.shape == (subsubreg.num_strats,)
     assert subsubreg._max_payoffs.shape == (subsubreg.num_strats,)
+
+    jgame = json.dumps(subsubreg.to_json())
+    copy = learning.rbfgame_json(json.loads(jgame))
+    assert copy == subsubreg
 
 
 @pytest.mark.parametrize('players,strats', games)
@@ -163,81 +180,161 @@ def test_rbfgame_normalize(players, strats, _):
     norm_pays = normreg.get_dev_payoffs(dev_profs) * scale + offset
     assert np.allclose(reg_pays, norm_pays)
 
+    jgame = json.dumps(normreg.to_json())
+    copy = learning.rbfgame_json(json.loads(jgame))
+    assert copy == normreg
+
 
 @pytest.mark.parametrize('_', range(20))
 def test_sample(_):
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
-    model = gp.GaussianProcessRegressor(
+    model = learning.sklgame_train(game, gp.GaussianProcessRegressor(
         1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1),
-        normalize_y=True)
-    reggame = learning.sample(learning.sklgame_train(game, model))
-    full = paygame.game_copy(reggame)
+        normalize_y=True))
+    learn = learning.sample(model)
+    full = paygame.game_copy(learn)
+
+    @autograd.primitive
+    def sample_profs(mix):
+        return game.random_role_deviation_profiles(
+            learn._num_samples, mix).astype(float)
+
+    @autograd.primitive
+    def model_pays(profs):
+        return model.get_dev_payoffs(profs)
+
+    @autograd.primitive
+    def const_weights(profs, mix):
+        return np.prod(mix ** profs, 2).repeat(game.num_role_strats, 1)
+
+    @autograd.primitive
+    def rep(probs):
+        return probs.repeat(game.num_role_strats, 1)
+
+    def rep_vjp(repd, probs):
+        return lambda grad: np.add.reduceat(grad, game.role_starts, 1)
+
+    autograd.extend.defvjp(sample_profs, None)
+    autograd.extend.defvjp(model_pays, None)
+    autograd.extend.defvjp(const_weights, None, None)
+    autograd.extend.defvjp(rep, rep_vjp)  # This is wrong in autograd
+
+    def devpays(mix):
+        profs = sample_profs(mix)
+        payoffs = model_pays(profs)
+        numer = rep(anp.prod(mix ** profs, 2))
+        denom = const_weights(profs, mix)
+        weights = numer / denom / learn._num_samples
+        return anp.einsum('ij,ij->j', weights, payoffs)
+
+    jacobian = autograd.jacobian(devpays)
+
+    def devpays_jac(mix):
+        jac = jacobian(mix)
+        jac -= np.repeat(
+            np.add.reduceat(jac, game.role_starts, 1) /
+            game.num_role_strats, game.num_role_strats, 1)
+        return jac
 
     errors = np.zeros(game.num_strats)
     samp_errors = np.zeros(game.num_strats)
-    jac_errors = np.zeros((game.num_strats,) * 2)
-    samp_jac_errors = np.zeros((game.num_strats,) * 2)
-    for i, mix in enumerate(game.grid_mixtures(11), 1):
-        tdev, tjac = full.deviation_payoffs(mix, jacobian=True)
-        dev, jac = reggame.deviation_payoffs(mix, jacobian=True)
-        avg_err = (tdev - dev) ** 2
+    for i, mix in enumerate(itertools.chain(
+            game.random_mixtures(20), game.random_sparse_mixtures(20)), 1):
+        seed = random.randint(0, 10**9)
+        fdev = full.deviation_payoffs(mix)
+        np.random.seed(seed)
+        dev, jac = learn.deviation_payoffs(mix, jacobian=True)
+        avg_err = (fdev - dev) ** 2 / (np.abs(fdev) + 1e-5)
         errors += (avg_err - errors) / i
-        samp_err = (reggame.deviation_payoffs(mix) - dev) ** 2
+        samp_err = ((learn.deviation_payoffs(mix) - dev) ** 2 /
+                    (np.abs(dev) + 1e-5))
         samp_errors += (samp_err - samp_errors) / i
-        jac_err = (tjac - jac) ** 2
-        jac_errors += (jac_err - jac_errors) / i
-        samp_jac_err = (reggame.deviation_payoffs(mix, jacobian=True)[1] -
-                        jac) ** 2
-        samp_jac_errors += (samp_jac_err - samp_jac_errors) / i
-    assert np.all(errors <= samp_errors + 1e-10)
-    assert np.all(jac_errors <= 15 * samp_jac_errors + 1e-10)
+
+        np.random.seed(seed)
+        tdev = devpays(mix)
+        assert np.allclose(dev, tdev)
+        np.random.seed(seed)
+        tjac = devpays_jac(mix)
+        assert np.allclose(jac, tjac)
+    assert np.all(errors <= 100 * (samp_errors + 1e-5))
 
     submask = game.random_subgame()
-    subreg = reggame.subgame(submask)
+    sublearn = learn.subgame(submask)
     subfull = full.subgame(submask)
-    assert np.allclose(subreg.get_payoffs(subfull.profiles()),
+    assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
                        subfull.payoffs())
 
-    norm = reggame.normalize()
+    norm = learn.normalize()
     assert np.allclose(norm.min_role_payoffs(), 0)
     assert np.allclose(norm.max_role_payoffs(), 1)
 
-    assert learning.sample(reggame, reggame._num_samples) == reggame
+    assert learning.sample(learn, learn._num_samples) == learn
+
+    learn = learning.sample(learning.rbfgame_train(game))
+    jgame = json.dumps(learn.to_json())
+    copy = learning.sample_json(json.loads(jgame))
+    assert copy == learn
 
 
 @pytest.mark.parametrize('_', range(20))
 def test_point(_):
     # We increase player number so point is a more accurate estimator
-    game = gamegen.add_profiles(rsgame.emptygame([10, 12], [3, 2]), 10)
-    reggame = learning.point(learning.rbfgame_train(game))
-    full = paygame.game_copy(reggame)
+    game = gamegen.add_profiles(rsgame.emptygame(1000, 2), 10)
+    model = learning.rbfgame_train(game)
+    learn = learning.point(model)
+    full = paygame.game_copy(learn)
+    red = np.eye(game.num_roles).repeat(game.num_role_strats, 0)
+    size = np.eye(game.num_strats).repeat(model._sizes, 0)
+
+    def devpays(mix):
+        profile = learn._dev_players * mix
+        dev_profiles = anp.dot(size, anp.dot(red, profile))
+        vec = ((dev_profiles - model._profiles) /
+               model._lengths.repeat(model._sizes, 0))
+        rbf = anp.einsum('...ij,...ij->...i', vec, vec)
+        exp = anp.exp(-rbf / 2) * model._alpha
+        return model._offset + model._coefs * anp.dot(exp, size)
+
+    jacobian = autograd.jacobian(devpays)
+
+    def devpays_jac(mix):
+        jac = jacobian(mix)
+        jac -= np.repeat(
+            np.add.reduceat(jac, game.role_starts, 1) /
+            game.num_role_strats, game.num_role_strats, 1)
+        return jac
 
     errors = np.zeros(game.num_strats)
-    jac_errors = np.zeros((game.num_strats,) * 2)
-    for i, mix in enumerate(game.grid_mixtures(11), 1):
-        tdev = full.deviation_payoffs(mix)
-        dev, jac = reggame.deviation_payoffs(mix, jacobian=True)
-        err = (tdev - dev) ** 2
+    for i, mix in enumerate(itertools.chain(
+            game.random_mixtures(20), game.random_sparse_mixtures(20)), 1):
+        fdev = full.deviation_payoffs(mix)
+        dev, jac = learn.deviation_payoffs(mix, jacobian=True)
+        err = (fdev - dev) ** 2 / (np.abs(dev) + 1e-5)
         errors += (err - errors) / i
-        tjac = testutils.mixture_jacobian_estimate(
-            game, reggame.deviation_payoffs, mix)
-        jac_err = (tjac - jac) ** 2
-        jac_errors += (jac_err - jac_errors) / i
+        tdev = devpays(mix)
+        tjac = devpays_jac(mix)
+        assert np.allclose(learn.deviation_payoffs(mix), dev)
+        assert np.allclose(dev, tdev)
+        assert np.allclose(jac, tjac)
+
     # Point is a very biased estimator, so errors are large
-    assert np.all(errors < 0.25)
-    assert np.all(jac_errors < 0.1)
+    assert np.all(errors < 0.5)
 
     submask = game.random_subgame()
-    subreg = reggame.subgame(submask)
+    sublearn = learn.subgame(submask)
     subfull = full.subgame(submask)
-    assert np.allclose(subreg.get_payoffs(subfull.profiles()),
+    assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
                        subfull.payoffs())
 
-    norm = reggame.normalize()
+    norm = learn.normalize()
     assert np.allclose(norm.min_role_payoffs(), 0)
     assert np.allclose(norm.max_role_payoffs(), 1)
 
-    assert learning.point(reggame) == reggame
+    assert learning.point(learn) == learn
+
+    jgame = json.dumps(learn.to_json())
+    copy = learning.point_json(json.loads(jgame))
+    assert copy == learn
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -246,32 +343,34 @@ def test_neighbor(_):
     model = gp.GaussianProcessRegressor(
         1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1),
         normalize_y=True)
-    reggame = learning.neighbor(learning.sklgame_train(game, model))
-    full = paygame.game_copy(reggame)
+    learn = learning.neighbor(learning.sklgame_train(game, model))
+    full = paygame.game_copy(learn)
 
     errors = np.zeros(game.num_strats)
-    jac_errors = np.zeros((game.num_strats,) * 2)
-    for i, mix in enumerate(game.grid_mixtures(11), 1):
-        tdev, tjac = full.deviation_payoffs(mix, jacobian=True)
-        dev, jac = reggame.deviation_payoffs(mix, jacobian=True)
-        err = (tdev - dev) ** 2
+    for i, mix in enumerate(itertools.chain(
+            game.random_mixtures(20), game.random_sparse_mixtures(20)), 1):
+        tdev = full.deviation_payoffs(mix)
+        dev, _ = learn.deviation_payoffs(mix, jacobian=True)
+        err = (tdev - dev) ** 2 / (np.abs(dev) + 1e-5)
         errors += (err - errors) / i
-        jac_err = (tjac - jac) ** 2
-        jac_errors += (jac_err - jac_errors) / i
-    assert np.all(errors < 0.1)
-    assert np.all(jac_errors < 0.5)
+    assert np.all(errors < 0.5)
 
     submask = game.random_subgame()
-    subreg = reggame.subgame(submask)
+    sublearn = learn.subgame(submask)
     subfull = full.subgame(submask)
-    assert np.allclose(subreg.get_payoffs(subfull.profiles()),
+    assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
                        subfull.payoffs())
 
-    norm = reggame.normalize()
+    norm = learn.normalize()
     assert np.allclose(norm.min_role_payoffs(), 0)
     assert np.allclose(norm.max_role_payoffs(), 1)
 
-    assert learning.neighbor(reggame, reggame._num_devs) == reggame
+    assert learning.neighbor(learn, learn._num_devs) == learn
+
+    learn = learning.neighbor(learning.rbfgame_train(game))
+    jgame = json.dumps(learn.to_json())
+    copy = learning.neighbor_json(json.loads(jgame))
+    assert copy == learn
 
 
 @pytest.mark.parametrize('players,strats', [
@@ -295,45 +394,79 @@ def test_rbfgame_equality():
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
     regg = learning.rbfgame_train(game)
     copy = regg.subgame(np.ones(game.num_strats, bool))
+    copy._alpha.setflags(write=True)
+    copy._profiles.setflags(write=True)
+    copy._lengths.setflags(write=True)
+    copy._coefs.setflags(write=True)
+    copy._offset.setflags(write=True)
     assert regg == copy
-    copy._zero_diags = tuple(1 for _ in copy._zero_diags)
+
+    for alph, prof in zip(np.split(copy._alpha, copy._size_starts[1:]),
+                          np.split(copy._profiles, copy._size_starts[1:])):
+        perm = np.random.permutation(alph.size)
+        np.copyto(alph, alph[perm])
+        np.copyto(prof, prof[perm])
+    assert regg == copy
+
+    copy._alpha.fill(0)
     assert regg != copy
-    copy._alphas = tuple(0 for _ in copy._alphas)
+    copy._profiles.fill(0)
     assert regg != copy
-    copy._train_data = tuple(0 for _ in copy._train_data)
+    copy._lengths.fill(0)
     assert regg != copy
-    copy._lengths = np.zeros_like(copy._lengths)
+    copy._coefs.fill(0)
     assert regg != copy
-    copy._coefs = np.zeros_like(copy._coefs)
-    assert regg != copy
-    copy._offset = np.zeros_like(copy._offset)
+    copy._offset.fill(0)
     assert regg != copy
 
 
-@pytest.mark.parametrize('_', range(20))
-def test_continuous_approximation(_):
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
-    reggame = learning.rbfgame_train(game)
-    full = paygame.game_copy(reggame)
+@pytest.mark.parametrize('players,strats,num', [
+    (10, 3, 15),
+    ([2, 3], [3, 2], 15),
+    ([1, 3], [2, 2], 1.0),
+])
+@pytest.mark.parametrize('_', range(10))
+def test_continuous_approximation(players, strats, num, _):
+    game = gamegen.add_profiles(rsgame.emptygame(players, strats), num)
+    learn = learning.rbfgame_train(game)
+    full = paygame.game_copy(learn)
+    red = np.eye(game.num_roles).repeat(game.num_role_strats, 0)
+    size = np.eye(game.num_strats).repeat(learn._sizes, 0)
 
-    for mix in game.grid_mixtures(11):
-        truth = full.deviation_payoffs(mix)
-        approx, ajac = reggame.deviation_payoffs(mix, jacobian=True)
-        tjac = testutils.mixture_jacobian_estimate(
-            game, reggame.deviation_payoffs, mix)
-        assert np.allclose(approx, truth, rtol=0.1, atol=0.2)
-        # FIXME How high these values are indicates that there is likely a
-        # problem with the jacobian computation. It's not uncommon for there
-        # error to be because of a sign flip, which is especially problematic.
-        assert np.allclose(ajac, tjac, rtol=1, atol=0.5)
+    def devpays(mix):
+        players = learn._dev_players.repeat(game.num_role_strats, 1)
+        avg_prof = players * mix
+        diag = 1 / (learn._lengths ** 2 + avg_prof)
+        diag_sizes = anp.dot(size, diag)
+        diff = learn._profiles - anp.dot(size, avg_prof)
+        det = 1 / (1 - learn._dev_players * anp.dot(mix ** 2 * diag, red))
+        det_sizes = anp.dot(size, det)
+        cov_diag = anp.einsum('ij,ij,ij->i', diff, diff, diag_sizes)
+        cov_outer = anp.dot(mix * diag_sizes * diff, red)
+        sec_term = anp.einsum(
+            'ij,ij,ij,ij->i', learn._dev_players.repeat(learn._sizes, 0),
+            det_sizes, cov_outer, cov_outer)
+        exp = anp.exp(-(cov_diag + sec_term) / 2)
+        coef = anp.prod(learn._lengths, 1) * anp.sqrt(
+            anp.prod(diag, 1) * anp.prod(det, 1))
+        avg = anp.dot(learn._alpha * exp, size)
+        return learn._coefs * coef * avg + learn._offset
 
+    jacobian = autograd.jacobian(devpays)
 
-def test_continuous_approximation_one_players():
-    game = gamegen.add_profiles(rsgame.emptygame([1, 3], [2, 2]))
-    reggame = learning.rbfgame_train(game)
-    full = paygame.game_copy(reggame)
+    def devpays_jac(mix):
+        jac = jacobian(mix)
+        jac -= np.repeat(
+            np.add.reduceat(jac, game.role_starts, 1) /
+            game.num_role_strats, game.num_role_strats, 1)
+        return jac
 
-    for mix in game.grid_mixtures(11):
-        truth = full.deviation_payoffs(mix)
-        approx = reggame.deviation_payoffs(mix)
-        assert np.allclose(approx, truth, rtol=0.1, atol=0.2)
+    for mix in itertools.chain(game.random_mixtures(20),
+                               game.random_sparse_mixtures(20)):
+        dev = full.deviation_payoffs(mix)
+        adev, ajac = learn.deviation_payoffs(mix, jacobian=True)
+        assert np.allclose(adev, dev, rtol=0.1, atol=0.2)
+        tdev = devpays(mix)
+        tjac = devpays_jac(mix)
+        assert np.allclose(adev, tdev)
+        assert np.allclose(ajac, tjac)

@@ -3,10 +3,11 @@ import pytest
 
 import numpy as np
 
-from gameanalysis import gamereader
 from gameanalysis import agggen
-from gameanalysis import matgame
 from gameanalysis import gamegen
+from gameanalysis import gamereader
+from gameanalysis import learning
+from gameanalysis import matgame
 from gameanalysis import rsgame
 
 
@@ -15,6 +16,10 @@ game = gamegen.add_profiles(egame, 0.5)
 sgame = gamegen.add_noise(game, 1, 3)
 agg = agggen.normal_aggfn([3, 4], [4, 3], 10)
 mat = matgame.matgame(np.random.random((4, 3, 2, 3)))
+rbf = learning.rbfgame_train(game)
+point = learning.point(rbf)
+sample = learning.sample(rbf)
+neighbor = learning.neighbor(rbf)
 
 
 @pytest.mark.parametrize('game', [egame, game, sgame, agg, mat])

@@ -204,8 +204,9 @@ class Game(rsgame.RsGame):
             devs.fill(np.nan)
 
         if ignore_incomplete:
+            # FIXME tprobs may be zero
             tprobs = probs.sum(0)
-            devs /= probs.sum(0)
+            devs /= tprobs
 
         if not jacobian:
             return devs
