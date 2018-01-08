@@ -121,9 +121,6 @@ class MatrixGame(rsgame.CompleteGame):
             the deviating strategy, the second axis is the strategy in the mix
             the jacobian is taken with respect to.
         """
-        # TODO This has a lot of for loops. It might be able to be more
-        # efficient if we add _TINY to the mixture so we can just divide, or
-        # potentially reshape payoff_matrix, but I'm not really sure.
         rmix = []
         for r, m in enumerate(np.split(mix, self.role_starts[1:])):
             shape = [1] * self.num_roles
@@ -298,7 +295,6 @@ def matgame_copy(copy_game):
     payoff_matrix = np.empty(shape, float)
     offset = copy_game.role_starts.repeat(copy_game.num_role_players)
     for profile, payoffs in zip(copy_game.profiles(), copy_game.payoffs()):
-        # TODO Is is possible to do this with array logic?
         inds = itertools.product(*[
             set(itertools.permutations(np.arange(s.size).repeat(s))) for s
             in np.split(profile, copy_game.role_starts[1:])])

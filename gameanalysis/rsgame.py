@@ -34,15 +34,6 @@ import scipy.special as sps
 from gameanalysis import utils
 
 
-# TODO It may be possible to be excessively clever, where we subclass ndarray
-# with our own "profile-esqe" class. This class will necessarily retain a
-# reference to the game it refers to, but is otherwise an ndarray. It could
-# have to_json and str representations, where internally it would check the
-# dimension and dtype to determine if this is one or several and a mixture
-# profile or subgame. This seems really cool, but may be more clever than
-# helpful.
-
-
 class StratArray(object):
     """A class with knowledge of the number of strategies per role
 
@@ -184,8 +175,7 @@ class StratArray(object):
                 self.dev_strat_starts.repeat(self.num_strat_devs) +
                 self.role_starts.repeat(self.num_role_devs))
 
-        # XXX The use of bincount here allows for one strategy roles
-        # FIXME This should be possible with .dot(np.eye().repeat)
+        # The use of bincount here allows for one strategy roles
         pos_offset = np.bincount(np.arange(self.num_strats) -
                                  self.role_starts.repeat(self.num_role_strats)
                                  + self.dev_strat_starts,
@@ -517,8 +507,7 @@ class StratArray(object):
             if num_strats == 1:
                 mix = np.ones((1, 1))
             else:
-                mix = np.empty((num_strats, num_strats))
-                mix.fill((1 - bias) / (num_strats - 1))
+                mix = np.full((num_strats,) * 2, (1 - bias) / (num_strats - 1))
                 np.fill_diagonal(mix, bias)
             role_mixtures.append(mix)
 
@@ -1036,12 +1025,6 @@ class RsGame(StratArray):
         """The total number of profiles in the game
 
         Not just the ones with data."""
-        # XXX Ideally this would be self.num_all_role_profiles.prod() with a
-        # check for overflow, but there is no check for overflow on array
-        # operations, so we have to do this manually. Another option would be
-        # to cast as a float and then for overflow on returning to an int, but
-        # this seems more straightforward. Currently, python integers don't
-        # overflow, so we just make sure that the product is done with them.
         return self.num_all_role_profiles.astype(object).prod()
 
     @property
@@ -1096,7 +1079,7 @@ class RsGame(StratArray):
     @property
     @utils.memoize
     def _prof_id_base(self):
-        # XXX Base is reversed so that profile_ids are ascending
+        # Base is reversed so that profile_ids are ascending
         rprofs = self.num_all_role_profiles
         if self.num_all_profiles > np.iinfo(int).max:
             rprofs = rprofs.astype(object)
@@ -1139,7 +1122,7 @@ class RsGame(StratArray):
         dec_profs_iter = dec_profs.view()
         dec_profs_iter.shape = (-1, self.num_strats)
 
-        # XXX This can't be vectroized further, because the sizes are dependent
+        # This can't be vectorized further, because the sizes are dependent
         for sizes, profs in zip(
                 role_ids_iter.T,
                 np.split(dec_profs_iter.T, self.role_starts[1:])):
@@ -1222,7 +1205,6 @@ class RsGame(StratArray):
 
     def nearby_profiles(self, profile, num_devs):
         """Returns profiles reachable by at most num_devs deviations"""
-        # TODO This is pretty slow and could probably be sped up
         assert num_devs >= 0
         profile = np.asarray(profile, int)
         dev_players = utils.acomb(self.num_roles, num_devs, True)
@@ -1250,8 +1232,6 @@ class RsGame(StratArray):
     def random_profile(self, mixture=None):
         return self.random_profiles(1, mixture)[0]
 
-    # TODO Allow mixture to be several mixtures. This might not be
-    # possible with the way multinomial is structured.
     def random_profiles(self, num_samples=None, mixture=None):
         """Sample profiles from a mixture
 
@@ -1580,20 +1560,15 @@ class EmptyGame(RsGame):
     def payoffs(self):
         return np.empty((0, self.num_strats), float)
 
-    def _nan_array(self):
-        arr = np.empty(self.num_strats)
-        arr.fill(np.nan)
-        return arr
-
     @utils.memoize
     def max_strat_payoffs(self):
-        maxs = self._nan_array()
+        maxs = np.full(self.num_strats, np.nan)
         maxs.setflags(write=False)
         return maxs.view()
 
     @utils.memoize
     def min_strat_payoffs(self):
-        mins = self._nan_array()
+        mins = np.full(self.num_strats, np.nan)
         mins.setflags(write=False)
         return mins.view()
 
@@ -1607,12 +1582,12 @@ class EmptyGame(RsGame):
 
     def deviation_payoffs(self, mixture, *, jacobian=False):
         assert self.is_mixture(mixture)
+        devs = np.full(self.num_strats, np.nan)
         if not jacobian:
-            return self._nan_array()
+            return devs
 
-        jac = np.empty((self.num_strats, self.num_strats))
-        jac.fill(np.nan)
-        return self._nan_array(), jac
+        jac = np.full((self.num_strats,) * 2, np.nan)
+        return devs, jac
 
     def subgame(self, sub_mask):
         return emptygame_copy(super().subgame(sub_mask))

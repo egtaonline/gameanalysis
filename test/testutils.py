@@ -16,7 +16,7 @@ games = [
 ]
 
 
-def warnings_filter(status='ignore'):
+def warnings_filter(category=Warning, status='ignore'):
     """decorator to apply warning filter to a function
 
     Arguments
@@ -27,7 +27,7 @@ def warnings_filter(status='ignore'):
         @functools.wraps(func)
         def wrapped(*args, **kwargs):
             with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
+                warnings.simplefilter('ignore', category)
                 return func(*args, **kwargs)
         return wrapped
     return decorator

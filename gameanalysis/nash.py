@@ -95,7 +95,6 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
         minimum and maximum payoffs. This has an effect on convergence, but the
         actual effect isn't really know.
     """
-    # TODO Add efficient cycle detection to remove max_iters
     minp = game.min_role_payoffs()
     maxp = game.max_role_payoffs()
 

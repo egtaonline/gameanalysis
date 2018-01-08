@@ -183,21 +183,18 @@ def max_pure_social_welfare(game, *, by_role=False):
     """Returns the maximum social welfare over the known profiles.
 
     If by_role is specified, then max social welfare applies to each role
-    independently."""
+    independently. If there are no profiles with full payoff data for a role,
+    an arbitrary profile will be returned."""
     if by_role:
-        if game.num_complete_profiles:
-            # TODO technically you could have no complete profiles, but full
-            # payoff data for all roles
+        if game.num_profiles:
             welfares = np.add.reduceat(
                 game.profiles() * game.payoffs(), game.role_starts, 1)
             prof_inds = np.nanargmax(welfares, 0)
             return (welfares[prof_inds, np.arange(game.num_roles)],
                     game.profiles()[prof_inds])
         else:
-            welfares = np.empty(game.num_roles)
-            welfares.fill(np.nan)
-            profiles = np.empty(game.num_roles, dtype=object)
-            profiles.fill(None)
+            welfares = np.full(game.num_roles, np.nan)
+            profiles = np.full(game.num_roles, None)
             return welfares, profiles
 
     else:

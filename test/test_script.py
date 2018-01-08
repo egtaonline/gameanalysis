@@ -15,9 +15,9 @@ from gameanalysis.reduction import deviation_preserving as dpr
 from gameanalysis.reduction import hierarchical as hr
 from gameanalysis.reduction import twins as tr
 
-# XXX To pass files to some scripts we use tempfile.NamedTemporaryFile and just
-# flush it. This will likely fail on windows.
-# XXX Some tests also use /dev/null which will also fail on windows
+# To pass files to some scripts we use tempfile.NamedTemporaryFile and just
+# flush it prior to running the scripts. Some tests also use /dev/null. Both of
+# these will fail on windows.
 
 
 DIR = path.dirname(path.realpath(__file__))

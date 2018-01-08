@@ -30,8 +30,7 @@ def _reduceat(ufunc, a, indices, axis=0):
     """Fix for the way reduceat handles empty slices"""
     new_shape = list(a.shape)
     new_shape[axis] = indices.size
-    out = np.empty(new_shape, a.dtype)
-    out.fill(ufunc.identity)
+    out = np.full(new_shape, ufunc.identity, a.dtype)
     valid = np.diff(np.insert(indices, indices.size, a.shape[axis])) > 0
     index = [slice(None)] * out.ndim
     index[axis] = valid

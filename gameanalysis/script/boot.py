@@ -60,8 +60,6 @@ def add_parser(subparsers):
 
 
 def main(args):
-    # TODO Profiles that aren't in support of mixtures or single deviations
-    # could be safely pruned.
     game = gamereader.read(json.load(args.input))
     profiles = np.concatenate([game.profile_from_json(p)[None] for p
                                in scriptutils.load_profiles(args.profiles)])

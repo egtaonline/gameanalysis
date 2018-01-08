@@ -66,8 +66,6 @@ def add_parser(subparsers):
         '--sorted-roles', '-s', action='store_true', help="""If set, reduction
         should be a comma separated list of reduced counts for the role names
         in sorted order.""")
-    # TODO Want metavar to be '<role>:<count>[,<role>:<count>]...', but
-    # argparse doesn't allow [] in metavars
     parser.add_argument(
         'reduction', nargs='?', metavar='<role>:<count>,...',
         help="""Number of players in each reduced-game role.  This is a string

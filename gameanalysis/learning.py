@@ -8,6 +8,8 @@ games. Learned games vary by the method, but generally expose methods for
 computing payoffs and may other features. Deviation games use learned games and
 different functions to compute deviation payoffs via various methods.
 """
+import warnings
+
 import numpy as np
 import sklearn
 from sklearn import gaussian_process as gp
@@ -17,9 +19,6 @@ from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import subgame
 from gameanalysis import utils
-
-
-# TODO Replace np.fill with np.full
 
 
 class DevRegressionGame(rsgame.CompleteGame):
@@ -447,13 +446,15 @@ def rbfgame_train(game, num_restarts=3):
         means[s] = pay_mean
         coefs[s] = reg.kernel_.k1.k1.constant_value
         lengths[s] = reg.kernel_.k1.k2.length_scale
-        # TODO If these scales are at the boundary (1 or dev_players) then it's
-        # likely a poor fit and we should warn...
         uprofs, inds = utils.unique_axis(
             profs, return_inverse=True)
         profiles.append(uprofs)
         alpha.append(np.bincount(inds, reg.alpha_))
         sizes.append(inds.size)
+
+    if np.any(lengths[..., None] == bounds):
+        warnings.warn("some lengths were at their bounds, "
+                      "this may indicate a poor fit")
 
     return RbfGpGame(
         game.role_names, game.strat_names, game.num_role_players, means, coefs,

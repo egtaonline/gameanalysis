@@ -369,8 +369,6 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
         not allowed in the function table as they are clutter, instead,
         constant functions can be specified here.
     """
-    # XXX aggfn_names_replaces checks that these names are valid, even though
-    # we know they are, but this is easier to read so it seems like a win.
     function_names = tuple(utils.prefix_strings('f', len(action_weights)))
     return aggfn_names_replace(copy_game, function_names, action_weights,
                                function_inputs, function_table, offsets)

@@ -14,6 +14,7 @@ from gameanalysis import learning
 from gameanalysis import paygame
 from gameanalysis import rsgame
 from gameanalysis import subgame
+from test import testutils
 
 
 games = [
@@ -23,6 +24,7 @@ games = [
 ]
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('dist', range(5))
 def test_rbfgame_members(players, strats, dist):
@@ -102,6 +104,7 @@ def test_skltrain():
         reggame.random_role_deviation_profile())))
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('_', range(5))
 def test_rbfgame_subgame(players, strats, _):
@@ -151,6 +154,7 @@ def test_rbfgame_subgame(players, strats, _):
     assert copy == subsubreg
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('_', range(5))
 def test_rbfgame_normalize(players, strats, _):
@@ -185,6 +189,7 @@ def test_rbfgame_normalize(players, strats, _):
     assert copy == normreg
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_sample(_):
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
@@ -276,6 +281,7 @@ def test_sample(_):
     assert copy == learn
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_point(_):
     # We increase player number so point is a more accurate estimator
@@ -337,6 +343,7 @@ def test_point(_):
     assert copy == learn
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_neighbor(_):
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
@@ -373,6 +380,7 @@ def test_neighbor(_):
     assert copy == learn
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', [
     [[1, 5], [2, 2]],
     [[2, 3], [3, 2]],
@@ -389,6 +397,7 @@ def test_rbfgame_min_max_payoffs(players, strats, _):
                   reggame.max_strat_payoffs() + 1e-4)
 
 
+@testutils.warnings_filter(UserWarning)
 def test_rbfgame_equality():
     """Test all branches of equality test"""
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
@@ -420,6 +429,7 @@ def test_rbfgame_equality():
     assert regg != copy
 
 
+@testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats,num', [
     (10, 3, 15),
     ([2, 3], [3, 2], 15),

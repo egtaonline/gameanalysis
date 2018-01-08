@@ -482,6 +482,7 @@ def test_deviation_payoffs_jacobian():
     assert np.allclose(dpj, expected_jac)
 
 
+# TODO This test fails for sparse mixtures
 @pytest.mark.parametrize('players,strats', testutils.games)
 @pytest.mark.parametrize('ignore', [False, True])
 @pytest.mark.parametrize('_', range(5))
@@ -521,8 +522,6 @@ def test_random_deviation_payoffs_jacobian(players, strats, ignore, _):
         tjac = devpays_jac(mix)
         assert np.allclose(dev, tdev)
         assert np.allclose(jac, tjac)
-
-    # FIXME Test sparse mixtures, which fail...
 
 
 @pytest.mark.parametrize('players,strats', testutils.games)

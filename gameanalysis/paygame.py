@@ -10,12 +10,6 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-# TODO Using array set operations would allow for convenient array operations
-# like, "are all of these profiles in the game", however, it requires sorting
-# of large void types which is very expensive, less so than just hashing the
-# data. Maybe pandas or other libraries have more efficient variants?
-
-
 class Game(rsgame.RsGame):
     """Role-symmetric data game representation
 
@@ -84,8 +78,7 @@ class Game(rsgame.RsGame):
     def min_strat_payoffs(self):
         """Returns the minimum payoff for each role"""
         if not self.num_profiles:
-            pays = np.empty(self.num_strats)
-            pays.fill(np.nan)
+            pays = np.full(self.num_strats, np.nan)
         else:
             pays = np.fmin.reduce(np.where(
                 self._profiles > 0, self._payoffs, np.nan), 0)
@@ -96,8 +89,7 @@ class Game(rsgame.RsGame):
     def max_strat_payoffs(self):
         """Returns the maximum payoff for each role"""
         if not self.num_profiles:
-            pays = np.empty(self.num_strats)
-            pays.fill(np.nan)
+            pays = np.full(self.num_strats, np.nan)
         else:
             pays = np.fmax.reduce(np.where(
                 self._profiles > 0, self._payoffs, np.nan), 0)
@@ -147,9 +139,6 @@ class Game(rsgame.RsGame):
             mass that is known, creating a biased estimate based of the data
             that is present.
         """
-        # TODO It wouldn't be hard to extend this to multiple mixtures, which
-        # would allow array calculation of mixture regret. Support would have
-        # to be iterative though.
         mix = np.asarray(mix, float)
         nan_mask = np.empty_like(mix, dtype=bool)
 
@@ -200,13 +189,13 @@ class Game(rsgame.RsGame):
             devs[nan_mask] = np.nan
 
         else:
-            devs = np.empty(self.num_strats)
-            devs.fill(np.nan)
+            devs = np.full(self.num_strats, np.nan)
 
         if ignore_incomplete:
-            # FIXME tprobs may be zero
             tprobs = probs.sum(0)
-            devs /= tprobs
+            tsupp = tprobs > 0
+            devs[tsupp] /= tprobs[tsupp]
+            devs[~tsupp] = np.nan
 
         if not jacobian:
             return devs
@@ -217,13 +206,13 @@ class Game(rsgame.RsGame):
             if ignore_incomplete:
                 dev_jac -= (np.einsum('ij,ijk->jk', probs, product_rule) *
                             devs[:, None])
-                dev_jac /= tprobs[:, None]
+                dev_jac[tsupp] /= tprobs[tsupp, None]
+                dev_jac[~tsupp] = np.nan
             dev_jac -= np.repeat(
                 np.add.reduceat(dev_jac, self.role_starts, 1) /
                 self.num_role_strats, self.num_role_strats, 1)
         else:
-            dev_jac = np.empty((self.num_strats, self.num_strats))
-            dev_jac.fill(np.nan)
+            dev_jac = np.full((self.num_strats,) * 2, np.nan)
 
         return devs, dev_jac
 
@@ -639,8 +628,7 @@ class SampleGame(Game):
     @utils.memoize
     def min_strat_payoffs(self):
         """Returns the minimum payoff for each role"""
-        mins = np.empty(self.num_strats)
-        mins.fill(np.nan)
+        mins = np.full(self.num_strats, np.nan)
         for profs, spays in zip(
                 np.split(self._profiles, self.sample_starts[1:]),
                 self._sample_payoffs):
@@ -653,8 +641,7 @@ class SampleGame(Game):
     @utils.memoize
     def max_strat_payoffs(self):
         """Returns the maximum payoff for each role"""
-        maxs = np.empty(self.num_strats)
-        maxs.fill(np.nan)
+        maxs = np.full(self.num_strats, np.nan)
         for profs, spays in zip(
                 np.split(self._profiles, self.sample_starts[1:]),
                 self._sample_payoffs):
@@ -821,10 +808,10 @@ class SampleGame(Game):
 
     def samplepay_to_json(self, samplepay):
         """Format sample payoffs as json"""
-        # XXX In a really weird degenerate case, if all payoffs are 0, we'll
-        # write out an empty dictionary, which loses information about the
-        # number of samples. In that case we arbitrarily write out the first
-        # strategy with zero payoffs.
+        # In a really weird degenerate case, if all payoffs are 0, we'll write
+        # out an empty dictionary, which loses information about the number of
+        # samples. In that case we arbitrarily write out the first strategy
+        # with zero payoffs.
         samplepay = np.asarray(samplepay, float)
         if np.all(samplepay == 0):
             return {self.role_names[0]: {
@@ -988,7 +975,8 @@ class SampleGame(Game):
 
 def _sample_payoffs_equal(p1, p2):
     """Returns true if two sample payoffs are almost equal"""
-    # XXX Pathological payoffs will make this fail, but we're testing for
+    # Pathological payoffs will make this fail, e.g. small perturbations to
+    # almost equal payoffs that invert their order, but we're testing for
     # equality, so that's not really an issue, as strict permutations will
     # still be valid.
     return (p1.shape[0] == p2.shape[0] and

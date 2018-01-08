@@ -215,22 +215,10 @@ def test_empty_game():
 def test_hard_nash():
     with open('test/hard_nash_game_1.json') as f:
         game = gamereader.read(json.load(f))
+    expected = [0.54074609, 0.45925391, 0, 0, 0, 1, 0, 0, 0]
     eqa = nash.mixed_nash(game)
-    expected = game.mixture_from_json({
-        'background': {
-            'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
-            0.5407460907477768,
-            'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9':
-            0.45925390925222315
-        },
-        'hft': {
-            'trend:trendLength_5_profitDemanded_50_expiration_50': 1.0
-        }
-    })
-    # XXX The updated version of scipy must do something different in the
-    # optimization library that causes this to not always converge.
-    assert not eqa.size or np.isclose(game.trim_mixture_support(eqa), expected,
-                                      atol=1e-4, rtol=1e-4).all(1).any(), \
+    assert np.isclose(game.trim_mixture_support(eqa), expected,
+                      atol=1e-4, rtol=1e-4).all(1).any(), \
         "Didn't find equilibrium in known hard instance"
 
 
