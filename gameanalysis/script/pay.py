@@ -69,7 +69,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
+    game = gamereader.load(args.input)
     prof_func = TYPE[args.type]
     payoffs = [prof_func(game, game.mixture_from_json(prof, verify=False))
                for prof in scriptutils.load_profiles(args.profiles)]

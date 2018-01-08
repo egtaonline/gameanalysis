@@ -360,7 +360,7 @@ def test_neighbor(_):
         dev, _ = learn.deviation_payoffs(mix, jacobian=True)
         err = (tdev - dev) ** 2 / (np.abs(dev) + 1e-5)
         errors += (err - errors) / i
-    assert np.all(errors < 0.5)
+    assert np.all(errors < 1)
 
     submask = game.random_subgame()
     sublearn = learn.subgame(submask)

@@ -56,7 +56,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = learning.rbfgame_train(gamereader.read(json.load(args.input)))
+    game = learning.rbfgame_train(gamereader.load(args.input))
     methods = {'replicator': {'max_iters': args.max_iters,
                               'converge_thresh': args.converge_thresh},
                'optimize': {}}

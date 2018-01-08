@@ -45,6 +45,44 @@ def test_role_symmetric_game(players, strategies):
         "didn't generate correct number of strategies"
 
 
+@pytest.mark.parametrize('_', range(20))
+@pytest.mark.parametrize('players,strategies', [
+    ([1], [1]),
+    ([1] * 3, [2] * 3),
+    ([3], [2]),
+    ([2, 2], [3, 3]),
+    ([1, 2], [2, 2]),
+    ([2, 2], [1, 2]),
+    ([1, 2], [1, 2]),
+])
+def test_game(players, strategies, _):
+    game = gamegen.game(players, strategies)
+    assert game.is_complete(), "didn't generate a full game"
+    assert np.all(players == game.num_role_players), \
+        "didn't generate correct number of strategies"
+    assert np.all(strategies == game.num_role_strats), \
+        "didn't generate correct number of strategies"
+
+
+@pytest.mark.parametrize('_', range(20))
+@pytest.mark.parametrize('players,strategies', [
+    ([1], [1]),
+    ([1] * 3, [2] * 3),
+    ([3], [2]),
+    ([2, 2], [3, 3]),
+    ([1, 2], [2, 2]),
+    ([2, 2], [1, 2]),
+    ([1, 2], [1, 2]),
+])
+def test_samplegamegame(players, strategies, _):
+    game = gamegen.samplegame(players, strategies)
+    assert game.is_complete(), "didn't generate a full game"
+    assert np.all(players == game.num_role_players), \
+        "didn't generate correct number of strategies"
+    assert np.all(strategies == game.num_role_strats), \
+        "didn't generate correct number of strategies"
+
+
 @pytest.mark.parametrize('players,strategies', [
     ([1], [1]),
     ([1] * 3, [2] * 3),

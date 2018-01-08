@@ -220,7 +220,7 @@ def matgame(payoff_matrix):
     payoff_matrix : ndarray-like
         The matrix of payoffs for an asymmetric game.
     """
-    payoff_matrix = np.asarray(payoff_matrix, float)
+    payoff_matrix = np.ascontiguousarray(payoff_matrix, float)
     return matgame_replace(
         rsgame.emptygame(
             np.ones(payoff_matrix.ndim - 1, int),
@@ -336,7 +336,7 @@ def matgame_replace(base, payoff_matrix):
         Game to take structure out of.
     payoff_matrix : ndarray-like
         The new payoff matrix."""
-    payoff_matrix = np.asarray(payoff_matrix, float)
+    payoff_matrix = np.ascontiguousarray(payoff_matrix, float)
     assert np.all(base.num_role_players == 1), \
         "replaced game must be independent"
     assert payoff_matrix.shape == (tuple(base.num_role_strats) +

@@ -1,4 +1,4 @@
-import json
+from os import path
 
 import numpy as np
 
@@ -251,6 +251,6 @@ def test_travellers_dilemma():
 
 
 def test_known_fail_case():
-    with open('test/hard_nash_game_1.json') as f:
-        game = gamereader.read(json.load(f))
+    with open(path.join('example_games', 'hard_nash.json')) as f:
+        game = gamereader.load(f)
     dominance.iterated_elimination(game, 'neverbr')

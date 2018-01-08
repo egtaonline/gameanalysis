@@ -15,6 +15,40 @@ def default_distribution(shape=None):
     return rand.uniform(-1, 1, shape)
 
 
+def game(players, strats, prob_or_count=1.0,
+         distribution=default_distribution):
+    """Generate a random role symmetric game
+
+    See `add_profiles`.
+    """
+    return add_profiles(rsgame.emptygame(players, strats), prob_or_count,
+                        distribution)
+
+
+def samplegame(players, strats, prob=0.5, complete=True,
+               distribution=default_distribution):
+    """Generate a random role symmetric sample game
+
+    Parameters
+    ----------
+    players : int or [int]
+        The number of players per role.
+    strats : int or [int]
+        The number of strategies per role.
+    prob : float, optional
+        The probability of adding another sample payoff.
+    complete : boolean, optional
+        If true, game will be complete with one or more samples per profile. If
+        false, a profile will be missing data with `1 - prob`.
+    distribution : (shape) -> ndarray
+        The distribution of the initial payoffs and the noise that will be
+        added to them.
+    """
+    return add_noise(game(players, strats, distribution=distribution),
+                     prob, complete, distribution)
+
+
+# TODO Remove
 def role_symmetric_game(num_role_players, num_role_strats,
                         distribution=default_distribution):
     """Generate a random role symmetric game

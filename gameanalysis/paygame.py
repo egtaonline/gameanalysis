@@ -961,6 +961,7 @@ class SampleGame(Game):
         return '{}, {})'.format(super().__repr__()[:-1], sample_str)
 
     def __str__(self):
+        samples = self.num_sample_profs.dot(self.num_samples)
         if self.num_samples.size == 0:
             sampstr = 'no observations'
         elif self.num_samples.size == 1:
@@ -970,7 +971,9 @@ class SampleGame(Game):
         else:
             sampstr = '{:d} to {:d} observations per profile'.format(
                 self.num_samples.min(), self.num_samples.max())
-        return '{}\n{}'.format(super().__str__(), sampstr)
+        return '{}\n{} payoff sample{}\n{}'.format(
+            super().__str__(), 'no' if samples == 0 else samples,
+            '' if samples == 1 else 's', sampstr)
 
 
 def _sample_payoffs_equal(p1, p2):

@@ -609,7 +609,7 @@ def sample_json(json):
     """Read sample game from json"""
     assert json['type'].split('.', 1)[0] == 'sample', \
         "incorrect type"
-    return SampleDeviationGame(gamereader.read(json['model']),
+    return SampleDeviationGame(gamereader.loadj(json['model']),
                                num_samples=json['samples'])
 
 
@@ -677,7 +677,7 @@ def point_json(json):
     """Read point game from json"""
     assert json['type'].split('.', 1)[0] == 'point', \
         "incorrect type"
-    return PointDeviationGame(gamereader.read(json['model']))
+    return PointDeviationGame(gamereader.loadj(json['model']))
 
 
 class NeighborDeviationGame(_DeviationGame):
@@ -752,5 +752,5 @@ def neighbor_json(json):
     """Read neighbor game from json"""
     assert json['type'].split('.', 1)[0] == 'neighbor', \
         "incorrect type"
-    return NeighborDeviationGame(gamereader.read(json['model']),
+    return NeighborDeviationGame(gamereader.loadj(json['model']),
                                  num_devs=json['devs'])

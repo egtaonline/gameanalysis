@@ -60,7 +60,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
+    game = gamereader.load(args.input)
     profiles = np.concatenate([game.profile_from_json(p)[None] for p
                                in scriptutils.load_profiles(args.profiles)])
     bootf, meanf = CHOICES[args.type]

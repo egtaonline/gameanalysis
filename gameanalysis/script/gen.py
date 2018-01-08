@@ -87,7 +87,7 @@ class Noise(object):
 
     @staticmethod
     def create(args):
-        game = gamereader.read(json.load(args.input))
+        game = gamereader.load(args.input)
         dist = Noise.distributions[args.distribution]
         return gamegen.add_noise_width(
             game, args.num_samples, args.max_width, dist)

@@ -418,6 +418,13 @@ def test_function_index():
         assert _game.function_index('f{:d}'.format(i)) == i
 
 
+def test_eq():
+    copy = aggfn.aggfn_replace(
+        _game, _game.action_weights, _game.function_inputs,
+        _game.function_table, np.ones(_game.num_strats))
+    assert copy != _game
+
+
 def test_deprecation():
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', DeprecationWarning)

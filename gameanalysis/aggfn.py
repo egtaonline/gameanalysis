@@ -271,15 +271,17 @@ class AgfnGame(rsgame.CompleteGame):
             nfuncs=self.num_functions)
 
     def __eq__(self, other):
+        if not (super().__eq__(other) and
+                self.function_names == other.function_names and
+                self.function_table.shape == other.function_table.shape and
+                np.allclose(self.offsets, other.offsets)):
+            return False
+
         selfp = np.lexsort(
             self.function_table.reshape((self.num_functions, -1)).T)
         otherp = np.lexsort(
             other.function_table.reshape((other.num_functions, -1)).T)
-        return (super().__eq__(other) and
-                self.function_names == other.function_names and
-                self.function_table.shape == other.function_table.shape and
-                np.allclose(self.offsets, other.offsets) and
-                np.all(self.function_inputs[:, selfp]
+        return (np.all(self.function_inputs[:, selfp]
                        == other.function_inputs[:, otherp]) and
                 np.allclose(self.action_weights[selfp],
                             other.action_weights[otherp]) and
@@ -369,7 +371,10 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
         not allowed in the function table as they are clutter, instead,
         constant functions can be specified here.
     """
-    function_names = tuple(utils.prefix_strings('f', len(action_weights)))
+    if hasattr(copy_game, 'function_names'):
+        function_names = copy_game.function_names
+    else:
+        function_names = tuple(utils.prefix_strings('f', len(action_weights)))
     return aggfn_names_replace(copy_game, function_names, action_weights,
                                function_inputs, function_table, offsets)
 

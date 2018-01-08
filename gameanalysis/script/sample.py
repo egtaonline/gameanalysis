@@ -37,7 +37,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = rsgame.emptygame_copy(gamereader.read(json.load(args.input)))
+    game = rsgame.emptygame_copy(gamereader.load(args.input))
     mix = game.mixture_from_json(json.load(args.mix))
 
     if args.seed:

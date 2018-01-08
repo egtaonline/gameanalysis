@@ -83,7 +83,7 @@ def parse_reduction(game, red):
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
+    game = gamereader.load(args.input)
 
     if args.dpr is not None:
         red_players = parse_reduction(game, args.dpr)

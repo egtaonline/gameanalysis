@@ -80,7 +80,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
+    game = gamereader.load(args.input)
 
     if args.type == 'pure':
         equilibria = nash.pure_nash(game, epsilon=args.regret)

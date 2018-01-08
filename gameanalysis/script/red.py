@@ -74,7 +74,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
+    game = gamereader.load(args.input)
     reduced_players = (
         None if not args.reduction
         else PLAYERS[args.sorted_roles](args.reduction, game))

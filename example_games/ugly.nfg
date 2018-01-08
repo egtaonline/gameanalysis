@@ -1,0 +1,22 @@
+NFG 1 R "This is an game that attempts to break
+all norms with \"NFG\" parsing" {
+  "player
+ \"1\"" "a" "a" }
+
+{ { "1" "2" }
+{ "1" "\"2\"
+" }
+{ "1" "1" }
+}
+"This is
+a multi-line \"comment\", because why
+not"
+
+{
+{ "I don't know why these \"strings\" exist,
+but they can totally have new lines in them..." 9 8, 12 }
+{ "" -9e1, 8E-2 .2 }
+{ "" 3, +4,
+-6.2 }
+}
+1 0 0 2 0 3 3 0 

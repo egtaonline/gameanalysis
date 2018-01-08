@@ -1477,7 +1477,29 @@ SampleGame:
             s3
             s4
 payoff data for 0 out of 50 profiles
+no payoff samples
 no observations
+"""[1:-1]
+    assert str(game) == expected
+
+    game = paygame.samplegame_replace(base, profs[:1], [np.zeros((1, 1, 5))])
+    expected = """
+SampleGame:
+    Roles: r0, r1
+    Players:
+        3x r0
+        4x r1
+    Strategies:
+        r0:
+            s0
+            s1
+            s2
+        r1:
+            s3
+            s4
+payoff data for 1 out of 50 profiles
+1 payoff sample
+1 observation per profile
 """[1:-1]
     assert str(game) == expected
 
@@ -1497,6 +1519,7 @@ SampleGame:
             s3
             s4
 payoff data for 13 out of 50 profiles
+13 payoff samples
 1 observation per profile
 """[1:-1]
     assert str(game) == expected
@@ -1517,6 +1540,7 @@ SampleGame:
             s3
             s4
 payoff data for 13 out of 50 profiles
+26 payoff samples
 2 observations per profile
 """[1:-1]
     assert str(game) == expected
@@ -1540,6 +1564,7 @@ SampleGame:
             s3
             s4
 payoff data for 35 out of 50 profiles
+102 payoff samples
 2 to 4 observations per profile
 """[1:-1]
     assert str(game) == expected
@@ -1564,6 +1589,7 @@ SampleGame:
             s3
             s4
 payoff data for 40 out of 50 profiles
+132 payoff samples
 2 to 6 observations per profile
 """[1:-1]
     assert str(game) == expected

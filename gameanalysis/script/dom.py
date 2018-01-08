@@ -37,7 +37,7 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
+    game = gamereader.load(args.input)
     sub_mask = dominance.iterated_elimination(
         game, args.criterion, conditional=args.unconditional)
     if args.strategies:

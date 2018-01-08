@@ -22,10 +22,12 @@ from gameanalysis.reduction import twins as tr
 
 DIR = path.dirname(path.realpath(__file__))
 GA = path.join(DIR, '..', 'bin', 'ga')
-HARD_GAME = path.join(DIR, 'hard_nash_game_1.json')
+HARD_GAME = path.join(DIR, '..', 'example_games', 'hard_nash.json')
 with open(HARD_GAME, 'r') as f:
     HARD_GAME_STR = f.read()
-HARD_GAME_DATA = gamereader.read(json.loads(HARD_GAME_STR))
+with open(path.join(DIR, '..', 'example_games', 'ugly.nfg'), 'r') as f:
+    GAMBIT_STR = f.read()
+HARD_GAME_DATA = gamereader.loads(HARD_GAME_STR)
 GAME_DATA = gamegen.role_symmetric_game([3, 2], [2, 3])
 GAME_JSON = GAME_DATA.to_json()
 GAME_STR = json.dumps(GAME_JSON)
@@ -65,7 +67,7 @@ def test_dominance_1():
         game.flush()
         success, out, err = run('dom', '-i', game.name)
     assert success, err
-    game = gamereader.read(json.loads(out))
+    game = gamereader.loads(out)
     assert game == GAME_DATA
 
 
@@ -89,7 +91,7 @@ def test_dominance_4():
         game.flush()
         success, out, err = run('dom', '-cstrictdom', '-i', game.name)
     assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_dominance_5():
@@ -98,7 +100,7 @@ def test_dominance_5():
         game.flush()
         success, out, err = run('dom', '-cneverbr', '-i', game.name)
     assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_dominance_6():
@@ -121,14 +123,14 @@ def test_gamegen_1():
 def test_gamegen_2():
     success, out, err = run('gen', 'ursym', '3', '4', '4', '3')
     assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_gamegen_3():
     success, out, err = run('gen', 'noise', 'uniform', '1.5', '5',
                             input=GAME_STR)
     assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_gamegen_4():
@@ -138,7 +140,7 @@ def test_gamegen_4():
         success, out, err = run('gen', 'noise', 'gumbel',
                                 '1.5', '5', '-i', game.name)
     assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_gamegen_5():
@@ -148,7 +150,7 @@ def test_gamegen_5():
         success, out, err = run('gen', 'noise', 'bimodal',
                                 '1.5', '5', '-i', game.name)
     assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_gamegen_6():
@@ -158,7 +160,7 @@ def test_gamegen_6():
         success, out, err = run(
             'gen', 'noise', 'gaussian', '1.5', '5', '-i', game.name)
     assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_nash_1():
@@ -312,7 +314,7 @@ def test_payoff_pure_string():
 def test_reduction_1():
     success, out, err = run('red', 'background:2,hft:1', input=HARD_GAME_STR)
     assert success, err
-    game = gamereader.read(json.loads(out))
+    game = gamereader.loads(out)
     assert game == dpr.reduce_game(HARD_GAME_DATA, [2, 1])
 
 
@@ -322,7 +324,7 @@ def test_reduction_3():
         game.flush()
         success, out, err = run('red', '-thr', '-s', '2,1', '-i', game.name)
     assert success, err
-    game = gamereader.read(json.loads(out))
+    game = gamereader.loads(out)
     assert game == hr.reduce_game(GAME_DATA, [2, 1])
 
 
@@ -332,7 +334,7 @@ def test_reduction_4():
         game.flush()
         success, out, err = run('red', '-ttr', '-i', game.name)
     assert success, err
-    game = gamereader.read(json.loads(out))
+    game = gamereader.loads(out)
     assert game == tr.reduce_game(GAME_DATA)
 
 
@@ -343,7 +345,7 @@ def test_reduction_5():
         game.flush()
         success, out, err = run('red', '-tidr', '-i', game.name)
     assert success, err
-    game = gamereader.read(json.loads(out))
+    game = gamereader.loads(out)
     assert game == paygame.game_copy(GAME_DATA)
 
 
@@ -354,7 +356,7 @@ def test_reduction_6():
         game.flush()
         success, out, err = run('red', '-tidr', '-i', game.name)
         assert success, err
-    gamereader.read(json.loads(out))
+    gamereader.loads(out)
 
 
 def test_regret_pure():
@@ -448,7 +450,7 @@ def test_subgame_extract_2():
         sub.flush()
         success, out, err = run('sub', '-i', game.name, '-f', sub.name)
         assert success, err
-        game = gamereader.read(json.loads(out)[0])
+        game = gamereader.loadj(json.loads(out)[0])
         assert game == GAME_DATA.subgame(subg)
 
 
@@ -813,7 +815,7 @@ def test_samp_seed():
 
 
 def test_conv_game_empty():
-    success, _, err = run('conv', '-temptygame', '-o/dev/null', input=GAME_STR)
+    success, _, err = run('conv', '-o/dev/null', 'empty', input=GAME_STR)
     assert success, err
 
 
@@ -823,24 +825,44 @@ def test_conv_game_def():
 
 
 def test_conv_game_game():
-    success, _, err = run('conv', '-tgame', '-o/dev/null', input=GAME_STR)
+    success, _, err = run('conv', '-o/dev/null', 'game', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_sgame():
     success, _, err = run(
-        'conv', '-tsamplegame', '-o/dev/null', input=GAME_STR)
+        'conv', '-o/dev/null', 'samp', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_mat():
-    success, _, err = run('conv', '-tmatgame', '-o/dev/null', input=GAME_STR)
+    success, _, err = run('conv', '-o/dev/null', 'mat', input=GAME_STR)
     assert success, err
+
+
+def test_conv_game_str():
+    success, _, err = run('conv', '-o/dev/null', 'str', input=GAME_STR)
+    assert success, err
+
+
+def test_conv_game_gambit():
+    success, _, err = run('conv', '-o/dev/null', 'gambit', input=GAME_STR)
+    assert success, err
+
+
+def test_conv_game_norm():
+    success, out, err = run(
+        'conv', 'norm', input=GAME_STR)
+    assert success, err
+    game = gamereader.loads(out)
+    assert np.all(game.min_role_payoffs() == 0)
+    assert np.all((game.max_role_payoffs() == 1) |
+                  (game.max_role_payoffs() == 0))
 
 
 def test_conv_mat_empty():
     success, _, err = run(
-        'conv', '-temptygame', '-o/dev/null', input=MATGAME_STR)
+        'conv', '-o/dev/null', 'empty', input=MATGAME_STR)
     assert success, err
 
 
@@ -850,45 +872,87 @@ def test_conv_mat_def():
 
 
 def test_conv_mat_game():
-    success, _, err = run('conv', '-tgame', '-o/dev/null', input=MATGAME_STR)
+    success, _, err = run('conv', '-o/dev/null', 'game', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_mat_sgame():
     success, _, err = run(
-        'conv', '-tsamplegame', '-o/dev/null', input=MATGAME_STR)
+        'conv', '-o/dev/null', 'samp', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_mat_mat():
     success, _, err = run(
-        'conv', '-tmatgame', '-o/dev/null', input=MATGAME_STR)
+        'conv', '-o/dev/null', 'mat', input=MATGAME_STR)
     assert success, err
+
+
+def test_conv_mat_str():
+    success, _, err = run(
+        'conv', '-o/dev/null', 'str', input=MATGAME_STR)
+    assert success, err
+
+
+def test_conv_mat_gambit():
+    success, _, err = run(
+        'conv', '-o/dev/null', 'gambit', input=MATGAME_STR)
+    assert success, err
+
+
+def test_conv_gambit_mat():
+    success, _, err = run(
+        'conv', '-o/dev/null', 'mat', input=GAMBIT_STR)
+    assert success, err
+
+
+def test_conv_gambit_game():
+    success, _, err = run(
+        'conv', '-o/dev/null', 'game', input=GAMBIT_STR)
+    assert success, err
+
+
+def test_conv_mat_norm():
+    success, out, err = run(
+        'conv', 'norm', input=MATGAME_STR)
+    assert success, err
+    game = gamereader.loads(out)
+    assert np.all(game.min_role_payoffs() == 0)
+    assert np.all((game.max_role_payoffs() == 1) |
+                  (game.max_role_payoffs() == 0))
 
 
 def test_conv_game_mat_inv():
-    success, out, err = run('conv', '-tmatgame', input=GAME_STR)
+    success, out, err = run('conv', 'matgame', input=GAME_STR)
     assert success, err
-    success, out, err = run('conv', '-tgame', input=out)
+    success, out, err = run('conv', 'game', input=out)
     assert success, err
-    game = gamereader.read(json.loads(out))
+    game = gamereader.loads(out)
+    assert game == paygame.game_copy(matgame.matgame_copy(GAME_DATA))
+
+
+def test_conv_game_gambit_inv():
+    success, out, err = run('conv', 'gambit', input=GAME_STR)
+    assert success, err
+    success, out, err = run('conv', 'game', input=out)
+    assert success, err
+    game = gamereader.loads(out)
     assert game == paygame.game_copy(matgame.matgame_copy(GAME_DATA))
 
 
 def test_conv_mat_game_inv():
-    success, out, err = run('conv', '-tgame', input=MATGAME_STR)
+    success, out, err = run('conv', 'game', input=MATGAME_STR)
     assert success, err
-    success, out, err = run('conv', '-tmatgame', input=out)
+    success, out, err = run('conv', 'matgame', input=out)
     assert success, err
-    game = gamereader.read(json.loads(out))
+    game = gamereader.loads(out)
     assert game == MATGAME
 
 
-def test_conv_norm_empty():
-    success, out, err = run(
-        'conv', '-tnorm', input=MATGAME_STR)
+def test_conv_mat_gambit_inv():
+    success, out, err = run('conv', 'gambit', input=MATGAME_STR)
     assert success, err
-    game = gamereader.read(json.loads(out))
-    assert np.all(game.min_role_payoffs() == 0)
-    assert np.all((game.max_role_payoffs() == 1) |
-                  (game.max_role_payoffs() == 0))
+    success, out, err = run('conv', 'matgame', input=out)
+    assert success, err
+    game = gamereader.loads(out)
+    assert game == MATGAME

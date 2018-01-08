@@ -86,7 +86,7 @@ def parse_index_spec(game, spec):
 
 
 def main(args):
-    game = gamereader.read(json.load(args.input))
+    game = gamereader.load(args.input)
 
     # Collect all subgames
     subgames = []

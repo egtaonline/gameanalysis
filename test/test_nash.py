@@ -1,6 +1,6 @@
 import itertools
-import json
 import math
+from os import path
 
 import numpy as np
 import pytest
@@ -213,8 +213,8 @@ def test_empty_game():
 
 
 def test_hard_nash():
-    with open('test/hard_nash_game_1.json') as f:
-        game = gamereader.read(json.load(f))
+    with open(path.join('example_games', 'hard_nash.json')) as f:
+        game = gamereader.load(f)
     expected = [0.54074609, 0.45925391, 0, 0, 0, 1, 0, 0, 0]
     eqa = nash.mixed_nash(game)
     assert np.isclose(game.trim_mixture_support(eqa), expected,
