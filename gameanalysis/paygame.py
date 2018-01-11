@@ -989,7 +989,7 @@ def _sample_payoffs_equal(p1, p2):
 
 def samplegame(num_role_players, num_role_strats, profiles,
                sample_payoffs):
-    """Create a SampleGame with default names.
+    """Create a SampleGame with default names
 
     Parameters
     ----------
@@ -1005,6 +1005,25 @@ def samplegame(num_role_players, num_role_strats, profiles,
     return samplegame_replace(
         rsgame.emptygame(num_role_players, num_role_strats),
         profiles, sample_payoffs)
+
+
+def samplegame_flat(num_role_players, num_role_strats, profiles, payoffs):
+    """Create a SampleGame with default names and flat profiles
+
+    Parameters
+    ----------
+    num_role_players : ndarray-like, int
+        The number of players per role.
+    num_role_strats : ndarray-like, int
+        The number of strategies per role.
+    profiles : ndarray-like, int, (num_sample_profiles, num_strats)
+        The profiles for the game, potentially with duplicates.
+    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)
+        The sample payoffs for the game, in parallel with the profiles they're
+        samples from.
+    """
+    return samplegame_replace_flat(
+        rsgame.emptygame(num_role_players, num_role_strats), profiles, payoffs)
 
 
 def samplegame_names(role_names, num_role_players, strat_names, profiles,
@@ -1026,6 +1045,29 @@ def samplegame_names(role_names, num_role_players, strat_names, profiles,
     return samplegame_replace(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
         profiles, sample_payoffs)
+
+
+def samplegame_names_flat(role_names, num_role_players, strat_names, profiles,
+                          payoffs):
+    """Create a SampleGame with specified names and flat payoffs
+
+    Parameters
+    ----------
+    role_names : [str]
+        The name of each role.
+    num_role_players : ndarray
+        The number of players for each role.
+    strat_names : [[str]]
+        The name of each strategy.
+    profiles : ndarray-like, int, (num_sample_profiles, num_strats)
+        The profiles for the game, potentially with duplicates.
+    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)
+        The sample payoffs for the game, in parallel with the profiles they're
+        samples from.
+    """
+    return samplegame_replace_flat(
+        rsgame.emptygame_names(role_names, num_role_players, strat_names),
+        profiles, payoffs)
 
 
 def samplegame_json(json):
@@ -1075,8 +1117,41 @@ def samplegame_copy(copy_game):
                       sample_payoffs)
 
 
+def samplegame_replace_flat(copy_game, profiles, payoffs):
+    """Replace sample payoff data for an existing game
+
+    Parameters
+    ----------
+    copy_game : BaseGame, optional
+        Game to copy information out of.
+    profiles : ndarray-like, int, (num_sample_profiles, num_strats)
+        The profiles for the game, potentially with duplicates.
+    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)
+        The sample payoffs for the game, in parallel with the profiles they're
+        samples from.
+    """
+    profiles = np.asarray(profiles, int)
+    payoffs = np.asarray(payoffs, float)
+    _, ind, inv, counts = utils.unique_axis(
+        profiles, return_index=True, return_inverse=True, return_counts=True)
+    countso = counts.argsort()
+    countsoi = np.empty(counts.size, int)
+    countsoi[countso] = np.arange(counts.size)
+    cinv = countsoi[inv]
+    cinvo = cinv.argsort()
+    cinvs = cinv[cinvo]
+    payo = (np.insert(np.cumsum(1 - np.diff(cinvs)), 0, 0) + cinvs)[cinvo]
+    num_samps, ccounts = np.unique(counts[countso], return_counts=True)
+    splits = (num_samps * ccounts)[:-1].cumsum()
+
+    profs = profiles[ind[countso]]
+    pays = [pay.reshape((n, c, -1)) for pay, n, c
+            in zip(np.split(payoffs[payo], splits), ccounts, num_samps)]
+    return samplegame_replace(copy_game, profs, pays)
+
+
 def samplegame_replace(copy_game, profiles, sample_payoffs):
-    """Replace payoff data for an existing game
+    """Replace sample payoff data for an existing game
 
     Parameters
     ----------

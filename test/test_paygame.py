@@ -1307,6 +1307,40 @@ def test_random_samplegame_copy(role_players, role_strats):
     assert game == copy and hash(game) == hash(copy)
 
 
+def test_samplegame_flat():
+    profiles = [[2, 0],
+                [2, 0],
+                [1, 1]]
+    payoffs = [[1, 0],
+               [2, 0],
+               [3, 4]]
+    gamed = paygame.samplegame_flat(2, 2, profiles, payoffs)
+    gamen = paygame.samplegame_names_flat(
+        ['r'], [2], [['a', 'b']], profiles, payoffs)
+
+    assert np.allclose(gamed.get_sample_payoffs([1, 1]), [[3, 4]])
+    assert np.allclose(gamen.get_sample_payoffs([1, 1]), [[3, 4]])
+
+    expected = np.array([[1, 0], [2, 0]])
+    eord = np.lexsort(expected.T)
+    spay = gamed.get_sample_payoffs([2, 0])
+    sord = np.lexsort(spay.T)
+    assert np.allclose(spay[sord], expected[eord])
+    spay = gamen.get_sample_payoffs([2, 0])
+    sord = np.lexsort(spay.T)
+    assert np.allclose(spay[sord], expected[eord])
+
+
+@pytest.mark.parametrize('_', range(10))
+@pytest.mark.parametrize('players,strats', testutils.games)
+def test_random_samplegame_flat(players, strats, _):
+    game = random_game(players, strats, prob=1.0)
+    profiles = game.random_profiles(20)
+    payoffs = game.get_payoffs(profiles)
+    # This asserts that it is valid
+    paygame.samplegame_replace_flat(game, profiles, payoffs)
+
+
 # Test sample game with different number of samples
 def test_samplegame_different_samples():
     base = rsgame.emptygame(1, [1, 2])
