@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.gamereader &#8212; Game Analysis 4.1.2 documentation</title>
+    <title>gameanalysis.gamereader &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '4.1.2',
+        VERSION:     '4.1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -46,23 +46,51 @@
             
   <h1>Source code for gameanalysis.gamereader</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Module for loading an arbitrary game with its associated serializer&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">aggfn</span>
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">gambit</span>
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">learning</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">matgame</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">paygame</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">rsgame</span>
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<span class="n">_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;emptygame&#39;</span><span class="p">:</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">,</span>
-    <span class="s1">&#39;game&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_json</span><span class="p">,</span>
-    <span class="s1">&#39;samplegame&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_json</span><span class="p">,</span>
-    <span class="s1">&#39;aggfn&#39;</span><span class="p">:</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_json</span><span class="p">,</span>
-    <span class="s1">&#39;matrix&#39;</span><span class="p">:</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame_json</span><span class="p">,</span>
-<span class="p">}</span>
+<div class="viewcode-block" id="load"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.load">[docs]</a><span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">filelike</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a game from a file</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filelike : file-like</span>
+<span class="sd">        A file-like object to read the game from. The entire file will be</span>
+<span class="sd">        consumed by this action.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">loads</span><span class="p">(</span><span class="n">filelike</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="read"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.read">[docs]</a><span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Read a game in any form</span>
+<div class="viewcode-block" id="loads"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.loads">[docs]</a><span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a game from a string</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    string : str</span>
+<span class="sd">        A string representation of the game.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># Try another thing</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gambit</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># Try another thing</span>
+    <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;no known format for game&quot;</span></div>
+
+
+<div class="viewcode-block" id="loadj"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.loadj">[docs]</a><span class="k">def</span> <span class="nf">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a game from serializable python objects</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -70,7 +98,26 @@
 <span class="sd">        The python object representation of a game encoded as json. Any valid</span>
 <span class="sd">        game will be read and returned.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_TYPE_MAP</span><span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;samplegame.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]](</span><span class="n">json</span><span class="p">)</span></div>
+    <span class="n">readers</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;emptygame&#39;</span><span class="p">:</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">,</span>
+        <span class="s1">&#39;game&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_json</span><span class="p">,</span>
+        <span class="s1">&#39;samplegame&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_json</span><span class="p">,</span>
+        <span class="s1">&#39;aggfn&#39;</span><span class="p">:</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_json</span><span class="p">,</span>
+        <span class="s1">&#39;matrix&#39;</span><span class="p">:</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame_json</span><span class="p">,</span>
+        <span class="s1">&#39;rbf&#39;</span><span class="p">:</span> <span class="n">learning</span><span class="o">.</span><span class="n">rbfgame_json</span><span class="p">,</span>
+        <span class="s1">&#39;sample&#39;</span><span class="p">:</span> <span class="n">learning</span><span class="o">.</span><span class="n">sample_json</span><span class="p">,</span>
+        <span class="s1">&#39;point&#39;</span><span class="p">:</span> <span class="n">learning</span><span class="o">.</span><span class="n">point_json</span><span class="p">,</span>
+        <span class="s1">&#39;neighbor&#39;</span><span class="p">:</span> <span class="n">learning</span><span class="o">.</span><span class="n">neighbor_json</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">game_type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;samplegame.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">readers</span><span class="p">[</span><span class="n">game_type</span><span class="p">](</span><span class="n">obj</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO Remove</span>
+<div class="viewcode-block" id="read"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.read">[docs]</a><span class="nd">@utils</span><span class="o">.</span><span class="n">deprecated</span>
+<span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;See loadj&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -101,12 +148,12 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, Strategic Reasoning Group.
+        &#169; Copyright 2018, Strategic Reasoning Group.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

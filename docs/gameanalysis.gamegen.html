@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.gamegen module &#8212; Game Analysis 4.1.2 documentation</title>
+    <title>gameanalysis.gamegen module &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.1.2',
+        VERSION:     '4.1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -24,7 +24,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.gamereader module" href="gameanalysis.gamereader.html" />
-    <link rel="prev" title="gameanalysis.fixedpoint module" href="gameanalysis.fixedpoint.html" /> 
+    <link rel="prev" title="gameanalysis.gambit module" href="gameanalysis.gambit.html" /> 
   </head>
   <body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -40,9 +40,9 @@
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.fixedpoint.html" title="gameanalysis.fixedpoint module"
+          <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -56,7 +56,7 @@
 <span id="gameanalysis-gamegen-module"></span><h1>gameanalysis.gamegen module<a class="headerlink" href="#module-gameanalysis.gamegen" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="gameanalysis.gamegen.add_noise">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">add_noise</code><span class="sig-paren">(</span><em>game</em>, <em>min_samples</em>, <em>max_samples=None</em>, <em>noise=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#add_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.add_noise" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">add_noise</code><span class="sig-paren">(</span><em>game</em>, <em>prob=0.5</em>, <em>initial=1</em>, <em>noise=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#add_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.add_noise" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate sample game by adding noise to game payoffs</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -64,9 +64,13 @@
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – A Game or SampleGame (only current payoffs are used)</li>
-<li><strong>min_samples</strong> (<em>int</em>) – The minimum number of observations to create per profile</li>
-<li><strong>max_samples</strong> (<em>int</em>) – The maximum number of observations to create per profile. If None, it’s
-the same as min_samples.</li>
+<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – For every profile, draw a sample for each failed coin flip with prob
+until a success.</li>
+<li><strong>initial</strong> (<em>int</em><em>, </em><em>optional</em>) – The initial number of samples to always draw. If 0, the number of
+samples will follow a zero based gemetric (the number of failed coin
+flips), if 1, the number of samples will follow a one base geometric
+(the number of coin flips until the first success). Other numbers can
+be used for more samples.</li>
 <li><strong>noise</strong> (<em>shape -&gt; ndarray</em>) – A noise generating function. The function should take a single shape
 parameter, and return a number of samples equal to shape. In order to
 preserve mixed equilibria, noise should also be zero mean (aka
@@ -175,6 +179,13 @@ int, the number of profiles to keep.</td>
 </dd></dl>
 
 <dl class="function">
+<dt id="gameanalysis.gamegen.game">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">game</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob_or_count=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random role symmetric game</p>
+<p>See <cite>add_profiles</cite>.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="gameanalysis.gamegen.independent_game">
 <code class="descclassname">gameanalysis.gamegen.</code><code class="descname">independent_game</code><span class="sig-paren">(</span><em>num_role_strats</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#independent_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.independent_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random independent (asymmetric) game</p>
@@ -247,6 +258,29 @@ for each role.</li>
 <li><strong>num_role_strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em><em>, </em><em>len == num_roles</em>) – The number of strategies, same for each role if a scalar, or a list,
 one for each role.</li>
 <li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Payoff distribution.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.samplegame">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob=0.5</em>, <em>complete=True</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random role symmetric sample game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
+<li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
+<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of adding another sample payoff.</li>
+<li><strong>complete</strong> (<em>boolean</em><em>, </em><em>optional</em>) – If true, game will be complete with one or more samples per profile. If
+false, a profile will be missing data with <cite>1 - prob</cite>.</li>
+<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em>) – The distribution of the initial payoffs and the noise that will be
+added to them.</li>
 </ul>
 </td>
 </tr>
@@ -363,8 +397,8 @@ the scale invariance of guassian variance.</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="gameanalysis.fixedpoint.html"
-                        title="previous chapter">gameanalysis.fixedpoint module</a></p>
+  <p class="topless"><a href="gameanalysis.gambit.html"
+                        title="previous chapter">gameanalysis.gambit module</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="gameanalysis.gamereader.html"
                         title="next chapter">gameanalysis.gamereader module</a></p>
@@ -402,14 +436,14 @@ the scale invariance of guassian variance.</p>
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              >next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.fixedpoint.html" title="gameanalysis.fixedpoint module"
+          <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, Strategic Reasoning Group.
+        &#169; Copyright 2018, Strategic Reasoning Group.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

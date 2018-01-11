@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.rsgame module &#8212; Game Analysis 4.1.2 documentation</title>
+    <title>gameanalysis.rsgame module &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.1.2',
+        VERSION:     '4.1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.regret.html" title="gameanalysis.regret module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -79,6 +79,16 @@ the name tend to be arrays of size <cite>num_strats</cite>.</p>
 <dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
 <p>A game that defines everything for complete games</p>
 <p>Extend this if your game by default has payoff data for every profile.</p>
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.CompleteGame.payoffs">
+<code class="descname">payoffs</code><a class="reference internal" href="_modules/gameanalysis/rsgame.html#CompleteGame.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.CompleteGame.payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.CompleteGame.profiles">
+<code class="descname">profiles</code><a class="reference internal" href="_modules/gameanalysis/rsgame.html#CompleteGame.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.CompleteGame.profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="class">
@@ -218,6 +228,23 @@ passed in to save computation.</p>
 <dt id="gameanalysis.rsgame.RsGame.from_prof_str">
 <code class="descname">from_prof_str</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.from_prof_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.from_prof_str" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.get_dev_payoffs">
+<code class="descname">get_dev_payoffs</code><span class="sig-paren">(</span><em>dev_profs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.get_dev_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.get_dev_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the payoffs for deviating</p>
+<p>Given partial profiles per role, compute the mean
+payoff for deviating to each strategy.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dev_profs</strong> (<em>array-like</em><em>, </em><em>shape =</em><em> (</em><em>num_samples</em><em>, </em><em>num_roles</em><em>, </em><em>num_strats</em><em>)</em>) – A list of partial profiles by role. This is the same structure as
+returned by <cite>random_dev_profiles</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="method">
 <dt id="gameanalysis.rsgame.RsGame.get_payoffs">
@@ -548,6 +575,14 @@ sample, without a leading singleton dimension is returned.</li>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.RsGame.round_mixture_to_profile">
+<code class="descname">round_mixture_to_profile</code><span class="sig-paren">(</span><em>mixture</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.round_mixture_to_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.round_mixture_to_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Round a mixture to the nearest profile</p>
+<p>This finds the profile with the minimum absolute error to the product
+of the profile and the number of players per role.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1197,12 +1232,12 @@ data.</p>
         <li class="right" >
           <a href="gameanalysis.regret.html" title="gameanalysis.regret module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, Strategic Reasoning Group.
+        &#169; Copyright 2018, Strategic Reasoning Group.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

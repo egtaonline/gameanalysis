@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.regret module &#8212; Game Analysis 4.1.2 documentation</title>
+    <title>gameanalysis.regret module &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.1.2',
+        VERSION:     '4.1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.reduction.html" title="gameanalysis.reduction module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -82,7 +82,8 @@ to be pickleable.</li>
 <code class="descclassname">gameanalysis.regret.</code><code class="descname">max_pure_social_welfare</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>by_role=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/regret.html#max_pure_social_welfare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.regret.max_pure_social_welfare" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the maximum social welfare over the known profiles.</p>
 <p>If by_role is specified, then max social welfare applies to each role
-independently.</p>
+independently. If there are no profiles with full payoff data for a role,
+an arbitrary profile will be returned.</p>
 </dd></dl>
 
 <dl class="function">
@@ -177,12 +178,12 @@ of profiles and returned as a new array.</p>
         <li class="right" >
           <a href="gameanalysis.reduction.html" title="gameanalysis.reduction module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, Strategic Reasoning Group.
+        &#169; Copyright 2018, Strategic Reasoning Group.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

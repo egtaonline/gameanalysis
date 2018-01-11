@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.nash &#8212; Game Analysis 4.1.2 documentation</title>
+    <title>gameanalysis.nash &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '4.1.2',
+        VERSION:     '4.1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -142,7 +142,6 @@
 <span class="sd">        minimum and maximum payoffs. This has an effect on convergence, but the</span>
 <span class="sd">        actual effect isn&#39;t really know.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># TODO Add efficient cycle detection to remove max_iters</span>
     <span class="n">minp</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span>
     <span class="n">maxp</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">max_role_payoffs</span><span class="p">()</span>
 
@@ -209,16 +208,17 @@
                 <span class="n">mixture</span> <span class="o">*</span> <span class="n">dev_pay</span><span class="p">,</span>
                 <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">),</span>
             <span class="mi">0</span><span class="p">)</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gains</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">gains</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gains</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
 
         <span class="n">gains_jac</span> <span class="o">=</span> <span class="p">(</span><span class="n">dev_jac</span> <span class="o">-</span> <span class="n">dev_pay</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
             <span class="n">mixture</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">dev_jac</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
                 <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-        <span class="n">grad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gains</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">gains_jac</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">grad</span> <span class="o">=</span> <span class="n">gains</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gains_jac</span><span class="p">)</span>
 
         <span class="c1"># Penalty terms for obj and gradient</span>
-        <span class="n">obj</span> <span class="o">+=</span> <span class="n">penalty</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">grad</span> <span class="o">+=</span> <span class="n">penalty</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">neg_mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">+=</span> <span class="n">penalty</span> <span class="o">*</span> <span class="n">neg_mix</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">neg_mix</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">grad</span> <span class="o">+=</span> <span class="n">penalty</span> <span class="o">*</span> <span class="n">neg_mix</span>
 
         <span class="c1"># Project grad so steps stay in the appropriate space</span>
         <span class="n">grad</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">grad</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span> <span class="o">/</span>
@@ -465,12 +465,12 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, Strategic Reasoning Group.
+        &#169; Copyright 2018, Strategic Reasoning Group.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

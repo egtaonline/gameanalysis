@@ -12,6 +12,7 @@ Submodules
    gameanalysis.collect
    gameanalysis.dominance
    gameanalysis.fixedpoint
+   gameanalysis.gambit
    gameanalysis.gamegen
    gameanalysis.gamereader
    gameanalysis.learning

@@ -5,7 +5,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.scriptutils module &#8212; Game Analysis 4.1.3 documentation</title>
+    <title>gameanalysis.gambit module &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,8 +23,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="gameanalysis.subgame module" href="gameanalysis.subgame.html" />
-    <link rel="prev" title="gameanalysis.rsgame module" href="gameanalysis.rsgame.html" /> 
+    <link rel="next" title="gameanalysis.gamegen module" href="gameanalysis.gamegen.html" />
+    <link rel="prev" title="gameanalysis.fixedpoint module" href="gameanalysis.fixedpoint.html" /> 
   </head>
   <body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -37,10 +37,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.subgame.html" title="gameanalysis.subgame module"
+          <a href="gameanalysis.gamegen.html" title="gameanalysis.gamegen module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.rsgame.html" title="gameanalysis.rsgame module"
+          <a href="gameanalysis.fixedpoint.html" title="gameanalysis.fixedpoint module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
@@ -52,25 +52,31 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="module-gameanalysis.scriptutils">
-<span id="gameanalysis-scriptutils-module"></span><h1>gameanalysis.scriptutils module<a class="headerlink" href="#module-gameanalysis.scriptutils" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-gameanalysis.gambit">
+<span id="gameanalysis-gambit-module"></span><h1>gameanalysis.gambit module<a class="headerlink" href="#module-gameanalysis.gambit" title="Permalink to this headline">¶</a></h1>
+<p>Functions for reading and writing gambit nfg files</p>
 <dl class="function">
-<dt id="gameanalysis.scriptutils.load_profiles">
-<code class="descclassname">gameanalysis.scriptutils.</code><code class="descname">load_profiles</code><span class="sig-paren">(</span><em>strings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/scriptutils.html#load_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.scriptutils.load_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load profiles from a list of strings</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>strings</strong> (<em>[</em><em>str</em><em>]</em>) – A list of strings that are file names or json, and represent either a
-single profile or a list of profiles.</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>prof_gen</strong> – A generator of json profiles.</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">(prof)</td>
-</tr>
-</tbody>
-</table>
+<dt id="gameanalysis.gambit.dump">
+<code class="descclassname">gameanalysis.gambit.</code><code class="descname">dump</code><span class="sig-paren">(</span><em>game</em>, <em>filelike</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gambit.html#dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gambit.dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump game to gambit file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gambit.dumps">
+<code class="descclassname">gameanalysis.gambit.</code><code class="descname">dumps</code><span class="sig-paren">(</span><em>game</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gambit.html#dumps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gambit.dumps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump game as gambit string</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gambit.load">
+<code class="descclassname">gameanalysis.gambit.</code><code class="descname">load</code><span class="sig-paren">(</span><em>filelike</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gambit.html#load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gambit.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a gambit game from a file</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gambit.loads">
+<code class="descclassname">gameanalysis.gambit.</code><code class="descname">loads</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gambit.html#loads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gambit.loads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a gambit game from a string</p>
 </dd></dl>
 
 </div>
@@ -82,15 +88,15 @@ single profile or a list of profiles.</td>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="gameanalysis.rsgame.html"
-                        title="previous chapter">gameanalysis.rsgame module</a></p>
+  <p class="topless"><a href="gameanalysis.fixedpoint.html"
+                        title="previous chapter">gameanalysis.fixedpoint module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="gameanalysis.subgame.html"
-                        title="next chapter">gameanalysis.subgame module</a></p>
+  <p class="topless"><a href="gameanalysis.gamegen.html"
+                        title="next chapter">gameanalysis.gamegen module</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/gameanalysis.scriptutils.rst.txt"
+      <li><a href="_sources/gameanalysis.gambit.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -118,10 +124,10 @@ single profile or a list of profiles.</td>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.subgame.html" title="gameanalysis.subgame module"
+          <a href="gameanalysis.gamegen.html" title="gameanalysis.gamegen module"
              >next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.rsgame.html" title="gameanalysis.rsgame module"
+          <a href="gameanalysis.fixedpoint.html" title="gameanalysis.fixedpoint module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 

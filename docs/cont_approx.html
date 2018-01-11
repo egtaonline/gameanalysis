@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>RBF Gaussian Process Continuous Approximation &#8212; Game Analysis 4.1.2 documentation</title>
+    <title>RBF Gaussian Process Continuous Approximation &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.1.2',
+        VERSION:     '4.1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="profile_counts.html" title="Reduction Profile Counting"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -93,7 +93,7 @@ First, we need to define a few helpful variables:</p>
 &amp;= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( \left( \sum_{s_r} \frac{(X_{jrs_r} - n_r p_{rs_r})^2}{d_{rs_r}} \right) + \frac{n_r}{\gamma_r} \left( \sum_{s_r} \frac{p_{rs_r}}{d_{rs_r}} (X_{jrs_r} - n_r p_{rs_r}) \right)^2 \right) \right\}"/></p>
 </div><p>The derivative with respect to one element of the mixture <img class="math" src="_images/math/38e9f9b3766c84ca57bc0fff984be43b2dcb0f29.svg" alt="p_{\rho i}"/> is</p>
 <div class="math">
-<p><img src="_images/math/0a7aa1bacdd18d82b810d540585492fd9d679f0d.svg" alt="\frac{\partial}{\partial p_{\rho i}} \operatorname{devpayoff}(\mathbf p) &amp;= -\frac{1}{2} \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \left [ \gamma_{\rho}^{-1} \left( \beta_{\rho i}^2 - 1 \right) \sum_j \alpha_j \exp \left\{ \cdot \right\} + n_{\rho} \sum_j \alpha_j \exp \left\{ \cdot \right\} \left( \left( \delta_{j \rho} - 1 \right)^2 - \left( \delta_{j \rho} \beta_{\rho i} - \xi_{j \rho i} \right)^2 \right) \right] \\
+<p><img src="_images/math/9d8b0966886a1c3d2613979fb9d5fb8087d1e6d9.svg" alt="\frac{\partial}{\partial p_{\rho i}} \operatorname{devpayoff}(\mathbf p) &amp;= -\frac{1}{2} \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \left [ \left( \gamma_{\rho}^{-1} \left( \beta_{\rho i}^2 - 1 \right) + \frac{n_{\rho}}{d_{\rho i}} \right) \sum_j \alpha_j \exp \left\{ \cdot \right\} + n_{\rho} \sum_j \alpha_j \exp \left\{ \cdot \right\} \left( \left( \delta_{j \rho} - 1 \right)^2 - \left( \delta_{j \rho} \beta_{\rho i} - \xi_{j \rho i} \right)^2 \right) \right] \\
 \delta_{j \rho} &amp;= \gamma_{\rho}^{-1} \sum_{s_{\rho}} \frac{p_{\rho s_{\rho}}}{d_{\rho s_{\rho}}} \left( X_{j \rho s_{\rho}} - n_{\rho} p_{\rho s_{\rho}} \right) \\
 \beta_{\rho i} &amp;= 1 - \frac{n_{\rho} p_{\rho i}}{d_{\rho i}} \\
 \xi_{j \rho i} &amp;= 1 + \frac{X_{j \rho i} - n_{\rho} p_{\rho i}}{d_{\rho i}}"/></p>
@@ -164,11 +164,11 @@ First, we need to define a few helpful variables:</p>
         <li class="right" >
           <a href="profile_counts.html" title="Reduction Profile Counting"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, Strategic Reasoning Group.
+        &#169; Copyright 2018, Strategic Reasoning Group.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>

@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.paygame module &#8212; Game Analysis 4.1.2 documentation</title>
+    <title>gameanalysis.paygame module &#8212; Game Analysis 4.1.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.1.2',
+        VERSION:     '4.1.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -87,7 +87,7 @@ can’t be nan, the profile should be omitted instead.</li>
 </table>
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>ignore_incomplete=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the expected value of deviating</p>
 <p>More specifically, this is the expected payoff of playing each pure
 strategy played against all opponents playing mix.</p>
@@ -100,11 +100,14 @@ strategy played against all opponents playing mix.</p>
 <li><strong>jacobian</strong> (<em>bool</em>) – If true, the second returned argument will be the jacobian of the
 deviation payoffs with respect to the mixture. The first axis is
 the deviating strategy, the second axis is the strategy in the mix
-the jacobian is taken with respect to. The values that are marked
-nan are not very aggressive, so don’t rely on accurate nan values
-in the jacobian. Additionally, this uses sparse data, so jacobian
-values for mixtures that are close to zero are intentionally
-reported as zero instead of looking for data to support some value.</li>
+the derivative is taken with respect to. For this to be calculated
+correctly, the game must be complete. Thus if the game is not
+complete, this will be all nan.</li>
+<li><strong>ignore_incomplete</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, a “best estimate” will be returned for incomplete data.
+This means that instead of marking a payoff where all deviations
+aren’t known as nan, the probability will be renormalized by the
+mass that is known, creating a biased estimate based of the data
+that is present.</li>
 </ul>
 </td>
 </tr>
@@ -640,12 +643,12 @@ produce an empty sample game.</p>
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2017, Strategic Reasoning Group.
+        &#169; Copyright 2018, Strategic Reasoning Group.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
