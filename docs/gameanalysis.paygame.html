@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.paygame module &#8212; Game Analysis 4.1.3 documentation</title>
+    <title>gameanalysis.paygame module &#8212; Game Analysis 4.1.4 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.1.3',
+        VERSION:     '4.1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -512,7 +512,7 @@ names, and the number of players.</li>
 <dl class="function">
 <dt id="gameanalysis.paygame.samplegame">
 <code class="descclassname">gameanalysis.paygame.</code><code class="descname">samplegame</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>profiles</em>, <em>sample_payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.samplegame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a SampleGame with default names.</p>
+<dd><p>Create a SampleGame with default names</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -540,6 +540,27 @@ it will create a game with one sample per payoff.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>copy_game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to copy data from.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.paygame.samplegame_flat">
+<code class="descclassname">gameanalysis.paygame.</code><code class="descname">samplegame_flat</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>profiles</em>, <em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#samplegame_flat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.samplegame_flat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a SampleGame with default names and flat profiles</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of players per role.</li>
+<li><strong>num_role_strats</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of strategies per role.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game, potentially with duplicates.</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The sample payoffs for the game, in parallel with the profiles they’re
+samples from.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
@@ -575,9 +596,31 @@ produce an empty sample game.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="gameanalysis.paygame.samplegame_names_flat">
+<code class="descclassname">gameanalysis.paygame.</code><code class="descname">samplegame_names_flat</code><span class="sig-paren">(</span><em>role_names</em>, <em>num_role_players</em>, <em>strat_names</em>, <em>profiles</em>, <em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#samplegame_names_flat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.samplegame_names_flat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a SampleGame with specified names and flat payoffs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name of each role.</li>
+<li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players for each role.</li>
+<li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game, potentially with duplicates.</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The sample payoffs for the game, in parallel with the profiles they’re
+samples from.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="gameanalysis.paygame.samplegame_replace">
 <code class="descclassname">gameanalysis.paygame.</code><code class="descname">samplegame_replace</code><span class="sig-paren">(</span><em>copy_game</em>, <em>profiles</em>, <em>sample_payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#samplegame_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.samplegame_replace" title="Permalink to this definition">¶</a></dt>
-<dd><p>Replace payoff data for an existing game</p>
+<dd><p>Replace sample payoff data for an existing game</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -586,6 +629,26 @@ produce an empty sample game.</p>
 <li><strong>copy_game</strong> (<em>BaseGame</em><em>, </em><em>optional</em>) – Game to copy information out of.</li>
 <li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game.</li>
 <li><strong>sample_payoffs</strong> (<em>[</em><em>ndarray-like</em><em>, </em><em>float</em><em>]</em>) – The sample payoffs for the game.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.paygame.samplegame_replace_flat">
+<code class="descclassname">gameanalysis.paygame.</code><code class="descname">samplegame_replace_flat</code><span class="sig-paren">(</span><em>copy_game</em>, <em>profiles</em>, <em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#samplegame_replace_flat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.samplegame_replace_flat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace sample payoff data for an existing game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>copy_game</strong> (<em>BaseGame</em><em>, </em><em>optional</em>) – Game to copy information out of.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game, potentially with duplicates.</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The sample payoffs for the game, in parallel with the profiles they’re
+samples from.</li>
 </ul>
 </td>
 </tr>
@@ -643,7 +706,7 @@ produce an empty sample game.</p>
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.1.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

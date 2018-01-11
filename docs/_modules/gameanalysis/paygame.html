@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.paygame &#8212; Game Analysis 4.1.3 documentation</title>
+    <title>gameanalysis.paygame &#8212; Game Analysis 4.1.4 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '4.1.3',
+        VERSION:     '4.1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -1036,7 +1036,7 @@
 
 <div class="viewcode-block" id="samplegame"><a class="viewcode-back" href="../../gameanalysis.paygame.html#gameanalysis.paygame.samplegame">[docs]</a><span class="k">def</span> <span class="nf">samplegame</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span>
                <span class="n">sample_payoffs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a SampleGame with default names.</span>
+    <span class="sd">&quot;&quot;&quot;Create a SampleGame with default names</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1052,6 +1052,25 @@
     <span class="k">return</span> <span class="n">samplegame_replace</span><span class="p">(</span>
         <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">),</span>
         <span class="n">profiles</span><span class="p">,</span> <span class="n">sample_payoffs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="samplegame_flat"><a class="viewcode-back" href="../../gameanalysis.paygame.html#gameanalysis.paygame.samplegame_flat">[docs]</a><span class="k">def</span> <span class="nf">samplegame_flat</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a SampleGame with default names and flat profiles</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    num_role_players : ndarray-like, int</span>
+<span class="sd">        The number of players per role.</span>
+<span class="sd">    num_role_strats : ndarray-like, int</span>
+<span class="sd">        The number of strategies per role.</span>
+<span class="sd">    profiles : ndarray-like, int, (num_sample_profiles, num_strats)</span>
+<span class="sd">        The profiles for the game, potentially with duplicates.</span>
+<span class="sd">    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)</span>
+<span class="sd">        The sample payoffs for the game, in parallel with the profiles they&#39;re</span>
+<span class="sd">        samples from.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">samplegame_replace_flat</span><span class="p">(</span>
+        <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">),</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="samplegame_names"><a class="viewcode-back" href="../../gameanalysis.paygame.html#gameanalysis.paygame.samplegame_names">[docs]</a><span class="k">def</span> <span class="nf">samplegame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span>
@@ -1073,6 +1092,29 @@
     <span class="k">return</span> <span class="n">samplegame_replace</span><span class="p">(</span>
         <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">),</span>
         <span class="n">profiles</span><span class="p">,</span> <span class="n">sample_payoffs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="samplegame_names_flat"><a class="viewcode-back" href="../../gameanalysis.paygame.html#gameanalysis.paygame.samplegame_names_flat">[docs]</a><span class="k">def</span> <span class="nf">samplegame_names_flat</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span>
+                          <span class="n">payoffs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a SampleGame with specified names and flat payoffs</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_names : [str]</span>
+<span class="sd">        The name of each role.</span>
+<span class="sd">    num_role_players : ndarray</span>
+<span class="sd">        The number of players for each role.</span>
+<span class="sd">    strat_names : [[str]]</span>
+<span class="sd">        The name of each strategy.</span>
+<span class="sd">    profiles : ndarray-like, int, (num_sample_profiles, num_strats)</span>
+<span class="sd">        The profiles for the game, potentially with duplicates.</span>
+<span class="sd">    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)</span>
+<span class="sd">        The sample payoffs for the game, in parallel with the profiles they&#39;re</span>
+<span class="sd">        samples from.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">samplegame_replace_flat</span><span class="p">(</span>
+        <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">),</span>
+        <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="samplegame_json"><a class="viewcode-back" href="../../gameanalysis.paygame.html#gameanalysis.paygame.samplegame_json">[docs]</a><span class="k">def</span> <span class="nf">samplegame_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
@@ -1122,8 +1164,41 @@
                       <span class="n">sample_payoffs</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="samplegame_replace_flat"><a class="viewcode-back" href="../../gameanalysis.paygame.html#gameanalysis.paygame.samplegame_replace_flat">[docs]</a><span class="k">def</span> <span class="nf">samplegame_replace_flat</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Replace sample payoff data for an existing game</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    copy_game : BaseGame, optional</span>
+<span class="sd">        Game to copy information out of.</span>
+<span class="sd">    profiles : ndarray-like, int, (num_sample_profiles, num_strats)</span>
+<span class="sd">        The profiles for the game, potentially with duplicates.</span>
+<span class="sd">    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)</span>
+<span class="sd">        The sample payoffs for the game, in parallel with the profiles they&#39;re</span>
+<span class="sd">        samples from.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">payoffs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">inv</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span>
+        <span class="n">profiles</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">countso</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">countsoi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">countsoi</span><span class="p">[</span><span class="n">countso</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+    <span class="n">cinv</span> <span class="o">=</span> <span class="n">countsoi</span><span class="p">[</span><span class="n">inv</span><span class="p">]</span>
+    <span class="n">cinvo</span> <span class="o">=</span> <span class="n">cinv</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">cinvs</span> <span class="o">=</span> <span class="n">cinv</span><span class="p">[</span><span class="n">cinvo</span><span class="p">]</span>
+    <span class="n">payo</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">cinvs</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">cinvs</span><span class="p">)[</span><span class="n">cinvo</span><span class="p">]</span>
+    <span class="n">num_samps</span><span class="p">,</span> <span class="n">ccounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="n">countso</span><span class="p">],</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">splits</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_samps</span> <span class="o">*</span> <span class="n">ccounts</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+
+    <span class="n">profs</span> <span class="o">=</span> <span class="n">profiles</span><span class="p">[</span><span class="n">ind</span><span class="p">[</span><span class="n">countso</span><span class="p">]]</span>
+    <span class="n">pays</span> <span class="o">=</span> <span class="p">[</span><span class="n">pay</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">pay</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">c</span>
+            <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">payoffs</span><span class="p">[</span><span class="n">payo</span><span class="p">],</span> <span class="n">splits</span><span class="p">),</span> <span class="n">ccounts</span><span class="p">,</span> <span class="n">num_samps</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">samplegame_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">profs</span><span class="p">,</span> <span class="n">pays</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="samplegame_replace"><a class="viewcode-back" href="../../gameanalysis.paygame.html#gameanalysis.paygame.samplegame_replace">[docs]</a><span class="k">def</span> <span class="nf">samplegame_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">sample_payoffs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Replace payoff data for an existing game</span>
+    <span class="sd">&quot;&quot;&quot;Replace sample payoff data for an existing game</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1230,7 +1305,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.1.4 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
