@@ -767,7 +767,7 @@ def test_boot_3():
         assert all(j['5'] <= j['95'] for j in data)
 
 
-def test_samp():
+def test_samp_old():
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = {
             'background': {
@@ -781,7 +781,78 @@ def test_samp():
         assert HARD_GAME_DATA.is_profile(prof)
 
 
-def test_samp_seed():
+def test_samp_subg():
+    success, out, err = run('samp', '-i', HARD_GAME, 'subgame', '-p', '0.5')
+    assert success, err
+    sub = HARD_GAME_DATA.subgame_from_json(json.loads(out))
+    assert HARD_GAME_DATA.is_subgame(sub)
+
+
+def test_samp_mix():
+    success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5')
+    assert success, err
+    sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
+    assert HARD_GAME_DATA.is_mixture(sub)
+
+
+def test_samp_sparse_mix():
+    success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5', '-s')
+    assert success, err
+    sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
+    assert HARD_GAME_DATA.is_mixture(sub)
+
+
+def test_samp_sparse_mix_prob():
+    success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5', '-s',
+                            '0.5')
+    assert success, err
+    sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
+    assert HARD_GAME_DATA.is_mixture(sub)
+
+
+def test_samp_prof():
+    success, out, err = run('samp', '-i', HARD_GAME, 'prof')
+    assert success, err
+    sub = HARD_GAME_DATA.profile_from_json(json.loads(out))
+    assert HARD_GAME_DATA.is_profile(sub)
+
+
+def test_samp_prof_alpha():
+    success, out, err = run('samp', '-i', HARD_GAME, 'prof', '-a', '0.5')
+    assert success, err
+    sub = HARD_GAME_DATA.profile_from_json(json.loads(out))
+    assert HARD_GAME_DATA.is_profile(sub)
+
+
+def test_samp_prof_mix():
+    with tempfile.NamedTemporaryFile('w') as mixed:
+        prof = {
+            'background': {
+                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
+            'hft': {'noop': 1}}
+        json.dump(prof, mixed)
+        mixed.flush()
+        success, out, err = run('samp', '-i', HARD_GAME, 'prof', '-m',
+                                mixed.name)
+        assert success, err
+        prof = HARD_GAME_DATA.profile_from_json(json.loads(out))
+        assert HARD_GAME_DATA.is_profile(prof)
+
+
+def test_samp_prof_error():
+    with tempfile.NamedTemporaryFile('w') as mixed:
+        prof = {
+            'background': {
+                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
+            'hft': {'noop': 1}}
+        json.dump(prof, mixed)
+        mixed.flush()
+        success, out, err = run('samp', '-i', HARD_GAME, 'prof', '-a', '0.5',
+                                '-m', mixed.name)
+        assert not success
+
+
+def test_samp_seed_old():
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = {
             'background': {
@@ -791,26 +862,59 @@ def test_samp_seed():
             'hft': {'noop': 1}}
         json.dump(prof, mixed)
         mixed.flush()
-        success, out1, err = run(
+        success, out1, err1 = run(
             'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100', '--seed',
             '1234')
-        assert success, err
+        assert success, err1
         for line in out1[:-1].split('\n'):
             prof = HARD_GAME_DATA.profile_from_json(json.loads(line))
             assert HARD_GAME_DATA.is_profile(prof)
 
         # Setting seed produces identical output
-        success, out2, err = run(
+        success, out2, err2 = run(
             'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100', '--seed',
             '1234')
-        assert success, err
+        assert success, err2
         assert out1 == out2
 
         # Not setting it causes failure
         # This can technically fail, but the probability is very small
-        success, out3, err = run(
+        success, out3, err3 = run(
             'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100')
-        assert success, err
+        assert success, err3
+        assert out1 != out3
+
+
+def test_samp_seed_new():
+    with tempfile.NamedTemporaryFile('w') as mixed:
+        prof = {
+            'background': {
+                'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
+                0.5,
+                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 0.5},
+            'hft': {'noop': 1}}
+        json.dump(prof, mixed)
+        mixed.flush()
+        success, out1, err1 = run(
+            'samp', '-i', HARD_GAME, '-n', '100', '--seed', '1234', 'prof',
+            '-m', mixed.name)
+        assert success, err1
+        for line in out1[:-1].split('\n'):
+            prof = HARD_GAME_DATA.profile_from_json(json.loads(line))
+            assert HARD_GAME_DATA.is_profile(prof)
+
+        # Setting seed produces identical output
+        success, out2, err2 = run(
+            'samp', '-i', HARD_GAME, '-n', '100', '--seed', '1234', 'prof',
+            '-m', mixed.name)
+        assert success, err2
+        assert out1 == out2
+
+        # Not setting it causes failure
+        # This can technically fail, but the probability is very small
+        success, out3, err3 = run(
+            'samp', '-i', HARD_GAME, '-n', '100', 'prof', '-m', mixed.name)
+        assert success, err3
         assert out1 != out3
 
 

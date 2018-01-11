@@ -1375,6 +1375,29 @@ def test_random_random_profiles(role_players, role_strats):
     assert game.is_profile(game.random_profiles(100)).all()
 
 
+def test_round_mixture_to_profile():
+    game = rsgame.emptygame(3, 3)
+
+    prof = game.round_mixture_to_profile([1/3, 1/3, 1/3])
+    assert np.all(prof == 1)
+
+    prof = game.round_mixture_to_profile([2/3, 0, 1/3])
+    assert np.all(prof == [2, 0, 1])
+
+    prof = game.round_mixture_to_profile([.1, .2, .7])
+    assert np.all(prof == [0, 1, 2])
+
+
+@pytest.mark.parametrize('role_players,role_strats', testutils.games)
+def test_random_round_mixture_to_profile(role_players, role_strats):
+    game = rsgame.emptygame(role_players, role_strats)
+    mixtures = np.concatenate([
+        game.random_mixtures(100),
+        game.random_sparse_mixtures(100),
+    ])
+    assert game.is_profile(game.round_mixture_to_profile(mixtures)).all()
+
+
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_random_dev_profiles(role_players, role_strats):
     game = rsgame.emptygame(role_players, role_strats)

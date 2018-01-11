@@ -1254,6 +1254,24 @@ class RsGame(StratArray):
                                np.split(mixture, self.role_starts[1:]))]
         return np.concatenate(role_samples, 1)
 
+    def round_mixture_to_profile(self, mixture):
+        """Round a mixture to the nearest profile
+
+        This finds the profile with the minimum absolute error to the product
+        of the profile and the number of players per role.
+        """
+        float_prof = mixture * self.num_role_players.repeat(
+            self.num_role_strats)
+        profile = np.floor(float_prof).astype(int)
+        missing = self.num_role_players - np.add.reduceat(
+            profile, self.role_starts, -1)
+        errors = profile - float_prof + np.arange(self.num_roles).repeat(
+            self.num_role_strats)
+        rank = errors.argsort(-1) - self.role_starts.repeat(
+            self.num_role_strats)
+        profile[rank < missing.repeat(self.num_role_strats, -1)] += 1
+        return profile
+
     # TODO Remove
     @utils.deprecated
     def random_dev_profiles(self, mixture, num_samples=None):

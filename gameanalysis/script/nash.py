@@ -40,6 +40,7 @@ def add_parser(subparsers):
         '--support', '-s', metavar='<support>', type=float, default=1e-3,
         help="""Min probability for a strategy to be considered in support.
         (default: %(default)g)""")
+    # TODO Remove rand option
     parser.add_argument(
         '--type', '-t', metavar='<type>', default='mixed',
         choices=('mixed', 'pure', 'min-reg-prof', 'min-reg-grid',

@@ -171,7 +171,6 @@ def _list(element):
     return r'{(\s+' + element + r')+\s+}'
 
 
-# FIXME Test escaped backslashes / float parsing
 _str = r'"(.|\n)*?(?<!\\)"'
 _float = r'[-+]?(\d*\.?\d+|\d+\.\d*)([eE][-+]?\d+)?'
 _outcome = r'{\s+' + _str + r'(\s+' + _float + r',?)+\s+}'
