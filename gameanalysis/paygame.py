@@ -281,6 +281,16 @@ class Game(rsgame.RsGame):
             "\"{}\" is not a valid profile".format(prof)
         return dest
 
+    def profile_to_assignment(self, prof):
+        return {
+            role: list(itertools.chain.from_iterable(
+                itertools.repeat(strat, val.item()) for strat, val
+                in zip(strats, counts)))
+            for counts, role, strats
+            in zip(np.split(prof, self.role_starts[1:]),
+                   self.role_names, self.strat_names)
+            if np.any(counts > 0)}
+
     # TODO Remove
     @utils.deprecated
     def from_payoff_json(self, pays, dest=None, verify=True):

@@ -931,6 +931,15 @@ def test_to_from_prof_json():
     assert new_prof.dtype == int
 
 
+def test_to_assignment_json():
+    game = paygame.game_copy(rsgame.emptygame([5, 3], [2, 1]))
+    prof = [3, 2, 3]
+    assignment = {'r0': ['s0'] * 3 + ['s1'] * 2, 'r1': ['s2'] * 3}
+    jprof = game.profile_to_assignment(prof)
+    assert jprof == assignment
+    assert json.loads(json.dumps(jprof)) == jprof
+
+
 def test_to_from_payoff_json():
     game = paygame.game_copy(rsgame.emptygame([11, 3], [2, 1]))
     pay = [1.0, 2.0, 3.0]
