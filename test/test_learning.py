@@ -67,6 +67,15 @@ def test_rbfgame_members(players, strats, dist):
     assert copy == reggame
 
 
+def test_rbfgame_duplicate_profiles():
+    profs = [[2, 2],
+             [2, 2]]
+    pays = [[1, 2],
+            [3, 4]]
+    game = paygame.samplegame_flat(4, 2, profs, pays)
+    learning.rbfgame_train(game)
+
+
 def test_nntrain():
     game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
     with warnings.catch_warnings():

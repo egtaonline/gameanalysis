@@ -450,7 +450,7 @@ def rbfgame_train(game, num_restarts=3):
             profs, return_inverse=True)
         profiles.append(uprofs)
         alpha.append(np.bincount(inds, reg.alpha_))
-        sizes.append(inds.size)
+        sizes.append(uprofs.shape[0])
 
     if np.any(lengths[..., None] == bounds):
         warnings.warn("some lengths were at their bounds, "
