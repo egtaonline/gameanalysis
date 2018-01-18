@@ -160,9 +160,6 @@ class MatrixGame(rsgame.CompleteGame):
                 np.rollaxis(np.rollaxis(pays, r), d + (r > d),
                             1).reshape((nr, nd, -1)).sum(2, out=out)
 
-        # Normalize
-        jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
-                         self.num_role_strats, self.num_role_strats, 1)
         return devpays, jac
 
     def subgame(self, subgame_mask):

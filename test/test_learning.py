@@ -241,14 +241,7 @@ def test_sample(_):
         weights = numer / denom / learn._num_samples
         return anp.einsum('ij,ij->j', weights, payoffs)
 
-    jacobian = autograd.jacobian(devpays)
-
-    def devpays_jac(mix):
-        jac = jacobian(mix)
-        jac -= np.repeat(
-            np.add.reduceat(jac, game.role_starts, 1) /
-            game.num_role_strats, game.num_role_strats, 1)
-        return jac
+    devpays_jac = autograd.jacobian(devpays)
 
     errors = np.zeros(game.num_strats)
     samp_errors = np.zeros(game.num_strats)
@@ -310,14 +303,7 @@ def test_point(_):
         exp = anp.exp(-rbf / 2) * model._alpha
         return model._offset + model._coefs * anp.dot(exp, size)
 
-    jacobian = autograd.jacobian(devpays)
-
-    def devpays_jac(mix):
-        jac = jacobian(mix)
-        jac -= np.repeat(
-            np.add.reduceat(jac, game.role_starts, 1) /
-            game.num_role_strats, game.num_role_strats, 1)
-        return jac
+    devpays_jac = autograd.jacobian(devpays)
 
     errors = np.zeros(game.num_strats)
     for i, mix in enumerate(itertools.chain(
@@ -471,14 +457,7 @@ def test_continuous_approximation(players, strats, num, _):
         avg = anp.dot(learn._alpha * exp, size)
         return learn._coefs * coef * avg + learn._offset
 
-    jacobian = autograd.jacobian(devpays)
-
-    def devpays_jac(mix):
-        jac = jacobian(mix)
-        jac -= np.repeat(
-            np.add.reduceat(jac, game.role_starts, 1) /
-            game.num_role_strats, game.num_role_strats, 1)
-        return jac
+    devpays_jac = autograd.jacobian(devpays)
 
     for mix in itertools.chain(game.random_mixtures(20),
                                game.random_sparse_mixtures(20)):

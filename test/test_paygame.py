@@ -506,14 +506,7 @@ def test_random_deviation_payoffs_jacobian(players, strats, ignore, _):
         devs = anp.einsum('ij,ij->j', probs, game._payoffs)
         return devs / probs.sum(0) if ignore else devs
 
-    jacobian = autograd.jacobian(devpays)
-
-    def devpays_jac(mix):
-        jac = jacobian(mix)
-        jac -= np.repeat(
-            np.add.reduceat(jac, game.role_starts, 1) /
-            game.num_role_strats, game.num_role_strats, 1)
-        return jac
+    devpays_jac = autograd.jacobian(devpays)
 
     for mix in game.random_mixtures(20):
         dev, jac = game.deviation_payoffs(
@@ -536,6 +529,12 @@ def test_random_deviation_payoffs_ignore_incomplete(players, strats):
         idev, ijac = game.deviation_payoffs(mix, jacobian=True,
                                             ignore_incomplete=True)
         assert np.allclose(idev, tdev)
+        # Jacobians aren't guaranteed to be identical, but they should have the
+        # same direction in mixture space.
+        tjac -= np.repeat(np.add.reduceat(tjac, base.role_starts, 1) /
+                          base.num_role_strats, base.num_role_strats, 1)
+        ijac -= np.repeat(np.add.reduceat(ijac, base.role_starts, 1) /
+                          base.num_role_strats, base.num_role_strats, 1)
         assert np.allclose(ijac, tjac)
 
 

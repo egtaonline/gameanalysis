@@ -307,9 +307,6 @@ class RbfGpGame(rsgame.CompleteGame):
             - (delta - 1) ** 2)
         jac_avg = (players * np.add.reduceat(jac_exp, self._size_starts, 0))
         jac = -self._coefs[:, None] * coef[:, None] * (jac_coef + jac_avg) / 2
-        jac -= np.repeat(
-            np.add.reduceat(jac, self.role_starts, 1) /
-            self.num_role_strats, self.num_role_strats, 1)
         return payoffs, jac
 
     # TODO Add function that creates sample game which draws payoffs from the
@@ -571,8 +568,6 @@ class SampleDeviationGame(_DeviationGame):
         weights[..., supp] = profs[..., supp] / mix[supp]
         jac = np.einsum('ij,ijk->jk', payoffs, weights.repeat(
             self.num_role_strats, 1)) / self._num_samples
-        jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
-                         self.num_role_strats, self.num_role_strats, 1)
         return dev_pays, jac
 
     def subgame(self, sub_mask):
@@ -641,8 +636,6 @@ class PointDeviationGame(_DeviationGame):
             dev, jac = self._model.get_dev_payoffs(
                 self._dev_players * mix, jacobian=True)
             jac *= self._dev_players.repeat(self.num_role_strats, 0)
-            jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
-                             self.num_role_strats, self.num_role_strats, 1)
             return dev, jac
         else:
             return self._model.get_dev_payoffs(self._dev_players * mix)

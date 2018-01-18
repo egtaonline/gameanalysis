@@ -328,10 +328,14 @@ def verify_aggfn(game):
     # game deviation payoff jacobian is inaccurate for sparse mixtures, so we
     # can't use it as ground truth
     for mix in game.random_mixtures(20):
-        dev, jac = game.deviation_payoffs(mix, jacobian=True)
+        idev, ijac = game.deviation_payoffs(mix, jacobian=True)
         tdev, tjac = payoff_game.deviation_payoffs(mix, jacobian=True)
-        assert np.allclose(dev, tdev)
-        assert np.allclose(jac, tjac)
+        assert np.allclose(idev, tdev)
+        tjac -= np.repeat(np.add.reduceat(tjac, game.role_starts, 1) /
+                          game.num_role_strats, game.num_role_strats, 1)
+        ijac -= np.repeat(np.add.reduceat(ijac, game.role_starts, 1) /
+                          game.num_role_strats, game.num_role_strats, 1)
+        assert np.allclose(ijac, tjac)
 
     # Check that sparse mixtures produce correct deviations
     # TODO For some reason, the jacobians don't match with the jacobians for

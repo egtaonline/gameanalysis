@@ -208,8 +208,6 @@ class AgfnGame(rsgame.CompleteGame):
                             self.num_functions, self.num_roles, -1)
         jac = np.einsum('iklm,jkl,ki->ij', dev_values, self._dinputs,
                         self.action_weights)
-        jac -= np.repeat(np.add.reduceat(jac, self.role_starts, 1) /
-                         self.num_role_strats, self.num_role_strats, 1)
         return devs, jac
 
     def normalize(self):

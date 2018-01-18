@@ -201,16 +201,15 @@ class Game(rsgame.RsGame):
             return devs
 
         if ignore_incomplete or self.is_complete():
-            product_rule = self._profiles[:, None] / zmix - np.diag(1 / zmix)
-            dev_jac = np.einsum('ij,ij,ijk->jk', probs, payoffs, product_rule)
+            dev_profs = (self._profiles[:, None] -
+                         np.eye(self.num_strats, dtype=int))
+            dev_jac = np.einsum(
+                'ij,ij,ijk->jk', probs, payoffs, dev_profs) / zmix
             if ignore_incomplete:
-                dev_jac -= (np.einsum('ij,ijk->jk', probs, product_rule) *
-                            devs[:, None])
+                dev_jac -= (np.einsum('ij,ijk->jk', probs, dev_profs) *
+                            devs[:, None] / zmix)
                 dev_jac[tsupp] /= tprobs[tsupp, None]
                 dev_jac[~tsupp] = np.nan
-            dev_jac -= np.repeat(
-                np.add.reduceat(dev_jac, self.role_starts, 1) /
-                self.num_role_strats, self.num_role_strats, 1)
         else:
             dev_jac = np.full((self.num_strats,) * 2, np.nan)
 
