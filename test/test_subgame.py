@@ -28,7 +28,7 @@ def test_subgame():
 
 @pytest.mark.parametrize('players,strategies', testutils.games)
 def test_maximal_subgames(players, strategies):
-    game = gamegen.role_symmetric_game(players, strategies)
+    game = gamegen.game(players, strategies)
     subs = subgame.maximal_subgames(game)
     assert subs.shape[0] == 1, \
         "found more than maximal subgame in a complete game"
@@ -39,8 +39,7 @@ def test_maximal_subgames(players, strategies):
 @pytest.mark.parametrize('players,strategies', testutils.games)
 @pytest.mark.parametrize('prob', [0.9, 0.6, 0.4])
 def test_missing_data_maximal_subgames(players, strategies, prob):
-    base = rsgame.emptygame(players, strategies)
-    game = gamegen.add_profiles(base, prob)
+    game = gamegen.game(players, strategies, prob)
     subs = subgame.maximal_subgames(game)
 
     if subs.size:
@@ -50,7 +49,7 @@ def test_missing_data_maximal_subgames(players, strategies, prob):
             "One maximal subgame dominated another"
 
     for sub in subs:
-        subprofs = subgame.translate(base.subgame(sub).all_profiles(), sub)
+        subprofs = subgame.translate(game.subgame(sub).all_profiles(), sub)
         assert all(p in game for p in subprofs), \
             "Maximal subgame didn't have all profiles"
         for dev in np.nonzero(~sub)[0]:
@@ -94,14 +93,14 @@ def test_deviation_profile_count(players, strategies, _):
 @pytest.mark.parametrize('players,strategies', testutils.games)
 def test_subgame_preserves_completeness(players, strategies, _):
     """Test that subgame function preserves completeness"""
-    game = gamegen.role_symmetric_game(players, strategies)
+    game = gamegen.game(players, strategies)
     assert game.is_complete(), "gamegen didn't create complete game"
 
     mask = game.random_subgame()
     sub_game = game.subgame(mask)
     assert sub_game.is_complete(), "subgame didn't preserve game completeness"
 
-    sgame = gamegen.add_noise(game, 1, 3)
+    sgame = gamegen.gen_noise(game)
     sub_sgame = sgame.subgame(mask)
     assert sub_sgame.is_complete(), \
         "subgame didn't preserve sample game completeness"

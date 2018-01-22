@@ -35,18 +35,18 @@ class RoleSymmetric(object):
             'ursym', aliases=['rs'], parents=[base], description="""Construct a
             role symmetric game.""", help="""Role Symmetric""")
         parser.add_argument(
-            'pands', nargs='+', metavar='<player> <strat>', type=int,
+            'pands', metavar='players:strats,...',
             help="""The number of players and strategies for a role, specified
-            as many times as there are roles. e.g. "1 4 3 2" will be a two role
+            as many times as there are roles. e.g. "1:4,3:2" will be a two role
             game, the first role has 1 player and 4 strategies, the second role
             has 3 players and 2 strategies.""")
         return parser
 
     @staticmethod
     def create(args):
-        assert len(args.pands) % 2 == 0, \
-            'Must specify matching sets of players and strategies'
-        return gamegen.role_symmetric_game(args.pands[::2], args.pands[1::2])
+        players, strats = zip(*(map(int, ps.split(':')) for ps
+                                in args.pands.split(',')))
+        return gamegen.game(players, strats)
 
 
 class Noise(object):
@@ -69,28 +69,40 @@ class Noise(object):
             type=argparse.FileType('r'), help="""Input file for script.
             (default: stdin)""")
         parser.add_argument(
-            'distribution', choices=Noise.distributions, help="""The
-            distribution to sample from. uniform: the width corresponds to the
-            half width of the sampled value. gaussian: the width corresponds to
-            the standard deviation. bimodal: gaussian mixture where the means
-            are N(0, max-width) apart.  gumbel: the width corresponds to the
-            shape parameter.""")
+            '--distribution', '-d', choices=Noise.distributions,
+            default='gaussian', help="""The distribution to sample from.
+            (default: %(default)s)""")
         parser.add_argument(
-            'max_width', metavar='<max-width>', type=float, help="""The max
-            width for the distribution. For each payoff the width is drawn
-            uniformly from [0, max-width], and then the noise is drawn from
-            distribution parameterized by width.""")
+            '--min-width', metavar='<min-width>', default=0, type=float,
+            help="""The minimum width for each distribution. See max-width.
+            (default: %(default)g)""")
         parser.add_argument(
-            'num_samples', metavar='<num-samples>', type=int, help="""The
-            number of samples to draw for every payoff.""")
+            '--max-width', '-w', metavar='<max-width>', default=1, type=float,
+            help="""The max width for each distribution. For each payoff the
+            width is drawn uniformly from [min-width, max-width], and then the
+            noise is drawn from distributions whith zero mean and width
+            standard deviation. (default: %(default)g)""")
+        parser.add_argument(
+            '--min-samples', '-s', default=1, metavar='<min-samples>',
+            type=int, help="""The minimum number of samples to draw for every
+            payoff, before potentially sampling more with prob. (default:
+            %(default)d)""")
+        parser.add_argument(
+            '--prob', '-p', metavar='<prob>', default=0, type=float,
+            help="""The probability of sampling successively more profiles
+            after the minimum number have been sampled. Profiles will keep
+            being sampled until a failure is reached. Setting this to 0.5 will
+            add one extra sample in expectation to every profile. (default:
+            %(default)g)""")
         return parser
 
     @staticmethod
     def create(args):
         game = gamereader.load(args.input)
         dist = Noise.distributions[args.distribution]
-        return gamegen.add_noise_width(
-            game, args.num_samples, args.max_width, dist)
+        return gamegen.gen_noise(
+            game, args.prob, args.min_samples, args.min_width, args.max_width,
+            noise_distribution=dist)
 
 
 _TYPES = {}
@@ -98,11 +110,12 @@ _TYPES = {}
 
 def add_parser(subparsers):
     base = argparse.ArgumentParser(add_help=False)
-    base.add_argument(
+    group = base.add_argument_group('generate arguments')
+    group.add_argument(
         '--output', '-o', metavar='<output-file>', default=sys.stdout,
         type=argparse.FileType('w'), help="""Output file for script. (default:
         stdout)""")
-    base.add_argument(
+    group.add_argument(
         '--normalize', '-n', action='store_true', help="""Normalize the game
         payoffs so that the minimum payoff is 0 and the maximum payoff is 1""")
     parser = subparsers.add_parser(

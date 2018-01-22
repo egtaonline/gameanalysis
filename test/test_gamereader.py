@@ -1,4 +1,5 @@
 import functools
+import io
 import json
 import pytest
 
@@ -21,11 +22,11 @@ def egame():
 
 @functools.lru_cache()
 def game():
-    return gamegen.add_profiles(egame(), 0.5)
+    return gamegen.gen_profiles(egame(), 0.5)
 
 
 def sgame():
-    return gamegen.add_noise(game(), 1, 3)
+    return gamegen.gen_noise(game())
 
 
 def agg():
@@ -67,12 +68,10 @@ def test_automatic_deserialization(game):
     copy = gamereader.loads(string)
     assert game == copy
 
+    copy = gamereader.load(io.StringIO(string))
+    assert game == copy
+
 
 def test_parse_fail():
     with pytest.raises(AssertionError):
         gamereader.loads('')
-
-
-@testutils.warnings_filter(DeprecationWarning)
-def test_deprecation():
-    gamereader.read(egame().to_json())

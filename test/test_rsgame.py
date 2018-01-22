@@ -200,19 +200,20 @@ def test_random_subgames():
     assert sarr.is_subgame(subgs).all()
     assert not subgs.all()
 
-    subgs = sarr.random_subgames(1000, 1)
+    subgs = sarr.random_subgames(1000, strat_prob=1)
     assert sarr.is_subgame(subgs).all()
     assert subgs.all()
 
     # Probability is raised to 1/3
-    subgs = sarr.random_subgames(1000, 0)
+    subgs = sarr.random_subgames(1000, strat_prob=0)
     assert sarr.is_subgame(subgs).all()
 
-    subgs = sarr.random_subgames(1000, 0, False)
+    subgs = sarr.random_subgames(1000, strat_prob=0, normalize=False)
     assert sarr.is_subgame(subgs).all()
 
+    # This has a roughly .5^1000 probability of failure
     sarr = stratarray([3, 2])
-    subgs = sarr.random_subgames(1000, [1, 1 / 2])
+    subgs = sarr.random_subgames(1000, strat_prob=[1, 1 / 2])
     assert sarr.is_subgame(subgs).all()
     assert np.all([True, True, True, False, False] == subgs.all(0))
 
@@ -830,6 +831,18 @@ def test_to_from_role_json():
     assert arr.dtype == float
 
 
+def test_trim_precision():
+    sarr = stratarray([3, 2])
+    trimmed = sarr.trim_mixture_precision(
+        [1/3, 1/3, 1/3, 0.62, 0.38], ndigits=1)
+    # Ties resolve as first strategies
+    assert np.allclose(trimmed, [0.4, 0.3, 0.3, 0.6, 0.4])
+
+    trimmed = sarr.trim_mixture_precision(
+        [0.5, 0.25, 0.25, 0.5, 0.5], ndigits=2)
+    assert np.allclose(trimmed, [0.5, 0.25, 0.25, 0.5, 0.5])
+
+
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_role_serialization(role_players, role_strats):
     game = rsgame.emptygame(role_players, role_strats)
@@ -1112,9 +1125,10 @@ def test_profile_id():
     assert game.profile_to_id(prof) == 2
     assert np.all(game.profile_from_id(2) == prof)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', DeprecationWarning)
-        assert game.profile_id(prof) == 2
+    game = rsgame.emptygame([1, 1, 1], [2, 2, 2])
+    ids = np.arange(game.num_all_profiles)
+    profs = game.profile_from_id(ids)
+    assert np.all(profs == game.all_profiles())
 
 
 def test_profile_id_big():
@@ -1420,6 +1434,10 @@ def test_random_random_dev_profiles(role_players, role_strats):
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
 def test_random_random_deviator_profiles(role_players, role_strats):
     game = rsgame.emptygame(role_players, role_strats)
+    profs = game.random_deviation_profile()
+    assert profs.shape == (game.num_strats, game.num_strats)
+    assert game.is_profile(profs).all()
+
     profs = game.random_deviation_profiles(100)
     assert profs.shape == (100, game.num_strats, game.num_strats)
     prof_mins = np.minimum.reduceat(
@@ -1721,82 +1739,3 @@ def test_ramdom_complete_game(role_players, role_strats):
 
     with pytest.raises(NotImplementedError):
         game.payoffs()  # Get payoffs no implemented
-
-
-@pytest.mark.parametrize('players', [1, 2, 3, [3, 2, 1]])
-@pytest.mark.parametrize('strats', [2, 4, [2, 3, 4]])
-@pytest.mark.parametrize('_', range(5))
-def test_random_deprecated_functions(players, strats, _):
-    game = rsgame.emptygame(players, strats)
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', DeprecationWarning)
-        assert game.is_subgame(game.random_subgames())
-
-        mix = game.random_mixture()
-        simp = game.to_simplex(mix)
-        assert np.all(0 <= simp) and np.isclose(simp.sum(), 1)
-        assert np.allclose(game.from_simplex(simp), mix)
-        assert game.is_mixture(game.random_mixtures())
-        assert game.is_mixture(game.random_sparse_mixtures())
-        mixj = game.mixture_to_json(mix)
-        assert np.allclose(game.from_mix_json(mixj), mix)
-
-        # Fuzzy json equality
-        mixjd = game.to_mix_json(mix)
-        assert mixj.keys() == mixjd.keys()
-        for role, strats in mixj.items():
-            stratsd = mixjd[role]
-            assert strats.keys() == stratsd.keys()
-            for strat, val in strats.items():
-                assert np.isclose(val, stratsd[strat])
-
-        mixr = game.mixture_to_repr(mix)
-        assert np.allclose(game.from_mix_repr(mixr), mix, atol=1e-4)
-        assert mixr == game.to_mix_repr(mix)
-        mixs = game.mixture_to_str(mix)
-        assert np.allclose(game.from_mix_str(mixs), mix, atol=1e-4)
-        assert mixs == game.to_mix_str(mix)
-
-        sub = game.random_subgame()
-        subj = game.subgame_to_json(sub)
-        assert np.all(game.from_subgame_json(subj) == sub)
-        assert subj == game.to_subgame_json(sub)
-        subr = game.subgame_to_repr(sub)
-        assert np.all(game.from_subgame_repr(subr) == sub)
-        assert subr == game.to_subgame_repr(sub)
-        subs = game.subgame_to_str(sub)
-        assert np.all(game.from_subgame_str(subs) == sub)
-        assert subs == game.to_subgame_str(sub)
-
-        role = np.random.random(game.num_roles)
-        rolej = game.role_to_json(role)
-        assert np.allclose(game.from_role_json(rolej), role)
-        assert rolej == game.to_role_json(role)
-
-        prof = game.random_profiles()
-        assert game.is_profile(prof)
-        game.random_dev_profiles(game.uniform_mixture())
-        game.random_dev_profiles(game.uniform_mixture(), 2)
-        assert game.is_profile(game.random_deviator_profiles(
-            game.uniform_mixture())).all()
-        assert game.is_profile(game.random_deviator_profiles(
-            game.uniform_mixture(), 2)).all()
-        profj = game.profile_to_json(prof)
-        assert np.all(game.from_prof_json(profj) == prof)
-        assert profj == game.to_prof_json(prof)
-        profr = game.profile_to_repr(prof)
-        assert np.all(game.from_prof_repr(profr) == prof)
-        assert profr == game.to_prof_repr(prof)
-        profs = game.profile_to_str(prof)
-        assert np.all(game.from_prof_str(profs) == prof)
-        assert profs == game.to_prof_str(prof)
-
-        pay = np.random.random(game.num_strats)
-        payj = game.payoff_to_json(pay)
-        assert np.all(game.from_payoff_json(payj) == pay)
-        assert payj == game.to_payoff_json(pay)
-
-        dpay = np.random.random(game.num_devs)
-        dpayj = game.devpay_to_json(dpay)
-        assert np.all(game.from_dev_payoff_json(dpayj) == dpay)
-        assert dpayj == game.to_dev_payoff_json(dpay)

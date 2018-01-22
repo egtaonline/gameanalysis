@@ -134,7 +134,7 @@ def test_nonzero_mixed_welfare():
 ])
 # Test that for complete games, there are never any nan deviations.
 def test_nan_deviations(players, strategies):
-    game = gamegen.role_symmetric_game(players, strategies)
+    game = gamegen.game(players, strategies)
     for mix in game.random_mixtures(20, alpha=0.05):
         mix = game.trim_mixture_support(mix)
         gains = regret.mixture_deviation_gains(game, mix)

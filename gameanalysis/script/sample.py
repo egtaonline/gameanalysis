@@ -24,10 +24,6 @@ def add_parser(subparsers):
         '--input', '-i', metavar='<input-file>', default=sys.stdin,
         type=argparse.FileType('r'), help="""Game file to draw samples from.
         (default: stdin)""")
-    # TODO Remove this in favor of sub command
-    parser.add_argument(
-        '--mix', '-m', metavar='<deprecated>', default=sys.stdin,
-        type=argparse.FileType('r'), help="""deprecated""")
     parser.add_argument(
         '--output', '-o', metavar='<output-file>', default=sys.stdout,
         type=argparse.FileType('w'), help="""File to write stream of objects
@@ -43,6 +39,7 @@ def add_parser(subparsers):
     types = parser.add_subparsers(
         title='types', dest='types', metavar='<type>', help="""The type of game
         object to sample from the input. Available commands are:""")
+    types.required = True
 
     subg = types.add_parser(
         subs[0], aliases=subs[1:], help='subgames', description="""Sample
@@ -103,7 +100,7 @@ def main(args):
                                               support_prob=args.sparse)
         objs = (game.mixture_to_json(m) for m in mix)
 
-    elif args.types in profs:
+    elif args.types in profs:  # pragma: no branch
         if args.mix is None:
             prof = game.round_mixture_to_profile(
                 game.random_mixtures(args.num, alpha=args.alpha))
@@ -111,11 +108,6 @@ def main(args):
             mix = game.mixture_from_json(json.load(args.mix))
             prof = game.random_profiles(args.num, mix)
         objs = (game.profile_to_json(p) for p in prof)
-
-    else:  # TODO Remove and make subparser required
-        mix = game.mixture_from_json(json.load(args.mix))
-        objs = (game.profile_to_json(prof) for prof
-                in game.random_profiles(args.num, mix))
 
     # We sort the keys when a seed is set to guarantee identical output.  This
     # technically shouldn't be necessary, but on the off chance that a

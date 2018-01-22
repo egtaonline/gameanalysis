@@ -15,18 +15,199 @@ def default_distribution(shape=None):
     return rand.uniform(-1, 1, shape)
 
 
-def game(players, strats, prob_or_count=1.0,
-         distribution=default_distribution):
-    """Generate a random role symmetric game
+def gen_profiles(game, prob=1.0, distribution=default_distribution):
+    """Generate profiles given game structure
 
-    See `add_profiles`.
+    Parameters
+    ----------
+    game : RsGame
+        Game to generate payoffs for.
+    prob : float, optional
+        The probability to add a profile from the full game.
+    distribution : (shape) -> ndarray, optional
+        Distribution function to draw payoffs from.
     """
-    return add_profiles(rsgame.emptygame(players, strats), prob_or_count,
-                        distribution)
+    # First turn input into number of profiles to compute
+    num_profs = game.num_all_profiles
+    assert 0 <= prob <= 1
+    if num_profs <= np.iinfo(int).max:
+        num = rand.binomial(num_profs, prob)
+    else:
+        num = round(float(num_profs * prob))
+    return gen_num_profiles(game, num, distribution)
 
 
-def samplegame(players, strats, prob=0.5, complete=True,
-               distribution=default_distribution):
+def gen_num_profiles(game, num, distribution=default_distribution):
+    """Generate profiles given game structure
+
+    Parameters
+    ----------
+    game : RsGame
+        Game to generate payoffs for.
+    count : int
+        The number of profiles to generate.
+    distribution : (shape) -> ndarray, optional
+        Distribution function to draw payoffs from.
+    """
+    assert 0 <= num <= game.num_all_profiles
+    profiles = sample_profiles(game, num)
+    payoffs = np.zeros(profiles.shape)
+    mask = profiles > 0
+    payoffs[mask] = distribution(mask.sum())
+    return paygame.game_replace(game, profiles, payoffs)
+
+
+def game(players, strats, prob=1.0, distribution=default_distribution):
+    """Generate a random role symmetric game with sparse profiles
+
+    Parameters
+    ----------
+    players : int or [int]
+        The number of players per role.
+    strats : int or [int]
+        The number of strategies per role.
+    prob : float, optional
+        The probability of any profile being included in the game.
+    distribution : (shape) -> ndarray, optional
+        Distribution function to draw payoffs from.
+    """
+    return gen_profiles(rsgame.emptygame(players, strats), prob, distribution)
+
+
+def sparse_game(players, strats, num, distribution=default_distribution):
+    """Generate a random role symmetric game with sparse profiles
+
+    Parameters
+    ----------
+    players : int or [int]
+        The number of players per role.
+    strats : int or [int]
+        The number of strategies per role.
+    num : int
+        The number of profiles to draw payoffs for.
+    distribution : (shape) -> ndarray, optional
+        Distribution function to draw payoffs from.
+    """
+    return gen_num_profiles(
+        rsgame.emptygame(players, strats), num, distribution)
+
+
+def width_gaussian(widths, num_samples):
+    """Gaussian width distribution
+
+    Samples come from iid Gaussian distributions.
+    """
+    return rand.normal(0, widths[:, None], (widths.size, num_samples))
+
+
+def width_bimodal(widths, num_samples):
+    """Bimodal Gaussian width distribution
+
+    Samples come from a uniform mixture between two symmetric Gaussians.
+    """
+    squared_widths = widths ** 2
+    variances = rand.uniform(0, squared_widths)
+    sdevs = np.sqrt(variances)[:, None]
+    spreads = np.sqrt(squared_widths - variances)[:, None]
+    draws = rand.normal(spreads, sdevs, (widths.size, num_samples))
+    draws *= rand.randint(0, 2, draws.shape) * 2 - 1
+    return draws
+
+
+def width_uniform(widths, num_samples):
+    """Uniform width distribution
+
+    Samples come from iid uniform distributions.
+    """
+    halfwidths = np.sqrt(3) * widths[:, None]
+    return rand.uniform(-halfwidths, halfwidths, (widths.size, num_samples))
+
+
+def width_gumbel(widths, num_samples):
+    """Gumbel width distribution
+
+    Samples come from iid Gumbel distributions. Distributions are randomly
+    inverted since Gumbels are skewed.
+    """
+    scales = widths[:, None] * np.sqrt(6) / np.pi
+    draws = np.random.gumbel(
+        -scales * np.euler_gamma, scales, (widths.size, num_samples))
+    draws *= rand.randint(0, 2, (widths.size, 1)) * 2 - 1
+    return draws
+
+
+def gen_noise(game, prob=0.5, min_samples=1, min_width=0, max_width=1,
+              noise_distribution=width_gaussian):
+    """Generate noise for profiles of a game
+
+    This generates samples for payoff data by first generating some measure of
+    distribution spread for each payoff in the game. Then, for each sample,
+    noise is drawn from this distribution. As a result, some payoffs will have
+    significantly more noise than other payoffs, helping to mimic real games.
+
+    Parameters
+    ----------
+    game : Game
+        The game to generate samples from. These samples are additive zero-mean
+        noise to the payoff values.
+    prob : float, optional
+        The probability of continuing to add another sample to a profile. If
+        this is 0, min_samples will be generated for each profile. As this
+        approaches one, more samples will be generated for each profile,
+        sampled from the geometric distribution of 1 - prob.
+    min_samples : int, optional
+        The minimum number of samples to generate for each profile. By default
+        this will generate at least one sample for every profile with data.
+        Setting this to zero means that a profile will only have data with
+        probability `prob`.
+    min_width : float, optional
+        The minimum standard deviation of each payoffs samples.
+    max_width : float, optional
+        The maximum standard deviation of each payoffs samples.
+    noise_distribution : width distribution, optional
+        The noise generating function to use. This function must be a valid
+        width noise distribution. A width distribution takes an array of widths
+        and a number of samples, and draws that many samples for each width
+        such that the standard deviation of the samples is equal to the width
+        and the mean is zero.  Several default versions are specified in
+        gamegen, and they're all prefixed with `width_`. By default, this uses
+        `width_gaussian`.
+    """
+    if game.is_empty():
+        return paygame.samplegame_copy(game)
+    perm = rand.permutation(game.num_profiles)
+    profiles = game.profiles()[perm]
+    payoffs = game.payoffs()[perm]
+    samples = utils.geometric_histogram(profiles.shape[0], 1 - prob)
+    mask = samples > 0
+    observations = np.arange(samples.size)[mask] + min_samples
+    splits = samples[mask][:-1].cumsum()
+
+    sample_payoffs = []
+    new_profiles = []
+    for num, prof, pay in zip(observations, np.split(profiles, splits),
+                              np.split(payoffs, splits)):
+        if num == 0:
+            continue
+        supp = prof > 0
+        spay = np.zeros((pay.shape[0], num, game.num_strats))
+        pview = np.rollaxis(spay, 1, 3)
+        widths = rand.uniform(min_width, max_width, supp.sum())
+        pview[supp] = pay[supp, None] + noise_distribution(widths, num)
+
+        new_profiles.append(prof)
+        sample_payoffs.append(spay)
+
+    if new_profiles:
+        new_profiles = np.concatenate(new_profiles)
+    else:  # No data
+        new_profiles = np.empty((0, game.num_strats), dtype=int)
+    return paygame.samplegame_replace(game, new_profiles, sample_payoffs)
+
+
+def samplegame(players, strats, prob=0.5, min_samples=1, min_width=0,
+               max_width=1, payoff_distribution=default_distribution,
+               noise_distribution=width_gaussian):
     """Generate a random role symmetric sample game
 
     Parameters
@@ -36,42 +217,28 @@ def samplegame(players, strats, prob=0.5, complete=True,
     strats : int or [int]
         The number of strategies per role.
     prob : float, optional
-        The probability of adding another sample payoff.
-    complete : boolean, optional
-        If true, game will be complete with one or more samples per profile. If
-        false, a profile will be missing data with `1 - prob`.
-    distribution : (shape) -> ndarray
-        The distribution of the initial payoffs and the noise that will be
-        added to them.
+        The probability of adding another sample above min_samples. These draws
+        are repeated, so 0.5 will add one extra sample in expectation.
+    min_samples : int, optional
+        The minimum number of samples to generate for each profile. If 0, the
+        game will potentially be sparse.
+    min_width : float, optional
+        The minimum standard deviation for each payoffs samples.
+    max_width : float, optional
+        The maximum standard deviation for each payoffs samples.
+    payoff_distribution : (shape) -> ndarray, optional
+        The distribution to sample mean payoffs from.
+    noise_distribution : width distribution, optional
+        The distribution used to add noise to each payoff. See `gen_noise` for
+        a description of width distributions.
     """
-    return add_noise(game(players, strats, distribution=distribution),
-                     prob, complete, distribution)
-
-
-# TODO Remove
-def role_symmetric_game(num_role_players, num_role_strats,
-                        distribution=default_distribution):
-    """Generate a random role symmetric game
-
-    Parameters
-    ----------
-    num_roles : int > 0
-        The number of roles in the game.
-    num_role_players : int or [int], len == num_roles
-        The number of players, same for each role if a scalar, or a list, one
-        for each role.
-    num_role_strats : int or [int], len == num_roles
-        The number of strategies, same for each role if a scalar, or a list,
-        one for each role.
-    distribution : (shape) -> ndarray (shape)
-        Payoff distribution.
-    """
-    game = rsgame.emptygame(num_role_players, num_role_strats)
-    profiles = game.all_profiles()
-    mask = profiles > 0
-    payoffs = np.zeros(profiles.shape)
-    payoffs[mask] = distribution(mask.sum())
-    return paygame.game_replace(game, profiles, payoffs)
+    if min_samples == 0:
+        base = game(players, strats, prob, payoff_distribution)
+        min_samples = 1
+    else:
+        base = game(players, strats, distribution=payoff_distribution)
+    return gen_noise(base, prob, min_samples, min_width, max_width,
+                     noise_distribution)
 
 
 def independent_game(num_role_strats, distribution=default_distribution):
@@ -143,13 +310,12 @@ def two_player_zero_sum_game(num_role_strats,
     return matgame.matgame(np.concatenate([p1_payoffs, -p1_payoffs], -1))
 
 
-def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
+def sym_2p2s_game(a, b, c, d, distribution=default_distribution):
     """Create a symmetric 2-player 2-strategy game of the specified form.
 
     Four payoff values get drawn from U(min_val, max_val), and then are
     assigned to profiles in order from smallest to largest according to the
     order parameters as follows:
-
 
     +---+-----+-----+
     |   | s0  | s1  |
@@ -159,23 +325,25 @@ def sym_2p2s_game(a=0, b=1, c=2, d=3, distribution=default_distribution):
     |s1 | c,b | d,d |
     +---+-----+-----+
 
-
-    So a=2,b=0,c=3,d=1 gives a prisoners' dilemma; a=0,b=3,c=1,d=2 gives a game
-    of chicken.
-
     distribution must accept a size parameter a la numpy distributions.
     """
+    assert {a, b, c, d} == set(range(4))
     # Generate payoffs
     payoffs = distribution(4)
     payoffs.sort()
-    counts = [[2, 0], [1, 1], [0, 2]]
-    values = [[payoffs[a], 0], [payoffs[b], payoffs[c]], [0, payoffs[d]]]
-    return paygame.game(2, 2, counts, values)
+    profs = [[2, 0], [1, 1], [0, 2]]
+    pays = [[payoffs[a], 0], [payoffs[b], payoffs[c]], [0, payoffs[d]]]
+    return paygame.game(2, 2, profs, pays)
 
 
 def prisoners_dilemma(distribution=default_distribution):
     """Return a random prisoners dilemma game"""
     return sym_2p2s_game(2, 0, 3, 1, distribution)
+
+
+def chicken(distribution=default_distribution):
+    """Return a random prisoners dilemma game"""
+    return sym_2p2s_game(0, 3, 1, 2, distribution)
 
 
 def sym_2p2s_known_eq(eq_prob):
@@ -273,262 +441,77 @@ def travellers_dilemma(players=2, max_value=100):
     return paygame.game_replace(game, profiles, payoffs)
 
 
-def add_profiles(game, prob_or_count=1.0, distribution=default_distribution):
-    """Add profiles to a base game
+def keep_profiles(game, keep_prob=0.5):
+    """Keep random profiles from an existing game
 
     Parameters
     ----------
-    prob_or_count : float or int, optional
-        If a float, the probability to add a profile from the full game. If an
-        int, the number of profiles to add.
-    distribution : (shape) -> ndarray, optional
-        Distribution function to draw payoffs from.
-    """
-    # First turn input into number of profiles to compute
-    num_profs = game.num_all_profiles
-    if isinstance(prob_or_count, float):
-        assert 0 <= prob_or_count <= 1
-        if num_profs <= np.iinfo(int).max:
-            num = rand.binomial(num_profs, prob_or_count)
-        else:
-            num = round(float(num_profs * prob_or_count))
-    else:
-        assert 0 <= prob_or_count <= num_profs
-        num = prob_or_count
-
-    # Generate profiles based number and size of game
-
-    # Ratio of the expected number of profiles we'd have to draw at random to
-    # produce num unique relative to the number of total profiles
-    ratio = sps.digamma(float(num_profs)) - sps.digamma(float(num_profs - num))
-    if num == num_profs:
-        profiles = game.all_profiles()
-    elif num == 0:
-        profiles = np.empty((0, game.num_strats), int)
-    elif ratio >= 1:
-        inds = rand.choice(num_profs, num, replace=False)
-        profiles = game.all_profiles()[inds]
-    else:
-        profiles = np.empty((0, game.num_strats), int)
-        num_per = max(round(float(ratio * num_profs)), num)  # Max => underflow
-        mix = game.uniform_mixture()
-        while profiles.shape[0] < num:
-            profiles = np.concatenate([profiles,
-                                       game.random_profiles(num_per, mix)])
-            profiles = utils.unique_axis(profiles)
-        inds = rand.choice(profiles.shape[0], num, replace=False)
-        profiles = profiles[inds]
-
-    # Fill out game with profiles
-    payoffs = np.zeros(profiles.shape)
-    mask = profiles > 0
-    payoffs[mask] = distribution(mask.sum())
-    return paygame.game_replace(game, profiles, payoffs)
-
-
-def drop_profiles(game, keep_prob_or_count=1.0):
-    """Drop profiles from an existing game
-
-    Parameters
-    ----------
-    keep_prob_or_count : float or int, optional
-        If a float, the probability to keep a profile from the full game. If an
-        int, the number of profiles to keep.
+    game : RsGame
+        The game to take profiles from.
+    keep_prob : float, optional
+        The probability of keeping a profile from the full game.
     """
     # First turn input into number of profiles to compute
     num_profs = game.num_profiles
-    if isinstance(keep_prob_or_count, float):
-        assert 0 <= keep_prob_or_count <= 1
-        if num_profs <= np.iinfo(int).max:
-            num = rand.binomial(num_profs, keep_prob_or_count)
-        else:
-            num = round(float(num_profs * keep_prob_or_count))
+    assert 0 <= keep_prob <= 1
+    if num_profs <= np.iinfo(int).max:
+        num = rand.binomial(num_profs, keep_prob)
     else:
-        assert 0 <= keep_prob_or_count <= num_profs
-        num = keep_prob_or_count
-
-    # Generate profiles based number and size of game
-
-    # Ratio of the expected number of profiles we'd have to draw at random to
-    # produce num unique relative to the number of total profiles
-    ratio = sps.digamma(float(num_profs)) - sps.digamma(float(num_profs - num))
-    if num == num_profs:
-        profiles = game.profiles()
-        payoffs = game.payoffs()
-    elif num == 0:
-        profiles = np.empty((0, game.num_strats), int)
-        payoffs = np.empty((0, game.num_strats))
-    elif ratio >= 1:
-        inds = rand.choice(num_profs, num, replace=False)
-        profiles = game.profiles()[inds]
-        payoffs = game.payoffs()[inds]
-    else:
-        profiles = np.empty((0, game.num_strats), int)
-        num_per = max(round(float(ratio * num_profs)), num)  # Max => underflow
-        mix = game.uniform_mixture()
-        while profiles.shape[0] < num:
-            profiles = np.concatenate([profiles,
-                                       game.random_profiles(num_per, mix)])
-            profiles = utils.unique_axis(profiles)
-        inds = rand.choice(profiles.shape[0], num, replace=False)
-        profiles = profiles[inds]
-        payoffs = game.get_payoffs(profiles)
-
-    return paygame.game_replace(game, profiles, payoffs)
+        num = round(float(num_profs * keep_prob))
+    return keep_num_profiles(game, num)
 
 
-def add_noise(game, prob=0.5, initial=1, noise=default_distribution):
-    """Generate sample game by adding noise to game payoffs
-
-    Arguments
-    ---------
-    game : Game
-        A Game or SampleGame (only current payoffs are used)
-    prob : float, optional
-        For every profile, draw a sample for each failed coin flip with prob
-        until a success.
-    initial : int, optional
-        The initial number of samples to always draw. If 0, the number of
-        samples will follow a zero based gemetric (the number of failed coin
-        flips), if 1, the number of samples will follow a one base geometric
-        (the number of coin flips until the first success). Other numbers can
-        be used for more samples.
-    noise : shape -> ndarray
-        A noise generating function. The function should take a single shape
-        parameter, and return a number of samples equal to shape. In order to
-        preserve mixed equilibria, noise should also be zero mean (aka
-        unbiased)
-    """
-    assert 0 < prob <= 1, "invalid probability"
-    assert 0 <= initial, "invalid initial number of samples"
-    if game.is_empty():
-        return paygame.samplegame_copy(game)
-
-    perm = rand.permutation(game.num_profiles)
-    profiles = game.profiles()[perm]
-    payoffs = game.payoffs()[perm]
-    samples = utils.geometric_histogram(profiles.shape[0], prob)
-    mask = samples > 0
-    observations = np.arange(samples.size)[mask] + initial
-    splits = samples[mask][:-1].cumsum()
-
-    sample_payoffs = []
-    new_profiles = []
-    for num, prof, pay in zip(observations, np.split(profiles, splits),
-                              np.split(payoffs, splits)):
-        if num == 0:
-            continue
-        supp = prof > 0
-        spay = np.zeros((pay.shape[0], num, game.num_strats))
-        pview = np.rollaxis(spay, 1, 3)
-        pview[supp] = pay[supp, None] + noise((supp.sum(), num))
-
-        new_profiles.append(prof)
-        sample_payoffs.append(spay)
-
-    if new_profiles:
-        new_profiles = np.concatenate(new_profiles)
-    else:  # No data
-        new_profiles = np.empty((0, game.num_strats), dtype=int)
-    return paygame.samplegame_replace(game, new_profiles, sample_payoffs)
-
-
-def width_gaussian(max_width, num_profiles, num_samples):
-    """Gaussian width distribution
-
-    This returns standard deviations from U[0, max_width].
-    """
-    widths = rand.uniform(0, max_width, num_profiles)
-    return rand.normal(0, widths, (num_samples, num_profiles)).T
-
-
-# TODO Remove
-def width_gaussian_old(scale=1):
-    """Old gaussian width distribution
-
-    This returns a valid distribution, taking a scale parameter to correct for
-    the scale invariance of guassian variance.
-    """
-    def width_gaussian(max_width, num_profiles, num_samples):
-        widths = rand.uniform(0, max_width, num_profiles)
-        return rand.normal(0, np.sqrt(widths) * scale,
-                           (num_samples, num_profiles)).T
-    return width_gaussian
-
-
-def width_bimodal(max_width, num_profiles, num_samples):
-    """Bimodal width distribution
-
-    This returns standard deviations from U[0, max_width] and half spreads from
-    N[0, sqrt(max_width)].
-    """
-    sdevs = rand.uniform(0, max_width, num_profiles)
-    spreads = rand.normal(0, max_width, num_profiles)
-    draws = rand.normal(spreads, sdevs, (num_samples, num_profiles)).T
-    draws *= (rand.random(draws.shape) < .5) * 2 - 1
-    return draws
-
-
-# TODO Remove
-def width_bimodal_old(scale=1):
-    """Old bimodal width distribution
-
-    This returns a valid distribution, taking a scale parameter to correct for
-    the scale invariance of guassian variance.
-    """
-    def width_bimodal(max_width, num_profiles, num_samples):
-        variances = np.sqrt(rand.uniform(0, max_width, num_profiles)) * scale
-        spreads = rand.normal(0, np.sqrt(max_width) * scale, num_profiles)
-        draws = rand.normal(spreads, variances, (num_samples, num_profiles)).T
-        draws *= (rand.random(draws.shape) < .5) * 2 - 1
-        return draws
-    return width_bimodal
-
-
-def width_uniform(max_width, num_profiles, num_samples):
-    """Uniform width distribution
-
-    Generates halfwidths in U[0, max_width]
-    """
-    halfwidths = rand.uniform(0, max_width, num_profiles)
-    return rand.uniform(-halfwidths, halfwidths, (num_samples, num_profiles)).T
-
-
-def width_gumbel(max_width, num_profiles, num_samples):
-    """Gumbel width distribution
-
-    Generates scales in U[0, max_width]
-    """
-    scales = rand.uniform(0, max_width, num_profiles)
-    return rand.gumbel(0, scales, (num_samples, num_profiles)).T
-
-
-def add_noise_width(game, num_samples, max_width, noise=width_gaussian):
-    """Create sample game where each profile has different noise level
+def keep_num_profiles(game, num):
+    """Keep random profiles from an existing game
 
     Parameters
     ----------
-    game : Game
-        The game to generate samples from. These samples are additive noise to
-        standard payoff values.
-    num_samples : int
-        The number of samples to generate for each profile.
-    max_width : float
-        A parameter describing how much noise to generate. Larger max_width
-        generates more noise.
-    noise : (float, int, int) -> ndarray (optional)
-        The noise generating function to use. The function must take three
-        parameters: the max_width, the number of profiles, and the number of
-        samples, and return an ndarray of the additive noise for each profile
-        (shape: (num_profiles, num_samples)). The max_width should be used to
-        generate sufficient statistics for each profile, and then each sample
-        per profile should come from a distribution derived from those. For
-        this to be accurate, this distribution should have expectation 0.
-        Several default versions are specified in gamegen, and they're all
-        prefixed with `width_`. By default, this uses `width_gaussian`.
+    game : RsGame
+        Game to keep profiles from.
+    num : int
+        The number of profiles to keep from the game.
     """
-    spayoffs = game.payoffs()[:, None].repeat(num_samples, 1)
-    supp = game.profiles() > 0
-    view = np.rollaxis(spayoffs, 1, 3)
-    view[supp] += noise(max_width, supp.sum(), num_samples)
-    return paygame.samplegame_replace(game, game.profiles(), [spayoffs])
+    assert 0 <= num <= game.num_profiles
+    if num == 0:
+        profiles = np.empty((0, game.num_strats), int)
+        payoffs = np.empty((0, game.num_strats))
+    elif game.is_complete():
+        profiles = sample_profiles(game, num)
+        payoffs = game.get_payoffs(profiles)
+    else:
+        inds = rand.choice(game.num_profiles, num, replace=False)
+        profiles = game.profiles()[inds]
+        payoffs = game.payoffs()[inds]
+    return paygame.game_replace(game, profiles, payoffs)
+
+
+def sample_profiles(game, num):
+    """Generate unique profiles from a game
+
+    Parameters
+    ----------
+    game : RsGame
+        Game to generate random profiles from.
+    num : int
+        Number of profiles to sample from the game.
+    """
+    if num == game.num_all_profiles:
+        return game.all_profiles()
+    elif num == 0:
+        return np.empty((0, game.num_strats), int)
+    elif game.num_all_profiles <= np.iinfo(int).max:
+        inds = rand.choice(game.num_all_profiles, num, replace=False)
+        return game.profile_from_id(inds)
+    else:
+        # Number of times we have to re-query
+        ratio = (sps.digamma(float(game.num_all_profiles)) -
+                 sps.digamma(float(game.num_all_profiles - num)))
+        # Max is for underflow
+        num_per = max(round(float(ratio * game.num_all_profiles)), num)
+        profiles = set()
+        while len(profiles) < num:
+            profiles.update(
+                utils.hash_array(p) for p in game.random_profiles(num_per))
+        profiles = np.stack([h.array for h in profiles])
+        inds = rand.choice(profiles.shape[0], num, replace=False)
+        return profiles[inds]

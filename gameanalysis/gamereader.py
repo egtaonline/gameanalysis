@@ -7,7 +7,6 @@ from gameanalysis import learning
 from gameanalysis import matgame
 from gameanalysis import paygame
 from gameanalysis import rsgame
-from gameanalysis import utils
 
 
 def load(filelike):
@@ -64,10 +63,3 @@ def loadj(obj):
     }
     game_type = obj.get('type', 'samplegame.').split('.', 1)[0]
     return readers[game_type](obj)
-
-
-# TODO Remove
-@utils.deprecated
-def read(obj):
-    """See loadj"""
-    return loadj(obj)

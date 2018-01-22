@@ -239,11 +239,6 @@ class Game(rsgame.RsGame):
         return (utils.hash_array(np.asarray(profile, int))
                 in self._complete_profiles)
 
-    # TODO Remove
-    @utils.deprecated
-    def from_prof_json(self, prof, dest=None, verify=True):
-        return self.profile_from_json(prof, dest, verify=verify)
-
     def profile_from_json(self, prof, dest=None, *, verify=True):
         """Read a profile from json
 
@@ -290,11 +285,6 @@ class Game(rsgame.RsGame):
                    self.role_names, self.strat_names)
             if np.any(counts > 0)}
 
-    # TODO Remove
-    @utils.deprecated
-    def from_payoff_json(self, pays, dest=None, verify=True):
-        return self.payoff_from_json(pays, dest, verify=verify)
-
     def payoff_from_json(self, pays, dest=None, *, verify=True):
         """Read a set of payoffs from json
 
@@ -321,13 +311,6 @@ class Game(rsgame.RsGame):
             super().payoff_from_json(pays, dest=dest)
 
         return dest
-
-    # TODO Remove
-    @utils.deprecated
-    def from_profpay_json(self, prof, dest_prof=None, dest_pays=None,
-                          verify=True):
-        return self.profpay_from_json(
-            prof, dest_prof, dest_pays, verify=verify)
 
     def profpay_from_json(self, prof, dest_prof=None, dest_pays=None, *,
                           verify=True):
@@ -413,11 +396,6 @@ class Game(rsgame.RsGame):
         assert not verify or self.is_profile(dest_prof), \
             "\"{}\" does not define a valid profile".format(prof)
         return dest_prof, dest_pays
-
-    # TODO Remove
-    @utils.deprecated
-    def to_profpay_json(self, payoffs, prof):
-        return self.profpay_to_json(payoffs, prof)
 
     def profpay_to_json(self, payoffs, prof):
         """Format a profile and payoffs as json"""
@@ -768,11 +746,6 @@ class SampleGame(Game):
         return SampleGame(base.role_names, base.strat_names,
                           base.num_role_players, profiles, sample_payoffs)
 
-    # TODO Remove
-    @utils.deprecated
-    def from_samplepay_json(self, prof, dest=None):
-        return self.samplepay_from_json(prof, dest)
-
     def samplepay_from_json(self, prof, dest=None):
         """Read a set of payoff samples
 
@@ -810,11 +783,6 @@ class SampleGame(Game):
 
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def to_samplepay_json(self, samplepay, prof=None):
-        return self.samplepay_to_json(samplepay)
-
     def samplepay_to_json(self, samplepay):
         """Format sample payoffs as json"""
         # In a really weird degenerate case, if all payoffs are 0, we'll write
@@ -833,12 +801,6 @@ class SampleGame(Game):
                     in zip(self.role_names, self.strat_names,
                            np.split(samplepay.T, self.role_starts[1:]))
                     if np.any(pays != 0)}
-
-    # TODO Remove
-    @utils.deprecated
-    def from_profsamplepay_json(self, prof, dest_prof=None,
-                                dest_samplepay=None):
-        return self.profsamplepay_from_json(prof, dest_prof, dest_samplepay)
 
     def profsamplepay_from_json(self, prof, dest_prof=None,
                                 dest_samplepay=None):
@@ -920,11 +882,6 @@ class SampleGame(Game):
             raise ValueError("unrecognized format")
 
         return dest_prof, dest
-
-    # TODO Remove
-    @utils.deprecated
-    def to_profsamplepay_json(self, samplepay, prof):
-        return self.profsamplepay_to_json(samplepay, prof)
 
     def profsamplepay_to_json(self, samplepay, prof):
         """Convery profile and observations to prof obs output"""

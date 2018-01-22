@@ -72,30 +72,6 @@ class AgfnGame(rsgame.CompleteGame):
         self._func_offset = (np.arange(self.num_functions) *
                              np.prod(self.num_role_players + 1))
 
-    # TODO Remove
-    @property
-    @utils.deprecated
-    def _action_weights(self):
-        return self.action_weights
-
-    # TODO Remove
-    @property
-    @utils.deprecated
-    def _function_inputs(self):
-        return self.function_inputs
-
-    # TODO Remove
-    @property
-    @utils.deprecated
-    def _function_table(self):
-        return self.function_table
-
-    # TODO Remove
-    @property
-    @utils.deprecated
-    def _offsets(self):
-        return self.offsets
-
     def function_index(self, func_name):
         """Get the index of a function by name"""
         return self._function_index[func_name]

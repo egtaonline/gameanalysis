@@ -1,5 +1,4 @@
 import json
-import warnings
 
 import numpy as np
 import pytest
@@ -427,12 +426,3 @@ def test_eq():
         _game, _game.action_weights, _game.function_inputs,
         _game.function_table, np.ones(_game.num_strats))
     assert copy != _game
-
-
-def test_deprecation():
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', DeprecationWarning)
-        assert np.all(_game.action_weights == _game._action_weights)
-        assert np.all(_game.function_inputs == _game._function_inputs)
-        assert np.all(_game.function_table == _game._function_table)
-        assert np.all(_game.offsets == _game._offsets)

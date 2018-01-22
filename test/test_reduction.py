@@ -27,8 +27,7 @@ def test_random_dpr(keep_prob, game_desc, _):
     """Simple test that dpr functions are consistent"""
     players, strategies, red_players = game_desc
     # Create game
-    game = gamegen.add_profiles(
-        rsgame.emptygame(players, strategies), keep_prob)
+    game = gamegen.game(players, strategies, keep_prob)
 
     # Try to reduce game
     red_game = dpr.reduce_game(game, red_players)
@@ -107,8 +106,7 @@ def test_dpr_names():
 @pytest.mark.parametrize('_', range(10))
 def test_random_twins(players, strategies, keep_prob, _):
     # Create game and reduction
-    game = gamegen.add_profiles(
-        rsgame.emptygame(players, strategies), keep_prob)
+    game = gamegen.game(players, strategies, keep_prob)
 
     # Try to reduce game
     red_game = tr.reduce_game(game)
@@ -155,8 +153,7 @@ def test_twins_names():
 @pytest.mark.parametrize('_', range(10))
 def test_random_hierarchical(keep_prob, players, strategies, red_players, _):
     # Create game and reduction
-    game = gamegen.add_profiles(
-        rsgame.emptygame(players, strategies), keep_prob)
+    game = gamegen.game(players, strategies, keep_prob)
     assert (rsgame.emptygame(red_players, strategies) ==
             hr.reduce_game(rsgame.emptygame(players, strategies), red_players))
 
@@ -206,8 +203,7 @@ def test_hierarchical_names():
 def test_random_identity(keep_prob, game_desc, _):
     players, strategies = game_desc
     # Create game and reduction
-    game = gamegen.add_profiles(
-        rsgame.emptygame(players, strategies), keep_prob)
+    game = gamegen.game(players, strategies, keep_prob)
     assert (paygame.game_copy(rsgame.emptygame(players, strategies)) ==
             ir.reduce_game(rsgame.emptygame(players, strategies)))
 
@@ -343,7 +339,7 @@ def test_expansion_contributions():
 
 def test_approximate_dpr_reduce_game():
     """Test approximate dpr game reduction"""
-    game = gamegen.role_symmetric_game([3, 4], 2)
+    game = gamegen.game([3, 4], 2)
     redgame = dpr.reduce_game(game, 2)
     # Pure strategies are reduced properly
     assert (redgame.get_payoffs([2, 0, 0, 2])[0]
@@ -371,7 +367,7 @@ def test_approximate_dpr_reduce_game():
 ])
 def test_random_approximate_dpr(players, strategies, _):
     """Test approximate dpr preserves completeness on random games"""
-    game = gamegen.role_symmetric_game(players, strategies)
+    game = gamegen.game(players, strategies)
     red_counts = 2 + (rand.random(game.num_roles) *
                       (game.num_role_players - 1)).astype(int)
     red_counts[game.num_role_players == 1] = 1

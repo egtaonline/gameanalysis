@@ -28,7 +28,7 @@ with open(HARD_GAME, 'r') as f:
 with open(path.join(DIR, '..', 'example_games', 'ugly.nfg'), 'r') as f:
     GAMBIT_STR = f.read()
 HARD_GAME_DATA = gamereader.loads(HARD_GAME_STR)
-GAME_DATA = gamegen.role_symmetric_game([3, 2], [2, 3])
+GAME_DATA = gamegen.game([3, 2], [2, 3])
 GAME_JSON = GAME_DATA.to_json()
 GAME_STR = json.dumps(GAME_JSON)
 
@@ -115,20 +115,21 @@ def test_dominance_6():
 
 def test_gamegen_1():
     assert not run('gen')[0]
-    assert not run('gen', 'ursym', '5')[0]
+    assert not run('gen', 'ursym')[0]
     success, _, err = run('gen', 'uzs', '6', '-n', '-o/dev/null')
     assert success, err
 
 
 def test_gamegen_2():
-    success, out, err = run('gen', 'ursym', '3', '4', '4', '3')
+    success, out, err = run('gen', 'ursym', '3:4,4:3')
     assert success, err
     gamereader.loads(out)
 
 
 def test_gamegen_3():
-    success, out, err = run('gen', 'noise', 'uniform', '1.5', '5',
-                            input=GAME_STR)
+    success, out, err = run(
+        'gen', 'noise', '-d', 'uniform', '-w', '1.5', '-s', '5',
+        input=GAME_STR)
     assert success, err
     gamereader.loads(out)
 
@@ -137,8 +138,9 @@ def test_gamegen_4():
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
-        success, out, err = run('gen', 'noise', 'gumbel',
-                                '1.5', '5', '-i', game.name)
+        success, out, err = run(
+            'gen', 'noise', '-d', 'gumbel', '-w', '1.5', '-s', '5', '-i',
+            game.name)
     assert success, err
     gamereader.loads(out)
 
@@ -147,23 +149,25 @@ def test_gamegen_5():
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
-        success, out, err = run('gen', 'noise', 'bimodal',
-                                '1.5', '5', '-i', game.name)
+        success, out, err = run(
+            'gen', 'noise', '-d', 'bimodal', '-w', '1.5', '-s', '5', '-i',
+            game.name)
     assert success, err
     gamereader.loads(out)
 
 
-def test_gamegen_6():
+def test_gamegen_noise():
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
         success, out, err = run(
-            'gen', 'noise', 'gaussian', '1.5', '5', '-i', game.name)
+            'gen', 'noise', '-d', 'gaussian', '-w', '1.5', '-s', '5', '-i',
+            game.name)
     assert success, err
     gamereader.loads(out)
 
 
-def test_nash_1():
+def test_nash_fail():
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -173,7 +177,7 @@ def test_nash_1():
     assert success, err
 
 
-def test_nash_2():
+def test_nash_options():
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -183,7 +187,7 @@ def test_nash_2():
     assert success, err
 
 
-def test_nash_3():
+def test_nash_pure():
     success, out, err = run('nash', '-tpure', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
@@ -192,7 +196,7 @@ def test_nash_3():
         for prof in json.loads(out))
 
 
-def test_nash_4():
+def test_nash_prof():
     success, out, err = run('nash', '-tmin-reg-prof', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
@@ -201,7 +205,7 @@ def test_nash_4():
         for prof in json.loads(out))
 
 
-def test_nash_5():
+def test_nash_grid():
     success, out, err = run('nash', '-tmin-reg-grid', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
@@ -210,28 +214,7 @@ def test_nash_5():
         for mix in json.loads(out))
 
 
-def test_nash_6():
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('nash', '-tmin-reg-rand',
-                                '-m10', '-i', game.name)
-    assert success, err
-    for mix in json.loads(out):
-        GAME_DATA.mixture_from_json(mix)
-
-
-def test_nash_7():
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('nash', '-trand', '-m10', '-i', game.name)
-    assert success, err
-    for mix in json.loads(out):
-        GAME_DATA.mixture_from_json(mix)
-
-
-def test_nash_8():
+def test_nash_pure_one():
     with tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.rock_paper_scissors()
         json.dump(sgame.to_json(), game)
@@ -240,7 +223,7 @@ def test_nash_8():
         assert success, err
 
 
-def test_nash_9():
+def test_nash_mat():
     """Test nash works with non Game"""
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(MATGAME.to_json(), game)
@@ -716,8 +699,7 @@ def test_learning_no_eqa():
 def test_boot_1():
     with tempfile.NamedTemporaryFile('w') as mixed, \
             tempfile.NamedTemporaryFile('w') as game:
-        sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
-                                  0.05)
+        sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
         json.dump(sgame.to_json(), game)
         game.flush()
 
@@ -730,8 +712,7 @@ def test_boot_1():
 
 def test_boot_2():
     with tempfile.NamedTemporaryFile('w') as mixed:
-        sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
-                                  0.05)
+        sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
         game_str = json.dumps(sgame.to_json())
 
         profs = [sgame.profile_to_json(sgame.random_profile())]
@@ -749,8 +730,7 @@ def test_boot_2():
 
 def test_boot_3():
     with tempfile.NamedTemporaryFile('w') as mixed:
-        sgame = gamegen.add_noise(gamegen.role_symmetric_game([2, 3], [4, 3]),
-                                  0.05)
+        sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
         game_str = json.dumps(sgame.to_json())
 
         profs = [sgame.profile_to_json(sgame.random_profile())]
@@ -765,20 +745,6 @@ def test_boot_3():
         expected = {'mean'}.union(set(map(str, range(0, 101, 5))))
         assert all(j.keys() == expected for j in data)
         assert all(j['5'] <= j['95'] for j in data)
-
-
-def test_samp_old():
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        prof = {
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
-            'hft': {'noop': 1}}
-        json.dump(prof, mixed)
-        mixed.flush()
-        success, out, err = run('samp', '-i', HARD_GAME, '-m', mixed.name)
-        assert success, err
-        prof = HARD_GAME_DATA.profile_from_json(json.loads(out))
-        assert HARD_GAME_DATA.is_profile(prof)
 
 
 def test_samp_subg():
@@ -852,40 +818,7 @@ def test_samp_prof_error():
         assert not success
 
 
-def test_samp_seed_old():
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        prof = {
-            'background': {
-                'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
-                0.5,
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 0.5},
-            'hft': {'noop': 1}}
-        json.dump(prof, mixed)
-        mixed.flush()
-        success, out1, err1 = run(
-            'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100', '--seed',
-            '1234')
-        assert success, err1
-        for line in out1[:-1].split('\n'):
-            prof = HARD_GAME_DATA.profile_from_json(json.loads(line))
-            assert HARD_GAME_DATA.is_profile(prof)
-
-        # Setting seed produces identical output
-        success, out2, err2 = run(
-            'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100', '--seed',
-            '1234')
-        assert success, err2
-        assert out1 == out2
-
-        # Not setting it causes failure
-        # This can technically fail, but the probability is very small
-        success, out3, err3 = run(
-            'samp', '-i', HARD_GAME, '-m', mixed.name, '-n', '100')
-        assert success, err3
-        assert out1 != out3
-
-
-def test_samp_seed_new():
+def test_samp_seed():
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = {
             'background': {
@@ -920,11 +853,6 @@ def test_samp_seed_new():
 
 def test_conv_game_empty():
     success, _, err = run('conv', '-o/dev/null', 'empty', input=GAME_STR)
-    assert success, err
-
-
-def test_conv_game_def():
-    success, _, err = run('conv', '-o/dev/null', '-i', HARD_GAME)
     assert success, err
 
 
@@ -967,11 +895,6 @@ def test_conv_game_norm():
 def test_conv_mat_empty():
     success, _, err = run(
         'conv', '-o/dev/null', 'empty', input=MATGAME_STR)
-    assert success, err
-
-
-def test_conv_mat_def():
-    success, _, err = run('conv', '-o/dev/null', input=MATGAME_STR)
     assert success, err
 
 

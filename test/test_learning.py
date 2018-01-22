@@ -12,7 +12,6 @@ from sklearn import gaussian_process as gp
 from gameanalysis import gamegen
 from gameanalysis import learning
 from gameanalysis import paygame
-from gameanalysis import rsgame
 from gameanalysis import subgame
 from test import testutils
 
@@ -29,7 +28,7 @@ games = [
 @pytest.mark.parametrize('dist', range(5))
 def test_rbfgame_members(players, strats, dist):
     """Test that all functions can be called without breaking"""
-    game = gamegen.add_profiles(rsgame.emptygame(players, strats), 10)
+    game = gamegen.sparse_game(players, strats, 10)
     reggame = learning.rbfgame_train(game)
 
     prof = reggame.random_profile()
@@ -77,7 +76,7 @@ def test_rbfgame_duplicate_profiles():
 
 
 def test_nntrain():
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    game = gamegen.sparse_game([2, 3], [3, 2], 10)
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         reggame = learning.nngame_train(game)
@@ -89,7 +88,7 @@ def test_nntrain():
 
 
 def test_nntrain_no_dropout():
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    game = gamegen.sparse_game([2, 3], [3, 2], 10)
     with warnings.catch_warnings():
         # Keras has some warning associated with loading tensorflow
         warnings.simplefilter('ignore')
@@ -102,7 +101,7 @@ def test_nntrain_no_dropout():
 
 
 def test_skltrain():
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    game = gamegen.sparse_game([2, 3], [3, 2], 10)
     model = gp.GaussianProcessRegressor(
         1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1))
     reggame = learning.sklgame_train(game, model)
@@ -117,7 +116,7 @@ def test_skltrain():
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('_', range(5))
 def test_rbfgame_subgame(players, strats, _):
-    game = gamegen.add_profiles(rsgame.emptygame(players, strats), 13)
+    game = gamegen.sparse_game(players, strats, 13)
     reggame = learning.rbfgame_train(game)
 
     sub_mask = game.random_subgame()
@@ -167,7 +166,7 @@ def test_rbfgame_subgame(players, strats, _):
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('_', range(5))
 def test_rbfgame_normalize(players, strats, _):
-    game = gamegen.add_profiles(rsgame.emptygame(players, strats), 13)
+    game = gamegen.sparse_game(players, strats, 13)
     reggame = learning.rbfgame_train(game)
     normreg = reggame.normalize()
     assert reggame != normreg
@@ -201,7 +200,7 @@ def test_rbfgame_normalize(players, strats, _):
 @testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_sample(_):
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    game = gamegen.sparse_game([2, 3], [3, 2], 10)
     model = learning.sklgame_train(game, gp.GaussianProcessRegressor(
         1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1),
         normalize_y=True))
@@ -287,7 +286,7 @@ def test_sample(_):
 @pytest.mark.parametrize('_', range(20))
 def test_point(_):
     # We increase player number so point is a more accurate estimator
-    game = gamegen.add_profiles(rsgame.emptygame(1000, 2), 10)
+    game = gamegen.sparse_game(1000, 2, 10)
     model = learning.rbfgame_train(game)
     learn = learning.point(model)
     full = paygame.game_copy(learn)
@@ -341,7 +340,7 @@ def test_point(_):
 @testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_neighbor(_):
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    game = gamegen.sparse_game([2, 3], [3, 2], 10)
     model = gp.GaussianProcessRegressor(
         1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1),
         normalize_y=True)
@@ -382,7 +381,7 @@ def test_neighbor(_):
 ])
 @pytest.mark.parametrize('_', range(20))
 def test_rbfgame_min_max_payoffs(players, strats, _):
-    game = gamegen.add_profiles(rsgame.emptygame(players, strats), 10)
+    game = gamegen.sparse_game(players, strats, 10)
     reggame = learning.rbfgame_train(game)
     full = paygame.game_copy(reggame)
 
@@ -395,7 +394,7 @@ def test_rbfgame_min_max_payoffs(players, strats, _):
 @testutils.warnings_filter(UserWarning)
 def test_rbfgame_equality():
     """Test all branches of equality test"""
-    game = gamegen.add_profiles(rsgame.emptygame([2, 3], [3, 2]), 10)
+    game = gamegen.sparse_game([2, 3], [3, 2], 10)
     regg = learning.rbfgame_train(game)
     copy = regg.subgame(np.ones(game.num_strats, bool))
     copy._alpha.setflags(write=True)
@@ -428,11 +427,11 @@ def test_rbfgame_equality():
 @pytest.mark.parametrize('players,strats,num', [
     (10, 3, 15),
     ([2, 3], [3, 2], 15),
-    ([1, 3], [2, 2], 1.0),
+    ([1, 3], [2, 2], 8),
 ])
 @pytest.mark.parametrize('_', range(10))
 def test_continuous_approximation(players, strats, num, _):
-    game = gamegen.add_profiles(rsgame.emptygame(players, strats), num)
+    game = gamegen.sparse_game(players, strats, num)
     learn = learning.rbfgame_train(game)
     full = paygame.game_copy(learn)
     red = np.eye(game.num_roles).repeat(game.num_role_strats, 0)

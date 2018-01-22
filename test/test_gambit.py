@@ -30,7 +30,7 @@ def test_load(filename):
     ([2, 1], [1, 2]),
 ])
 def test_random_identity_test(players, strats, _):
-    game = matgame.matgame_copy(gamegen.role_symmetric_game(players, strats))
+    game = matgame.matgame_copy(gamegen.game(players, strats))
     string = gambit.dumps(game)
     copy = gambit.loads(string)
     assert game == copy

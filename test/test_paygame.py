@@ -1,7 +1,6 @@
 import collections
 import itertools
 import json
-import warnings
 
 import autograd
 import autograd.numpy as anp
@@ -1656,35 +1655,6 @@ def test_samplegame_from_json():
     game = paygame.samplegame_copy(rsgame.emptygame_copy(game))
     for js in [_emptygame_json, _noprofs_json]:
         assert game == paygame.samplegame_json(js)
-
-
-@pytest.mark.parametrize('role_players,role_strats', testutils.games)
-def test_deprecated_functions(role_players, role_strats):
-    sgame = random_samplegame(role_players, role_strats)
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', DeprecationWarning)
-        prof = sgame.random_profile()
-        profj = sgame.profile_to_json(prof)
-        assert np.all(sgame.from_prof_json(profj) == prof)
-        pay = np.random.random(sgame.num_strats)
-        pay[prof == 0] = 0
-        payj = sgame.payoff_to_json(pay)
-        assert np.allclose(sgame.from_payoff_json(payj), pay)
-        profpayj = sgame.profpay_to_json(pay, prof)
-        assert profpayj == sgame.to_profpay_json(pay, prof)
-        profd, payd = sgame.from_profpay_json(profpayj)
-        assert np.all(profd == prof)
-        assert np.allclose(payd, pay)
-
-        spay = pay[None]
-        spayj = sgame.samplepay_to_json(spay)
-        assert spayj == sgame.to_samplepay_json(spay, prof)
-        assert np.allclose(sgame.from_samplepay_json(spayj), spay)
-        profspayj = sgame.profsamplepay_to_json(spay, prof)
-        assert profspayj == sgame.to_profsamplepay_json(spay, prof)
-        profd, spayd = sgame.from_profsamplepay_json(profspayj)
-        assert np.all(profd == prof)
-        assert np.allclose(spayd, spay)
 
 
 _emptygame_json = {'players': {'r0': 2}, 'strategies': {'r0': ['s0', 's1']}}

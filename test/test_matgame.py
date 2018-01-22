@@ -273,7 +273,7 @@ def test_matgame_repr():
     ([2, 3, 4], [4, 3, 2]),
 ])
 def test_random_matgame_copy(players, strats):
-    game = gamegen.role_symmetric_game(players, strats)
+    game = gamegen.game(players, strats)
     matg = matgame.matgame_copy(game)
     inds = np.cumsum(game.num_role_players[:-1] * game.num_role_strats[:-1])
 

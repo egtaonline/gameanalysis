@@ -40,11 +40,9 @@ def add_parser(subparsers):
         '--support', '-s', metavar='<support>', type=float, default=1e-3,
         help="""Min probability for a strategy to be considered in support.
         (default: %(default)g)""")
-    # TODO Remove rand option
     parser.add_argument(
         '--type', '-t', metavar='<type>', default='mixed',
-        choices=('mixed', 'pure', 'min-reg-prof', 'min-reg-grid',
-                 'min-reg-rand', 'rand'),
+        choices=('mixed', 'pure', 'min-reg-prof', 'min-reg-grid'),
         help="""Type of equilibrium to compute: `mixed` - role-symmetric
         mixed-strategy Nash. `pure` - pure-strategy Nash.  `min-reg-prof` -
         minimum regret profile.  `min-reg-grid` - minimum regret mixture over a
@@ -107,23 +105,10 @@ def main(args):
         prof = nash.min_regret_profile(game)
         json.dump([game.profile_to_json(prof)], args.output)
 
-    elif args.type == 'min-reg-grid':
+    elif args.type == 'min-reg-grid':  # pragma: no branch
         mix = nash.min_regret_grid_mixture(
             game, args.grid_points)
         json.dump([game.mixture_to_json(mix, supp_thresh=args.support)],
                   args.output)
-
-    elif args.type == 'min-reg-rand':
-        mix = nash.min_regret_rand_mixture(game, args.random_mixtures)
-        json.dump([game.mixture_to_json(mix, supp_thresh=args.support)],
-                  args.output)
-
-    elif args.type == 'rand':
-        mixes = game.random_mixtures(args.random_mixtures)
-        json.dump([game.mixture_to_json(mix, supp_thresh=args.support) for mix
-                   in mixes], args.output)
-
-    else:
-        raise ValueError('Unknown command given: {0}'.format(args.type))  # pragma: no cover # noqa
 
     args.output.write('\n')

@@ -125,10 +125,10 @@ class _SocialWelfareOptimizer(object):
             mix = opt.x
             # Project it onto the simplex, it might not be due to the penalty
             result = self.game.mixture_project(mix)
-            if np.allclose(mix, result):
+            if np.allclose(mix, result):  # pragma: no cover
                 break
             # Increase constraint penalty
-            penalty *= 2
+            penalty *= 2  # pragma: no cover
 
         return result
 

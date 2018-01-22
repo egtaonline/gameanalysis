@@ -212,16 +212,13 @@ class StratArray(object):
         return self.random_subgames(1, strat_prob=strat_prob,
                                     normalize=normalize)[0]
 
-    # TODO Make everything after num_samples key word only
-    def random_subgames(self, num_samples=None, strat_prob=None,
-                        normalize=True):
+    def random_subgames(self, num_samples, *, strat_prob=None, normalize=True):
         """Return random subgames
 
         Parameters
         ----------
-        num_samples : int, optional
-            The number of samples to be retuned, if None or unspecified, a
-            single sample without the extra dimension is returned.
+        num_samples : int
+            The number of samples to be retuned.
         strat_prob : float, ndarray, optional, (0, 1)
             The probability that a given strategy is in support. If support
             prob is None, supports will be sampled uniformly. This can either
@@ -233,9 +230,6 @@ class StratArray(object):
             num_role_strats`. Individual role probabilities are thresholded to
             this value.
         """
-        if num_samples is None:  # TODO Remove
-            warnings.warn('deprecated', DeprecationWarning)
-            return self.random_subgames(1, strat_prob, normalize)[0]
         if strat_prob is None:
             strat_prob = 1 - ((2 ** (self.num_role_strats - 1) - 1) /
                               (2 ** self.num_role_strats - 1))
@@ -313,11 +307,6 @@ class StratArray(object):
             [utils.simplex_project(r) for r
              in np.split(mixture, self.role_starts[1:], -1)], -1)
 
-    # TODO Remove
-    @utils.deprecated
-    def to_simplex(self, mixture):
-        return self.mixture_to_simplex(mixture)
-
     def mixture_to_simplex(self, mixture):
         """Convert a mixture to a simplex
 
@@ -380,11 +369,6 @@ class StratArray(object):
                              simp_alpha / alpha)
         return simp_center + ratio * simp_grad
 
-    # TODO Remove
-    @utils.deprecated
-    def from_simplex(self, simp):
-        return self.mixture_from_simplex(simp)
-
     def mixture_from_simplex(self, simp):
         """Convery a simplex back into a valid mixture
 
@@ -431,7 +415,7 @@ class StratArray(object):
         See random_mixtures"""
         return self.random_mixtures(1, alpha=alpha)[0]
 
-    def random_mixtures(self, num_samples=None, *, alpha=1):
+    def random_mixtures(self, num_samples, *, alpha=1):
         """Return a random mixed profile
 
         Mixed profiles are sampled from a dirichlet distribution with parameter
@@ -439,11 +423,8 @@ class StratArray(object):
         the simplex for each role. alpha \in (0, 1) is baised towards high
         entropy mixtures, i.e. mixtures where one strategy is played in
         majority. alpha \in (1, oo) is baised towards low entropy (uniform)
-        mixtures. If `num_samples` is None, a single mixture is returned.
+        mixtures.
         """
-        if num_samples is None:  # TODO Remove
-            warnings.warn('deprecated', DeprecationWarning)
-            return self.random_mixtures(1, alpha=alpha)[0]
         mixtures = rand.gamma(alpha, 1, (num_samples, self.num_strats))
         mixtures /= np.add.reduceat(mixtures, self.role_starts,
                                     1).repeat(self.num_role_strats, 1)
@@ -457,15 +438,14 @@ class StratArray(object):
         return self.random_sparse_mixtures(
             1, alpha=alpha, support_prob=support_prob, normalize=normalize)[0]
 
-    def random_sparse_mixtures(self, num_samples=None, *, alpha=1,
+    def random_sparse_mixtures(self, num_samples, *, alpha=1,
                                support_prob=None, normalize=True):
         """Return a random sparse mixed profile
 
         Parameters
         ----------
-        num_samples : int, optional
-            The number of samples to be retuned, if None or unspecified, a
-            single sample without the extra dimension is returned.
+        num_samples : int
+            The number of samples to be retuned.
         alpha : float, optional, (0, oo)
             Mixed profiles are sampled from a dirichlet distribution with
             parameter alpha. If alpha = 1 (the default) this is a uniform
@@ -482,13 +462,9 @@ class StratArray(object):
             true, the support_prob for any role must be at least `1 /
             num_role_strats`.
         """
-        if num_samples is None:  # TODO Remove
-            warnings.warn('deprecated', DeprecationWarning)
-            return self.random_sparse_mixtures(
-                1, alpha=alpha, support_prob=support_prob,
-                normalize=normalize)[0]
         mixtures = rand.gamma(alpha, 1, (num_samples, self.num_strats))
-        mixtures *= self.random_subgames(num_samples, support_prob, normalize)
+        mixtures *= self.random_subgames(
+            num_samples, strat_prob=support_prob, normalize=normalize)
         mixtures /= np.add.reduceat(mixtures, self.role_starts,
                                     1).repeat(self.num_role_strats, 1)
         return mixtures
@@ -575,11 +551,6 @@ class StratArray(object):
         return self.strat_names[role_index][role_strat_index -
                                             self.role_starts[role_index]]
 
-    # TODO Remove
-    @utils.deprecated
-    def from_mix_json(self, mix, dest=None, verify=True):
-        return self.mixture_from_json(mix, dest, verify=verify)
-
     def mixture_from_json(self, mix, dest=None, *, verify=True):
         """Read a json mixture into an array"""
         if dest is None:
@@ -606,11 +577,6 @@ class StratArray(object):
                        self.role_names, self.strat_names)
                 if np.any(values != 0)}
 
-    # TODO Remove
-    @utils.deprecated
-    def to_mix_json(self, mix, supp_thresh=1e-3):
-        return self.mixture_to_json(mix, supp_thresh=supp_thresh)
-
     def mixture_to_json(self, mix, *, supp_thresh=1e-3):
         """Convert a mixture array to json"""
         return self._to_arr_json(
@@ -631,11 +597,6 @@ class StratArray(object):
                 dest[self.role_strat_index(role, strat)] = parse(val)
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def from_mix_repr(self, mix_str, dest=None, verify=True):
-        return self.mixture_from_repr(mix_str, dest, verify=verify)
-
     def mixture_from_repr(self, mix_str, dest=None, *, verify=True):
         """Read a mixture from it's repr"""
         mix = self._from_arr_repr(mix_str, float, _parse_percent, dest)
@@ -652,12 +613,6 @@ class StratArray(object):
             for role, strats, values
             in zip(self.role_names, self.strat_names,
                    np.split(arr, self.role_starts[1:])))
-
-    # TODO Remove
-    @utils.deprecated
-    def to_mix_repr(self, mix, supp_thresh=1e-4):
-        return self.mixture_to_repr(self.trim_mixture_support(
-            mix, thresh=supp_thresh))
 
     def mixture_to_repr(self, mix):
         """Convert a mixture to a string"""
@@ -681,11 +636,6 @@ class StratArray(object):
                 dest[self.role_strat_index(role, strat)] = parse(val_str)
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def from_mix_str(self, mix_str, dest=None, verify=True):
-        return self.mixture_from_str(mix_str, dest, verify=verify)
-
     def mixture_from_str(self, mix_str, dest=None, *, verify=True):
         """Read a mixture from a verbose string"""
         mix = self._from_arr_str(mix_str, float, _parse_percent, dest)
@@ -704,20 +654,10 @@ class StratArray(object):
             in zip(np.split(arr, self.role_starts[1:]),
                    self.role_names, self.strat_names))
 
-    # TODO Remove
-    @utils.deprecated
-    def to_mix_str(self, mix):
-        return self.mixture_to_str(mix)
-
     def mixture_to_str(self, mix):
         """Convert a mixture to a printable string"""
         return self._to_arr_str(
             self.trim_mixture_precision(mix, ndigits=4), '>7.2%')
-
-    # TODO Remove
-    @utils.deprecated
-    def from_subgame_json(self, subg, dest=None, verify=True):
-        return self.subgame_from_json(subg, dest, verify=verify)
 
     def subgame_from_json(self, subg, dest=None, *, verify=True):
         """Read a json subgame into an array"""
@@ -736,11 +676,6 @@ class StratArray(object):
             "\"{}\" does not define a valid subgame".format(subg)
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def to_subgame_json(self, subg):
-        return self.subgame_to_json(subg)
-
     def subgame_to_json(self, subg):
         """Convert a subgame array to json"""
         return {role: [strat for strat, inc in zip(strats, mask) if inc]
@@ -748,11 +683,6 @@ class StratArray(object):
                 in zip(np.split(subg, self.role_starts[1:]),
                        self.role_names, self.strat_names)
                 if mask.any()}
-
-    # TODO Remove
-    @utils.deprecated
-    def from_subgame_repr(self, subg_str, dest=None, verify=True):
-        return self.subgame_from_repr(subg_str, dest, verify=verify)
 
     def subgame_from_repr(self, subg_str, dest=None, *, verify=True):
         """Read a subgame from a string"""
@@ -770,11 +700,6 @@ class StratArray(object):
             "\"{}\" does not define a valid subgame".format(subg_str)
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def to_subgame_repr(self, subg):
-        return self.subgame_to_repr(subg)
-
     def subgame_to_repr(self, subg):
         """Convert a subgame to a string"""
         return '; '.join(
@@ -784,11 +709,6 @@ class StratArray(object):
             for role, strats, mask
             in zip(self.role_names, self.strat_names,
                    np.split(subg, self.role_starts[1:])))
-
-    # TODO Remove
-    @utils.deprecated
-    def from_subgame_str(self, subg_str, dest=None, verify=True):
-        return self.subgame_from_str(subg_str, dest, verify=verify)
 
     def subgame_from_str(self, subg_str, dest=None, *, verify=True):
         """Read a subgame from a readable string"""
@@ -809,11 +729,6 @@ class StratArray(object):
             "\"{}\" does not define a valid subgame".format(subg_str)
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def to_subgame_str(self, subg):
-        return self.subgame_to_str(subg)
-
     def subgame_to_str(self, subg):
         """Convert a subgame to a printable string"""
         return '\n'.join(
@@ -825,11 +740,6 @@ class StratArray(object):
             in zip(np.split(np.asarray(subg), self.role_starts[1:]),
                    self.role_names, self.strat_names))
 
-    # TODO Remove
-    @utils.deprecated
-    def from_role_json(self, role_json, dest=None, dtype=float):
-        return self.role_from_json(role_json, dest, dtype)
-
     def role_from_json(self, role_json, dest=None, dtype=float):
         """Format role data as array"""
         if dest is None:
@@ -840,11 +750,6 @@ class StratArray(object):
         for role, val in role_json.items():
             dest[self.role_index(role)] = val
         return dest
-
-    # TODO Remove
-    @utils.deprecated
-    def to_role_json(self, role_info):
-        return self.role_to_json(role_info)
 
     def role_to_json(self, role_info):
         """Format role data as json"""
@@ -1092,11 +997,6 @@ class RsGame(StratArray):
         rev[self.role_starts] += self.num_role_strats
         return rev.cumsum()
 
-    # TODO Remove in next version
-    @utils.deprecated
-    def profile_id(self, profiles):
-        return self.profile_to_id(profiles)
-
     def profile_to_id(self, profiles):
         """Return a unique integer representing a profile"""
         profiles = -np.asarray(profiles, int)
@@ -1131,7 +1031,7 @@ class RsGame(StratArray):
                 sizes -= utils.game_size(n, prof)
         profiles = np.delete(np.diff(
             np.insert(dec_profs, self.role_starts, 0, -1),
-            1, -1), self.role_starts[1:], -1)
+            1, -1), self.role_starts[1:] + np.arange(self.num_roles - 1), -1)
         profiles[..., self.role_starts] -= self.num_role_players
         return -profiles
 
@@ -1232,21 +1132,17 @@ class RsGame(StratArray):
     def random_profile(self, mixture=None):
         return self.random_profiles(1, mixture)[0]
 
-    def random_profiles(self, num_samples=None, mixture=None):
+    def random_profiles(self, num_samples, mixture=None):
         """Sample profiles from a mixture
 
         Parameters
         ----------
-        num_samples : int, optional
-            Number of samples to return. If None or omitted, then a single
-            sample, without a leading singleton dimension is returned.
+        num_samples : int
+            Number of samples to return.
         mixture : ndarray, optional
             Mixture to sample from, of None or omitted, then uses the uniform
             mixture.
         """
-        if num_samples is None:  # TODO Remove
-            warnings.warn('deprecated', DeprecationWarning)
-            return self.random_profiles(1, mixture)[0]
         if mixture is None:
             mixture = self.uniform_mixture()
         role_samples = [rand.multinomial(n, probs, num_samples) for n, probs
@@ -1271,14 +1167,6 @@ class RsGame(StratArray):
             self.num_role_strats)
         profile[rank < missing.repeat(self.num_role_strats, -1)] += 1
         return profile
-
-    # TODO Remove
-    @utils.deprecated
-    def random_dev_profiles(self, mixture, num_samples=None):
-        if num_samples is None:
-            return self.random_role_deviation_profile(mixture)
-        else:
-            return self.random_role_deviation_profiles(num_samples, mixture)
 
     def random_role_deviation_profile(self, mixture=None):
         return self.random_role_deviation_profiles(1, mixture)[0]
@@ -1307,14 +1195,6 @@ class RsGame(StratArray):
             base = emptygame(players, self.num_role_strats)
             profs[:, i] = base.random_profiles(num_samples, mixture)
         return profs
-
-    # TODO Remove
-    @utils.deprecated
-    def random_deviator_profiles(self, mixture, num_samples=None):
-        if num_samples is None:
-            return self.random_deviation_profile(mixture)
-        else:
-            return self.random_deviation_profiles(num_samples, mixture)
 
     def random_deviation_profile(self, mixture=None):
         return self.random_deviation_profiles(1, mixture)[0]
@@ -1357,11 +1237,6 @@ class RsGame(StratArray):
         """Returns true if this game is asymmetric"""
         return np.all(self.num_role_players == 1)
 
-    # TODO Remove
-    @utils.deprecated
-    def from_prof_json(self, prof, dest=None, verify=True):
-        return self.profile_from_json(prof, dest, verify=verify)
-
     def profile_from_json(self, prof, dest=None, *, verify=True):
         """Read a profile from json
 
@@ -1390,11 +1265,6 @@ class RsGame(StratArray):
             "\"{}\" is not a valid profile".format(prof)
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def from_payoff_json(self, pays, dest=None):
-        return self.payoff_from_json(pays, dest)
-
     def payoff_from_json(self, pays, dest=None):
         """Read a payoff from json
 
@@ -1419,19 +1289,9 @@ class RsGame(StratArray):
 
         return dest
 
-    # TODO Remove
-    @utils.deprecated
-    def to_prof_json(self, prof):
-        return self.profile_to_json(prof)
-
     def profile_to_json(self, prof):
         """Convert a profile array to json"""
         return self._to_arr_json(prof)
-
-    # TODO Remove
-    @utils.deprecated
-    def to_payoff_json(self, payoffs, prof=None):
-        return self.payoff_to_json(payoffs)
 
     def payoff_to_json(self, payoffs):
         """Format payoffs as json
@@ -1443,11 +1303,6 @@ class RsGame(StratArray):
         """
         return self._to_arr_json(payoffs)
 
-    # TODO Remove
-    @utils.deprecated
-    def from_prof_repr(self, prof_str, dest=None, verify=True):
-        return self.profile_from_repr(prof_str, dest, verify=verify)
-
     def profile_from_repr(self, prof_str, dest=None, *, verify=True):
         """Read a profile from a string"""
         prof = self._from_arr_repr(prof_str, int, int, dest)
@@ -1455,19 +1310,9 @@ class RsGame(StratArray):
             "\"{}\" does not define a profile".format(prof_str)
         return prof
 
-    # TODO Remove
-    @utils.deprecated
-    def to_prof_repr(self, prof):
-        return self.profile_to_repr(prof)
-
     def profile_to_repr(self, prof):
         """Convert a profile to a string"""
         return self._to_arr_repr(prof, 'd')
-
-    # TODO Remove
-    @utils.deprecated
-    def from_prof_str(self, prof_str, dest=None, verify=True):
-        return self.profile_from_str(prof_str, dest, verify=verify)
 
     def profile_from_str(self, prof_str, dest=None, *, verify=True):
         prof = self._from_arr_str(prof_str, int, int, dest)
@@ -1475,19 +1320,9 @@ class RsGame(StratArray):
             "\"{}\" is not a valid profile".format(prof_str)
         return prof
 
-    # TODO Remove
-    @utils.deprecated
-    def to_prof_str(self, prof):
-        return self.profile_to_str(prof)
-
     def profile_to_str(self, prof):
         """Convert a profile to a printable string"""
         return self._to_arr_str(prof, 'd')
-
-    # TODO Remove
-    @utils.deprecated
-    def from_dev_payoff_json(self, deviations, dest=None):
-        return self.devpay_from_json(deviations, dest)
 
     def devpay_from_json(self, deviations, dest=None):
         if dest is None:
@@ -1503,11 +1338,6 @@ class RsGame(StratArray):
                     dest[self.role_strat_dev_index(role, strat, dev)] = val
 
         return dest
-
-    # TODO Remove
-    @utils.deprecated
-    def to_dev_payoff_json(self, payoffs, profile=None):
-        return self.devpay_to_json(payoffs)
 
     def devpay_to_json(self, payoffs):
         """Format a profile and deviation payoffs as json"""

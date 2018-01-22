@@ -39,8 +39,7 @@ GAMES = SMALL_GAMES + [
 @pytest.mark.parametrize('num_boots', [200])
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_mixture_welfare(players, strategies, num_mixes, num_boots):
-    game = gamegen.add_noise(gamegen.role_symmetric_game(players, strategies),
-                             1, 3)
+    game = gamegen.samplegame(players, strategies)
     mixes = game.random_mixtures(num_mixes)
     boots = bootstrap.mixture_welfare(game, mixes, num_boots, processes=1)
     assert boots.shape == (num_mixes, num_boots)
@@ -50,8 +49,7 @@ def test_mixture_welfare(players, strategies, num_mixes, num_boots):
 @pytest.mark.parametrize('num_boots', [200])
 @pytest.mark.parametrize('players,strategies', SMALL_GAMES)
 def test_mixture_regret(players, strategies, num_mixes, num_boots):
-    game = gamegen.add_noise(gamegen.role_symmetric_game(players, strategies),
-                             1, 3)
+    game = gamegen.samplegame(players, strategies)
     mixes = game.random_mixtures(num_mixes)
     boots = bootstrap.mixture_regret(game, mixes, num_boots, processes=1)
     assert boots.shape == (num_mixes, num_boots)
@@ -67,8 +65,7 @@ def test_mixture_regret(players, strategies, num_mixes, num_boots):
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_mixture_regret_single_mix(players, strategies, num_boots):
     num_boots = 200
-    game = gamegen.add_noise(gamegen.role_symmetric_game(players, strategies),
-                             1, 3)
+    game = gamegen.samplegame(players, strategies)
     mix = game.random_mixture()
     boots = bootstrap.mixture_regret(game, mix, num_boots, processes=1)
     assert boots.shape == (1, num_boots)
@@ -78,8 +75,7 @@ def test_mixture_regret_single_mix(players, strategies, num_boots):
 @pytest.mark.parametrize('num_mixes', [5])
 @pytest.mark.parametrize('num_boots', [200])
 def test_mixture_regret_parallel(num_mixes, num_boots):
-    game = gamegen.add_noise(gamegen.role_symmetric_game([4, 3], [3, 4]), 1,
-                             3)
+    game = gamegen.samplegame([4, 3], [3, 4])
     mixes = game.random_mixtures(num_mixes)
     boots = bootstrap.mixture_regret(game, mixes, num_boots)
     assert boots.shape == (num_mixes, num_boots)

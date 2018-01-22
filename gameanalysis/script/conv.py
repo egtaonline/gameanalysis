@@ -73,10 +73,6 @@ def add_parser(subparsers):
         '--output', '-o', metavar='<output-file>', default=sys.stdout,
         type=argparse.FileType('w'), help="""Output file for script. (default:
         stdout)""")
-    # TODO Remove
-    parser.add_argument(
-        '--type', '-t', default='game', metavar='<deprecated>', choices=_TYPES,
-        help="""deprecated""")
     types = parser.add_subparsers(
         title='types', dest='type', metavar='<type>', help="""The type to
         convert input to. Available commands are:""")
