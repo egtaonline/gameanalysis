@@ -12,7 +12,7 @@ from gameanalysis import gamereader
 from gameanalysis import learning
 from gameanalysis import matgame
 from gameanalysis import rsgame
-from test import testutils
+from test import utils
 
 
 @functools.lru_cache()
@@ -54,7 +54,7 @@ def neighbor():
     return learning.neighbor(rbf())
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('game', [
     egame, game, sgame, agg, mat, rbf, point, sample, neighbor, 'gambit'])
 def test_automatic_deserialization(game):

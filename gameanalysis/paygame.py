@@ -45,7 +45,7 @@ class Game(rsgame.RsGame):
         self._profiles.setflags(write=False)
         self._payoffs = payoffs
         self._payoffs.setflags(write=False)
-        self.num_profiles = profiles.shape[0]
+        self._num_profiles = profiles.shape[0]
 
         # compute log dev reps
         player_factorial = np.sum(sps.gammaln(profiles + 1), 1)
@@ -66,7 +66,15 @@ class Game(rsgame.RsGame):
                 if not np.isnan(pay).any())
         else:  # Don't need to store duplicate lookup object
             self._complete_profiles = self._profile_map
-        self.num_complete_profiles = len(self._complete_profiles)
+        self._num_complete_profiles = len(self._complete_profiles)
+
+    @property
+    def num_profiles(self):
+        return self._num_profiles
+
+    @property
+    def num_complete_profiles(self):
+        return self._num_complete_profiles
 
     def profiles(self):
         return self._profiles.view()
@@ -452,10 +460,10 @@ def game(num_role_players, num_role_strats, profiles, payoffs):
         The number of players per role.
     num_role_strats : ndarray-like, int,
         The number of strategies per role.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
-    payoffs : ndarray-like, float, (num_profiles, num_strats)
-        The payoffs for the game.
+    profiles : ndarray-like, int
+        The profiles for the game, with shape (num_profiles, num_strats).
+    payoffs : ndarray-like, float
+        The payoffs for the game, with shape (num_profiles, num_strats).
     """
     return game_replace(rsgame.emptygame(num_role_players, num_role_strats),
                         profiles, payoffs)
@@ -472,10 +480,10 @@ def game_names(role_names, num_role_players, strat_names, profiles, payoffs):
         The number of players per role.
     strat_names : [[str]]
         The name for each strategy per role.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
-    payoffs : ndarray-like, float, (num_profiles, num_strats)
-        The payoffs for the game.
+    profiles : ndarray-like, int
+        The profiles for the game, with shape (num_profiles, num_strats).
+    payoffs : ndarray-like, float
+        The payoffs for the game, with shape (num_profiles, num_strats).
     """
     return game_replace(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
@@ -528,10 +536,10 @@ def game_replace(copy_game, profiles, payoffs):
     copy_game : Game
         Game to copy structure out of. Structure includes role names, strategy
         names, and the number of players.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
-    payoffs : ndarray-like, float, (num_profiles, num_strats)
-        The payoffs for the game.
+    profiles : ndarray-like, int
+        The profiles for the game, with shape (num_profiles, num_strats).
+    payoffs : ndarray-like, float
+        The payoffs for the game, with shape (num_profiles, num_strats).
     """
     profiles = np.asarray(profiles, int)
     payoffs = np.asarray(payoffs, float)
@@ -963,8 +971,8 @@ def samplegame(num_role_players, num_role_strats, profiles,
         The number of players per role.
     num_role_strats : ndarray-like, int
         The number of strategies per role.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
+    profiles : ndarray-like, int
+        The profiles for the game, with shape (num_profiles, num_strats).
     sample_payoffs : [ndarray-like, float]
         The sample payoffs for the game.
     """
@@ -982,11 +990,12 @@ def samplegame_flat(num_role_players, num_role_strats, profiles, payoffs):
         The number of players per role.
     num_role_strats : ndarray-like, int
         The number of strategies per role.
-    profiles : ndarray-like, int, (num_sample_profiles, num_strats)
-        The profiles for the game, potentially with duplicates.
-    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)
+    profiles : ndarray-like, int
+        The profiles for the game, potentially with duplicates, with shape
+        (num_sample_profiles, num_strats).
+    payoffs : ndarray-like, float
         The sample payoffs for the game, in parallel with the profiles they're
-        samples from.
+        samples from, with shape (num_sample_profiles, num_strats).
     """
     return samplegame_replace_flat(
         rsgame.emptygame(num_role_players, num_role_strats), profiles, payoffs)
@@ -1025,11 +1034,12 @@ def samplegame_names_flat(role_names, num_role_players, strat_names, profiles,
         The number of players for each role.
     strat_names : [[str]]
         The name of each strategy.
-    profiles : ndarray-like, int, (num_sample_profiles, num_strats)
-        The profiles for the game, potentially with duplicates.
-    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)
+    profiles : ndarray-like, int
+        The profiles for the game, potentially with duplicates,
+        (num_sample_profiles, num_strats).
+    payoffs : ndarray-like, float
         The sample payoffs for the game, in parallel with the profiles they're
-        samples from.
+        samples from, (num_sample_profiles, num_strats).
     """
     return samplegame_replace_flat(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
@@ -1090,11 +1100,12 @@ def samplegame_replace_flat(copy_game, profiles, payoffs):
     ----------
     copy_game : BaseGame, optional
         Game to copy information out of.
-    profiles : ndarray-like, int, (num_sample_profiles, num_strats)
-        The profiles for the game, potentially with duplicates.
-    payoffs : ndarray-like, float, (num_sample_profiles, num_strats)
+    profiles : ndarray-like, int
+        The profiles for the game, potentially with duplicates, with shape
+        (num_sample_profiles, num_strats).
+    payoffs : ndarray-like, float
         The sample payoffs for the game, in parallel with the profiles they're
-        samples from.
+        samples from, with shape (num_sample_profiles, num_strats).
     """
     profiles = np.asarray(profiles, int)
     payoffs = np.asarray(payoffs, float)
@@ -1123,8 +1134,8 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
     ----------
     copy_game : BaseGame, optional
         Game to copy information out of.
-    profiles : ndarray-like, int, (num_profiles, num_strats)
-        The profiles for the game.
+    profiles : ndarray-like, int
+        The profiles for the game, with shape (num_profiles, num_strats).
     sample_payoffs : [ndarray-like, float]
         The sample payoffs for the game.
     """

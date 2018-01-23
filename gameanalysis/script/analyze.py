@@ -66,30 +66,22 @@ def add_parser(subparsers):
         the game as a whole.""")
     reductions = parser.add_mutually_exclusive_group()
     reductions.add_argument(
-        '--dpr', metavar='<role:count,role:count,...>', help="""Specify a
+        '--dpr', metavar='<role:count;role:count,...>', help="""Specify a
         deviation preserving reduction.""")
     reductions.add_argument(
-        '--hr', metavar='<role:count,role:count,...>', help="""Specify a
+        '--hr', metavar='<role:count;role:count,...>', help="""Specify a
         hierarchical reduction.""")
     return parser
-
-
-def parse_reduction(game, red):
-    reduced_players = np.empty(game.num_roles, int)
-    for role_red in red.strip().split(','):
-        role, count = role_red.strip().split(':')
-        reduced_players[game.role_index(role.strip())] = int(count)
-    return reduced_players
 
 
 def main(args):
     game = gamereader.load(args.input)
 
     if args.dpr is not None:
-        red_players = parse_reduction(game, args.dpr)
+        red_players = game.role_from_repr(args.dpr, dtype=int)
         game = reduction.deviation_preserving.reduce_game(game, red_players)
     elif args.hr is not None:
-        red_players = parse_reduction(game, args.hr)
+        red_players = game.role_from_repr(args.hr, dtype=int)
         game = reduction.hierarchical.reduce_game(game, red_players)
 
     if args.dominance:
@@ -160,11 +152,11 @@ def main(args):
     args.output.write('\n\n')
     if args.dpr is not None:
         args.output.write('With deviation preserving reduction: ')
-        args.output.write(' '.join(args.dpr.split(',')))
+        args.output.write(args.dpr.replace(';', ' '))
         args.output.write('\n\n')
     elif args.hr is not None:
         args.output.write('With hierarchical reduction: ')
-        args.output.write(' '.join(args.hr.split(',')))
+        args.output.write(args.hr.replace(';', ' '))
         args.output.write('\n\n')
     if args.dominance:
         num = np.sum(~domsub)

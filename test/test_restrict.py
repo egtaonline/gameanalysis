@@ -6,7 +6,7 @@ from gameanalysis import paygame
 from gameanalysis import restrict
 from gameanalysis import rsgame
 from gameanalysis import utils
-from test import testutils
+from test import utils as testutils
 
 
 def test_restriction():

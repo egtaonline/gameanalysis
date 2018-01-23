@@ -295,7 +295,7 @@ def test_payoff_pure_string():
 
 
 def test_reduction_1():
-    success, out, err = run('red', 'background:2,hft:1', input=HARD_GAME_STR)
+    success, out, err = run('red', 'background:2;hft:1', input=HARD_GAME_STR)
     assert success, err
     game = gamereader.loads(out)
     assert game == dpr.reduce_game(HARD_GAME_DATA, [2, 1])
@@ -410,9 +410,9 @@ def test_restriction_detect():
 
 def test_restriction_extract_1():
     success, out, err = run(
-        'rest', '-n', '-t', 'background',
-        'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9', 'hft', 'noop',
-        '-s', '0', '3', '4', '-i', HARD_GAME)
+        'rest', '-n', '-t',
+        'background:markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9;'
+        'hft:noop', '-s', '0,3,4', '-i', HARD_GAME)
     assert success, err
 
     expected = {utils.hash_array([False,  True,  True, False, False, False,
@@ -476,7 +476,7 @@ def test_analysis_dpr():
         game.flush()
         success, out, err = run(
             'analyze', '-i', game.name, '--restrictions', '--dominance',
-            '--dpr', 'r0:3,r1:2', '-p1', '--dist-thresh', '1e-3', '-r1e-3',
+            '--dpr', 'r0:3;r1:2', '-p1', '--dist-thresh', '1e-3', '-r1e-3',
             '-t1e-3', '--rand-restarts', '0', '-m10000', '-c1e-8')
     assert success, err
     assert 'With deviation preserving reduction: r0:3 r1:2' in out
@@ -487,7 +487,7 @@ def test_analysis_hr():
         game.write(GAME_STR)
         game.flush()
         success, out, err = run(
-            'analyze', '-i', game.name, '--hr', 'r0:3,r1:2', '-p1')
+            'analyze', '-i', game.name, '--hr', 'r0:3;r1:2', '-p1')
     assert success, err
     assert 'With hierarchical reduction: r0:3 r1:2' in out
 
@@ -645,7 +645,7 @@ def test_analysis_no_eqa():
         game.flush()
         success, out, err = run(
             'analyze', '-i', game.name, '--restrictions', '--dominance',
-            '--dpr', 'r0:3,r1:2', '-p1', '-r0', '-m0')
+            '--dpr', 'r0:3;r1:2', '-p1', '-r0', '-m0')
     assert success, err
     assert "Found no equilibria" in out
     assert "Found 1 no-equilibria restricted game" in out
@@ -720,8 +720,8 @@ def test_boot_2():
         mixed.flush()
 
         success, out, err = run(
-            'boot', mixed.name, '-tsurplus', '--processes', '1', '-n21',
-            '-p', '5', '95', input=game_str)
+            'boot', mixed.name, '-tsurplus', '--processes', '1', '-n21', '-p',
+            '5', '-p', '95', input=game_str)
         assert success, err
         data = json.loads(out)
         assert all(j.keys() == {'5', '95', 'mean'} for j in data)

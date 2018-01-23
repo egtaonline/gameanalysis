@@ -6,10 +6,10 @@ import numpy as np
 from gameanalysis import matgame
 from gameanalysis import gamegen
 from gameanalysis import gambit
-from test import testutils
+from test import utils
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize(
     'filename', ['2x2x2-nau.nfg', '2x2x2.nfg', 'sample.nfg', 'ugly.nfg'])
 def test_load(filename):
@@ -41,7 +41,7 @@ def test_parse_error():
         gambit.loads('')
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 def test_parse_ugly():
     with open(path.join('example_games', 'ugly.nfg')) as f:
         game = gambit.load(f)

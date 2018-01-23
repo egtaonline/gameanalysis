@@ -8,7 +8,6 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-# FIXME Make functions names first, so it's always names first
 class AgfnGame(rsgame.CompleteGame):
     """Action graph with function nodes game
 
@@ -42,8 +41,8 @@ class AgfnGame(rsgame.CompleteGame):
         each nodes inputs as distinct, and so each function maps from the
         number of inputs from each role.
     """
-    def __init__(self, role_names, strat_names, num_role_players,
-                 function_names, action_weights, function_inputs,
+    def __init__(self, role_names, strat_names, function_names,
+                 num_role_players, action_weights, function_inputs,
                  function_table, offsets):
         super().__init__(role_names, strat_names, num_role_players)
         self.function_names = function_names
@@ -196,8 +195,8 @@ class AgfnGame(rsgame.CompleteGame):
             self.num_role_strats)) / scale
 
         return AgfnGame(
-            self.role_names, self.strat_names, self.num_role_players,
-            self.function_names, self.action_weights / scale,
+            self.role_names, self.strat_names, self.function_names,
+            self.num_role_players, self.action_weights / scale,
             self.function_inputs, self.function_table, offsets)
 
     def restrict(self, rest):
@@ -208,8 +207,8 @@ class AgfnGame(rsgame.CompleteGame):
         func_names = tuple(
             n for n, m in zip(self.function_names, func_mask) if m)
         return AgfnGame(
-            base.role_names, base.strat_names, base.num_role_players,
-            func_names, action_weights[func_mask],
+            base.role_names, base.strat_names, func_names,
+            base.num_role_players, action_weights[func_mask],
             self.function_inputs[:, func_mask][rest],
             self.function_table[func_mask], self.offsets[rest])
 
@@ -410,9 +409,9 @@ def aggfn_names_replace(copy_game, function_names, action_weights,
         "function_names must be sorted"
 
     return AgfnGame(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players, function_names, action_weights,
-        function_inputs, function_table, offsets)
+        copy_game.role_names, copy_game.strat_names, function_names,
+        copy_game.num_role_players, action_weights, function_inputs,
+        function_table, offsets)
 
 
 def aggfn_funcs(num_role_players, num_role_strats, action_weights,

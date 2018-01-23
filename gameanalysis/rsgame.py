@@ -21,11 +21,12 @@ attribute instead of a getter function. Attributes that have the world role in
 them tend to be arrays of size `num_roles` and attributes that have `strat` in
 the name tend to be arrays of size `num_strats`.
 """
+import abc
 import functools
 import itertools
 import string
 import warnings
-from collections import abc
+import collections.abc as cabc
 
 import numpy as np
 import numpy.random as rand
@@ -34,8 +35,7 @@ import scipy.special as sps
 from gameanalysis import utils
 
 
-# FIXME Make this abstract
-class StratArray(object):
+class StratArray(abc.ABC):
     """A class with knowledge of the number of strategies per role
 
     This has methods common to working with strategy arrays, which essentially
@@ -595,10 +595,10 @@ class StratArray(object):
             assert dest.dtype.kind == np.dtype(dtype).kind
             assert dest.shape == (self.num_strats,)
         dest.fill(0)
-        for role_str in arr_str.split('; '):
-            role, strats = role_str.split(': ', 1)
-            for strat_str in strats.split(', '):
-                val, strat = strat_str.split(' ', 1)
+        for role_str in arr_str.split(';'):
+            role, strats = (s.strip() for s in role_str.split(':', 1))
+            for sstrat in strats.split(','):
+                val, strat = (s.strip() for s in sstrat.strip().split(' ', 1))
                 dest[self.role_strat_index(role, strat)] = parse(val)
         return dest
 
@@ -701,10 +701,10 @@ class StratArray(object):
             assert dest.dtype.kind == 'b'
             assert dest.shape == (self.num_strats,)
         dest.fill(False)
-        for role_str in rrest.split('; '):
-            role, strats = role_str.split(': ', 1)
-            for strat in strats.split(', '):
-                dest[self.role_strat_index(role, strat)] = True
+        for role_str in rrest.split(';'):
+            role, strats = (s.strip() for s in role_str.split(':', 1))
+            for strat in strats.split(','):
+                dest[self.role_strat_index(role, strat.strip())] = True
         assert not verify or self.is_restriction(dest), \
             "\"{}\" does not define a valid restriction".format(rrest)
         return dest
@@ -766,6 +766,24 @@ class StratArray(object):
                 in zip(self.role_names, np.asarray(role_info))
                 if info != 0}
 
+    def role_to_repr(self, role_info):
+        """Format role data as repr"""
+        return '; '.join(
+            '{}: {}'.format(role, val) for role, val
+            in zip(self.role_names, role_info))
+
+    def role_from_repr(self, rrole, dest=None, dtype=float):
+        """Read role data from repr"""
+        if dest is None:
+            dest = np.empty(self.num_roles, dtype)
+        else:
+            assert dest.dtype.kind == np.dtype(dtype).kind
+            assert dest.shape == (self.num_roles,)
+        for rinfo in rrole.split(';'):
+            role, val = (s.strip() for s in rinfo.split(':', 1))
+            dest[self.role_index(role)] = val
+        return dest
+
     @utils.memoize
     def __hash__(self):
         return hash((type(self), self.num_roles,
@@ -781,9 +799,6 @@ class StratArray(object):
                 self.strat_names == other.strat_names)
 
 
-# FIXME Make this abstract, and the unimplemented methods along with it
-# There is one "property" that I want to be abstract. I'll make that a memoized
-# property and have it call an abstract _method to ensure it exists.
 class RsGame(StratArray):
     """Role-symmetric game representation
 
@@ -817,92 +832,68 @@ class RsGame(StratArray):
     # ----------------
 
     @property
+    @abc.abstractmethod
     def num_profiles(self):
         """The number of profiles with any payoff information"""
-        if self._num_profiles is not None:
-            return self._num_profiles
-        raise NotImplementedError("num_profiles not implemented by {}".format(
-            self.__class__.__name__))
+        pass  # pragma: no cover
 
     @property
+    @abc.abstractmethod
     def num_complete_profiles(self):
         """The number of profiles with complete payoff information"""
-        if self._num_complete_profiles is not None:
-            return self._num_complete_profiles
-        raise NotImplementedError(
-            "num_complete_profiles not implemented by {}".format(
-                self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def profiles(self):
         """An array all of the profiles with any data"""
-        raise NotImplementedError("profiles not implemented by {}".format(
-            self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def payoffs(self):
         """An array with all of the payoff corresponding to profiles()"""
-        raise NotImplementedError("payoffs not implemented by {}".format(
-            self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def max_strat_payoffs(self):
         """An upper bound on the payoff for each strategy"""
-        raise NotImplementedError(
-            "max_strat_payoffs not implemented by {}".format(
-                self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def min_strat_payoffs(self):
         """A lower bound on the payoff for each strategy"""
-        raise NotImplementedError(
-            "min_strat_payoffs not implemented by {}".format(
-                self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def get_payoffs(self, profile):
         """The payoffs for all profiles"""
-        raise NotImplementedError("get_payoffs not implemented by {}".format(
-            self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def deviation_payoffs(self, mixture, *, jacobian=False):
         """The payoffs for deviating from mixture
 
         Optionally with the jacobian with respect to mixture. This is the
         primary method that needs to implemented for nash finding."""
-        raise NotImplementedError(
-            "deviation_payoffs not implemented by {}".format(
-                self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def restrict(self, restriction):
         """Restrict viable strategies"""
-        raise NotImplementedError(
-            "restrict not implemented by {}".format(
-                self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def normalize(self):
         """Return a new game where the max payoff is 1 and min payoff is 0"""
-        raise NotImplementedError("normalize not implemented by {}".format(
-            self.__class__.__name__))
+        pass  # pragma: no cover
 
+    @abc.abstractmethod
     def __contains__(self, profile):
         """Return true if full payoff data for profile exists"""
-        raise NotImplementedError("contains not implemented by {}".format(
-            self.__class__.__name__))
+        pass  # pragma: no cover
 
     # --------------------
     # End Abstract Methods
     # --------------------
-
-    # FIXME See header of RsGame
-    @num_profiles.setter
-    def num_profiles(self, num_profs):
-        """Setter for num_profiles"""
-        assert self._num_profiles is None, \
-            "num_profiles can only be set once"
-        self._num_profiles = num_profs
-
-    @num_complete_profiles.setter
-    def num_complete_profiles(self, num_profs):
-        """Setter for num_complete_profiles"""
-        assert self._num_complete_profiles is None, \
-            "num_complete_profiles can only be set once"
-        self._num_complete_profiles = num_profs
 
     def min_role_payoffs(self):
         """Returns the minimum payoff for each role"""
@@ -1410,7 +1401,15 @@ class EmptyGame(RsGame):
 
     def __init__(self, role_names, strat_names, num_role_players):
         super().__init__(role_names, strat_names, num_role_players)
-        self.num_profiles = self.num_complete_profiles = 0
+        self._num_profiles = self._num_complete_profiles = 0
+
+    @property
+    def num_profiles(self):
+        return self._num_profiles
+
+    @property
+    def num_complete_profiles(self):
+        return self._num_complete_profiles
 
     def profiles(self):
         return np.empty((0, self.num_strats), int)
@@ -1602,9 +1601,13 @@ class CompleteGame(RsGame):
 
     Extend this if your game by default has payoff data for every profile."""
 
-    def __init__(self, role_names, strat_names, num_role_players):
-        super().__init__(role_names, strat_names, num_role_players)
-        self.num_profiles = self.num_complete_profiles = self.num_all_profiles
+    @property
+    def num_profiles(self):
+        return self.num_all_profiles
+
+    @property
+    def num_complete_profiles(self):
+        return self.num_all_profiles
 
     @functools.lru_cache(maxsize=1)
     def profiles(self):
@@ -1629,7 +1632,7 @@ def _parse_percent(perc):
 
 
 def _mean(vals):
-    if isinstance(vals, abc.Iterable):
+    if isinstance(vals, cabc.Iterable):
         count = 0
         mean = 0
         for v in vals:

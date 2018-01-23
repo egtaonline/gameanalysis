@@ -45,6 +45,11 @@ class DevRegressionGame(rsgame.CompleteGame):
         self._rest = rest
         self._rest.setflags(write=False)
 
+    def deviation_payoffs(self, mix, *, jacobian=False):
+        raise ValueError(
+            "regression games don't define deviation payoffs and must be used "
+            "as a model for a deviation game")
+
     def get_payoffs(self, profiles):
         assert self.is_profile(profiles).all(), "must pass valid profiles"
         payoffs = np.zeros(profiles.shape)

@@ -42,13 +42,14 @@ def add_parser(subparsers):
         return. regret - returns the regret of each profile. surplus - returns
         the bootstrap surplus of every profile.  (default: %(default)s)""")
     parser.add_argument(
-        '--processes', metavar='num-processes', type=int, help="""The number of
-        processes when constructing bootstrap samples. Default will use all the
-        cores available.""")
+        '--processes', metavar='<num-processes>', type=int, help="""The number
+        of processes when constructing bootstrap samples. Default will use all
+        the cores available.""")
     parser.add_argument(
-        '--percentiles', '-p', metavar='percentile', type=float, nargs='+',
-        help="""Percentiles to return in [0, 100]. By default all bootstrap
-        values will be returned sorted.""")
+        '--percentiles', '-p', metavar='<percentile>', type=float,
+        action='append', help="""Percentiles to return in [0, 100]. If no
+        percentiles are specified, all bootstrap values will be returned
+        sorted.""")
     parser.add_argument(
         '--num-bootstraps', '-n', metavar='num-bootstraps', default=101,
         type=int, help="""The number of bootstrap samples to acquire. More

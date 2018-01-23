@@ -13,7 +13,7 @@ from gameanalysis import gamegen
 from gameanalysis import learning
 from gameanalysis import paygame
 from gameanalysis import restrict
-from test import testutils
+from test import utils
 
 
 games = [
@@ -23,7 +23,7 @@ games = [
 ]
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('dist', range(5))
 def test_rbfgame_members(players, strats, dist):
@@ -111,8 +111,11 @@ def test_skltrain():
     assert not np.any(np.isnan(reggame.get_dev_payoffs(
         reggame.random_role_deviation_profile())))
 
+    with pytest.raises(ValueError):
+        reggame.deviation_payoffs(game.random_mixture())
 
-@testutils.warnings_filter(UserWarning)
+
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('_', range(5))
 def test_rbfgame_restriction(players, strats, _):
@@ -162,7 +165,7 @@ def test_rbfgame_restriction(players, strats, _):
     assert copy == rrreg
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('_', range(5))
 def test_rbfgame_normalize(players, strats, _):
@@ -197,7 +200,7 @@ def test_rbfgame_normalize(players, strats, _):
     assert copy == normreg
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_sample(_):
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
@@ -282,7 +285,7 @@ def test_sample(_):
     assert copy == learn
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_point(_):
     # We increase player number so point is a more accurate estimator
@@ -318,7 +321,7 @@ def test_point(_):
         assert np.allclose(jac, tjac)
 
     # Point is a very biased estimator, so errors are large
-    assert np.all(errors < 0.5)
+    assert np.all(errors < 10)
 
     submask = game.random_restriction()
     sublearn = learn.restrict(submask)
@@ -337,7 +340,7 @@ def test_point(_):
     assert copy == learn
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('_', range(20))
 def test_neighbor(_):
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
@@ -354,7 +357,7 @@ def test_neighbor(_):
         dev, _ = learn.deviation_payoffs(mix, jacobian=True)
         err = (tdev - dev) ** 2 / (np.abs(dev) + 1e-5)
         errors += (err - errors) / i
-    assert np.all(errors < 1)
+    assert np.all(errors < 2)
 
     submask = game.random_restriction()
     sublearn = learn.restrict(submask)
@@ -374,7 +377,7 @@ def test_neighbor(_):
     assert copy == learn
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', [
     [[1, 5], [2, 2]],
     [[2, 3], [3, 2]],
@@ -391,7 +394,7 @@ def test_rbfgame_min_max_payoffs(players, strats, _):
                   reggame.max_strat_payoffs() + 1e-4)
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 def test_rbfgame_equality():
     """Test all branches of equality test"""
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
@@ -423,7 +426,7 @@ def test_rbfgame_equality():
     assert regg != copy
 
 
-@testutils.warnings_filter(UserWarning)
+@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats,num', [
     (10, 3, 15),
     ([2, 3], [3, 2], 15),

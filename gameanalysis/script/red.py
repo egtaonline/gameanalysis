@@ -20,21 +20,9 @@ def parse_sorted(red, game):
     return np.fromiter(map(int, players), int, len(players))
 
 
-def parse_inorder(red, game):
-    """Parser input for role number pairs"""
-    players = red.split(',')
-    assert len(players) == game.num_roles, \
-        'Must input a reduced count for every role'
-    red_players = np.zeros(game.num_roles, int)
-    for p in players:
-        s, c = p.split(':')
-        red_players[game.role_index(s)] = int(c)
-    return red_players
-
-
 PLAYERS = {
     True: parse_sorted,
-    False: parse_inorder,
+    False: lambda red, game: game.role_from_repr(red, dtype=int),
 }
 
 REDUCTIONS = {
@@ -67,9 +55,9 @@ def add_parser(subparsers):
         should be a comma separated list of reduced counts for the role names
         in sorted order.""")
     parser.add_argument(
-        'reduction', nargs='?', metavar='<role>:<count>,...',
-        help="""Number of players in each reduced-game role.  This is a string
-        e.g. 'role1:4,role2:2'""")
+        'reduction', nargs='?', metavar='<role>:<count>;...',
+        help="""Number of players in each reduced-game role. This is a string
+        e.g. 'role1:4;role2:2'""")
     return parser
 
 

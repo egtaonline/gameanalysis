@@ -9,7 +9,7 @@ import scipy.special as sps
 
 from gameanalysis import rsgame
 from gameanalysis import utils
-from test import testutils
+from test import utils as testutils
 
 
 TINY = np.finfo(float).tiny
@@ -831,6 +831,20 @@ def test_to_from_role_json():
     assert arr.dtype == float
 
 
+def test_to_from_role_repr():
+    sarr = stratarray([2, 1])
+    role = [6, 3]
+    rep_role = 'a: 6; b: 3'
+    assert sarr.role_to_repr(role) == rep_role
+    arr = sarr.role_from_repr(rep_role)
+    assert np.allclose(arr, role)
+    assert arr.dtype == float
+    arr = np.empty_like(arr)
+    sarr.role_from_repr(rep_role, dest=arr)
+    assert np.allclose(arr, role)
+    assert arr.dtype == float
+
+
 def test_trim_precision():
     sarr = stratarray([3, 2])
     trimmed = sarr.trim_mixture_precision(
@@ -852,36 +866,6 @@ def test_random_role_serialization(role_players, role_strats):
         jrole = json.dumps(game.role_to_json(role))
         game.role_from_json(json.loads(jrole), copy)
     assert np.allclose(copies, roles)
-
-
-# ------
-# RsGame
-# ------
-
-
-def test_unassigned_throw_errors():
-    game = rsgame.RsGame(('1',), ('a',), np.array([1]))
-
-    with pytest.raises(NotImplementedError):
-        game.num_profiles
-    with pytest.raises(NotImplementedError):
-        game.num_complete_profiles
-    with pytest.raises(NotImplementedError):
-        game.profiles()
-    with pytest.raises(NotImplementedError):
-        game.payoffs()
-    with pytest.raises(NotImplementedError):
-        game.min_strat_payoffs()
-    with pytest.raises(NotImplementedError):
-        game.max_strat_payoffs()
-    with pytest.raises(NotImplementedError):
-        game.get_payoffs(game.random_profile())
-    with pytest.raises(NotImplementedError):
-        game.deviation_payoffs(game.random_mixture())
-    with pytest.raises(NotImplementedError):
-        game.normalize()
-    with pytest.raises(NotImplementedError):
-        None in game
 
 
 # ---------
@@ -933,6 +917,12 @@ def test_random_emptygame_const_properties(role_players, role_strats):
     assert pays.shape == (game.num_strats,)
 
     dprof = game.random_role_deviation_profile()
+    assert dprof.shape == (game.num_roles, game.num_strats)
+    dpays = game.get_dev_payoffs(dprof)
+    assert dpays.shape == (game.num_strats,)
+    assert np.isnan(dpays).all()
+
+    dprof = game.random_role_deviation_profile(game.random_mixture())
     assert dprof.shape == (game.num_roles, game.num_strats)
     dpays = game.get_dev_payoffs(dprof)
     assert dpays.shape == (game.num_strats,)
@@ -1720,16 +1710,41 @@ def test_random_emptygame_copy(role_players, role_strats):
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
-def test_ramdom_complete_game(role_players, role_strats):
+def test_complete_game(role_players, role_strats):
     base = rsgame.emptygame(role_players, role_strats)
-    game = rsgame.CompleteGame(base.role_names, base.strat_names,
-                               base.num_role_players)
+    game = ZeroGame(base.role_names, base.strat_names, base.num_role_players)
     assert game.is_complete()
+    assert game.is_constant_sum()
     assert not game.is_empty()
     assert game.num_profiles == game.num_all_profiles
     assert game.num_complete_profiles == game.num_all_profiles
     assert all(prof in game for prof in game.all_profiles())
     assert np.all(game.profiles() == game.all_profiles())
 
-    with pytest.raises(NotImplementedError):
-        game.payoffs()  # Get payoffs no implemented
+    assert np.allclose(game.deviation_payoffs(game.random_mixture()), 0)
+    assert np.allclose(game.max_strat_payoffs(), 0)
+    assert np.allclose(game.min_strat_payoffs(), 0)
+    assert game == game.normalize()
+    assert game == game.restrict(np.ones(game.num_strats, bool))
+
+
+class ZeroGame(rsgame.CompleteGame):
+    def deviation_payoffs(self, mix, *, jacobian=False):
+        return np.zeros(self.num_strats)
+
+    def get_payoffs(self, profs):
+        return np.zeros(profs.shape)
+
+    def max_strat_payoffs(self):
+        return np.zeros(self.num_strats)
+
+    def min_strat_payoffs(self):
+        return np.zeros(self.num_strats)
+
+    def normalize(self):
+        return self
+
+    def restrict(self, rest):
+        base = rsgame.emptygame_copy(self).restrict(rest)
+        return ZeroGame(base.role_names, base.strat_names,
+                        base.num_role_players)
