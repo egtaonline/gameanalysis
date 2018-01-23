@@ -38,7 +38,7 @@ def rand(players, strategies, functions):
                                function_table, offsets)
 
 
-def test_subgame_function_removal():
+def test_restrict_function_removal():
     game = aggfn.aggfn(
         [2, 1], [2, 3],
         [[-1, 0, 1, 2, 3],
@@ -54,7 +54,7 @@ def test_subgame_function_removal():
          [[0, 0], [3, 2], [2, 1]],
          [[9, 8], [4, 5], [1, 0]],
          [[3, 2], [0, 1], [0, 3]]])
-    sub = game.subgame([True, True, True, False, True])
+    rgame = game.restrict([True, True, True, False, True])
     expected = aggfn.aggfn_names(
         ['r0', 'r1'], [2, 1], [['s0', 's1'], ['s2', 's4']],
         ['f0', 'f2', 'f3'],
@@ -68,7 +68,7 @@ def test_subgame_function_removal():
         [[[0, 0], [1, 2], [2, 3]],
          [[9, 8], [4, 5], [1, 0]],
          [[3, 2], [0, 1], [0, 3]]])
-    assert sub == expected
+    assert rgame == expected
 
 
 def test_props():
@@ -143,9 +143,8 @@ def test_function_perm():
     assert perm == _game
 
 
-def test_subgame():
-    game = _game
-    mask = [False, True, True, False, True]
+def test_restrict():
+    rest = [False, True, True, False, True]
     sfuncinps = [[False, True, True, False],
                  [True, False, True, True],
                  [True, False, False, True]]
@@ -154,9 +153,9 @@ def test_subgame():
              [1, 1, 1],
              [0, 1, 1]]
     sgame = aggfn.aggfn_names(['r0', 'r1'], [2, 1], [['s1'], ['s2', 's4']],
-                              game.function_names, sactw, sfuncinps,
-                              game.function_table)
-    assert sgame == game.subgame(mask)
+                              _game.function_names, sactw, sfuncinps,
+                              _game.function_table)
+    assert sgame == _game.restrict(rest)
 
 
 def test_to_from_json():

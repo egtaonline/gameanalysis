@@ -122,13 +122,13 @@ _CRITERIA = {
 
 
 def iterated_elimination(game, criterion, *, conditional=True):
-    """Return a subgame mask resulting from iterated elimination of strategies
+    """Return a restriction resulting from iterated elimination of strategies
 
     Parameters
     ----------
     game : Game
         The game to run iterated elimination on
-    criterion : str, {'weakdom', 'strictdom', 'neverbr'}
+    criterion : {'weakdom', 'strictdom', 'neverbr'}
         The criterion to use to eliminated strategies.
     conditional : bool
         Whether to use conditional criteria. In general, conditional set to
@@ -143,11 +143,11 @@ def iterated_elimination(game, criterion, *, conditional=True):
     gains = _gains(game)
     supports = game.profiles() > 0
 
-    subgame_mask = np.ones(game.num_strats, bool)
+    rest = np.ones(game.num_strats, bool)
     mask = ~cfunc(gains, supports, num_strats, conditional)
     while (~np.all(mask) and np.any(np.add.reduceat(
             mask, np.insert(num_strats[:-1].cumsum(), 0, 0)) > 1)):
-        subgame_mask[subgame_mask] = mask
+        rest[rest] = mask
         prof_mask = ~np.any(supports & ~mask, -1)
         dev_inds = _dev_inds(num_strats)
         strat_inds = np.arange(num_strats.sum()).repeat(
@@ -161,5 +161,5 @@ def iterated_elimination(game, criterion, *, conditional=True):
             mask, np.insert(num_strats[:-1].cumsum(), 0, 0))
         mask = ~cfunc(gains, supports, num_strats, conditional)
 
-    subgame_mask[subgame_mask] = mask
-    return subgame_mask
+    rest[rest] = mask
+    return rest

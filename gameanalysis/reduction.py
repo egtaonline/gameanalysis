@@ -1,9 +1,9 @@
 """Module for computing player reductions"""
 import numpy as np
 
-from gameanalysis import rsgame
 from gameanalysis import paygame
-from gameanalysis import subgame
+from gameanalysis import restrict
+from gameanalysis import rsgame
 from gameanalysis import utils
 
 
@@ -199,26 +199,25 @@ class hierarchical(object):
 
     @staticmethod
     def expand_deviation_profiles(
-            full_game, subgame_mask, red_players, role_index=None):
-        """Expand all deviation profiles from a subgame
+            full_game, rest, red_players, role_index=None):
+        """Expand all deviation profiles from a restricted game
 
         Parameters
         ----------
         full_game : Game
             The game the deviations profiles will be valid for.
-        subgame_mask : ndarray-like, bool
-            The subgame to get deviations from.
+        rest : [bool]
+            The restriction to get deviations from.
         red_players : ndarray-like
             The number of players in each role in the reduced game.
         role_index : int, optional
             If specified , only expand deviations for the role selected.
         """
-        assert full_game.is_subgame(subgame_mask)
+        assert full_game.is_restriction(rest)
         return hierarchical.expand_profiles(
-            full_game, subgame.deviation_profiles(
-                rsgame.emptygame(red_players,
-                                 full_game.num_role_strats),
-                subgame_mask, role_index))
+            full_game, restrict.deviation_profiles(
+                rsgame.emptygame(red_players, full_game.num_role_strats),
+                rest, role_index))
 
 
 class deviation_preserving(object):
@@ -391,29 +390,29 @@ class deviation_preserving(object):
 
     @staticmethod
     def expand_deviation_profiles(
-            full_game, subgame_mask, red_players, role_index=None):
-        """Expand all deviation profiles from a subgame
+            full_game, rest, red_players, role_index=None):
+        """Expand all deviation profiles from a restriction
 
         Parameters
         ----------
         full_game : Game
             The game the deviations profiles will be valid for.
-        subgame_mask : ndarray-like, bool
-            The subgame to get deviations from.
-        red_players : ndarray-like
+        rest : [bool]
+            The restriction to get deviations from.
+        red_players : [int]
             The number of players in each role in the reduced game.
         role_index : int, optional
             If specified , only expand deviations for the role selected.
         """
-        subgame_mask = np.asarray(subgame_mask, bool)
+        rest = np.asarray(rest, bool)
         rdev = np.eye(full_game.num_roles, dtype=int)
         red_players = np.broadcast_to(np.asarray(red_players, int),
                                       full_game.num_roles)
-        support = np.add.reduceat(subgame_mask, full_game.role_starts)
+        support = np.add.reduceat(rest, full_game.role_starts)
 
         def dev_profs(red_players, full_players, mask, rs):
-            subg = rsgame.emptygame(red_players, support)
-            sub_profs = subgame.translate(subg.all_profiles(), subgame_mask)
+            rgame = rsgame.emptygame(red_players, support)
+            sub_profs = restrict.translate(rgame.all_profiles(), rest)
             game = rsgame.emptygame(full_players, full_game.num_role_strats)
             non_devs = hierarchical.expand_profiles(game, sub_profs)
             ndevs = np.sum(~mask)
@@ -428,7 +427,7 @@ class deviation_preserving(object):
                               for red_players, full_players, mask, rs
                               in zip(red_players - rdev,
                                      full_game.num_role_players - rdev,
-                                     np.split(subgame_mask,
+                                     np.split(rest,
                                               full_game.role_starts[1:]),
                                      full_game.role_starts)]
             return np.concatenate(expanded_profs)
@@ -438,7 +437,7 @@ class deviation_preserving(object):
             full_players[role_index] -= 1
             red_players = red_players.copy()
             red_players[role_index] -= 1
-            mask = np.split(subgame_mask, full_game.role_starts[1:])[
+            mask = np.split(rest, full_game.role_starts[1:])[
                 role_index]
             rs = full_game.role_starts[role_index]
             return dev_profs(red_players, full_players, mask, rs)
@@ -500,17 +499,17 @@ class twins(object):
         return deviation_preserving.reduce_profiles(red_game, profiles)
 
     @staticmethod
-    def expand_deviation_profiles(full_game, subgame_mask, red_players=None,
+    def expand_deviation_profiles(full_game, rest, red_players=None,
                                   role_index=None):
-        """Expand all deviation profiles from a subgame
+        """Expand all deviation profiles from a restriction
 
         Parameters
         ----------
         full_game : Game
             The game the deviations profiles will be valid for.
-        subgame_mask : ndarray-like, bool
-            The subgame to get deviations from.
-        red_players : ndarray-like, optional
+        rest : [bool]
+            The restriction to get deviations from.
+        red_players : [int], optional
             The number of players in each role in the reduced game.IF
             specified, it must match the expected number for twins reduction.
         role_index : int, optional
@@ -521,7 +520,7 @@ class twins(object):
                 np.all(exp_red_players == red_players)), \
             "twins reduction didn't get expected reduced players"
         return deviation_preserving.expand_deviation_profiles(
-            full_game, subgame_mask, exp_red_players, role_index)
+            full_game, rest, exp_red_players, role_index)
 
 
 class identity(object):
@@ -580,17 +579,17 @@ class identity(object):
         return profiles.reshape((-1, red_game.num_strats))
 
     @staticmethod
-    def expand_deviation_profiles(full_game, subgame_mask, red_players=None,
+    def expand_deviation_profiles(full_game, rest, red_players=None,
                                   role_index=None):
-        """Expand all deviation profiles from a subgame
+        """Expand all deviation profiles from a restriction
 
         Parameters
         ----------
         full_game : Game
             The game the deviations profiles will be valid for.
-        subgame_mask : ndarray-like, bool
-            The subgame to get deviations from.
-        red_players : ndarray-like, optional
+        rest : [bool]
+            The restriction to get deviations from.
+        red_players : [int], optional
             The number of players in each role in the reduced game.IF
             specified, it must match the number for full_game.
         role_index : int, optional
@@ -599,4 +598,4 @@ class identity(object):
         assert (red_players is None or
                 np.all(full_game.num_role_players == red_players)), \
             "identity reduction must have same number of players"
-        return subgame.deviation_profiles(full_game, subgame_mask, role_index)
+        return restrict.deviation_profiles(full_game, rest, role_index)

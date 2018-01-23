@@ -10,6 +10,7 @@ import pytest
 
 from gameanalysis import paygame
 from gameanalysis import rsgame
+# FIXME Rename this to utils
 from test import testutils
 
 
@@ -824,7 +825,7 @@ def test_is_constant_sum():
     assert not game.is_constant_sum()
 
 
-def test_game_subgame():
+def test_game_restrict():
     profiles = [
         [2, 0, 2, 0],
         [1, 1, 2, 0],
@@ -841,12 +842,12 @@ def test_game_subgame():
     spayoffs = [[1, 2]]
     sgame = paygame.game_names(
         ['r0', 'r1'], 2, [['s0'], ['s2']], sprofiles, spayoffs)
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
     sgame = paygame.game_copy(rsgame.emptygame_names(
         ['r0', 'r1'], 2, [['s0', 's1'], ['s3']]))
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
     profiles = [
         [2, 0, 1, 1],
@@ -864,12 +865,12 @@ def test_game_subgame():
     spayoffs = [[8, 9, 10]]
     sgame = paygame.game_names(
         ('r0', 'r1'), 2, (('s0',), ('s2', 's3')), sprofiles, spayoffs)
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
     sgame = paygame.game_copy(rsgame.emptygame_names(
         ['r0', 'r1'], 2, [['s0', 's1'], ['s3']]))
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
 
 def test_contains():
@@ -1372,7 +1373,7 @@ def test_samplegame_different_samples():
                for _ in range(1000))
 
 
-def test_samplegame_subgame():
+def test_samplegame_restrict():
     profiles = [
         [2, 0, 2, 0],
         [1, 1, 2, 0],
@@ -1393,12 +1394,12 @@ def test_samplegame_subgame():
     spayoffs = [[[[1, 2]]]]
     sgame = paygame.samplegame_names(
         ('r0', 'r1'), 2, (('s0',), ('s2',)), sprofiles, spayoffs)
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
     sgame = paygame.samplegame_copy(rsgame.emptygame_names(
         ('r0', 'r1'), 2, (('s0', 's1'), ('s3',))))
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
     profiles = [
         [2, 0, 1, 1],
@@ -1420,12 +1421,12 @@ def test_samplegame_subgame():
     spayoffs = [[[[15, 17, 19], [16, 18, 20]]]]
     sgame = paygame.samplegame_names(
         ('r0', 'r1'), 2, (('s1',), ('s2', 's3')), sprofiles, spayoffs)
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
     sgame = paygame.samplegame_copy(rsgame.emptygame_names(
         ('r0', 'r1'), 2, (('s0', 's1'), ('s3',))))
-    assert sgame == game.subgame(mask)
+    assert sgame == game.restrict(mask)
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)

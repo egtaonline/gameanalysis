@@ -162,10 +162,10 @@ class MatrixGame(rsgame.CompleteGame):
 
         return devpays, jac
 
-    def subgame(self, subgame_mask):
-        base = super().subgame(subgame_mask)
+    def restrict(self, rest):
+        base = rsgame.emptygame_copy(self).restrict(rest)
         matrix = self._payoff_matrix
-        for i, mask in enumerate(np.split(subgame_mask, self.role_starts[1:])):
+        for i, mask in enumerate(np.split(rest, self.role_starts[1:])):
             matrix = matrix[(slice(None),) * i + (mask,)]
         return MatrixGame(base.role_names, base.strat_names, matrix.copy())
 

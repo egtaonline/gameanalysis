@@ -10,7 +10,10 @@ from gameanalysis import gamereader
 from gameanalysis import rsgame
 
 
-subs = ['subgame', 'sub']
+# TODO There should be an easier way to handle subparsers that is robust to
+# errors and concise
+
+rests = ['restriction', 'rest']
 mixes = ['mixture', 'mix']
 profs = ['profile', 'prof']
 
@@ -41,14 +44,14 @@ def add_parser(subparsers):
         object to sample from the input. Available commands are:""")
     types.required = True
 
-    subg = types.add_parser(
-        subs[0], aliases=subs[1:], help='subgames', description="""Sample
-        random subgames""")
-    subg.add_argument(
+    rest = types.add_parser(
+        rests[0], aliases=rests[1:], help='restrictions', description="""Sample
+        random restrictions""")
+    rest.add_argument(
         '--prob', '-p', type=float, metavar='<prob>', help="""Probability that
-        an particular strategy occurs in the subgame. By default this is set so
-        all subgames are equally likely.""")
-    subg.add_argument(
+        an particular strategy occurs in the restriction. By default this is
+        set so all restrictions are equally likely.""")
+    rest.add_argument(
         '--unnormalize', '-u', action='store_false', help="""Don't normalize
         probabilities so they are reflected in the final distributions.""")
 
@@ -87,10 +90,11 @@ def main(args):
         np.random.seed(int(
             hashlib.sha256(args.seed.encode('utf8')).hexdigest()[:8], 16))
 
-    if args.types in subs:
-        objs = (game.subgame_to_json(sub) for sub
-                in game.random_subgames(args.num, strat_prob=args.prob,
-                                        normalize=args.unnormalize))
+    if args.types in rests:
+        objs = (game.restriction_to_json(rest) for rest
+                in game.random_restrictions(
+                    args.num, strat_prob=args.prob,
+                    normalize=args.unnormalize))
 
     elif args.types in mixes:
         if args.sparse is _nosparse:

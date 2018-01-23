@@ -4,6 +4,7 @@ import pytest
 
 from gameanalysis import gamegen
 from gameanalysis import paygame
+from gameanalysis import restrict
 from gameanalysis import rsgame
 from gameanalysis import utils
 from gameanalysis.reduction import deviation_preserving as dpr
@@ -50,6 +51,19 @@ def test_random_dpr(keep_prob, game_desc, _):
         dpr.expand_profiles(game, red_game.profiles()[complete_profs]))
     assert np.setdiff1d(full_reduced_profiles, full_profiles).size == 0, \
         "full game did not have data for all profiles required of reduced"
+
+    # Assert that dpr counts are accurate
+    num_dpr_profiles = dpr.expand_profiles(
+        game, red_game.all_profiles()).shape[0]
+    assert num_dpr_profiles == red_game.num_all_dpr_profiles
+
+    # Test the dpr deviation profile counts are accurate
+    rest = red_game.random_restriction()
+    dpr_devs = dpr.expand_profiles(
+        game, restrict.deviation_profiles(red_game, rest)).shape[0]
+    num = restrict.num_dpr_deviation_profiles(red_game, rest)
+    assert dpr_devs == num, \
+        "num_dpr_deviation_profiles didn't return correct number"
 
 
 def test_empty_dpr_1():

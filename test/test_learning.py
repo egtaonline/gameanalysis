@@ -12,7 +12,7 @@ from sklearn import gaussian_process as gp
 from gameanalysis import gamegen
 from gameanalysis import learning
 from gameanalysis import paygame
-from gameanalysis import subgame
+from gameanalysis import restrict
 from test import testutils
 
 
@@ -115,51 +115,51 @@ def test_skltrain():
 @testutils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('_', range(5))
-def test_rbfgame_subgame(players, strats, _):
+def test_rbfgame_restriction(players, strats, _):
     game = gamegen.sparse_game(players, strats, 13)
     reggame = learning.rbfgame_train(game)
 
-    sub_mask = game.random_subgame()
-    subreg = reggame.subgame(sub_mask)
+    rest = game.random_restriction()
+    rreg = reggame.restrict(rest)
 
-    subpays = subreg.payoffs()
-    fullpays = reggame.get_payoffs(subgame.translate(
-        subreg.profiles(), sub_mask))[:, sub_mask]
+    subpays = rreg.payoffs()
+    fullpays = reggame.get_payoffs(restrict.translate(
+        rreg.profiles(), rest))[:, rest]
     assert np.allclose(subpays, fullpays)
 
-    mix = subreg.random_mixture()
-    sub_dev_profs = subreg.random_role_deviation_profiles(20, mix)
-    sub_pays = subreg.get_dev_payoffs(sub_dev_profs)
-    pays = reggame.get_dev_payoffs(subgame.translate(
-        sub_dev_profs, sub_mask))[:, sub_mask]
+    mix = rreg.random_mixture()
+    sub_dev_profs = rreg.random_role_deviation_profiles(20, mix)
+    sub_pays = rreg.get_dev_payoffs(sub_dev_profs)
+    pays = reggame.get_dev_payoffs(restrict.translate(
+        sub_dev_profs, rest))[:, rest]
     assert np.allclose(sub_pays, pays)
 
-    for mix in subreg.random_mixtures(20):
-        dev_pay = subreg.deviation_payoffs(mix)
-        full_pay = reggame.deviation_payoffs(subgame.translate(
-            mix, sub_mask))[sub_mask]
+    for mix in rreg.random_mixtures(20):
+        dev_pay = rreg.deviation_payoffs(mix)
+        full_pay = reggame.deviation_payoffs(restrict.translate(
+            mix, rest))[rest]
         assert np.allclose(dev_pay, full_pay)
 
-    assert subreg._offset.shape == (subreg.num_strats,)
-    assert subreg._coefs.shape == (subreg.num_strats,)
-    assert subreg._min_payoffs.shape == (subreg.num_strats,)
-    assert subreg._max_payoffs.shape == (subreg.num_strats,)
+    assert rreg._offset.shape == (rreg.num_strats,)
+    assert rreg._coefs.shape == (rreg.num_strats,)
+    assert rreg._min_payoffs.shape == (rreg.num_strats,)
+    assert rreg._max_payoffs.shape == (rreg.num_strats,)
 
-    jgame = json.dumps(subreg.to_json())
+    jgame = json.dumps(rreg.to_json())
     copy = learning.rbfgame_json(json.loads(jgame))
-    assert copy == subreg
+    assert copy == rreg
 
-    subsubmask = subreg.random_subgame()
-    subsubreg = subreg.subgame(subsubmask)
+    rrest = rreg.random_restriction()
+    rrreg = rreg.restrict(rrest)
 
-    assert subsubreg._offset.shape == (subsubreg.num_strats,)
-    assert subsubreg._coefs.shape == (subsubreg.num_strats,)
-    assert subsubreg._min_payoffs.shape == (subsubreg.num_strats,)
-    assert subsubreg._max_payoffs.shape == (subsubreg.num_strats,)
+    assert rrreg._offset.shape == (rrreg.num_strats,)
+    assert rrreg._coefs.shape == (rrreg.num_strats,)
+    assert rrreg._min_payoffs.shape == (rrreg.num_strats,)
+    assert rrreg._max_payoffs.shape == (rrreg.num_strats,)
 
-    jgame = json.dumps(subsubreg.to_json())
+    jgame = json.dumps(rrreg.to_json())
     copy = learning.rbfgame_json(json.loads(jgame))
-    assert copy == subsubreg
+    assert copy == rrreg
 
 
 @testutils.warnings_filter(UserWarning)
@@ -262,11 +262,11 @@ def test_sample(_):
         np.random.seed(seed)
         tjac = devpays_jac(mix)
         assert np.allclose(jac, tjac)
-    assert np.all(errors <= 100 * (samp_errors + 1e-5))
+    assert np.all(errors <= 200 * (samp_errors + 1e-5))
 
-    submask = game.random_subgame()
-    sublearn = learn.subgame(submask)
-    subfull = full.subgame(submask)
+    submask = game.random_restriction()
+    sublearn = learn.restrict(submask)
+    subfull = full.restrict(submask)
     assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
                        subfull.payoffs())
 
@@ -320,9 +320,9 @@ def test_point(_):
     # Point is a very biased estimator, so errors are large
     assert np.all(errors < 0.5)
 
-    submask = game.random_subgame()
-    sublearn = learn.subgame(submask)
-    subfull = full.subgame(submask)
+    submask = game.random_restriction()
+    sublearn = learn.restrict(submask)
+    subfull = full.restrict(submask)
     assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
                        subfull.payoffs())
 
@@ -356,9 +356,9 @@ def test_neighbor(_):
         errors += (err - errors) / i
     assert np.all(errors < 1)
 
-    submask = game.random_subgame()
-    sublearn = learn.subgame(submask)
-    subfull = full.subgame(submask)
+    submask = game.random_restriction()
+    sublearn = learn.restrict(submask)
+    subfull = full.restrict(submask)
     assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
                        subfull.payoffs())
 
@@ -396,7 +396,7 @@ def test_rbfgame_equality():
     """Test all branches of equality test"""
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
     regg = learning.rbfgame_train(game)
-    copy = regg.subgame(np.ones(game.num_strats, bool))
+    copy = regg.restrict(np.ones(game.num_strats, bool))
     copy._alpha.setflags(write=True)
     copy._profiles.setflags(write=True)
     copy._lengths.setflags(write=True)

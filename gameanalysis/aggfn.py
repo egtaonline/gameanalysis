@@ -8,6 +8,7 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# FIXME Make functions names first, so it's always names first
 class AgfnGame(rsgame.CompleteGame):
     """Action graph with function nodes game
 
@@ -199,24 +200,24 @@ class AgfnGame(rsgame.CompleteGame):
             self.function_names, self.action_weights / scale,
             self.function_inputs, self.function_table, offsets)
 
-    def subgame(self, subgame_mask):
-        subgame_mask = np.asarray(subgame_mask, bool)
-        base = super().subgame(subgame_mask)
-        action_weights = self.action_weights[:, subgame_mask]
+    def restrict(self, rest):
+        rest = np.asarray(rest, bool)
+        base = rsgame.emptygame_copy(self).restrict(rest)
+        action_weights = self.action_weights[:, rest]
         func_mask = np.any(~np.isclose(action_weights, 0), 1)
         func_names = tuple(
             n for n, m in zip(self.function_names, func_mask) if m)
         return AgfnGame(
             base.role_names, base.strat_names, base.num_role_players,
             func_names, action_weights[func_mask],
-            self.function_inputs[:, func_mask][subgame_mask],
-            self.function_table[func_mask], self.offsets[subgame_mask])
+            self.function_inputs[:, func_mask][rest],
+            self.function_table[func_mask], self.offsets[rest])
 
     def to_json(self):
         res = super().to_json()
 
         res['function_inputs'] = {
-            func: self.subgame_to_json(finp) for func, finp
+            func: self.restriction_to_json(finp) for func, finp
             in zip(self.function_names, self.function_inputs.T)}
 
         res['action_weights'] = {
@@ -469,8 +470,8 @@ def aggfn_json(json):
     offsets = np.empty(base.num_strats)
 
     for func, inps in json['function_inputs'].items():
-        base.subgame_from_json(inps, function_inputs[:, findex[func]],
-                               verify=False)
+        base.restriction_from_json(inps, function_inputs[:, findex[func]],
+                                   verify=False)
 
     base.payoff_from_json(json.get('offsets', {}), offsets)
 

@@ -21,7 +21,7 @@ def add_parser(subparsers):
     parser = subparsers.add_parser(
         'bootstrap', aliases=['boot'], help="""Bootstrap on sample games""",
         description="""Compute bootstrap statistics using a sample game with
-        data for every profile in the support of the subgame and potentially
+        data for every profile in the support of the mixture and potentially
         deviations. The return value is a list with an entry for each mixture
         in order. Each element is a dictionary mapping percentile to value,
         plus 'mean' to the mean.""")

@@ -10,7 +10,7 @@ from gameanalysis import gamereader
 def add_parser(subparsers):
     parser = subparsers.add_parser(
         'dominance', aliases=['dom'], help="""Computed dominated strategies""",
-        description="""Compute dominated strategies, or subgames with only
+        description="""Compute dominated strategies, or restrictions with only
         undominated strategies.""")
     parser.add_argument(
         '--input', '-i', metavar='<input-file>', default=sys.stdin,
@@ -22,8 +22,8 @@ def add_parser(subparsers):
         stdout)""")
     parser.add_argument(
         '--strategies', '-s', action='store_true', help="""Output the remaining
-        strategies instead of the subgame after removing appropriate
-        strategies.  (default: %(default)s)""")
+        strategies instead of the restricted game after removing dominated
+        strategies. (default: %(default)s)""")
     parser.add_argument(
         '--criterion', '-c', default='strictdom',
         choices=['weakdom', 'strictdom', 'neverbr'],
@@ -38,11 +38,11 @@ def add_parser(subparsers):
 
 def main(args):
     game = gamereader.load(args.input)
-    sub_mask = dominance.iterated_elimination(
+    rest = dominance.iterated_elimination(
         game, args.criterion, conditional=args.unconditional)
     if args.strategies:
-        json.dump(game.subgame_to_json(sub_mask), args.output)
+        json.dump(game.restriction_to_json(rest), args.output)
     else:
-        json.dump(game.subgame(sub_mask).to_json(), args.output)
+        json.dump(game.restrict(rest).to_json(), args.output)
 
     args.output.write('\n')

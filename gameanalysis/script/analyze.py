@@ -11,7 +11,7 @@ from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import reduction
 from gameanalysis import regret
-from gameanalysis import subgame
+from gameanalysis import restrict
 
 
 def add_parser(subparsers):
@@ -61,9 +61,9 @@ def add_parser(subparsers):
         '--dominance', '-d', action='store_true', help="""Remove dominated
         strategies.""")
     parser.add_argument(
-        '--subgames', '-s', action='store_true', help="""Extract maximal
-        subgames, and analyze each individually instead of considering the game
-        as a whole.""")
+        '--restrictions', '-s', action='store_true', help="""Extract maximal
+        restricted games, and analyze each individually instead of considering
+        the game as a whole.""")
     reductions = parser.add_mutually_exclusive_group()
     reductions.add_argument(
         '--dpr', metavar='<role:count,role:count,...>', help="""Specify a
@@ -94,35 +94,35 @@ def main(args):
 
     if args.dominance:
         domsub = dominance.iterated_elimination(game, 'strictdom')
-        game = game.subgame(domsub)
+        game = game.restrict(domsub)
 
-    if args.subgames:
-        subgames = subgame.maximal_subgames(game)
+    if args.restrictions:
+        restrictions = restrict.maximal_restrictions(game)
     else:
-        subgames = np.ones((1, game.num_strats), bool)
+        restrictions = np.ones((1, game.num_strats), bool)
 
     methods = {
         'replicator': {
             'max_iters': args.max_iters,
             'converge_thresh': args.converge_thresh},
         'optimize': {}}
-    noeq_subgames = []
+    noeq_restrictions = []
     candidates = []
-    for submask in subgames:
-        subg = game.subgame(submask)
-        subeqa = nash.mixed_nash(
-            subg, regret_thresh=args.regret_thresh,
+    for rest in restrictions:
+        rgame = game.restrict(rest)
+        reqa = nash.mixed_nash(
+            rgame, regret_thresh=args.regret_thresh,
             dist_thresh=args.dist_thresh, processes=args.processes,
             at_least_one=args.one, **methods)
-        eqa = subgame.translate(subg.trim_mixture_support(
-            subeqa, thresh=args.supp_thresh), submask)
+        eqa = restrict.translate(rgame.trim_mixture_support(
+            reqa, thresh=args.supp_thresh), rest)
         if eqa.size:
             for eqm in eqa:
                 if not any(linalg.norm(eqm - eq) < args.dist_thresh
                            for eq in candidates):
                     candidates.append(eqm)
         else:
-            noeq_subgames.append(submask)
+            noeq_restrictions.append(rest)
 
     equilibria = []
     unconfirmed = []
@@ -146,7 +146,7 @@ def main(args):
             for dind in dev_inds:
                 devsupp = support.copy()
                 devsupp[dind] = True
-                if not np.all(devsupp <= subgames, -1).any():
+                if not np.all(devsupp <= restrictions, -1).any():
                     unexplored.append((devsupp, dind, gains[dind], eqm))
 
         else:
@@ -171,18 +171,18 @@ def main(args):
         if num:
             args.output.write('Found {:d} dominated strateg{}\n'.format(
                 num, 'y' if num == 1 else 'ies'))
-            args.output.write(game.subgame_to_str(~domsub))
+            args.output.write(game.restriction_to_str(~domsub))
             args.output.write('\n\n')
         else:
             args.output.write('Found no dominated strategies\n\n')
-    if args.subgames:
-        num = subgames.shape[0]
+    if args.restrictions:
+        num = restrictions.shape[0]
         if num:
             args.output.write(
-                'Found {:d} maximal complete subgame{}\n\n'.format(
+                'Found {:d} maximal complete restricted game{}\n\n'.format(
                     num, '' if num == 1 else 's'))
         else:
-            args.output.write('Found no complete subgames\n\n')
+            args.output.write('Found no complete restricted games\n\n')
     args.output.write('\n')
 
     # Output social welfare
@@ -224,16 +224,19 @@ def main(args):
     # Output No-equilibria Subgames
     args.output.write('No-equilibria Subgames\n')
     args.output.write('----------------------\n')
-    if noeq_subgames:
-        args.output.write('Found {:d} no-equilibria subgame{}\n\n'.format(
-            len(noeq_subgames), '' if len(noeq_subgames) == 1 else 's'))
-        noeq_subgames.sort(key=lambda x: x.sum())
-        for i, subg in enumerate(noeq_subgames, 1):
-            args.output.write('No-equilibria subgame {:d}:\n'.format(i))
-            args.output.write(game.subgame_to_str(subg))
+    if noeq_restrictions:
+        args.output.write(
+            'Found {:d} no-equilibria restricted game{}\n\n'.format(
+                len(noeq_restrictions),
+                '' if len(noeq_restrictions) == 1 else 's'))
+        noeq_restrictions.sort(key=lambda x: x.sum())
+        for i, subg in enumerate(noeq_restrictions, 1):
+            args.output.write(
+                'No-equilibria restricted game {:d}:\n'.format(i))
+            args.output.write(game.restriction_to_str(subg))
             args.output.write('\n\n')
     else:
-        args.output.write('Found no no-equilibria subgames\n\n')
+        args.output.write('Found no no-equilibria restricted games\n\n')
     args.output.write('\n')
 
     # Output Unconfirmed Candidates
@@ -258,22 +261,23 @@ def main(args):
     if unexplored:
         min_supp = min(supp.sum() for supp, _, _, _ in unexplored)
         args.output.write(
-            'Found {:d} unexplored best-response subgame{}\n'.format(
+            'Found {:d} unexplored best-response restricted game{}\n'.format(
                 len(unexplored), '' if len(unexplored) == 1 else 's'))
         args.output.write(
-            'Smallest unexplored subgame has support {:d}\n\n'.format(
+            'Smallest unexplored restricted game has support {:d}\n\n'.format(
                 min_supp))
 
         unexplored.sort(key=lambda x: (x[0].sum(), -x[2]))
         for i, (sub, dev, gain, eqm) in enumerate(unexplored, 1):
-            args.output.write('Unexplored subgame {:d}:\n'.format(i))
-            args.output.write(game.subgame_to_str(sub))
+            args.output.write('Unexplored restricted game {:d}:\n'.format(i))
+            args.output.write(game.restriction_to_str(sub))
             args.output.write('\n{:.4f} for deviating to {} from:\n'.format(
                 gain, game.strat_name(dev)))
             args.output.write(game.mixture_to_str(eqm))
             args.output.write('\n\n')
     else:
-        args.output.write('Found no unexplored best-response subgames\n\n')
+        args.output.write(
+            'Found no unexplored best-response restricted games\n\n')
     args.output.write('\n')
 
     # Output json data

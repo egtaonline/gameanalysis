@@ -34,6 +34,7 @@ import scipy.special as sps
 from gameanalysis import utils
 
 
+# FIXME Make this abstract
 class StratArray(object):
     """A class with knowledge of the number of strategies per role
 
@@ -97,16 +98,16 @@ class StratArray(object):
 
     @property
     @utils.memoize
-    def num_all_subgames(self):
-        """Number of unique subgames"""
+    def num_all_restrictions(self):
+        """Number of unique restrictions"""
         return np.prod(2 ** self.num_role_strats - 1)
 
     @property
     @utils.memoize
-    def num_pure_subgames(self):
-        """The number of pure subgames
+    def num_pure_restrictions(self):
+        """The number of pure restrictions
 
-        A pure subgame is is one with only one strategy per role."""
+        A pure restrictions has exactly one strategy per role."""
         return self.num_role_strats.prod()
 
     @property
@@ -187,48 +188,48 @@ class StratArray(object):
         inds.setflags(write=False)
         return inds
 
-    def all_subgames(self):
-        """Return all valid subgames"""
+    def all_restrictions(self):
+        """Return all valid restrictions"""
         role_subs = [(np.arange(1, 1 << num_strats)[:, None]
                       & (1 << np.arange(num_strats))).astype(bool)
                      for num_strats
                      in self.num_role_strats]
         return utils.acartesian2(*role_subs)
 
-    def pure_subgames(self):
-        """Returns every pure subgame mask in a game
+    def pure_restrictions(self):
+        """Returns every pure restriction in a game
 
-        A pure subgame is a subgame where each role only has one strategy. This
-        returns the pure subgames in sorted order based off of role and
-        strategy."""
-        role_subgames = [np.eye(num_strats, dtype=bool) for num_strats
-                         in self.num_role_strats]
-        return utils.acartesian2(*role_subgames)
+        A pure restriction has only one strategy per role. This returns the
+        pure restrictions in sorted order based off of role and strategy."""
+        role_rests = [np.eye(num_strats, dtype=bool) for num_strats
+                      in self.num_role_strats]
+        return utils.acartesian2(*role_rests)
 
-    def random_subgame(self, *, strat_prob=None, normalize=True):
-        """Return a random subgame
+    def random_restriction(self, *, strat_prob=None, normalize=True):
+        """Return a random restriction
 
-        See ranom_subgames"""
-        return self.random_subgames(1, strat_prob=strat_prob,
-                                    normalize=normalize)[0]
+        See random_restrictions"""
+        return self.random_restrictions(1, strat_prob=strat_prob,
+                                        normalize=normalize)[0]
 
-    def random_subgames(self, num_samples, *, strat_prob=None, normalize=True):
-        """Return random subgames
+    def random_restrictions(self, num_samples, *, strat_prob=None,
+                            normalize=True):
+        """Return random restrictions
 
         Parameters
         ----------
         num_samples : int
-            The number of samples to be retuned.
-        strat_prob : float, ndarray, optional, (0, 1)
-            The probability that a given strategy is in support. If support
-            prob is None, supports will be sampled uniformly. This can either
-            be a scalar, or an ndarray of size `num_roles`.
+            The number of restrictions to be returned.
+        strat_prob : float or [float], optional
+            The probability that a given strategy is in support. If
+            `strat_prob` is None, supports will be sampled uniformly. This can
+            either be a scalar, or an iterable of length `num_roles`.
         normalize : bool, optional
-            If true, the mixtures are normalized, so that the conditional
-            probability of any strategy in support equals support prob. If
-            true, the support_prob for any role must be at least `1 /
-            num_role_strats`. Individual role probabilities are thresholded to
-            this value.
+            If true, the strategy probabilities are normalized, so that the
+            conditional probability of any strategy in support equals
+            `strat_prob`. The probability for any strategy must be at least `1
+            / num_role_strats` for its role. Individual strategy probabilities
+            are thresholded to this value when normalize is set to true.
         """
         if strat_prob is None:
             strat_prob = 1 - ((2 ** (self.num_role_strats - 1) - 1) /
@@ -255,11 +256,11 @@ class StratArray(object):
             rands, self.role_starts, 1), strat_prob)
         return rands <= thresh.repeat(self.num_role_strats, 1)
 
-    def is_subgame(self, subg, *, axis=-1):
-        """Verify that a subgame or array of subgames are valid"""
-        subg = np.asarray(subg, bool)
-        assert subg.shape[axis] == self.num_strats
-        return np.all(np.bitwise_or.reduceat(subg, self.role_starts, axis),
+    def is_restriction(self, restrict, *, axis=-1):
+        """Verify that a restriction is valid"""
+        restrict = np.asarray(restrict, bool)
+        assert restrict.shape[axis] == self.num_strats
+        return np.all(np.bitwise_or.reduceat(restrict, self.role_starts, axis),
                       axis)
 
     def trim_mixture_support(self, mixture, *, thresh=1e-3, axis=-1):
@@ -267,30 +268,34 @@ class StratArray(object):
         mixture = np.asarray(mixture, float)
         assert mixture.shape[axis] == self.num_strats
         mixture *= mixture >= thresh
-        mixture /= np.add.reduceat(mixture, self.role_starts,
-                                   axis).repeat(self.num_role_strats, axis)
+        mixture /= np.add.reduceat(
+            mixture, self.role_starts, axis).repeat(self.num_role_strats, axis)
         return mixture
 
-    def trim_mixture_precision(self, mixture, *, ndigits=3):
-        """Reduce precision of mixture to ndigits
+    def trim_mixture_precision(self, mixture, *, resolution=1e-3):
+        """Reduce precision of mixture
 
-        By default, trim mixture so every component is only accurate to 1 out
-        of 1000. This function returns a valid mixture with the minimum
-        absolute error to the input mixture.
+        This trims the mixture so that it lies on the discretized space, where
+        every component is an integer multiple of resolution. By default, trim
+        mixture so every component is only accurate to 1 out of 1000, making it
+        convenient for serialization. This function returns a valid mixture
+        with the minimum absolute error to the input mixture.
         """
         mixture = np.asarray(mixture, float)
-        assert self.is_mixture(mixture)
-        resolution = 10 ** ndigits
-        rmix = resolution * mixture
+        ires = round(1 / resolution)
+        assert self.is_mixture(mixture), "must pass mixtures"
+        assert np.isclose(ires, 1 / resolution), \
+            "resolution must be integer inverse"
+        rmix = mixture * ires
         imix = np.floor(rmix).astype(int)
         error = imix - rmix
-        incs = resolution - np.add.reduceat(imix, self.role_starts)
+        incs = ires - np.add.reduceat(imix, self.role_starts)
         for mix, err, inc in zip(
                 np.split(imix, self.role_starts[1:]),
                 np.split(error, self.role_starts[1:]), incs):
             if inc > 0:
                 mix[np.argpartition(err, inc - 1)[:inc]] += 1
-        return imix / resolution
+        return imix / ires
 
     def is_mixture(self, mix, *, axis=-1):
         """Verify that a mixture is valid for game"""
@@ -301,7 +306,7 @@ class StratArray(object):
                     mix, self.role_starts, axis), 1), axis))
 
     def mixture_project(self, mixture):
-        """Project a mixture array onto the simplotope"""
+        """Project an array into mixture space"""
         mixture = np.asarray(mixture, float)
         return np.concatenate(
             [utils.simplex_project(r) for r
@@ -370,9 +375,9 @@ class StratArray(object):
         return simp_center + ratio * simp_grad
 
     def mixture_from_simplex(self, simp):
-        """Convery a simplex back into a valid mixture
+        """Convert a simplex back into a valid mixture
 
-        This is the inverse function of to_simplex."""
+        This is the inverse function of mixture_to_simplex."""
         # See to_simplex for an understanding of what these steps are doing.
         simp = np.asarray(simp, float)
         simp_dim = self.num_strats - self.num_roles + 1
@@ -418,11 +423,11 @@ class StratArray(object):
     def random_mixtures(self, num_samples, *, alpha=1):
         """Return a random mixed profile
 
-        Mixed profiles are sampled from a dirichlet distribution with parameter
+        Mixed profiles are sampled from a Dirichlet distribution with parameter
         alpha. If alpha = 1 (the default) this is a uniform distribution over
-        the simplex for each role. alpha \in (0, 1) is baised towards high
+        the simplex for each role. Alpha \in (0, 1) is baised towards high
         entropy mixtures, i.e. mixtures where one strategy is played in
-        majority. alpha \in (1, oo) is baised towards low entropy (uniform)
+        majority. Alpha \in (1, oo) is baised towards low entropy (uniform)
         mixtures.
         """
         mixtures = rand.gamma(alpha, 1, (num_samples, self.num_strats))
@@ -445,15 +450,15 @@ class StratArray(object):
         Parameters
         ----------
         num_samples : int
-            The number of samples to be retuned.
-        alpha : float, optional, (0, oo)
+            The number of mixtures to be returned.
+        alpha : float, optional
             Mixed profiles are sampled from a dirichlet distribution with
             parameter alpha. If alpha = 1 (the default) this is a uniform
-            distribution over the simplex for each role. alpha \in (0, 1) is
+            distribution over the simplex for each role. Alpha \in (0, 1) is
             baised towards high entropy mixtures, i.e. mixtures where one
-            strategy is played in majority. alpha \in (1, oo) is baised towards
+            strategy is played in majority. Alpha \in (1, oo) is baised towards
             low entropy (uniform) mixtures.
-        support_prob : float, ndarray, optional, (0, 1)
+        support_prob : float or [float], optional
             The probability that a given strategy is in support. If support
             prob is None, supports will be sampled uniformly.
         normalize : bool, optional
@@ -463,16 +468,16 @@ class StratArray(object):
             num_role_strats`.
         """
         mixtures = rand.gamma(alpha, 1, (num_samples, self.num_strats))
-        mixtures *= self.random_subgames(
+        mixtures *= self.random_restrictions(
             num_samples, strat_prob=support_prob, normalize=normalize)
-        mixtures /= np.add.reduceat(mixtures, self.role_starts,
-                                    1).repeat(self.num_role_strats, 1)
+        mixtures /= np.add.reduceat(
+            mixtures, self.role_starts, 1).repeat(self.num_role_strats, 1)
         return mixtures
 
-    def biased_mixtures(self, bias=.9):
+    def biased_mixtures(self, bias=0.9):
         """Generates mixtures biased towards one strategy for each role
 
-        Each role has one strategy played with probability bias; the reamaining
+        Each role has one strategy played with probability bias; the remaining
         1-bias probability is distributed uniformly over the remaining S or S-1
         strategies. If there's only one strategy, it is played with probability
         1."""
@@ -515,7 +520,7 @@ class StratArray(object):
 
     def pure_mixtures(self):
         """Returns all mixtures where the probability is either 1 or 0."""
-        return self.pure_subgames().astype(float)
+        return self.pure_restrictions().astype(float)
 
     def grid_mixtures(self, num_points):
         """Returns all of the mixtures in a grid with n points
@@ -617,7 +622,7 @@ class StratArray(object):
     def mixture_to_repr(self, mix):
         """Convert a mixture to a string"""
         return self._to_arr_repr(
-            self.trim_mixture_precision(mix, ndigits=4), '.2%')
+            self.trim_mixture_precision(mix, resolution=1e-4), '.2%')
 
     def _from_arr_str(self, arr_str, dtype, parse, dest=None):
         if dest is None:
@@ -657,10 +662,12 @@ class StratArray(object):
     def mixture_to_str(self, mix):
         """Convert a mixture to a printable string"""
         return self._to_arr_str(
-            self.trim_mixture_precision(mix, ndigits=4), '>7.2%')
+            self.trim_mixture_precision(mix, resolution=1e-4), '>7.2%')
 
-    def subgame_from_json(self, subg, dest=None, *, verify=True):
-        """Read a json subgame into an array"""
+    def restriction_from_json(self, jrest, dest=None, *, verify=True):
+        """Read a restriction from json
+
+        Json format is {role: [strat]}"""
         if dest is None:
             dest = np.empty(self.num_strats, bool)
         else:
@@ -668,50 +675,52 @@ class StratArray(object):
             assert dest.shape == (self.num_strats,)
         dest.fill(False)
 
-        for role, strats in subg.items():
+        for role, strats in jrest.items():
             for strat in strats:
                 dest[self.role_strat_index(role, strat)] = True
 
-        assert not verify or self.is_subgame(dest), \
-            "\"{}\" does not define a valid subgame".format(subg)
+        assert not verify or self.is_restriction(dest), \
+            "\"{}\" does not define a valid restriction".format(jrest)
         return dest
 
-    def subgame_to_json(self, subg):
-        """Convert a subgame array to json"""
+    def restriction_to_json(self, rest):
+        """Convert a restriction to json"""
         return {role: [strat for strat, inc in zip(strats, mask) if inc]
                 for mask, role, strats
-                in zip(np.split(subg, self.role_starts[1:]),
+                in zip(np.split(rest, self.role_starts[1:]),
                        self.role_names, self.strat_names)
                 if mask.any()}
 
-    def subgame_from_repr(self, subg_str, dest=None, *, verify=True):
-        """Read a subgame from a string"""
+    def restriction_from_repr(self, rrest, dest=None, *, verify=True):
+        """Read a restriction from a repr string
+
+        A restriction repr is 'role: strat, ...; ...'"""
         if dest is None:
             dest = np.empty(self.num_strats, bool)
         else:
             assert dest.dtype.kind == 'b'
             assert dest.shape == (self.num_strats,)
         dest.fill(False)
-        for role_str in subg_str.split('; '):
+        for role_str in rrest.split('; '):
             role, strats = role_str.split(': ', 1)
             for strat in strats.split(', '):
                 dest[self.role_strat_index(role, strat)] = True
-        assert not verify or self.is_subgame(dest), \
-            "\"{}\" does not define a valid subgame".format(subg_str)
+        assert not verify or self.is_restriction(dest), \
+            "\"{}\" does not define a valid restriction".format(rrest)
         return dest
 
-    def subgame_to_repr(self, subg):
-        """Convert a subgame to a string"""
+    def restriction_to_repr(self, rest):
+        """Convert a restriction to a repr string"""
         return '; '.join(
             '{}: {}'.format(role, ', '.join(
                 strat for strat, inc
                 in zip(strats, mask) if inc > 0))
             for role, strats, mask
             in zip(self.role_names, self.strat_names,
-                   np.split(subg, self.role_starts[1:])))
+                   np.split(rest, self.role_starts[1:])))
 
-    def subgame_from_str(self, subg_str, dest=None, *, verify=True):
-        """Read a subgame from a readable string"""
+    def restriction_from_str(self, srest, dest=None, *, verify=True):
+        """Read a restriction from a string"""
         if dest is None:
             dest = np.empty(self.num_strats, bool)
         else:
@@ -720,28 +729,28 @@ class StratArray(object):
         dest.fill(False)
 
         role = None
-        for line in subg_str.split('\n'):
+        for line in srest.split('\n'):
             if line[0] != ' ':
                 role = line[:-1]
             else:
                 dest[self.role_strat_index(role, line[4:])] = True
-        assert not verify or self.is_subgame(dest), \
-            "\"{}\" does not define a valid subgame".format(subg_str)
+        assert not verify or self.is_restriction(dest), \
+            "\"{}\" does not define a valid restriction".format(srest)
         return dest
 
-    def subgame_to_str(self, subg):
-        """Convert a subgame to a printable string"""
+    def restriction_to_str(self, rest):
+        """Convert a restriction to a string"""
         return '\n'.join(
             '{}:\n{}'.format(role, '\n'.join(
                 '    {}'.format(s)
                 for m, s in zip(mask, strats)
                 if m))
             for mask, role, strats
-            in zip(np.split(np.asarray(subg), self.role_starts[1:]),
+            in zip(np.split(np.asarray(rest), self.role_starts[1:]),
                    self.role_names, self.strat_names))
 
     def role_from_json(self, role_json, dest=None, dtype=float):
-        """Format role data as array"""
+        """Read role array from json"""
         if dest is None:
             dest = np.empty(self.num_roles, dtype)
         else:
@@ -772,6 +781,9 @@ class StratArray(object):
                 self.strat_names == other.strat_names)
 
 
+# FIXME Make this abstract, and the unimplemented methods along with it
+# There is one "property" that I want to be abstract. I'll make that a memoized
+# property and have it call an abstract _method to ensure it exists.
 class RsGame(StratArray):
     """Role-symmetric game representation
 
@@ -857,14 +869,11 @@ class RsGame(StratArray):
             "deviation_payoffs not implemented by {}".format(
                 self.__class__.__name__))
 
-    def subgame(self, sub_mask):
-        """Return a new game omitting strategies where sub_mask is false"""
-        assert self.is_subgame(sub_mask)
-        new_strats = tuple(
-            tuple(s for s, m in zip(strats, mask) if m)
-            for strats, mask in zip(
-                self.strat_names, np.split(sub_mask, self.role_starts[1:])))
-        return RsGame(self.role_names, new_strats, self.num_role_players)
+    def restrict(self, restriction):
+        """Restrict viable strategies"""
+        raise NotImplementedError(
+            "restrict not implemented by {}".format(
+                self.__class__.__name__))
 
     def normalize(self):
         """Return a new game where the max payoff is 1 and min payoff is 0"""
@@ -880,6 +889,7 @@ class RsGame(StratArray):
     # End Abstract Methods
     # --------------------
 
+    # FIXME See header of RsGame
     @num_profiles.setter
     def num_profiles(self, num_profs):
         """Setter for num_profiles"""
@@ -1100,7 +1110,7 @@ class RsGame(StratArray):
 
         A pure profile is a profile where only one strategy is played per
         role."""
-        return (self.pure_subgames() *
+        return (self.pure_restrictions() *
                 self.num_role_players.repeat(self.num_role_strats))
 
     def nearby_profiles(self, profile, num_devs):
@@ -1437,8 +1447,13 @@ class EmptyGame(RsGame):
         jac = np.full((self.num_strats,) * 2, np.nan)
         return devs, jac
 
-    def subgame(self, sub_mask):
-        return emptygame_copy(super().subgame(sub_mask))
+    def restrict(self, rest):
+        assert self.is_restriction(rest)
+        new_strats = tuple(
+            tuple(s for s, m in zip(strats, mask) if m)
+            for strats, mask in zip(
+                self.strat_names, np.split(rest, self.role_starts[1:])))
+        return EmptyGame(self.role_names, new_strats, self.num_role_players)
 
     def normalize(self):
         return self

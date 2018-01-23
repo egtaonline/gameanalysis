@@ -402,15 +402,15 @@ def test_regret_single():
         assert np.isclose(json.loads(out)[0], 7747.618428)
 
 
-def test_subgame_detect():
-    success, out, err = run('sub', '-nd', '-i', HARD_GAME)
+def test_restriction_detect():
+    success, out, err = run('rest', '-nd', '-i', HARD_GAME)
     assert success, err
-    assert HARD_GAME_DATA.subgame_from_json(json.loads(out)[0]).all()
+    assert HARD_GAME_DATA.restriction_from_json(json.loads(out)[0]).all()
 
 
-def test_subgame_extract_1():
+def test_restriction_extract_1():
     success, out, err = run(
-        'sub', '-n', '-t', 'background',
+        'rest', '-n', '-t', 'background',
         'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9', 'hft', 'noop',
         '-s', '0', '3', '4', '-i', HARD_GAME)
     assert success, err
@@ -419,22 +419,22 @@ def test_subgame_extract_1():
                                   False, False, False]),
                 utils.hash_array([True, False, False,  True,  True, False,
                                   False, False, False])}
-    assert {utils.hash_array(HARD_GAME_DATA.subgame_from_json(s))
+    assert {utils.hash_array(HARD_GAME_DATA.restriction_from_json(s))
             for s in json.loads(out)} == expected
 
 
-def test_subgame_extract_2():
+def test_restriction_extract_2():
     with tempfile.NamedTemporaryFile('w') as sub, \
             tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
-        subg = [False, True, True, True, False]
-        json.dump([GAME_DATA.subgame_to_json(subg)], sub)
+        rest = [False, True, True, True, False]
+        json.dump([GAME_DATA.restriction_to_json(rest)], sub)
         sub.flush()
-        success, out, err = run('sub', '-i', game.name, '-f', sub.name)
+        success, out, err = run('rest', '-i', game.name, '-f', sub.name)
         assert success, err
         game = gamereader.loadj(json.loads(out)[0])
-        assert game == GAME_DATA.subgame(subg)
+        assert game == GAME_DATA.restrict(rest)
 
 
 def test_analysis_output():
@@ -475,9 +475,9 @@ def test_analysis_dpr():
         game.write(GAME_STR)
         game.flush()
         success, out, err = run(
-            'analyze', '-i', game.name, '--subgames', '--dominance', '--dpr',
-            'r0:3,r1:2', '-p1', '--dist-thresh', '1e-3', '-r1e-3', '-t1e-3',
-            '--rand-restarts', '0', '-m10000', '-c1e-8')
+            'analyze', '-i', game.name, '--restrictions', '--dominance',
+            '--dpr', 'r0:3,r1:2', '-p1', '--dist-thresh', '1e-3', '-r1e-3',
+            '-t1e-3', '--rand-restarts', '0', '-m10000', '-c1e-8')
     assert success, err
     assert 'With deviation preserving reduction: r0:3 r1:2' in out
 
@@ -500,7 +500,7 @@ def test_analysis_equilibria():
         [3, 0, 1, 0, 0],
         [3, 0, 0, 1, 0],
         [3, 0, 0, 0, 1],
-        # Deviating subgame also explored
+        # Deviating restriction also explored
         [0, 4, 0, 0, 0],
         [0, 3, 1, 0, 0],
         [0, 2, 2, 0, 0],
@@ -519,7 +519,7 @@ def test_analysis_equilibria():
         [0, 2, 1, 0, 1],
         [0, 1, 2, 0, 1],
         [0, 0, 3, 0, 1],
-        # Deviating subgame
+        # Deviating restriction
         [0, 2, 0, 2, 0],
         [0, 1, 0, 3, 0],
         [0, 0, 0, 4, 0],
@@ -531,7 +531,7 @@ def test_analysis_equilibria():
         [4, 0, 1, 0, 0],
         [4, 0, 0, 1, 0],
         [4, 0, 0, 0, 0],
-        # Deviating subgame also explored
+        # Deviating restriction also explored
         [0, 1, 0, 0, 0],
         [0, 1, 4, 0, 0],
         [0, 1, 4, 0, 0],
@@ -550,7 +550,7 @@ def test_analysis_equilibria():
         [0, 2, 1, 0, 0],
         [0, 1, 2, 0, 0],
         [0, 0, 3, 0, 0],
-        # Deviating subgame
+        # Deviating restriction
         [0, 2, 0, 2, 0],
         [0, 1, 0, 3, 0],
         [0, 0, 0, 4, 0],
@@ -562,11 +562,11 @@ def test_analysis_equilibria():
     assert success, err
     assert 'Found 1 dominated strategy' in out
     assert 'Found 1 unconfirmed candidate' in out
-    assert 'Found 1 unexplored best-response subgame' in out
+    assert 'Found 1 unexplored best-response restricted game' in out
 
 
 def test_analysis_dup_equilibria():
-    # Two subgames, but dominated, so identical equilibria
+    # Two restrictions, but dominated, so identical equilibria
     profiles = [
         [2, 0, 0, 0],
         [1, 1, 0, 0],
@@ -594,11 +594,11 @@ def test_analysis_dup_equilibria():
 
     success, out, err = run('analyze', '-s', input=game_str)
     assert success, err
-    assert "Found 2 maximal complete subgames" in out
+    assert "Found 2 maximal complete restricted games" in out
 
 
 def test_analysis_dev_explored():
-    # Beneficial deviation to an already explored subgame
+    # Beneficial deviation to an already explored restriction
     profiles = [
         [2, 0, 0, 0],
         [1, 1, 0, 0],
@@ -626,7 +626,7 @@ def test_analysis_dev_explored():
 
     success, out, err = run('analyze', '-s', input=game_str)
     assert success, err
-    assert "Found no unexplored best-response subgames" in out
+    assert "Found no unexplored best-response restricted games" in out
 
 
 def test_analysis_no_data():
@@ -636,7 +636,7 @@ def test_analysis_no_data():
     success, out, err = run('analyze', '-s', input=game_str)
     assert success, err
     assert 'There was no profile with complete payoff data' in out
-    assert 'Found no complete subgames' in out
+    assert 'Found no complete restricted games' in out
 
 
 def test_analysis_no_eqa():
@@ -644,11 +644,11 @@ def test_analysis_no_eqa():
         game.write(GAME_STR)
         game.flush()
         success, out, err = run(
-            'analyze', '-i', game.name, '--subgames', '--dominance', '--dpr',
-            'r0:3,r1:2', '-p1', '-r0', '-m0')
+            'analyze', '-i', game.name, '--restrictions', '--dominance',
+            '--dpr', 'r0:3,r1:2', '-p1', '-r0', '-m0')
     assert success, err
     assert "Found no equilibria" in out
-    assert "Found 1 no-equilibria subgame" in out
+    assert "Found 1 no-equilibria restricted game" in out
 
 
 def test_learning_output():
@@ -747,11 +747,12 @@ def test_boot_3():
         assert all(j['5'] <= j['95'] for j in data)
 
 
-def test_samp_subg():
-    success, out, err = run('samp', '-i', HARD_GAME, 'subgame', '-p', '0.5')
+def test_samp_restriction():
+    success, out, err = run(
+        'samp', '-i', HARD_GAME, 'restriction', '-p', '0.5')
     assert success, err
-    sub = HARD_GAME_DATA.subgame_from_json(json.loads(out))
-    assert HARD_GAME_DATA.is_subgame(sub)
+    sub = HARD_GAME_DATA.restriction_from_json(json.loads(out))
+    assert HARD_GAME_DATA.is_restriction(sub)
 
 
 def test_samp_mix():

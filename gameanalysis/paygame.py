@@ -224,13 +224,13 @@ class Game(rsgame.RsGame):
         payoffs[0 == self._profiles] = 0
         return game_replace(self, self._profiles, payoffs)
 
-    def subgame(self, subgame_mask):
+    def restrict(self, rest):
         """Remove possible strategies from consideration"""
-        subgame_mask = np.asarray(subgame_mask, bool)
-        base = rsgame.emptygame_copy(self).subgame(subgame_mask)
-        prof_mask = ~np.any(self._profiles * ~subgame_mask, 1)
-        profiles = self._profiles[prof_mask][:, subgame_mask]
-        payoffs = self._payoffs[prof_mask][:, subgame_mask]
+        rest = np.asarray(rest, bool)
+        base = rsgame.emptygame_copy(self).restrict(rest)
+        prof_mask = ~np.any(self._profiles * ~rest, 1)
+        profiles = self._profiles[prof_mask][:, rest]
+        payoffs = self._payoffs[prof_mask][:, rest]
         return Game(base.role_names, base.strat_names, base.num_role_players,
                     profiles, payoffs)
 
@@ -732,14 +732,14 @@ class SampleGame(Game):
             spays *= 0 < profs[:, None]
         return samplegame_replace(self, self._profiles, spayoffs)
 
-    def subgame(self, subgame_mask):
+    def restrict(self, rest):
         """Remove possible strategies from consideration"""
-        subgame_mask = np.asarray(subgame_mask, bool)
-        base = rsgame.emptygame_copy(self).subgame(subgame_mask)
-        prof_mask = ~np.any(self._profiles * ~subgame_mask, 1)
-        profiles = self._profiles[prof_mask][:, subgame_mask]
+        rest = np.asarray(rest, bool)
+        base = rsgame.emptygame_copy(self).restrict(rest)
+        prof_mask = ~np.any(self._profiles * ~rest, 1)
+        profiles = self._profiles[prof_mask][:, rest]
         sample_payoffs = tuple(
-            pays[pmask][..., subgame_mask] for pays, pmask
+            pays[pmask][..., rest] for pays, pmask
             in zip(self._sample_payoffs,
                    np.split(prof_mask, self.sample_starts[1:]))
             if pmask.any())

@@ -16,8 +16,8 @@ from sklearn import gaussian_process as gp
 
 from gameanalysis import gamereader
 from gameanalysis import paygame
+from gameanalysis import restrict
 from gameanalysis import rsgame
-from gameanalysis import subgame
 from gameanalysis import utils
 
 
@@ -30,7 +30,7 @@ class DevRegressionGame(rsgame.CompleteGame):
     """
 
     def __init__(self, game, regressors, offset, scale, min_payoffs,
-                 max_payoffs, sub_mask):
+                 max_payoffs, rest):
         super().__init__(game.role_names, game.strat_names,
                          game.num_role_players)
         self._regressors = regressors
@@ -42,8 +42,8 @@ class DevRegressionGame(rsgame.CompleteGame):
         self._min_payoffs.setflags(write=False)
         self._max_payoffs = max_payoffs
         self._max_payoffs.setflags(write=False)
-        self._sub_mask = sub_mask
-        self._sub_mask.setflags(write=False)
+        self._rest = rest
+        self._rest.setflags(write=False)
 
     def get_payoffs(self, profiles):
         assert self.is_profile(profiles).all(), "must pass valid profiles"
@@ -54,8 +54,8 @@ class DevRegressionGame(rsgame.CompleteGame):
             profs = profiles[mask]
             profs[:, i] -= 1
             if profs.size:
-                payoffs[mask, i] = reg.predict(subgame.translate(
-                    profs, self._sub_mask)).ravel() * s + o
+                payoffs[mask, i] = reg.predict(restrict.translate(
+                    profs, self._rest)).ravel() * s + o
         return payoffs
 
     def get_dev_payoffs(self, profiles):
@@ -63,8 +63,8 @@ class DevRegressionGame(rsgame.CompleteGame):
 
         This implementation is more efficient than the default since we don't
         need to compute the payoff for non deviators."""
-        prof_view = np.rollaxis(subgame.translate(profiles.reshape(
-            (-1, self.num_roles, self.num_strats)), self._sub_mask), 1, 0)
+        prof_view = np.rollaxis(restrict.translate(profiles.reshape(
+            (-1, self.num_roles, self.num_strats)), self._rest), 1, 0)
         payoffs = np.empty(profiles.shape[:-2] + (self.num_strats,))
         pay_view = payoffs.reshape((-1, self.num_strats)).T
         for pays, profs, reg in zip(
@@ -79,15 +79,15 @@ class DevRegressionGame(rsgame.CompleteGame):
     def min_strat_payoffs(self):
         return self._min_payoffs.view()
 
-    def subgame(self, sub_mask):
-        base = super().subgame(sub_mask)
-        new_mask = self._sub_mask.copy()
-        new_mask[new_mask] = sub_mask
-        regs = tuple(reg for reg, m in zip(self._regressors, sub_mask) if m)
+    def restrict(self, rest):
+        base = rsgame.emptygame_copy(self).restrict(rest)
+        new_rest = self._rest.copy()
+        new_rest[new_rest] = rest
+        regs = tuple(reg for reg, m in zip(self._regressors, rest) if m)
         return DevRegressionGame(
-            base, regs, self._offset[sub_mask], self._scale[sub_mask],
-            self._min_payoffs[sub_mask],
-            self._max_payoffs[sub_mask], new_mask)
+            base, regs, self._offset[rest], self._scale[rest],
+            self._min_payoffs[rest],
+            self._max_payoffs[rest], new_rest)
 
     def normalize(self):
         scale = (self.max_role_payoffs() - self.min_role_payoffs())
@@ -97,14 +97,14 @@ class DevRegressionGame(rsgame.CompleteGame):
         return DevRegressionGame(
             self, self._regressors, (self._offset - offset) / scale,
             self._scale / scale, (self._min_payoffs - offset) / scale,
-            (self._max_payoffs - offset) / scale, self._sub_mask)
+            (self._max_payoffs - offset) / scale, self._rest)
 
     def __eq__(self, other):
         return (super().__eq__(other) and
                 self._regressors == other._regressors and
                 np.allclose(self._offset, other._offset) and
                 np.allclose(self._scale, other._scale) and
-                np.all(self._sub_mask == other._sub_mask))
+                np.all(self._rest == other._rest))
 
     def __hash__(self):
         return super().__hash__()
@@ -312,20 +312,20 @@ class RbfGpGame(rsgame.CompleteGame):
     # TODO Add function that creates sample game which draws payoffs from the
     # gp distribution
 
-    def subgame(self, sub_mask):
-        sub_mask = np.asarray(sub_mask, bool)
-        base = super().subgame(sub_mask)
+    def restrict(self, rest):
+        rest = np.asarray(rest, bool)
+        base = rsgame.emptygame_copy(self).restrict(rest)
 
-        size_mask = sub_mask.repeat(self._sizes)
-        sizes = self._sizes[sub_mask]
+        size_mask = rest.repeat(self._sizes)
+        sizes = self._sizes[rest]
         profiles = self._profiles[size_mask]
-        lengths = self._lengths[sub_mask]
-        zeros = (profiles[:, ~sub_mask] /
-                 lengths[:, ~sub_mask].repeat(sizes, 0))
+        lengths = self._lengths[rest]
+        zeros = (profiles[:, ~rest] /
+                 lengths[:, ~rest].repeat(sizes, 0))
         removed = np.exp(-np.einsum('ij,ij->i', zeros, zeros) / 2)
         new_profs, inds = utils.unique_axis(
-            np.concatenate([np.arange(sub_mask.sum()).repeat(sizes)[:, None],
-                            profiles[:, sub_mask]], 1),
+            np.concatenate([np.arange(rest.sum()).repeat(sizes)[:, None],
+                            profiles[:, rest]], 1),
             return_inverse=True)
         new_alpha = np.bincount(inds, removed * self._alpha[size_mask])
         new_sizes = np.diff(np.concatenate([
@@ -334,8 +334,8 @@ class RbfGpGame(rsgame.CompleteGame):
 
         return RbfGpGame(
             base.role_names, base.strat_names, base.num_role_players,
-            self._offset[sub_mask], self._coefs[sub_mask],
-            lengths[:, sub_mask], new_sizes, new_profs[:, 1:], new_alpha)
+            self._offset[rest], self._coefs[rest],
+            lengths[:, rest], new_sizes, new_profs[:, 1:], new_alpha)
 
     def normalize(self):
         scale = (self.max_role_payoffs() - self.min_role_payoffs())
@@ -570,8 +570,8 @@ class SampleDeviationGame(_DeviationGame):
             self.num_role_strats, 1)) / self._num_samples
         return dev_pays, jac
 
-    def subgame(self, sub_mask):
-        return SampleDeviationGame(self._model.subgame(sub_mask),
+    def restrict(self, rest):
+        return SampleDeviationGame(self._model.restrict(rest),
                                    self._num_samples)
 
     def normalize(self):
@@ -640,8 +640,8 @@ class PointDeviationGame(_DeviationGame):
         else:
             return self._model.get_dev_payoffs(self._dev_players * mix)
 
-    def subgame(self, sub_mask):
-        return PointDeviationGame(self._model.subgame(sub_mask))
+    def restrict(self, rest):
+        return PointDeviationGame(self._model.restrict(rest))
 
     def normalize(self):
         return PointDeviationGame(self._model.normalize())
@@ -711,9 +711,9 @@ class NeighborDeviationGame(_DeviationGame):
         return game.deviation_payoffs(mix, ignore_incomplete=True,
                                       jacobian=jacobian)
 
-    def subgame(self, sub_mask):
+    def restrict(self, rest):
         return NeighborDeviationGame(
-            self._model.subgame(sub_mask), self._num_devs)
+            self._model.restrict(rest), self._num_devs)
 
     def normalize(self):
         return NeighborDeviationGame(self._model.normalize(), self._num_devs)

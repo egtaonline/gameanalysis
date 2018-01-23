@@ -9,7 +9,6 @@ import scipy.special as sps
 
 from gameanalysis import rsgame
 from gameanalysis import utils
-from gameanalysis.reduction import deviation_preserving as dpr
 from test import testutils
 
 
@@ -36,8 +35,8 @@ def test_stratarray_properties():
     assert sarr.num_roles == 1
     assert np.all(sarr.role_starts == [0])
     assert np.all(sarr.role_indices == [0])
-    assert sarr.num_all_subgames == 1
-    assert sarr.num_pure_subgames == 1
+    assert sarr.num_all_restrictions == 1
+    assert sarr.num_pure_restrictions == 1
     assert np.all(sarr.num_strat_devs == [0])
     assert np.all(sarr.num_role_devs == [0])
     assert sarr.num_devs == 0
@@ -60,8 +59,8 @@ def test_stratarray_properties():
     assert sarr.num_roles == 1
     assert np.all(sarr.role_starts == [0])
     assert np.all(sarr.role_indices == [0, 0, 0])
-    assert sarr.num_all_subgames == 7
-    assert sarr.num_pure_subgames == 3
+    assert sarr.num_all_restrictions == 7
+    assert sarr.num_pure_restrictions == 3
     assert np.all(sarr.num_strat_devs == [2, 2, 2])
     assert np.all(sarr.num_role_devs == [6])
     assert sarr.num_devs == 6
@@ -76,8 +75,8 @@ def test_stratarray_properties():
     assert sarr.num_roles == 2
     assert np.all(sarr.role_starts == [0, 1])
     assert np.all(sarr.role_indices == [0, 1, 1, 1])
-    assert sarr.num_all_subgames == 7
-    assert sarr.num_pure_subgames == 3
+    assert sarr.num_all_restrictions == 7
+    assert sarr.num_pure_restrictions == 3
     assert np.all(sarr.num_strat_devs == [0, 2, 2, 2])
     assert np.all(sarr.num_role_devs == [0, 6])
     assert sarr.num_devs == 6
@@ -100,8 +99,8 @@ def test_stratarray_properties():
     assert sarr.num_roles == 3
     assert np.all(sarr.role_starts == [0, 3, 5])
     assert np.all(sarr.role_indices == [0, 0, 0, 1, 1, 2])
-    assert sarr.num_all_subgames == 21
-    assert sarr.num_pure_subgames == 6
+    assert sarr.num_all_restrictions == 21
+    assert sarr.num_pure_restrictions == 6
     assert np.all(sarr.num_strat_devs == [2, 2, 2, 1, 1, 0])
     assert np.all(sarr.num_role_devs == [6, 2, 0])
     assert sarr.num_devs == 8
@@ -119,113 +118,114 @@ def test_stratarray_properties():
     assert np.all(sarr.dev_to_indices == [1, 2, 0, 2, 0, 1, 4, 3])
 
 
-def test_subgame_enumeration():
+def test_restriction_enumeration():
     sarr = stratarray([1])
-    all_subgames = [[True]]
-    assert not np.setxor1d(utils.axis_to_elem(all_subgames),
-                           utils.axis_to_elem(sarr.all_subgames())).size
-    pure_subgames = [[True]]
-    assert not np.setxor1d(utils.axis_to_elem(pure_subgames),
-                           utils.axis_to_elem(sarr.pure_subgames())).size
+    all_restrictions = [[True]]
+    assert not np.setxor1d(utils.axis_to_elem(all_restrictions),
+                           utils.axis_to_elem(sarr.all_restrictions())).size
+    pure_restrictions = [[True]]
+    assert not np.setxor1d(utils.axis_to_elem(pure_restrictions),
+                           utils.axis_to_elem(sarr.pure_restrictions())).size
 
     sarr = stratarray([3])
-    all_subgames = [[True, False, False],
-                    [False, True, False],
-                    [True, True, False],
-                    [False, False, True],
-                    [True, False, True],
-                    [False, True, True],
-                    [True, True, True]]
-    assert not np.setxor1d(utils.axis_to_elem(all_subgames),
-                           utils.axis_to_elem(sarr.all_subgames())).size
-    pure_subgames = [[True, False, False],
-                     [False, True, False],
-                     [False, False, True]]
-    assert not np.setxor1d(utils.axis_to_elem(pure_subgames),
-                           utils.axis_to_elem(sarr.pure_subgames())).size
+    all_restrictions = [[True, False, False],
+                        [False, True, False],
+                        [True, True, False],
+                        [False, False, True],
+                        [True, False, True],
+                        [False, True, True],
+                        [True, True, True]]
+    assert not np.setxor1d(utils.axis_to_elem(all_restrictions),
+                           utils.axis_to_elem(sarr.all_restrictions())).size
+    pure_restrictions = [[True, False, False],
+                         [False, True, False],
+                         [False, False, True]]
+    assert not np.setxor1d(utils.axis_to_elem(pure_restrictions),
+                           utils.axis_to_elem(sarr.pure_restrictions())).size
 
     sarr = stratarray([1, 3])
-    all_subgames = [[True, True, False, False],
-                    [True, False, True, False],
-                    [True, True, True, False],
-                    [True, False, False, True],
-                    [True, True, False, True],
-                    [True, False, True, True],
-                    [True, True, True, True]]
-    assert not np.setxor1d(utils.axis_to_elem(all_subgames),
-                           utils.axis_to_elem(sarr.all_subgames())).size
-    pure_subgames = [[True, True, False, False],
-                     [True, False, True, False],
-                     [True, False, False, True]]
-    assert not np.setxor1d(utils.axis_to_elem(pure_subgames),
-                           utils.axis_to_elem(sarr.pure_subgames())).size
+    all_restrictions = [[True, True, False, False],
+                        [True, False, True, False],
+                        [True, True, True, False],
+                        [True, False, False, True],
+                        [True, True, False, True],
+                        [True, False, True, True],
+                        [True, True, True, True]]
+    assert not np.setxor1d(utils.axis_to_elem(all_restrictions),
+                           utils.axis_to_elem(sarr.all_restrictions())).size
+    pure_restrictions = [[True, True, False, False],
+                         [True, False, True, False],
+                         [True, False, False, True]]
+    assert not np.setxor1d(utils.axis_to_elem(pure_restrictions),
+                           utils.axis_to_elem(sarr.pure_restrictions())).size
 
 
-def test_is_subgame():
+def test_is_restriction():
     sarr = stratarray([3, 2])
-    assert sarr.is_subgame([True, False, True, False, True])
-    assert not sarr.is_subgame([True, False, True, False, False])
-    assert not sarr.is_subgame([False, False, False, True, False])
-    assert not sarr.is_subgame([False, False, False, False, False])
-    assert np.all([True] + [False] * 3 == sarr.is_subgame([
+    assert sarr.is_restriction([True, False, True, False, True])
+    assert not sarr.is_restriction([True, False, True, False, False])
+    assert not sarr.is_restriction([False, False, False, True, False])
+    assert not sarr.is_restriction([False, False, False, False, False])
+    assert np.all([True] + [False] * 3 == sarr.is_restriction([
         [True, False, True, False, True],
         [True, False, True, False, False],
         [False, False, False, True, False],
         [False, False, False, False, False]]))
-    assert sarr.is_subgame([[True], [False], [True], [False], [True]], axis=0)
+    assert sarr.is_restriction(
+        [[True], [False], [True], [False], [True]], axis=0)
 
     with pytest.raises(AssertionError):
-        sarr.is_subgame([False, False, False, False])
+        sarr.is_restriction([False, False, False, False])
     with pytest.raises(AssertionError):
-        sarr.is_subgame([False, False, False, False, False, False])
+        sarr.is_restriction([False, False, False, False, False, False])
     with pytest.raises(AssertionError):
-        sarr.is_subgame([[False, False, False, False, False, False]])
+        sarr.is_restriction([[False, False, False, False, False, False]])
 
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
-def test_random_stratarray_subgames(_, role_strats):
+def test_random_stratarray_restrictions(_, role_strats):
     sarr = stratarray(role_strats)
-    all_subgames = sarr.all_subgames()
-    assert sarr.is_subgame(all_subgames).all()
-    assert sarr.num_all_subgames == all_subgames.shape[0]
-    pure_subgames = sarr.pure_subgames()
-    assert sarr.is_subgame(pure_subgames).all()
-    assert sarr.num_pure_subgames == pure_subgames.shape[0]
+    all_restrictions = sarr.all_restrictions()
+    assert sarr.is_restriction(all_restrictions).all()
+    assert sarr.num_all_restrictions == all_restrictions.shape[0]
+    pure_restrictions = sarr.pure_restrictions()
+    assert sarr.is_restriction(pure_restrictions).all()
+    assert sarr.num_pure_restrictions == pure_restrictions.shape[0]
 
 
-def test_random_subgames():
+def test_random_restrictions():
     # Technically some of these can fail, but it's extremely unlikely
     sarr = stratarray([3])
-    subgs = sarr.random_subgames(1000)
-    assert sarr.is_subgame(subgs).all()
-    assert not subgs.all()
+    rests = sarr.random_restrictions(1000)
+    assert sarr.is_restriction(rests).all()
+    assert not rests.all()
 
-    subgs = sarr.random_subgames(1000, strat_prob=1)
-    assert sarr.is_subgame(subgs).all()
-    assert subgs.all()
+    rests = sarr.random_restrictions(1000, strat_prob=1)
+    assert sarr.is_restriction(rests).all()
+    assert rests.all()
 
     # Probability is raised to 1/3
-    subgs = sarr.random_subgames(1000, strat_prob=0)
-    assert sarr.is_subgame(subgs).all()
+    rests = sarr.random_restrictions(1000, strat_prob=0)
+    assert sarr.is_restriction(rests).all()
 
-    subgs = sarr.random_subgames(1000, strat_prob=0, normalize=False)
-    assert sarr.is_subgame(subgs).all()
+    rests = sarr.random_restrictions(1000, strat_prob=0, normalize=False)
+    assert sarr.is_restriction(rests).all()
 
     # This has a roughly .5^1000 probability of failure
     sarr = stratarray([3, 2])
-    subgs = sarr.random_subgames(1000, strat_prob=[1, 1 / 2])
-    assert sarr.is_subgame(subgs).all()
-    assert np.all([True, True, True, False, False] == subgs.all(0))
+    rests = sarr.random_restrictions(1000, strat_prob=[1, 1 / 2])
+    assert sarr.is_restriction(rests).all()
+    assert np.all([True, True, True, False, False] == rests.all(0))
 
 
 @pytest.mark.parametrize('_,role_strats', testutils.games)
-def test_random_random_subgames(_, role_strats):
+def test_random_random_restrictions(_, role_strats):
     sarr = stratarray(role_strats)
-    subg = sarr.random_subgame()
-    assert len(subg.shape) == 1
+    rest = sarr.random_restriction()
+    assert len(rest.shape) == 1
 
-    subgs = sarr.random_subgames(100)
-    assert sarr.is_subgame(subgs).all()
+    rests = sarr.random_restrictions(100)
+    assert sarr.is_restriction(rests).all()
 
 
 def test_trim_mixture_support():
@@ -759,46 +759,46 @@ b:
     assert new_mix.dtype == float
 
 
-def test_to_from_subgame_json():
+def test_to_from_restriction_json():
     sarr = stratarray([2, 1])
     sub = [True, False, True]
     json_sub = {'a': ['a'], 'b': ['c']}
-    assert sarr.subgame_to_json(sub) == json_sub
-    new_sub = sarr.subgame_from_json(json_sub)
+    assert sarr.restriction_to_json(sub) == json_sub
+    new_sub = sarr.restriction_from_json(json_sub)
     assert np.all(new_sub == sub)
     assert new_sub.dtype == bool
     new_sub.fill(False)
-    sarr.subgame_from_json(json_sub, dest=new_sub)
+    sarr.restriction_from_json(json_sub, dest=new_sub)
     assert np.all(new_sub == sub)
     assert new_sub.dtype == bool
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
-def test_random_subgame_serialization(role_players, role_strats):
+def test_random_restriction_serialization(role_players, role_strats):
     game = rsgame.emptygame(role_players, role_strats)
-    subs = game.random_subgames(20)
+    subs = game.random_restrictions(20)
     copies = np.empty(subs.shape, bool)
     for sub, copy in zip(subs, copies):
-        jsub = json.dumps(game.subgame_to_json(sub))
-        game.subgame_from_json(json.loads(jsub), copy)
+        jsub = json.dumps(game.restriction_to_json(sub))
+        game.restriction_from_json(json.loads(jsub), copy)
     assert np.all(copies == subs)
 
 
-def test_to_from_subgame_repr():
+def test_to_from_restriction_repr():
     sarr = stratarray([2, 1])
     sub = [True, False, True]
     sub_repr = "a: a; b: c"
-    assert sarr.subgame_to_repr(sub) == sub_repr
-    new_sub = sarr.subgame_from_repr(sub_repr)
+    assert sarr.restriction_to_repr(sub) == sub_repr
+    new_sub = sarr.restriction_from_repr(sub_repr)
     assert np.all(new_sub == sub)
     assert new_sub.dtype == bool
     new_sub.fill(False)
-    sarr.subgame_from_repr(sub_repr, dest=new_sub)
+    sarr.restriction_from_repr(sub_repr, dest=new_sub)
     assert np.all(new_sub == sub)
     assert new_sub.dtype == bool
 
 
-def test_to_from_subgame_str():
+def test_to_from_restriction_str():
     sarr = stratarray([2, 1])
     sub = [True, False, True]
     sub_str = """
@@ -807,12 +807,12 @@ a:
 b:
     c
 """[1:-1]
-    assert sarr.subgame_to_str(sub) == sub_str
-    new_sub = sarr.subgame_from_str(sub_str)
+    assert sarr.restriction_to_str(sub) == sub_str
+    new_sub = sarr.restriction_from_str(sub_str)
     assert np.all(new_sub == sub)
     assert new_sub.dtype == bool
     new_sub.fill(False)
-    sarr.subgame_from_str(sub_str, dest=new_sub)
+    sarr.restriction_from_str(sub_str, dest=new_sub)
     assert np.all(new_sub == sub)
     assert new_sub.dtype == bool
 
@@ -834,12 +834,12 @@ def test_to_from_role_json():
 def test_trim_precision():
     sarr = stratarray([3, 2])
     trimmed = sarr.trim_mixture_precision(
-        [1/3, 1/3, 1/3, 0.62, 0.38], ndigits=1)
+        [1/3, 1/3, 1/3, 0.62, 0.38], resolution=0.1)
     # Ties resolve as first strategies
     assert np.allclose(trimmed, [0.4, 0.3, 0.3, 0.6, 0.4])
 
     trimmed = sarr.trim_mixture_precision(
-        [0.5, 0.25, 0.25, 0.5, 0.5], ndigits=2)
+        [0.5, 0.25, 0.25, 0.5, 0.5], resolution=0.05)
     assert np.allclose(trimmed, [0.5, 0.25, 0.25, 0.5, 0.5])
 
 
@@ -991,31 +991,31 @@ def test_random_emptygame_const_properties(role_players, role_strats):
     assert game.random_profile() not in game
 
 
-def test_empty_subgame():
+def test_empty_restriction():
     game = rsgame.emptygame(1, [2, 3])
-    subg = game.subgame([False, True, True, False, True])
+    rgame = game.restrict([False, True, True, False, True])
     expected = rsgame.emptygame_names(('r0', 'r1'), 1, (('s1',), ('s2', 's4')))
-    assert subg == expected
+    assert rgame == expected
 
     game = rsgame.emptygame([3, 4, 5], [4, 3, 2])
-    subg = game.subgame(
+    rgame = game.restrict(
         [False, True, True, False, False, False, True, True, False])
     expected = rsgame.emptygame_names(
         ('r0', 'r1', 'r2'), [3, 4, 5], (('s1', 's2'), ('s6',), ('s7',)))
-    assert subg == expected
+    assert rgame == expected
 
     game = rsgame.emptygame(1, [2, 3])
     with pytest.raises(AssertionError):
-        subg = game.subgame([False, False, True, True, True])
+        game.restrict([False, False, True, True, True])
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
-def test_random_empty_subgame(role_players, role_strats):
+def test_random_empty_restriction(role_players, role_strats):
     game = rsgame.emptygame(role_players, role_strats)
-    subgm = game.random_subgame()
-    subg = game.subgame(subgm)
-    assert np.all(game.num_role_players == subg.num_role_players)
-    assert subg.num_strats == subgm.sum()
+    rest = game.random_restriction()
+    rgame = game.restrict(rest)
+    assert np.all(game.num_role_players == rgame.num_role_players)
+    assert rgame.num_strats == rest.sum()
 
 
 def test_num_all_profiles():
@@ -1100,12 +1100,6 @@ def test_random_profile_counts(role_players, role_strats):
 
     num_payoffs = np.sum(game.all_profiles() > 0)
     assert num_payoffs == game.num_all_payoffs
-
-    full_game = rsgame.emptygame(
-        game.num_role_players ** 2, game.num_role_strats)
-    num_dpr_profiles = dpr.expand_profiles(
-        full_game, game.all_profiles()).shape[0]
-    assert num_dpr_profiles == game.num_all_dpr_profiles
 
 
 def test_profile_id():
@@ -1373,7 +1367,7 @@ def test_random_fixed_profiles(role_players, role_strats):
     assert game.num_all_profiles == all_profiles.shape[0]
     assert game.is_profile(all_profiles).all()
     pure_profiles = game.pure_profiles()
-    assert game.num_pure_subgames == pure_profiles.shape[0]
+    assert game.num_pure_restrictions == pure_profiles.shape[0]
     assert game.is_profile(pure_profiles).all()
 
 

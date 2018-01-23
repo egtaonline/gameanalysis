@@ -229,7 +229,7 @@ def test_submatgame():
     submat = matrix[:, [0, 2]][:, :, 2:].copy()
     smatg = matgame.matgame_names(
         ['r0', 'r1', 'r2'], [['s0', 's1'], ['s2', 's4'], ['s7', 's8']], submat)
-    assert smatg == matg.subgame(mask)
+    assert smatg == matg.restrict(mask)
 
     matg = matgame.matgame([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
     mask = [True, True, True, False]
