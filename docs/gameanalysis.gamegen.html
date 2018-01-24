@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.gamegen module &#8212; Game Analysis 4.2.1 documentation</title>
+    <title>gameanalysis.gamegen module &#8212; Game Analysis 5.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.2.1',
+        VERSION:     '5.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -55,80 +55,9 @@
   <div class="section" id="module-gameanalysis.gamegen">
 <span id="gameanalysis-gamegen-module"></span><h1>gameanalysis.gamegen module<a class="headerlink" href="#module-gameanalysis.gamegen" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="gameanalysis.gamegen.add_noise">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">add_noise</code><span class="sig-paren">(</span><em>game</em>, <em>prob=0.5</em>, <em>initial=1</em>, <em>noise=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#add_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.add_noise" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate sample game by adding noise to game payoffs</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – A Game or SampleGame (only current payoffs are used)</li>
-<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – For every profile, draw a sample for each failed coin flip with prob
-until a success.</li>
-<li><strong>initial</strong> (<em>int</em><em>, </em><em>optional</em>) – The initial number of samples to always draw. If 0, the number of
-samples will follow a zero based gemetric (the number of failed coin
-flips), if 1, the number of samples will follow a one base geometric
-(the number of coin flips until the first success). Other numbers can
-be used for more samples.</li>
-<li><strong>noise</strong> (<em>shape -&gt; ndarray</em>) – A noise generating function. The function should take a single shape
-parameter, and return a number of samples equal to shape. In order to
-preserve mixed equilibria, noise should also be zero mean (aka
-unbiased)</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="gameanalysis.gamegen.add_noise_width">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">add_noise_width</code><span class="sig-paren">(</span><em>game</em>, <em>num_samples</em>, <em>max_width</em>, <em>noise=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#add_noise_width"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.add_noise_width" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create sample game where each profile has different noise level</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game to generate samples from. These samples are additive noise to
-standard payoff values.</li>
-<li><strong>num_samples</strong> (<em>int</em>) – The number of samples to generate for each profile.</li>
-<li><strong>max_width</strong> (<em>float</em>) – A parameter describing how much noise to generate. Larger max_width
-generates more noise.</li>
-<li><strong>noise</strong> (<em>(</em><em>float</em><em>, </em><em>int</em><em>, </em><em>int</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>optional</em><em>)</em>) – The noise generating function to use. The function must take three
-parameters: the max_width, the number of profiles, and the number of
-samples, and return an ndarray of the additive noise for each profile
-(shape: (num_profiles, num_samples)). The max_width should be used to
-generate sufficient statistics for each profile, and then each sample
-per profile should come from a distribution derived from those. For
-this to be accurate, this distribution should have expectation 0.
-Several default versions are specified in gamegen, and they’re all
-prefixed with <cite>width_</cite>. By default, this uses <cite>width_gaussian</cite>.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="gameanalysis.gamegen.add_profiles">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">add_profiles</code><span class="sig-paren">(</span><em>game</em>, <em>prob_or_count=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#add_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.add_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add profiles to a base game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>prob_or_count</strong> (<em>float</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – If a float, the probability to add a profile from the full game. If an
-int, the number of profiles to add.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
+<dt id="gameanalysis.gamegen.chicken">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">chicken</code><span class="sig-paren">(</span><em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#chicken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.chicken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a random prisoners dilemma game</p>
 </dd></dl>
 
 <dl class="function">
@@ -164,25 +93,100 @@ entries for each profile is drawn. (default: uniform [-1, 1])</li>
 <dd></dd></dl>
 
 <dl class="function">
-<dt id="gameanalysis.gamegen.drop_profiles">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">drop_profiles</code><span class="sig-paren">(</span><em>game</em>, <em>keep_prob_or_count=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#drop_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.drop_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop profiles from an existing game</p>
+<dt id="gameanalysis.gamegen.game">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">game</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random role symmetric game with sparse profiles</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>keep_prob_or_count</strong> (<em>float</em><em> or </em><em>int</em><em>, </em><em>optional</em>) – If a float, the probability to keep a profile from the full game. If an
-int, the number of profiles to keep.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
+<li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
+<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of any profile being included in the game.</li>
+<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="function">
-<dt id="gameanalysis.gamegen.game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">game</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob_or_count=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a random role symmetric game</p>
-<p>See <cite>add_profiles</cite>.</p>
+<dt id="gameanalysis.gamegen.gen_noise">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">gen_noise</code><span class="sig-paren">(</span><em>game</em>, <em>prob=0.5</em>, <em>min_samples=1</em>, <em>min_width=0</em>, <em>max_width=1</em>, <em>noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate noise for profiles of a game</p>
+<p>This generates samples for payoff data by first generating some measure of
+distribution spread for each payoff in the game. Then, for each sample,
+noise is drawn from this distribution. As a result, some payoffs will have
+significantly more noise than other payoffs, helping to mimic real games.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game to generate samples from. These samples are additive zero-mean
+noise to the payoff values.</li>
+<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of continuing to add another sample to a profile. If
+this is 0, min_samples will be generated for each profile. As this
+approaches one, more samples will be generated for each profile,
+sampled from the geometric distribution of 1 - prob.</li>
+<li><strong>min_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of samples to generate for each profile. By default
+this will generate at least one sample for every profile with data.
+Setting this to zero means that a profile will only have data with
+probability <cite>prob</cite>.</li>
+<li><strong>min_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum standard deviation of each payoffs samples.</li>
+<li><strong>max_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum standard deviation of each payoffs samples.</li>
+<li><strong>noise_distribution</strong> (<em>width distribution</em><em>, </em><em>optional</em>) – The noise generating function to use. This function must be a valid
+width noise distribution. A width distribution takes an array of widths
+and a number of samples, and draws that many samples for each width
+such that the standard deviation of the samples is equal to the width
+and the mean is zero.  Several default versions are specified in
+gamegen, and they’re all prefixed with <cite>width_</cite>. By default, this uses
+<cite>width_gaussian</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.gen_num_profiles">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">gen_num_profiles</code><span class="sig-paren">(</span><em>game</em>, <em>num</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_num_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_num_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate profiles given game structure</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to generate payoffs for.</li>
+<li><strong>count</strong> (<em>int</em>) – The number of profiles to generate.</li>
+<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.gen_profiles">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">gen_profiles</code><span class="sig-paren">(</span><em>game</em>, <em>prob=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate profiles given game structure</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to generate payoffs for.</li>
+<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability to add a profile from the full game.</li>
+<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -199,6 +203,42 @@ int, the number of profiles to keep.</td>
 player game.</li>
 <li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – The distribution to sample payoffs from. Must take a single shape
 argument and return an ndarray of iid values with that shape.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.keep_num_profiles">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">keep_num_profiles</code><span class="sig-paren">(</span><em>game</em>, <em>num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#keep_num_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.keep_num_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Keep random profiles from an existing game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to keep profiles from.</li>
+<li><strong>num</strong> (<em>int</em>) – The number of profiles to keep from the game.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.keep_profiles">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">keep_profiles</code><span class="sig-paren">(</span><em>game</em>, <em>keep_prob=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#keep_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.keep_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Keep random profiles from an existing game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The game to take profiles from.</li>
+<li><strong>keep_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of keeping a profile from the full game.</li>
 </ul>
 </td>
 </tr>
@@ -244,20 +284,16 @@ the specified random k-player matrix game.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="gameanalysis.gamegen.role_symmetric_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">role_symmetric_game</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#role_symmetric_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.role_symmetric_game" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a random role symmetric game</p>
+<dt id="gameanalysis.gamegen.sample_profiles">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sample_profiles</code><span class="sig-paren">(</span><em>game</em>, <em>num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sample_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sample_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate unique profiles from a game</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_roles</strong> (<em>int &gt; 0</em>) – The number of roles in the game.</li>
-<li><strong>num_role_players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em><em>, </em><em>len == num_roles</em>) – The number of players, same for each role if a scalar, or a list, one
-for each role.</li>
-<li><strong>num_role_strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em><em>, </em><em>len == num_roles</em>) – The number of strategies, same for each role if a scalar, or a list,
-one for each role.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Payoff distribution.</li>
+<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – Game to generate random profiles from.</li>
+<li><strong>num</strong> (<em>int</em>) – Number of profiles to sample from the game.</li>
 </ul>
 </td>
 </tr>
@@ -267,7 +303,7 @@ one for each role.</li>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.samplegame">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob=0.5</em>, <em>complete=True</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob=0.5</em>, <em>min_samples=1</em>, <em>min_width=0</em>, <em>max_width=1</em>, <em>payoff_distribution=&lt;function default_distribution&gt;</em>, <em>noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random role symmetric sample game</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -276,11 +312,35 @@ one for each role.</li>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
 <li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
-<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of adding another sample payoff.</li>
-<li><strong>complete</strong> (<em>boolean</em><em>, </em><em>optional</em>) – If true, game will be complete with one or more samples per profile. If
-false, a profile will be missing data with <cite>1 - prob</cite>.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em>) – The distribution of the initial payoffs and the noise that will be
-added to them.</li>
+<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of adding another sample above min_samples. These draws
+are repeated, so 0.5 will add one extra sample in expectation.</li>
+<li><strong>min_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of samples to generate for each profile. If 0, the
+game will potentially be sparse.</li>
+<li><strong>min_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum standard deviation for each payoffs samples.</li>
+<li><strong>max_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum standard deviation for each payoffs samples.</li>
+<li><strong>payoff_distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – The distribution to sample mean payoffs from.</li>
+<li><strong>noise_distribution</strong> (<em>width distribution</em><em>, </em><em>optional</em>) – The distribution used to add noise to each payoff. See <cite>gen_noise</cite> for
+a description of width distributions.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.sparse_game">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sparse_game</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>num</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sparse_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sparse_game" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random role symmetric game with sparse profiles</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
+<li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
+<li><strong>num</strong> (<em>int</em>) – The number of profiles to draw payoffs for.</li>
+<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
 </ul>
 </td>
 </tr>
@@ -290,7 +350,7 @@ added to them.</li>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.sym_2p2s_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sym_2p2s_game</code><span class="sig-paren">(</span><em>a=0</em>, <em>b=1</em>, <em>c=2</em>, <em>d=3</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sym_2p2s_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sym_2p2s_game" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sym_2p2s_game</code><span class="sig-paren">(</span><em>a</em>, <em>b</em>, <em>c</em>, <em>d</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sym_2p2s_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sym_2p2s_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a symmetric 2-player 2-strategy game of the specified form.</p>
 <p>Four payoff values get drawn from U(min_val, max_val), and then are
 assigned to profiles in order from smallest to largest according to the
@@ -316,8 +376,6 @@ order parameters as follows:</p>
 </tr>
 </tbody>
 </table>
-<p>So a=2,b=0,c=3,d=1 gives a prisoners’ dilemma; a=0,b=3,c=1,d=2 gives a game
-of chicken.</p>
 <p>distribution must accept a size parameter a la numpy distributions.</p>
 </dd></dl>
 
@@ -345,47 +403,31 @@ strategies.</p>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.width_bimodal">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_bimodal</code><span class="sig-paren">(</span><em>max_width</em>, <em>num_profiles</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_bimodal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_bimodal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bimodal width distribution</p>
-<p>This returns standard deviations from U[0, max_width] and half spreads from
-N[0, sqrt(max_width)].</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="gameanalysis.gamegen.width_bimodal_old">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_bimodal_old</code><span class="sig-paren">(</span><em>scale=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_bimodal_old"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_bimodal_old" title="Permalink to this definition">¶</a></dt>
-<dd><p>Old bimodal width distribution</p>
-<p>This returns a valid distribution, taking a scale parameter to correct for
-the scale invariance of guassian variance.</p>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_bimodal</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_bimodal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_bimodal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bimodal Gaussian width distribution</p>
+<p>Samples come from a uniform mixture between two symmetric Gaussians.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.width_gaussian">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_gaussian</code><span class="sig-paren">(</span><em>max_width</em>, <em>num_profiles</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gaussian" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_gaussian</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gaussian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gaussian width distribution</p>
-<p>This returns standard deviations from U[0, max_width].</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="gameanalysis.gamegen.width_gaussian_old">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_gaussian_old</code><span class="sig-paren">(</span><em>scale=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gaussian_old"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gaussian_old" title="Permalink to this definition">¶</a></dt>
-<dd><p>Old gaussian width distribution</p>
-<p>This returns a valid distribution, taking a scale parameter to correct for
-the scale invariance of guassian variance.</p>
+<p>Samples come from iid Gaussian distributions.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.width_gumbel">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_gumbel</code><span class="sig-paren">(</span><em>max_width</em>, <em>num_profiles</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gumbel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gumbel" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_gumbel</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gumbel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gumbel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gumbel width distribution</p>
-<p>Generates scales in U[0, max_width]</p>
+<p>Samples come from iid Gumbel distributions. Distributions are randomly
+inverted since Gumbels are skewed.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.width_uniform">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_uniform</code><span class="sig-paren">(</span><em>max_width</em>, <em>num_profiles</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_uniform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_uniform" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_uniform</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_uniform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_uniform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uniform width distribution</p>
-<p>Generates halfwidths in U[0, max_width]</p>
+<p>Samples come from iid uniform distributions.</p>
 </dd></dl>
 
 </div>
@@ -438,7 +480,7 @@ the scale invariance of guassian variance.</p>
         <li class="right" >
           <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

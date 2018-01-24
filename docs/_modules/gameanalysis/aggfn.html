@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.aggfn &#8212; Game Analysis 4.2.1 documentation</title>
+    <title>gameanalysis.aggfn &#8212; Game Analysis 5.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '4.2.1',
+        VERSION:     '5.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -88,8 +88,8 @@
 <span class="sd">        each nodes inputs as distinct, and so each function maps from the</span>
 <span class="sd">        number of inputs from each role.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span>
-                 <span class="n">function_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span>
+                 <span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
                  <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span> <span class="o">=</span> <span class="n">function_names</span>
@@ -118,30 +118,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_func_offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span> <span class="o">*</span>
                              <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
-
-    <span class="c1"># TODO Remove</span>
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">deprecated</span>
-    <span class="k">def</span> <span class="nf">_action_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span>
-
-    <span class="c1"># TODO Remove</span>
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">deprecated</span>
-    <span class="k">def</span> <span class="nf">_function_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span>
-
-    <span class="c1"># TODO Remove</span>
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">deprecated</span>
-    <span class="k">def</span> <span class="nf">_function_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span>
-
-    <span class="c1"># TODO Remove</span>
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">deprecated</span>
-    <span class="k">def</span> <span class="nf">_offsets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span>
 
 <div class="viewcode-block" id="AgfnGame.function_index"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.function_index">[docs]</a>    <span class="k">def</span> <span class="nf">function_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get the index of a function by name&quot;&quot;&quot;</span>
@@ -255,8 +231,6 @@
                             <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;iklm,jkl,ki-&gt;ij&#39;</span><span class="p">,</span> <span class="n">dev_values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span><span class="p">,</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span>
-        <span class="n">jac</span> <span class="o">-=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">jac</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span>
-                         <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">devs</span><span class="p">,</span> <span class="n">jac</span></div>
 
 <div class="viewcode-block" id="AgfnGame.normalize"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -268,28 +242,28 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">))</span> <span class="o">/</span> <span class="n">scale</span>
 
         <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="AgfnGame.subgame"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.subgame">[docs]</a>    <span class="k">def</span> <span class="nf">subgame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subgame_mask</span><span class="p">):</span>
-        <span class="n">subgame_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">subgame_mask</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
-        <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">subgame</span><span class="p">(</span><span class="n">subgame_mask</span><span class="p">)</span>
-        <span class="n">action_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">[:,</span> <span class="n">subgame_mask</span><span class="p">]</span>
+<div class="viewcode-block" id="AgfnGame.restrict"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.restrict">[docs]</a>    <span class="k">def</span> <span class="nf">restrict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
+        <span class="n">rest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span>
+        <span class="n">action_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">[:,</span> <span class="n">rest</span><span class="p">]</span>
         <span class="n">func_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">func_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
             <span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span> <span class="n">func_mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
-            <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-            <span class="n">func_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">func_mask</span><span class="p">][</span><span class="n">subgame_mask</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="n">subgame_mask</span><span class="p">])</span></div>
+            <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">func_names</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">func_mask</span><span class="p">][</span><span class="n">rest</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="n">rest</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="AgfnGame.to_json"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
 
         <span class="n">res</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">func</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">subgame_to_json</span><span class="p">(</span><span class="n">finp</span><span class="p">)</span> <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">finp</span>
+            <span class="n">func</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">restriction_to_json</span><span class="p">(</span><span class="n">finp</span><span class="p">)</span> <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">finp</span>
             <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">)}</span>
 
         <span class="n">res</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -482,9 +456,9 @@
         <span class="s2">&quot;function_names must be sorted&quot;</span>
 
     <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
-        <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
+        <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="aggfn_funcs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_funcs">[docs]</a><span class="k">def</span> <span class="nf">aggfn_funcs</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
@@ -542,8 +516,8 @@
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">inps</span> <span class="ow">in</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">base</span><span class="o">.</span><span class="n">subgame_from_json</span><span class="p">(</span><span class="n">inps</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">]],</span>
-                               <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">base</span><span class="o">.</span><span class="n">restriction_from_json</span><span class="p">(</span><span class="n">inps</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">]],</span>
+                                   <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;offsets&#39;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">offsets</span><span class="p">)</span>
 
@@ -631,7 +605,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

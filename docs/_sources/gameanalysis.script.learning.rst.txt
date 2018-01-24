@@ -1,7 +1,0 @@
-gameanalysis\.script\.learning module
-=====================================
-
-.. automodule:: gameanalysis.script.learning
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -1,7 +1,0 @@
-gameanalysis\.script\.analyze module
-====================================
-
-.. automodule:: gameanalysis.script.analyze
-    :members:
-    :undoc-members:
-    :show-inheritance:

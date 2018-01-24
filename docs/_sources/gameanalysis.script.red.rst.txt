@@ -1,7 +1,0 @@
-gameanalysis\.script\.red module
-================================
-
-.. automodule:: gameanalysis.script.red
-    :members:
-    :undoc-members:
-    :show-inheritance:

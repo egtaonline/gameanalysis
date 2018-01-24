@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.paygame module &#8212; Game Analysis 4.2.1 documentation</title>
+    <title>gameanalysis.paygame module &#8212; Game Analysis 5.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.2.1',
+        VERSION:     '5.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -116,21 +116,6 @@ that is present.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.paygame.Game.from_payoff_json">
-<code class="descname">from_payoff_json</code><span class="sig-paren">(</span><em>pays</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.from_payoff_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.from_payoff_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.paygame.Game.from_prof_json">
-<code class="descname">from_prof_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.from_prof_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.from_prof_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.paygame.Game.from_profpay_json">
-<code class="descname">from_profpay_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest_prof=None</em>, <em>dest_pays=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.from_profpay_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.from_profpay_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.paygame.Game.get_payoffs">
 <code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.get_payoffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an array of profile payoffs</p>
@@ -155,6 +140,16 @@ has support.</p>
 <code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.normalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a normalized game</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.paygame.Game.num_complete_profiles">
+<code class="descname">num_complete_profiles</code><a class="headerlink" href="#gameanalysis.paygame.Game.num_complete_profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.paygame.Game.num_profiles">
+<code class="descname">num_profiles</code><a class="headerlink" href="#gameanalysis.paygame.Game.num_profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.payoff_from_json">
@@ -228,8 +223,8 @@ new array.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.paygame.Game.subgame">
-<code class="descname">subgame</code><span class="sig-paren">(</span><em>subgame_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.subgame" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.paygame.Game.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.restrict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove possible strategies from consideration</p>
 </dd></dl>
 
@@ -238,11 +233,6 @@ new array.</li>
 <code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.to_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fromat a Game as json</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.paygame.Game.to_profpay_json">
-<code class="descname">to_profpay_json</code><span class="sig-paren">(</span><em>payoffs</em>, <em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.to_profpay_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.to_profpay_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
@@ -288,16 +278,6 @@ apply.</li>
 <code class="descname">flat_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.flat_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.flat_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Profiles in parallel with flat_payoffs</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.paygame.SampleGame.from_profsamplepay_json">
-<code class="descname">from_profsamplepay_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest_prof=None</em>, <em>dest_samplepay=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.from_profsamplepay_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.from_profsamplepay_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.paygame.SampleGame.from_samplepay_json">
-<code class="descname">from_samplepay_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.from_samplepay_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.from_samplepay_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="method">
 <dt id="gameanalysis.paygame.SampleGame.get_sample_payoffs">
@@ -369,6 +349,12 @@ between payoffs.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="gameanalysis.paygame.SampleGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.restrict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove possible strategies from consideration</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="gameanalysis.paygame.SampleGame.sample_payoffs">
 <code class="descname">sample_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.sample_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.sample_payoffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the underlying sample payoffs</p>
@@ -402,26 +388,10 @@ observations are in the json.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.paygame.SampleGame.subgame">
-<code class="descname">subgame</code><span class="sig-paren">(</span><em>subgame_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.subgame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove possible strategies from consideration</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.paygame.SampleGame.to_json">
 <code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.to_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fromat a SampleGame as json</p>
 </dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.paygame.SampleGame.to_profsamplepay_json">
-<code class="descname">to_profsamplepay_json</code><span class="sig-paren">(</span><em>samplepay</em>, <em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.to_profsamplepay_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.to_profsamplepay_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.paygame.SampleGame.to_samplepay_json">
-<code class="descname">to_samplepay_json</code><span class="sig-paren">(</span><em>samplepay</em>, <em>prof=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame.to_samplepay_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame.to_samplepay_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
@@ -436,8 +406,8 @@ observations are in the json.</li>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>,</em>) – The number of players per role.</li>
 <li><strong>num_role_strats</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>,</em>) – The number of strategies per role.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game.</li>
-<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The payoffs for the game.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, with shape (num_profiles, num_strats).</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em>) – The payoffs for the game, with shape (num_profiles, num_strats).</li>
 </ul>
 </td>
 </tr>
@@ -485,8 +455,8 @@ structure, but it is possible to write the json.</p>
 <li><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name for each role.</li>
 <li><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>,</em>) – The number of players per role.</li>
 <li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name for each strategy per role.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game.</li>
-<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The payoffs for the game.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, with shape (num_profiles, num_strats).</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em>) – The payoffs for the game, with shape (num_profiles, num_strats).</li>
 </ul>
 </td>
 </tr>
@@ -505,8 +475,8 @@ structure, but it is possible to write the json.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>copy_game</strong> (<a class="reference internal" href="#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – Game to copy structure out of. Structure includes role names, strategy
 names, and the number of players.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game.</li>
-<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The payoffs for the game.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, with shape (num_profiles, num_strats).</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em>) – The payoffs for the game, with shape (num_profiles, num_strats).</li>
 </ul>
 </td>
 </tr>
@@ -525,7 +495,7 @@ names, and the number of players.</li>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of players per role.</li>
 <li><strong>num_role_strats</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of strategies per role.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, with shape (num_profiles, num_strats).</li>
 <li><strong>sample_payoffs</strong> (<em>[</em><em>ndarray-like</em><em>, </em><em>float</em><em>]</em>) – The sample payoffs for the game.</li>
 </ul>
 </td>
@@ -561,9 +531,10 @@ it will create a game with one sample per payoff.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of players per role.</li>
 <li><strong>num_role_strats</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of strategies per role.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game, potentially with duplicates.</li>
-<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The sample payoffs for the game, in parallel with the profiles they’re
-samples from.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, potentially with duplicates, with shape
+(num_sample_profiles, num_strats).</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em>) – The sample payoffs for the game, in parallel with the profiles they’re
+samples from, with shape (num_sample_profiles, num_strats).</li>
 </ul>
 </td>
 </tr>
@@ -612,9 +583,10 @@ produce an empty sample game.</p>
 <li><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name of each role.</li>
 <li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players for each role.</li>
 <li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game, potentially with duplicates.</li>
-<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The sample payoffs for the game, in parallel with the profiles they’re
-samples from.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, potentially with duplicates,
+(num_sample_profiles, num_strats).</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em>) – The sample payoffs for the game, in parallel with the profiles they’re
+samples from, (num_sample_profiles, num_strats).</li>
 </ul>
 </td>
 </tr>
@@ -632,7 +604,7 @@ samples from.</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>copy_game</strong> (<em>BaseGame</em><em>, </em><em>optional</em>) – Game to copy information out of.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.num_profiles" title="gameanalysis.rsgame.RsGame.num_profiles"><em>num_profiles</em></a><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, with shape (num_profiles, num_strats).</li>
 <li><strong>sample_payoffs</strong> (<em>[</em><em>ndarray-like</em><em>, </em><em>float</em><em>]</em>) – The sample payoffs for the game.</li>
 </ul>
 </td>
@@ -651,9 +623,10 @@ samples from.</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>copy_game</strong> (<em>BaseGame</em><em>, </em><em>optional</em>) – Game to copy information out of.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The profiles for the game, potentially with duplicates.</li>
-<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em><em>, </em><em>(</em><em>num_sample_profiles</em><em>, </em><em>num_strats</em><em>)</em>) – The sample payoffs for the game, in parallel with the profiles they’re
-samples from.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The profiles for the game, potentially with duplicates, with shape
+(num_sample_profiles, num_strats).</li>
+<li><strong>payoffs</strong> (<em>ndarray-like</em><em>, </em><em>float</em>) – The sample payoffs for the game, in parallel with the profiles they’re
+samples from, with shape (num_sample_profiles, num_strats).</li>
 </ul>
 </td>
 </tr>
@@ -711,7 +684,7 @@ samples from.</li>
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

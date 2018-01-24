@@ -21,9 +21,9 @@ Submodules
    gameanalysis.paygame
    gameanalysis.reduction
    gameanalysis.regret
+   gameanalysis.restrict
    gameanalysis.rsgame
    gameanalysis.scriptutils
-   gameanalysis.subgame
    gameanalysis.utils
 
 Module contents

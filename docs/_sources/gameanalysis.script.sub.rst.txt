@@ -1,7 +1,0 @@
-gameanalysis\.script\.sub module
-================================
-
-.. automodule:: gameanalysis.script.sub
-    :members:
-    :undoc-members:
-    :show-inheritance:

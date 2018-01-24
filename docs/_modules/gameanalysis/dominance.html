@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.dominance &#8212; Game Analysis 4.2.1 documentation</title>
+    <title>gameanalysis.dominance &#8212; Game Analysis 5.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '4.2.1',
+        VERSION:     '5.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -169,13 +169,13 @@
 
 
 <div class="viewcode-block" id="iterated_elimination"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.iterated_elimination">[docs]</a><span class="k">def</span> <span class="nf">iterated_elimination</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return a subgame mask resulting from iterated elimination of strategies</span>
+    <span class="sd">&quot;&quot;&quot;Return a restriction resulting from iterated elimination of strategies</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    game : Game</span>
 <span class="sd">        The game to run iterated elimination on</span>
-<span class="sd">    criterion : str, {&#39;weakdom&#39;, &#39;strictdom&#39;, &#39;neverbr&#39;}</span>
+<span class="sd">    criterion : {&#39;weakdom&#39;, &#39;strictdom&#39;, &#39;neverbr&#39;}</span>
 <span class="sd">        The criterion to use to eliminated strategies.</span>
 <span class="sd">    conditional : bool</span>
 <span class="sd">        Whether to use conditional criteria. In general, conditional set to</span>
@@ -190,11 +190,11 @@
     <span class="n">gains</span> <span class="o">=</span> <span class="n">_gains</span><span class="p">(</span><span class="n">game</span><span class="p">)</span>
     <span class="n">supports</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
 
-    <span class="n">subgame_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+    <span class="n">rest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">cfunc</span><span class="p">(</span><span class="n">gains</span><span class="p">,</span> <span class="n">supports</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">)</span>
     <span class="k">while</span> <span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
             <span class="n">mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">num_strats</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)):</span>
-        <span class="n">subgame_mask</span><span class="p">[</span><span class="n">subgame_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+        <span class="n">rest</span><span class="p">[</span><span class="n">rest</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
         <span class="n">prof_mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">supports</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">mask</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">dev_inds</span> <span class="o">=</span> <span class="n">_dev_inds</span><span class="p">(</span><span class="n">num_strats</span><span class="p">)</span>
         <span class="n">strat_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_strats</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
@@ -208,8 +208,8 @@
             <span class="n">mask</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">num_strats</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">cfunc</span><span class="p">(</span><span class="n">gains</span><span class="p">,</span> <span class="n">supports</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">)</span>
 
-    <span class="n">subgame_mask</span><span class="p">[</span><span class="n">subgame_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
-    <span class="k">return</span> <span class="n">subgame_mask</span></div>
+    <span class="n">rest</span><span class="p">[</span><span class="n">rest</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+    <span class="k">return</span> <span class="n">rest</span></div>
 </pre></div>
 
           </div>
@@ -240,7 +240,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

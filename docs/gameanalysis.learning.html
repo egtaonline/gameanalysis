@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.learning module &#8212; Game Analysis 4.2.1 documentation</title>
+    <title>gameanalysis.learning module &#8212; Game Analysis 5.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.2.1',
+        VERSION:     '5.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -63,12 +63,17 @@ computing payoffs and may other features. Deviation games use learned games and
 different functions to compute deviation payoffs via various methods.</p>
 <dl class="class">
 <dt id="gameanalysis.learning.DevRegressionGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.learning.</code><code class="descname">DevRegressionGame</code><span class="sig-paren">(</span><em>game</em>, <em>regressors</em>, <em>offset</em>, <em>scale</em>, <em>min_payoffs</em>, <em>max_payoffs</em>, <em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">gameanalysis.learning.</code><code class="descname">DevRegressionGame</code><span class="sig-paren">(</span><em>game</em>, <em>regressors</em>, <em>offset</em>, <em>scale</em>, <em>min_payoffs</em>, <em>max_payoffs</em>, <em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.CompleteGame" title="gameanalysis.rsgame.CompleteGame"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.rsgame.CompleteGame</span></code></a></p>
 <p>A game regression model that learns deviation payoffs</p>
 <p>This model functions as a game, but doesn’t have a default way of computing
 deviation payoffs. It must be wrapped with another game that uses payoff
 data to compute deviation payoffs.</p>
+<dl class="method">
+<dt id="gameanalysis.learning.DevRegressionGame.deviation_payoffs">
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="gameanalysis.learning.DevRegressionGame.get_dev_payoffs">
 <code class="descname">get_dev_payoffs</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.get_dev_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.get_dev_payoffs" title="Permalink to this definition">¶</a></dt>
@@ -98,8 +103,8 @@ need to compute the payoff for non deviators.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.subgame">
-<code class="descname">subgame</code><span class="sig-paren">(</span><em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.learning.DevRegressionGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -139,8 +144,8 @@ an existing deviation game, then this will use it’s underlying model.</li>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.learning.NeighborDeviationGame.subgame">
-<code class="descname">subgame</code><span class="sig-paren">(</span><em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#NeighborDeviationGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.NeighborDeviationGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.learning.NeighborDeviationGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#NeighborDeviationGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.NeighborDeviationGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -181,8 +186,8 @@ model must also support a jacobian for get_dev_payoffs.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.learning.PointDeviationGame.subgame">
-<code class="descname">subgame</code><span class="sig-paren">(</span><em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#PointDeviationGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.PointDeviationGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.learning.PointDeviationGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#PointDeviationGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.PointDeviationGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -230,8 +235,8 @@ continuous approximation of the multinomial distribution.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.subgame">
-<code class="descname">subgame</code><span class="sig-paren">(</span><em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.learning.RbfGpGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -277,8 +282,8 @@ m’, but then importance sample to get the actual result.</p>
 <dd></dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.learning.SampleDeviationGame.subgame">
-<code class="descname">subgame</code><span class="sig-paren">(</span><em>sub_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#SampleDeviationGame.subgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.SampleDeviationGame.subgame" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.learning.SampleDeviationGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#SampleDeviationGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.SampleDeviationGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -465,7 +470,7 @@ scikit-learn estimator API.</li>
         <li class="right" >
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

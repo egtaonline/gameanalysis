@@ -1,7 +1,0 @@
-gameanalysis\.script\.pay module
-================================
-
-.. automodule:: gameanalysis.script.pay
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -5,13 +5,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.reduction module &#8212; Game Analysis 4.2.1 documentation</title>
+    <title>gameanalysis.reduction module &#8212; Game Analysis 5.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '4.2.1',
+        VERSION:     '5.0.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -42,7 +42,7 @@
         <li class="right" >
           <a href="gameanalysis.paygame.html" title="gameanalysis.paygame module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -61,16 +61,16 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="staticmethod">
 <dt id="gameanalysis.reduction.deviation_preserving.expand_deviation_profiles">
-<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>subgame_mask</em>, <em>red_players</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#deviation_preserving.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.deviation_preserving.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Expand all deviation profiles from a subgame</p>
+<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>rest</em>, <em>red_players</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#deviation_preserving.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.deviation_preserving.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand all deviation profiles from a restriction</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>full_game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game the deviations profiles will be valid for.</li>
-<li><strong>subgame_mask</strong> (<em>ndarray-like</em><em>, </em><em>bool</em>) – The subgame to get deviations from.</li>
-<li><strong>red_players</strong> (<em>ndarray-like</em>) – The number of players in each role in the reduced game.</li>
+<li><strong>rest</strong> (<em>[</em><em>bool</em><em>]</em>) – The restriction to get deviations from.</li>
+<li><strong>red_players</strong> (<em>[</em><em>int</em><em>]</em>) – The number of players in each role in the reduced game.</li>
 <li><strong>role_index</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified , only expand deviations for the role selected.</li>
 </ul>
 </td>
@@ -147,15 +147,15 @@ from.</li>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="staticmethod">
 <dt id="gameanalysis.reduction.hierarchical.expand_deviation_profiles">
-<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>subgame_mask</em>, <em>red_players</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#hierarchical.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.hierarchical.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Expand all deviation profiles from a subgame</p>
+<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>rest</em>, <em>red_players</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#hierarchical.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.hierarchical.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand all deviation profiles from a restricted game</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>full_game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game the deviations profiles will be valid for.</li>
-<li><strong>subgame_mask</strong> (<em>ndarray-like</em><em>, </em><em>bool</em>) – The subgame to get deviations from.</li>
+<li><strong>rest</strong> (<em>[</em><em>bool</em><em>]</em>) – The restriction to get deviations from.</li>
 <li><strong>red_players</strong> (<em>ndarray-like</em>) – The number of players in each role in the reduced game.</li>
 <li><strong>role_index</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified , only expand deviations for the role selected.</li>
 </ul>
@@ -228,16 +228,16 @@ into the proper shape if necessary.</li>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="staticmethod">
 <dt id="gameanalysis.reduction.identity.expand_deviation_profiles">
-<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>subgame_mask</em>, <em>red_players=None</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#identity.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.identity.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Expand all deviation profiles from a subgame</p>
+<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>rest</em>, <em>red_players=None</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#identity.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.identity.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand all deviation profiles from a restriction</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>full_game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game the deviations profiles will be valid for.</li>
-<li><strong>subgame_mask</strong> (<em>ndarray-like</em><em>, </em><em>bool</em>) – The subgame to get deviations from.</li>
-<li><strong>red_players</strong> (<em>ndarray-like</em><em>, </em><em>optional</em>) – The number of players in each role in the reduced game.IF
+<li><strong>rest</strong> (<em>[</em><em>bool</em><em>]</em>) – The restriction to get deviations from.</li>
+<li><strong>red_players</strong> (<em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The number of players in each role in the reduced game.IF
 specified, it must match the number for full_game.</li>
 <li><strong>role_index</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified , only expand deviations for the role selected.</li>
 </ul>
@@ -312,16 +312,16 @@ full_game.</li>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <dl class="staticmethod">
 <dt id="gameanalysis.reduction.twins.expand_deviation_profiles">
-<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>subgame_mask</em>, <em>red_players=None</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#twins.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Expand all deviation profiles from a subgame</p>
+<em class="property">static </em><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>rest</em>, <em>red_players=None</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction.html#twins.expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand all deviation profiles from a restriction</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>full_game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a>) – The game the deviations profiles will be valid for.</li>
-<li><strong>subgame_mask</strong> (<em>ndarray-like</em><em>, </em><em>bool</em>) – The subgame to get deviations from.</li>
-<li><strong>red_players</strong> (<em>ndarray-like</em><em>, </em><em>optional</em>) – The number of players in each role in the reduced game.IF
+<li><strong>rest</strong> (<em>[</em><em>bool</em><em>]</em>) – The restriction to get deviations from.</li>
+<li><strong>red_players</strong> (<em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The number of players in each role in the reduced game.IF
 specified, it must match the expected number for twins reduction.</li>
 <li><strong>role_index</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified , only expand deviations for the role selected.</li>
 </ul>
@@ -439,7 +439,7 @@ have the valid twins reduction number of players.</li>
         <li class="right" >
           <a href="gameanalysis.paygame.html" title="gameanalysis.paygame module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 4.2.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
