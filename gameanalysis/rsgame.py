@@ -265,7 +265,7 @@ class StratArray(abc.ABC):
 
     def trim_mixture_support(self, mixture, *, thresh=1e-3, axis=-1):
         """Trims strategies played less than supp_thresh from the support"""
-        mixture = np.asarray(mixture, float)
+        mixture = np.array(mixture, float)
         assert mixture.shape[axis] == self.num_strats
         mixture *= mixture >= thresh
         mixture /= np.add.reduceat(
