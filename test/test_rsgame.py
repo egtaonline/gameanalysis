@@ -848,7 +848,7 @@ def test_to_from_role_repr():
 def test_trim_precision():
     sarr = stratarray([3, 2])
     trimmed = sarr.trim_mixture_precision(
-        [1/3, 1/3, 1/3, 0.62, 0.38], resolution=0.1)
+        [1 / 3, 1 / 3, 1 / 3, 0.62, 0.38], resolution=0.1)
     # Ties resolve as first strategies
     assert np.allclose(trimmed, [0.4, 0.3, 0.3, 0.6, 0.4])
 
@@ -1376,10 +1376,10 @@ def test_random_random_profiles(role_players, role_strats):
 def test_round_mixture_to_profile():
     game = rsgame.emptygame(3, 3)
 
-    prof = game.round_mixture_to_profile([1/3, 1/3, 1/3])
+    prof = game.round_mixture_to_profile([1 / 3, 1 / 3, 1 / 3])
     assert np.all(prof == 1)
 
-    prof = game.round_mixture_to_profile([2/3, 0, 1/3])
+    prof = game.round_mixture_to_profile([2 / 3, 0, 1 / 3])
     assert np.all(prof == [2, 0, 1])
 
     prof = game.round_mixture_to_profile([.1, .2, .7])

@@ -12,6 +12,7 @@ Welcome to Game Analysis's documentation!
    gameanalysis
    profile_counts
    cont_approx
+   endogenous_mix_eqa
 
 
 Indices and tables

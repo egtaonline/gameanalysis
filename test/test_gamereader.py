@@ -11,6 +11,7 @@ from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import learning
 from gameanalysis import matgame
+from gameanalysis import merge
 from gameanalysis import rsgame
 from test import utils
 
@@ -29,6 +30,7 @@ def sgame():
     return gamegen.gen_noise(game())
 
 
+@functools.lru_cache()
 def agg():
     return agggen.normal_aggfn([3, 4], [4, 3], 10)
 
@@ -54,9 +56,14 @@ def neighbor():
     return learning.neighbor(rbf())
 
 
+def merg():
+    return merge.merge(game(), agg(), 0.5)
+
+
 @utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('game', [
-    egame, game, sgame, agg, mat, rbf, point, sample, neighbor, 'gambit'])
+    egame, game, sgame, agg, mat, rbf, point, sample, neighbor, merg,
+    'gambit'])
 def test_automatic_deserialization(game):
     """Test that we can serialize and deserialize arbitrary games"""
     if game == 'gambit':

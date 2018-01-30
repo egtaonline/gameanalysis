@@ -41,6 +41,7 @@ class AgfnGame(rsgame.CompleteGame):
         each nodes inputs as distinct, and so each function maps from the
         number of inputs from each role.
     """
+
     def __init__(self, role_names, strat_names, function_names,
                  num_role_players, action_weights, function_inputs,
                  function_table, offsets):
@@ -228,8 +229,8 @@ class AgfnGame(rsgame.CompleteGame):
             name: [dict(zip(self.role_names, (c.item() for c in counts)),
                         value=val)
                    for val, *counts in zip(
-                           tab.ravel(), *np.indices(tab.shape).reshape(
-                               self.num_roles, -1))
+                tab.ravel(), *np.indices(tab.shape).reshape(
+                    self.num_roles, -1))
                    if val != 0]
             for name, tab in zip(self.function_names, self.function_table)}
 

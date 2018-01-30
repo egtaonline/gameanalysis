@@ -5,6 +5,7 @@ from gameanalysis import aggfn
 from gameanalysis import gambit
 from gameanalysis import learning
 from gameanalysis import matgame
+from gameanalysis import merge
 from gameanalysis import paygame
 from gameanalysis import rsgame
 
@@ -51,15 +52,16 @@ def loadj(obj):
         game will be read and returned.
     """
     readers = {
+        'aggfn': aggfn.aggfn_json,
         'emptygame': rsgame.emptygame_json,
         'game': paygame.game_json,
-        'samplegame': paygame.samplegame_json,
-        'aggfn': aggfn.aggfn_json,
         'matrix': matgame.matgame_json,
+        'merge': merge.merge_json,
+        'neighbor': learning.neighbor_json,
+        'point': learning.point_json,
         'rbf': learning.rbfgame_json,
         'sample': learning.sample_json,
-        'point': learning.point_json,
-        'neighbor': learning.neighbor_json,
+        'samplegame': paygame.samplegame_json,
     }
     game_type = obj.get('type', 'samplegame.').split('.', 1)[0]
     return readers[game_type](obj)
