@@ -10,6 +10,7 @@ from gameanalysis import nash
 from gameanalysis import paygame
 from gameanalysis import regret
 from gameanalysis import rsgame
+from test import utils
 
 
 # This tests the edge case for non-differentiability of the equilibrium is
@@ -37,11 +38,7 @@ def test_trace_equilibria():
     assert np.allclose(mixes, [0, 1])
 
 
-# FIXME Migrate import games to utils.games, remove big games from tests
-
-@pytest.mark.parametrize('players,strats', [
-    (2, 2), ([2, 3], [3, 2]), ([1, 2], [2, 1]), ([2, 1], [1, 2]),
-    ([1, 1, 1], 2)])
+@pytest.mark.parametrize('players,strats', utils.games)
 def test_random_trace_equilibria(players, strats):
     game1 = agggen.normal_aggfn(players, strats, 6).normalize()
     game2 = agggen.normal_aggfn(players, strats, 6).normalize()
@@ -89,8 +86,7 @@ def test_merge():
     assert np.allclose(pay, [0, np.nan], equal_nan=True)
 
 
-@pytest.mark.parametrize('players,strats', [
-    (2, 2), ([2, 3], [3, 2]), ([1, 2, 3], [3, 2, 1])])
+@pytest.mark.parametrize('players,strats', utils.games)
 @pytest.mark.parametrize('t', [0.0, 0.2, 0.5, 0.8, 1.0])
 def test_random_merge(players, strats, t):
     game1 = gamegen.game(players, strats, .5)
@@ -149,8 +145,7 @@ def test_random_merge(players, strats, t):
     assert rev == mgame
 
 
-@pytest.mark.parametrize('players,strats', [
-    (2, 2), ([2, 3], [3, 2]), ([1, 2, 3], [3, 2, 1])])
+@pytest.mark.parametrize('players,strats', utils.games)
 @pytest.mark.parametrize('t', [0.0, 0.2, 0.5, 0.8, 1.0])
 def test_random_merge_complete(players, strats, t):
     game1 = agggen.normal_aggfn(players, strats, 3)
