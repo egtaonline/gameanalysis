@@ -584,8 +584,7 @@ class StratArray(abc.ABC):
 
     def mixture_to_json(self, mix, *, supp_thresh=1e-3):
         """Convert a mixture array to json"""
-        return self._to_arr_json(
-            self.trim_mixture_support(mix, thresh=supp_thresh))
+        return self._to_arr_json(mix)
 
     def _from_arr_repr(self, arr_str, dtype, parse, dest=None):
         """Read an array from a string"""

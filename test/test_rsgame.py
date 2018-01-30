@@ -722,8 +722,7 @@ def test_random_mixture_serialization(role_players, role_strats):
     for mix, copy in zip(mixes, copies):
         jmix = json.dumps(game.mixture_to_json(mix))
         game.mixture_from_json(json.loads(jmix), copy)
-    # 1e-4 is the tolerance for serialization
-    assert np.allclose(copies, mixes, atol=1e-4)
+    assert np.allclose(copies, mixes)
 
 
 def test_to_from_mix_repr():
