@@ -40,13 +40,13 @@ def test_trace_equilibria():
 
 @pytest.mark.parametrize('players,strats', utils.games)
 def test_random_trace_equilibria(players, strats):
-    game1 = agggen.normal_aggfn(players, strats, 6).normalize()
-    game2 = agggen.normal_aggfn(players, strats, 6).normalize()
+    game1 = agggen.normal_aggfn(players, strats, 6)
+    game2 = agggen.normal_aggfn(players, strats, 6)
 
     eqa = game1.trim_mixture_support(nash.mixed_nash(game1), thresh=1e-5)
     for eqm in eqa:
         # leeway for support trimming
-        thresh = regret.mixture_regret(game1, eqm) + 0.2
+        thresh = regret.mixture_regret(game1, eqm) + 0.5
         ts, mixes = merge.trace_equilibria(game1, game2, 0, eqm)
         for t, mix in zip(ts, mixes):
             reg = regret.mixture_regret(merge.merge(game1, game2, t), mix)
@@ -55,7 +55,7 @@ def test_random_trace_equilibria(players, strats):
     eqa = game2.trim_mixture_support(nash.mixed_nash(game2), thresh=1e-5)
     for eqm in eqa:
         # leeway for support trimming
-        thresh = regret.mixture_regret(game2, eqm) + 0.2
+        thresh = regret.mixture_regret(game2, eqm) + 0.5
         ts, mixes = merge.trace_equilibria(game1, game2, 1, eqm)
         for t, mix in zip(ts, mixes):
             reg = regret.mixture_regret(merge.merge(game1, game2, t), mix)
