@@ -17,6 +17,7 @@ Submodules
    gameanalysis.gamereader
    gameanalysis.learning
    gameanalysis.matgame
+   gameanalysis.merge
    gameanalysis.nash
    gameanalysis.paygame
    gameanalysis.reduction
