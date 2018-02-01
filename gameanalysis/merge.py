@@ -1,4 +1,5 @@
 import functools
+import threading
 
 import numpy as np
 from scipy import integrate
@@ -6,6 +7,9 @@ from scipy import integrate
 from gameanalysis import gamereader
 from gameanalysis import rsgame
 from gameanalysis import utils
+
+
+_trace_lock = threading.Lock()
 
 
 def trace_equilibria(game1, game2, t, eqm, *, regret_thresh=1e-4,
@@ -105,10 +109,11 @@ def trace_equilibria(game1, game2, t, eqm, *, regret_thresh=1e-4,
     for i in range(egame.num_strats):
         events.append(create_support_loss(i))
 
-    with np.errstate(divide='ignore'):
-        # Known warning for when gradient equals zero
-        res_backward = integrate.solve_ivp(ode, [t, 0], eqm, events=events)
-        res_forward = integrate.solve_ivp(ode, [t, 1], eqm, events=events)
+    with _trace_lock:
+        with np.errstate(divide='ignore'):
+            # Known warning for when gradient equals zero
+            res_backward = integrate.solve_ivp(ode, [t, 0], eqm, events=events)
+            res_forward = integrate.solve_ivp(ode, [t, 1], eqm, events=events)
 
     ts = np.concatenate([res_backward.t[::-1], res_forward.t[1:]])
     mixes = np.concatenate([res_backward.y.T[::-1], res_forward.y.T[1:]])

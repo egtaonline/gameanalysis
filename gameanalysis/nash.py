@@ -1,6 +1,8 @@
 """Module for computing nash equilibria"""
 import itertools
 import multiprocessing
+import threading
+import warnings
 
 import numpy as np
 from numpy import linalg
@@ -9,9 +11,6 @@ from scipy import optimize
 from gameanalysis import collect
 from gameanalysis import fixedpoint
 from gameanalysis import regret
-
-
-_TINY = np.finfo(float).tiny
 
 
 def pure_nash(game, *, epsilon=0):
@@ -116,6 +115,9 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
     return game.mixture_project(mix)
 
 
+_reg_min_lock = threading.Lock()
+
+
 def regret_minimize(game, mix, *, gtol=1e-8):
     """A pickleable object to find Nash equilibria
 
@@ -181,16 +183,24 @@ def regret_minimize(game, mix, *, gtol=1e-8):
 
     result = None
     penalty = 1
-    for _ in range(10):
-        # First get an unconstrained result from the optimization
-        mix = optimize.minimize(grad, mix, method='CG', jac=True,
-                                options={'gtol': gtol}).x
-        # Project it onto the simplex, it might not be due to the penalty
-        result = game.mixture_project(mix)
-        if np.allclose(mix, result):
-            break
-        # Increase constraint penalty
-        penalty *= 2
+    with _reg_min_lock:
+        for _ in range(10):
+            # First get an unconstrained result from the optimization
+            with warnings.catch_warnings():
+                # XXX For some reason, line-search in optimize throws a
+                # run-time warning when things get very small negative.  This
+                # is potentially a error with the way we compute gradients, but
+                # it's not reproducible, so we ignore it.
+                warnings.simplefilter(
+                    'ignore', optimize.linesearch.LineSearchWarning)
+                mix = optimize.minimize(
+                    grad, mix, method='CG', jac=True, options={'gtol': gtol}).x
+            # Project it onto the simplex, it might not be due to the penalty
+            result = game.mixture_project(mix)
+            if np.allclose(mix, result):
+                break
+            # Increase constraint penalty
+            penalty *= 2
 
     return result
 
