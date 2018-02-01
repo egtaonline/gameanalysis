@@ -147,7 +147,7 @@ class BitSet(object):
             self._mask = 2 ** np.arange(bitmask.size)
         if bitmask not in self:
             num = bitmask.dot(self._mask)
-            self._masks[:] = [m for m in self._masks if not m & ~num]
+            self._masks[:] = [m for m in self._masks if m & ~num]
             self._masks.append(num)
             return True
         else:
@@ -157,6 +157,8 @@ class BitSet(object):
         self._masks.clear()
 
     def __contains__(self, bitmask):
+        if not self._masks:
+            return False
         assert bitmask.size == self._mask.size, \
             "can't add bitmasks of different sizes"
         num = bitmask.dot(self._mask)

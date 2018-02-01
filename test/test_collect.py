@@ -57,6 +57,16 @@ def test_bit_set():
     assert bitset.add(np.array([0, 1, 1, 0, 1], bool))
 
 
+def test_bitset_failure():
+    bitset = collect.BitSet()
+    a = np.array([0, 1, 1, 1, 0], bool)
+    b = np.array([1, 0, 0, 1, 1], bool)
+    assert bitset.add(a)
+    assert bitset.add(b)
+    assert not bitset.add(a)
+    assert not bitset.add(b)
+
+
 def test_mixture_set():
     mixset = collect.MixtureSet(0.1)
     assert not mixset
