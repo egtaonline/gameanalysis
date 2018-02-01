@@ -278,7 +278,7 @@ class _PickleableEqaFinding(object):
         return self.func(self.game, mix, **self.args)
 
 
-def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=1e-3, grid_points=2,
+def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=0.1, grid_points=2,
                random_restarts=0, processes=0, min_reg=False,
                at_least_one=False, **methods):
     """Finds role-symmetric mixed Nash equilibria
