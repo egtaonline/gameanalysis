@@ -1,5 +1,4 @@
 import functools
-import warnings
 
 import numpy as np
 from scipy import integrate
@@ -106,11 +105,8 @@ def trace_equilibria(game1, game2, t, eqm, *, regret_thresh=1e-4,
     for i in range(egame.num_strats):
         events.append(create_support_loss(i))
 
-    with warnings.catch_warnings():
+    with np.errstate(divide='ignore'):
         # Known warning for when gradient equals zero
-        warnings.filterwarnings(
-            'ignore', 'divide by zero encountered in double_scalars',
-            RuntimeWarning, 'scipy.integrate._ivp.rk', 145)
         res_backward = integrate.solve_ivp(ode, [t, 0], eqm, events=events)
         res_forward = integrate.solve_ivp(ode, [t, 1], eqm, events=events)
 
