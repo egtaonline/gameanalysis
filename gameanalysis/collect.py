@@ -135,14 +135,16 @@ class DynamicArray(object):
 class BitSet(object):
     """Set of bitmasks
 
-    A bitmask is in the set if all of the true bits have been added"""
-    # This compresses all bitmasks down to the number they are implicitly, and
-    # uses bitwise math to replicate the same functions.
+    A bitmask is in the set if all of the true bits have been added
+    together. When iterating, all maximal bitsets are returned."""
+    # This compresses all bitmasks down to the number they are
+    # implicitly, and uses bitwise math to replicate the same functions.
 
     def __init__(self):
         self._masks = []
 
     def add(self, bitmask):
+        bitmask = np.asarray(bitmask, bool)
         if not self._masks:
             self._mask = 2 ** np.arange(bitmask.size)
         if bitmask not in self:
@@ -163,6 +165,9 @@ class BitSet(object):
             "can't add bitmasks of different sizes"
         num = bitmask.dot(self._mask)
         return not all(num & ~m for m in self._masks)
+
+    def __iter__(self):
+        return ((m // self._mask % 2).astype(bool) for m in self._masks)
 
     def __bool__(self):
         return bool(self._masks)

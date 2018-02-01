@@ -351,7 +351,7 @@ FUNCTIONS = [
 def test_width_distribution(func):
     widths = np.random.uniform(0, 1, 5)
     stddevs = np.std(func(widths, 100000), 1)
-    assert np.allclose(widths, stddevs, rtol=1e-2)
+    assert np.allclose(widths, stddevs, rtol=0.05)
 
 
 @pytest.mark.parametrize('players,strats', [([2], [3]), ([2, 3], [3, 2])])

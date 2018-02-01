@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from gameanalysis import collect
+from gameanalysis import utils
 
 
 def test_weighted_similarity():
@@ -49,22 +50,27 @@ def test_dynamic_array_failure():
 def test_bit_set():
     bitset = collect.BitSet()
     assert not bitset
-    assert bitset.add(np.array([0, 1, 1, 0, 1], bool))
-    assert not bitset.add(np.array([0, 1, 0, 0, 1], bool))
-    assert bitset.add(np.array([0, 1, 0, 1, 1], bool))
-    bitset.clear()
-    assert repr(bitset) == 'BitSet([])'
-    assert bitset.add(np.array([0, 1, 1, 0, 1], bool))
-
-
-def test_bitset_failure():
-    bitset = collect.BitSet()
     a = np.array([0, 1, 1, 1, 0], bool)
     b = np.array([1, 0, 0, 1, 1], bool)
+    c = np.array([0, 0, 0, 1, 0], bool)
     assert bitset.add(a)
+    assert bitset
+    assert not bitset.add(c)
     assert bitset.add(b)
+    assert not bitset.add(c)
     assert not bitset.add(a)
     assert not bitset.add(b)
+
+    expected = frozenset(map(utils.hash_array, [a, b]))
+    actual = frozenset(map(utils.hash_array, bitset))
+    assert expected == actual
+    assert bitset
+
+    bitset.clear()
+    assert not bitset
+    assert repr(bitset) == 'BitSet([])'
+    assert list(bitset) == []
+    assert bitset.add(a)
 
 
 def test_mixture_set():
