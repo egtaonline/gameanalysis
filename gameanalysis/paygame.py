@@ -148,6 +148,7 @@ class Game(rsgame.RsGame):
             that is present.
         """
         mix = np.asarray(mix, float)
+        supp = mix > 0
         nan_mask = np.empty_like(mix, dtype=bool)
 
         # Fill out mask where we don't have data
@@ -159,17 +160,16 @@ class Game(rsgame.RsGame):
             # These calculations are approximate, but for games we can do
             # anything with, the size is bounded, and so numeric methods are
             # actually exact.
-            support = mix > 0
-            strats = np.add.reduceat(support, self.role_starts)
-            devs = self._profiles[:, ~support]
+            strats = np.add.reduceat(supp, self.role_starts)
+            devs = self._profiles[:, ~supp]
             num_supp = utils.game_size(self.num_role_players, strats).prod()
             dev_players = self.num_role_players - \
                 np.eye(self.num_roles, dtype=int)
             role_num_dev = utils.game_size(dev_players, strats).prod(1)
-            num_dev = role_num_dev.repeat(self.num_role_strats)[~support]
+            num_dev = role_num_dev.repeat(self.num_role_strats)[~supp]
 
-            nan_mask[support] = np.all(devs == 0, 1).sum() < num_supp
-            nan_mask[~support] = devs[devs.sum(1) == 1].sum(0) < num_dev
+            nan_mask[supp] = np.all(devs == 0, 1).sum() < num_supp
+            nan_mask[~supp] = devs[devs.sum(1) == 1].sum(0) < num_dev
 
         # Compute values
         if not nan_mask.all():
@@ -208,7 +208,7 @@ class Game(rsgame.RsGame):
         if not jacobian:
             return devs
 
-        if ignore_incomplete or self.is_complete():
+        if ignore_incomplete or not nan_mask.all():
             dev_profs = (self._profiles[:, None] -
                          np.eye(self.num_strats, dtype=int))
             dev_jac = np.einsum(
@@ -218,6 +218,10 @@ class Game(rsgame.RsGame):
                             devs[:, None] / zmix)
                 dev_jac[tsupp] /= tprobs[tsupp, None]
                 dev_jac[~tsupp] = np.nan
+            # TODO This is a little conservative and could be relaxed but would
+            # require extra computation
+            if not self.is_complete():
+                dev_jac[nan_mask | ~supp] = np.nan
         else:
             dev_jac = np.full((self.num_strats,) * 2, np.nan)
 

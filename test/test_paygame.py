@@ -9,6 +9,7 @@ import numpy.random as rand
 import pytest
 
 from gameanalysis import paygame
+from gameanalysis import restrict
 from gameanalysis import rsgame
 from test import utils
 
@@ -514,6 +515,30 @@ def test_random_deviation_payoffs_jacobian(players, strats, ignore, _):
         tjac = devpays_jac(mix)
         assert np.allclose(dev, tdev)
         assert np.allclose(jac, tjac)
+
+
+@pytest.mark.parametrize('players,strats', utils.games)
+@pytest.mark.parametrize('_', range(5))
+def test_random_deviation_payoffs_jacobian_nan(players, strats, _):
+    base = rsgame.emptygame(players, strats)
+    profs = base.all_profiles()
+    pays = np.random.random(profs.shape)
+    pays[profs == 0] = 0
+    game = paygame.game_replace(base, profs, pays)
+
+    for mix in game.random_sparse_mixtures(20):
+        supp = mix > 0
+
+        profs = np.concatenate([
+            restrict.deviation_profiles(game, supp),
+            restrict.translate(base.restrict(supp).all_profiles(), supp)])
+        dgame = paygame.game_replace(base, profs, game.get_payoffs(profs))
+
+        dev, jac = game.deviation_payoffs(mix, jacobian=True)
+        ddev, djac = dgame.deviation_payoffs(mix, jacobian=True)
+        assert np.allclose(dev, ddev)
+        assert np.allclose(jac[supp], djac[supp])
+        assert np.isnan(djac[~supp]).all() or dgame.is_complete()
 
 
 @pytest.mark.parametrize('players,strats', utils.games)
