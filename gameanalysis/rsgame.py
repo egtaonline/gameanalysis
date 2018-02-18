@@ -772,13 +772,16 @@ class StratArray(abc.ABC):
             in zip(self.role_names, role_info))
 
     def role_from_repr(self, rrole, dest=None, dtype=float):
-        """Read role data from repr"""
+        """Read role data from repr
+
+        A role repr is `role:info` delimited by commas or semicolons.
+        """
         if dest is None:
             dest = np.empty(self.num_roles, dtype)
         else:
             assert dest.dtype.kind == np.dtype(dtype).kind
             assert dest.shape == (self.num_roles,)
-        for rinfo in rrole.split(';'):
+        for rinfo in rrole.replace(',', ';').split(';'):
             role, val = (s.strip() for s in rinfo.split(':', 1))
             dest[self.role_index(role)] = val
         return dest

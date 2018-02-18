@@ -843,6 +843,7 @@ def test_to_from_role_repr():
     sarr.role_from_repr(rep_role, dest=arr)
     assert np.allclose(arr, role)
     assert arr.dtype == float
+    assert np.allclose(sarr.role_from_repr('a:6,b:3'), role)
 
 
 def test_trim_precision():
