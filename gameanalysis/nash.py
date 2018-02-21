@@ -141,7 +141,6 @@ def regret_minimize(game, mix, *, gtol=1e-8):
                       game.num_role_strats)
     scale[np.isclose(scale, 0)] = 1  # In case payoffs are the same
     offset = game.min_role_payoffs().repeat(game.num_role_strats)
-    penalty = 1
 
     def grad(mixture):
         # We assume that the initial point is in a constant sum subspace, and
@@ -170,39 +169,24 @@ def regret_minimize(game, mix, *, gtol=1e-8):
                 game.num_role_strats, 0))
         grad = gains.dot(gains_jac)
 
-        # Penalty terms for obj and gradient
-        neg_mix = np.minimum(mixture, 0)
-        obj += penalty * neg_mix.dot(neg_mix) / 2
-        grad += penalty * neg_mix
-
-        # Project grad so steps stay in the appropriate space
+        # Project grad so steps stay in the simplotope
         grad -= np.repeat(np.add.reduceat(grad, game.role_starts) /
                           game.num_role_strats, game.num_role_strats)
 
         return obj, grad
 
-    result = None
-    penalty = 1
-    with _reg_min_lock:
-        for _ in range(10):
-            # First get an unconstrained result from the optimization
-            with warnings.catch_warnings():
-                # XXX For some reason, line-search in optimize throws a
-                # run-time warning when things get very small negative.  This
-                # is potentially a error with the way we compute gradients, but
-                # it's not reproducible, so we ignore it.
-                warnings.simplefilter(
-                    'ignore', optimize.linesearch.LineSearchWarning)
-                mix = optimize.minimize(
-                    grad, mix, method='CG', jac=True, options={'gtol': gtol}).x
-            # Project it onto the simplex, it might not be due to the penalty
-            result = game.mixture_project(mix)
-            if np.allclose(mix, result):
-                break
-            # Increase constraint penalty
-            penalty *= 2
-
-    return result
+    with _reg_min_lock, warnings.catch_warnings():
+        # XXX For some reason, line-search in optimize throws a
+        # run-time warning when things get very small negative.  This
+        # is potentially a error with the way we compute gradients, but
+        # it's not reproducible, so we ignore it.
+        warnings.simplefilter(
+            'ignore', optimize.linesearch.LineSearchWarning)
+        mix = optimize.minimize(
+            grad, mix, jac=True, bounds=[(0, 1)] * game.num_strats,
+            options={'gtol': gtol}).x
+        # Project it onto the simplex, it might not be due to the penalty
+        return game.mixture_project(mix)
 
 
 def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-8):
