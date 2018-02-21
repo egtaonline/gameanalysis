@@ -5,7 +5,7 @@ from gameanalysis import aggfn
 from gameanalysis import gambit
 from gameanalysis import learning
 from gameanalysis import matgame
-from gameanalysis import merge
+from gameanalysis import mergegame
 from gameanalysis import paygame
 from gameanalysis import rsgame
 
@@ -56,7 +56,7 @@ def loadj(obj):
         'emptygame': rsgame.emptygame_json,
         'game': paygame.game_json,
         'matrix': matgame.matgame_json,
-        'merge': merge.merge_json,
+        'merge': mergegame.merge_json,
         'neighbor': learning.neighbor_json,
         'point': learning.point_json,
         'rbf': learning.rbfgame_json,

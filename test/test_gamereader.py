@@ -11,7 +11,7 @@ from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import learning
 from gameanalysis import matgame
-from gameanalysis import merge
+from gameanalysis import mergegame
 from gameanalysis import rsgame
 from test import utils
 
@@ -57,7 +57,7 @@ def neighbor():
 
 
 def merg():
-    return merge.merge(game(), agg(), 0.5)
+    return mergegame.merge(game(), agg(), 0.5)
 
 
 @utils.warnings_filter(UserWarning)

@@ -5,61 +5,10 @@ import pytest
 
 from gameanalysis import agggen
 from gameanalysis import gamegen
-from gameanalysis import merge
-from gameanalysis import nash
+from gameanalysis import mergegame
 from gameanalysis import paygame
-from gameanalysis import regret
 from gameanalysis import rsgame
 from test import utils
-
-
-# This tests the edge case for non-differentiability of the equilibrium is
-# sound and recovered.
-def test_trace_equilibria():
-    profs = [[2, 0],
-             [1, 1],
-             [0, 2]]
-    pays1 = [[1, 0],
-             [1, 0],
-             [0, 0]]
-    game1 = paygame.game(2, 2, profs, pays1)
-    pays2 = [[0, 0],
-             [0, 1],
-             [0, 1]]
-    game2 = paygame.game(2, 2, profs, pays2)
-
-    ts, mixes = merge.trace_equilibria(game1, game2, 0, [1, 0])
-    assert np.isclose(ts[0], 0)
-    assert np.isclose(ts[-1], 0.5, atol=1e-4)
-    assert np.allclose(mixes, [1, 0])
-    ts, mixes = merge.trace_equilibria(game1, game2, 1, [0, 1])
-    assert np.isclose(ts[0], 0.5, atol=1e-4)
-    assert np.isclose(ts[-1], 1)
-    assert np.allclose(mixes, [0, 1])
-
-
-@pytest.mark.parametrize('players,strats', utils.games)
-def test_random_trace_equilibria(players, strats):
-    game1 = agggen.normal_aggfn(players, strats, 6)
-    game2 = agggen.normal_aggfn(players, strats, 6)
-
-    eqa = game1.trim_mixture_support(nash.mixed_nash(game1), thresh=1e-5)
-    for eqm in eqa:
-        # leeway for support trimming
-        thresh = regret.mixture_regret(game1, eqm) + 2
-        ts, mixes = merge.trace_equilibria(game1, game2, 0, eqm)
-        for t, mix in zip(ts, mixes):
-            reg = regret.mixture_regret(merge.merge(game1, game2, t), mix)
-            assert reg < thresh
-
-    eqa = game2.trim_mixture_support(nash.mixed_nash(game2), thresh=1e-5)
-    for eqm in eqa:
-        # leeway for support trimming
-        thresh = regret.mixture_regret(game2, eqm) + 1
-        ts, mixes = merge.trace_equilibria(game1, game2, 1, eqm)
-        for t, mix in zip(ts, mixes):
-            reg = regret.mixture_regret(merge.merge(game1, game2, t), mix)
-            assert reg < thresh
 
 
 def test_merge():
@@ -75,7 +24,7 @@ def test_merge():
              [5, np.nan],
              [0, 7]]
     game2 = paygame.game(2, 2, profs2, pays2)
-    mgame = merge.merge(game1, game2, 0.2)
+    mgame = mergegame.merge(game1, game2, 0.2)
     assert mgame.num_profiles == 2
     assert mgame.num_complete_profiles == 1
     pay = mgame.get_payoffs([2, 0])
@@ -91,7 +40,7 @@ def test_merge():
 def test_random_merge(players, strats, t):
     game1 = gamegen.game(players, strats, .5)
     game2 = agggen.normal_aggfn(players, strats, 3)
-    mgame = merge.merge(game1, game2, t)
+    mgame = mergegame.merge(game1, game2, t)
 
     assert mgame.num_profiles == game1.num_profiles
     assert mgame.num_complete_profiles == game1.num_complete_profiles
@@ -138,10 +87,10 @@ def test_random_merge(players, strats, t):
     assert repr(game1) == repr(mgame)[5:]
 
     mstr = json.dumps(mgame.to_json())
-    copy = merge.merge_json(json.loads(mstr))
+    copy = mergegame.merge_json(json.loads(mstr))
     assert mgame == copy
 
-    rev = merge.merge(game2, game1, 1 - t)
+    rev = mergegame.merge(game2, game1, 1 - t)
     assert rev == mgame
 
 
@@ -150,7 +99,7 @@ def test_random_merge(players, strats, t):
 def test_random_merge_complete(players, strats, t):
     game1 = agggen.normal_aggfn(players, strats, 3)
     game2 = agggen.normal_aggfn(players, strats, 3)
-    mgame = merge.merge(game1, game2, t)
+    mgame = mergegame.merge(game1, game2, t)
     assert mgame.is_complete()
     assert mgame.num_profiles == mgame.num_all_profiles
     assert mgame.num_complete_profiles == mgame.num_all_profiles
