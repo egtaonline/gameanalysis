@@ -495,3 +495,9 @@ def deprecated(func):
         return func(*args, **kwargs)
 
     return wrapped
+
+
+def experimental(func):
+    """Mark a function as experimental"""
+    func.experimental = True
+    return func

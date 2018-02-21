@@ -899,6 +899,21 @@ class RsGame(StratArray):
     # End Abstract Methods
     # --------------------
 
+    # XXX I've face a constant struggle about whether to overload some of these
+    # reduceats and splits. It's really hard to say.
+
+    @utils.experimental
+    def role_dot(self, zeroed, values):
+        """Dot product values organized by role
+
+        The first argument is special. If it is zero, the product is zero even
+        if the second argument is nan or inf. This is often what we want when
+        zeroed is a mixture or a profile, etc.
+        """
+        zeroed = np.asarray(zeroed)
+        return np.add.reduceat(zeroed * np.where(
+            zeroed == 0, 0, values), self.role_starts)
+
     def min_role_payoffs(self):
         """Returns the minimum payoff for each role"""
         return np.fmin.reduceat(self.min_strat_payoffs(), self.role_starts)
@@ -1039,17 +1054,6 @@ class RsGame(StratArray):
             1, -1), self.role_starts[1:] + np.arange(self.num_roles - 1), -1)
         profiles[..., self.role_starts] -= self.num_role_players
         return -profiles
-
-    def role_dot(self, zeroed, values):
-        """Dot product values organized by role
-
-        The first argument is special. If it is zero, the product is zero even
-        if the second argument is nan or inf. This is often what we want when
-        zeroed is a mixture or a profile, etc.
-        """
-        zeroed = np.asarray(zeroed)
-        return np.add.reduceat(np.where(
-            zeroed > 0, zeroed * values, 0), self.role_starts)
 
     def expected_payoffs(self, mix):
         """Returns the payoff of each role under mixture"""
