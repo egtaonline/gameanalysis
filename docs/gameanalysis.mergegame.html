@@ -1,0 +1,211 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.mergegame module &#8212; Game Analysis 5.4.0 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.nash module" href="gameanalysis.nash.html" />
+    <link rel="prev" title="gameanalysis.matgame module" href="gameanalysis.matgame.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.matgame.html" title="gameanalysis.matgame module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.mergegame">
+<span id="gameanalysis-mergegame-module"></span><h1>gameanalysis.mergegame module<a class="headerlink" href="#module-gameanalysis.mergegame" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="gameanalysis.mergegame.MergeGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.mergegame.</code><code class="descname">MergeGame</code><span class="sig-paren">(</span><em>game1</em>, <em>game2</em>, <em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
+<p>A Game representing the <cite>t</cite> merger between two other games</p>
+<p>Payoffs in this game are simply the weighted fraction of payoffs from game1
+and game2 such that the interpolation is smooth.</p>
+<dl class="method">
+<dt id="gameanalysis.mergegame.MergeGame.deviation_payoffs">
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for deviating from mixture</p>
+<p>Optionally with the jacobian with respect to mixture. This is the
+primary method that needs to implemented for nash finding.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.mergegame.MergeGame.get_payoffs">
+<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for all profiles</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.mergegame.MergeGame.max_strat_payoffs">
+<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>An upper bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.mergegame.MergeGame.min_strat_payoffs">
+<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A lower bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.mergegame.MergeGame.normalize">
+<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.normalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.mergegame.MergeGame.num_complete_profiles">
+<code class="descname">num_complete_profiles</code><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.num_complete_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles with complete payoff information</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.mergegame.MergeGame.num_profiles">
+<code class="descname">num_profiles</code><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.num_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles with any payoff information</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.mergegame.MergeGame.payoffs">
+<code class="descname">payoffs</code><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.mergegame.MergeGame.profiles">
+<code class="descname">profiles</code><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.mergegame.MergeGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.restrict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict viable strategies</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.mergegame.MergeGame.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#MergeGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.MergeGame.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format game as json</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.mergegame.merge">
+<code class="descclassname">gameanalysis.mergegame.</code><code class="descname">merge</code><span class="sig-paren">(</span><em>game1</em>, <em>game2</em>, <em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge two games by a <cite>t</cite> fraction</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game1</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The first game to merge.</li>
+<li><strong>game2</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The second game to merge.</li>
+<li><strong>t</strong> (<em>float</em>) – The fraction to merge the games. 0 corresponds to a copy of <cite>game1</cite>, 1
+corresponds to <cite>game2</cite>, and somewhere between corresponds to the linear
+interpolation between them.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.mergegame.merge_json">
+<code class="descclassname">gameanalysis.mergegame.</code><code class="descname">merge_json</code><span class="sig-paren">(</span><em>jgame</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/mergegame.html#merge_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.mergegame.merge_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a merged game from json</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.matgame.html"
+                        title="previous chapter">gameanalysis.matgame module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.nash.html"
+                        title="next chapter">gameanalysis.nash module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.mergegame.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.matgame.html" title="gameanalysis.matgame module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.0.
+    </div>
+  </body>
+</html>

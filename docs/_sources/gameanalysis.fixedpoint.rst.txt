@@ -1,5 +1,5 @@
-gameanalysis\.fixedpoint module
-===============================
+gameanalysis.fixedpoint module
+==============================
 
 .. automodule:: gameanalysis.fixedpoint
     :members:

@@ -1,5 +1,5 @@
-gameanalysis\.gambit module
-===========================
+gameanalysis.gambit module
+==========================
 
 .. automodule:: gameanalysis.gambit
     :members:

@@ -1,5 +1,5 @@
-gameanalysis\.agggen module
-===========================
+gameanalysis.agggen module
+==========================
 
 .. automodule:: gameanalysis.agggen
     :members:

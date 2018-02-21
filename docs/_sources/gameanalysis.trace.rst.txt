@@ -1,7 +1,7 @@
-gameanalysis.aggfn module
+gameanalysis.trace module
 =========================
 
-.. automodule:: gameanalysis.aggfn
+.. automodule:: gameanalysis.trace
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,5 +1,5 @@
-gameanalysis\.utils module
-==========================
+gameanalysis.utils module
+=========================
 
 .. automodule:: gameanalysis.utils
     :members:

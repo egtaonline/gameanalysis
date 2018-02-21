@@ -1,5 +1,5 @@
-gameanalysis\.restrict module
-=============================
+gameanalysis.restrict module
+============================
 
 .. automodule:: gameanalysis.restrict
     :members:

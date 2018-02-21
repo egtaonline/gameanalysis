@@ -1,5 +1,5 @@
-gameanalysis\.reduction module
-==============================
+gameanalysis.reduction module
+=============================
 
 .. automodule:: gameanalysis.reduction
     :members:

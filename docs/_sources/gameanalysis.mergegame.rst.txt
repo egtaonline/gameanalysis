@@ -1,7 +1,7 @@
-gameanalysis.bootstrap module
+gameanalysis.mergegame module
 =============================
 
-.. automodule:: gameanalysis.bootstrap
+.. automodule:: gameanalysis.mergegame
     :members:
     :undoc-members:
     :show-inheritance:

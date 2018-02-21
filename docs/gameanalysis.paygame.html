@@ -4,20 +4,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.paygame module &#8212; Game Analysis 5.3.0 documentation</title>
+    <title>gameanalysis.paygame module &#8212; Game Analysis 5.4.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '5.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -25,8 +17,7 @@
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.reduction module" href="gameanalysis.reduction.html" />
     <link rel="prev" title="gameanalysis.nash module" href="gameanalysis.nash.html" /> 
-  </head>
-  <body>
+  </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -42,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -58,7 +49,7 @@
 <dl class="class">
 <dt id="gameanalysis.paygame.Game">
 <em class="property">class </em><code class="descclassname">gameanalysis.paygame.</code><code class="descname">Game</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em>, <em>profiles</em>, <em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
 <p>Role-symmetric data game representation</p>
 <p>This representation uses a sparse mapping from profiles to payoffs for role
 symmetric games. This allows it to capture arbitrary games, as well as
@@ -87,7 +78,7 @@ can’t be nan, the profile should be omitted instead.</li>
 </table>
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>ignore_incomplete=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>ignore_incomplete=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes the expected value of deviating</p>
 <p>More specifically, this is the expected payoff of playing each pure
 strategy played against all opponents playing mix.</p>
@@ -144,12 +135,14 @@ has support.</p>
 <dl class="attribute">
 <dt id="gameanalysis.paygame.Game.num_complete_profiles">
 <code class="descname">num_complete_profiles</code><a class="headerlink" href="#gameanalysis.paygame.Game.num_complete_profiles" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of profiles with complete payoff information</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="gameanalysis.paygame.Game.num_profiles">
 <code class="descname">num_profiles</code><a class="headerlink" href="#gameanalysis.paygame.Game.num_profiles" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The number of profiles with any payoff information</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.payoff_from_json">
@@ -161,7 +154,7 @@ has support.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>pays</strong> (<em>json</em>) – A description of a set of payoffs in a number of formats</li>
-<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal"><span class="pre">dest</span></code> will be written to instead of allocating a
+<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal notranslate"><span class="pre">dest</span></code> will be written to instead of allocating a
 new array.</li>
 </ul>
 </td>
@@ -173,7 +166,8 @@ new array.</li>
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.payoffs">
 <code class="descname">payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.payoffs" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An array with all of the payoff corresponding to profiles()</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.profile_from_json">
@@ -191,7 +185,7 @@ format will be auto detected and used. The most common are {role:
 {strat: count}}, {role: [(strat, count, payoff)]},
 {symmetry_groups: [{role: role, strategy: strategy, count:
 count}]}.</li>
-<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal"><span class="pre">dest</span></code> will be written to instead of allocating a
+<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal notranslate"><span class="pre">dest</span></code> will be written to instead of allocating a
 new array.</li>
 </ul>
 </td>
@@ -208,7 +202,8 @@ new array.</li>
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.profiles">
 <code class="descname">profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#Game.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.Game.profiles" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An array all of the profiles with any data</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="gameanalysis.paygame.Game.profpay_from_json">
@@ -239,7 +234,7 @@ new array.</li>
 <dl class="class">
 <dt id="gameanalysis.paygame.SampleGame">
 <em class="property">class </em><code class="descclassname">gameanalysis.paygame.</code><code class="descname">SampleGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em>, <em>profiles</em>, <em>sample_payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/paygame.html#SampleGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.paygame.SampleGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><code class="xref py py-class docutils literal"><span class="pre">gameanalysis.paygame.Game</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.paygame.Game</span></code></a></p>
 <p>A Role Symmetric Game that has multiple samples per profile</p>
 <p>This behaves the same as a normal Game object, except that it has methods
 for accessing several payoffs per profile. It also has a <cite>resample</cite> method
@@ -371,7 +366,7 @@ between payoffs.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>prof</strong> (<em>json</em>) – A description of a set of profiles and their payoffs. There are
 several formats that are acceptable, they’re all output by egta.</li>
-<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>options</em>) – If supplied, <code class="docutils literal"><span class="pre">dest</span></code> will be written to instead of allocting a new
+<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>options</em>) – If supplied, <code class="docutils literal notranslate"><span class="pre">dest</span></code> will be written to instead of allocting a new
 array. This may be hard to use as you need to know how many
 observations are in the json.</li>
 </ul>
@@ -657,12 +652,14 @@ samples from, with shape (num_sample_profiles, num_strats).</li>
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -684,13 +681,13 @@ samples from, with shape (num_sample_profiles, num_strats).</li>
         <li class="right" >
           <a href="gameanalysis.nash.html" title="gameanalysis.nash module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.0.
     </div>
   </body>
 </html>

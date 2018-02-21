@@ -1,5 +1,5 @@
-gameanalysis\.gamereader module
-===============================
+gameanalysis.gamereader module
+==============================
 
 .. automodule:: gameanalysis.gamereader
     :members:

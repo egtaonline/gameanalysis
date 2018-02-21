@@ -1,5 +1,5 @@
-gameanalysis\.paygame module
-============================
+gameanalysis.paygame module
+===========================
 
 .. automodule:: gameanalysis.paygame
     :members:

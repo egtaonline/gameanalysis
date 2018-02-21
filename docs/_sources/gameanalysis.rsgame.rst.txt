@@ -1,5 +1,5 @@
-gameanalysis\.rsgame module
-===========================
+gameanalysis.rsgame module
+==========================
 
 .. automodule:: gameanalysis.rsgame
     :members:

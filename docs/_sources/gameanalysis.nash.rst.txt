@@ -1,5 +1,5 @@
-gameanalysis\.nash module
-=========================
+gameanalysis.nash module
+========================
 
 .. automodule:: gameanalysis.nash
     :members:

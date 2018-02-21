@@ -1,5 +1,5 @@
-gameanalysis\.dominance module
-==============================
+gameanalysis.dominance module
+=============================
 
 .. automodule:: gameanalysis.dominance
     :members:

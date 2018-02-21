@@ -1,5 +1,5 @@
-gameanalysis\.regret module
-===========================
+gameanalysis.regret module
+==========================
 
 .. automodule:: gameanalysis.regret
     :members:

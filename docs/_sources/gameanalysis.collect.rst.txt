@@ -1,5 +1,5 @@
-gameanalysis\.collect module
-============================
+gameanalysis.collect module
+===========================
 
 .. automodule:: gameanalysis.collect
     :members:
