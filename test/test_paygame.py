@@ -137,29 +137,6 @@ def test_random_emptygame_const_properties(role_players, role_strats):
     assert np.isnan(exp_pays).all()
     assert exp_pays.shape == (game.num_roles,)
 
-    exp_pays = game.expected_payoffs(mix, deviations=dev_pays)
-    assert np.isnan(exp_pays).all()
-    assert exp_pays.shape == (game.num_roles,)
-
-    dev_pays, dev_jac = game.deviation_payoffs(mix, jacobian=True)
-    assert np.isnan(dev_pays).all()
-    assert dev_pays.shape == (game.num_strats,)
-    assert np.isnan(dev_jac).all()
-    assert dev_jac.shape == (game.num_strats, game.num_strats)
-
-    exp_pays, exp_jac = game.expected_payoffs(mix, jacobian=True)
-    assert np.isnan(exp_pays).all()
-    assert exp_pays.shape == (game.num_roles,)
-    assert np.isnan(exp_jac).all()
-    assert exp_jac.shape == (game.num_roles, game.num_strats)
-
-    exp_pays, exp_jac = game.expected_payoffs(
-        mix, jacobian=True, deviations=(dev_pays, dev_jac))
-    assert np.isnan(exp_pays).all()
-    assert exp_pays.shape == (game.num_roles,)
-    assert np.isnan(exp_jac).all()
-    assert exp_jac.shape == (game.num_roles, game.num_strats)
-
     br = game.best_response(mix)
     assert np.isnan(br).all()
     assert br.shape == (game.num_strats,)
@@ -756,29 +733,6 @@ def test_expected_payoffs():
     game = paygame.game([2, 2], [2, 2], profs, pays)
     pays = game.expected_payoffs([1, 0, 0.4, 0.6])
     assert np.allclose([np.nan, 5], pays, equal_nan=True)
-
-
-def test_expected_payoffs_jac():
-    profiles = [[2, 0],
-                [1, 1],
-                [0, 2]]
-    payoffs = [[1, 0],
-               [3, 3],
-               [0, 1]]
-    game = paygame.game(2, 2, profiles, payoffs)
-    ep, ep_jac = game.expected_payoffs([.5, .5], jacobian=True)
-    ep_jac -= ep_jac.sum() / 2  # project on simplex
-    assert np.allclose(ep, 2)
-    assert np.allclose(ep_jac, 0), \
-        "maximum surplus should have 0 jacobian"
-
-    dev_data = game.deviation_payoffs([0.5, 0.5], jacobian=True)
-    ep, ep_jac = game.expected_payoffs([.5, .5], jacobian=True,
-                                       deviations=dev_data)
-    ep_jac -= ep_jac.sum() / 2  # project on simplex
-    assert np.allclose(ep, 2)
-    assert np.allclose(ep_jac, 0), \
-        "maximum surplus should have 0 jacobian"
 
 
 @pytest.mark.parametrize('role_players,role_strats', utils.games)

@@ -46,7 +46,7 @@ def test_random_trace_equilibria(players, strats):
     eqa = game1.trim_mixture_support(nash.mixed_nash(game1), thresh=1e-5)
     for eqm in eqa:
         # leeway for support trimming
-        thresh = regret.mixture_regret(game1, eqm) + 1
+        thresh = regret.mixture_regret(game1, eqm) + 2
         ts, mixes = merge.trace_equilibria(game1, game2, 0, eqm)
         for t, mix in zip(ts, mixes):
             reg = regret.mixture_regret(merge.merge(game1, game2, t), mix)

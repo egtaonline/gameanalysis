@@ -142,20 +142,6 @@ def test_nan_deviations(players, strategies):
             "deviation gains in complete game were nan"
 
 
-def test_max_mixed_profile():
-    profiles = [[2, 0],
-                [1, 1],
-                [0, 2]]
-    payoffs = [[1, 0],
-               [3, 3],
-               [0, 1]]
-    game = paygame.game(2, 2, profiles, payoffs)
-    mix1 = regret.max_mixed_social_welfare(game, processes=1)[1]
-    mix2 = regret.max_mixed_social_welfare(game)[1]
-    assert np.allclose(mix1, [0.5, 0.5])
-    assert np.allclose(mix2, [0.5, 0.5])
-
-
 def test_max_pure_profile():
     profiles = [[2, 0],
                 [1, 1],

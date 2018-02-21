@@ -944,29 +944,6 @@ def test_random_emptygame_const_properties(role_players, role_strats):
     assert np.isnan(exp_pays).all()
     assert exp_pays.shape == (game.num_roles,)
 
-    exp_pays = game.expected_payoffs(mix, deviations=dev_pays)
-    assert np.isnan(exp_pays).all()
-    assert exp_pays.shape == (game.num_roles,)
-
-    dev_pays, dev_jac = game.deviation_payoffs(mix, jacobian=True)
-    assert np.isnan(dev_pays).all()
-    assert dev_pays.shape == (game.num_strats,)
-    assert np.isnan(dev_jac).all()
-    assert dev_jac.shape == (game.num_strats, game.num_strats)
-
-    exp_pays, exp_jac = game.expected_payoffs(mix, jacobian=True)
-    assert np.isnan(exp_pays).all()
-    assert exp_pays.shape == (game.num_roles,)
-    assert np.isnan(exp_jac).all()
-    assert exp_jac.shape == (game.num_roles, game.num_strats)
-
-    exp_pays, exp_jac = game.expected_payoffs(
-        mix, jacobian=True, deviations=(dev_pays, dev_jac))
-    assert np.isnan(exp_pays).all()
-    assert exp_pays.shape == (game.num_roles,)
-    assert np.isnan(exp_jac).all()
-    assert exp_jac.shape == (game.num_roles, game.num_strats)
-
     br = game.best_response(mix)
     assert np.isnan(br).all()
     assert br.shape == (game.num_strats,)

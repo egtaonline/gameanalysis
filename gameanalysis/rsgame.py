@@ -1038,34 +1038,21 @@ class RsGame(StratArray):
         profiles[..., self.role_starts] -= self.num_role_players
         return -profiles
 
-    def expected_payoffs(self, mix, *, jacobian=False, deviations=None):
-        """Returns the payoff of each role under mixture
+    def role_dot(self, zeroed, values):
+        """Dot product values organized by role
 
-        If the payoffs for deviating from `mix` is already known, that an be
-        passed in to save computation."""
-        mix = np.asarray(mix, float)
-        if jacobian:
-            if deviations is None:
-                deviations, dev_jac = self.deviation_payoffs(
-                    mix, jacobian=True)
-            else:
-                deviations, dev_jac = deviations
-            # Don't care about that missing data
-            deviations[mix < self.zero_prob.repeat(self.num_role_strats)] = 0
-            # Don't care about that missing data
-            dev_jac[mix < self.zero_prob.repeat(self.num_role_strats)] = 0
-            expected_payoffs = np.add.reduceat(
-                mix * deviations, self.role_starts)
-            jac = np.add.reduceat(
-                mix[:, None] * dev_jac, self.role_starts, 0) + deviations
-            return expected_payoffs, jac
+        The first argument is special. If it is zero, the product is zero even
+        if the second argument is nan or inf. This is often what we want when
+        zeroed is a mixture or a profile, etc.
+        """
+        zeroed = np.asarray(zeroed)
+        return np.add.reduceat(np.where(
+            zeroed > 0, zeroed * values, 0), self.role_starts)
 
-        else:
-            if deviations is None:
-                deviations = self.deviation_payoffs(mix)
-            # Don't care about that missing data
-            deviations[mix < self.zero_prob.repeat(self.num_role_strats)] = 0
-            return np.add.reduceat(mix * deviations, self.role_starts)
+    def expected_payoffs(self, mix):
+        """Returns the payoff of each role under mixture"""
+        deviations = self.deviation_payoffs(mix)
+        return self.role_dot(mix, deviations)
 
     def best_response(self, mix):
         """Returns the best response to a mixture
