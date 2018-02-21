@@ -150,7 +150,7 @@ def regret_minimize(game, mix, *, gtol=1e-8):
         # Because deviation payoffs uses log space, we max with 0 just for the
         # payoff calculation
         dev_pay, dev_jac = game.deviation_payoffs(
-            np.maximum(mixture, 0), jacobian=True)
+            np.maximum(mixture, 0), jacobian=True, full_jacobian=True)
 
         # Normalize
         dev_pay = (dev_pay - offset) / scale

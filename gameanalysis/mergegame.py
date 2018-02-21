@@ -57,15 +57,15 @@ class MergeGame(rsgame.RsGame):
     def payoffs(self):
         return self.get_payoffs(self.profiles())
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **kw):
         if jacobian:
-            d1, j1 = self._game1.deviation_payoffs(mix, jacobian=True)
-            d2, j2 = self._game2.deviation_payoffs(mix, jacobian=True)
+            d1, j1 = self._game1.deviation_payoffs(mix, jacobian=True, **kw)
+            d2, j2 = self._game2.deviation_payoffs(mix, jacobian=True, **kw)
             return ((1 - self.t) * d1 + self.t * d2,
                     (1 - self.t) * j1 + self.t * j2)
         else:
-            return ((1 - self.t) * self._game1.deviation_payoffs(mix) +
-                    self.t * self._game2.deviation_payoffs(mix))
+            return ((1 - self.t) * self._game1.deviation_payoffs(mix, **kw) +
+                    self.t * self._game2.deviation_payoffs(mix, **kw))
 
     def get_payoffs(self, profile):
         return ((1 - self.t) * self._game1.get_payoffs(profile) +

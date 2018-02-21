@@ -870,8 +870,10 @@ class RsGame(StratArray):
         """The payoffs for all profiles"""
         pass  # pragma: no cover
 
+    # Note: This should allow arbitrary keyword arguments which is ignores if
+    # they're invalid.
     @abc.abstractmethod
-    def deviation_payoffs(self, mixture, *, jacobian=False):
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         """The payoffs for deviating from mixture
 
         Optionally with the jacobian with respect to mixture. This is the
@@ -1426,7 +1428,7 @@ class EmptyGame(RsGame):
         pays.setflags(write=False)
         return pays.view()
 
-    def deviation_payoffs(self, mixture, *, jacobian=False):
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         assert self.is_mixture(mixture)
         devs = np.full(self.num_strats, np.nan)
         if not jacobian:

@@ -123,7 +123,7 @@ class Game(rsgame.RsGame):
         return payoffs.reshape(profiles.shape)
 
     def deviation_payoffs(self, mix, *, jacobian=False,
-                          ignore_incomplete=False):
+                          ignore_incomplete=False, **_):
         """Computes the expected value of deviating
 
         More specifically, this is the expected payoff of playing each pure

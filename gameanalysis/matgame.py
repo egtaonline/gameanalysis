@@ -107,7 +107,7 @@ class MatrixGame(rsgame.CompleteGame):
         payoffs[profile > 0] = self._payoff_view[ids].flat
         return payoffs
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
         """Computes the expected value of each pure strategy played against all
         opponents playing mix.
 

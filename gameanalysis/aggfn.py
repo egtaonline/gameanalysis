@@ -116,7 +116,7 @@ class AgfnGame(rsgame.CompleteGame):
     # TODO override get_dev_payoffs to be more efficient, i.e. only compute the
     # dev payoff.
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
         """Get the deviation payoffs"""
         mix = np.asarray(mix, float)
         role_node_probs = np.minimum(

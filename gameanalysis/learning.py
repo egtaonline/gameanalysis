@@ -45,7 +45,7 @@ class DevRegressionGame(rsgame.CompleteGame):
         self._rest = rest
         self._rest.setflags(write=False)
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
         raise ValueError(
             "regression games don't define deviation payoffs and must be used "
             "as a model for a deviation game")
@@ -279,7 +279,7 @@ class RbfGpGame(rsgame.CompleteGame):
     def min_strat_payoffs(self):
         return self._min_payoffs.view()
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
         players = self._dev_players.repeat(self.num_role_strats, 1)
         avg_prof = players * mix
         diag = 1 / (self._lengths ** 2 + avg_prof)
@@ -556,7 +556,7 @@ class SampleDeviationGame(_DeviationGame):
         # convergence)
         self._num_samples = num_samples
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
         """Compute the deivation payoffs
 
         The method computes the jacobian as if we were importance sampling the
@@ -636,7 +636,7 @@ class PointDeviationGame(_DeviationGame):
         self._dev_players = np.repeat(self.num_role_players - np.eye(
             self.num_roles, dtype=int), self.num_role_strats, 1)
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
         if jacobian:
             dev, jac = self._model.get_dev_payoffs(
                 self._dev_players * mix, jacobian=True)
@@ -702,7 +702,7 @@ class NeighborDeviationGame(_DeviationGame):
         assert 0 <= num_devs
         self._num_devs = num_devs
 
-    def deviation_payoffs(self, mix, *, jacobian=False):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
         # TODO This is not smooth because there are discontinuities when the
         # maximum probability profile jumps at the boundary. If we wanted to
         # make it smooth, one option would be to compute the smoother
