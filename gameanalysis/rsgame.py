@@ -263,7 +263,7 @@ class StratArray(abc.ABC):
         return np.all(np.bitwise_or.reduceat(restrict, self.role_starts, axis),
                       axis)
 
-    def trim_mixture_support(self, mixture, *, thresh=1e-3, axis=-1):
+    def trim_mixture_support(self, mixture, *, thresh=1e-4, axis=-1):
         """Trims strategies played less than supp_thresh from the support"""
         mixture = np.array(mixture, float)
         assert mixture.shape[axis] == self.num_strats
