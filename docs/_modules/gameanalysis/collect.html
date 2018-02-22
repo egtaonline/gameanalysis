@@ -6,7 +6,7 @@
   <head>
         <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.collect &#8212; Game Analysis 5.4.0 documentation</title>
+    <title>gameanalysis.collect &#8212; Game Analysis 5.5.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.5.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,12 +36,73 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.collect</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">abc</span>
+<span></span><span class="kn">import</span> <span class="nn">bisect</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">abc</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
-<div class="viewcode-block" id="WeightedSimilaritySet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.WeightedSimilaritySet">[docs]</a><span class="k">class</span> <span class="nc">WeightedSimilaritySet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+<div class="viewcode-block" id="mcces"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.mcces">[docs]</a><span class="k">def</span> <span class="nf">mcces</span><span class="p">(</span><span class="n">thresh</span><span class="p">):</span></div>
+    <span class="k">return</span> <span class="n">MinimumConnectedComponentElementSet</span><span class="p">(</span><span class="n">thresh</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MinimumConnectedComponentElementSet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MinimumConnectedComponentElementSet">[docs]</a><span class="k">class</span> <span class="nc">MinimumConnectedComponentElementSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A class for returning vectors with the minimum weight</span>
+<span class="sd">    </span>
+<span class="sd">    Vectors are only returned if they have the minimum weight in their</span>
+<span class="sd">    connected component, where two vectors are connected if they&#39;re closer than</span>
+<span class="sd">    `thresh` distance apart.</span>
+<span class="sd">    </span>
+<span class="sd">    Inserts can take up to `O(n)` where `n` is the number of elements inserted.</span>
+<span class="sd">    If this is problematic, a better data structure will probably be</span>
+<span class="sd">    necessary.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">thresh</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_thresh</span> <span class="o">=</span> <span class="n">thresh</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_similar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">((</span><span class="n">ai</span> <span class="o">-</span> <span class="n">bi</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="k">for</span> <span class="n">ai</span><span class="p">,</span> <span class="n">bi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thresh</span>
+
+<div class="viewcode-block" id="MinimumConnectedComponentElementSet.add"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MinimumConnectedComponentElementSet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vector</span><span class="p">,</span> <span class="n">weight</span><span class="p">):</span>
+        <span class="n">vector</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
+        <span class="n">tup</span> <span class="o">=</span> <span class="p">(</span><span class="n">weight</span><span class="p">,</span> <span class="n">vector</span><span class="p">)</span>
+
+        <span class="n">mins</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">),</span> <span class="p">())</span>
+        <span class="n">vecs</span> <span class="o">=</span> <span class="p">[</span><span class="n">vector</span><span class="p">]</span>
+        <span class="n">new_set</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">set_tup</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="p">:</span>
+            <span class="n">smin</span><span class="p">,</span> <span class="n">svecs</span> <span class="o">=</span> <span class="n">set_tup</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_similar</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">svecs</span><span class="p">):</span>
+                <span class="n">mins</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">smin</span><span class="p">,</span> <span class="n">mins</span><span class="p">)</span>
+                <span class="n">vecs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">svecs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_set</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">set_tup</span><span class="p">)</span>
+
+        <span class="n">added</span> <span class="o">=</span> <span class="n">tup</span> <span class="o">&lt;</span> <span class="n">mins</span>
+        <span class="n">new_tup</span> <span class="o">=</span> <span class="p">(</span><span class="n">tup</span> <span class="k">if</span> <span class="n">added</span> <span class="k">else</span> <span class="n">mins</span><span class="p">,</span> <span class="n">vecs</span><span class="p">)</span>
+        <span class="n">bisect</span><span class="o">.</span><span class="n">insort</span><span class="p">(</span><span class="n">new_set</span><span class="p">,</span> <span class="n">new_tup</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set</span> <span class="o">=</span> <span class="n">new_set</span></div>
+        <span class="k">return</span> <span class="n">added</span>
+
+<div class="viewcode-block" id="MinimumConnectedComponentElementSet.clear"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MinimumConnectedComponentElementSet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">),</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_thresh</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="WeightedSimilaritySet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.WeightedSimilaritySet">[docs]</a><span class="nd">@utils</span><span class="o">.</span><span class="n">deprecated</span>
+<span class="k">class</span> <span class="nc">WeightedSimilaritySet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A set of non-similar elements prioritized by weight</span>
 
 <span class="sd">    Allows adding a bunch of weighted elements, and when iterated, only</span>
@@ -56,17 +117,17 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_computed</span> <span class="o">=</span> <span class="kc">True</span>
 
-<div class="viewcode-block" id="WeightedSimilaritySet.add"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.WeightedSimilaritySet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">weight</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">weight</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_computed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">weight</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_i</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">+=</span> <span class="mi">1</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-<div class="viewcode-block" id="WeightedSimilaritySet.clear"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.WeightedSimilaritySet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_computed</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">_satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -170,6 +231,10 @@
         <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="bitset"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.bitset">[docs]</a><span class="k">def</span> <span class="nf">bitset</span><span class="p">():</span></div>
+    <span class="k">return</span> <span class="n">BitSet</span><span class="p">()</span>
+
+
 <div class="viewcode-block" id="BitSet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.BitSet">[docs]</a><span class="k">class</span> <span class="nc">BitSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Set of bitmasks</span>
 
@@ -214,7 +279,8 @@
         <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{!r}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_masks</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="MixtureSet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MixtureSet">[docs]</a><span class="k">class</span> <span class="nc">MixtureSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="MixtureSet"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MixtureSet">[docs]</a><span class="nd">@utils</span><span class="o">.</span><span class="n">deprecated</span>
+<span class="k">class</span> <span class="nc">MixtureSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A set of mixtures</span>
 
 <span class="sd">    Elements are only kept if the norm of their difference is greater than the</span>
@@ -224,14 +290,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_tol</span> <span class="o">=</span> <span class="n">tolerance</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mixtures</span> <span class="o">=</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="MixtureSet.add"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MixtureSet.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">mixture</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_mixtures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mixture</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">else</span><span class="p">:</span></div>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="MixtureSet.clear"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.MixtureSet.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mixtures</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
@@ -280,7 +346,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.5.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

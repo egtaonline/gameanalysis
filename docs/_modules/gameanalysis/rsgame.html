@@ -6,7 +6,7 @@
   <head>
         <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.rsgame &#8212; Game Analysis 5.4.0 documentation</title>
+    <title>gameanalysis.rsgame &#8212; Game Analysis 5.5.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.5.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -937,21 +937,6 @@
     <span class="c1"># End Abstract Methods</span>
     <span class="c1"># --------------------</span>
 
-    <span class="c1"># XXX I&#39;ve face a constant struggle about whether to overload some of these</span>
-    <span class="c1"># reduceats and splits. It&#39;s really hard to say.</span>
-
-<div class="viewcode-block" id="RsGame.role_dot"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.role_dot">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">experimental</span>
-    <span class="k">def</span> <span class="nf">role_dot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zeroed</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Dot product values organized by role</span>
-
-<span class="sd">        The first argument is special. If it is zero, the product is zero even</span>
-<span class="sd">        if the second argument is nan or inf. This is often what we want when</span>
-<span class="sd">        zeroed is a mixture or a profile, etc.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">zeroed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">zeroed</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">zeroed</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span></div>
-            <span class="n">zeroed</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">values</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
-
 <div class="viewcode-block" id="RsGame.min_role_payoffs"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.min_role_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">min_role_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the minimum payoff for each role&quot;&quot;&quot;</span></div>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fmin</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_strat_payoffs</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
@@ -1095,8 +1080,10 @@
 
 <div class="viewcode-block" id="RsGame.expected_payoffs"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.expected_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">expected_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the payoff of each role under mixture&quot;&quot;&quot;</span>
-        <span class="n">deviations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_dot</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">deviations</span><span class="p">)</span>
+        <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span>
+        <span class="n">deviations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">mix</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span></div>
+            <span class="n">mix</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">deviations</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
 
 <div class="viewcode-block" id="RsGame.best_response"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.best_response">[docs]</a>    <span class="k">def</span> <span class="nf">best_response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the best response to a mixture</span>
@@ -1706,7 +1693,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.4.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.5.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
