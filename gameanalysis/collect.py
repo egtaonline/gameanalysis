@@ -12,11 +12,11 @@ def mcces(thresh):
 
 class MinimumConnectedComponentElementSet(object):
     """A class for returning vectors with the minimum weight
-    
+
     Vectors are only returned if they have the minimum weight in their
     connected component, where two vectors are connected if they're closer than
     `thresh` distance apart.
-    
+
     Inserts can take up to `O(n)` where `n` is the number of elements inserted.
     If this is problematic, a better data structure will probably be
     necessary."""

@@ -13,7 +13,8 @@ def test_connected_component():
     assert not simset.add([0.75], .5)
     assert len(simset) == 1
     assert [((0,), 0)] == list(simset)
-    assert repr(simset) == 'MinimumConnectedComponentElementSet(1, [((0,), 0)])'
+    assert (repr(simset) ==
+            'MinimumConnectedComponentElementSet(1, [((0,), 0)])')
 
     simset.clear()
     assert simset.add([0.75], 1)
