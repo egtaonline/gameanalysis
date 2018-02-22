@@ -3,8 +3,32 @@ import pytest
 
 from gameanalysis import collect
 from gameanalysis import utils
+from test import utils as tu
 
 
+def test_connected_component():
+    simset = collect.mcces(1)
+    assert simset.add([0], 0)
+    assert simset.add([1.5], 1)
+    assert not simset.add([0.75], .5)
+    assert len(simset) == 1
+    assert [((0,), 0)] == list(simset)
+    assert repr(simset) == 'MinimumConnectedComponentElementSet(1, [((0,), 0)])'
+
+    simset.clear()
+    assert simset.add([0.75], 1)
+    assert simset.add([1.5], 0.5)
+    assert simset.add([0], 0)
+    assert [((0,), 0)] == list(simset)
+
+    simset.clear()
+    assert simset.add([0], 0)
+    assert not simset.add([0.75], 1)
+    assert not simset.add([1.5], 0.5)
+    assert [((0,), 0)] == list(simset)
+
+
+@tu.warnings_filter(DeprecationWarning)
 def test_weighted_similarity():
     simset = collect.WeightedSimilaritySet(lambda a, b: abs(a - b) <= 1)
     simset.add(1, 0)
@@ -48,7 +72,7 @@ def test_dynamic_array_failure():
 
 
 def test_bit_set():
-    bitset = collect.BitSet()
+    bitset = collect.bitset()
     assert not bitset
     a = np.array([0, 1, 1, 1, 0], bool)
     b = np.array([1, 0, 0, 1, 1], bool)
@@ -73,6 +97,7 @@ def test_bit_set():
     assert bitset.add(a)
 
 
+@tu.warnings_filter(DeprecationWarning)
 def test_mixture_set():
     mixset = collect.MixtureSet(0.1)
     assert not mixset

@@ -340,8 +340,7 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=0.1, grid_points=2,
         game.biased_mixtures(),
         game.role_biased_mixtures(),
         game.random_mixtures(random_restarts)))
-    equilibria = collect.WeightedSimilaritySet(
-        lambda a, b: linalg.norm(a - b) < dist_thresh)
+    equilibria = collect.mcces(dist_thresh)
     best = [np.inf, -1, None]
     chunksize = len(initial_points) if processes == 1 else 4
 
@@ -379,6 +378,6 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=0.1, grid_points=2,
         equilibria.add(eqm, reg)
 
     if equilibria:
-        return np.concatenate([e[None] for e, r in equilibria])
+        return np.array([e for e, _ in equilibria])
     else:
         return np.empty((0, game.num_strats))

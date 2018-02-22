@@ -1,8 +1,69 @@
+import bisect
 from collections import abc
 
 import numpy as np
 
+from gameanalysis import utils
 
+
+def mcces(thresh):
+    return MinimumConnectedComponentElementSet(thresh)
+
+
+class MinimumConnectedComponentElementSet(object):
+    """A class for returning vectors with the minimum weight
+    
+    Vectors are only returned if they have the minimum weight in their
+    connected component, where two vectors are connected if they're closer than
+    `thresh` distance apart.
+    
+    Inserts can take up to `O(n)` where `n` is the number of elements inserted.
+    If this is problematic, a better data structure will probably be
+    necessary."""
+
+    def __init__(self, thresh):
+        self._thresh = thresh ** 2
+        self._set = []
+
+    def _similar(self, a, b):
+        return sum((ai - bi) ** 2 for ai, bi in zip(a, b)) <= self._thresh
+
+    def add(self, vector, weight):
+        vector = tuple(vector)
+        tup = (weight, vector)
+
+        mins = (float('inf'), ())
+        vecs = [vector]
+        new_set = []
+        for set_tup in self._set:
+            smin, svecs = set_tup
+            if any(self._similar(vector, v) for v in svecs):
+                mins = min(smin, mins)
+                vecs.extend(svecs)
+            else:
+                new_set.append(set_tup)
+
+        added = tup < mins
+        new_tup = (tup if added else mins, vecs)
+        bisect.insort(new_set, new_tup)
+        self._set = new_set
+        return added
+
+    def clear(self):
+        self._set.clear()
+
+    def __len__(self):
+        return len(self._set)
+
+    def __iter__(self):
+        return iter((v, w) for (w, v), _ in self._set)
+
+    def __repr__(self):
+        return '{}({}, {})'.format(
+            self.__class__.__name__, self._thresh, list(self))
+
+
+@utils.deprecated
 class WeightedSimilaritySet(object):
     """A set of non-similar elements prioritized by weight
 
@@ -132,6 +193,10 @@ class DynamicArray(object):
         return repr(self.data)
 
 
+def bitset():
+    return BitSet()
+
+
 class BitSet(object):
     """Set of bitmasks
 
@@ -176,6 +241,7 @@ class BitSet(object):
         return '{}({!r})'.format(self.__class__.__name__, self._masks)
 
 
+@utils.deprecated
 class MixtureSet(object):
     """A set of mixtures
 
