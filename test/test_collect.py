@@ -18,15 +18,16 @@ def test_connected_component():
 
     simset.clear()
     assert simset.add([0.75], 1)
-    assert simset.add([1.5], 0.5)
-    assert simset.add([0], 0)
+    assert not simset.add([1.5], 0.5)
+    assert not simset.add([0], 0)
     assert [((0,), 0)] == list(simset)
 
     simset.clear()
     assert simset.add([0], 0)
     assert not simset.add([0.75], 1)
     assert not simset.add([1.5], 0.5)
-    assert [((0,), 0)] == list(simset)
+    assert simset.add([3], 2)
+    assert [((0,), 0), ((3,), 2)] == list(simset)
 
 
 @tu.warnings_filter(DeprecationWarning)

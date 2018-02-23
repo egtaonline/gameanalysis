@@ -29,10 +29,12 @@ class MinimumConnectedComponentElementSet(object):
         return sum((ai - bi) ** 2 for ai, bi in zip(a, b)) <= self._thresh
 
     def add(self, vector, weight):
-        vector = tuple(vector)
-        tup = (weight, vector)
+        """Add a vector with a weight
 
-        mins = (float('inf'), ())
+        Returns true if the element is distinct from every element in the
+        container"""
+        vector = tuple(vector)
+        mins = (weight, vector)
         vecs = [vector]
         new_set = []
         for set_tup in self._set:
@@ -43,11 +45,9 @@ class MinimumConnectedComponentElementSet(object):
             else:
                 new_set.append(set_tup)
 
-        added = tup < mins
-        new_tup = (tup if added else mins, vecs)
-        bisect.insort(new_set, new_tup)
+        bisect.insort(new_set, (mins, vecs))
         self._set = new_set
-        return added
+        return len(vecs) == 1
 
     def clear(self):
         self._set.clear()
