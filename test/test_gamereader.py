@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 
 from gameanalysis import agggen
+from gameanalysis import canongame
 from gameanalysis import gambit
 from gameanalysis import gamegen
 from gameanalysis import gamereader
@@ -60,9 +61,13 @@ def merg():
     return mergegame.merge(game(), agg(), 0.5)
 
 
+def canon():
+    return canongame.canon(game())
+
+
 @utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('game', [
-    egame, game, sgame, agg, mat, rbf, point, sample, neighbor, merg,
+    egame, game, sgame, agg, mat, rbf, point, sample, neighbor, merg, canon,
     'gambit'])
 def test_automatic_deserialization(game):
     """Test that we can serialize and deserialize arbitrary games"""

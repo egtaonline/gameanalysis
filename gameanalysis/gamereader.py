@@ -2,6 +2,7 @@
 import json
 
 from gameanalysis import aggfn
+from gameanalysis import canongame
 from gameanalysis import gambit
 from gameanalysis import learning
 from gameanalysis import matgame
@@ -53,6 +54,7 @@ def loadj(obj):
     """
     readers = {
         'aggfn': aggfn.aggfn_json,
+        'canon': canongame.canon_json,
         'emptygame': rsgame.emptygame_json,
         'game': paygame.game_json,
         'matrix': matgame.matgame_json,
