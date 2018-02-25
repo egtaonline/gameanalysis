@@ -9,6 +9,7 @@ Submodules
    gameanalysis.aggfn
    gameanalysis.agggen
    gameanalysis.bootstrap
+   gameanalysis.canongame
    gameanalysis.collect
    gameanalysis.dominance
    gameanalysis.fixedpoint

@@ -6,7 +6,7 @@
   <head>
         <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.gamereader &#8212; Game Analysis 5.5.2 documentation</title>
+    <title>gameanalysis.gamereader &#8212; Game Analysis 5.6.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.5.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -40,6 +40,7 @@
 <span class="kn">import</span> <span class="nn">json</span>
 
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">aggfn</span>
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">canongame</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">gambit</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">learning</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">matgame</span>
@@ -91,6 +92,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">readers</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;aggfn&#39;</span><span class="p">:</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_json</span><span class="p">,</span>
+        <span class="s1">&#39;canon&#39;</span><span class="p">:</span> <span class="n">canongame</span><span class="o">.</span><span class="n">canon_json</span><span class="p">,</span>
         <span class="s1">&#39;emptygame&#39;</span><span class="p">:</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">,</span>
         <span class="s1">&#39;game&#39;</span><span class="p">:</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_json</span><span class="p">,</span>
         <span class="s1">&#39;matrix&#39;</span><span class="p">:</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame_json</span><span class="p">,</span>
@@ -135,7 +137,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.5.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

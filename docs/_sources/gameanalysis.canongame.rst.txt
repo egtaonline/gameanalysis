@@ -1,0 +1,7 @@
+gameanalysis.canongame module
+=============================
+
+.. automodule:: gameanalysis.canongame
+    :members:
+    :undoc-members:
+    :show-inheritance:
