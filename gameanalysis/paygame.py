@@ -192,8 +192,11 @@ class Game(rsgame.RsGame):
 
             # Mask out nans
             zp = self.zero_prob.dot(self.num_role_players)
-            devs = np.einsum(
-                'ij,ij->j', probs, np.where(probs > zp, payoffs, 0))
+            # TODO This threshold causes large errors in the jacobian when we
+            # look at sparse mixtures. This should probably be addressed, but
+            # it's unclear how without making this significantly slower.
+            nan_pays = np.where(probs > zp, payoffs, 0)
+            devs = np.einsum('ij,ij->j', probs, nan_pays)
             devs[nan_mask] = np.nan
 
         else:
@@ -212,7 +215,7 @@ class Game(rsgame.RsGame):
             dev_profs = (self._profiles[:, None] -
                          np.eye(self.num_strats, dtype=int))
             dev_jac = np.einsum(
-                'ij,ij,ijk->jk', probs, payoffs, dev_profs) / zmix
+                'ij,ij,ijk->jk', probs, nan_pays, dev_profs) / zmix
             if ignore_incomplete:
                 dev_jac -= (np.einsum('ij,ijk->jk', probs, dev_profs) *
                             devs[:, None] / zmix)

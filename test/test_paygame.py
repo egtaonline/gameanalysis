@@ -459,6 +459,18 @@ def test_deviation_payoffs_jacobian():
     assert np.allclose(dpj, expected_jac)
 
 
+def test_deviation_payoffs_jacobian_nans():
+    profs = [[2, 0],
+             [1, 1]]
+    pays = [[1, 0],
+            [np.nan, 2]]
+    game = paygame.game(2, 2, profs, pays)
+    dev, jac = game.deviation_payoffs([1, 0], jacobian=True)
+    assert np.allclose(dev, [1, 2])
+    assert np.any(~np.isnan(jac[0]))
+    assert np.all(np.isnan(jac[1]))
+
+
 # TODO This test fails for sparse mixtures
 @pytest.mark.parametrize('players,strats', utils.games)
 @pytest.mark.parametrize('ignore', [False, True])

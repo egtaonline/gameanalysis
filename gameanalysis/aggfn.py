@@ -126,8 +126,8 @@ class AgfnGame(rsgame.CompleteGame):
             (self.num_roles, self.num_functions) +
             tuple(self.num_role_players + 1),
             float)
-        for i, (num_play, probs, zp) in enumerate(zip(
-                self.num_role_players, role_node_probs, self.zero_prob)):
+        for i, (num_play, probs) in enumerate(zip(self.num_role_players,
+                                                  role_node_probs)):
             role_probs = spt.binom.pmf(
                 np.arange(num_play + 1), num_play, probs)
             dev_role_probs = spt.binom.pmf(
@@ -159,6 +159,9 @@ class AgfnGame(rsgame.CompleteGame):
                          tuple(self.num_role_players + 1), float)
         for i, (num_play, probs, zp) in enumerate(zip(
                 self.num_role_players, role_node_probs, self.zero_prob)):
+            # TODO This zp threshold causes large errors in the jacobian when
+            # we look at sparse mixtures. This should probably be addressed,
+            # but it's unclear how without making this significantly slower.
             configs = np.arange(num_play + 1)
             der = configs / (probs + zp) - configs[::-1] / (1 - probs + zp)
             dev_der = np.insert(configs[:-1] / (probs + zp) - configs[-2::-1] /
