@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.paygame &#8212; Game Analysis 5.6.0 documentation</title>
+    <title>gameanalysis.paygame &#8212; Game Analysis 5.6.1 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -230,8 +230,11 @@
 
             <span class="c1"># Mask out nans</span>
             <span class="n">zp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zero_prob</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span>
-            <span class="n">devs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
-                <span class="s1">&#39;ij,ij-&gt;j&#39;</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">probs</span> <span class="o">&gt;</span> <span class="n">zp</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="c1"># TODO This threshold causes large errors in the jacobian when we</span>
+            <span class="c1"># look at sparse mixtures. This should probably be addressed, but</span>
+            <span class="c1"># it&#39;s unclear how without making this significantly slower.</span>
+            <span class="n">nan_pays</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">probs</span> <span class="o">&gt;</span> <span class="n">zp</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">devs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ij-&gt;j&#39;</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">nan_pays</span><span class="p">)</span>
             <span class="n">devs</span><span class="p">[</span><span class="n">nan_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
         <span class="k">else</span><span class="p">:</span>
@@ -250,7 +253,7 @@
             <span class="n">dev_profs</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span>
                          <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
             <span class="n">dev_jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
-                <span class="s1">&#39;ij,ij,ijk-&gt;jk&#39;</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">,</span> <span class="n">dev_profs</span><span class="p">)</span> <span class="o">/</span> <span class="n">zmix</span>
+                <span class="s1">&#39;ij,ij,ijk-&gt;jk&#39;</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">nan_pays</span><span class="p">,</span> <span class="n">dev_profs</span><span class="p">)</span> <span class="o">/</span> <span class="n">zmix</span>
             <span class="k">if</span> <span class="n">ignore_incomplete</span><span class="p">:</span>
                 <span class="n">dev_jac</span> <span class="o">-=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ijk-&gt;jk&#39;</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">dev_profs</span><span class="p">)</span> <span class="o">*</span>
                             <span class="n">devs</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">/</span> <span class="n">zmix</span><span class="p">)</span>
@@ -1279,7 +1282,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
