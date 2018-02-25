@@ -725,14 +725,20 @@ class SampleGame(Game):
 
     def flat_profiles(self):
         """Profiles in parallel with flat_payoffs"""
-        return self._profiles.repeat(
-            self.num_samples.repeat(self.num_sample_profs), 0)
+        if self.is_empty():
+            return np.empty((0, self.num_strats), int)
+        else:
+            return self._profiles.repeat(
+                self.num_samples.repeat(self.num_sample_profs), 0)
 
     def flat_payoffs(self):
         """All sample payoffs linearly concatenated together"""
-        return np.concatenate([
-            pay.reshape((-1, self.num_strats))
-            for pay in self._sample_payoffs])
+        if self.is_empty():
+            return np.empty((0, self.num_strats))
+        else:
+            return np.concatenate([
+                pay.reshape((-1, self.num_strats))
+                for pay in self._sample_payoffs])
 
     def normalize(self):
         """Return a normalized SampleGame"""

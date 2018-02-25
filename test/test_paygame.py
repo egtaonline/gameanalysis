@@ -1101,6 +1101,10 @@ def test_samplegame_properties():
     assert np.all([] == game.num_sample_profs)
     assert np.all([] == game.sample_starts)
     assert np.all([] == game.num_samples)
+    assert game.profiles().shape == (0, 3)
+    assert game.payoffs().shape == (0, 3)
+    assert game.flat_profiles().shape == (0, 3)
+    assert game.flat_payoffs().shape == (0, 3)
 
     base = rsgame.emptygame(1, [4, 3])
     game = paygame.samplegame_replace(
