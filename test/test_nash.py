@@ -4,6 +4,7 @@ from os import path
 
 import numpy as np
 import pytest
+import timeout_decorator
 
 from gameanalysis import agggen
 from gameanalysis import gamegen
@@ -224,6 +225,18 @@ def test_hard_nash():
     assert not eqa.size or np.isclose(game.trim_mixture_support(eqa), expected,
                                       atol=1e-4, rtol=1e-4).all(1).any(), \
         "Didn't find equilibrium in known hard instance"
+
+
+@timeout_decorator.timeout(2)
+@pytest.mark.xfail(raises=timeout_decorator.timeout_decorator.TimeoutError)
+def test_hard_scarf():
+    """A buggy instance of scarfs algorithm
+
+    This triggered a discretization error with the fixed point algorithm
+    immediately, e.g. a timeout of 2s is fine"""
+    with open(path.join('example_games', 'hard_scarf.json')) as f:
+        game = gamereader.load(f)
+    nash.scarfs_algorithm(game, game.uniform_mixture())
 
 
 @pytest.mark.slow

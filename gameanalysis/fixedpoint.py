@@ -16,8 +16,9 @@ def fixed_point(func, init, **kwargs):
         Additional options to pass on to labeled_subsimplex. See other options
         for details.
     """
-    return labeled_subsimplex(
-        lambda mix: np.argmin((mix == 0) - mix + func(mix)), init, **kwargs)
+    def fixed_func(mix):
+        return np.argmin((mix == 0) - mix + func(mix))
+    return labeled_subsimplex(fixed_func, init, **kwargs)
 
 
 def labeled_subsimplex(label_func, init, disc):
@@ -56,14 +57,15 @@ def labeled_subsimplex(label_func, init, disc):
     init = np.asarray(init, float)
     dim = init.size
     # Base vertex of the subsimplex currently being used
-    base = np.append(_discretize_mixture(init, disc), 0)
+    dinit = _discretize_mixture(init, disc)
+    base = np.append(dinit, 0)
     base[0] += 1
     # permutation array of [1,dim] where v0 = base,
     # v{i+1} = [..., vi_{perms[i] - 1} - 1, vi_{perms[i]} + 1, ...]
     perms = np.arange(1, dim + 1)
     # Array of labels for each vertex
     labels = np.arange(dim + 1)
-    labels[dim] = label_func(init)
+    labels[dim] = label_func(dinit / disc)
     # Vertex used to label initial vertices (vertex[-1] == 0)
     label_vertex = base[:-1].copy()
     # Last index moved
