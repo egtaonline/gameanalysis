@@ -297,42 +297,51 @@ def multiplicative_weights_dist(
 
 
 def multiplicative_weights_stoch(
-        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8):
+        game, mix, *, max_iters=10000, converge_thresh=1e-8):
     """FIXME"""
     empirical = mix.copy()
-    weights = mix.copy()
+    weights = np.log(mix)
+    scales = np.ones(game.num_roles)
     players = game.num_role_players.repeat(game.num_role_strats)
     for i in range(2, max_iters + 2):
-        profile = game.random_profiles(None, weights)
-        pays = 0 # FIXME Appropriate thing here...
-        weights *= (1 + epsilon) ** pays
-        weights /= np.add.reduceat(weights, game.role_starts).repeat(
+        mix = np.exp(weights)
+        profile = game.random_profile(mix)
+        pays = 0 # FIXME
+        new_scales = np.maximum(
+            np.maximum.reduceat(np.abs(pays), game.role_starts), scales)
+        weights *= np.repeat(scales / new_scales, game.num_role_strats)
+        weights += pays / new_scales.repeat(game.num_role_strats)
+        weights -= np.logaddexp.reduceat(weights, game.role_starts).repeat(
             game.num_role_strats)
         update = (profile / players - empirical) / i
         empirical += update
+        scales = new_scales
         if np.linalg.norm(update) < converge_thresh:
             break
     return empirical
 
 
 def multiplicative_weights_bandit(
-        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8):
+        game, mix, *, max_iters=10000, converge_thresh=1e-8):
     """FIXME"""
     empirical = mix.copy()
-    weights = mix.copy()
+    weights = np.log(mix)
+    scales = np.ones(game.num_roles)
     players = game.num_role_players.repeat(game.num_role_strats)
     for i in range(2, max_iters + 2):
-        # FIXME Is this necessary
-        mix = game.trim_mixture_support(weights)
-        profile = game.random_profiles(None, mix)
+        mix = np.exp(weights)
+        profile = game.random_profile(mix)
         pays = game.get_payoffs(profile)
-        supp = profile > 0
-        weights[supp] *= (1 + epsilon) ** (
-            pays[supp] * players[supp] / mix[supp])
-        weights /= np.add.reduceat(weights, game.role_starts).repeat(
+        exp = pays * players / np.where(profile > 0, mix, 1)
+        new_scales = np.maximum(
+            np.maximum.reduceat(np.abs(exp), game.role_starts), scales)
+        weights *= np.repeat(scales / new_scales, game.num_role_strats)
+        weights += exp / new_scales.repeat(game.num_role_strats)
+        weights -= np.logaddexp.reduceat(weights, game.role_starts).repeat(
             game.num_role_strats)
         update = (profile / players - empirical) / i
         empirical += update
+        scales = new_scales
         if np.linalg.norm(update) < converge_thresh:
             break
     return empirical
