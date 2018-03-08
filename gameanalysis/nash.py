@@ -328,14 +328,16 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=0.1, grid_points=2,
         A two dimensional array with mixtures that have regret below
         `regret_thresh` and have norm difference of at least `dist_thresh`.
     """
-    assert game.is_complete(), "Nash finding only works on complete games"""
+    umix = game.uniform_mixture()
+    assert not np.isnan(game.deviation_payoffs(umix)).any(), \
+        "Nash finding only works on game with full deviation data"""
     assert processes is None or processes >= 0, \
         "processes must be non-negative or None"
     assert all(m in _AVAILABLE_METHODS for m in methods), \
         "specified a invalid method {}".format(methods)
 
     initial_points = list(itertools.chain(
-        [game.uniform_mixture()],
+        [umix],
         game.grid_mixtures(grid_points),
         game.biased_mixtures(),
         game.role_biased_mixtures(),
