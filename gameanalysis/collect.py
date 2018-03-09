@@ -5,6 +5,8 @@ import numpy as np
 
 from gameanalysis import utils
 
+# TODO Prune unused collections
+
 
 def mcces(thresh):
     return MinimumConnectedComponentElementSet(thresh)
@@ -239,7 +241,7 @@ class BitSet(object):
         return ((m // self._mask % 2).astype(bool) for m in self._masks)
 
     def __eq__(self, other):
-        return (self.__class__ == other.__class__ and
+        return (type(self) is type(other) and
                 (not self._masks and not other._masks) or
                 (self._mask.size == other._mask.size and
                  frozenset(self._masks) == frozenset(other._masks)))

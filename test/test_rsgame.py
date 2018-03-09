@@ -878,6 +878,11 @@ def test_emptygame_properties():
     assert np.all(game.num_role_players == [1])
     assert game.num_players == 1
     assert game.zero_prob.shape == (1,)
+    devs, jac = game.deviation_payoffs(game.random_mixture(), jacobian=True)
+    assert devs.shape == (1,)
+    assert np.isnan(devs).all()
+    assert jac.shape == (1, 1)
+    assert np.isnan(jac).all()
 
     game = rsgame.emptygame(3, 1)
     assert np.all(game.num_role_players == [3])

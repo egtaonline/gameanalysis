@@ -801,7 +801,7 @@ class StratArray(abc.ABC):
                 self.strat_names == other.strat_names)
 
 
-class RsGame(StratArray):
+class GameLike(StratArray):
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
@@ -822,106 +822,6 @@ class RsGame(StratArray):
         self.num_role_players = num_role_players
         self.num_role_players.setflags(write=False)
         self.num_players = num_role_players.sum()
-
-        self.zero_prob = np.finfo(float).tiny * (self.num_role_players + 1)
-        self.zero_prob.setflags(write=False)
-
-        self._num_profiles = None
-        self._num_complete_profiles = None
-
-    # ----------------
-    # Abstract Methods
-    # ----------------
-
-    @property
-    @abc.abstractmethod
-    def num_profiles(self):
-        """The number of profiles with any payoff information"""
-        pass  # pragma: no cover
-
-    @property
-    @abc.abstractmethod
-    def num_complete_profiles(self):
-        """The number of profiles with complete payoff information"""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def profiles(self):
-        """An array all of the profiles with any data"""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def payoffs(self):
-        """An array with all of the payoff corresponding to profiles()"""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def max_strat_payoffs(self):
-        """An upper bound on the payoff for each strategy"""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def min_strat_payoffs(self):
-        """A lower bound on the payoff for each strategy"""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def get_payoffs(self, profile):
-        """The payoffs for all profiles"""
-        pass  # pragma: no cover
-
-    # Note: This should allow arbitrary keyword arguments which is ignores if
-    # they're invalid.
-    @abc.abstractmethod
-    def deviation_payoffs(self, mixture, *, jacobian=False, **_):
-        """The payoffs for deviating from mixture
-
-        Optionally with the jacobian with respect to mixture. This is the
-        primary method that needs to implemented for nash finding."""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def restrict(self, restriction):
-        """Restrict viable strategies"""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def normalize(self):
-        """Return a new game where the max payoff is 1 and min payoff is 0"""
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def __contains__(self, profile):
-        """Return true if full payoff data for profile exists"""
-        pass  # pragma: no cover
-
-    # --------------------
-    # End Abstract Methods
-    # --------------------
-
-    def min_role_payoffs(self):
-        """Returns the minimum payoff for each role"""
-        return np.fmin.reduceat(self.min_strat_payoffs(), self.role_starts)
-
-    def max_role_payoffs(self):
-        """Returns the maximum payoff for each role"""
-        return np.fmax.reduceat(self.max_strat_payoffs(), self.role_starts)
-
-    def get_dev_payoffs(self, dev_profs):
-        """Compute the payoffs for deviating
-
-        Given partial profiles per role, compute the mean
-        payoff for deviating to each strategy.
-
-        Parameters
-        ----------
-        dev_profs : array-like, shape = (num_samples, num_roles, num_strats)
-            A list of partial profiles by role. This is the same structure as
-            returned by `random_dev_profiles`.
-        """
-        return np.diagonal(self.get_payoffs(
-            np.repeat(dev_profs, self.num_role_strats, -2) +
-            np.eye(self.num_strats, dtype=int)), 0, -2, -1)
 
     @property
     @utils.memoize
@@ -968,23 +868,6 @@ class RsGame(StratArray):
                                  self.num_role_strats) * ~pure + pure, 1)
         overcount = np.sum(cards * pure_counts * unpure_counts)
         return self.num_all_payoffs - overcount
-
-    def is_empty(self):
-        """Returns true if no profiles have data"""
-        return self.num_profiles == 0
-
-    def is_complete(self):
-        """Returns true if every profile has data"""
-        return self.num_complete_profiles == self.num_all_profiles
-
-    def is_constant_sum(self):
-        """Returns true if this game is constant sum"""
-        if self.is_empty():
-            return True
-        else:
-            profile_sums = np.einsum(
-                'ij,ij->i', self.profiles(), self.payoffs())
-            return np.allclose(profile_sums, profile_sums[0])
 
     @property
     @utils.memoize
@@ -1039,26 +922,6 @@ class RsGame(StratArray):
             1, -1), self.role_starts[1:] + np.arange(self.num_roles - 1), -1)
         profiles[..., self.role_starts] -= self.num_role_players
         return -profiles
-
-    def expected_payoffs(self, mix):
-        """Returns the payoff of each role under mixture"""
-        mix = np.asarray(mix)
-        deviations = self.deviation_payoffs(mix)
-        return np.add.reduceat(mix * np.where(
-            mix > 0, deviations, 0), self.role_starts)
-
-    def best_response(self, mix):
-        """Returns the best response to a mixture
-
-        The result is a new mixture with uniform support over all best
-        deviating strategies.
-        """
-        responses = self.deviation_payoffs(mix)
-        bests = np.maximum.reduceat(responses, self.role_starts)
-        best_resps = responses == bests.repeat(self.num_role_strats)
-        with np.errstate(invalid='ignore'):  # nan
-            return best_resps / np.add.reduceat(
-                best_resps, self.role_starts).repeat(self.num_role_strats)
 
     def is_profile(self, prof, *, axis=-1):
         """Verify that a profile is valid for game"""
@@ -1376,6 +1239,159 @@ class RsGame(StratArray):
     def __eq__(self, other):
         return (super().__eq__(other) and
                 np.all(self.num_role_players == other.num_role_players))
+
+
+class RsGame(GameLike):
+    """Role-symmetric game representation
+
+    This object only contains methods and information about definition of the
+    game, without defining how payoff data is generated / accessed.
+
+    Parameters
+    ----------
+    role_names : (str,)
+        The name of each role.
+    strat_names : ((str,),)
+        The name of each strategy for each role.
+    num_role_players :  ndarray
+        The number of players in each role. Must contain non-negative integers.
+    """
+
+    def __init__(self, role_names, strat_names, num_role_players):
+        super().__init__(role_names, strat_names, num_role_players)
+        self.zero_prob = np.finfo(float).tiny * (self.num_role_players + 1)
+        self.zero_prob.setflags(write=False)
+
+    # ----------------
+    # Abstract Methods
+    # ----------------
+
+    @property
+    @abc.abstractmethod
+    def num_profiles(self):
+        """The number of profiles with any payoff information"""
+        pass  # pragma: no cover
+
+    @property
+    @abc.abstractmethod
+    def num_complete_profiles(self):
+        """The number of profiles with complete payoff information"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def profiles(self):
+        """An array all of the profiles with any data"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def payoffs(self):
+        """An array with all of the payoff corresponding to profiles()"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def max_strat_payoffs(self):
+        """An upper bound on the payoff for each strategy"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def min_strat_payoffs(self):
+        """A lower bound on the payoff for each strategy"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def get_payoffs(self, profile):
+        """The payoffs for all profiles"""
+        pass  # pragma: no cover
+
+    # Note: This should allow arbitrary keyword arguments which is ignores if
+    # they're invalid.
+    @abc.abstractmethod
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_):
+        """The payoffs for deviating from mixture
+
+        Optionally with the jacobian with respect to mixture. This is the
+        primary method that needs to implemented for nash finding."""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def restrict(self, restriction):
+        """Restrict viable strategies"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def normalize(self):
+        """Return a new game where the max payoff is 1 and min payoff is 0"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def __contains__(self, profile):
+        """Return true if full payoff data for profile exists"""
+        pass  # pragma: no cover
+
+    # --------------------
+    # End Abstract Methods
+    # --------------------
+
+    def min_role_payoffs(self):
+        """Returns the minimum payoff for each role"""
+        return np.fmin.reduceat(self.min_strat_payoffs(), self.role_starts)
+
+    def max_role_payoffs(self):
+        """Returns the maximum payoff for each role"""
+        return np.fmax.reduceat(self.max_strat_payoffs(), self.role_starts)
+
+    def get_dev_payoffs(self, dev_profs):
+        """Compute the payoffs for deviating
+
+        Given partial profiles per role, compute the mean
+        payoff for deviating to each strategy.
+
+        Parameters
+        ----------
+        dev_profs : array-like, shape = (num_samples, num_roles, num_strats)
+            A list of partial profiles by role. This is the same structure as
+            returned by `random_dev_profiles`.
+        """
+        return np.diagonal(self.get_payoffs(
+            np.repeat(dev_profs, self.num_role_strats, -2) +
+            np.eye(self.num_strats, dtype=int)), 0, -2, -1)
+
+    def is_empty(self):
+        """Returns true if no profiles have data"""
+        return self.num_profiles == 0
+
+    def is_complete(self):
+        """Returns true if every profile has data"""
+        return self.num_complete_profiles == self.num_all_profiles
+
+    def is_constant_sum(self):
+        """Returns true if this game is constant sum"""
+        if self.is_empty():
+            return True
+        else:
+            profile_sums = np.einsum(
+                'ij,ij->i', self.profiles(), self.payoffs())
+            return np.allclose(profile_sums, profile_sums[0])
+
+    def expected_payoffs(self, mix):
+        """Returns the payoff of each role under mixture"""
+        mix = np.asarray(mix)
+        deviations = self.deviation_payoffs(mix)
+        return np.add.reduceat(mix * np.where(
+            mix > 0, deviations, 0), self.role_starts)
+
+    def best_response(self, mix):
+        """Returns the best response to a mixture
+
+        The result is a new mixture with uniform support over all best
+        deviating strategies.
+        """
+        responses = self.deviation_payoffs(mix)
+        bests = np.maximum.reduceat(responses, self.role_starts)
+        best_resps = responses == bests.repeat(self.num_role_strats)
+        with np.errstate(invalid='ignore'):  # nan
+            return best_resps / np.add.reduceat(
+                best_resps, self.role_starts).repeat(self.num_role_strats)
 
 
 class EmptyGame(RsGame):
