@@ -9,6 +9,8 @@ from gameanalysis import utils
 
 # TODO Make reduce_game return new game type that computes deviation payoffs
 # with reduced profiles?
+# TODO All methods should have the same signature
+
 
 class hierarchical(object):
     def __init__(self):

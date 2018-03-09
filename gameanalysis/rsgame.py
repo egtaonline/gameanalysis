@@ -263,6 +263,16 @@ class StratArray(abc.ABC):
         return np.all(np.bitwise_or.reduceat(restrict, self.role_starts, axis),
                       axis)
 
+    def _is_pure_restriction(self, restrict, *, axis=-1):
+        return np.all(np.add.reduceat(
+            restrict, self.role_starts, axis) == 1, axis)
+
+    def is_pure_restriction(self, restrict, *, axis=-1):
+        """Verify a restriction is pure"""
+        restrict = np.asarray(restrict, bool)
+        return (self.is_restriction(restrict, axis=axis) &
+                self._is_pure_restriction(restrict, axis=axis))
+
     def trim_mixture_support(self, mixture, *, thresh=1e-4, axis=-1):
         """Trims strategies played less than supp_thresh from the support"""
         mixture = np.array(mixture, float)
@@ -304,6 +314,12 @@ class StratArray(abc.ABC):
         return (np.all(mix >= 0, axis) &
                 np.all(np.isclose(np.add.reduceat(
                     mix, self.role_starts, axis), 1), axis))
+
+    def is_pure_mixture(self, mix, *, axis=-1):
+        """Verify a mixture is pure"""
+        mix = np.asarray(mix, float)
+        return (self.is_mixture(mix, axis=axis) &
+                self._is_pure_restriction(mix > 0, axis=axis))
 
     def mixture_project(self, mixture):
         """Project an array into mixture space"""
@@ -933,6 +949,12 @@ class GameLike(StratArray):
             np.all(self.num_role_players.reshape(play_shape) ==
                    np.add.reduceat(prof, self.role_starts, axis), axis) &
             np.all(prof >= 0, axis))
+
+    def is_pure_profile(self, prof, *, axis=-1):
+        """Verify a profile is pure"""
+        prof = np.asarray(prof, int)
+        return (self.is_profile(prof, axis=axis) &
+                self._is_pure_restriction(prof > 0, axis=axis))
 
     def all_profiles(self):
         """Return all profiles"""

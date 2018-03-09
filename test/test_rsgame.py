@@ -182,6 +182,17 @@ def test_is_restriction():
         sarr.is_restriction([[False, False, False, False, False, False]])
 
 
+def test_is_pure_restriction():
+    sarr = stratarray([3, 2])
+    assert sarr.is_pure_restriction([True, False, False, False, True])
+    assert not sarr.is_pure_restriction([True, False, True, False, False])
+    assert not sarr.is_pure_restriction([False, True, True, True, False])
+    assert not sarr.is_pure_restriction([False, False, True, True, True])
+
+    with pytest.raises(AssertionError):
+        sarr.is_pure_restriction([False, False, False, False])
+
+
 @pytest.mark.parametrize('_,role_strats', testutils.games)
 def test_random_stratarray_restrictions(_, role_strats):
     sarr = stratarray(role_strats)
@@ -261,6 +272,18 @@ def test_is_mixture():
         sarr.is_mixture([0, 0, 0, 0, 0, 0])
     with pytest.raises(AssertionError):
         sarr.is_mixture([[0, 0, 0, 0, 0, 0]])
+
+
+def test_is_pure_mixture():
+    sarr = stratarray([3, 2])
+    assert sarr.is_pure_mixture([0, 1, 0, 0, 1])
+    assert not sarr.is_pure_mixture([0.2, 0.3, 0.4, 0.5, 0.6])
+    assert not sarr.is_pure_mixture([1, 0, 0, 0.5, 0.5])
+    assert not sarr.is_pure_mixture([0.2, 0.8, 0, 1, 0])
+    assert not sarr.is_pure_mixture([0.2, 0.4, 0.4, 0.4, 0.6])
+
+    with pytest.raises(AssertionError):
+        sarr.is_pure_mixture([0, 0, 0, 0])
 
 
 def test_mixture_project():
@@ -1153,6 +1176,17 @@ def test_is_profile():
         game.is_profile([0, 0, 0, 0, 0, 0])
     with pytest.raises(AssertionError):
         game.is_profile([[0, 0, 0, 0, 0, 0]])
+
+
+def test_is_pure_profile():
+    game = rsgame.emptygame([2, 3], [3, 2])
+    assert game.is_pure_profile([2, 0, 0, 3, 0])
+    assert not game.is_pure_profile([1, 0, 2, 2, 1])
+    assert not game.is_pure_profile([1, 0, 1, 3, 0])
+    assert not game.is_pure_profile([1, 1, 0, 2, 1])
+
+    with pytest.raises(AssertionError):
+        game.is_pure_profile([0, 0, 0, 0])
 
 
 def test_all_profiles():
