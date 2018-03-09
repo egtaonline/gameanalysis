@@ -91,6 +91,7 @@ def test_bit_set():
     actual = frozenset(map(utils.hash_array, bitset))
     assert expected == actual
     assert bitset
+    assert bitset == collect.bitset([a, b])
 
     bitset.clear()
     assert not bitset

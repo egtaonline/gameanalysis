@@ -193,10 +193,14 @@ class DynamicArray(object):
         return repr(self.data)
 
 
-def bitset():
-    return BitSet()
+def bitset(iterable=()):
+    bits = BitSet()
+    for bit in iterable:
+        bits.add(bit)
+    return bits
 
 
+# TODO Add a size parameter and add all false
 class BitSet(object):
     """Set of bitmasks
 
@@ -233,6 +237,12 @@ class BitSet(object):
 
     def __iter__(self):
         return ((m // self._mask % 2).astype(bool) for m in self._masks)
+
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and
+                (not self._masks and not other._masks) or
+                (self._mask.size == other._mask.size and
+                 frozenset(self._masks) == frozenset(other._masks)))
 
     def __bool__(self):
         return bool(self._masks)
