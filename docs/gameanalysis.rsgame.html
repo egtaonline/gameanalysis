@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.rsgame module &#8212; Game Analysis 5.6.4 documentation</title>
+    <title>gameanalysis.rsgame module &#8212; Game Analysis 5.7.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.restrict.html" title="gameanalysis.restrict module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.6.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.7.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -170,8 +170,8 @@ primary method that needs to implemented for nash finding.</p>
 </dd></dl>
 
 <dl class="class">
-<dt id="gameanalysis.rsgame.RsGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">RsGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.rsgame.GameLike">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">GameLike</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.StratArray" title="gameanalysis.rsgame.StratArray"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.StratArray</span></code></a></p>
 <p>Role-symmetric game representation</p>
 <p>This object only contains methods and information about definition of the
@@ -190,11 +190,301 @@ game, without defining how payoff data is generated / accessed.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.all_profiles">
-<code class="descname">all_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.all_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.all_profiles" title="Permalink to this definition">¶</a></dt>
+<dt id="gameanalysis.rsgame.GameLike.all_profiles">
+<code class="descname">all_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.all_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.all_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return all profiles</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.devpay_from_json">
+<code class="descname">devpay_from_json</code><span class="sig-paren">(</span><em>deviations</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.devpay_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.devpay_from_json" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.devpay_to_json">
+<code class="descname">devpay_to_json</code><span class="sig-paren">(</span><em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.devpay_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.devpay_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format a profile and deviation payoffs as json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.is_asymmetric">
+<code class="descname">is_asymmetric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.is_asymmetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.is_asymmetric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if this game is asymmetric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.is_profile">
+<code class="descname">is_profile</code><span class="sig-paren">(</span><em>prof</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.is_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.is_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that a profile is valid for game</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.is_pure_profile">
+<code class="descname">is_pure_profile</code><span class="sig-paren">(</span><em>prof</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.is_pure_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.is_pure_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify a profile is pure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.is_symmetric">
+<code class="descname">is_symmetric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.is_symmetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.is_symmetric" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if this game is symmetric</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.max_prob_prof">
+<code class="descname">max_prob_prof</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.max_prob_prof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.max_prob_prof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the pure strategy profile with highest probability.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.nearby_profiles">
+<code class="descname">nearby_profiles</code><span class="sig-paren">(</span><em>profile</em>, <em>num_devs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.nearby_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.nearby_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns profiles reachable by at most num_devs deviations</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.GameLike.num_all_dpr_profiles">
+<code class="descname">num_all_dpr_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.GameLike.num_all_dpr_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of unique dpr profiles</p>
+<p>This calculation takes time exponential in the number of roles.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.GameLike.num_all_payoffs">
+<code class="descname">num_all_payoffs</code><a class="headerlink" href="#gameanalysis.rsgame.GameLike.num_all_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of payoffs in all profiles</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.GameLike.num_all_profiles">
+<code class="descname">num_all_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.GameLike.num_all_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total number of profiles in the game</p>
+<p>Not just the ones with data.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.GameLike.num_all_role_profiles">
+<code class="descname">num_all_role_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.GameLike.num_all_role_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles in each role (independent of others)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.payoff_from_json">
+<code class="descname">payoff_from_json</code><span class="sig-paren">(</span><em>pays</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.payoff_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.payoff_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a payoff from json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pays</strong> (<em>{role: {strat: payoff}}</em>) – A description of a payoff.</li>
+<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal notranslate"><span class="pre">dest</span></code> will be written to instead of allocating a
+new array.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.payoff_to_json">
+<code class="descname">payoff_to_json</code><span class="sig-paren">(</span><em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.payoff_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.payoff_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format payoffs as json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>payoffs</strong> (<em>ndarray</em>) – The payoffs to serialize.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_from_id">
+<code class="descname">profile_from_id</code><span class="sig-paren">(</span><em>ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_from_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_from_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a profile from its integer representation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_from_json">
+<code class="descname">profile_from_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a profile from json</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>prof</strong> (<em>{role: {strat: count}}</em>) – A description of a profile.</li>
+<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal notranslate"><span class="pre">dest</span></code> will be written to instead of allocating a
+new array.</li>
+<li><strong>verify</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, verify that a proepr profile for this game was read.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_from_repr">
+<code class="descname">profile_from_repr</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_from_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_from_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a profile from a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_from_str">
+<code class="descname">profile_from_str</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_from_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_from_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_to_id">
+<code class="descname">profile_to_id</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_to_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_to_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a unique integer representing a profile</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_to_json">
+<code class="descname">profile_to_json</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a profile array to json</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_to_repr">
+<code class="descname">profile_to_repr</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_to_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_to_repr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a profile to a string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.profile_to_str">
+<code class="descname">profile_to_str</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.profile_to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.profile_to_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a profile to a printable string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.pure_profiles">
+<code class="descname">pure_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.pure_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.pure_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all pure profiles</p>
+<p>A pure profile is a profile where only one strategy is played per
+role.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.random_deviation_profile">
+<code class="descname">random_deviation_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.random_deviation_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.random_deviation_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.random_deviation_profiles">
+<code class="descname">random_deviation_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.random_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.random_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a profiles where one player is deviating from mix</p>
+<p>Resulting shape of profiles is (num_samples, num_role_strats,
+num_role_strats). The first dimension is the sample, the next is the
+deviating strategy, leaving the last dimension for the actual
+profile.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mixture</strong> (<em>ndarray</em>) – Mixture to sample from.</li>
+<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to return. If None or omitted, then a single
+sample, without a leading singleton dimension is returned.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.random_profile">
+<code class="descname">random_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.random_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.random_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.random_profiles">
+<code class="descname">random_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.random_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.random_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample profiles from a mixture</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num_samples</strong> (<em>int</em>) – Number of samples to return.</li>
+<li><strong>mixture</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Mixture to sample from, of None or omitted, then uses the uniform
+mixture.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.random_role_deviation_profile">
+<code class="descname">random_role_deviation_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.random_role_deviation_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.random_role_deviation_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.random_role_deviation_profiles">
+<code class="descname">random_role_deviation_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.random_role_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.random_role_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return partial profiles where dev player is missing</p>
+<p>Resulting shape of profiles is (num_samples, num_roles,
+num_role_strats). The first dimension is the sample, the next is the
+deviating role, leaving the last dimension for the partial profile.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>mixture</strong> (<em>ndarray</em>) – Mixture to sample from.</li>
+<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to return. If None or omitted, then a single
+sample, without a leading singleton dimension is returned.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.round_mixture_to_profile">
+<code class="descname">round_mixture_to_profile</code><span class="sig-paren">(</span><em>mixture</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.round_mixture_to_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.round_mixture_to_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Round a mixture to the nearest profile</p>
+<p>This finds the profile with the minimum absolute error to the product
+of the profile and the number of players per role.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.GameLike.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#GameLike.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.GameLike.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format game as json</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.rsgame.RsGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">RsGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.GameLike" title="gameanalysis.rsgame.GameLike"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.GameLike</span></code></a></p>
+<p>Role-symmetric game representation</p>
+<p>This object only contains methods and information about definition of the
+game, without defining how payoff data is generated / accessed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>role_names</strong> (<em>(</em><em>str</em><em>,</em><em>)</em>) – The name of each role.</li>
+<li><strong>strat_names</strong> (<em>(</em><em>(</em><em>str</em><em>,</em><em>)</em><em>,</em><em>)</em>) – The name of each strategy for each role.</li>
+<li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players in each role. Must contain non-negative integers.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="gameanalysis.rsgame.RsGame.best_response">
 <code class="descname">best_response</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.best_response"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.best_response" title="Permalink to this definition">¶</a></dt>
@@ -209,17 +499,6 @@ deviating strategies.</p>
 <dd><p>The payoffs for deviating from mixture</p>
 <p>Optionally with the jacobian with respect to mixture. This is the
 primary method that needs to implemented for nash finding.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.devpay_from_json">
-<code class="descname">devpay_from_json</code><span class="sig-paren">(</span><em>deviations</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.devpay_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.devpay_from_json" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.devpay_to_json">
-<code class="descname">devpay_to_json</code><span class="sig-paren">(</span><em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.devpay_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.devpay_to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format a profile and deviation payoffs as json</p>
 </dd></dl>
 
 <dl class="method">
@@ -252,12 +531,6 @@ returned by <cite>random_dev_profiles</cite>.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.is_asymmetric">
-<code class="descname">is_asymmetric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_asymmetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_asymmetric" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns true if this game is asymmetric</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.rsgame.RsGame.is_complete">
 <code class="descname">is_complete</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_complete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_complete" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns true if every profile has data</p>
@@ -273,24 +546,6 @@ returned by <cite>random_dev_profiles</cite>.</td>
 <dt id="gameanalysis.rsgame.RsGame.is_empty">
 <code class="descname">is_empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_empty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns true if no profiles have data</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.is_profile">
-<code class="descname">is_profile</code><span class="sig-paren">(</span><em>prof</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_profile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Verify that a profile is valid for game</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.is_symmetric">
-<code class="descname">is_symmetric</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.is_symmetric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.is_symmetric" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns true if this game is symmetric</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.max_prob_prof">
-<code class="descname">max_prob_prof</code><span class="sig-paren">(</span><em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.max_prob_prof"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.max_prob_prof" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the pure strategy profile with highest probability.</p>
 </dd></dl>
 
 <dl class="method">
@@ -318,41 +573,9 @@ returned by <cite>random_dev_profiles</cite>.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.nearby_profiles">
-<code class="descname">nearby_profiles</code><span class="sig-paren">(</span><em>profile</em>, <em>num_devs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.nearby_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.nearby_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns profiles reachable by at most num_devs deviations</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.rsgame.RsGame.normalize">
 <code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.normalize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="gameanalysis.rsgame.RsGame.num_all_dpr_profiles">
-<code class="descname">num_all_dpr_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_dpr_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of unique dpr profiles</p>
-<p>This calculation takes time exponential in the number of roles.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="gameanalysis.rsgame.RsGame.num_all_payoffs">
-<code class="descname">num_all_payoffs</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of payoffs in all profiles</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="gameanalysis.rsgame.RsGame.num_all_profiles">
-<code class="descname">num_all_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>The total number of profiles in the game</p>
-<p>Not just the ones with data.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="gameanalysis.rsgame.RsGame.num_all_role_profiles">
-<code class="descname">num_all_role_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.RsGame.num_all_role_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>The number of profiles in each role (independent of others)</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -368,103 +591,9 @@ returned by <cite>random_dev_profiles</cite>.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.payoff_from_json">
-<code class="descname">payoff_from_json</code><span class="sig-paren">(</span><em>pays</em>, <em>dest=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.payoff_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.payoff_from_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read a payoff from json</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>pays</strong> (<em>{role: {strat: payoff}}</em>) – A description of a payoff.</li>
-<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal notranslate"><span class="pre">dest</span></code> will be written to instead of allocating a
-new array.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.payoff_to_json">
-<code class="descname">payoff_to_json</code><span class="sig-paren">(</span><em>payoffs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.payoff_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.payoff_to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format payoffs as json</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>payoffs</strong> (<em>ndarray</em>) – The payoffs to serialize.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.rsgame.RsGame.payoffs">
 <code class="descname">payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.payoffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>An array with all of the payoff corresponding to profiles()</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_from_id">
-<code class="descname">profile_from_id</code><span class="sig-paren">(</span><em>ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a profile from its integer representation</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_from_json">
-<code class="descname">profile_from_json</code><span class="sig-paren">(</span><em>prof</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read a profile from json</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>prof</strong> (<em>{role: {strat: count}}</em>) – A description of a profile.</li>
-<li><strong>dest</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – If supplied, <code class="docutils literal notranslate"><span class="pre">dest</span></code> will be written to instead of allocating a
-new array.</li>
-<li><strong>verify</strong> (<em>bool</em><em>, </em><em>optional</em>) – If true, verify that a proepr profile for this game was read.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_from_repr">
-<code class="descname">profile_from_repr</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_repr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read a profile from a string</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_from_str">
-<code class="descname">profile_from_str</code><span class="sig-paren">(</span><em>prof_str</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_from_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_from_str" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_to_id">
-<code class="descname">profile_to_id</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a unique integer representing a profile</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_to_json">
-<code class="descname">profile_to_json</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a profile array to json</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_to_repr">
-<code class="descname">profile_to_repr</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_repr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a profile to a string</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.profile_to_str">
-<code class="descname">profile_to_str</code><span class="sig-paren">(</span><em>prof</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.profile_to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.profile_to_str" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a profile to a printable string</p>
 </dd></dl>
 
 <dl class="method">
@@ -474,110 +603,9 @@ new array.</li>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.pure_profiles">
-<code class="descname">pure_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.pure_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.pure_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return all pure profiles</p>
-<p>A pure profile is a profile where only one strategy is played per
-role.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.random_deviation_profile">
-<code class="descname">random_deviation_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_deviation_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_deviation_profile" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.random_deviation_profiles">
-<code class="descname">random_deviation_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_deviation_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a profiles where one player is deviating from mix</p>
-<p>Resulting shape of profiles is (num_samples, num_role_strats,
-num_role_strats). The first dimension is the sample, the next is the
-deviating strategy, leaving the last dimension for the actual
-profile.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>mixture</strong> (<em>ndarray</em>) – Mixture to sample from.</li>
-<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to return. If None or omitted, then a single
-sample, without a leading singleton dimension is returned.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.random_profile">
-<code class="descname">random_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_profile" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.random_profiles">
-<code class="descname">random_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sample profiles from a mixture</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_samples</strong> (<em>int</em>) – Number of samples to return.</li>
-<li><strong>mixture</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Mixture to sample from, of None or omitted, then uses the uniform
-mixture.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.random_role_deviation_profile">
-<code class="descname">random_role_deviation_profile</code><span class="sig-paren">(</span><em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_role_deviation_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_role_deviation_profile" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.random_role_deviation_profiles">
-<code class="descname">random_role_deviation_profiles</code><span class="sig-paren">(</span><em>num_samples</em>, <em>mixture=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.random_role_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.random_role_deviation_profiles" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return partial profiles where dev player is missing</p>
-<p>Resulting shape of profiles is (num_samples, num_roles,
-num_role_strats). The first dimension is the sample, the next is the
-deviating role, leaving the last dimension for the partial profile.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>mixture</strong> (<em>ndarray</em>) – Mixture to sample from.</li>
-<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of samples to return. If None or omitted, then a single
-sample, without a leading singleton dimension is returned.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.rsgame.RsGame.restrict">
 <code class="descname">restrict</code><span class="sig-paren">(</span><em>restriction</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Restrict viable strategies</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.round_mixture_to_profile">
-<code class="descname">round_mixture_to_profile</code><span class="sig-paren">(</span><em>mixture</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.round_mixture_to_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.round_mixture_to_profile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Round a mixture to the nearest profile</p>
-<p>This finds the profile with the minimum absolute error to the product
-of the profile and the number of players per role.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.RsGame.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#RsGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.RsGame.to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format game as json</p>
 </dd></dl>
 
 </dd></dl>
@@ -664,6 +692,18 @@ strategies. If there’s only one strategy, it is played with probability
 <dt id="gameanalysis.rsgame.StratArray.is_mixture">
 <code class="descname">is_mixture</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.is_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.is_mixture" title="Permalink to this definition">¶</a></dt>
 <dd><p>Verify that a mixture is valid for game</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.is_pure_mixture">
+<code class="descname">is_pure_mixture</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.is_pure_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.is_pure_mixture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify a mixture is pure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.StratArray.is_pure_restriction">
+<code class="descname">is_pure_restriction</code><span class="sig-paren">(</span><em>restrict</em>, <em>*</em>, <em>axis=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.is_pure_restriction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.is_pure_restriction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify a restriction is pure</p>
 </dd></dl>
 
 <dl class="method">
@@ -1126,7 +1166,7 @@ data.</p>
         <li class="right" >
           <a href="gameanalysis.restrict.html" title="gameanalysis.restrict module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.6.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.7.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

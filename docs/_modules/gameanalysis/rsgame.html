@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.rsgame &#8212; Game Analysis 5.6.4 documentation</title>
+    <title>gameanalysis.rsgame &#8212; Game Analysis 5.7.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -301,6 +301,16 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bitwise_or</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span></div>
                       <span class="n">axis</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_is_pure_restriction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
+            <span class="n">restrict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StratArray.is_pure_restriction"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.StratArray.is_pure_restriction">[docs]</a>    <span class="k">def</span> <span class="nf">is_pure_restriction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify a restriction is pure&quot;&quot;&quot;</span>
+        <span class="n">restrict</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span> <span class="o">&amp;</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_is_pure_restriction</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">))</span>
+
 <div class="viewcode-block" id="StratArray.trim_mixture_support"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.StratArray.trim_mixture_support">[docs]</a>    <span class="k">def</span> <span class="nf">trim_mixture_support</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Trims strategies played less than supp_thresh from the support&quot;&quot;&quot;</span>
         <span class="n">mixture</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
@@ -342,6 +352,12 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">mix</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span> <span class="o">&amp;</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span></div>
                     <span class="n">mix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="p">))</span>
+
+<div class="viewcode-block" id="StratArray.is_pure_mixture"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.StratArray.is_pure_mixture">[docs]</a>    <span class="k">def</span> <span class="nf">is_pure_mixture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify a mixture is pure&quot;&quot;&quot;</span>
+        <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_mixture</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span> <span class="o">&amp;</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_is_pure_restriction</span><span class="p">(</span><span class="n">mix</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">))</span>
 
 <div class="viewcode-block" id="StratArray.mixture_project"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.StratArray.mixture_project">[docs]</a>    <span class="k">def</span> <span class="nf">mixture_project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Project an array into mixture space&quot;&quot;&quot;</span>
@@ -839,7 +855,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">strat_names</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="RsGame"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame">[docs]</a><span class="k">class</span> <span class="nc">RsGame</span><span class="p">(</span><span class="n">StratArray</span><span class="p">):</span>
+<div class="viewcode-block" id="GameLike"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike">[docs]</a><span class="k">class</span> <span class="nc">GameLike</span><span class="p">(</span><span class="n">StratArray</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Role-symmetric game representation</span>
 
 <span class="sd">    This object only contains methods and information about definition of the</span>
@@ -861,11 +877,450 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_players</span> <span class="o">=</span> <span class="n">num_role_players</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
+    <span class="nd">@property</span>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">num_all_role_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The number of profiles in each role (independent of others)&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">num_all_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The total number of profiles in the game</span>
+
+<span class="sd">        Not just the ones with data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_role_profiles</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">num_all_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The number of payoffs in all profiles&quot;&quot;&quot;</span>
+        <span class="n">dev_players</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">dev_players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+                      <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">num_all_dpr_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The number of unique dpr profiles</span>
+
+<span class="sd">        This calculation takes time exponential in the number of roles.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get all combinations of &quot;pure&quot; roles and then filter by ones with</span>
+        <span class="c1"># support at least 2. Thus, 0, 1, and 2 can be safely ignored</span>
+        <span class="n">pure</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&amp;</span>
+                <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">cards</span> <span class="o">=</span> <span class="n">pure</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pure</span> <span class="o">=</span> <span class="n">pure</span><span class="p">[</span><span class="n">cards</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">cards</span> <span class="o">=</span> <span class="n">cards</span><span class="p">[</span><span class="n">cards</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="c1"># For each combination of pure roles, compute the number of profiles</span>
+        <span class="c1"># conditioned on those roles being pure, then multiply them by the</span>
+        <span class="c1"># cardinality of the pure roles.</span>
+        <span class="n">pure_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">*</span> <span class="n">pure</span> <span class="o">+</span> <span class="o">~</span><span class="n">pure</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">unpure_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">((</span><span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+                                                 <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">-</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">*</span> <span class="o">~</span><span class="n">pure</span> <span class="o">+</span> <span class="n">pure</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">overcount</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cards</span> <span class="o">*</span> <span class="n">pure_counts</span> <span class="o">*</span> <span class="n">unpure_counts</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_payoffs</span> <span class="o">-</span> <span class="n">overcount</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">_prof_id_base</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Base is reversed so that profile_ids are ascending</span>
+        <span class="n">rprofs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_role_profiles</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
+            <span class="n">rprofs</span> <span class="o">=</span> <span class="n">rprofs</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">rprofs</span><span class="p">[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumprod</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">_id_play</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">rev</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">rev</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span>
+        <span class="k">return</span> <span class="n">rev</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GameLike.profile_to_id"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_to_id">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a unique integer representing a profile&quot;&quot;&quot;</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">profiles</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">profiles</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">sizes</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id_play</span><span class="p">,</span> <span class="n">profiles</span><span class="p">)</span>
+        <span class="n">sizes</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_ends</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
+            <span class="n">sizes</span> <span class="o">=</span> <span class="n">sizes</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">sizes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prof_id_base</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.profile_from_id"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_from_id">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a profile from its integer representation&quot;&quot;&quot;</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="n">role_ids</span> <span class="o">=</span> <span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prof_id_base</span> <span class="o">%</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">num_all_role_profiles</span><span class="p">)</span>
+        <span class="n">dec_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ids</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,),</span> <span class="nb">int</span><span class="p">)</span>
+
+        <span class="n">role_ids_iter</span> <span class="o">=</span> <span class="n">role_ids</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
+        <span class="n">role_ids_iter</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span>
+        <span class="n">dec_profs_iter</span> <span class="o">=</span> <span class="n">dec_profs</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
+        <span class="n">dec_profs_iter</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
+
+        <span class="c1"># This can&#39;t be vectorized further, because the sizes are dependent</span>
+        <span class="k">for</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">profs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                <span class="n">role_ids_iter</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">dec_profs_iter</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
+            <span class="k">for</span> <span class="n">prof</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">profs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nb">range</span><span class="p">(</span><span class="n">profs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size_inv</span><span class="p">(</span><span class="n">sizes</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+                <span class="n">sizes</span> <span class="o">-=</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">prof</span><span class="p">)</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">dec_profs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">profiles</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">]</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span></div>
+        <span class="k">return</span> <span class="o">-</span><span class="n">profiles</span>
+
+<div class="viewcode-block" id="GameLike.is_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.is_profile">[docs]</a>    <span class="k">def</span> <span class="nf">is_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify that a profile is valid for game&quot;&quot;&quot;</span>
+        <span class="n">prof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">prof</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span>
+        <span class="n">play_shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">prof</span><span class="o">.</span><span class="n">ndim</span>
+        <span class="n">play_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">play_shape</span><span class="p">)</span> <span class="o">==</span>
+                   <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span> <span class="n">axis</span><span class="p">)</span> <span class="o">&amp;</span></div>
+            <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">prof</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="p">))</span>
+
+<div class="viewcode-block" id="GameLike.is_pure_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.is_pure_profile">[docs]</a>    <span class="k">def</span> <span class="nf">is_pure_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify a profile is pure&quot;&quot;&quot;</span>
+        <span class="n">prof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span> <span class="o">&amp;</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_is_pure_restriction</span><span class="p">(</span><span class="n">prof</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">))</span>
+
+<div class="viewcode-block" id="GameLike.all_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.all_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">all_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return all profiles&quot;&quot;&quot;</span>
+        <span class="n">role_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">utils</span><span class="o">.</span><span class="n">acomb</span><span class="p">(</span><span class="n">n_strats</span><span class="p">,</span> <span class="n">players</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">n_strats</span><span class="p">,</span> <span class="n">players</span>
+                       <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)]</span></div>
+        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">acartesian2</span><span class="p">(</span><span class="o">*</span><span class="n">role_arrays</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.pure_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.pure_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">pure_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return all pure profiles</span>
+
+<span class="sd">        A pure profile is a profile where only one strategy is played per</span>
+<span class="sd">        role.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pure_restrictions</span><span class="p">()</span> <span class="o">*</span></div>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">))</span>
+
+<div class="viewcode-block" id="GameLike.nearby_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.nearby_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">nearby_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">num_devs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns profiles reachable by at most num_devs deviations&quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">num_devs</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">dev_players</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">acomb</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">num_devs</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dev_players</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">dev_players</span> <span class="o">=</span> <span class="n">dev_players</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">supp</span> <span class="o">=</span> <span class="n">profile</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">sub_strats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">supp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
+
+        <span class="n">profiles</span> <span class="o">=</span> <span class="p">[</span><span class="n">profile</span><span class="p">[</span><span class="kc">None</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">players</span> <span class="ow">in</span> <span class="n">dev_players</span><span class="p">:</span>
+            <span class="n">to_dev_profs</span> <span class="o">=</span> <span class="n">emptygame</span><span class="p">(</span>
+                <span class="n">players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">sub_strats</span><span class="p">)</span>
+            <span class="n">from_dev_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sub</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="n">from_dev_profs</span><span class="p">[:,</span> <span class="n">supp</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
+            <span class="n">before_devs</span> <span class="o">=</span> <span class="n">profile</span> <span class="o">-</span> <span class="n">from_dev_profs</span>
+            <span class="n">before_devs</span> <span class="o">=</span> <span class="n">before_devs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">before_devs</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">before_devs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span><span class="n">before_devs</span><span class="p">)</span>
+            <span class="n">nearby</span> <span class="o">=</span> <span class="n">before_devs</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">to_dev_profs</span>
+            <span class="n">nearby</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
+            <span class="n">profiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span><span class="n">nearby</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">profiles</span><span class="p">))</span>
+
+<div class="viewcode-block" id="GameLike.random_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.random_profile">[docs]</a>    <span class="k">def</span> <span class="nf">random_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_profiles</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GameLike.random_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.random_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">random_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample profiles from a mixture</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        num_samples : int</span>
+<span class="sd">            Number of samples to return.</span>
+<span class="sd">        mixture : ndarray, optional</span>
+<span class="sd">            Mixture to sample from, of None or omitted, then uses the uniform</span>
+<span class="sd">            mixture.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mixture</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniform_mixture</span><span class="p">()</span>
+        <span class="n">role_samples</span> <span class="o">=</span> <span class="p">[</span><span class="n">rand</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">probs</span>
+                        <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+                               <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))]</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">role_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.round_mixture_to_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.round_mixture_to_profile">[docs]</a>    <span class="k">def</span> <span class="nf">round_mixture_to_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Round a mixture to the nearest profile</span>
+
+<span class="sd">        This finds the profile with the minimum absolute error to the product</span>
+<span class="sd">        of the profile and the number of players per role.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">float_prof</span> <span class="o">=</span> <span class="n">mixture</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">float_prof</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
+            <span class="n">profile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">profile</span> <span class="o">-</span> <span class="n">float_prof</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="n">errors</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="n">profile</span><span class="p">[</span><span class="n">rank</span> <span class="o">&lt;</span> <span class="n">missing</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+        <span class="k">return</span> <span class="n">profile</span>
+
+<div class="viewcode-block" id="GameLike.random_role_deviation_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.random_role_deviation_profile">[docs]</a>    <span class="k">def</span> <span class="nf">random_role_deviation_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_role_deviation_profiles</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GameLike.random_role_deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.random_role_deviation_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">random_role_deviation_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return partial profiles where dev player is missing</span>
+
+<span class="sd">        Resulting shape of profiles is (num_samples, num_roles,</span>
+<span class="sd">        num_role_strats). The first dimension is the sample, the next is the</span>
+<span class="sd">        deviating role, leaving the last dimension for the partial profile.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mixture : ndarray</span>
+<span class="sd">            Mixture to sample from.</span>
+<span class="sd">        num_samples : int, optional</span>
+<span class="sd">            Number of samples to return. If None or omitted, then a single</span>
+<span class="sd">            sample, without a leading singleton dimension is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mixture</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniform_mixture</span><span class="p">()</span>
+        <span class="n">dev_players</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span>
+                         <span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">players</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dev_players</span><span class="p">):</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+            <span class="n">profs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">random_profiles</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">profs</span>
+
+<div class="viewcode-block" id="GameLike.random_deviation_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.random_deviation_profile">[docs]</a>    <span class="k">def</span> <span class="nf">random_deviation_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_deviation_profiles</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GameLike.random_deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.random_deviation_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">random_deviation_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a profiles where one player is deviating from mix</span>
+
+<span class="sd">        Resulting shape of profiles is (num_samples, num_role_strats,</span>
+<span class="sd">        num_role_strats). The first dimension is the sample, the next is the</span>
+<span class="sd">        deviating strategy, leaving the last dimension for the actual</span>
+<span class="sd">        profile.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        mixture : ndarray</span>
+<span class="sd">            Mixture to sample from.</span>
+<span class="sd">        num_samples : int, optional</span>
+<span class="sd">            Number of samples to return. If None or omitted, then a single</span>
+<span class="sd">            sample, without a leading singleton dimension is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">devs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_role_deviation_profiles</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">devs</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span></div>
+                <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+
+<div class="viewcode-block" id="GameLike.max_prob_prof"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.max_prob_prof">[docs]</a>    <span class="k">def</span> <span class="nf">max_prob_prof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the pure strategy profile with highest probability.&quot;&quot;&quot;</span>
+        <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">utils</span><span class="o">.</span><span class="n">multinomial_mode</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">p</span>
+             <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span></div>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.is_symmetric"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.is_symmetric">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">is_symmetric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns true if this game is symmetric&quot;&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">==</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="GameLike.is_asymmetric"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.is_asymmetric">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">is_asymmetric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns true if this game is asymmetric&quot;&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.profile_from_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_from_json">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read a profile from json</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prof : {role: {strat: count}}</span>
+<span class="sd">            A description of a profile.</span>
+<span class="sd">        dest : ndarray, optional</span>
+<span class="sd">            If supplied, ``dest`` will be written to instead of allocating a</span>
+<span class="sd">            new array.</span>
+<span class="sd">        verify : bool, optional</span>
+<span class="sd">            If true, verify that a proepr profile for this game was read.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;i&#39;</span>
+            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,)</span>
+        <span class="n">dest</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">prof</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">strats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">dest</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_strat_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">)]</span> <span class="o">=</span> <span class="n">count</span>
+
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">verify</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">dest</span><span class="p">),</span> \
+            <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2"> is not a valid profile&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prof</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">dest</span>
+
+<div class="viewcode-block" id="GameLike.payoff_from_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.payoff_from_json">[docs]</a>    <span class="k">def</span> <span class="nf">payoff_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pays</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read a payoff from json</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pays : {role: {strat: payoff}}</span>
+<span class="sd">            A description of a payoff.</span>
+<span class="sd">        dest : ndarray, optional</span>
+<span class="sd">            If supplied, ``dest`` will be written to instead of allocating a</span>
+<span class="sd">            new array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">dest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span>
+            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,)</span>
+        <span class="n">dest</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">pays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">pay</span> <span class="ow">in</span> <span class="n">strats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">dest</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_strat_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">)]</span> <span class="o">=</span> <span class="n">_mean</span><span class="p">(</span><span class="n">pay</span><span class="p">)</span>
+</div>
+        <span class="k">return</span> <span class="n">dest</span>
+
+<div class="viewcode-block" id="GameLike.profile_to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_to_json">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a profile array to json&quot;&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_json</span><span class="p">(</span><span class="n">prof</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.payoff_to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.payoff_to_json">[docs]</a>    <span class="k">def</span> <span class="nf">payoff_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Format payoffs as json</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        payoffs : ndarray</span>
+<span class="sd">            The payoffs to serialize.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_json</span><span class="p">(</span><span class="n">payoffs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.profile_from_repr"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_from_repr">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof_str</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read a profile from a string&quot;&quot;&quot;</span>
+        <span class="n">prof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_arr_repr</span><span class="p">(</span><span class="n">prof_str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">verify</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">prof</span><span class="p">),</span> \
+            <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2"> does not define a profile&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prof_str</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">prof</span>
+
+<div class="viewcode-block" id="GameLike.profile_to_repr"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_to_repr">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a profile to a string&quot;&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_repr</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.profile_from_str"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_from_str">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof_str</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">prof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_arr_str</span><span class="p">(</span><span class="n">prof_str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">verify</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">prof</span><span class="p">),</span> \
+            <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2"> is not a valid profile&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prof_str</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">prof</span>
+
+<div class="viewcode-block" id="GameLike.profile_to_str"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.profile_to_str">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a profile to a printable string&quot;&quot;&quot;</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_str</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GameLike.devpay_from_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.devpay_from_json">[docs]</a>    <span class="k">def</span> <span class="nf">devpay_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deviations</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_devs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span>
+            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_devs</span><span class="p">,)</span>
+        <span class="n">dest</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">deviations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">devs</span> <span class="ow">in</span> <span class="n">strats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">dev</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">devs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">dest</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_strat_dev_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">dev</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
+</div>
+        <span class="k">return</span> <span class="n">dest</span>
+
+<div class="viewcode-block" id="GameLike.devpay_to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.devpay_to_json">[docs]</a>    <span class="k">def</span> <span class="nf">devpay_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Format a profile and deviation payoffs as json&quot;&quot;&quot;</span>
+        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">payoffs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">:</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">pay</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">pay</span><span class="p">,</span> <span class="n">d</span>  <span class="c1"># pragma: no branch</span>
+                        <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">spays</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ses</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">s</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">pay</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">}</span>
+                    <span class="k">for</span> <span class="n">spays</span><span class="p">,</span> <span class="n">s</span>
+                    <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rpay</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">ses</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">spays</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)}</span>
+                <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">ses</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">rpay</span>
+                <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span>
+                       <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">payoffs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dev_role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span></div>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">rpay</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)}</span>
+
+<div class="viewcode-block" id="GameLike.to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.GameLike.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Format game as json&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;players&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+                                <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">))),</span>
+            <span class="s1">&#39;strategies&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+                                   <span class="nb">map</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">)))</span></div>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Format game as a printable string&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">:</span><span class="se">\n</span><span class="s1">    Roles: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">    Players:</span><span class="se">\n</span><span class="s1">        </span><span class="si">{}</span><span class="se">\n</span><span class="s1">    &#39;</span>
+             <span class="s1">&#39;Strategies:</span><span class="se">\n</span><span class="s1">        </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                 <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">),</span>
+                 <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">        &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                     <span class="s1">&#39;</span><span class="si">{:d}</span><span class="s1">x </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">role</span><span class="p">)</span>
+                     <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">count</span>
+                     <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)),</span>
+                 <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">        &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">:</span><span class="se">\n</span><span class="s1">            </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                         <span class="n">role</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">            &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">strats</span><span class="p">))</span>
+                     <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span>
+                     <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">))))</span>
+
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span></div>
+                <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="RsGame"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame">[docs]</a><span class="k">class</span> <span class="nc">RsGame</span><span class="p">(</span><span class="n">GameLike</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Role-symmetric game representation</span>
+
+<span class="sd">    This object only contains methods and information about definition of the</span>
+<span class="sd">    game, without defining how payoff data is generated / accessed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_names : (str,)</span>
+<span class="sd">        The name of each role.</span>
+<span class="sd">    strat_names : ((str,),)</span>
+<span class="sd">        The name of each strategy for each role.</span>
+<span class="sd">    num_role_players :  ndarray</span>
+<span class="sd">        The number of players in each role. Must contain non-negative integers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zero_prob</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zero_prob</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_num_profiles</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_num_complete_profiles</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="c1"># ----------------</span>
     <span class="c1"># Abstract Methods</span>
@@ -961,52 +1416,6 @@
             <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">dev_profs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span></div>
             <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)),</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">num_all_role_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The number of profiles in each role (independent of others)&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">num_all_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The total number of profiles in the game</span>
-
-<span class="sd">        Not just the ones with data.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_role_profiles</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">()</span>
-
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">num_all_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The number of payoffs in all profiles&quot;&quot;&quot;</span>
-        <span class="n">dev_players</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">dev_players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-                      <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">num_all_dpr_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The number of unique dpr profiles</span>
-
-<span class="sd">        This calculation takes time exponential in the number of roles.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Get all combinations of &quot;pure&quot; roles and then filter by ones with</span>
-        <span class="c1"># support at least 2. Thus, 0, 1, and 2 can be safely ignored</span>
-        <span class="n">pure</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&amp;</span>
-                <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
-        <span class="n">cards</span> <span class="o">=</span> <span class="n">pure</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">pure</span> <span class="o">=</span> <span class="n">pure</span><span class="p">[</span><span class="n">cards</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">cards</span> <span class="o">=</span> <span class="n">cards</span><span class="p">[</span><span class="n">cards</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="c1"># For each combination of pure roles, compute the number of profiles</span>
-        <span class="c1"># conditioned on those roles being pure, then multiply them by the</span>
-        <span class="c1"># cardinality of the pure roles.</span>
-        <span class="n">pure_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">*</span> <span class="n">pure</span> <span class="o">+</span> <span class="o">~</span><span class="n">pure</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">unpure_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">((</span><span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-                                                 <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">-</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">*</span> <span class="o">~</span><span class="n">pure</span> <span class="o">+</span> <span class="n">pure</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">overcount</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">cards</span> <span class="o">*</span> <span class="n">pure_counts</span> <span class="o">*</span> <span class="n">unpure_counts</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_payoffs</span> <span class="o">-</span> <span class="n">overcount</span>
-
 <div class="viewcode-block" id="RsGame.is_empty"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.is_empty">[docs]</a>    <span class="k">def</span> <span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns true if no profiles have data&quot;&quot;&quot;</span></div>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_profiles</span> <span class="o">==</span> <span class="mi">0</span>
@@ -1023,60 +1432,6 @@
             <span class="n">profile_sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
                 <span class="s1">&#39;ij,ij-&gt;i&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">payoffs</span><span class="p">())</span></div>
             <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">profile_sums</span><span class="p">,</span> <span class="n">profile_sums</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">_prof_id_base</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># Base is reversed so that profile_ids are ascending</span>
-        <span class="n">rprofs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_role_profiles</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
-            <span class="n">rprofs</span> <span class="o">=</span> <span class="n">rprofs</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">rprofs</span><span class="p">[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumprod</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">_id_play</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">rev</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">rev</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span>
-        <span class="k">return</span> <span class="n">rev</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
-
-<div class="viewcode-block" id="RsGame.profile_to_id"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_to_id">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a unique integer representing a profile&quot;&quot;&quot;</span>
-        <span class="n">profiles</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">profiles</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span>
-        <span class="n">profiles</span> <span class="o">=</span> <span class="n">profiles</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">sizes</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_id_play</span><span class="p">,</span> <span class="n">profiles</span><span class="p">)</span>
-        <span class="n">sizes</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_ends</span><span class="p">]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
-            <span class="n">sizes</span> <span class="o">=</span> <span class="n">sizes</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">sizes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span></div>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_prof_id_base</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.profile_from_id"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_from_id">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a profile from its integer representation&quot;&quot;&quot;</span>
-        <span class="n">ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
-        <span class="n">role_ids</span> <span class="o">=</span> <span class="p">(</span><span class="n">ids</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prof_id_base</span> <span class="o">%</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">num_all_role_profiles</span><span class="p">)</span>
-        <span class="n">dec_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ids</span><span class="o">.</span><span class="n">shape</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,),</span> <span class="nb">int</span><span class="p">)</span>
-
-        <span class="n">role_ids_iter</span> <span class="o">=</span> <span class="n">role_ids</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
-        <span class="n">role_ids_iter</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span>
-        <span class="n">dec_profs_iter</span> <span class="o">=</span> <span class="n">dec_profs</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
-        <span class="n">dec_profs_iter</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
-
-        <span class="c1"># This can&#39;t be vectorized further, because the sizes are dependent</span>
-        <span class="k">for</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">profs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                <span class="n">role_ids_iter</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">dec_profs_iter</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
-            <span class="k">for</span> <span class="n">prof</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">profs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="nb">range</span><span class="p">(</span><span class="n">profs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">copyto</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size_inv</span><span class="p">(</span><span class="n">sizes</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
-                <span class="n">sizes</span> <span class="o">-=</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">prof</span><span class="p">)</span>
-        <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">dec_profs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
-            <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">profiles</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">]</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span></div>
-        <span class="k">return</span> <span class="o">-</span><span class="n">profiles</span>
 
 <div class="viewcode-block" id="RsGame.expected_payoffs"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.expected_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">expected_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns the payoff of each role under mixture&quot;&quot;&quot;</span>
@@ -1095,325 +1450,8 @@
         <span class="n">bests</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
         <span class="n">best_resps</span> <span class="o">=</span> <span class="n">responses</span> <span class="o">==</span> <span class="n">bests</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
         <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>  <span class="c1"># nan</span>
-            <span class="k">return</span> <span class="n">best_resps</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span></div>
+            <span class="k">return</span> <span class="n">best_resps</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span></div></div>
                 <span class="n">best_resps</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.is_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.is_profile">[docs]</a>    <span class="k">def</span> <span class="nf">is_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Verify that a profile is valid for game&quot;&quot;&quot;</span>
-        <span class="n">prof</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">prof</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span>
-        <span class="n">play_shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">prof</span><span class="o">.</span><span class="n">ndim</span>
-        <span class="n">play_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">play_shape</span><span class="p">)</span> <span class="o">==</span>
-                   <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span> <span class="n">axis</span><span class="p">)</span> <span class="o">&amp;</span></div>
-            <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">prof</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="p">))</span>
-
-<div class="viewcode-block" id="RsGame.all_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.all_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">all_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return all profiles&quot;&quot;&quot;</span>
-        <span class="n">role_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">utils</span><span class="o">.</span><span class="n">acomb</span><span class="p">(</span><span class="n">n_strats</span><span class="p">,</span> <span class="n">players</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-                       <span class="k">for</span> <span class="n">n_strats</span><span class="p">,</span> <span class="n">players</span>
-                       <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)]</span></div>
-        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">acartesian2</span><span class="p">(</span><span class="o">*</span><span class="n">role_arrays</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.pure_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.pure_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">pure_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return all pure profiles</span>
-
-<span class="sd">        A pure profile is a profile where only one strategy is played per</span>
-<span class="sd">        role.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pure_restrictions</span><span class="p">()</span> <span class="o">*</span></div>
-                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">))</span>
-
-<div class="viewcode-block" id="RsGame.nearby_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.nearby_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">nearby_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">num_devs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns profiles reachable by at most num_devs deviations&quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">num_devs</span> <span class="o">&gt;=</span> <span class="mi">0</span>
-        <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">dev_players</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">acomb</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">num_devs</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">dev_players</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">dev_players</span> <span class="o">=</span> <span class="n">dev_players</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
-        <span class="n">supp</span> <span class="o">=</span> <span class="n">profile</span> <span class="o">&gt;</span> <span class="mi">0</span>
-        <span class="n">sub_strats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">supp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
-
-        <span class="n">profiles</span> <span class="o">=</span> <span class="p">[</span><span class="n">profile</span><span class="p">[</span><span class="kc">None</span><span class="p">]]</span>
-        <span class="k">for</span> <span class="n">players</span> <span class="ow">in</span> <span class="n">dev_players</span><span class="p">:</span>
-            <span class="n">to_dev_profs</span> <span class="o">=</span> <span class="n">emptygame</span><span class="p">(</span>
-                <span class="n">players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
-            <span class="n">sub</span> <span class="o">=</span> <span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">sub_strats</span><span class="p">)</span>
-            <span class="n">from_dev_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">sub</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span>
-                                       <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
-            <span class="n">from_dev_profs</span><span class="p">[:,</span> <span class="n">supp</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
-            <span class="n">before_devs</span> <span class="o">=</span> <span class="n">profile</span> <span class="o">-</span> <span class="n">from_dev_profs</span>
-            <span class="n">before_devs</span> <span class="o">=</span> <span class="n">before_devs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">before_devs</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
-            <span class="n">before_devs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span><span class="n">before_devs</span><span class="p">)</span>
-            <span class="n">nearby</span> <span class="o">=</span> <span class="n">before_devs</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">to_dev_profs</span>
-            <span class="n">nearby</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
-            <span class="n">profiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span><span class="n">nearby</span><span class="p">))</span></div>
-        <span class="k">return</span> <span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">profiles</span><span class="p">))</span>
-
-<div class="viewcode-block" id="RsGame.random_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.random_profile">[docs]</a>    <span class="k">def</span> <span class="nf">random_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_profiles</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-<div class="viewcode-block" id="RsGame.random_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.random_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">random_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Sample profiles from a mixture</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        num_samples : int</span>
-<span class="sd">            Number of samples to return.</span>
-<span class="sd">        mixture : ndarray, optional</span>
-<span class="sd">            Mixture to sample from, of None or omitted, then uses the uniform</span>
-<span class="sd">            mixture.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">mixture</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniform_mixture</span><span class="p">()</span>
-        <span class="n">role_samples</span> <span class="o">=</span> <span class="p">[</span><span class="n">rand</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">probs</span>
-                        <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-                               <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))]</span></div>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">role_samples</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.round_mixture_to_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.round_mixture_to_profile">[docs]</a>    <span class="k">def</span> <span class="nf">round_mixture_to_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Round a mixture to the nearest profile</span>
-
-<span class="sd">        This finds the profile with the minimum absolute error to the product</span>
-<span class="sd">        of the profile and the number of players per role.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">float_prof</span> <span class="o">=</span> <span class="n">mixture</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-        <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">float_prof</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">missing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
-            <span class="n">profile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">errors</span> <span class="o">=</span> <span class="n">profile</span> <span class="o">-</span> <span class="n">float_prof</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-        <span class="n">rank</span> <span class="o">=</span> <span class="n">errors</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-        <span class="n">profile</span><span class="p">[</span><span class="n">rank</span> <span class="o">&lt;</span> <span class="n">missing</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span></div>
-        <span class="k">return</span> <span class="n">profile</span>
-
-<div class="viewcode-block" id="RsGame.random_role_deviation_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.random_role_deviation_profile">[docs]</a>    <span class="k">def</span> <span class="nf">random_role_deviation_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_role_deviation_profiles</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-<div class="viewcode-block" id="RsGame.random_role_deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.random_role_deviation_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">random_role_deviation_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return partial profiles where dev player is missing</span>
-
-<span class="sd">        Resulting shape of profiles is (num_samples, num_roles,</span>
-<span class="sd">        num_role_strats). The first dimension is the sample, the next is the</span>
-<span class="sd">        deviating role, leaving the last dimension for the partial profile.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        mixture : ndarray</span>
-<span class="sd">            Mixture to sample from.</span>
-<span class="sd">        num_samples : int, optional</span>
-<span class="sd">            Number of samples to return. If None or omitted, then a single</span>
-<span class="sd">            sample, without a leading singleton dimension is returned.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">mixture</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">mixture</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniform_mixture</span><span class="p">()</span>
-        <span class="n">dev_players</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-        <span class="n">profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span>
-                         <span class="nb">int</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">players</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dev_players</span><span class="p">):</span>
-            <span class="n">base</span> <span class="o">=</span> <span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-            <span class="n">profs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">random_profiles</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)</span></div>
-        <span class="k">return</span> <span class="n">profs</span>
-
-<div class="viewcode-block" id="RsGame.random_deviation_profile"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.random_deviation_profile">[docs]</a>    <span class="k">def</span> <span class="nf">random_deviation_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_deviation_profiles</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-<div class="viewcode-block" id="RsGame.random_deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.random_deviation_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">random_deviation_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a profiles where one player is deviating from mix</span>
-
-<span class="sd">        Resulting shape of profiles is (num_samples, num_role_strats,</span>
-<span class="sd">        num_role_strats). The first dimension is the sample, the next is the</span>
-<span class="sd">        deviating strategy, leaving the last dimension for the actual</span>
-<span class="sd">        profile.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        mixture : ndarray</span>
-<span class="sd">            Mixture to sample from.</span>
-<span class="sd">        num_samples : int, optional</span>
-<span class="sd">            Number of samples to return. If None or omitted, then a single</span>
-<span class="sd">            sample, without a leading singleton dimension is returned.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">devs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_role_deviation_profiles</span><span class="p">(</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">mixture</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">devs</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span></div>
-                <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
-
-<div class="viewcode-block" id="RsGame.max_prob_prof"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.max_prob_prof">[docs]</a>    <span class="k">def</span> <span class="nf">max_prob_prof</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns the pure strategy profile with highest probability.&quot;&quot;&quot;</span>
-        <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">utils</span><span class="o">.</span><span class="n">multinomial_mode</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span><span class="p">,</span> <span class="n">p</span>
-             <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span></div>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.is_symmetric"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.is_symmetric">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">is_symmetric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns true if this game is symmetric&quot;&quot;&quot;</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">==</span> <span class="mi">1</span>
-
-<div class="viewcode-block" id="RsGame.is_asymmetric"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.is_asymmetric">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">is_asymmetric</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns true if this game is asymmetric&quot;&quot;&quot;</span></div>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.profile_from_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_from_json">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Read a profile from json</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        prof : {role: {strat: count}}</span>
-<span class="sd">            A description of a profile.</span>
-<span class="sd">        dest : ndarray, optional</span>
-<span class="sd">            If supplied, ``dest`` will be written to instead of allocating a</span>
-<span class="sd">            new array.</span>
-<span class="sd">        verify : bool, optional</span>
-<span class="sd">            If true, verify that a proepr profile for this game was read.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">dest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;i&#39;</span>
-            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,)</span>
-        <span class="n">dest</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">prof</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">strats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">dest</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_strat_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">)]</span> <span class="o">=</span> <span class="n">count</span>
-
-        <span class="k">assert</span> <span class="ow">not</span> <span class="n">verify</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">dest</span><span class="p">),</span> \
-            <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2"> is not a valid profile&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prof</span><span class="p">)</span></div>
-        <span class="k">return</span> <span class="n">dest</span>
-
-<div class="viewcode-block" id="RsGame.payoff_from_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.payoff_from_json">[docs]</a>    <span class="k">def</span> <span class="nf">payoff_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pays</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Read a payoff from json</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        pays : {role: {strat: payoff}}</span>
-<span class="sd">            A description of a payoff.</span>
-<span class="sd">        dest : ndarray, optional</span>
-<span class="sd">            If supplied, ``dest`` will be written to instead of allocating a</span>
-<span class="sd">            new array.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">dest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span>
-            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,)</span>
-        <span class="n">dest</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">pays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">pay</span> <span class="ow">in</span> <span class="n">strats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">dest</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_strat_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">)]</span> <span class="o">=</span> <span class="n">_mean</span><span class="p">(</span><span class="n">pay</span><span class="p">)</span>
-</div>
-        <span class="k">return</span> <span class="n">dest</span>
-
-<div class="viewcode-block" id="RsGame.profile_to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_to_json">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Convert a profile array to json&quot;&quot;&quot;</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_json</span><span class="p">(</span><span class="n">prof</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.payoff_to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.payoff_to_json">[docs]</a>    <span class="k">def</span> <span class="nf">payoff_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Format payoffs as json</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        payoffs : ndarray</span>
-<span class="sd">            The payoffs to serialize.</span>
-<span class="sd">        &quot;&quot;&quot;</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_json</span><span class="p">(</span><span class="n">payoffs</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.profile_from_repr"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_from_repr">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof_str</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Read a profile from a string&quot;&quot;&quot;</span>
-        <span class="n">prof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_arr_repr</span><span class="p">(</span><span class="n">prof_str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="ow">not</span> <span class="n">verify</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">prof</span><span class="p">),</span> \
-            <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2"> does not define a profile&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prof_str</span><span class="p">)</span></div>
-        <span class="k">return</span> <span class="n">prof</span>
-
-<div class="viewcode-block" id="RsGame.profile_to_repr"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_to_repr">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Convert a profile to a string&quot;&quot;&quot;</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_repr</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.profile_from_str"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_from_str">[docs]</a>    <span class="k">def</span> <span class="nf">profile_from_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof_str</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="n">prof</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_from_arr_str</span><span class="p">(</span><span class="n">prof_str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="ow">not</span> <span class="n">verify</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">prof</span><span class="p">),</span> \
-            <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2"> is not a valid profile&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prof_str</span><span class="p">)</span></div>
-        <span class="k">return</span> <span class="n">prof</span>
-
-<div class="viewcode-block" id="RsGame.profile_to_str"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.profile_to_str">[docs]</a>    <span class="k">def</span> <span class="nf">profile_to_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Convert a profile to a printable string&quot;&quot;&quot;</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_arr_str</span><span class="p">(</span><span class="n">prof</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RsGame.devpay_from_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.devpay_from_json">[docs]</a>    <span class="k">def</span> <span class="nf">devpay_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deviations</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">dest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">dest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_devs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span>
-            <span class="k">assert</span> <span class="n">dest</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_devs</span><span class="p">,)</span>
-        <span class="n">dest</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">deviations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">devs</span> <span class="ow">in</span> <span class="n">strats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">for</span> <span class="n">dev</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">devs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="n">dest</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">role_strat_dev_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">,</span> <span class="n">dev</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
-</div>
-        <span class="k">return</span> <span class="n">dest</span>
-
-<div class="viewcode-block" id="RsGame.devpay_to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.devpay_to_json">[docs]</a>    <span class="k">def</span> <span class="nf">devpay_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Format a profile and deviation payoffs as json&quot;&quot;&quot;</span>
-        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">payoffs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">:</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">pay</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">pay</span><span class="p">,</span> <span class="n">d</span>  <span class="c1"># pragma: no branch</span>
-                        <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">spays</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ses</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">s</span><span class="p">))</span>
-                        <span class="k">if</span> <span class="n">pay</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">}</span>
-                    <span class="k">for</span> <span class="n">spays</span><span class="p">,</span> <span class="n">s</span>
-                    <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rpay</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">ses</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">spays</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)}</span>
-                <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">ses</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">rpay</span>
-                <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
-                       <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span>
-                       <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">payoffs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dev_role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span></div>
-                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">rpay</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)}</span>
-
-<div class="viewcode-block" id="RsGame.to_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Format game as json&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="s1">&#39;players&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
-                                <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">))),</span>
-            <span class="s1">&#39;strategies&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
-                                   <span class="nb">map</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">)))</span></div>
-        <span class="p">}</span>
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Format game as a printable string&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">:</span><span class="se">\n</span><span class="s1">    Roles: </span><span class="si">{}</span><span class="se">\n</span><span class="s1">    Players:</span><span class="se">\n</span><span class="s1">        </span><span class="si">{}</span><span class="se">\n</span><span class="s1">    &#39;</span>
-             <span class="s1">&#39;Strategies:</span><span class="se">\n</span><span class="s1">        </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                 <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                 <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">),</span>
-                 <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">        &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                     <span class="s1">&#39;</span><span class="si">{:d}</span><span class="s1">x </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">role</span><span class="p">)</span>
-                     <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">count</span>
-                     <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)),</span>
-                 <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">        &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                     <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">:</span><span class="se">\n</span><span class="s1">            </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                         <span class="n">role</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">            &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">strats</span><span class="p">))</span>
-                     <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span>
-                     <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">))))</span>
-
-    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()))</span>
-
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span></div>
-                <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="EmptyGame"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.EmptyGame">[docs]</a><span class="k">class</span> <span class="nc">EmptyGame</span><span class="p">(</span><span class="n">RsGame</span><span class="p">):</span>
@@ -1693,7 +1731,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.6.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
