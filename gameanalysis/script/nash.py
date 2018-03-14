@@ -98,8 +98,10 @@ def main(args):
             random_restarts=args.random_mixtures, grid_points=args.grid_points,
             min_reg=args.min, at_least_one=args.one, processes=args.processes,
             replicator=rep_args, optimize={})
-        json.dump([game.mixture_to_json(eqm, supp_thresh=args.support) for eqm
-                   in equilibria], args.output)
+        json.dump(
+            [game.mixture_to_json(eqm) for eqm
+             in game.trim_mixture_support(equilibria, thresh=args.support)],
+            args.output)
 
     elif args.type == 'min-reg-prof':
         prof = nash.min_regret_profile(game)
@@ -108,7 +110,9 @@ def main(args):
     elif args.type == 'min-reg-grid':  # pragma: no branch
         mix = nash.min_regret_grid_mixture(
             game, args.grid_points)
-        json.dump([game.mixture_to_json(mix, supp_thresh=args.support)],
-                  args.output)
+        json.dump(
+            [game.mixture_to_json(game.trim_mixture_support(
+                mix, thresh=args.support))],
+            args.output)
 
     args.output.write('\n')

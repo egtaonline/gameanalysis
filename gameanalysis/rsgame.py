@@ -598,7 +598,7 @@ class StratArray(abc.ABC):
                        self.role_names, self.strat_names)
                 if np.any(values != 0)}
 
-    def mixture_to_json(self, mix, *, supp_thresh=1e-3):
+    def mixture_to_json(self, mix):
         """Convert a mixture array to json"""
         return self._to_arr_json(mix)
 
