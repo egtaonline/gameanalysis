@@ -8,8 +8,8 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-def trace_equilibria(game1, game2, t, eqm, *, regret_thresh=1e-4,
-                     singular=1e-7):
+def trace_equilibria(game1, game2, t, eqm, *, regret_thresh=1e-4, max_step=0.1,
+                     singular=1e-7, **ivp_args):
     """Trace an equilibrium between games
 
     Takes two games, a fraction that they're merged, and an equilibrium of the
@@ -31,15 +31,20 @@ def trace_equilibria(game1, game2, t, eqm, *, regret_thresh=1e-4,
         have before it's considered a beneficial deviation and the tracing
         stops. This should be larger than zero as most equilibria are
         approximate due to floating point precision.
+    max_step : float, optional
+        The maximum step to take in t when evaluating.
     singular : float, optional
         An absolute determinant below this value is considered singular.
         Occasionally the derivative doesn't exist, and this is one way in which
         that manifests. This values regulate when ODE solving terminates due to
         a singular matrix.
+    ivp_args
+        Any remaining keyword arguments are passed to the ivp solver.
     """
     egame = rsgame.emptygame_copy(game1)
     eqm = np.asarray(eqm, float)
     assert egame.is_mixture(eqm), "equilibrium wasn't a valid mixture"
+    ivp_args.update(max_step=max_step)
 
     @functools.lru_cache(maxsize=2)
     def cache_comp(hash_m):
@@ -106,10 +111,10 @@ def trace_equilibria(game1, game2, t, eqm, *, regret_thresh=1e-4,
         events.append(create_support_loss(i))
 
     with _trace_lock:
-        with np.errstate(divide='ignore'):
-            # Known warning for when gradient equals zero
-            res_backward = integrate.solve_ivp(ode, [t, 0], eqm, events=events)
-            res_forward = integrate.solve_ivp(ode, [t, 1], eqm, events=events)
+        res_backward = integrate.solve_ivp(
+            ode, [t, 0], eqm, events=events, **ivp_args)
+        res_forward = integrate.solve_ivp(
+            ode, [t, 1], eqm, events=events, **ivp_args)
 
     ts = np.concatenate([res_backward.t[::-1], res_forward.t[1:]])
     mixes = np.concatenate([res_backward.y.T[::-1], res_forward.y.T[1:]])

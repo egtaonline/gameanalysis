@@ -14,7 +14,6 @@ from gameanalysis import learning
 from gameanalysis import matgame
 from gameanalysis import mergegame
 from gameanalysis import rsgame
-from test import utils
 
 
 @functools.lru_cache()
@@ -65,7 +64,6 @@ def canon():
     return canongame.canon(game())
 
 
-@utils.warnings_filter(UserWarning)
 @pytest.mark.parametrize('game', [
     egame, game, sgame, agg, mat, rbf, point, sample, neighbor, merg, canon,
     'gambit'])

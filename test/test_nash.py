@@ -12,7 +12,6 @@ from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import regret
 from gameanalysis import rsgame
-from test import utils
 
 
 METHS = [('optimize', {}), ('replicator', {}), ('fictitious', {})]
@@ -33,7 +32,6 @@ def test_pure_prisoners_dilemma(_):
         "didn't find pd equilibrium"
 
 
-@utils.warnings_filter()
 @pytest.mark.parametrize('_', range(20))
 @pytest.mark.parametrize('methods', ALL_METHODS)
 def test_mixed_prisoners_dilemma(methods, _):
@@ -49,7 +47,6 @@ def test_mixed_prisoners_dilemma(methods, _):
         "didn't find pd equilibrium {}".format(eqa)
 
 
-@utils.warnings_filter()
 @pytest.mark.parametrize('methods', METHODS)
 @pytest.mark.parametrize('eq_prob', [0, .1, .2, .3, .5, .7, .8, .9, 1])
 def test_mixed_known_eq(methods, eq_prob):
@@ -98,7 +95,6 @@ def test_minreg_rand_roshambo():
         "Found a mixture with greater than maximum regret"
 
 
-@utils.warnings_filter()
 @pytest.mark.parametrize('methods', METHODS)
 def test_mixed_roshambo(methods):
     game = gamegen.rock_paper_scissors()
@@ -142,7 +138,6 @@ def test_min_reg_nash():
     assert eqa.shape[0] == 1, "min_reg didn't return anything"
 
 
-@utils.warnings_filter()
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -158,7 +153,6 @@ def test_mixed_nash(methods, strategies):
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
-@utils.warnings_filter()
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -174,7 +168,6 @@ def test_mixed_nash_multi_process(methods, strategies):
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
-@utils.warnings_filter()
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,
     [
@@ -190,7 +183,6 @@ def test_mixed_nash_best(methods, strategies):
     assert eqa.size, "didn't return something"
 
 
-@utils.warnings_filter()
 @pytest.mark.slow
 @pytest.mark.parametrize('methods,strategies', zip(
     ALL_METHODS * 2,

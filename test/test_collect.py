@@ -3,7 +3,6 @@ import pytest
 
 from gameanalysis import collect
 from gameanalysis import utils
-from test import utils as tu
 
 
 def test_connected_component():
@@ -30,7 +29,6 @@ def test_connected_component():
     assert [((0,), 0), ((3,), 2)] == list(simset)
 
 
-@tu.warnings_filter(DeprecationWarning)
 def test_weighted_similarity():
     simset = collect.WeightedSimilaritySet(lambda a, b: abs(a - b) <= 1)
     simset.add(1, 0)
@@ -100,7 +98,6 @@ def test_bit_set():
     assert bitset.add(a)
 
 
-@tu.warnings_filter(DeprecationWarning)
 def test_mixture_set():
     mixset = collect.MixtureSet(0.1)
     assert not mixset

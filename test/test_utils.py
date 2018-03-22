@@ -276,9 +276,6 @@ def test_deprecation():
     def func(a, b):
         return a, b
 
-    with pytest.raises(DeprecationWarning):
-        func(None, None)
-
     with warnings.catch_warnings(record=True) as warns:
         warnings.simplefilter('always', DeprecationWarning)
         assert func(3, b=4) == (3, 4)
