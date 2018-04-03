@@ -25,7 +25,7 @@ def add_parser(subparsers):
         help="""Max allowed regret for approximate Nash equilibria/ (default:
         %(default)g)""")
     parser.add_argument(
-        '--distance', '-d', metavar='<distance>', type=float, default=1e-3,
+        '--distance', '-d', metavar='<distance>', type=float, default=0.1,
         help="""L2-distance threshold to consider equilibria distinct.
         (default: %(default)g)""")
     parser.add_argument(

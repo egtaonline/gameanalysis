@@ -28,7 +28,7 @@ def add_parser(subparsers):
         stdout)""")
     parser.add_argument(
         '--dist-thresh', metavar='<distance-threshold>', type=float,
-        default=1e-3, help="""L2 norm threshold, inside of which, equilibria
+        default=0.1, help="""L2 norm threshold, inside of which, equilibria
         are considered identical.  (default: %(default)g)""")
     parser.add_argument(
         '--regret-thresh', '-r', metavar='<regret-threshold>', type=float,
