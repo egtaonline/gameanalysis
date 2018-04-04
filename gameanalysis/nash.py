@@ -1,7 +1,6 @@
 """Module for computing nash equilibria"""
 import itertools
 import multiprocessing
-import threading
 import warnings
 
 import numpy as np
@@ -115,9 +114,6 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
     return game.mixture_project(mix)
 
 
-_reg_min_lock = threading.Lock()
-
-
 def regret_minimize(game, mix, *, gtol=1e-8):
     """A pickleable object to find Nash equilibria
 
@@ -175,7 +171,7 @@ def regret_minimize(game, mix, *, gtol=1e-8):
 
         return obj, grad
 
-    with _reg_min_lock, warnings.catch_warnings():
+    with warnings.catch_warnings():
         # XXX For some reason, line-search in optimize throws a
         # run-time warning when things get very small negative.  This
         # is potentially a error with the way we compute gradients, but

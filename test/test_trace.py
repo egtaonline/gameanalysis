@@ -19,41 +19,86 @@ def test_trace_equilibria():
     pays1 = [[1, 0],
              [1, 0],
              [0, 0]]
-    game1 = paygame.game(2, 2, profs, pays1)
+    game0 = paygame.game(2, 2, profs, pays1)
     pays2 = [[0, 0],
              [0, 1],
              [0, 1]]
-    game2 = paygame.game(2, 2, profs, pays2)
+    game1 = paygame.game(2, 2, profs, pays2)
 
-    ts, mixes = trace.trace_equilibria(game1, game2, 0, [1, 0])
+    ts, mixes = trace.trace_equilibria(game0, game1, 0, [1, 0])
     assert np.isclose(ts[0], 0)
-    assert np.isclose(ts[-1], 0.5, atol=1e-4)
+    assert np.isclose(ts[-1], 0.5, atol=1.1e-3)
     assert np.allclose(mixes, [1, 0])
-    ts, mixes = trace.trace_equilibria(game1, game2, 1, [0, 1])
-    assert np.isclose(ts[0], 0.5, atol=1e-4)
+    ts, mixes = trace.trace_equilibria(game0, game1, 1, [0, 1])
+    assert np.isclose(ts[0], 0.5, atol=1.1e-3)
     assert np.isclose(ts[-1], 1)
     assert np.allclose(mixes, [0, 1])
 
 
 @pytest.mark.parametrize('players,strats', utils.games)
 def test_random_trace_equilibria(players, strats):
+    game0 = agggen.normal_aggfn(players, strats, 6)
     game1 = agggen.normal_aggfn(players, strats, 6)
-    game2 = agggen.normal_aggfn(players, strats, 6)
 
-    eqa = game1.trim_mixture_support(nash.mixed_nash(game1), thresh=1e-5)
+    eqa = game0.trim_mixture_support(nash.mixed_nash(
+        game0, regret_thresh=1e-4))
     for eqm in eqa:
-        # leeway for support trimming
-        thresh = regret.mixture_regret(game1, eqm) + 2
-        ts, mixes = trace.trace_equilibria(game1, game2, 0, eqm)
+        if 1e-3 < regret.mixture_regret(game0, eqm):
+            # trimmed equilibrium had too high of regret... 
+            continue  # pragma: no cover
+        ts, mixes = trace.trace_equilibria(game0, game1, 0, eqm)
         for t, mix in zip(ts, mixes):
-            reg = regret.mixture_regret(mergegame.merge(game1, game2, t), mix)
-            assert reg < thresh
+            reg = regret.mixture_regret(mergegame.merge(game0, game1, t), mix)
+            assert reg <= 1.1e-3
 
-    eqa = game2.trim_mixture_support(nash.mixed_nash(game2), thresh=1e-5)
+    eqa = game1.trim_mixture_support(nash.mixed_nash(
+        game1, regret_thresh=1e-4))
     for eqm in eqa:
-        # leeway for support trimming
-        thresh = regret.mixture_regret(game2, eqm) + 1
-        ts, mixes = trace.trace_equilibria(game1, game2, 1, eqm)
+        if 1e-3 < regret.mixture_regret(game1, eqm):
+            # trimmed equilibrium had too high of regret...
+            continue  # pragma: no cover
+        ts, mixes = trace.trace_equilibria(game0, game1, 1, eqm)
         for t, mix in zip(ts, mixes):
-            reg = regret.mixture_regret(mergegame.merge(game1, game2, t), mix)
-            assert reg < thresh
+            reg = regret.mixture_regret(mergegame.merge(game0, game1, t), mix)
+            assert reg <= 1.1e-3
+
+
+@pytest.mark.parametrize('players,strats', utils.games)
+def test_random_trace_interpolate(players, strats):
+    game0 = agggen.normal_aggfn(players, strats, 6)
+    game1 = agggen.normal_aggfn(players, strats, 6)
+
+    t = np.random.random()
+    eqa = game0.trim_mixture_support(nash.mixed_nash(
+        mergegame.merge(game0, game1, t),
+        regret_thresh=1e-4))
+    for eqm in eqa:
+        if 1e-3 < regret.mixture_regret(mergegame.merge(game0, game1, t), eqm):
+            # trimmed equilibrium had too high of regret...
+            continue  # pragma: no cover
+
+        # Test that interp reovers missing equilibria
+        ts, mixes = trace.trace_equilibria(game0, game1, t, eqm)
+        start, interp, end = np.sort(np.random.choice(
+            ts.size, 3, replace=False))
+        interp_mix = trace.trace_interpolate(
+            game0, game1, [ts[start], ts[end]], [mixes[start], mixes[end]],
+            ts[interp])
+        assert np.allclose(interp_mix, mixes[interp])
+
+        # Test interp at first
+        mix = trace.trace_interpolate(
+            game0, game1, ts, mixes, ts[0])
+        assert np.allclose(mix, mixes[0])
+
+        # Test interp at last
+        mix = trace.trace_interpolate(
+            game0, game1, ts, mixes, ts[-1])
+        assert np.allclose(mix, mixes[-1])
+
+        # Test random t
+        t_interp = np.random.uniform(ts[0], ts[-1])
+        mix = trace.trace_interpolate(
+            game0, game1, ts, mixes, t_interp)
+        assert regret.mixture_regret(mergegame.merge(
+            game0, game1, t_interp), mix) <= 1.1e-3
