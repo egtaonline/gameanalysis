@@ -44,7 +44,7 @@ def test_random_trace_equilibria(players, strats):
         game0, regret_thresh=1e-4))
     for eqm in eqa:
         if 1e-3 < regret.mixture_regret(game0, eqm):
-            # trimmed equilibrium had too high of regret... 
+            # trimmed equilibrium had too high of regret...
             continue  # pragma: no cover
         ts, mixes = trace.trace_equilibria(game0, game1, 0, eqm)
         for t, mix in zip(ts, mixes):

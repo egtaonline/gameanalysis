@@ -1,6 +1,7 @@
 import itertools
 import json
 import random
+import warnings
 
 import autograd
 import autograd.numpy as anp
@@ -19,6 +20,16 @@ games = [
     ([3, 2], [2, 3]),
     ([2, 2, 2], 2),
 ]
+
+
+@pytest.fixture(autouse=True)
+def ignore_fit():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            'some lengths were at their bounds, this may indicate a poor fit',
+            UserWarning)
+        yield
 
 
 @pytest.mark.parametrize('players,strats', games)

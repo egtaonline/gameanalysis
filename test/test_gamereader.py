@@ -1,9 +1,10 @@
 import functools
 import io
 import json
-import pytest
+import warnings
 
 import numpy as np
+import pytest
 
 from gameanalysis import agggen
 from gameanalysis import canongame
@@ -41,7 +42,12 @@ def mat():
 
 @functools.lru_cache()
 def rbf():
-    return learning.rbfgame_train(game())
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            'some lengths were at their bounds, this may indicate a poor fit',
+            UserWarning)
+        return learning.rbfgame_train(game())
 
 
 def point():

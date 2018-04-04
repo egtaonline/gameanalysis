@@ -1559,24 +1559,30 @@ r1:
 
 
 def test_dev_payoff_json():
-    game = rsgame.emptygame([11, 3], [2, 1])
-    devpay = [5, 0]
-    json_devpay = {'r0': {'s0': {'s1': 5}}}
-    json_devpay2 = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 0}}, 'r1': {'s2': {}}}
-    assert game.devpay_to_json(devpay) == json_devpay
-    dest = np.empty(game.num_devs)
-    game.devpay_from_json(json_devpay, dest)
-    assert np.allclose(dest, devpay)
-    assert np.allclose(game.devpay_from_json(json_devpay), devpay)
-    assert np.allclose(game.devpay_from_json(json_devpay2), devpay)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            'using reduceat with dev_role_starts will not produce correct results if any role only has one strategy. This might get fixed at some point, but currently extra care must be taken for these cases.',
+            UserWarning)
+        game = rsgame.emptygame([11, 3], [2, 1])
+        devpay = [5, 0]
+        json_devpay = {'r0': {'s0': {'s1': 5}}}
+        json_devpay2 = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 0}},
+                        'r1': {'s2': {}}}
+        assert game.devpay_to_json(devpay) == json_devpay
+        dest = np.empty(game.num_devs)
+        game.devpay_from_json(json_devpay, dest)
+        assert np.allclose(dest, devpay)
+        assert np.allclose(game.devpay_from_json(json_devpay), devpay)
+        assert np.allclose(game.devpay_from_json(json_devpay2), devpay)
 
-    devpay = [5, 4]
-    json_devpay = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 4}}}
-    assert game.devpay_to_json(devpay) == json_devpay
-    dest = np.empty(game.num_devs)
-    game.devpay_from_json(json_devpay, dest)
-    assert np.allclose(dest, devpay)
-    assert np.allclose(game.devpay_from_json(json_devpay), devpay)
+        devpay = [5, 4]
+        json_devpay = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 4}}}
+        assert game.devpay_to_json(devpay) == json_devpay
+        dest = np.empty(game.num_devs)
+        game.devpay_from_json(json_devpay, dest)
+        assert np.allclose(dest, devpay)
+        assert np.allclose(game.devpay_from_json(json_devpay), devpay)
 
 
 @pytest.mark.parametrize('role_players', [1, 2, 3, [3, 2, 1]])

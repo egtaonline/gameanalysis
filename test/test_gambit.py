@@ -1,3 +1,4 @@
+import warnings
 from os import path
 
 import pytest
@@ -6,6 +7,20 @@ import numpy as np
 from gameanalysis import matgame
 from gameanalysis import gamegen
 from gameanalysis import gambit
+
+
+@pytest.fixture(autouse=True)
+def ignore_fit():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            'ignore',
+            "gambit player names aren't strictly sorted; modifying to comply with gameanalysis standards",
+            UserWarning)
+        warnings.filterwarnings(
+            'ignore',
+            "gambit strategy names aren't strictly sorted; modifying to comply with gameanalysis standards",
+            UserWarning)
+        yield
 
 
 @pytest.mark.parametrize(
