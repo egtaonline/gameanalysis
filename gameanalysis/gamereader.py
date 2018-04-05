@@ -1,14 +1,6 @@
 """Module for loading an arbitrary game with its associated serializer"""
+import contextlib
 import json
-
-from gameanalysis import aggfn
-from gameanalysis import canongame
-from gameanalysis import gambit
-from gameanalysis import learning
-from gameanalysis import matgame
-from gameanalysis import mergegame
-from gameanalysis import paygame
-from gameanalysis import rsgame
 
 
 def load(filelike):
@@ -31,15 +23,12 @@ def loads(string):
     string : str
         A string representation of the game.
     """
-    try:
+    with contextlib.suppress(json.JSONDecodeError):
         obj = json.loads(string)
         return loadj(obj)
-    except json.JSONDecodeError:
-        pass  # Try another thing
-    try:
+    with contextlib.suppress(AssertionError):
+        from gameanalysis import gambit
         return gambit.loads(string)
-    except AssertionError:
-        pass  # Try another thing
     assert False, "no known format for game"
 
 
@@ -52,18 +41,42 @@ def loadj(obj):
         The python object representation of a game encoded as json. Any valid
         game will be read and returned.
     """
-    readers = {
-        'aggfn': aggfn.aggfn_json,
-        'canon': canongame.canon_json,
-        'emptygame': rsgame.emptygame_json,
-        'game': paygame.game_json,
-        'matrix': matgame.matgame_json,
-        'merge': mergegame.merge_json,
-        'neighbor': learning.neighbor_json,
-        'point': learning.point_json,
-        'rbf': learning.rbfgame_json,
-        'sample': learning.sample_json,
-        'samplegame': paygame.samplegame_json,
-    }
-    game_type = obj.get('type', 'samplegame.').split('.', 1)[0]
-    return readers[game_type](obj)
+    game_type, _ = obj.get('type', 'samplegame.').split('.', 1)
+    if game_type == 'add':
+        from gameanalysis import rsgame
+        return rsgame.add_json(obj)
+    elif game_type == 'aggfn':
+        from gameanalysis import aggfn
+        return aggfn.aggfn_json(obj)
+    elif game_type == 'canon':
+        from gameanalysis import canongame
+        return canongame.canon_json(obj)
+    elif game_type == 'const':
+        from gameanalysis import rsgame
+        return rsgame.const_json(obj)
+    elif game_type == 'empty' or game_type == 'emptygame':
+        from gameanalysis import rsgame
+        return rsgame.emptygame_json(obj)
+    elif game_type == 'game':
+        from gameanalysis import paygame
+        return paygame.game_json(obj)
+    elif game_type == 'matrix':
+        from gameanalysis import matgame
+        return matgame.matgame_json(obj)
+    elif game_type == 'neighbor':
+        from gameanalysis import learning
+        return learning.neighbor_json(obj)
+    elif game_type == 'point':
+        from gameanalysis import learning
+        return learning.point_json(obj)
+    elif game_type == 'rbf':
+        from gameanalysis import learning
+        return learning.rbfgame_json(obj)
+    elif game_type == 'sample':
+        from gameanalysis import learning
+        return learning.sample_json(obj)
+    elif game_type == 'samplegame':
+        from gameanalysis import paygame
+        return paygame.samplegame_json(obj)
+    else:
+        assert False, "unknown game type {}".format(game_type)

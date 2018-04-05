@@ -60,12 +60,18 @@ class CanonGame(rsgame.RsGame):
     def min_strat_payoffs(self):
         return self._game.min_strat_payoffs()[self._mask]
 
-    def normalize(self):
-        return CanonGame(self._game.normalize())
-
     def restrict(self, rest):
         unrest = np.insert(rest, self._inds, True)
         return CanonGame(self._game.restrict(unrest))
+
+    def _add_constant(self, role_array):
+        return CanonGame(self._game + role_array)
+
+    def _multiply_constant(self, role_array):
+        return CanonGame(self._game * role_array)
+
+    def _add_game(self, other):
+        assert False, "canon games can't be added"
 
     def to_json(self):
         base = super().to_json()

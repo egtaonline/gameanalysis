@@ -94,15 +94,20 @@ class DevRegressionGame(rsgame.CompleteGame):
             self._min_payoffs[rest],
             self._max_payoffs[rest], new_rest)
 
-    def normalize(self):
-        scale = (self.max_role_payoffs() - self.min_role_payoffs())
-        scale[np.isclose(scale, 0)] = 1
-        scale = scale.repeat(self.num_role_strats)
-        offset = self.min_role_payoffs().repeat(self.num_role_strats)
+    def _add_constant(self, role_array):
+        off = np.repeat(role_array, self.num_role_strats)
         return DevRegressionGame(
-            self, self._regressors, (self._offset - offset) / scale,
-            self._scale / scale, (self._min_payoffs - offset) / scale,
-            (self._max_payoffs - offset) / scale, self._rest)
+            self, self._regressors, self._offset + off, self._scale,
+            self._min_payoffs + off, self._max_payoffs + off, self._rest)
+
+    def _multiply_constant(self, role_array):
+        mul = np.repeat(role_array, self.num_role_strats)
+        return DevRegressionGame(
+            self, self._regressors, self._offset * mul, self._scale * mul,
+            self._min_payoffs * mul, self._max_payoffs * mul, self._rest)
+
+    def _add_game(self, other):
+        assert False, "no efficient add"
 
     def __eq__(self, other):
         return (super().__eq__(other) and
@@ -342,15 +347,22 @@ class RbfGpGame(rsgame.CompleteGame):
             self._offset[rest], self._coefs[rest],
             lengths[:, rest], new_sizes, new_profs[:, 1:], new_alpha)
 
-    def normalize(self):
-        scale = (self.max_role_payoffs() - self.min_role_payoffs())
-        scale[np.isclose(scale, 0)] = 1
-        scale = scale.repeat(self.num_role_strats)
-        offset = self.min_role_payoffs().repeat(self.num_role_strats)
+    def _add_constant(self, role_array):
         return RbfGpGame(
             self.role_names, self.strat_names, self.num_role_players,
-            (self._offset - offset) / scale, self._coefs / scale,
-            self._lengths, self._sizes, self._profiles, self._alpha)
+            self._offset + np.repeat(role_array, self.num_role_strats),
+            self._coefs, self._lengths, self._sizes, self._profiles,
+            self._alpha)
+
+    def _multiply_constant(self, role_array):
+        mul = np.repeat(role_array, self.num_role_strats)
+        return RbfGpGame(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._offset * mul, self._coefs * mul, self._lengths, self._sizes,
+            self._profiles, self._alpha)
+
+    def _add_game(self, other):
+        assert False, "no efficient add"
 
     def to_json(self):
         base = super().to_json()
@@ -579,8 +591,16 @@ class SampleDeviationGame(_DeviationGame):
         return SampleDeviationGame(self._model.restrict(rest),
                                    self._num_samples)
 
-    def normalize(self):
-        return SampleDeviationGame(self._model.normalize(), self._num_samples)
+    def _add_constant(self, role_array):
+        return SampleDeviationGame(self._model + role_array, self._num_samples)
+
+    def _multiply_constant(self, role_array):
+        return SampleDeviationGame(self._model * role_array, self._num_samples)
+
+    def _add_game(self, other):
+        assert isinstance(other, SampleDeviationGame)
+        return SampleDeviationGame(
+            self._model + other._model, self._num_samples)
 
     def to_json(self):
         base = super().to_json()
@@ -648,8 +668,15 @@ class PointDeviationGame(_DeviationGame):
     def restrict(self, rest):
         return PointDeviationGame(self._model.restrict(rest))
 
-    def normalize(self):
-        return PointDeviationGame(self._model.normalize())
+    def _add_constant(self, role_array):
+        return PointDeviationGame(self._model + role_array)
+
+    def _multiply_constant(self, role_array):
+        return PointDeviationGame(self._model * role_array)
+
+    def _add_game(self, other):
+        assert isinstance(other, PointDeviationGame)
+        return PointDeviationGame(self._model + other._model)
 
     def to_json(self):
         base = super().to_json()
@@ -720,8 +747,16 @@ class NeighborDeviationGame(_DeviationGame):
         return NeighborDeviationGame(
             self._model.restrict(rest), self._num_devs)
 
-    def normalize(self):
-        return NeighborDeviationGame(self._model.normalize(), self._num_devs)
+    def _add_constant(self, role_array):
+        return NeighborDeviationGame(self._model + role_array, self._num_devs)
+
+    def _multiply_constant(self, role_array):
+        return NeighborDeviationGame(self._model * role_array, self._num_devs)
+
+    def _add_game(self, other):
+        assert isinstance(other, NeighborDeviationGame)
+        return NeighborDeviationGame(
+            self._model + other._model, self._num_devs)
 
     def to_json(self):
         base = super().to_json()

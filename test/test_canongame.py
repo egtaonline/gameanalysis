@@ -59,6 +59,9 @@ def test_canon():
 
     assert repr(cgame) == 'CanonGame([2], [3], 2 / 6)'
 
+    other = canongame.canon(agggen.normal_aggfn([2, 2, 3], [3, 1, 1], 2))
+    other + cgame
+
 
 @pytest.mark.parametrize('strats', itertools.product(*[[1, 2]] * 3))
 def test_random_canongame(strats):

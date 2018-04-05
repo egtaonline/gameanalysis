@@ -209,8 +209,9 @@ def congestion(num_players, num_facilities, num_required, *, degree=2):
     facs = tuple(utils.prefix_strings('', num_facilities))
     strats = tuple('_'.join(facs[i] for i, m in enumerate(mask) if m)
                    for mask in function_inputs)
-    return aggfn.aggfn_names(['all'], num_players, [strats], facs,
-                             function_inputs.T, function_inputs, functions)
+    return aggfn.aggfn_names(
+        ['all'], num_players, [strats], function_inputs.T, function_inputs,
+        functions)
 
 
 def local_effect(num_players, num_strategies, *, edge_prob=0.2):

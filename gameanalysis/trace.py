@@ -1,7 +1,6 @@
 import numpy as np
 from scipy import integrate
 
-from gameanalysis import mergegame
 from gameanalysis import regret
 from gameanalysis import rsgame
 
@@ -16,7 +15,7 @@ def _ode(game0, game1, t_eq, eqm, t_dest, *, regret_thresh=1e-3, max_step=0.1,
     eqm = np.asarray(eqm, float)
     assert egame.is_mixture(eqm), "equilibrium wasn't a valid mixture"
     assert regret.mixture_regret(
-        mergegame.merge(game0, game1, t_eq), eqm) <= regret_thresh + 1e-7, \
+        rsgame.mix(game0, game1, t_eq), eqm) <= regret_thresh + 1e-7, \
         "equilibrium didn't have regret below threshold"
     ivp_args.update(max_step=max_step)
 
@@ -48,7 +47,7 @@ def _ode(game0, game1, t_eq, eqm, t_dest, *, regret_thresh=1e-3, max_step=0.1,
 
     def below_regret_thresh(t, mix_neg):
         mix = egame.trim_mixture_support(mix_neg, thresh=0)
-        reg = regret.mixture_regret(mergegame.merge(game0, game1, t), mix)
+        reg = regret.mixture_regret(rsgame.mix(game0, game1, t), mix)
         return reg - regret_thresh
 
     below_regret_thresh.terminal = True
@@ -151,7 +150,7 @@ def trace_interpolate(game0, game1, ts, eqa, t, **kwargs):
     # select nearby equilibrium with maximum support if tied, take lowest reg
     ind = max(ind - 1, ind, key=lambda i: (
         np.sum(eqa[i] > 0),
-        regret.mixture_regret(mergegame.merge(game0, game1, ts[i]), eqa[i])))
+        regret.mixture_regret(rsgame.mix(game0, game1, ts[i]), eqa[i])))
     (*_, t_res), (*_, eqm_res) = _ode(
         game0, game1, ts[ind], eqa[ind], t, **kwargs)
     assert np.isclose(t_res, t), "ode solving failed to reach t"

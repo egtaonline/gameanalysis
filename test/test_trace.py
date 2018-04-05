@@ -2,10 +2,10 @@ import numpy as np
 import pytest
 
 from gameanalysis import agggen
-from gameanalysis import mergegame
 from gameanalysis import nash
 from gameanalysis import paygame
 from gameanalysis import regret
+from gameanalysis import rsgame
 from gameanalysis import trace
 from test import utils
 
@@ -48,7 +48,7 @@ def test_random_trace_equilibria(players, strats):
             continue  # pragma: no cover
         ts, mixes = trace.trace_equilibria(game0, game1, 0, eqm)
         for t, mix in zip(ts, mixes):
-            reg = regret.mixture_regret(mergegame.merge(game0, game1, t), mix)
+            reg = regret.mixture_regret(rsgame.mix(game0, game1, t), mix)
             assert reg <= 1.1e-3
 
     eqa = game1.trim_mixture_support(nash.mixed_nash(
@@ -59,7 +59,7 @@ def test_random_trace_equilibria(players, strats):
             continue  # pragma: no cover
         ts, mixes = trace.trace_equilibria(game0, game1, 1, eqm)
         for t, mix in zip(ts, mixes):
-            reg = regret.mixture_regret(mergegame.merge(game0, game1, t), mix)
+            reg = regret.mixture_regret(rsgame.mix(game0, game1, t), mix)
             assert reg <= 1.1e-3
 
 
@@ -70,10 +70,10 @@ def test_random_trace_interpolate(players, strats):
 
     t = np.random.random()
     eqa = game0.trim_mixture_support(nash.mixed_nash(
-        mergegame.merge(game0, game1, t),
+        rsgame.mix(game0, game1, t),
         regret_thresh=1e-4))
     for eqm in eqa:
-        if 1e-3 < regret.mixture_regret(mergegame.merge(game0, game1, t), eqm):
+        if 1e-3 < regret.mixture_regret(rsgame.mix(game0, game1, t), eqm):
             # trimmed equilibrium had too high of regret...
             continue  # pragma: no cover
 
@@ -100,5 +100,5 @@ def test_random_trace_interpolate(players, strats):
         t_interp = np.random.uniform(ts[0], ts[-1])
         mix = trace.trace_interpolate(
             game0, game1, ts, mixes, t_interp)
-        assert regret.mixture_regret(mergegame.merge(
+        assert regret.mixture_regret(rsgame.mix(
             game0, game1, t_interp), mix) <= 1.1e-3

@@ -230,15 +230,6 @@ class Game(rsgame.RsGame):
 
         return devs, dev_jac
 
-    def normalize(self):
-        """Return a normalized game"""
-        scale = self.max_role_payoffs() - self.min_role_payoffs()
-        scale[np.isclose(scale, 0)] = 1
-        offset = np.repeat(self.min_role_payoffs(), self.num_role_strats)
-        payoffs = (self._payoffs - offset) / scale.repeat(self.num_role_strats)
-        payoffs[0 == self._profiles] = 0
-        return game_replace(self, self._profiles, payoffs)
-
     def restrict(self, rest):
         """Remove possible strategies from consideration"""
         rest = np.asarray(rest, bool)
@@ -246,8 +237,34 @@ class Game(rsgame.RsGame):
         prof_mask = ~np.any(self._profiles * ~rest, 1)
         profiles = self._profiles[prof_mask][:, rest]
         payoffs = self._payoffs[prof_mask][:, rest]
-        return Game(base.role_names, base.strat_names, base.num_role_players,
-                    profiles, payoffs)
+        return Game(
+            base.role_names, base.strat_names, base.num_role_players, profiles,
+            payoffs)
+
+    def _add_constant(self, role_array):
+        with np.errstate(invalid='ignore'):
+            new_pays = self._payoffs + np.repeat(
+                role_array, self.num_role_strats)
+        new_pays[self._profiles == 0] = 0
+        return Game(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._profiles, new_pays)
+
+    def _multiply_constant(self, role_array):
+        with np.errstate(invalid='ignore'):
+            new_pays = self._payoffs * np.repeat(
+                role_array, self.num_role_strats)
+        return Game(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._profiles, new_pays)
+
+    def _add_game(self, other):
+        with np.errstate(invalid='ignore'):
+            new_pays = self._payoffs + other.get_payoffs(self._profiles)
+        mask = np.any((~np.isnan(new_pays)) & (self._profiles > 0), 1)
+        return Game(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._profiles[mask], new_pays[mask])
 
     def __contains__(self, profile):
         """Returns true if all data for that profile exists"""
@@ -740,18 +757,25 @@ class SampleGame(Game):
                 pay.reshape((-1, self.num_strats))
                 for pay in self._sample_payoffs])
 
-    def normalize(self):
-        """Return a normalized SampleGame"""
-        scale = self.max_role_payoffs() - self.min_role_payoffs()
-        scale[np.isclose(scale, 0)] = 1
-        scale = scale.repeat(self.num_role_strats)
-        offset = self.min_role_payoffs().repeat(self.num_role_strats)
-        spayoffs = tuple((pays - offset) / scale
-                         for pays in self._sample_payoffs)
-        for profs, spays in zip(
-                np.split(self._profiles, self.sample_starts[1:]), spayoffs):
-            spays *= 0 < profs[:, None]
-        return samplegame_replace(self, self._profiles, spayoffs)
+    def _add_constant(self, role_array):
+        off = np.repeat(role_array, self.num_role_strats)
+        with np.errstate(invalid='ignore'):
+            new_pays = tuple(
+                (profs > 0)[:, None] * (pays + off)
+                for profs, pays in zip(
+                    np.split(self._profiles, self.sample_starts[1:]),
+                    self._sample_payoffs))
+        return SampleGame(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._profiles, new_pays)
+
+    def _multiply_constant(self, role_array):
+        mult = np.repeat(role_array, self.num_role_strats)
+        with np.errstate(invalid='ignore'):
+            new_pays = tuple(pays * mult for pays in self._sample_payoffs)
+        return SampleGame(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._profiles, new_pays)
 
     def restrict(self, rest):
         """Remove possible strategies from consideration"""

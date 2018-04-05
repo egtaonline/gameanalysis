@@ -10,6 +10,7 @@ from collections import abc
 
 import numpy as np
 import scipy.special as sps
+from scipy import optimize
 
 
 _TINY = np.finfo(float).tiny
@@ -470,6 +471,13 @@ def is_sorted(iterable, *, key=None, reverse=False, strict=False):
         return all(a <= b for a, b in zip(ai, bi))
 
 
+def allclose_perm(a, b, **kwargs):
+    """allclose but for any permutation of actual"""
+    assert a.ndim == 2 and a.shape == b.shape
+    isclose = np.isclose(a[:, None], b, **kwargs).all(2)
+    return isclose[optimize.linear_sum_assignment(~isclose)].all()
+
+
 def memoize(member_function):
     """Memoize computation of single object functions"""
     assert len(inspect.signature(member_function).parameters) == 1, \
@@ -495,9 +503,3 @@ def deprecated(func):
         return func(*args, **kwargs)
 
     return wrapped
-
-
-def experimental(func):
-    """Mark a function as experimental"""
-    func.experimental = True
-    return func

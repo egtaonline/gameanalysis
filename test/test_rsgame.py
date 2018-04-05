@@ -1562,7 +1562,10 @@ def test_dev_payoff_json():
     with warnings.catch_warnings():
         warnings.filterwarnings(
             'ignore',
-            'using reduceat with dev_role_starts will not produce correct results if any role only has one strategy. This might get fixed at some point, but currently extra care must be taken for these cases.',
+            'using reduceat with dev_role_starts will not produce correct '
+            'results if any role only has one strategy. This might get fixed '
+            'at some point, but currently extra care must be taken for these '
+            'cases.',
             UserWarning)
         game = rsgame.emptygame([11, 3], [2, 1])
         devpay = [5, 0]
@@ -1612,7 +1615,7 @@ def test_to_from_json():
     game = rsgame.emptygame(4, 5)
     jgame = {'players': {'r0': 4},
              'strategies': {'r0': ['s0', 's1', 's2', 's3', 's4']},
-             'type': 'emptygame.1'}
+             'type': 'empty.1'}
     old_jgame = {'roles': [{'name': 'r0',
                             'strategies': ['s0', 's1', 's2', 's3', 's4'],
                             'count': 4}]}
@@ -1625,7 +1628,7 @@ def test_to_from_json():
     jgame = {'players': {'r0': 4, 'r1': 3},
              'strategies': {'r0': ['s0', 's1', 's2'],
                             'r1': ['s3', 's4', 's5', 's6']},
-             'type': 'emptygame.1'}
+             'type': 'empty.1'}
     old_jgame = {'roles': [{'name': 'r0',
                             'strategies': ['s0', 's1', 's2'],
                             'count': 4},
@@ -1728,10 +1731,31 @@ def test_random_emptygame_copy(role_players, role_strats):
     assert game == copy and hash(game) == hash(copy)
 
 
+def test_empty_add_multiply():
+    empty = rsgame.emptygame([1, 2], [3, 2])
+
+    assert empty + 1 == empty
+    assert empty - 1 == empty
+    assert empty * 2 == empty
+    assert empty / 2 == empty
+
+    assert empty + [1, 2] == empty
+    assert empty - [1, 2] == empty
+    assert empty * [2, 3] == empty
+    assert empty / [2, 3] == empty
+
+    assert 1 + empty == empty
+    assert 2 * empty == empty
+
+    assert [1, 2] + empty == empty
+    assert [2, 3] * empty == empty
+
+    assert empty + empty == empty
+
+
 @pytest.mark.parametrize('role_players,role_strats', testutils.games)
-def test_complete_game(role_players, role_strats):
-    base = rsgame.emptygame(role_players, role_strats)
-    game = ZeroGame(base.role_names, base.strat_names, base.num_role_players)
+def test_const_game(role_players, role_strats):
+    game = rsgame.const(role_players, role_strats, 0)
     assert game.is_complete()
     assert game.is_constant_sum()
     assert not game.is_empty()
@@ -1741,29 +1765,138 @@ def test_complete_game(role_players, role_strats):
     assert np.all(game.profiles() == game.all_profiles())
 
     assert np.allclose(game.deviation_payoffs(game.random_mixture()), 0)
+    dev, jac = game.deviation_payoffs(game.random_mixture(), jacobian=True)
+    assert np.allclose(dev, 0)
+    assert dev.shape == (game.num_strats,)
+    assert np.allclose(jac, 0)
+    assert jac.shape == (game.num_strats,) * 2
+
+    jstr = json.dumps(game.to_json())
+    assert game == rsgame.const_json(json.loads(jstr))
     assert np.allclose(game.max_strat_payoffs(), 0)
     assert np.allclose(game.min_strat_payoffs(), 0)
     assert game == game.normalize()
     assert game == game.restrict(np.ones(game.num_strats, bool))
 
 
-class ZeroGame(rsgame.CompleteGame):
-    def deviation_payoffs(self, mix, *, jacobian=False):
-        return np.zeros(self.num_strats)
+def test_repr():
+    const = rsgame.const([1, 2], [3, 2], 1)
+    assert repr(const) == 'ConstantGame([1 2], [3 2], [1. 1.])'
 
-    def get_payoffs(self, profs):
-        return np.zeros(profs.shape)
 
-    def max_strat_payoffs(self):
-        return np.zeros(self.num_strats)
+def test_const_add_multiply():
+    empty = rsgame.emptygame([1, 2], [3, 2])
+    const1 = rsgame.const_replace(empty, 1)
+    assert np.allclose(const1.payoffs(), const1.profiles() > 0)
+    const2 = rsgame.const_replace(empty, [2, 3])
+    assert np.allclose(
+        const2.payoffs(),
+        np.where(const2.profiles() > 0, [2, 2, 2, 3, 3], 0))
 
-    def min_strat_payoffs(self):
-        return np.zeros(self.num_strats)
+    assert const2 + 1 == rsgame.const_replace(empty, [3, 4])
+    assert const2 - 1 == rsgame.const_replace(empty, [1, 2])
+    assert const2 * 2 == rsgame.const_replace(empty, [4, 6])
+    assert const2 / 2 == rsgame.const_replace(empty, [1, 3/2])
 
-    def normalize(self):
-        return self
+    assert const2 + [2, 1] == rsgame.const_replace(empty, 4)
+    assert const2 - [1, 2] == rsgame.const_replace(empty, 1)
+    assert const2 * [3, 2] == rsgame.const_replace(empty, 6)
+    assert const2 / [2, 3] == rsgame.const_replace(empty, 1)
 
-    def restrict(self, rest):
-        base = rsgame.emptygame_copy(self).restrict(rest)
-        return ZeroGame(base.role_names, base.strat_names,
-                        base.num_role_players)
+    assert 1 + const2 == rsgame.const_replace(empty, [3, 4])
+    assert 2 * const2 == rsgame.const_replace(empty, [4, 6])
+
+    assert const1 + const2 == rsgame.const_replace(empty, [3, 4])
+    assert const2 + const1 == rsgame.const_replace(empty, [3, 4])
+
+
+def test_const_names():
+    game = rsgame.const_names(
+        ['a', 'b'], [2, 3], [['1', '2'], ['3', '4', '5']], 1)
+    assert game.role_names == ('a', 'b')
+    assert np.all(game.num_role_players == [2, 3])
+    assert game.strat_names == (('1', '2'), ('3', '4', '5'))
+
+
+def test_mix():
+    empty = rsgame.emptygame([1, 2], [3, 2])
+    const1 = rsgame.const_replace(empty, [1, 5])
+    const2 = rsgame.const_replace(empty, [4, -1])
+    mix = rsgame.mix(const1, const2, 1/3)
+    assert mix == rsgame.const_replace(empty, [2, 3])
+
+
+def test_add_const():
+    empty = rsgame.emptygame([1, 2], [3, 2])
+    const1 = rsgame.const_replace(empty, [1, 5])
+    const2 = rsgame.const_replace(empty, [4, -1])
+    const3 = rsgame.const_replace(empty, 1)
+    add = rsgame.add(const1, const2, const3)
+    assert add == rsgame.const_replace(empty, [6, 5])
+
+
+def test_add_types():
+    empty = rsgame.emptygame([1, 2], [3, 2])
+    const = rsgame.const_replace(empty, 1)
+
+    assert empty + const == empty
+    assert const + empty == empty
+    assert rsgame.add(empty, const) == empty
+    assert rsgame.add(const, empty) == empty
+
+
+def test_add_game():
+    empty = rsgame.emptygame([1, 2], [3, 2])
+    unadd1 = unadd_replace(empty, 1)
+    unadd2 = unadd_replace(empty, [1, 2])
+    add = unadd1 + unadd2
+
+    assert add.is_complete()
+    for prof in add.all_profiles():
+        assert prof in add
+    prof = add.random_profile()
+    assert np.allclose(
+        add.payoffs(),
+        np.where(add.profiles() > 0, [2, 2, 2, 3, 3], 0))
+    assert np.allclose(add.min_role_payoffs(), [2, 3])
+    assert np.allclose(add.max_role_payoffs(), [2, 3])
+
+    assert np.allclose(add.deviation_payoffs(add.random_mixture()),
+                       [2, 2, 2, 3, 3])
+    dev, jac = add.deviation_payoffs(add.random_mixture(), jacobian=True)
+    assert np.allclose(dev, [2, 2, 2, 3, 3])
+    assert dev.shape == (add.num_strats,)
+    assert np.allclose(jac, 0)
+    assert jac.shape == (add.num_strats,) * 2
+
+    jstr = json.dumps(add.to_json())
+    loaded = rsgame.add_json(json.loads(jstr))  # Won't load proper type
+    assert np.allclose(add.payoffs(), loaded.get_payoffs(add.profiles()))
+    assert repr(add) == 'AddGame([1 2], [3 2], 9 / 9)'
+
+    add_comm = unadd2 + unadd1
+    assert hash(add) == hash(add_comm)
+    assert add == add_comm
+    add3 = add + unadd1
+    assert add3 == add_comm + unadd1
+    assert np.allclose(add3.get_payoffs(prof), (prof > 0) * [3, 3, 3, 4, 4])
+    add_add = add + [2, 5]
+    assert np.allclose(add_add.get_payoffs(prof), (prof > 0) * [4, 4, 4, 8, 8])
+    add_mul = add * 2
+    assert np.allclose(add_mul.get_payoffs(prof), (prof > 0) * [4, 4, 4, 6, 6])
+
+    rest = [True, True, False, True, True]
+    add_rest = add.restrict(rest)
+    assert rsgame.emptygame_copy(add_rest) == empty.restrict(rest)
+
+
+class UnAddable(rsgame.ConstantGame):
+    def _add_game(self, other):
+        assert False
+
+
+def unadd_replace(copy_game, constant):
+    """Replace a game with constant payoffs"""
+    return UnAddable(
+        copy_game.role_names, copy_game.strat_names,
+        copy_game.num_role_players, np.asarray(constant, float))

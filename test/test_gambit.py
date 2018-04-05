@@ -14,11 +14,13 @@ def ignore_fit():
     with warnings.catch_warnings():
         warnings.filterwarnings(
             'ignore',
-            "gambit player names aren't strictly sorted; modifying to comply with gameanalysis standards",
+            'gambit player names aren\'t strictly sorted; modifying to comply '
+            'with gameanalysis standards',
             UserWarning)
         warnings.filterwarnings(
             'ignore',
-            "gambit strategy names aren't strictly sorted; modifying to comply with gameanalysis standards",
+            'gambit strategy names aren\'t strictly sorted; modifying to '
+            'comply with gameanalysis standards',
             UserWarning)
         yield
 

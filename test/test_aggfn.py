@@ -57,7 +57,6 @@ def test_restrict_function_removal():
     rgame = game.restrict([True, True, True, False, True])
     expected = aggfn.aggfn_names(
         ['r0', 'r1'], [2, 1], [['s0', 's1'], ['s2', 's4']],
-        ['f0', 'f2', 'f3'],
         [[-1, 0, 1, 3],
          [1, 1, 1, 1],
          [0, 0, 1, 1]],
@@ -153,147 +152,8 @@ def test_restrict():
              [1, 1, 1],
              [0, 1, 1]]
     sgame = aggfn.aggfn_names(['r0', 'r1'], [2, 1], [['s1'], ['s2', 's4']],
-                              _game.function_names, sactw, sfuncinps,
-                              _game.function_table)
+                              sactw, sfuncinps, _game.function_table)
     assert sgame == _game.restrict(rest)
-
-
-def test_to_from_json():
-    jgame = {
-        'players': {'r0': 2, 'r1': 1},
-        'strategies': {'r0': ['s0', 's1'], 'r1': ['s2', 's3', 's4']},
-        'action_weights': {
-            'f0': {'r0': {'s0': -1},
-                   'r1': {'s2': 1, 's3': 2, 's4': 3}},
-            'f1': {'r0': {'s1': 1},
-                   'r1': {'s3': 1}},
-            'f2': {'r0': {'s0': 1, 's1': 1},
-                   'r1': {'s2': 1, 's3': 1, 's4': 1}},
-            'f3': {'r1': {'s2': 1, 's3': 1, 's4': 1}},
-        },
-        'function_inputs': {
-            'f0': {'r0': ['s0'], 'r1': ['s2', 's4']},
-            'f1': {'r0': ['s0', 's1']},
-            'f2': {'r0': ['s0', 's1'], 'r1': ['s2']},
-            'f3': {'r0': ['s0'], 'r1': ['s2', 's4']}},
-        'function_tables': {
-            'f0': [
-                {'r0': 0, 'r1': 1, 'value': 1},
-                {'r0': 1, 'r1': 0, 'value': 1},
-                {'r0': 1, 'r1': 1, 'value': 3},
-                {'r0': 2, 'r1': 0, 'value': 2},
-            ],
-            'f1': [
-                {'r0': 1, 'r1': 0, 'value': 3},
-                {'r0': 1, 'r1': 1, 'value': 2},
-                {'r0': 2, 'r1': 0, 'value': 2},
-                {'r0': 2, 'r1': 1, 'value': 4},
-            ],
-            'f2': [
-                {'r0': 0, 'r1': 0, 'value': 9},
-                {'r0': 0, 'r1': 1, 'value': 7},
-                {'r0': 1, 'r1': 0, 'value': 4},
-                {'r0': 1, 'r1': 1, 'value': 1},
-                {'r0': 2, 'r1': 0, 'value': 1},
-                {'r0': 2, 'r1': 1, 'value': 4},
-            ],
-            'f3': [
-                {'r0': 0, 'r1': 0, 'value': 3},
-                {'r0': 0, 'r1': 1, 'value': 6},
-                {'r0': 1, 'r1': 1, 'value': -1},
-                {'r0': 2, 'r1': 0, 'value': 3},
-                {'r0': 2, 'r1': 1, 'value': 4},
-            ],
-        },
-        'type': 'aggfn.2'}
-    assert _game.to_json() == jgame
-    assert json.loads(json.dumps(_game.to_json())) == jgame
-    assert aggfn.aggfn_json(jgame) == _game
-
-
-def test_from_json_v1():
-    jgame = {
-        'players': {'r0': 2, 'r1': 1},
-        'strategies': {'r0': ['s0', 's1'], 'r1': ['s2', 's3', 's4']},
-        'action_weights': {
-            'r0': {'s0': {'f0': -1, 'f2': 1},
-                   's1': {'f1': 1, 'f2': 1}},
-            'r1': {'s2': {'f0': 1, 'f2': 1, 'f3': 1},
-                   's3': {'f0': 2, 'f1': 1, 'f2': 1, 'f3': 1},
-                   's4': {'f0': 3, 'f2': 1, 'f3': 1}}},
-        'function_inputs': {
-            'f0': {'r0': ['s0'], 'r1': ['s2', 's4']},
-            'f1': {'r0': ['s0', 's1']},
-            'f2': {'r0': ['s0', 's1'], 'r1': ['s2']},
-            'f3': {'r0': ['s0'], 'r1': ['s2', 's4']}},
-        'function_tables': {
-            'f0': [[0, 1], [1, 3], [2, 0]],
-            'f1': [[0, 0], [3, 2], [2, 4]],
-            'f2': [[9, 7], [4, 1], [1, 4]],
-            'f3': [[3, 6], [0, -1], [3, 4]]},
-        'type': 'aggfn.1'}
-    assert aggfn.aggfn_json(jgame) == _game
-
-
-def test_from_json_vunnk():
-    jgame = {
-        'players': {'r0': 1},
-        'strategies': {'r0': ['s0']},
-        'function_tables': ['f0'],
-        'function_inputs': {'f0': {}},
-        'type': 'aggfn.unk'}
-    with pytest.raises(AssertionError):
-        aggfn.aggfn_json(jgame)
-
-
-def test_from_json_sum():
-    game = aggfn.aggfn(
-        [1, 1], [2, 2],
-        [[-1, 0, 1, 2]],
-        [[True], [False], [False], [True]],
-        [[[0, 1], [1, 3]]])
-    jgame = {
-        'players': {'r0': 1, 'r1': 1},
-        'strategies': {'r0': ['s0', 's1'], 'r1': ['s2', 's3']},
-        'action_weights': {
-            'r0': {'s0': {'f0': -1}},
-            'r1': {'s2': {'f0': 1},
-                   's3': {'f0': 2}}},
-        'function_inputs': {
-            'f0': {'r0': ['s0'], 'r1': ['s3']}},
-        'function_tables': {
-            'f0': [0, 1, 3]},
-        'type': 'aggfn.1'}
-    assert aggfn.aggfn_json(jgame) == game
-
-
-def test_from_json_const():
-    game = aggfn.aggfn(
-        [1, 1], [2, 2],
-        [[-1, 0, 1, 2]],
-        [[True], [False], [False], [True]],
-        [[[0, 1], [1, 3]]],
-        [4, 2, 1, 6])
-    jgame = {
-        'players': {'r0': 1, 'r1': 1},
-        'strategies': {'r0': ['s0', 's1'], 'r1': ['s2', 's3']},
-        'action_weights': {
-            'r0': {'s0': {'f0': -1, 'f3': 4},
-                   's1': {'f1': 2}},
-            'r1': {'s2': {'f0': 1, 'f1': 1},
-                   's3': {'f0': 2, 'f2': 3}}},
-        'function_inputs': {
-            'f0': {'r0': ['s0'], 'r1': ['s3']},
-            'f1': {'r0': ['s1'], 'r1': ['s2']},
-            'f2': {},
-            'f3': {'r0': ['s0', 's1'], 'r1': ['s2', 's3']}},
-        'function_tables': {
-            'f0': [0, 1, 3],
-            'f1': [1, 1, 1],
-            'f2': [2, 3, 4],
-            'f3': [3, 2, 1]},
-        'type': 'aggfn.1'}
-    assert aggfn.aggfn_json(jgame) == game
 
 
 def verify_aggfn(game):
@@ -415,13 +275,39 @@ def test_repr():
     assert repr(rand([5, 4], [4, 3], 3)) == expected
 
 
-def test_function_index():
-    for i in range(_game.num_functions):
-        assert _game.function_index('f{:d}'.format(i)) == i
-
-
 def test_eq():
     copy = aggfn.aggfn_replace(
         _game, _game.action_weights, _game.function_inputs,
         _game.function_table, np.ones(_game.num_strats))
     assert copy != _game
+
+
+def test_add():
+    g1 = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3]],
+        [[True], [False], [True], [False], [True]],
+        [[[0, 1], [1, 3], [2, 0]]])
+    g2 = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[0, 1, 3, 1, 0]],
+        [[False], [True], [True], [False], [False]],
+        [[[1, 2], [3, 4], [5, 0]]])
+    ga = aggfn.aggfn(
+        [2, 1], [2, 3],
+        [[-1, 0, 1, 2, 3],
+         [0, 1, 3, 1, 0]],
+        [[True, False],
+         [False, True],
+         [True, True],
+         [False, False],
+         [True, False]],
+        [[[0, 1], [1, 3], [2, 0]],
+         [[1, 2], [3, 4], [5, 0]]])
+    assert g1 + g2 == ga
+    assert g2 + g1 == ga
+
+
+def test_json():
+    jstr = json.dumps(_game.to_json())
+    assert _game == aggfn.aggfn_json(json.loads(jstr))

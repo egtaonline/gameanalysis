@@ -888,9 +888,9 @@ def test_conv_game_norm():
         'conv', 'norm', input=GAME_STR)
     assert success, err
     game = gamereader.loads(out)
-    assert np.all(game.min_role_payoffs() == 0)
-    assert np.all((game.max_role_payoffs() == 1) |
-                  (game.max_role_payoffs() == 0))
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.all(np.isclose(game.max_role_payoffs(), 1) |
+                  np.isclose(game.max_role_payoffs(), 0))
 
 
 def test_conv_mat_empty():
@@ -945,9 +945,9 @@ def test_conv_mat_norm():
         'conv', 'norm', input=MATGAME_STR)
     assert success, err
     game = gamereader.loads(out)
-    assert np.all(game.min_role_payoffs() == 0)
-    assert np.all((game.max_role_payoffs() == 1) |
-                  (game.max_role_payoffs() == 0))
+    assert np.allclose(game.min_role_payoffs(), 0)
+    assert np.all(np.isclose(game.max_role_payoffs(), 1) |
+                  np.isclose(game.max_role_payoffs(), 0))
 
 
 def test_conv_game_mat_inv():

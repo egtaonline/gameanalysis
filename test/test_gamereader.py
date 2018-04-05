@@ -13,7 +13,6 @@ from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import learning
 from gameanalysis import matgame
-from gameanalysis import mergegame
 from gameanalysis import rsgame
 
 
@@ -62,8 +61,8 @@ def neighbor():
     return learning.neighbor(rbf())
 
 
-def merg():
-    return mergegame.merge(game(), agg(), 0.5)
+def add():
+    return canon() + agg()
 
 
 def canon():
@@ -71,7 +70,7 @@ def canon():
 
 
 @pytest.mark.parametrize('game', [
-    egame, game, sgame, agg, mat, rbf, point, sample, neighbor, merg, canon,
+    egame, game, sgame, agg, mat, rbf, point, sample, neighbor, add, canon,
     'gambit'])
 def test_automatic_deserialization(game):
     """Test that we can serialize and deserialize arbitrary games"""

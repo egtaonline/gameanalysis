@@ -8,6 +8,8 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# FIXME Remove function names, they're not necessary and clutter equality and
+# merging... and replace because we need replace_names
 class AgfnGame(rsgame.CompleteGame):
     """Action graph with function nodes game
 
@@ -23,8 +25,6 @@ class AgfnGame(rsgame.CompleteGame):
         The name of each strategy per role.
     num_role_players : ndarray
         The number of players for each role.
-    function_names : (str,)
-        The name of each function. Must be sorted, unique, and non-empty.
     action_weights : ndarray
         Each entry specifies the incoming weight in the action graph for the
         action node (column).  Must have shape (num_functions, num_strats). The
@@ -42,12 +42,11 @@ class AgfnGame(rsgame.CompleteGame):
         number of inputs from each role.
     """
 
-    def __init__(self, role_names, strat_names, function_names,
-                 num_role_players, action_weights, function_inputs,
-                 function_table, offsets):
+    def __init__(
+            self, role_names, strat_names, num_role_players, action_weights,
+            function_inputs, function_table, offsets):
         super().__init__(role_names, strat_names, num_role_players)
-        self.function_names = function_names
-        self.num_functions = len(function_names)
+        self.num_functions, *_ = function_table.shape
         self.action_weights = action_weights
         self.action_weights.setflags(write=False)
         self.function_inputs = function_inputs
@@ -64,18 +63,12 @@ class AgfnGame(rsgame.CompleteGame):
             self.function_inputs)
         self._dinputs.setflags(write=False)
 
-        self._function_index = {f: i for i, f in enumerate(function_names)}
-
         # Compute other bookmarking stuff
         self._basis = np.insert(
             np.cumprod(self.num_role_players[:0:-1] + 1)[::-1],
             self.num_roles - 1, 1)
         self._func_offset = (np.arange(self.num_functions) *
                              np.prod(self.num_role_players + 1))
-
-    def function_index(self, func_name):
-        """Get the index of a function by name"""
-        return self._function_index[func_name]
 
     @utils.memoize
     def min_strat_payoffs(self):
@@ -190,57 +183,62 @@ class AgfnGame(rsgame.CompleteGame):
                         self.action_weights)
         return devs, jac
 
-    def normalize(self):
-        """Return a normalized AgfnGame"""
-        scale = self.max_role_payoffs() - self.min_role_payoffs()
-        scale[np.isclose(scale, 0)] = 1
-        scale = scale.repeat(self.num_role_strats)
-        offsets = (self.offsets - self.min_role_payoffs().repeat(
-            self.num_role_strats)) / scale
-
+    def _add_constant(self, role_array):
         return AgfnGame(
-            self.role_names, self.strat_names, self.function_names,
-            self.num_role_players, self.action_weights / scale,
-            self.function_inputs, self.function_table, offsets)
+            self.role_names, self.strat_names, self.num_role_players,
+            self.action_weights, self.function_inputs, self.function_table,
+            self.offsets + np.repeat(role_array, self.num_role_strats))
+
+    def _multiply_constant(self, role_array):
+        mul = np.repeat(role_array, self.num_role_strats)
+        return AgfnGame(
+            self.role_names, self.strat_names, self.num_role_players,
+            self.action_weights * mul, self.function_inputs,
+            self.function_table, self.offsets * mul)
+
+    def _add_game(self, other):
+        assert isinstance(other, AgfnGame)
+        return AgfnGame(
+            self.role_names, self.strat_names, self.num_role_players,
+            np.concatenate([self.action_weights, other.action_weights]),
+            np.concatenate([self.function_inputs, other.function_inputs], 1),
+            np.concatenate([self.function_table, other.function_table]),
+            self.offsets + other.offsets)
 
     def restrict(self, rest):
         rest = np.asarray(rest, bool)
         base = rsgame.emptygame_copy(self).restrict(rest)
         action_weights = self.action_weights[:, rest]
         func_mask = np.any(~np.isclose(action_weights, 0), 1)
-        func_names = tuple(
-            n for n, m in zip(self.function_names, func_mask) if m)
         return AgfnGame(
-            base.role_names, base.strat_names, func_names,
-            base.num_role_players, action_weights[func_mask],
+            base.role_names, base.strat_names, base.num_role_players,
+            action_weights[func_mask],
             self.function_inputs[:, func_mask][rest],
             self.function_table[func_mask], self.offsets[rest])
 
     def to_json(self):
         res = super().to_json()
 
-        res['function_inputs'] = {
-            func: self.restriction_to_json(finp) for func, finp
-            in zip(self.function_names, self.function_inputs.T)}
+        res['function_inputs'] = [
+            self.restriction_to_json(finp) for finp in self.function_inputs.T]
 
-        res['action_weights'] = {
-            func: self.payoff_to_json(ws) for func, ws
-            in zip(self.function_names, self.action_weights)}
+        res['action_weights'] = [
+            self.payoff_to_json(ws) for ws in self.action_weights]
 
         # XXX This will fail if a role has the name "value", do we care?
-        res['function_tables'] = {
-            name: [dict(zip(self.role_names, (c.item() for c in counts)),
-                        value=val)
-                   for val, *counts in zip(
-                tab.ravel(), *np.indices(tab.shape).reshape(
-                    self.num_roles, -1))
-                   if val != 0]
-            for name, tab in zip(self.function_names, self.function_table)}
+        res['function_tables'] = [
+            [dict(zip(self.role_names, (c.item() for c in counts)),
+                  value=val)
+             for val, *counts in zip(
+                     tab.ravel(), *np.indices(tab.shape).reshape(
+                         self.num_roles, -1))
+             if val != 0]
+            for tab in self.function_table]
 
         if not np.allclose(self.offsets, 0):
             res['offsets'] = self.payoff_to_json(self.offsets)
 
-        res['type'] = 'aggfn.2'
+        res['type'] = 'aggfn.3'
         return res
 
     def __repr__(self):
@@ -248,26 +246,23 @@ class AgfnGame(rsgame.CompleteGame):
             old=super().__repr__()[:-1],
             nfuncs=self.num_functions)
 
-    def __eq__(self, other):
-        if not (super().__eq__(other) and
-                self.function_names == other.function_names and
-                self.function_table.shape == other.function_table.shape and
-                np.allclose(self.offsets, other.offsets)):
-            return False
-
-        selfp = np.lexsort(
-            self.function_table.reshape((self.num_functions, -1)).T)
-        otherp = np.lexsort(
-            other.function_table.reshape((other.num_functions, -1)).T)
-        return (np.all(self.function_inputs[:, selfp]
-                       == other.function_inputs[:, otherp]) and
-                np.allclose(self.action_weights[selfp],
-                            other.action_weights[otherp]) and
-                np.allclose(self.function_table[selfp],
-                            other.function_table[otherp]))
+    def __eq__(self, othr):
+        return (super().__eq__(othr) and
+                self.num_functions == othr.num_functions and
+                np.allclose(self.offsets, othr.offsets) and
+                utils.allclose_perm(
+                    np.concatenate(
+                        [self.action_weights, self.function_inputs.T,
+                         self.function_table.reshape(self.num_functions, -1)],
+                        1),
+                    np.concatenate(
+                        [othr.action_weights, othr.function_inputs.T,
+                         othr.function_table.reshape(othr.num_functions, -1)],
+                        1)))
 
     @utils.memoize
     def __hash__(self):
+        # FIXME Can has function inputs
         return hash((super().__hash__(), self.num_functions))
 
 
@@ -297,8 +292,8 @@ def aggfn(num_role_players, num_role_strats, action_weights, function_inputs,
                          offsets)
 
 
-def aggfn_names(role_names, num_role_players, strat_names, function_names,
-                action_weights, function_inputs, function_table, offsets=None):
+def aggfn_names(role_names, num_role_players, strat_names, action_weights,
+                function_inputs, function_table, offsets=None):
     """Create an Aggfn with specified names
 
     Parameters
@@ -309,8 +304,6 @@ def aggfn_names(role_names, num_role_players, strat_names, function_names,
         The number of players for each role.
     strat_names : [[str]]
         The name of each strategy for each role.
-    function_names : [str]
-        The name of each function.
     action_weights : ndarray
         The mapping of each function to the strategy weight for a player.
     function_inpits : ndarray
@@ -320,10 +313,9 @@ def aggfn_names(role_names, num_role_players, strat_names, function_names,
         not allowed in the function table as they are clutter, instead,
         constant functions can be specified here.
     """
-    return aggfn_names_replace(
+    return aggfn_replace(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
-        function_names, action_weights, function_inputs, function_table,
-        offsets)
+        action_weights, function_inputs, function_table, offsets)
 
 
 # TODO Make aggfn_copy method that will clone the aggfn game if it is one,
@@ -332,41 +324,12 @@ def aggfn_names(role_names, num_role_players, strat_names, function_names,
 
 def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
                   offsets=None):
-    """Replace an existing game with default function names
-
-    Parameters
-    ----------
-    copy_game : RsGame
-        The game to take game structure from.
-    action_weights : ndarray-like
-        The weights of each function to player payoffs.
-    function_inputs : ndarray-like
-        The mask of each strategy to function.
-    function_table : ndarray-like
-        The lookup table of number of incoming edges to function value.
-    offsets : ndarray, float, optional
-        A constant offset for each strategies payoff. Constant functions are
-        not allowed in the function table as they are clutter, instead,
-        constant functions can be specified here.
-    """
-    if hasattr(copy_game, 'function_names'):
-        function_names = copy_game.function_names
-    else:
-        function_names = tuple(utils.prefix_strings('f', len(action_weights)))
-    return aggfn_names_replace(copy_game, function_names, action_weights,
-                               function_inputs, function_table, offsets)
-
-
-def aggfn_names_replace(copy_game, function_names, action_weights,
-                        function_inputs, function_table, offsets=None):
     """Replace an existing game with an Aggfn
 
     Parameters
     ----------
     copy_game : RsGame
         The game to take game structure from.
-    function_names : [str]
-        The name of each function.
     action_weights : ndarray-like
         The weights of each function to player payoffs.
     function_inputs : ndarray-like
@@ -381,25 +344,23 @@ def aggfn_names_replace(copy_game, function_names, action_weights,
     if offsets is None:
         offsets = np.zeros(copy_game.num_strats)
 
-    function_names = tuple(function_names)
     action_weights = np.asarray(action_weights, float)
     function_inputs = np.asarray(function_inputs, bool)
     function_table = np.asarray(function_table, float)
     offsets = np.asarray(offsets, float)
-    num_funcs = len(function_names)
+    num_funcs, *one_plays = function_table.shape
 
-    assert function_names, \
+    assert 0 < num_funcs, \
         "must have at least one function"
-    assert (action_weights.shape == (num_funcs, copy_game.num_strats)), \
+    assert action_weights.shape == (num_funcs, copy_game.num_strats), \
         "action_weights must have shape (num_functions, num_strats)"
-    assert (function_inputs.shape == (copy_game.num_strats, num_funcs)), \
+    assert function_inputs.shape == (copy_game.num_strats, num_funcs), \
         "function_inputs must have shape (num_strats, num_functions)"
     assert not function_inputs.all(0).any(), \
         "can't have a function with input from every strategy"
     assert function_inputs.any(0).all(), \
         "every function must take input from at least one strategy"
-    assert (function_table.shape == (num_funcs,) +
-            tuple(copy_game.num_role_players + 1)), \
+    assert one_plays == list(copy_game.num_role_players + 1), \
         "function_table must have shape (num_functions, ... num_role_players + 1)"  # noqa
     assert not np.isclose(
         function_table.reshape((num_funcs, -1))[:, 0, None],
@@ -407,13 +368,11 @@ def aggfn_names_replace(copy_game, function_names, action_weights,
         "a function can't be constant (all identical values)"
     assert not np.isclose(action_weights, 0).all(1).any(), \
         "a function can't have actions weights of all zero"
-    assert all(isinstance(f, str) for f in function_names), \
-        "all function names must be strs"
-    assert utils.is_sorted(function_names, strict=True), \
-        "function_names must be sorted"
+    assert offsets.shape == (copy_game.num_strats,), \
+        "offsets must have shape (num_strats,)"
 
     return AgfnGame(
-        copy_game.role_names, copy_game.strat_names, function_names,
+        copy_game.role_names, copy_game.strat_names,
         copy_game.num_role_players, action_weights, function_inputs,
         function_table, offsets)
 
@@ -460,75 +419,31 @@ def aggfn_json(json):
     Json versions of the game will generally have 'type': 'aggfn...' in them,
     but as long as the proper fields exist, this will succeed."""
     base = rsgame.emptygame_json(json)
-    function_names = sorted(json['function_tables'])
-    findex = {f: i for i, f in enumerate(function_names)}
-    num_functions = len(function_names)
 
-    version = json.get('type', '.1').split('.', 1)[1]
+    _, version = json.get('type', '.3').split('.', 1)
+    assert version == '3'
 
+    num_functions = len(json['function_tables'])
     function_inputs = np.empty((base.num_strats, num_functions), bool)
     action_weights = np.empty((num_functions, base.num_strats))
-    function_table = np.empty((num_functions,) +
-                              tuple(base.num_role_players + 1))
+    function_table = np.empty(
+        (num_functions,) + tuple(base.num_role_players + 1))
     offsets = np.empty(base.num_strats)
-
-    for func, inps in json['function_inputs'].items():
-        base.restriction_from_json(inps, function_inputs[:, findex[func]],
-                                   verify=False)
 
     base.payoff_from_json(json.get('offsets', {}), offsets)
 
-    if version == '1':
-        action_weights.fill(0)
-        for role, strats in json['action_weights'].items():
-            for strat, funcs in strats.items():
-                rsi = base.role_strat_index(role, strat)
-                for func, val in funcs.items():
-                    action_weights[findex[func], rsi] = val
+    for inps, jinps in zip(function_inputs.T, json['function_inputs']):
+        base.restriction_from_json(jinps, inps, verify=False)
 
-        for func, jtable in json['function_tables'].items():
-            atable = np.asarray(jtable, float)
-            if base.num_roles > 1 and atable.ndim == 1:
-                # Convert old sum format to role format
-                tab = function_table[findex[func]]
-                inds = np.indices(tab.shape)
-                tab[tuple(inds)] = atable[inds.sum(0)]
-            else:
-                function_table[findex[func]] = atable
+    for weights, jweights in zip(action_weights, json['action_weights']):
+        base.payoff_from_json(jweights, weights)
 
-        # Find constant functions and remove them. Constant functions either
-        # have identical function values for every possible input, or are never
-        # activated or always activated.
-        flat_funcs = function_table.reshape(num_functions, -1)
-        vals = flat_funcs[:, 0].copy()
-        consts = np.isclose(vals[:, None], flat_funcs).all(1)
-        consts |= ~function_inputs.any(0)
-        always = function_inputs.all(0)
-        vals[always] = flat_funcs[always, -1]
-        consts |= always
+    function_table.fill(0)
+    for table, jtable in zip(function_table, json['function_tables']):
+        for elem in jtable:
+            copy = elem.copy()
+            value = copy.pop('value')
+            table[tuple(int(i) for i in base.role_from_json(copy))] = value
 
-        offsets += vals[consts].dot(action_weights[consts])
-        function_inputs = function_inputs[:, ~consts]
-        action_weights = action_weights[~consts]
-        function_table = function_table[~consts]
-        flat_funcs = flat_funcs[~consts]
-        function_names = [n for n, c in zip(function_names, consts) if not c]
-
-    elif version == '2':
-        for func, weights in json['action_weights'].items():
-            base.payoff_from_json(weights, action_weights[findex[func]])
-
-        function_table.fill(0)
-        for func, jtable in json['function_tables'].items():
-            table = function_table[findex[func]]
-            for elem in jtable:
-                copy = elem.copy()
-                value = copy.pop('value')
-                table[tuple(int(i) for i in base.role_from_json(copy))] = value
-
-    else:
-        assert False, "unknown version \"{}\"".format(version)
-
-    return aggfn_names_replace(
-        base, function_names, action_weights, function_inputs, function_table,
-        offsets)
+    return aggfn_replace(
+        base, action_weights, function_inputs, function_table, offsets)

@@ -169,13 +169,27 @@ class MatrixGame(rsgame.CompleteGame):
             matrix = matrix[(slice(None),) * i + (mask,)]
         return MatrixGame(base.role_names, base.strat_names, matrix.copy())
 
-    def normalize(self):
-        """Return a normalized MatGame"""
-        scale = self.max_role_payoffs() - self.min_role_payoffs()
-        scale[np.isclose(scale, 0)] = 1
+    def _add_constant(self, role_array):
         return MatrixGame(
             self.role_names, self.strat_names,
-            (self._payoff_matrix - self.min_role_payoffs()) / scale)
+            self._payoff_matrix + role_array)
+
+    def _multiply_constant(self, role_array):
+        return MatrixGame(
+            self.role_names, self.strat_names,
+            self._payoff_matrix * role_array)
+
+    def _add_game(self, other):
+        assert other.is_complete()
+        if hasattr(other, 'payoff_matrix'):
+            other_mat = other.payoff_matrix()
+        else:
+            other_mat = other.get_payoffs(
+                self.all_profiles())[self.all_profiles() > 0].reshape(
+                    self._payoff_matrix.shape)
+        return MatrixGame(
+            self.role_names, self.strat_names,
+            self._payoff_matrix + other_mat)
 
     def _mat_to_json(self, matrix, role_index):
         """Convert a sub matrix into json representation"""

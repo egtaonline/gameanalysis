@@ -360,3 +360,35 @@ def test_random_to_from_json(strats):
     jgame = json.dumps(matg.to_json())
     copy = matgame.matgame_json(json.loads(jgame))
     assert matg == copy
+
+
+@pytest.mark.parametrize('strats', [
+    [1],
+    [3],
+    [2, 3],
+    [1, 2, 3],
+    [2, 3, 1],
+])
+def test_random_matrix_addition(strats):
+    shape = tuple(strats) + (len(strats),)
+    payoffs1 = rand.random(shape)
+    matg1 = matgame.matgame(payoffs1)
+    payoffs2 = rand.random(shape)
+    matg2 = matgame.matgame(payoffs2)
+    assert matg1 + matg2 == matgame.matgame(payoffs1 + payoffs2)
+
+
+@pytest.mark.parametrize('strats', [
+    [1],
+    [3],
+    [2, 3],
+    [1, 2, 3],
+    [2, 3, 1],
+])
+def test_random_game_addition(strats):
+    mpayoffs = rand.random(tuple(strats) + (len(strats),))
+    matg = matgame.matgame(mpayoffs)
+    payoffs = rand.random(matg.payoffs().shape)
+    payoffs[matg.profiles() == 0] = 0
+    game = paygame.game_replace(matg, matg.profiles(), payoffs)
+    assert paygame.game_copy(matg + game) == game + matg

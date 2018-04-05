@@ -22,6 +22,7 @@ them tend to be arrays of size `num_roles` and attributes that have `strat` in
 the name tend to be arrays of size `num_strats`.
 """
 import abc
+import contextlib
 import functools
 import itertools
 import string
@@ -32,6 +33,7 @@ import numpy as np
 import numpy.random as rand
 import scipy.special as sps
 
+from gameanalysis import gamereader
 from gameanalysis import utils
 
 
@@ -1341,13 +1343,23 @@ class RsGame(GameLike):
         pass  # pragma: no cover
 
     @abc.abstractmethod
-    def normalize(self):
-        """Return a new game where the max payoff is 1 and min payoff is 0"""
+    def __contains__(self, profile):
+        """Return true if full payoff data for profile exists"""
         pass  # pragma: no cover
 
     @abc.abstractmethod
-    def __contains__(self, profile):
-        """Return true if full payoff data for profile exists"""
+    def _add_constant(self, role_array):
+        """Add a constant to each roles payoffs"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def _multiply_constant(self, role_array):
+        """Multiply each roles payoffs by a constant"""
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def _add_game(self, other):
+        """Add two games together, so payoffs are the sum"""
         pass  # pragma: no cover
 
     # --------------------
@@ -1361,6 +1373,14 @@ class RsGame(GameLike):
     def max_role_payoffs(self):
         """Returns the maximum payoff for each role"""
         return np.fmax.reduceat(self.max_strat_payoffs(), self.role_starts)
+
+    def normalize(self):
+        """Return a new game where the max payoff is 1 and min payoff is 0"""
+        scale = self.max_role_payoffs() - self.min_role_payoffs()
+        scale[np.isclose(scale, 0) | np.isnan(scale)] = 1
+        offset = self.min_role_payoffs()
+        offset[np.isnan(offset)] = 0
+        return (self - offset) / scale
 
     def get_dev_payoffs(self, dev_profs):
         """Compute the payoffs for deviating
@@ -1414,6 +1434,35 @@ class RsGame(GameLike):
         with np.errstate(invalid='ignore'):  # nan
             return best_resps / np.add.reduceat(
                 best_resps, self.role_starts).repeat(self.num_role_strats)
+
+    def __mul__(self, other):
+        const = np.broadcast_to(other, self.num_roles)
+        assert np.all(const > 0)
+        return self._multiply_constant(const)
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __truediv__(self, other):
+        return self * (1 / np.asarray(other))
+
+    def __add__(self, other):
+        if hasattr(other, '_add_game'):
+            assert emptygame_copy(self) == emptygame_copy(other), \
+                "games must have the same structure"
+            with contextlib.suppress(Exception):
+                return self._add_game(other)
+            with contextlib.suppress(Exception):
+                return other._add_game(self)
+            return add(self, other)
+        else:
+            return self._add_constant(np.broadcast_to(other, self.num_roles))
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        return self + -np.asarray(other)
 
 
 class EmptyGame(RsGame):
@@ -1474,7 +1523,13 @@ class EmptyGame(RsGame):
                 self.strat_names, np.split(rest, self.role_starts[1:])))
         return EmptyGame(self.role_names, new_strats, self.num_role_players)
 
-    def normalize(self):
+    def _add_constant(self, role_array):
+        return self
+
+    def _multiply_constant(self, role_array):
+        return self
+
+    def _add_game(self, other):
         return self
 
     def __contains__(self, profile):
@@ -1486,7 +1541,7 @@ class EmptyGame(RsGame):
 
     def to_json(self):
         res = super().to_json()
-        res['type'] = 'emptygame.1'
+        res['type'] = 'empty.1'
         return res
 
 
@@ -1616,6 +1671,185 @@ def emptygame_copy(copy_game):
                      copy_game.num_role_players)
 
 
+class AddGame(RsGame):
+    """A Game representing the addition of two games
+
+    Payoffs in this game are the sum of the payoffs from each game. Some game
+    types may support native addition, this is the fallback.
+    """
+
+    def __init__(self, games):
+        super().__init__(
+            games[0].role_names, games[0].strat_names,
+            games[0].num_role_players)
+        self._games = games
+
+    @property
+    @utils.memoize
+    def num_complete_profiles(self):
+        if all(game.is_complete() for game in self._games):
+            return self.num_all_profiles
+        else:
+            return len(frozenset.intersection(*[
+                frozenset(utils.hash_array(prof) for prof, pay
+                          in zip(game.profiles(), game.payoffs())
+                          if not np.isnan(pay).any())
+                for game in self._games]))
+
+    @property
+    @utils.memoize
+    def num_profiles(self):
+        if all(game.is_complete() for game in self._games):
+            return self.num_all_profiles
+        else:
+            return self.profiles().shape[0]
+
+    @functools.lru_cache(maxsize=1)
+    def profiles(self):
+        if all(game.is_complete() for game in self._games):
+            return self.all_profiles()
+        else:
+            profs = frozenset.intersection(*[
+                frozenset(utils.hash_array(prof) for prof in game.profiles())
+                for game in self._games])
+            if profs:
+                return np.stack([h.array for h in profs])
+            else:
+                return np.empty((0, self.num_strats), int)
+
+    @functools.lru_cache(maxsize=1)
+    def payoffs(self):
+        return self.get_payoffs(self.profiles())
+
+    def deviation_payoffs(self, mix, *, jacobian=False, **kw):
+        if jacobian:
+            return map(sum, zip(*[
+                game.deviation_payoffs(mix, jacobian=True, **kw)
+                for game in self._games]))
+        else:
+            return sum(game.deviation_payoffs(mix, **kw)
+                       for game in self._games)
+
+    def get_payoffs(self, profile):
+        return sum(game.get_payoffs(profile) for game in self._games)
+
+    @utils.memoize
+    def max_strat_payoffs(self):
+        return sum(game.max_strat_payoffs() for game in self._games)
+
+    @utils.memoize
+    def min_strat_payoffs(self):
+        return sum(game.min_strat_payoffs() for game in self._games)
+
+    def restrict(self, rest):
+        return AddGame(
+            tuple(game.restrict(rest) for game in self._games))
+
+    def _add_constant(self, role_array):
+        return AddGame(self._games + (const_replace(self, role_array),))
+
+    def _multiply_constant(self, role_array):
+        return AddGame(
+            tuple(game * role_array for game in self._games))
+
+    def _add_game(self, other):
+        return add(self, other)
+
+    def to_json(self):
+        base = super().to_json()
+        base['games'] = [game.to_json() for game in self._games]
+        base['type'] = 'add.1'
+        return base
+
+    def __contains__(self, profile):
+        return all(profile in game for game in self._games)
+
+    def __eq__(self, other):
+        return (super().__eq__(other) and
+                frozenset(self._games) == frozenset(other._games))
+
+    def __hash__(self):
+        return hash(frozenset(self._games))
+
+    def __repr__(self):
+        return '{}, {:d} / {:d})'.format(
+            super().__repr__()[:-1], self.num_profiles, self.num_all_profiles)
+
+
+def add(*games):
+    """Add games together to that the payoff is the sum of each game
+
+    Parameters
+    ----------
+    games : RsGame
+        The games to add together
+    """
+    assert games, "must add at least one game"
+    base = emptygame_copy(games[0])
+    assert all(base == emptygame_copy(game) for game in games[1:]), \
+        "all games must have same structure"
+
+    # Expand games in base forms
+    games = list(itertools.chain.from_iterable(
+        game._games if hasattr(game, '_games') else [game]
+        for game in games))
+    # This attempts to add any game that can be added
+    final_games = []
+    while games:
+        current_game = games.pop()
+        unmerged_games = []
+        for game in games:
+            with contextlib.suppress(Exception):
+                current_game = current_game._add_game(game)
+                continue
+            with contextlib.suppress(Exception):
+                current_game = game._add_game(current_game)
+                continue
+            unmerged_games.append(game)
+        final_games.append(current_game)
+        games = unmerged_games
+    if len(final_games) == 1:
+        return final_games[0]
+    else:
+        return AddGame(tuple(final_games))
+
+
+def add_json(jgame):
+    """Read added games from json"""
+    base = emptygame_json(jgame)
+    games = [gamereader.loadj(jg) for jg in jgame['games']]
+    assert all(base == emptygame_copy(game)
+               for game in games), \
+        "game structure didn't match each added game"
+    return add(*games)
+
+
+def mix(game0, game1, t):
+    """Mix games together
+
+    The resulting payoff is a (1-t) fraction of game0 and a t fraction of
+    game1.
+
+    Parameters
+    ----------
+    game0 : RsGame
+        The first game to mix.
+    game1 : RsGame
+        The second game to mix.
+    t : float
+        The fraction to merge the games. 0 corresponds to a copy of `game0`, 1
+        corresponds to `game1`, and somewhere between corresponds to the linear
+        interpolation between them.
+    """
+    assert 0 <= t <= 1, "t must be in [0, 1] but was {:f}".format(t)
+    if t == 0:
+        return game0
+    elif t == 1:
+        return game1
+    else:
+        return (1 - t) * game0 + t * game1
+
+
 class CompleteGame(RsGame):
     """A game that defines everything for complete games
 
@@ -1640,6 +1874,91 @@ class CompleteGame(RsGame):
     def __contains__(self, profile):
         assert self.is_profile(profile)
         return True
+
+
+class ConstantGame(CompleteGame):
+    """A game with constant payoffs"""
+    def __init__(self, role_names, strat_names, num_role_players, constant):
+        super().__init__(role_names, strat_names, num_role_players)
+        self._role_const = np.broadcast_to(constant, self.num_roles)
+        self._role_const.setflags(write=False)
+        self._strat_const = self._role_const.repeat(self.num_role_strats)
+        self._strat_const.setflags(write=False)
+
+    def deviation_payoffs(self, mix, *, jacobian=False, **_):
+        if jacobian:
+            return self._strat_const.copy(), np.zeros([self.num_strats] * 2)
+        else:
+            return self._strat_const.copy()
+
+    def get_payoffs(self, profs):
+        return np.where(profs > 0, self._strat_const, 0)
+
+    def max_strat_payoffs(self):
+        return self._strat_const.view()
+
+    def min_strat_payoffs(self):
+        return self._strat_const.view()
+
+    def restrict(self, rest):
+        base = emptygame_copy(self).restrict(rest)
+        return ConstantGame(base.role_names, base.strat_names,
+                            base.num_role_players, self._role_const)
+
+    def _add_constant(self, role_array):
+        return ConstantGame(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._role_const + role_array)
+
+    def _multiply_constant(self, role_array):
+        return ConstantGame(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._role_const * role_array)
+
+    def _add_game(self, other):
+        return other + self._role_const
+
+    def to_json(self):
+        base = super().to_json()
+        base['const'] = self._role_const.tolist()
+        base['type'] = 'const.1'
+        return base
+
+    def __eq__(self, other):
+        return (super().__eq__(other) and
+                np.allclose(self._role_const, other._role_const))
+
+    def __hash__(self):
+        return super().__hash__()
+
+    def __repr__(self):
+        return '{}, {})'.format(super().__repr__()[:-1], self._role_const)
+
+
+def const(num_role_players, num_role_strats, constant):
+    """Create a new constant game"""
+    return const_replace(
+        emptygame(num_role_players, num_role_strats), constant)
+
+
+def const_names(role_names, num_role_players, strat_names, constant):
+    """Create a new constant game with names"""
+    return const_replace(
+        emptygame_names(role_names, num_role_players, strat_names), constant)
+
+
+def const_replace(copy_game, constant):
+    """Replace a game with constant payoffs"""
+    return ConstantGame(
+        copy_game.role_names, copy_game.strat_names,
+        copy_game.num_role_players, np.asarray(constant, float))
+
+
+def const_json(jgame):
+    """Read a constant game from json"""
+    base = emptygame_json(jgame)
+    constant = np.asarray(jgame['const'], float)
+    return const_replace(base, constant)
 
 
 # Legal characters for roles and strategies
