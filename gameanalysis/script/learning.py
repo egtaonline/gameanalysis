@@ -2,6 +2,7 @@
 import argparse
 import json
 import sys
+import warnings
 
 from gameanalysis import learning
 from gameanalysis import gamereader
@@ -56,7 +57,8 @@ def add_parser(subparsers):
 
 
 def main(args):
-    game = learning.rbfgame_train(gamereader.load(args.input))
+    with warnings.catch_warnings(record=True) as warns:
+        game = learning.rbfgame_train(gamereader.load(args.input))
     methods = {'replicator': {'max_iters': args.max_iters,
                               'converge_thresh': args.converge_thresh},
                'optimize': {}}
@@ -75,6 +77,17 @@ def main(args):
     args.output.write('=============\n')
     args.output.write(str(game))
     args.output.write('\n\n')
+
+    if any(w.category == UserWarning and
+           w.message.args[0] == (
+               'some lengths were at their bounds, this may indicate a poor '
+               'fit') for w in warns):
+        args.output.write('Warning\n')
+        args.output.write('=======\n')
+        args.output.write(
+            'Some length scales were at their limit. This is a strong\n'
+            'indication that a good representation was not found.\n')
+        args.output.write('\n\n')
 
     # Output Equilibria
     args.output.write('Equilibria\n')
