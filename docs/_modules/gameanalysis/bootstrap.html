@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.bootstrap &#8212; Game Analysis 5.7.1 documentation</title>
+    <title>gameanalysis.bootstrap &#8212; Game Analysis 6.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,7 +36,7 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.bootstrap</h1><div class="highlight"><pre>
-<span></span><span class="s2">&quot;Module for using bootstrap in analysis&quot;</span>
+<span></span><span class="sd">&#39;&#39;&#39;Module for using bootstrap in analysis&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">multiprocessing</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -46,7 +46,7 @@
 
 <div class="viewcode-block" id="game_function"><a class="viewcode-back" href="../../gameanalysis.bootstrap.html#gameanalysis.bootstrap.game_function">[docs]</a><span class="k">def</span> <span class="nf">game_function</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">num_resamples</span><span class="p">,</span> <span class="n">num_returned</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
                   <span class="n">percentiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Bootstrap the value of a function over a sample game</span>
+    <span class="sd">&#39;&#39;&#39;Bootstrap the value of a function over a sample game</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -75,7 +75,7 @@
 <span class="sd">        An ndarray of the percentiles from bootstrapping. The shape will depend</span>
 <span class="sd">        on the number of percentiles and the number of values returned from</span>
 <span class="sd">        your function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">results</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_resamples</span><span class="p">,</span> <span class="n">num_returned</span><span class="p">))</span>
     <span class="n">func</span> <span class="o">=</span> <span class="n">_BootstrapPickleable</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">function</span><span class="p">)</span>
     <span class="n">chunksize</span> <span class="o">=</span> <span class="n">num_resamples</span> <span class="k">if</span> <span class="n">processes</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">4</span>
@@ -92,7 +92,7 @@
 
 
 <span class="k">class</span> <span class="nc">_BootstrapPickleable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A pickleable game function combo&quot;&quot;&quot;</span>
+    <span class="sd">&#39;&#39;&#39;A pickleable game function combo&#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">game</span><span class="p">,</span> <span class="n">function</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">game</span> <span class="o">=</span> <span class="n">game</span>
@@ -104,7 +104,7 @@
 
 <div class="viewcode-block" id="profile_function"><a class="viewcode-back" href="../../gameanalysis.bootstrap.html#gameanalysis.bootstrap.profile_function">[docs]</a><span class="k">def</span> <span class="nf">profile_function</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">num_resamples</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
                      <span class="n">percentiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">processes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute a function over profiles</span>
+    <span class="sd">&#39;&#39;&#39;Compute a function over profiles</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -131,7 +131,7 @@
 <span class="sd">        An ndarray of the percentiles from bootstrapping for each profile. The</span>
 <span class="sd">        shape will depend on the number of percentiles and the number of</span>
 <span class="sd">        profiles.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">profiles</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">profiles</span> <span class="o">=</span> <span class="n">profiles</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span>
     <span class="n">func</span> <span class="o">=</span> <span class="n">_ProfilePickleable</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">function</span><span class="p">)</span>
@@ -151,7 +151,7 @@
 
 <div class="viewcode-block" id="mixture_regret"><a class="viewcode-back" href="../../gameanalysis.bootstrap.html#gameanalysis.bootstrap.mixture_regret">[docs]</a><span class="k">def</span> <span class="nf">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">,</span> <span class="n">num_resamples</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">percentiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                    <span class="n">processes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute percentile bounds on mixture regret</span>
+    <span class="sd">&#39;&#39;&#39;Compute percentile bounds on mixture regret</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -173,7 +173,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    regret_percentiles : ndarray</span>
 <span class="sd">        An ndarray of the percentiles for bootstrap regret for each profile.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">profile_function</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">,</span>
                             <span class="n">num_resamples</span><span class="p">,</span> <span class="n">percentiles</span><span class="o">=</span><span class="n">percentiles</span><span class="p">,</span></div>
                             <span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
@@ -181,7 +181,7 @@
 
 <div class="viewcode-block" id="mixture_welfare"><a class="viewcode-back" href="../../gameanalysis.bootstrap.html#gameanalysis.bootstrap.mixture_welfare">[docs]</a><span class="k">def</span> <span class="nf">mixture_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">,</span> <span class="n">num_resamples</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">percentiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                     <span class="n">processes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Compute percentile bounds on mixture welfare</span>
+    <span class="sd">&#39;&#39;&#39;Compute percentile bounds on mixture welfare</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -203,7 +203,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    bootstrap_percentiles : ndarray</span>
 <span class="sd">        An ndarray of the percentiles for bootstrap welfare for each profile.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">profile_function</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">regret</span><span class="o">.</span><span class="n">mixed_social_welfare</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">,</span>
                             <span class="n">num_resamples</span><span class="p">,</span> <span class="n">percentiles</span><span class="o">=</span><span class="n">percentiles</span><span class="p">,</span></div>
                             <span class="n">processes</span><span class="o">=</span><span class="n">processes</span><span class="p">)</span>
@@ -239,7 +239,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

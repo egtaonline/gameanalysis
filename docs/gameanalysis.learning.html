@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.learning module &#8212; Game Analysis 5.7.1 documentation</title>
+    <title>gameanalysis.learning module &#8212; Game Analysis 6.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -95,12 +95,6 @@ need to compute the payoff for non deviators.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.normalize">
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.learning.DevRegressionGame.restrict">
 <code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Restrict viable strategies</p>
@@ -138,12 +132,6 @@ an existing deviation game, then this will use it’s underlying model.</li>
 <dd><p>The payoffs for deviating from mixture</p>
 <p>Optionally with the jacobian with respect to mixture. This is the
 primary method that needs to implemented for nash finding.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.NeighborDeviationGame.normalize">
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#NeighborDeviationGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.NeighborDeviationGame.normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
 </dd></dl>
 
 <dl class="method">
@@ -186,12 +174,6 @@ model must also support a jacobian for get_dev_payoffs.</p>
 <dd><p>The payoffs for deviating from mixture</p>
 <p>Optionally with the jacobian with respect to mixture. This is the
 primary method that needs to implemented for nash finding.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.PointDeviationGame.normalize">
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#PointDeviationGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.PointDeviationGame.normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
 </dd></dl>
 
 <dl class="method">
@@ -259,12 +241,6 @@ returned by <cite>random_dev_profiles</cite>.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.normalize">
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="gameanalysis.learning.RbfGpGame.restrict">
 <code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.restrict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Restrict viable strategies</p>
@@ -306,12 +282,6 @@ lower variance but higher computation time.</li>
 <p>The method computes the jacobian as if we were importance sampling the
 results, i.e. the function is really always sample according to mixture
 m’, but then importance sample to get the actual result.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.SampleDeviationGame.normalize">
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#SampleDeviationGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.SampleDeviationGame.normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
 </dd></dl>
 
 <dl class="method">
@@ -507,7 +477,7 @@ scikit-learn estimator API.</li>
         <li class="right" >
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

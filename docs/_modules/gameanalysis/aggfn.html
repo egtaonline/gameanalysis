@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.aggfn &#8212; Game Analysis 5.7.1 documentation</title>
+    <title>gameanalysis.aggfn &#8212; Game Analysis 6.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,7 +36,7 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.aggfn</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;An action graph game with additive function nodes&quot;&quot;&quot;</span>
+<span></span><span class="sd">&#39;&#39;&#39;An action graph game with additive function nodes&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -47,7 +47,7 @@
 
 
 <div class="viewcode-block" id="AgfnGame"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame">[docs]</a><span class="k">class</span> <span class="nc">AgfnGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">CompleteGame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Action graph with function nodes game</span>
+    <span class="sd">&#39;&#39;&#39;Action graph with function nodes game</span>
 
 <span class="sd">    Action node utilities have additive structure. Function nodes are</span>
 <span class="sd">    contribution-independent. Graph is bipartite so that function nodes have</span>
@@ -61,8 +61,6 @@
 <span class="sd">        The name of each strategy per role.</span>
 <span class="sd">    num_role_players : ndarray</span>
 <span class="sd">        The number of players for each role.</span>
-<span class="sd">    function_names : (str,)</span>
-<span class="sd">        The name of each function. Must be sorted, unique, and non-empty.</span>
 <span class="sd">    action_weights : ndarray</span>
 <span class="sd">        Each entry specifies the incoming weight in the action graph for the</span>
 <span class="sd">        action node (column).  Must have shape (num_functions, num_strats). The</span>
@@ -78,14 +76,13 @@
 <span class="sd">        different roles ass simply different strategy sets, the later treats</span>
 <span class="sd">        each nodes inputs as distinct, and so each function maps from the</span>
 <span class="sd">        number of inputs from each role.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span>
-                 <span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
-                 <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
+            <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span> <span class="o">=</span> <span class="n">function_names</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">function_names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">function_table</span><span class="o">.</span><span class="n">shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">=</span> <span class="n">action_weights</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span> <span class="o">=</span> <span class="n">function_inputs</span>
@@ -102,8 +99,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_function_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">function_names</span><span class="p">)}</span>
-
         <span class="c1"># Compute other bookmarking stuff</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_basis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
@@ -111,13 +106,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_func_offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span> <span class="o">*</span>
                              <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
 
-<div class="viewcode-block" id="AgfnGame.function_index"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.function_index">[docs]</a>    <span class="k">def</span> <span class="nf">function_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the index of a function by name&quot;&quot;&quot;</span></div>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_function_index</span><span class="p">[</span><span class="n">func_name</span><span class="p">]</span>
-
 <div class="viewcode-block" id="AgfnGame.min_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.min_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">min_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns a lower bound on the payoffs.&quot;&quot;&quot;</span>
+        <span class="sd">&#39;&#39;&#39;Returns a lower bound on the payoffs.&#39;&#39;&#39;</span>
         <span class="n">node_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">minima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">maxima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -129,7 +120,7 @@
 
 <div class="viewcode-block" id="AgfnGame.max_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.max_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">max_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns an upper bound on the payoffs.&quot;&quot;&quot;</span>
+        <span class="sd">&#39;&#39;&#39;Returns an upper bound on the payoffs.&#39;&#39;&#39;</span>
         <span class="n">node_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
         <span class="n">minima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">maxima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -140,7 +131,7 @@
         <span class="k">return</span> <span class="n">maxs</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
 
 <div class="viewcode-block" id="AgfnGame.get_payoffs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.get_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Returns an array of profile payoffs.&quot;&quot;&quot;</span>
+        <span class="sd">&#39;&#39;&#39;Returns an array of profile payoffs.&#39;&#39;&#39;</span>
         <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
         <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
             <span class="n">profile</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
@@ -155,7 +146,7 @@
     <span class="c1"># dev payoff.</span>
 
 <div class="viewcode-block" id="AgfnGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the deviation payoffs&quot;&quot;&quot;</span>
+        <span class="sd">&#39;&#39;&#39;Get the deviation payoffs&#39;&#39;&#39;</span>
         <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
         <span class="n">role_node_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">mix</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span>
@@ -228,57 +219,62 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span></div>
         <span class="k">return</span> <span class="n">devs</span><span class="p">,</span> <span class="n">jac</span>
 
-<div class="viewcode-block" id="AgfnGame.normalize"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return a normalized AgfnGame&quot;&quot;&quot;</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_role_payoffs</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span>
-        <span class="n">scale</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-        <span class="n">offsets</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">))</span> <span class="o">/</span> <span class="n">scale</span>
-
+    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span></div>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="n">mul</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">*</span> <span class="n">mul</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">AgfnGame</span><span class="p">),</span> <span class="s1">&#39;can only add other aggfns&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">action_weights</span><span class="p">]),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">function_table</span><span class="p">]),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AgfnGame.restrict"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.restrict">[docs]</a>    <span class="k">def</span> <span class="nf">restrict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
         <span class="n">rest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span>
         <span class="n">action_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">[:,</span> <span class="n">rest</span><span class="p">]</span>
         <span class="n">func_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">func_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-            <span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span> <span class="n">func_mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
-            <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">func_names</span><span class="p">,</span>
-            <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="n">action_weights</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">func_mask</span><span class="p">][</span><span class="n">rest</span><span class="p">],</span></div>
             <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="n">rest</span><span class="p">])</span>
 
 <div class="viewcode-block" id="AgfnGame.to_json"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.AgfnGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
 
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">func</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">restriction_to_json</span><span class="p">(</span><span class="n">finp</span><span class="p">)</span> <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">finp</span>
-            <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">)}</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restriction_to_json</span><span class="p">(</span><span class="n">finp</span><span class="p">)</span> <span class="k">for</span> <span class="n">finp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">]</span>
 
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">func</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span> <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">ws</span>
-            <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)}</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span> <span class="k">for</span> <span class="n">ws</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">]</span>
 
-        <span class="c1"># XXX This will fail if a role has the name &quot;value&quot;, do we care?</span>
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">name</span><span class="p">:</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">)),</span>
-                        <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
-                   <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="o">*</span><span class="n">counts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                <span class="n">tab</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">tab</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-                   <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">tab</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">)}</span>
+        <span class="c1"># XXX This will fail if a role has the name &#39;value&#39;, do we care?</span>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">)),</span>
+                  <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+             <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="o">*</span><span class="n">counts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                     <span class="n">tab</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">tab</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+             <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
             <span class="n">res</span><span class="p">[</span><span class="s1">&#39;offsets&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span>
 
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;aggfn.2&#39;</span></div>
+        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;aggfn.3&#39;</span></div>
         <span class="k">return</span> <span class="n">res</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -286,32 +282,30 @@
             <span class="n">old</span><span class="o">=</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
             <span class="n">nfuncs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">function_names</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">function_names</span> <span class="ow">and</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">shape</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">offsets</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="n">selfp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-        <span class="n">otherp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">(</span>
-            <span class="n">other</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">other</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">selfp</span><span class="p">]</span>
-                       <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">otherp</span><span class="p">])</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">[</span><span class="n">selfp</span><span class="p">],</span>
-                            <span class="n">other</span><span class="o">.</span><span class="n">action_weights</span><span class="p">[</span><span class="n">otherp</span><span class="p">])</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[</span><span class="n">selfp</span><span class="p">],</span>
-                            <span class="n">other</span><span class="o">.</span><span class="n">function_table</span><span class="p">[</span><span class="n">otherp</span><span class="p">]))</span>
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">othr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">othr</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">num_functions</span> <span class="ow">and</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">allclose_perm</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
+                        <span class="mi">1</span><span class="p">),</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">othr</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                         <span class="n">othr</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">othr</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
+                        <span class="mi">1</span><span class="p">)))</span>
 
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span></div>
+            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">))</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()))</span>
 
 
 <div class="viewcode-block" id="aggfn"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn">[docs]</a><span class="k">def</span> <span class="nf">aggfn</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
           <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create an Aggfn with default names</span>
+    <span class="sd">&#39;&#39;&#39;Create an Aggfn with default names</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -329,15 +323,15 @@
 <span class="sd">        A constant offset for each strategies payoff. Constant functions are</span>
 <span class="sd">        not allowed in the function table as they are clutter, instead,</span>
 <span class="sd">        constant functions can be specified here.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">),</span>
                          <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span></div>
                          <span class="n">offsets</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="aggfn_names"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_names">[docs]</a><span class="k">def</span> <span class="nf">aggfn_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span>
-                <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create an Aggfn with specified names</span>
+<div class="viewcode-block" id="aggfn_names"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_names">[docs]</a><span class="k">def</span> <span class="nf">aggfn_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
+                <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Create an Aggfn with specified names</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -347,8 +341,6 @@
 <span class="sd">        The number of players for each role.</span>
 <span class="sd">    strat_names : [[str]]</span>
 <span class="sd">        The name of each strategy for each role.</span>
-<span class="sd">    function_names : [str]</span>
-<span class="sd">        The name of each function.</span>
 <span class="sd">    action_weights : ndarray</span>
 <span class="sd">        The mapping of each function to the strategy weight for a player.</span>
 <span class="sd">    function_inpits : ndarray</span>
@@ -357,11 +349,10 @@
 <span class="sd">        A constant offset for each strategies payoff. Constant functions are</span>
 <span class="sd">        not allowed in the function table as they are clutter, instead,</span>
 <span class="sd">        constant functions can be specified here.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">aggfn_names_replace</span><span class="p">(</span>
-        <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">),</span>
-        <span class="n">function_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span></div>
-        <span class="n">offsets</span><span class="p">)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span>
+        <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">),</span></div>
+        <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span>
 
 
 <span class="c1"># TODO Make aggfn_copy method that will clone the aggfn game if it is one,</span>
@@ -370,7 +361,7 @@
 
 <div class="viewcode-block" id="aggfn_replace"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_replace">[docs]</a><span class="k">def</span> <span class="nf">aggfn_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span>
                   <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Replace an existing game with default function names</span>
+    <span class="sd">&#39;&#39;&#39;Replace an existing game with an Aggfn</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -386,79 +377,57 @@
 <span class="sd">        A constant offset for each strategies payoff. Constant functions are</span>
 <span class="sd">        not allowed in the function table as they are clutter, instead,</span>
 <span class="sd">        constant functions can be specified here.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="s1">&#39;function_names&#39;</span><span class="p">):</span>
-        <span class="n">function_names</span> <span class="o">=</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">function_names</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">function_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">action_weights</span><span class="p">)))</span>
-    <span class="k">return</span> <span class="n">aggfn_names_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span></div>
-                               <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="aggfn_names_replace"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_names_replace">[docs]</a><span class="k">def</span> <span class="nf">aggfn_names_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
-                        <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Replace an existing game with an Aggfn</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    copy_game : RsGame</span>
-<span class="sd">        The game to take game structure from.</span>
-<span class="sd">    function_names : [str]</span>
-<span class="sd">        The name of each function.</span>
-<span class="sd">    action_weights : ndarray-like</span>
-<span class="sd">        The weights of each function to player payoffs.</span>
-<span class="sd">    function_inputs : ndarray-like</span>
-<span class="sd">        The mask of each strategy to function.</span>
-<span class="sd">    function_table : ndarray-like</span>
-<span class="sd">        The lookup table of number of incoming edges to function value.</span>
-<span class="sd">    offsets : ndarray, float, optional</span>
-<span class="sd">        A constant offset for each strategies payoff. Constant functions are</span>
-<span class="sd">        not allowed in the function table as they are clutter, instead,</span>
-<span class="sd">        constant functions can be specified here.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">offsets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
 
-    <span class="n">function_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">function_names</span><span class="p">)</span>
     <span class="n">action_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">function_inputs</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">function_table</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">offsets</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="n">num_funcs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">function_names</span><span class="p">)</span>
+    <span class="n">num_funcs</span><span class="p">,</span> <span class="o">*</span><span class="n">one_plays</span> <span class="o">=</span> <span class="n">function_table</span><span class="o">.</span><span class="n">shape</span>
 
-    <span class="k">assert</span> <span class="n">function_names</span><span class="p">,</span> \
-        <span class="s2">&quot;must have at least one function&quot;</span>
-    <span class="k">assert</span> <span class="p">(</span><span class="n">action_weights</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)),</span> \
-        <span class="s2">&quot;action_weights must have shape (num_functions, num_strats)&quot;</span>
-    <span class="k">assert</span> <span class="p">(</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">)),</span> \
-        <span class="s2">&quot;function_inputs must have shape (num_strats, num_functions)&quot;</span>
-    <span class="k">assert</span> <span class="ow">not</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> \
-        <span class="s2">&quot;can&#39;t have a function with input from every strategy&quot;</span>
-    <span class="k">assert</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> \
-        <span class="s2">&quot;every function must take input from at least one strategy&quot;</span>
-    <span class="k">assert</span> <span class="p">(</span><span class="n">function_table</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">num_funcs</span><span class="p">,)</span> <span class="o">+</span>
-            <span class="nb">tuple</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span> \
-        <span class="s2">&quot;function_table must have shape (num_functions, ... num_role_players + 1)&quot;</span>  <span class="c1"># noqa</span>
-    <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
-        <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-        <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> \
-        <span class="s2">&quot;a function can&#39;t be constant (all identical values)&quot;</span>
-    <span class="k">assert</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> \
-        <span class="s2">&quot;a function can&#39;t have actions weights of all zero&quot;</span>
-    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">function_names</span><span class="p">),</span> \
-        <span class="s2">&quot;all function names must be strs&quot;</span>
-    <span class="k">assert</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_sorted</span><span class="p">(</span><span class="n">function_names</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> \
-        <span class="s2">&quot;function_names must be sorted&quot;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="s1">&#39;must have at least one function&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">action_weights</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span>
+        <span class="s1">&#39;action_weights must have shape (num_functions, num_strats) but got &#39;</span>
+        <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">action_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">function_inputs</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">),</span>
+        <span class="s1">&#39;function_inputs must have shape (num_strats, num_functions) but got &#39;</span>
+        <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="ow">not</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span>
+        <span class="s1">&#39;can</span><span class="se">\&#39;</span><span class="s1">t have a function with input from every strategy&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">function_inputs</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+        <span class="s1">&#39;every function must take input from at least one strategy&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">one_plays</span> <span class="o">==</span> <span class="nb">list</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="s1">&#39;function_table must have shape &#39;</span>
+        <span class="s1">&#39;(num_functions, ... num_role_players + 1) but got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">function_table</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
+            <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+            <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span>
+        <span class="s1">&#39;a function can</span><span class="se">\&#39;</span><span class="s1">t be constant (all identical values)&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span>
+        <span class="s1">&#39;a function can</span><span class="se">\&#39;</span><span class="s1">t have actions weights of all zero&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">offsets</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,),</span>
+        <span class="s1">&#39;offsets must have shape (num_strats,) but got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">offsets</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">AgfnGame</span><span class="p">(</span>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
         <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span></div>
         <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="aggfn_funcs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_funcs">[docs]</a><span class="k">def</span> <span class="nf">aggfn_funcs</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
                 <span class="n">function_inputs</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Construct and Aggfn with functions</span>
+    <span class="sd">&#39;&#39;&#39;Construct and Aggfn with functions</span>
 
 <span class="sd">    This is generally less efficient than just constructing the function table</span>
 <span class="sd">    using vectorized operations or an existing function table.</span>
@@ -477,8 +446,8 @@
 <span class="sd">        List of functions that maps the player per role activations to a single</span>
 <span class="sd">        value. The number of ordered arguments will be inferred from each</span>
 <span class="sd">        function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">functions</span><span class="p">,</span> <span class="s2">&quot;must have at least one function&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="s1">&#39;must have at least one function&#39;</span><span class="p">)</span>
     <span class="n">num_functions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span>
 
     <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">)</span>
@@ -493,83 +462,40 @@
 
 
 <div class="viewcode-block" id="aggfn_json"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_json">[docs]</a><span class="k">def</span> <span class="nf">aggfn_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Read an Aggfn from json</span>
+    <span class="sd">&#39;&#39;&#39;Read an Aggfn from json</span>
 
 <span class="sd">    Json versions of the game will generally have &#39;type&#39;: &#39;aggfn...&#39; in them,</span>
-<span class="sd">    but as long as the proper fields exist, this will succeed.&quot;&quot;&quot;</span>
+<span class="sd">    but as long as the proper fields exist, this will succeed.&#39;&#39;&#39;</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">(</span><span class="n">json</span><span class="p">)</span>
-    <span class="n">function_names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">])</span>
-    <span class="n">findex</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">function_names</span><span class="p">)}</span>
-    <span class="n">num_functions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">function_names</span><span class="p">)</span>
 
-    <span class="n">version</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;.1&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;.3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">version</span> <span class="o">==</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;parsing versions below 3 is currently unsupported&#39;</span><span class="p">)</span>
 
+    <span class="n">num_functions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">])</span>
     <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_functions</span><span class="p">),</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">action_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
-    <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_functions</span><span class="p">,)</span> <span class="o">+</span>
-                              <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">num_functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">inps</span> <span class="ow">in</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">base</span><span class="o">.</span><span class="n">restriction_from_json</span><span class="p">(</span><span class="n">inps</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">]],</span>
-                                   <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;offsets&#39;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">offsets</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span>
-        <span class="n">action_weights</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">strat</span><span class="p">,</span> <span class="n">funcs</span> <span class="ow">in</span> <span class="n">strats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">rsi</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">role_strat_index</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">strat</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">funcs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="n">action_weights</span><span class="p">[</span><span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">],</span> <span class="n">rsi</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+    <span class="k">for</span> <span class="n">inps</span><span class="p">,</span> <span class="n">jinps</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]):</span>
+        <span class="n">base</span><span class="o">.</span><span class="n">restriction_from_json</span><span class="p">(</span><span class="n">jinps</span><span class="p">,</span> <span class="n">inps</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">jtable</span> <span class="ow">in</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">atable</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jtable</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">atable</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="c1"># Convert old sum format to role format</span>
-                <span class="n">tab</span> <span class="o">=</span> <span class="n">function_table</span><span class="p">[</span><span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">]]</span>
-                <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">tab</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-                <span class="n">tab</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">inds</span><span class="p">)]</span> <span class="o">=</span> <span class="n">atable</span><span class="p">[</span><span class="n">inds</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">function_table</span><span class="p">[</span><span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">]]</span> <span class="o">=</span> <span class="n">atable</span>
+    <span class="k">for</span> <span class="n">weights</span><span class="p">,</span> <span class="n">jweights</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]):</span>
+        <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">jweights</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
 
-        <span class="c1"># Find constant functions and remove them. Constant functions either</span>
-        <span class="c1"># have identical function values for every possible input, or are never</span>
-        <span class="c1"># activated or always activated.</span>
-        <span class="n">flat_funcs</span> <span class="o">=</span> <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">vals</span> <span class="o">=</span> <span class="n">flat_funcs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="n">consts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">vals</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">flat_funcs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">consts</span> <span class="o">|=</span> <span class="o">~</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">always</span> <span class="o">=</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">vals</span><span class="p">[</span><span class="n">always</span><span class="p">]</span> <span class="o">=</span> <span class="n">flat_funcs</span><span class="p">[</span><span class="n">always</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">consts</span> <span class="o">|=</span> <span class="n">always</span>
+    <span class="n">function_table</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">table</span><span class="p">,</span> <span class="n">jtable</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">function_table</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">jtable</span><span class="p">:</span>
+            <span class="n">copy</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+            <span class="n">table</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">role_from_json</span><span class="p">(</span><span class="n">copy</span><span class="p">))]</span> <span class="o">=</span> <span class="n">value</span>
 
-        <span class="n">offsets</span> <span class="o">+=</span> <span class="n">vals</span><span class="p">[</span><span class="n">consts</span><span class="p">]</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">action_weights</span><span class="p">[</span><span class="n">consts</span><span class="p">])</span>
-        <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">function_inputs</span><span class="p">[:,</span> <span class="o">~</span><span class="n">consts</span><span class="p">]</span>
-        <span class="n">action_weights</span> <span class="o">=</span> <span class="n">action_weights</span><span class="p">[</span><span class="o">~</span><span class="n">consts</span><span class="p">]</span>
-        <span class="n">function_table</span> <span class="o">=</span> <span class="n">function_table</span><span class="p">[</span><span class="o">~</span><span class="n">consts</span><span class="p">]</span>
-        <span class="n">flat_funcs</span> <span class="o">=</span> <span class="n">flat_funcs</span><span class="p">[</span><span class="o">~</span><span class="n">consts</span><span class="p">]</span>
-        <span class="n">function_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">function_names</span><span class="p">,</span> <span class="n">consts</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">]</span>
-
-    <span class="k">elif</span> <span class="n">version</span> <span class="o">==</span> <span class="s1">&#39;2&#39;</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">weights</span> <span class="ow">in</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">[</span><span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">]])</span>
-
-        <span class="n">function_table</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">jtable</span> <span class="ow">in</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">table</span> <span class="o">=</span> <span class="n">function_table</span><span class="p">[</span><span class="n">findex</span><span class="p">[</span><span class="n">func</span><span class="p">]]</span>
-            <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">jtable</span><span class="p">:</span>
-                <span class="n">copy</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
-                <span class="n">table</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">role_from_json</span><span class="p">(</span><span class="n">copy</span><span class="p">))]</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;unknown version </span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">aggfn_names_replace</span><span class="p">(</span>
-        <span class="n">base</span><span class="p">,</span> <span class="n">function_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span></div>
-        <span class="n">offsets</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span></div>
+        <span class="n">base</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span>
 </pre></div>
 
           </div>
@@ -602,7 +528,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

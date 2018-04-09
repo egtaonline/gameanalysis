@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.rsgame module &#8212; Game Analysis 5.7.1 documentation</title>
+    <title>gameanalysis.rsgame module &#8212; Game Analysis 6.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.restrict.html" title="gameanalysis.restrict module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -65,6 +65,75 @@ attribute instead of a getter function. Attributes that have the world role in
 them tend to be arrays of size <cite>num_roles</cite> and attributes that have <cite>strat</cite> in
 the name tend to be arrays of size <cite>num_strats</cite>.</p>
 <dl class="class">
+<dt id="gameanalysis.rsgame.AddGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">AddGame</code><span class="sig-paren">(</span><em>games</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
+<p>A Game representing the addition of two games</p>
+<p>Payoffs in this game are the sum of the payoffs from each game. Some game
+types may support native addition, this is the fallback.</p>
+<dl class="method">
+<dt id="gameanalysis.rsgame.AddGame.deviation_payoffs">
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for deviating from mixture</p>
+<p>Optionally with the jacobian with respect to mixture. This is the
+primary method that needs to implemented for nash finding.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.AddGame.get_payoffs">
+<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for all profiles</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.AddGame.max_strat_payoffs">
+<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>An upper bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.AddGame.min_strat_payoffs">
+<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A lower bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.AddGame.num_complete_profiles">
+<code class="descname">num_complete_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.AddGame.num_complete_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles with complete payoff information</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.AddGame.num_profiles">
+<code class="descname">num_profiles</code><a class="headerlink" href="#gameanalysis.rsgame.AddGame.num_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of profiles with any payoff information</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.AddGame.payoffs">
+<code class="descname">payoffs</code><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.payoffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="gameanalysis.rsgame.AddGame.profiles">
+<code class="descname">profiles</code><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.AddGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.restrict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict viable strategies</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.AddGame.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#AddGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.AddGame.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format game as json</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="gameanalysis.rsgame.CompleteGame">
 <em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">CompleteGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#CompleteGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.CompleteGame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.RsGame</span></code></a></p>
@@ -91,6 +160,51 @@ the name tend to be arrays of size <cite>num_strats</cite>.</p>
 <dt id="gameanalysis.rsgame.CompleteGame.profiles">
 <code class="descname">profiles</code><a class="reference internal" href="_modules/gameanalysis/rsgame.html#CompleteGame.profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.CompleteGame.profiles" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="gameanalysis.rsgame.ConstantGame">
+<em class="property">class </em><code class="descclassname">gameanalysis.rsgame.</code><code class="descname">ConstantGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em>, <em>constant</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#ConstantGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.ConstantGame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#gameanalysis.rsgame.CompleteGame" title="gameanalysis.rsgame.CompleteGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.CompleteGame</span></code></a></p>
+<p>A game with constant payoffs</p>
+<dl class="method">
+<dt id="gameanalysis.rsgame.ConstantGame.deviation_payoffs">
+<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#ConstantGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.ConstantGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for deviating from mixture</p>
+<p>Optionally with the jacobian with respect to mixture. This is the
+primary method that needs to implemented for nash finding.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.ConstantGame.get_payoffs">
+<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#ConstantGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.ConstantGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The payoffs for all profiles</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.ConstantGame.max_strat_payoffs">
+<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#ConstantGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.ConstantGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>An upper bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.ConstantGame.min_strat_payoffs">
+<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#ConstantGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.ConstantGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A lower bound on the payoff for each strategy</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.ConstantGame.restrict">
+<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#ConstantGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.ConstantGame.restrict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restrict viable strategies</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="gameanalysis.rsgame.ConstantGame.to_json">
+<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#ConstantGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.ConstantGame.to_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format game as json</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -123,12 +237,6 @@ primary method that needs to implemented for nash finding.</p>
 <dt id="gameanalysis.rsgame.EmptyGame.min_strat_payoffs">
 <code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>A lower bound on the payoff for each strategy</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.rsgame.EmptyGame.normalize">
-<code class="descname">normalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#EmptyGame.normalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.EmptyGame.normalize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new game where the max payoff is 1 and min payoff is 0</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -922,7 +1030,7 @@ num_role_strats</cite>.</li>
 <dt id="gameanalysis.rsgame.StratArray.restriction_from_repr">
 <code class="descname">restriction_from_repr</code><span class="sig-paren">(</span><em>rrest</em>, <em>dest=None</em>, <em>*</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#StratArray.restriction_from_repr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.StratArray.restriction_from_repr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a restriction from a repr string</p>
-<p>A restriction repr is ‘role: strat, …; …’</p>
+<p>A restriction repr is “role: strat, …; …”</p>
 </dd></dl>
 
 <dl class="method">
@@ -1043,6 +1151,50 @@ with the minimum absolute error to the input mixture.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="gameanalysis.rsgame.add">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">add</code><span class="sig-paren">(</span><em>*games</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add games together to that the payoff is the sum of each game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>games</strong> (<a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The games to add together</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.add_json">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">add_json</code><span class="sig-paren">(</span><em>jgame</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#add_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.add_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read added games from json</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.const">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>constant</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new constant game</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.const_json">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const_json</code><span class="sig-paren">(</span><em>jgame</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a constant game from json</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.const_names">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const_names</code><span class="sig-paren">(</span><em>role_names</em>, <em>num_role_players</em>, <em>strat_names</em>, <em>constant</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new constant game with names</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.rsgame.const_replace">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const_replace</code><span class="sig-paren">(</span><em>copy_game</em>, <em>constant</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace a game with constant payoffs</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="gameanalysis.rsgame.emptygame">
 <code class="descclassname">gameanalysis.rsgame.</code><code class="descname">emptygame</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#emptygame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.emptygame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an empty game with default names</p>
@@ -1114,6 +1266,29 @@ data.</p>
 </table>
 </dd></dl>
 
+<dl class="function">
+<dt id="gameanalysis.rsgame.mix">
+<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">mix</code><span class="sig-paren">(</span><em>game0</em>, <em>game1</em>, <em>t</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#mix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.mix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mix games together</p>
+<p>The resulting payoff is a (1-t) fraction of game0 and a t fraction of
+game1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game0</strong> (<a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The first game to mix.</li>
+<li><strong>game1</strong> (<a class="reference internal" href="#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The second game to mix.</li>
+<li><strong>t</strong> (<em>float</em>) – The fraction to merge the games. 0 corresponds to a copy of <cite>game0</cite>, 1
+corresponds to <cite>game1</cite>, and somewhere between corresponds to the linear
+interpolation between them.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -1166,7 +1341,7 @@ data.</p>
         <li class="right" >
           <a href="gameanalysis.restrict.html" title="gameanalysis.restrict module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

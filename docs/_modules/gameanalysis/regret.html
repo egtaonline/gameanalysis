@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.regret &#8212; Game Analysis 5.7.1 documentation</title>
+    <title>gameanalysis.regret &#8212; Game Analysis 6.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,16 +36,16 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.regret</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;A module for computing regret and social welfare of profiles&quot;&quot;&quot;</span>
+<span></span><span class="sd">&#39;&#39;&#39;A module for computing regret and social welfare of profiles&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
 <div class="viewcode-block" id="pure_strategy_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.pure_strategy_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the pure strategy deviations gains</span>
+    <span class="sd">&#39;&#39;&#39;Returns the pure strategy deviations gains</span>
 
 <span class="sd">    The result is a compact array of deviation gains. Each element corresponds</span>
 <span class="sd">    to the deviation from strategy i to strategy j ordered by (i, j) for all</span>
-<span class="sd">    valid deviations.&quot;&quot;&quot;</span>
+<span class="sd">    valid deviations.&#39;&#39;&#39;</span>
     <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">dev_profs</span> <span class="o">=</span> <span class="n">profile</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_devs</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">dev_profs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_devs</span><span class="p">),</span> <span class="n">game</span><span class="o">.</span><span class="n">dev_from_indices</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
@@ -60,17 +60,17 @@
 
 
 <div class="viewcode-block" id="pure_strategy_regret"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.pure_strategy_regret">[docs]</a><span class="k">def</span> <span class="nf">pure_strategy_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the regret of a pure strategy profile</span>
+    <span class="sd">&#39;&#39;&#39;Returns the regret of a pure strategy profile</span>
 
 <span class="sd">    If prof has more than one dimension, the last dimension is taken as a set</span>
-<span class="sd">    of profiles and returned as a new array.&quot;&quot;&quot;</span></div>
+<span class="sd">    of profiles and returned as a new array.&#39;&#39;&#39;</span></div>
     <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="mixture_deviation_gains"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.mixture_deviation_gains">[docs]</a><span class="k">def</span> <span class="nf">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns all the gains from deviation from a mixed strategy</span>
+    <span class="sd">&#39;&#39;&#39;Returns all the gains from deviation from a mixed strategy</span>
 
-<span class="sd">    The result is ordered by role, then strategy.&quot;&quot;&quot;</span>
+<span class="sd">    The result is ordered by role, then strategy.&#39;&#39;&#39;</span>
     <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">strategy_evs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span>
     <span class="c1"># strategy_evs is nan where there&#39;s no data, however, if it&#39;s not played in</span>
@@ -83,28 +83,28 @@
 
 
 <div class="viewcode-block" id="mixture_regret"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.mixture_regret">[docs]</a><span class="k">def</span> <span class="nf">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return the regret of a mixture profile&quot;&quot;&quot;</span>
+    <span class="sd">&#39;&#39;&#39;Return the regret of a mixture profile&#39;&#39;&#39;</span>
     <span class="n">mix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span></div>
     <span class="k">return</span> <span class="n">mixture_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the social welfare of a pure strategy profile in game&quot;&quot;&quot;</span>
+    <span class="sd">&#39;&#39;&#39;Returns the social welfare of a pure strategy profile in game&#39;&#39;&#39;</span>
     <span class="n">profile</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span></div>
     <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="mixed_social_welfare"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.mixed_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">mixed_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the social welfare of a mixed strategy profile&quot;&quot;&quot;</span></div>
+    <span class="sd">&#39;&#39;&#39;Returns the social welfare of a mixed strategy profile&#39;&#39;&#39;</span></div>
     <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">expected_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="max_pure_social_welfare"><a class="viewcode-back" href="../../gameanalysis.regret.html#gameanalysis.regret.max_pure_social_welfare">[docs]</a><span class="k">def</span> <span class="nf">max_pure_social_welfare</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">by_role</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns the maximum social welfare over the known profiles.</span>
+    <span class="sd">&#39;&#39;&#39;Returns the maximum social welfare over the known profiles.</span>
 
 <span class="sd">    If by_role is specified, then max social welfare applies to each role</span>
 <span class="sd">    independently. If there are no profiles with full payoff data for a role,</span>
-<span class="sd">    an arbitrary profile will be returned.&quot;&quot;&quot;</span>
+<span class="sd">    an arbitrary profile will be returned.&#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="n">by_role</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">game</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">:</span>
             <span class="n">welfares</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
@@ -156,7 +156,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.learning &#8212; Game Analysis 5.7.1 documentation</title>
+    <title>gameanalysis.learning &#8212; Game Analysis 6.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,7 +36,7 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.learning</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Package for learning complete games from data</span>
+<span></span><span class="sd">&#39;&#39;&#39;Package for learning complete games from data</span>
 
 <span class="sd">The API of this individual module is still unstable and may change as</span>
 <span class="sd">improvements or refinements are made.</span>
@@ -45,11 +45,12 @@
 <span class="sd">games. Learned games vary by the method, but generally expose methods for</span>
 <span class="sd">computing payoffs and may other features. Deviation games use learned games and</span>
 <span class="sd">different functions to compute deviation payoffs via various methods.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&#39;&#39;&#39;</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">sklearn</span>
+<span class="kn">from</span> <span class="nn">numpy.lib</span> <span class="k">import</span> <span class="n">recfunctions</span>
 <span class="kn">from</span> <span class="nn">sklearn</span> <span class="k">import</span> <span class="n">gaussian_process</span> <span class="k">as</span> <span class="n">gp</span>
 
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">gamereader</span>
@@ -60,12 +61,12 @@
 
 
 <div class="viewcode-block" id="DevRegressionGame"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.DevRegressionGame">[docs]</a><span class="k">class</span> <span class="nc">DevRegressionGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">CompleteGame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A game regression model that learns deviation payoffs</span>
+    <span class="sd">&#39;&#39;&#39;A game regression model that learns deviation payoffs</span>
 
 <span class="sd">    This model functions as a game, but doesn&#39;t have a default way of computing</span>
 <span class="sd">    deviation payoffs. It must be wrapped with another game that uses payoff</span>
 <span class="sd">    data to compute deviation payoffs.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">game</span><span class="p">,</span> <span class="n">regressors</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">min_payoffs</span><span class="p">,</span>
                  <span class="n">max_payoffs</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
@@ -84,12 +85,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_rest</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DevRegressionGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.DevRegressionGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;regression games don&#39;t define deviation payoffs and must be used &quot;</span></div>
-            <span class="s2">&quot;as a model for a deviation game&quot;</span><span class="p">)</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span>
+            <span class="s1">&#39;regression games don</span><span class="se">\&#39;</span><span class="s1">t define deviation payoffs and must be &#39;</span></div>
+            <span class="s1">&#39;used as a model for a deviation game&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="DevRegressionGame.get_payoffs"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.DevRegressionGame.get_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s2">&quot;must pass valid profiles&quot;</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s1">&#39;must pass valid profiles&#39;</span><span class="p">)</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">reg</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regressors</span><span class="p">)):</span>
@@ -102,10 +104,10 @@
         <span class="k">return</span> <span class="n">payoffs</span>
 
 <div class="viewcode-block" id="DevRegressionGame.get_dev_payoffs"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.DevRegressionGame.get_dev_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_dev_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute the payoff for deviating</span>
+        <span class="sd">&#39;&#39;&#39;Compute the payoff for deviating</span>
 
 <span class="sd">        This implementation is more efficient than the default since we don&#39;t</span>
-<span class="sd">        need to compute the payoff for non deviators.&quot;&quot;&quot;</span>
+<span class="sd">        need to compute the payoff for non deviators.&#39;&#39;&#39;</span>
         <span class="n">prof_view</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">restrict</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
             <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,))</span>
@@ -132,15 +134,20 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_min_payoffs</span><span class="p">[</span><span class="n">rest</span><span class="p">],</span></div>
             <span class="bp">self</span><span class="o">.</span><span class="n">_max_payoffs</span><span class="p">[</span><span class="n">rest</span><span class="p">],</span> <span class="n">new_rest</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DevRegressionGame.normalize"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.DevRegressionGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_role_payoffs</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">())</span>
-        <span class="n">scale</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">DevRegressionGame</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regressors</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_min_payoffs</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span></div>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_max_payoffs</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regressors</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">+</span> <span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_min_payoffs</span> <span class="o">+</span> <span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_payoffs</span> <span class="o">+</span> <span class="n">off</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="n">mul</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DevRegressionGame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regressors</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_min_payoffs</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_max_payoffs</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;no efficient add&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span>
@@ -150,19 +157,19 @@
                 <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rest</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_rest</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()))</span>
 
 
 <span class="k">def</span> <span class="nf">_dev_profpay</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Iterate over deviation profiles and payoffs&quot;&quot;&quot;</span>
+    <span class="sd">&#39;&#39;&#39;Iterate over deviation profiles and payoffs&#39;&#39;&#39;</span>
     <span class="n">sgame</span> <span class="o">=</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_copy</span><span class="p">(</span><span class="n">game</span><span class="p">)</span>
     <span class="n">profiles</span> <span class="o">=</span> <span class="n">sgame</span><span class="o">.</span><span class="n">flat_profiles</span><span class="p">()</span>
     <span class="n">payoffs</span> <span class="o">=</span> <span class="n">sgame</span><span class="o">.</span><span class="n">flat_payoffs</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pays</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">payoffs</span><span class="o">.</span><span class="n">T</span><span class="p">):</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">profiles</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pays</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> \
-            <span class="s2">&quot;couldn&#39;t find deviation data for a strategy&quot;</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+            <span class="n">mask</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> <span class="s1">&#39;couldn</span><span class="se">\&#39;</span><span class="s1">t find deviation data for a strategy&#39;</span><span class="p">)</span>
         <span class="n">profs</span> <span class="o">=</span> <span class="n">profiles</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
         <span class="n">profs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="k">yield</span> <span class="n">i</span><span class="p">,</span> <span class="n">profs</span><span class="p">,</span> <span class="n">pays</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
@@ -170,14 +177,14 @@
 
 <div class="viewcode-block" id="nngame_train"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.nngame_train">[docs]</a><span class="k">def</span> <span class="nf">nngame_train</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">layer_sizes</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
                  <span class="n">verbosity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;sgd&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;mean_squared_error&#39;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Train a neural network regression model</span>
+    <span class="sd">&#39;&#39;&#39;Train a neural network regression model</span>
 
 <span class="sd">    This mostly exists as a proof of concept, individual testing should be done</span>
 <span class="sd">    to make sure it is working sufficiently. This API will likely change to</span>
 <span class="sd">    support more general architectures and training.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">layer_sizes</span><span class="p">,</span> <span class="s2">&quot;must have at least one layer&quot;</span>
-    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">dropout</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;dropout must be a valid probability&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">layer_sizes</span><span class="p">,</span> <span class="s1">&#39;must have at least one layer&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">dropout</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;dropout must be a valid probability&#39;</span><span class="p">)</span>
     <span class="c1"># This is for delayed importing inf tensor flow</span>
     <span class="kn">from</span> <span class="nn">keras</span> <span class="k">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">layers</span>
 
@@ -215,7 +222,7 @@
 
 
 <div class="viewcode-block" id="sklgame_train"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.sklgame_train">[docs]</a><span class="k">def</span> <span class="nf">sklgame_train</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a regression game from an arbitrary sklearn estimator</span>
+    <span class="sd">&#39;&#39;&#39;Create a regression game from an arbitrary sklearn estimator</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -224,7 +231,7 @@
 <span class="sd">    estimator : sklearn estimator</span>
 <span class="sd">        An estimator that supports clone, fit, and predict via the stand</span>
 <span class="sd">        scikit-learn estimator API.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">regs</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">profs</span><span class="p">,</span> <span class="n">pays</span> <span class="ow">in</span> <span class="n">_dev_profpay</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
         <span class="n">reg</span> <span class="o">=</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">estimator</span><span class="p">)</span>
@@ -237,11 +244,11 @@
 
 
 <div class="viewcode-block" id="RbfGpGame"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.RbfGpGame">[docs]</a><span class="k">class</span> <span class="nc">RbfGpGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">CompleteGame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A regression game using RBF Gaussian processes</span>
+    <span class="sd">&#39;&#39;&#39;A regression game using RBF Gaussian processes</span>
 
 <span class="sd">    This regression game has a build in deviation payoff based off of a</span>
 <span class="sd">    continuous approximation of the multinomial distribution.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span>
                  <span class="n">coefs</span><span class="p">,</span> <span class="n">lengths</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
@@ -282,7 +289,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_payoffs</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
 <div class="viewcode-block" id="RbfGpGame.get_payoffs"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.RbfGpGame.get_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s2">&quot;must pass valid profiles&quot;</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s1">&#39;must pass valid profiles&#39;</span><span class="p">)</span>
         <span class="n">dev_profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
             <span class="n">profiles</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">),</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span>
@@ -366,29 +374,37 @@
         <span class="n">zeros</span> <span class="o">=</span> <span class="p">(</span><span class="n">profiles</span><span class="p">[:,</span> <span class="o">~</span><span class="n">rest</span><span class="p">]</span> <span class="o">/</span>
                  <span class="n">lengths</span><span class="p">[:,</span> <span class="o">~</span><span class="n">rest</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">sizes</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
         <span class="n">removed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ij,ij-&gt;i&#39;</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">zeros</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
-        <span class="n">new_profs</span><span class="p">,</span> <span class="n">inds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">rest</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">sizes</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span>
-                            <span class="n">profiles</span><span class="p">[:,</span> <span class="n">rest</span><span class="p">]],</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">uprofs</span><span class="p">,</span> <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+            <span class="n">recfunctions</span><span class="o">.</span><span class="n">merge_arrays</span><span class="p">([</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">rest</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">sizes</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">([(</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)]),</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="n">profiles</span><span class="p">[:,</span> <span class="n">rest</span><span class="p">])],</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
             <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">new_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">inds</span><span class="p">,</span> <span class="n">removed</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">[</span><span class="n">size_mask</span><span class="p">])</span>
         <span class="n">new_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
-            <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">new_profs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])),</span>
+            <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">uprofs</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">])),</span>
             <span class="p">[</span><span class="n">new_alpha</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]]))</span>
 
         <span class="k">return</span> <span class="n">RbfGpGame</span><span class="p">(</span>
             <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">[</span><span class="n">rest</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coefs</span><span class="p">[</span><span class="n">rest</span><span class="p">],</span></div>
-            <span class="n">lengths</span><span class="p">[:,</span> <span class="n">rest</span><span class="p">],</span> <span class="n">new_sizes</span><span class="p">,</span> <span class="n">new_profs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">new_alpha</span><span class="p">)</span>
+            <span class="n">lengths</span><span class="p">[:,</span> <span class="n">rest</span><span class="p">],</span> <span class="n">new_sizes</span><span class="p">,</span> <span class="n">uprofs</span><span class="p">[</span><span class="s1">&#39;axis&#39;</span><span class="p">],</span> <span class="n">new_alpha</span><span class="p">)</span>
 
-<div class="viewcode-block" id="RbfGpGame.normalize"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.RbfGpGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_role_payoffs</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">())</span>
-        <span class="n">scale</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
-        <span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_role_payoffs</span><span class="p">()</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">RbfGpGame</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coefs</span> <span class="o">/</span> <span class="n">scale</span><span class="p">,</span></div>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_lengths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_coefs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lengths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="n">mul</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RbfGpGame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_offset</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coefs</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lengths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;no efficient add&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="RbfGpGame.to_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.RbfGpGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
@@ -423,30 +439,34 @@
         <span class="n">base</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;rbf.1&#39;</span></div>
         <span class="k">return</span> <span class="n">base</span>
 
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_offset</span><span class="p">)</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_coefs</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_coefs</span><span class="p">)</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lengths</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_lengths</span><span class="p">)</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_sizes</span><span class="p">)):</span>
-            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">othr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">othr</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_offset</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">_offset</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_coefs</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">_coefs</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lengths</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">_lengths</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">_sizes</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_eq_params</span><span class="p">(</span><span class="n">othr</span><span class="p">))</span>
 
-        <span class="n">orda</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">)[</span><span class="kc">None</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="o">.</span><span class="n">T</span><span class="p">]))</span>
-        <span class="n">ordb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_sizes</span><span class="p">)[</span><span class="kc">None</span><span class="p">],</span>
-            <span class="n">other</span><span class="o">.</span><span class="n">_profiles</span><span class="o">.</span><span class="n">T</span><span class="p">]))</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[</span><span class="n">orda</span><span class="p">]</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[</span><span class="n">ordb</span><span class="p">])</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">[</span><span class="n">orda</span><span class="p">],</span> <span class="n">other</span><span class="o">.</span><span class="n">_alpha</span><span class="p">[</span><span class="n">ordb</span><span class="p">]))</span>
+    <span class="k">def</span> <span class="nf">_eq_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">othr</span><span class="p">):</span>
+        <span class="n">sord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">recfunctions</span><span class="o">.</span><span class="n">merge_arrays</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">),</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">)],</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="n">oord</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">recfunctions</span><span class="o">.</span><span class="n">merge_arrays</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">othr</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">othr</span><span class="o">.</span><span class="n">_sizes</span><span class="p">),</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="n">othr</span><span class="o">.</span><span class="n">_profiles</span><span class="p">)],</span> <span class="n">flatten</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[</span><span class="n">sord</span><span class="p">]</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[</span><span class="n">oord</span><span class="p">])</span> <span class="ow">and</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_alpha</span><span class="p">[</span><span class="n">sord</span><span class="p">],</span> <span class="n">othr</span><span class="o">.</span><span class="n">_alpha</span><span class="p">[</span><span class="n">oord</span><span class="p">]))</span>
 
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()))</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">hprofs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sizes</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">],</span> <span class="mi">1</span><span class="p">)))</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="n">hprofs</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="rbfgame_train"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.rbfgame_train">[docs]</a><span class="k">def</span> <span class="nf">rbfgame_train</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_restarts</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Train a regression game with an RBF Gaussian process</span>
+    <span class="sd">&#39;&#39;&#39;Train a regression game with an RBF Gaussian process</span>
 
 <span class="sd">    This model is somewhat well tests and has a few added benefits over</span>
 <span class="sd">    standard regression models due the nature of its functional form.</span>
@@ -459,7 +479,7 @@
 <span class="sd">        The number of random restarts to make with the optimizer. Higher</span>
 <span class="sd">        numbers will give a better fit (in expectation), but will take</span>
 <span class="sd">        longer.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="n">dev_players</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span>
         <span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
             <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -486,15 +506,16 @@
         <span class="n">means</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">pay_mean</span>
         <span class="n">coefs</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">kernel_</span><span class="o">.</span><span class="n">k1</span><span class="o">.</span><span class="n">k1</span><span class="o">.</span><span class="n">constant_value</span>
         <span class="n">lengths</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">kernel_</span><span class="o">.</span><span class="n">k1</span><span class="o">.</span><span class="n">k2</span><span class="o">.</span><span class="n">length_scale</span>
-        <span class="n">uprofs</span><span class="p">,</span> <span class="n">inds</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">unique_axis</span><span class="p">(</span>
-            <span class="n">profs</span><span class="p">,</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">profiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uprofs</span><span class="p">)</span>
+        <span class="n">uprofs</span><span class="p">,</span> <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="n">profs</span><span class="p">),</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">profiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">axis_from_elem</span><span class="p">(</span><span class="n">uprofs</span><span class="p">))</span>
         <span class="n">alpha</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">inds</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">alpha_</span><span class="p">))</span>
-        <span class="n">sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uprofs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uprofs</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">lengths</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">==</span> <span class="n">bounds</span><span class="p">):</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;some lengths were at their bounds, &quot;</span>
-                      <span class="s2">&quot;this may indicate a poor fit&quot;</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s1">&#39;some lengths were at their bounds, this may indicate a poor &#39;</span>
+            <span class="s1">&#39;fit&#39;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">RbfGpGame</span><span class="p">(</span>
         <span class="n">game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">coefs</span><span class="p">,</span>
@@ -503,9 +524,8 @@
 
 
 <div class="viewcode-block" id="rbfgame_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.rbfgame_json">[docs]</a><span class="k">def</span> <span class="nf">rbfgame_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Read an rbf game from json&quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;rbf&#39;</span><span class="p">,</span> \
-        <span class="s2">&quot;incorrect type&quot;</span>
+    <span class="sd">&#39;&#39;&#39;Read an rbf game from json&#39;&#39;&#39;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;rbf&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">(</span><span class="n">json</span><span class="p">)</span>
 
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;offsets&#39;</span><span class="p">])</span>
@@ -540,12 +560,14 @@
 
 
 <span class="k">class</span> <span class="nc">_DeviationGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">CompleteGame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A game that adds deviation payoffs&quot;&quot;&quot;</span>
+    <span class="sd">&#39;&#39;&#39;A game that adds deviation payoffs&#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_game</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">model_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
                          <span class="n">model_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">model_game</span><span class="o">.</span><span class="n">is_complete</span><span class="p">()</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+            <span class="n">model_game</span><span class="o">.</span><span class="n">is_complete</span><span class="p">(),</span>
+            <span class="s1">&#39;deviation models must be complete games&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model_game</span>
 
     <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
@@ -568,9 +590,17 @@
         <span class="n">base</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">base</span>
 
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">))</span>
+
 
 <div class="viewcode-block" id="SampleDeviationGame"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.SampleDeviationGame">[docs]</a><span class="k">class</span> <span class="nc">SampleDeviationGame</span><span class="p">(</span><span class="n">_DeviationGame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Deviation payoffs by sampling from mixture</span>
+    <span class="sd">&#39;&#39;&#39;Deviation payoffs by sampling from mixture</span>
 
 <span class="sd">    This model produces unbiased deviation payoff estimates, but they&#39;re noisy</span>
 <span class="sd">    and random and take a while to compute. This is accurate in the limit as</span>
@@ -583,11 +613,11 @@
 <span class="sd">    num_samples : int, optional</span>
 <span class="sd">        The number of samples to use for each deviation estimate. Higher means</span>
 <span class="sd">        lower variance but higher computation time.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">num_samples</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_samples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;num samples must be greater than 0&#39;</span><span class="p">)</span>
         <span class="c1"># TODO It might be interesting to play with a sample schedule, i.e.</span>
         <span class="c1"># change the number of samples based off of the query number to</span>
         <span class="c1"># deviation payoffs (i.e. reduce variance as we get close to</span>
@@ -595,11 +625,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span> <span class="o">=</span> <span class="n">num_samples</span>
 
 <div class="viewcode-block" id="SampleDeviationGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.SampleDeviationGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Compute the deivation payoffs</span>
+        <span class="sd">&#39;&#39;&#39;Compute the deivation payoffs</span>
 
 <span class="sd">        The method computes the jacobian as if we were importance sampling the</span>
 <span class="sd">        results, i.e. the function is really always sample according to mixture</span>
-<span class="sd">        m&#39;, but then importance sample to get the actual result.&quot;&quot;&quot;</span>
+<span class="sd">        m&#39;, but then importance sample to get the actual result.&#39;&#39;&#39;</span>
         <span class="n">profs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_role_deviation_profiles</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">get_dev_payoffs</span><span class="p">(</span><span class="n">profs</span><span class="p">)</span>
         <span class="n">dev_pays</span> <span class="o">=</span> <span class="n">payoffs</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -617,18 +647,36 @@
         <span class="k">return</span> <span class="n">SampleDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span></div>
                                    <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SampleDeviationGame.normalize"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.SampleDeviationGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="n">SampleDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">normalize</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SampleDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">+</span> <span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SampleDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">*</span> <span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">SampleDeviationGame</span><span class="p">),</span>
+            <span class="s1">&#39;only efficient if sample game&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SampleDeviationGame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SampleDeviationGame.to_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.SampleDeviationGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
         <span class="n">base</span><span class="p">[</span><span class="s1">&#39;samples&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span>
-        <span class="n">base</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;sample.1&#39;</span></div></div>
+        <span class="n">base</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;sample.1&#39;</span></div>
         <span class="k">return</span> <span class="n">base</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">)</span>
+
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_samples</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="sample"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.sample">[docs]</a><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a sample game from a model</span>
+    <span class="sd">&#39;&#39;&#39;Create a sample game from a model</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -637,22 +685,22 @@
 <span class="sd">        an existing deviation game, then this will use it&#39;s underlying model.</span>
 <span class="sd">    num_samples : int, optional</span>
 <span class="sd">        The number of samples to take.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="s1">&#39;_model&#39;</span><span class="p">):</span>
         <span class="n">game</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">_model</span></div>
     <span class="k">return</span> <span class="n">SampleDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="sample_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.sample_json">[docs]</a><span class="k">def</span> <span class="nf">sample_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Read sample game from json&quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> \
-        <span class="s2">&quot;incorrect type&quot;</span>
+    <span class="sd">&#39;&#39;&#39;Read sample game from json&#39;&#39;&#39;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">SampleDeviationGame</span><span class="p">(</span><span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]),</span></div>
                                <span class="n">num_samples</span><span class="o">=</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;samples&#39;</span><span class="p">])</span>
 
 
 <div class="viewcode-block" id="PointDeviationGame"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.PointDeviationGame">[docs]</a><span class="k">class</span> <span class="nc">PointDeviationGame</span><span class="p">(</span><span class="n">_DeviationGame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Deviation payoffs by point approximation</span>
+    <span class="sd">&#39;&#39;&#39;Deviation payoffs by point approximation</span>
 
 <span class="sd">    This model computes payoffs by finding the deviation payoffs from the point</span>
 <span class="sd">    estimate of the mixture. It&#39;s fast but biased. This is accurate in the</span>
@@ -667,7 +715,7 @@
 <span class="sd">    ----------</span>
 <span class="sd">    model : DevRegressionGame</span>
 <span class="sd">        A payoff model</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -686,8 +734,17 @@
 <div class="viewcode-block" id="PointDeviationGame.restrict"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.PointDeviationGame.restrict">[docs]</a>    <span class="k">def</span> <span class="nf">restrict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span></div>
         <span class="k">return</span> <span class="n">PointDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">rest</span><span class="p">))</span>
 
-<div class="viewcode-block" id="PointDeviationGame.normalize"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.PointDeviationGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="n">PointDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">normalize</span><span class="p">())</span>
+    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PointDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">+</span> <span class="n">role_array</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PointDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">*</span> <span class="n">role_array</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">PointDeviationGame</span><span class="p">),</span>
+            <span class="s1">&#39;only efficient add for point games&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">PointDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PointDeviationGame.to_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.PointDeviationGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
@@ -696,28 +753,28 @@
 
 
 <div class="viewcode-block" id="point"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.point">[docs]</a><span class="k">def</span> <span class="nf">point</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a point game from a model</span>
+    <span class="sd">&#39;&#39;&#39;Create a point game from a model</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    game : RsGame</span>
 <span class="sd">        If this is a payoff model it will be used to take samples, if this is</span>
 <span class="sd">        an existing deviation game, then this will use it&#39;s underlying model.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="s1">&#39;_model&#39;</span><span class="p">):</span>
         <span class="n">game</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">_model</span></div>
     <span class="k">return</span> <span class="n">PointDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="point_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.point_json">[docs]</a><span class="k">def</span> <span class="nf">point_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Read point game from json&quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;point&#39;</span><span class="p">,</span> \
-        <span class="s2">&quot;incorrect type&quot;</span></div>
+    <span class="sd">&#39;&#39;&#39;Read point game from json&#39;&#39;&#39;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;point&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span></div>
     <span class="k">return</span> <span class="n">PointDeviationGame</span><span class="p">(</span><span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]))</span>
 
 
 <div class="viewcode-block" id="NeighborDeviationGame"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.NeighborDeviationGame">[docs]</a><span class="k">class</span> <span class="nc">NeighborDeviationGame</span><span class="p">(</span><span class="n">_DeviationGame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a neighbor game from a model</span>
+    <span class="sd">&#39;&#39;&#39;Create a neighbor game from a model</span>
 
 <span class="sd">    This takes a normalized weighted estimate of the deviation payoffs by</span>
 <span class="sd">    finding all profiles within `num_devs` of the maximum probability profile</span>
@@ -733,11 +790,11 @@
 <span class="sd">        an existing deviation game, then this will use it&#39;s underlying model.</span>
 <span class="sd">    num_devs : int, optional</span>
 <span class="sd">        The number of deviations to take.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">num_devs</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num_devs</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num_devs</span><span class="p">,</span> <span class="s1">&#39;num devs must be nonnegative&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span> <span class="o">=</span> <span class="n">num_devs</span>
 
 <div class="viewcode-block" id="NeighborDeviationGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.NeighborDeviationGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span>
@@ -758,18 +815,35 @@
         <span class="k">return</span> <span class="n">NeighborDeviationGame</span><span class="p">(</span></div>
             <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="NeighborDeviationGame.normalize"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.NeighborDeviationGame.normalize">[docs]</a>    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
-        <span class="k">return</span> <span class="n">NeighborDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">normalize</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NeighborDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">+</span> <span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NeighborDeviationGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">*</span> <span class="n">role_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">NeighborDeviationGame</span><span class="p">),</span>
+            <span class="s1">&#39;only efficient add for neighbor games&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">NeighborDeviationGame</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="NeighborDeviationGame.to_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.NeighborDeviationGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
         <span class="n">base</span><span class="p">[</span><span class="s1">&#39;devs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span>
-        <span class="n">base</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;neighbor.1&#39;</span></div></div>
+        <span class="n">base</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;neighbor.1&#39;</span></div>
         <span class="k">return</span> <span class="n">base</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_num_devs</span><span class="p">)</span>
+
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_devs</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="neighbor"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.neighbor">[docs]</a><span class="k">def</span> <span class="nf">neighbor</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_devs</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Create a neighbor game from a model</span>
+    <span class="sd">&#39;&#39;&#39;Create a neighbor game from a model</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -778,16 +852,16 @@
 <span class="sd">        an existing deviation game, then this will use it&#39;s underlying model.</span>
 <span class="sd">    num_devs : int, optional</span>
 <span class="sd">        The number of deviations to explore out.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="s1">&#39;_model&#39;</span><span class="p">):</span>
         <span class="n">game</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">_model</span></div>
     <span class="k">return</span> <span class="n">NeighborDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_devs</span><span class="o">=</span><span class="n">num_devs</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="neighbor_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.neighbor_json">[docs]</a><span class="k">def</span> <span class="nf">neighbor_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Read neighbor game from json&quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;neighbor&#39;</span><span class="p">,</span> \
-        <span class="s2">&quot;incorrect type&quot;</span>
+    <span class="sd">&#39;&#39;&#39;Read neighbor game from json&#39;&#39;&#39;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;neighbor&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">NeighborDeviationGame</span><span class="p">(</span><span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]),</span></div>
                                  <span class="n">num_devs</span><span class="o">=</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;devs&#39;</span><span class="p">])</span>
 </pre></div>
@@ -822,7 +896,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 5.7.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
