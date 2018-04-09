@@ -140,7 +140,17 @@ def trace_interpolate(game0, game1, ts, eqa, t, **kwargs):
 
     Parameters
     ----------
-    FIXME
+    game0 : RsGame
+        The game to get data from when t is 0.
+    game1 : RsGame
+        The game to get data from when t is 1.
+    ts : [float]
+        A parallel list of times for each equilibria in a continuous trace.
+    eqa : [eqm]
+        A parallel list of equilibria for each time representing continuous
+        equilibria for t mixture games.
+    t : float
+        The time to compute an equilibrium at.
     kwargs : options
         The same options as `trace_equilibria`.
     '''
