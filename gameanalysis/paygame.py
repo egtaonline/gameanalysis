@@ -17,6 +17,15 @@ from gameanalysis import utils
 # usage, but maybe there are things we can do to make this more feasible. Any
 # implementation should probably still be based around scipy sparse, so we
 # should check speed too before doing anything drastic.
+# However, it is worth noting that the density of a complete profile or payoff
+# matrix is \frac{\sum_r \frac{s_r n_r}{s_r + n_r - 1}}{\sum_r s_r}. This means
+# that the density goes asymptotically to 1 as the number of players increases,
+# but to 0 as the strategies goes to infinity, however, strategies are
+# generally more fixed, and players are more limiting. Also, for a single role
+# game, the number of strategies would have to be more than 3x the number of
+# players to get a benefit, which is infeasible in most circumstances. What
+# this ultimately implies is that there's not an asymptotic argument to support
+# sparsity, so it should probably be done on a case by case basis.
 
 
 class Game(rsgame.RsGame):
