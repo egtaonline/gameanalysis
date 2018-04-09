@@ -11,6 +11,14 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# TODO For real games, there does seem to be a memory benefit (3-10x) for using
+# sparse matrices. This is likely due to the fact that for real games we
+# prioritize low support sampling. scipy sparse isn't a great api for this
+# usage, but maybe there are things we can do to make this more feasible. Any
+# implementation should probably still be based around scipy sparse, so we
+# should check speed too before doing anything drastic.
+
+
 class Game(rsgame.RsGame):
     '''Role-symmetric data game representation
 
