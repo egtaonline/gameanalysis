@@ -2,13 +2,15 @@ import bisect
 
 import numpy as np
 
+from gameanalysis import utils
+
 
 def mcces(thresh):
     return MinimumConnectedComponentElementSet(thresh)
 
 
 class MinimumConnectedComponentElementSet(object):
-    """A class for returning vectors with the minimum weight
+    '''A class for returning vectors with the minimum weight
 
     Vectors are only returned if they have the minimum weight in their
     connected component, where two vectors are connected if they're closer than
@@ -16,7 +18,7 @@ class MinimumConnectedComponentElementSet(object):
 
     Inserts can take up to `O(n)` where `n` is the number of elements inserted.
     If this is problematic, a better data structure will probably be
-    necessary."""
+    necessary.'''
 
     def __init__(self, thresh):
         self._thresh = thresh ** 2
@@ -26,10 +28,10 @@ class MinimumConnectedComponentElementSet(object):
         return sum((ai - bi) ** 2 for ai, bi in zip(a, b)) <= self._thresh
 
     def add(self, vector, weight):
-        """Add a vector with a weight
+        '''Add a vector with a weight
 
         Returns true if the element is distinct from every element in the
-        container"""
+        container'''
         vector = tuple(vector)
         mins = (weight, vector)
         vecs = [vector]
@@ -68,11 +70,11 @@ def bitset(dim, iterable=()):
 
 
 class BitSet(object):
-    """Set of bitmasks
+    '''Set of bitmasks
 
     A bitmask is in the set if all of the true bits have been added
     together. When iterating, all maximal bitsets are returned. An empty bitset
-    still contains 0."""
+    still contains 0.'''
     # This compresses all bitmasks down to the number they are
     # implicitly, and uses bitwise math to replicate the same functions.
 
@@ -95,8 +97,9 @@ class BitSet(object):
         self._masks.append(0)
 
     def __contains__(self, bitmask):
-        assert bitmask.size == self._mask.size, \
-            "can't add bitmasks of different sizes"
+        utils.check(
+            bitmask.size == self._mask.size,
+            'can\'t add bitmasks of different sizes')
         num = bitmask.dot(self._mask)
         return not all(num & ~m for m in self._masks)
 

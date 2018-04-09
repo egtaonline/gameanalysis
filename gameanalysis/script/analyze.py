@@ -1,4 +1,4 @@
-"""Analyze a game"""
+'''Analyze a game'''
 import argparse
 import json
 import sys
@@ -16,61 +16,61 @@ from gameanalysis import restrict
 
 def add_parser(subparsers):
     parser = subparsers.add_parser(
-        'analyze', help="""Analyze games""", description="""Perform game
-        analysis.""")
+        'analyze', help='''Analyze games''', description='''Perform game
+        analysis.''')
     parser.add_argument(
         '--input', '-i', metavar='<input-file>', default=sys.stdin,
-        type=argparse.FileType('r'), help="""Input file for script.  (default:
-        stdin)""")
+        type=argparse.FileType('r'), help='''Input file for script.  (default:
+        stdin)''')
     parser.add_argument(
         '--output', '-o', metavar='<output-file>', default=sys.stdout,
-        type=argparse.FileType('w'), help="""Output file for script. (default:
-        stdout)""")
+        type=argparse.FileType('w'), help='''Output file for script. (default:
+        stdout)''')
     parser.add_argument(
         '--dist-thresh', metavar='<distance-threshold>', type=float,
-        default=0.1, help="""L2 norm threshold, inside of which, equilibria
-        are considered identical.  (default: %(default)g)""")
+        default=0.1, help='''L2 norm threshold, inside of which, equilibria
+        are considered identical.  (default: %(default)g)''')
     parser.add_argument(
         '--regret-thresh', '-r', metavar='<regret-threshold>', type=float,
-        default=1e-3, help="""Maximum regret to consider an equilibrium
-        confirmed. (default: %(default)g)""")
+        default=1e-3, help='''Maximum regret to consider an equilibrium
+        confirmed. (default: %(default)g)''')
     parser.add_argument(
         '--supp-thresh', '-t', metavar='<support-threshold>', type=float,
-        default=1e-3, help="""Maximum probability to consider a strategy in
-        support. (default: %(default)g)""")
+        default=1e-3, help='''Maximum probability to consider a strategy in
+        support. (default: %(default)g)''')
     parser.add_argument(
         '--rand-restarts', metavar='<random-restarts>', type=int, default=0,
-        help="""The number of random points to add to nash equilibrium finding.
-        (default: %(default)d)""")
+        help='''The number of random points to add to nash equilibrium finding.
+        (default: %(default)d)''')
     parser.add_argument(
         '--max-iters', '-m', metavar='<maximum-iterations>', type=int,
-        default=10000, help="""The maximum number of iterations to run through
-        replicator dynamics.  (default: %(default)d)""")
+        default=10000, help='''The maximum number of iterations to run through
+        replicator dynamics.  (default: %(default)d)''')
     parser.add_argument(
         '--converge-thresh', '-c', metavar='<convergence-threshold>',
-        type=float, default=1e-8, help="""The convergence threshold for
-        replicator dynamics. (default: %(default)g)""")
+        type=float, default=1e-8, help='''The convergence threshold for
+        replicator dynamics. (default: %(default)g)''')
     parser.add_argument(
-        '--processes', '-p', metavar='<num-procs>', type=int, help="""Number of
-        processes to use to run nash finding.  (default: number of cores)""")
+        '--processes', '-p', metavar='<num-procs>', type=int, help='''Number of
+        processes to use to run nash finding.  (default: number of cores)''')
     parser.add_argument(
-        '--one', action='store_true', help="""If specified, run a potentially
+        '--one', action='store_true', help='''If specified, run a potentially
         expensive algorithm to guarantee an approximate equilibrium, if none
-        are found via other methods.""")
+        are found via other methods.''')
     parser.add_argument(
-        '--dominance', '-d', action='store_true', help="""Remove dominated
-        strategies.""")
+        '--dominance', '-d', action='store_true', help='''Remove dominated
+        strategies.''')
     parser.add_argument(
-        '--restrictions', '-s', action='store_true', help="""Extract maximal
+        '--restrictions', '-s', action='store_true', help='''Extract maximal
         restricted games, and analyze each individually instead of considering
-        the game as a whole.""")
+        the game as a whole.''')
     reductions = parser.add_mutually_exclusive_group()
     reductions.add_argument(
-        '--dpr', metavar='<role:count;role:count,...>', help="""Specify a
-        deviation preserving reduction.""")
+        '--dpr', metavar='<role:count;role:count,...>', help='''Specify a
+        deviation preserving reduction.''')
     reductions.add_argument(
-        '--hr', metavar='<role:count;role:count,...>', help="""Specify a
-        hierarchical reduction.""")
+        '--hr', metavar='<role:count;role:count,...>', help='''Specify a
+        hierarchical reduction.''')
     return parser
 
 

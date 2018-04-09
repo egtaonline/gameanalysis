@@ -104,7 +104,7 @@ def test_dominance_5():
 
 
 def test_dominance_6():
-    """Test dom works for non Games"""
+    '''Test dom works for non Games'''
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(MATGAME.to_json(), game)
         game.flush()
@@ -224,7 +224,7 @@ def test_nash_pure_one():
 
 
 def test_nash_mat():
-    """Test nash works with non Game"""
+    '''Test nash works with non Game'''
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(MATGAME.to_json(), game)
         game.flush()
@@ -322,7 +322,7 @@ def test_reduction_4():
 
 
 def test_reduction_5():
-    """Test identity reduction"""
+    '''Test identity reduction'''
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -333,7 +333,7 @@ def test_reduction_5():
 
 
 def test_reduction_6():
-    """Test that reduction works for non Games"""
+    '''Test that reduction works for non Games'''
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(MATGAME.to_json(), game)
         game.flush()
@@ -594,7 +594,7 @@ def test_analysis_dup_equilibria():
 
     success, out, err = run('analyze', '-s', input=game_str)
     assert success, err
-    assert "Found 2 maximal complete restricted games" in out
+    assert 'Found 2 maximal complete restricted games' in out
 
 
 def test_analysis_dev_explored():
@@ -626,7 +626,7 @@ def test_analysis_dev_explored():
 
     success, out, err = run('analyze', '-s', input=game_str)
     assert success, err
-    assert "Found no unexplored best-response restricted games" in out
+    assert 'Found no unexplored best-response restricted games' in out
 
 
 def test_analysis_no_data():
@@ -647,8 +647,8 @@ def test_analysis_no_eqa():
             'analyze', '-i', game.name, '--restrictions', '--dominance',
             '--dpr', 'r0:3;r1:2', '-p1', '-r0', '-m0')
     assert success, err
-    assert "Found no equilibria" in out
-    assert "Found 1 no-equilibria restricted game" in out
+    assert 'Found no equilibria' in out
+    assert 'Found 1 no-equilibria restricted game' in out
 
 
 def test_learning_output():
@@ -693,7 +693,7 @@ def test_learning_no_eqa():
         game.flush()
         success, out, err = run('learning', '-i', game.name, '-m0', '-r0')
     assert success, err
-    assert "Found no equilibria" in out
+    assert 'Found no equilibria' in out
 
 
 def test_boot_1():

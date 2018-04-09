@@ -35,7 +35,7 @@ def ignore_fit():
 @pytest.mark.parametrize('players,strats', games)
 @pytest.mark.parametrize('dist', range(5))
 def test_rbfgame_members(players, strats, dist):
-    """Test that all functions can be called without breaking"""
+    '''Test that all functions can be called without breaking'''
     game = gamegen.sparse_game(players, strats, 10)
     reggame = learning.rbfgame_train(game)
 
@@ -403,7 +403,7 @@ def test_rbfgame_min_max_payoffs(players, strats, _):
 
 
 def test_rbfgame_equality():
-    """Test all branches of equality test"""
+    '''Test all branches of equality test'''
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
     regg = learning.rbfgame_train(game)
     copy = regg.restrict(np.ones(game.num_strats, bool))

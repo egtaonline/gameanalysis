@@ -52,7 +52,7 @@ def test_random_identity_test(players, strats, _):
 
 
 def test_parse_error():
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         gambit.loads('')
 
 

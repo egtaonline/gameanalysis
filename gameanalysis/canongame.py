@@ -11,7 +11,7 @@ from gameanalysis import utils
 # contribute to incomplete profiles. There's not an obvious way to remedy this
 # with the current api in a way that works well.
 class CanonGame(rsgame.RsGame):
-    """A game canonicalized to remove single strategy roles"""
+    '''A game canonicalized to remove single strategy roles'''
 
     def __init__(self, game):
         role_mask = game.num_role_strats > 1
@@ -71,7 +71,7 @@ class CanonGame(rsgame.RsGame):
         return CanonGame(self._game * role_array)
 
     def _add_game(self, other):
-        assert False, "canon games can't be added"
+        utils.fail('canon games can\'t be added')
 
     def to_json(self):
         base = super().to_json()
@@ -95,16 +95,16 @@ class CanonGame(rsgame.RsGame):
 
 
 def canon(game):
-    """Canonicalize a game by removing single strategy roles
+    '''Canonicalize a game by removing single strategy roles
 
     Parameters
     ----------
     game : RsGame
         The game to canonizalize.
-    """
+    '''
     return CanonGame(game)
 
 
 def canon_json(jgame):
-    """Read a canonicalized game from json"""
+    '''Read a canonicalized game from json'''
     return canon(gamereader.loadj(jgame['game']))

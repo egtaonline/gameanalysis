@@ -7,7 +7,7 @@ from gameanalysis import utils
 
 @pytest.mark.parametrize('dim', [2, 3, 4, 7, 10])
 def test_ndim_fixed_point(dim):
-    """Test that it computes a fixed point for arbitrary dimensional cycles"""
+    '''Test that it computes a fixed point for arbitrary dimensional cycles'''
     start = utils.simplex_project(np.random.rand(dim))
     res = fixedpoint.fixed_point(lambda x: np.roll(x, 1), start, disc=100)
     assert np.all(res >= 0)
@@ -25,7 +25,7 @@ def progressive_fixed_point(func, start, init_disc, final_disc, ratio=2):
 @pytest.mark.parametrize('dim', [2, 3, 4, 7, 10])
 @pytest.mark.parametrize('disc', [10**3, 10**4, 10**6])
 def test_ndim_progressive_fixed_point(dim, disc):
-    """Test that it computes a fixed point for arbitrary dimensional cycles"""
+    '''Test that it computes a fixed point for arbitrary dimensional cycles'''
     start = utils.simplex_project(np.random.rand(dim))
     res = progressive_fixed_point(lambda x: np.roll(x, 1), start, 16, disc)
     assert np.all(res >= 0)
@@ -36,7 +36,7 @@ def test_ndim_progressive_fixed_point(dim, disc):
 @pytest.mark.slow
 @pytest.mark.parametrize('tol', [1e-3, 1e-4, 1e-6])
 def test_rps_fixed_point(tol):
-    """Test that it computes a fixed point for bad shapley triangles"""
+    '''Test that it computes a fixed point for bad shapley triangles'''
     start = utils.simplex_project(np.random.rand(3))
     weights = 1 + 3 * np.random.random(3)
     a, b, c = weights

@@ -84,7 +84,7 @@ def test_random_trace_interpolate(players, strats):
         interp_mix = trace.trace_interpolate(
             game0, game1, [ts[start], ts[end]], [mixes[start], mixes[end]],
             ts[interp])
-        assert np.allclose(interp_mix, mixes[interp])
+        assert np.allclose(interp_mix, mixes[interp], rtol=1e-3, atol=1e-5)
 
         # Test interp at first
         mix = trace.trace_interpolate(

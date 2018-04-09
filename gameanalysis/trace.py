@@ -3,20 +3,23 @@ from scipy import integrate
 
 from gameanalysis import regret
 from gameanalysis import rsgame
+from gameanalysis import utils
 
 
 def _ode(game0, game1, t_eq, eqm, t_dest, *, regret_thresh=1e-3, max_step=0.1,
          singular=1e-7, **ivp_args):
-    """Trace an equilibrium out to target
+    '''Trace an equilibrium out to target
 
     See trace_equilibrium for full info
-    """
+    '''
     egame = rsgame.emptygame_copy(game0)
     eqm = np.asarray(eqm, float)
-    assert egame.is_mixture(eqm), "equilibrium wasn't a valid mixture"
-    assert regret.mixture_regret(
-        rsgame.mix(game0, game1, t_eq), eqm) <= regret_thresh + 1e-7, \
-        "equilibrium didn't have regret below threshold"
+    utils.check(
+        egame.is_mixture(eqm), 'equilibrium wasn\'t a valid mixture')
+    utils.check(
+        regret.mixture_regret(
+            rsgame.mix(game0, game1, t_eq), eqm) <= regret_thresh + 1e-7,
+        'equilibrium didn\'t have regret below threshold')
     ivp_args.update(max_step=max_step)
 
     # It may be handy to have the derivative of this so that the ode solver can
@@ -89,7 +92,7 @@ def _ode(game0, game1, t_eq, eqm, t_dest, *, regret_thresh=1e-3, max_step=0.1,
 
 def trace_equilibria(game0, game1, t, eqm, *, regret_thresh=1e-3, max_step=0.1,
                      singular=1e-7, **ivp_args):
-    """Trace an equilibrium between games
+    '''Trace an equilibrium between games
 
     Takes two games, a fraction that they're merged, and an equilibrium of the
     merged game, and traces the equilibrium out to nearby merged games, as far
@@ -120,7 +123,7 @@ def trace_equilibria(game0, game1, t, eqm, *, regret_thresh=1e-3, max_step=0.1,
         a singular matrix.
     ivp_args
         Any remaining keyword arguments are passed to the ivp solver.
-    """
+    '''
     tsb, eqab = _ode(
         game0, game1, t, eqm, 0, regret_thresh=regret_thresh,
         max_step=max_step, singular=singular, **ivp_args)
@@ -133,17 +136,17 @@ def trace_equilibria(game0, game1, t, eqm, *, regret_thresh=1e-3, max_step=0.1,
 
 
 def trace_interpolate(game0, game1, ts, eqa, t, **kwargs):
-    """Get an equilibrium at a specific time
+    '''Get an equilibrium at a specific time
 
     Parameters
     ----------
     FIXME
     kwargs : options
         The same options as `trace_equilibria`.
-    """
+    '''
     ts = np.asarray(ts, float)
     eqa = np.asarray(eqa, float)
-    assert ts[0] <= t <= ts[-1], "t must be in trace"
+    utils.check(ts[0] <= t <= ts[-1], 't must be in trace')
     ind = ts.searchsorted(t)
     if ts[ind] == t:
         return eqa[ind]
@@ -153,5 +156,5 @@ def trace_interpolate(game0, game1, ts, eqa, t, **kwargs):
         regret.mixture_regret(rsgame.mix(game0, game1, ts[i]), eqa[i])))
     (*_, t_res), (*_, eqm_res) = _ode(
         game0, game1, ts[ind], eqa[ind], t, **kwargs)
-    assert np.isclose(t_res, t), "ode solving failed to reach t"
+    utils.check(np.isclose(t_res, t), 'ode solving failed to reach t')
     return eqm_res

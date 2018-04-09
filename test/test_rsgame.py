@@ -174,11 +174,11 @@ def test_is_restriction():
     assert sarr.is_restriction(
         [[True], [False], [True], [False], [True]], axis=0)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_restriction([False, False, False, False])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_restriction([False, False, False, False, False, False])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_restriction([[False, False, False, False, False, False]])
 
 
@@ -189,7 +189,7 @@ def test_is_pure_restriction():
     assert not sarr.is_pure_restriction([False, True, True, True, False])
     assert not sarr.is_pure_restriction([False, False, True, True, True])
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_pure_restriction([False, False, False, False])
 
 
@@ -266,11 +266,11 @@ def test_is_mixture():
         [0.2, 0.25, 0.4, 0.4, 0.6]]))
     assert sarr.is_mixture([[0.2], [0.3], [0.5], [0.6], [0.4]], axis=0)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_mixture([0, 0, 0, 0])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_mixture([0, 0, 0, 0, 0, 0])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_mixture([[0, 0, 0, 0, 0, 0]])
 
 
@@ -282,7 +282,7 @@ def test_is_pure_mixture():
     assert not sarr.is_pure_mixture([0.2, 0.8, 0, 1, 0])
     assert not sarr.is_pure_mixture([0.2, 0.4, 0.4, 0.4, 0.6])
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.is_pure_mixture([0, 0, 0, 0])
 
 
@@ -335,7 +335,7 @@ def test_random_mixture_project(_, role_strats):
     for non_mixture in rand.uniform(-1, 1, (100, sarr.num_strats)):
         new_mix = sarr.mixture_project(non_mixture)
         assert sarr.is_mixture(new_mix), \
-            "simplex project did not create a valid mixture"
+            'simplex project did not create a valid mixture'
 
     mixes = rand.uniform(-1, 1, (10, 12, sarr.num_strats))
     simps = sarr.mixture_project(mixes)
@@ -608,7 +608,7 @@ def test_pure_mixtures():
 
 def test_grid_mixtures_error():
     sarr = stratarray([1])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sarr.grid_mixtures(1)
 
 
@@ -751,7 +751,7 @@ def test_random_mixture_serialization(role_players, role_strats):
 def test_to_from_mix_repr():
     sarr = stratarray([2, 1])
     mix = [.6, .4, 1]
-    expected = "a: 60.00% a, 40.00% b; b: 100.00% c"
+    expected = 'a: 60.00% a, 40.00% b; b: 100.00% c'
     assert sarr.mixture_to_repr(mix) == expected
     new_mix = sarr.mixture_from_repr(expected)
     assert np.allclose(new_mix, mix)
@@ -765,13 +765,13 @@ def test_to_from_mix_repr():
 def test_to_from_mix_str():
     sarr = stratarray([2, 1])
     mix = [0.3, 0.7, 1]
-    expected = """
+    expected = '''
 a:
     a:  30.00%
     b:  70.00%
 b:
     c: 100.00%
-"""[1:-1]
+'''[1:-1]
     assert sarr.mixture_to_str(mix) == expected
     new_mix = sarr.mixture_from_str(expected)
     assert np.allclose(new_mix, mix)
@@ -810,7 +810,7 @@ def test_random_restriction_serialization(role_players, role_strats):
 def test_to_from_restriction_repr():
     sarr = stratarray([2, 1])
     sub = [True, False, True]
-    sub_repr = "a: a; b: c"
+    sub_repr = 'a: a; b: c'
     assert sarr.restriction_to_repr(sub) == sub_repr
     new_sub = sarr.restriction_from_repr(sub_repr)
     assert np.all(new_sub == sub)
@@ -824,12 +824,12 @@ def test_to_from_restriction_repr():
 def test_to_from_restriction_str():
     sarr = stratarray([2, 1])
     sub = [True, False, True]
-    sub_str = """
+    sub_str = '''
 a:
     a
 b:
     c
-"""[1:-1]
+'''[1:-1]
     assert sarr.restriction_to_str(sub) == sub_str
     new_sub = sarr.restriction_from_str(sub_str)
     assert np.all(new_sub == sub)
@@ -1001,7 +1001,7 @@ def test_empty_restriction():
     assert rgame == expected
 
     game = rsgame.emptygame(1, [2, 3])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.restrict([False, False, True, True, True])
 
 
@@ -1146,7 +1146,7 @@ def test_random_profile_id(role_players, role_strats):
 
 
 def test_big_game_functions():
-    """Test that everything works when game_size > int max"""
+    '''Test that everything works when game_size > int max'''
     game = rsgame.emptygame([100, 100], [30, 30])
     assert game.num_all_profiles > np.iinfo(int).max
     assert game.num_all_dpr_profiles > np.iinfo(int).max
@@ -1170,11 +1170,11 @@ def test_is_profile():
         [1, 0, 1, 2, 0]]))
     assert game.is_profile([[1], [0], [1], [2], [1]], axis=0)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.is_profile([0, 0, 0, 0])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.is_profile([0, 0, 0, 0, 0, 0])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.is_profile([[0, 0, 0, 0, 0, 0]])
 
 
@@ -1185,7 +1185,7 @@ def test_is_pure_profile():
     assert not game.is_pure_profile([1, 0, 1, 3, 0])
     assert not game.is_pure_profile([1, 1, 0, 2, 1])
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.is_pure_profile([0, 0, 0, 0])
 
 
@@ -1275,7 +1275,7 @@ def test_pure_profiles():
 
 
 def test_nearby_profiles_1():
-    """This is essentially just testing single deviations"""
+    '''This is essentially just testing single deviations'''
     game = rsgame.emptygame(1, 1)
     prof = [1]
     expected = [1]
@@ -1547,13 +1547,13 @@ def test_to_from_prof_repr():
 def test_to_from_prof_str():
     game = rsgame.emptygame([11, 3], [2, 1])
     prof = [6, 5, 3]
-    prof_str = """
+    prof_str = '''
 r0:
     s0: 6
     s1: 5
 r1:
     s2: 3
-"""[1:-1]
+'''[1:-1]
     assert game.profile_to_str(prof) == prof_str
     assert np.all(game.profile_from_str(prof_str) == prof)
 
@@ -1689,7 +1689,7 @@ def test_emptygame_repr():
 
 def test_emptygame_str():
     game = rsgame.emptygame(3, 4)
-    expected = """
+    expected = '''
 EmptyGame:
     Roles: r0
     Players:
@@ -1700,11 +1700,11 @@ EmptyGame:
             s1
             s2
             s3
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
     game = rsgame.emptygame([3, 4], [4, 3])
-    expected = """
+    expected = '''
 EmptyGame:
     Roles: r0, r1
     Players:
@@ -1720,7 +1720,7 @@ EmptyGame:
             s4
             s5
             s6
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
 
@@ -1824,6 +1824,8 @@ def test_mix():
     const2 = rsgame.const_replace(empty, [4, -1])
     mix = rsgame.mix(const1, const2, 1/3)
     assert mix == rsgame.const_replace(empty, [2, 3])
+    assert rsgame.mix(const1, const2, 0) == const1
+    assert rsgame.mix(const1, const2, 1) == const2
 
 
 def test_add_const():

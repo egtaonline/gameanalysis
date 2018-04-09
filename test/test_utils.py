@@ -9,7 +9,7 @@ from gameanalysis import utils
 
 
 def array_set_equals(a, b):
-    """Returns true if the unique last dimensions are the same set"""
+    '''Returns true if the unique last dimensions are the same set'''
     return not np.setxor1d(utils.axis_to_elem(a), utils.axis_to_elem(b)).size
 
 
@@ -31,13 +31,21 @@ def test_comb():
 
 def test_only():
     assert utils.only([None]) is None, \
-        "only didn't return only element"
+        'only didn\'t return only element'
     with pytest.raises(ValueError):
         utils.only([])
     with pytest.raises(ValueError):
         utils.only([None, None])
     with pytest.raises(ValueError):
         utils.only(5)
+
+
+def test_check():
+    utils.check(True, '')
+    with pytest.raises(ValueError):
+        utils.check(False, '')
+    with pytest.raises(ValueError):
+        utils.fail('')
 
 
 def test_game_size():
@@ -66,13 +74,13 @@ def test_repeat():
 
 
 def test_one_line():
-    short = "This is a short string, so it won't get truncated"
+    short = 'This is a short string, so it won\'t get truncated'
     assert utils.one_line(short, 100) == short, \
-        "short string still got truncated"
-    long_str = "This is relatively long"
-    expected = "This is rela...g"
+        'short string still got truncated'
+    long_str = 'This is relatively long'
+    expected = 'This is rela...g'
     assert utils.one_line(long_str, 16) == expected, \
-        "one_line didn't truncate as expected"
+        'one_line didn\'t truncate as expected'
 
 
 def test_acomb():
@@ -123,15 +131,15 @@ def test_acartesian2():
 def test_simplex_project():
     res = utils.simplex_project(np.array([0, 0, 0]))
     assert np.allclose(res, [1 / 3] * 3), \
-        "projecting [0, 0, 0] didn't result in uniform"
+        'projecting [0, 0, 0] didn\'t result in uniform'
 
     res = utils.simplex_project(np.array([1.2, 1.4]))
     assert np.allclose(res, [.4, .6]), \
-        "simplex project didn't return correct result"
+        'simplex project didn\'t return correct result'
 
     res = utils.simplex_project(np.array([-0.1, 0.8]))
     assert np.allclose(res, [0.05, 0.95]), \
-        "simplex project didn't return correct result"
+        'simplex project didn\'t return correct result'
 
 
 @pytest.mark.parametrize('array', [

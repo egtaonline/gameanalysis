@@ -77,7 +77,7 @@ def const():
     egame, game, sgame, agg, mat, rbf, point, sample, neighbor, add, canon,
     const, 'gambit'])
 def test_automatic_deserialization(game):
-    """Test that we can serialize and deserialize arbitrary games"""
+    '''Test that we can serialize and deserialize arbitrary games'''
     if game == 'gambit':
         game = mat()
         string = gambit.dumps(game)
@@ -92,7 +92,7 @@ def test_automatic_deserialization(game):
 
 
 def test_parse_fail():
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         gamereader.loads('')
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         gamereader.loadj({'type': 'unknown.0'})

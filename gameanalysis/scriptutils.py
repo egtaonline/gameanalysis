@@ -3,7 +3,7 @@ from collections import abc
 
 
 def load_profiles(strings):
-    """Load profiles from a list of strings
+    '''Load profiles from a list of strings
 
     Parameters
     ----------
@@ -15,7 +15,7 @@ def load_profiles(strings):
     -------
     prof_gen : (prof)
         A generator of json profiles.
-    """
+    '''
     for prof_type in strings:
         # Try to load file else read as string
         try:

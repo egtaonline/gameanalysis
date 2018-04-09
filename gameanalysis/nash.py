@@ -1,4 +1,4 @@
-"""Module for computing nash equilibria"""
+'''Module for computing nash equilibria'''
 import itertools
 import multiprocessing
 import warnings
@@ -10,10 +10,11 @@ from scipy import optimize
 from gameanalysis import collect
 from gameanalysis import fixedpoint
 from gameanalysis import regret
+from gameanalysis import utils
 
 
 def pure_nash(game, *, epsilon=0):
-    """Returns an array of all pure nash profiles"""
+    '''Returns an array of all pure nash profiles'''
     eqa = [prof[None] for prof in game.profiles()
            if regret.pure_strategy_regret(game, prof) <= epsilon]
     if eqa:
@@ -23,17 +24,17 @@ def pure_nash(game, *, epsilon=0):
 
 
 def min_regret_profile(game):
-    """Finds the profile with the confirmed lowest regret
+    '''Finds the profile with the confirmed lowest regret
 
     An error will be raised if there are no profiles with a defined regret.
-    """
+    '''
     regs = np.fromiter((regret.pure_strategy_regret(game, prof)  # pragma: no branch # noqa
                         for prof in game.profiles()), float, game.num_profiles)
     return game.profiles()[np.nanargmin(regs)]
 
 
 def min_regret_grid_mixture(game, points):
-    """Finds the mixed profile with the confirmed lowest regret
+    '''Finds the mixed profile with the confirmed lowest regret
 
     The search is done over a grid with `points` per dimensions.
 
@@ -41,7 +42,7 @@ def min_regret_grid_mixture(game, points):
     ---------
     points : int > 1
         Number of points per dimension to search.
-    """
+    '''
     mixes = game.grid_mixtures(points)
     regs = np.fromiter((regret.mixture_regret(game, mix)  # pragma: no branch
                         for mix in mixes), float, mixes.shape[0])
@@ -49,7 +50,7 @@ def min_regret_grid_mixture(game, points):
 
 
 def min_regret_rand_mixture(game, mixtures):
-    """Finds the mixed profile with the confirmed lowest regret
+    '''Finds the mixed profile with the confirmed lowest regret
 
     The search is done over a random sampling of `mixtures` mixed profiles.
 
@@ -57,8 +58,8 @@ def min_regret_rand_mixture(game, mixtures):
     ---------
     mixtures : int > 0
         Number of mixtures to evaluate the regret of.
-    """
-    assert mixtures > 0, "mixtures must be greater than 0"
+    '''
+    utils.check(mixtures > 0, 'mixtures must be greater than 0')
     mixes = game.random_mixtures(mixtures)
     regs = np.fromiter((regret.mixture_regret(game, mix)  # pragma: no branch
                         for mix in mixes), float, mixtures)
@@ -67,7 +68,7 @@ def min_regret_rand_mixture(game, mixtures):
 
 def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
                         slack=1e-3):
-    """Replicator Dynamics
+    '''Replicator Dynamics
 
     Run replicator dynamics on a game starting at mix. Replicator dynamics may
     not converge, and so the resulting mixture may not actually represent a
@@ -92,7 +93,7 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
         probability. This is the proportional slack that given relative to the
         minimum and maximum payoffs. This has an effect on convergence, but the
         actual effect isn't really know.
-    """
+    '''
     minp = game.min_role_payoffs()
     maxp = game.max_role_payoffs()
 
@@ -115,7 +116,7 @@ def replicator_dynamics(game, mix, *, max_iters=10000, converge_thresh=1e-8,
 
 
 def regret_minimize(game, mix, *, gtol=1e-8):
-    """A pickleable object to find Nash equilibria
+    '''A pickleable object to find Nash equilibria
 
     This method uses constrained convex optimization to to attempt to solve a
     proxy for the nonconvex regret minimization. Since this may converge to a
@@ -132,7 +133,7 @@ def regret_minimize(game, mix, *, gtol=1e-8):
     gtol : float
         The gradient tolerance used for optimization convergence. See
         `scipy.optimize.minimize`.
-    """
+    '''
     scale = np.repeat(game.max_role_payoffs() - game.min_role_payoffs(),
                       game.num_role_strats)
     scale[np.isclose(scale, 0)] = 1  # In case payoffs are the same
@@ -186,11 +187,11 @@ def regret_minimize(game, mix, *, gtol=1e-8):
 
 
 def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-8):
-    """Run fictitious play on a mixture
+    '''Run fictitious play on a mixture
 
     In fictitious play, players continually best respond to the empirical
     distribution of their opponents at each round.
-    """
+    '''
     empirical = mix.copy()
     for i in range(2, max_iters + 2):
         update = (game.best_response(empirical) - empirical) / i
@@ -206,7 +207,7 @@ def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-8):
 
 
 def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
-    """Uses fixed point method to find nash eqm
+    '''Uses fixed point method to find nash eqm
 
     This is guaranteed to find an equilibrium with regret below regret_thresh,
     however, it's guaranteed convergence is assured by potentially exponential
@@ -229,7 +230,7 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-3, disc=8):
         discretization will be seeded with an approximate equilibrium from a
         lower discretization. For example, with `disc=2` there are only
         `game.num_strats - game.num_roles + 1` possible starting points.
-    """
+    '''
     def eqa_func(mixture):
         mixture = game.mixture_from_simplex(mixture)
         gains = np.maximum(regret.mixture_deviation_gains(game, mixture), 0)
@@ -257,7 +258,7 @@ _AVAILABLE_METHODS = {
 
 
 class _PickleableEqaFinding(object):
-    """This allows all of the nash equilibria functions to be pickled"""
+    '''This allows all of the nash equilibria functions to be pickled'''
 
     def __init__(self, func, game, args):
         self.func = func
@@ -271,7 +272,7 @@ class _PickleableEqaFinding(object):
 def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=0.1, grid_points=2,
                random_restarts=0, processes=0, min_reg=False,
                at_least_one=False, **methods):
-    """Finds role-symmetric mixed Nash equilibria
+    '''Finds role-symmetric mixed Nash equilibria
 
     This is the intended front end for nash equilibria finding, wrapping the
     individual methods in a convenient front end that also support parallel
@@ -323,14 +324,17 @@ def mixed_nash(game, *, regret_thresh=1e-3, dist_thresh=0.1, grid_points=2,
     eqm : ndarray
         A two dimensional array with mixtures that have regret below
         `regret_thresh` and have norm difference of at least `dist_thresh`.
-    """
+    '''
     umix = game.uniform_mixture()
-    assert not np.isnan(game.deviation_payoffs(umix)).any(), \
-        "Nash finding only works on game with full deviation data"""
-    assert processes is None or processes >= 0, \
-        "processes must be non-negative or None"
-    assert all(m in _AVAILABLE_METHODS for m in methods), \
-        "specified a invalid method {}".format(methods)
+    utils.check(
+        not np.isnan(game.deviation_payoffs(umix)).any(),
+        'Nash finding only works on game with full deviation data')
+    utils.check(
+        processes is None or processes >= 0,
+        'processes must be non-negative or None')
+    utils.check(
+        all(m in _AVAILABLE_METHODS for m in methods),
+        'specified a invalid method {}', methods)
 
     initial_points = list(itertools.chain(
         [umix],

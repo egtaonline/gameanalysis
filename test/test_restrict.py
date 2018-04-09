@@ -14,15 +14,15 @@ def test_restriction():
     rest = np.asarray([1, 0, 1, 0, 1], bool)
     devs = restrict.deviation_profiles(game, rest)
     assert devs.shape[0] == 7, \
-        "didn't generate the right number of deviating profiles"
+        'didn\'t generate the right number of deviating profiles'
     adds = restrict.additional_strategy_profiles(game, rest, 1).shape[0]
     assert adds == 6, \
-        "didn't generate the right number of additional profiles"
+        'didn\'t generate the right number of additional profiles'
     rest2 = rest.copy()
     rest2[1] = True
     assert (game.restrict(rest2).num_all_profiles ==
             adds + game.restrict(rest).num_all_profiles), \
-        "additional profiles didn't return the proper amount"
+        'additional profiles didn\'t return the proper amount'
 
 
 @pytest.mark.parametrize('players,strategies', testutils.games)
@@ -30,9 +30,9 @@ def test_maximal_restrictions(players, strategies):
     game = gamegen.game(players, strategies)
     rests = restrict.maximal_restrictions(game)
     assert rests.shape[0] == 1, \
-        "found more than maximal restriction in a complete game"
+        'found more than maximal restriction in a complete game'
     assert rests.all(), \
-        "found restriction wasn't the full one"
+        'found restriction wasn\'t the full one'
 
 
 @pytest.mark.parametrize('players,strategies', testutils.games)
@@ -45,18 +45,18 @@ def test_missing_data_maximal_restrictions(players, strategies, prob):
         maximal = np.all(rests <= rests[:, None], -1)
         np.fill_diagonal(maximal, False)
         assert not maximal.any(), \
-            "One maximal restriction dominated another"
+            'One maximal restriction dominated another'
 
     for rest in rests:
         rgame = rsgame.emptygame_copy(game).restrict(rest)
         restprofs = restrict.translate(rgame.all_profiles(), rest)
         assert all(p in game for p in restprofs), \
-            "Maximal restriction didn't have all profiles"
+            'Maximal restriction didn\'t have all profiles'
         for dev in np.nonzero(~rest)[0]:
             devprofs = restrict.additional_strategy_profiles(
                 game, rest, dev)
             assert not all(p in game for p in devprofs), (  # pragma: no branch
-                "Maximal restriction could be bigger {} {}".format(
+                'Maximal restriction could be bigger {} {}'.format(
                     dev, rest))
 
 
@@ -68,9 +68,9 @@ def test_random_deviation_profile_count(players, strategies, _):
 
     devs = restrict.deviation_profiles(game, rest)
     assert devs.shape[0] == restrict.num_deviation_profiles(game, rest), \
-        "num_deviation_profiles didn't return correct number"
+        'num_deviation_profiles didn\'t return correct number'
     assert np.sum(devs > 0) == restrict.num_deviation_payoffs(game, rest), \
-        "num_deviation_profiles didn't return correct number"
+        'num_deviation_profiles didn\'t return correct number'
     assert np.all(np.sum(devs * ~rest, 1) == 1)
 
     count = 0
@@ -104,7 +104,7 @@ def test_dpr_deviation_count():
 
 
 def test_big_game_counts():
-    """Test that everything works when game_size > int max"""
+    '''Test that everything works when game_size > int max'''
     game = rsgame.emptygame([100, 100], [30, 30])
     num_devs = restrict.num_dpr_deviation_profiles(
         game, [False] + [True] * 58 + [False])
@@ -114,18 +114,19 @@ def test_big_game_counts():
 @pytest.mark.parametrize('_', range(20))
 @pytest.mark.parametrize('players,strategies', testutils.games)
 def test_random_restriction_preserves_completeness(players, strategies, _):
-    """Test that restriction function preserves completeness"""
+    '''Test that restriction function preserves completeness'''
     game = gamegen.game(players, strategies)
-    assert game.is_complete(), "gamegen didn't create complete game"
+    assert game.is_complete(), 'gamegen didn\'t create complete game'
 
     rest = game.random_restriction()
     rgame = game.restrict(rest)
-    assert rgame.is_complete(), "restriction didn't preserve game completeness"
+    assert rgame.is_complete(), \
+        'restriction didn\'t preserve game completeness'
 
     sgame = gamegen.gen_noise(game)
     rsgame = sgame.restrict(rest)
     assert rsgame.is_complete(), \
-        "restriction didn't preserve sample game completeness"
+        'restriction didn\'t preserve sample game completeness'
 
 
 def test_translate():
@@ -136,7 +137,7 @@ def test_translate():
 
 
 def test_maximal_restrictions_partial_profiles():
-    """Test that maximal restrictions properly handles partial profiles"""
+    '''Test that maximal restrictions properly handles partial profiles'''
     profiles = [[2, 0],
                 [1, 1],
                 [0, 2]]
@@ -149,12 +150,12 @@ def test_maximal_restrictions_partial_profiles():
         [True, False],
         [False, True]]))
     assert np.setxor1d(utils.axis_to_elem(rests), expected).size == 0, \
-        "Didn't produce both pure restrictions"
+        'Didn\'t produce both pure restrictions'
 
 
 @pytest.mark.parametrize('players,strategies', testutils.games)
 def test_restriction_to_from_id(players, strategies):
-    """Test that restriction function preserves completeness"""
+    '''Test that restriction function preserves completeness'''
     game = rsgame.emptygame(players, strategies)
     rests = game.all_restrictions()
     rests2 = restrict.from_id(game, restrict.to_id(game, rests))

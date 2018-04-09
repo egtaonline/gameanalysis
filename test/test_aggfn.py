@@ -157,7 +157,7 @@ def test_restrict():
 
 
 def verify_aggfn(game):
-    """Verify that aggfn matches the expanded version"""
+    '''Verify that aggfn matches the expanded version'''
     payoff_game = paygame.game_copy(game)
     assert not game.is_empty()
     assert game.is_complete()
@@ -229,7 +229,7 @@ def verify_aggfn(game):
     ([3, 4], [2, 3], 6),
 ])
 def test_random_game(players, strategies, functions):
-    """Test that deviation payoff formulation is accurate"""
+    '''Test that deviation payoff formulation is accurate'''
     verify_aggfn(rand(players, strategies, functions))
 
 

@@ -1,46 +1,48 @@
-"""Module for loading an arbitrary game with its associated serializer"""
+'''Module for loading an arbitrary game with its associated serializer'''
 import contextlib
 import json
 
+from gameanalysis import utils
+
 
 def load(filelike):
-    """Read a game from a file
+    '''Read a game from a file
 
     Parameters
     ----------
     filelike : file-like
         A file-like object to read the game from. The entire file will be
         consumed by this action.
-    """
+    '''
     return loads(filelike.read())
 
 
 def loads(string):
-    """Read a game from a string
+    '''Read a game from a string
 
     Parameters
     ----------
     string : str
         A string representation of the game.
-    """
+    '''
     with contextlib.suppress(json.JSONDecodeError):
         obj = json.loads(string)
         return loadj(obj)
-    with contextlib.suppress(AssertionError):
+    with contextlib.suppress(ValueError):
         from gameanalysis import gambit
         return gambit.loads(string)
-    assert False, "no known format for game"
+    utils.fail('no known format for game')
 
 
 def loadj(obj):
-    """Read a game from serializable python objects
+    '''Read a game from serializable python objects
 
     Parameters
     ----------
     json : {...}
         The python object representation of a game encoded as json. Any valid
         game will be read and returned.
-    """
+    '''
     game_type, _ = obj.get('type', 'samplegame.').split('.', 1)
     if game_type == 'add':
         from gameanalysis import rsgame
@@ -79,4 +81,4 @@ def loadj(obj):
         from gameanalysis import paygame
         return paygame.samplegame_json(obj)
     else:
-        assert False, "unknown game type {}".format(game_type)
+        utils.fail('unknown game type {}', game_type)

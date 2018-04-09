@@ -1,4 +1,4 @@
-"""Module for computing player reductions"""
+'''Module for computing player reductions'''
 import numpy as np
 
 from gameanalysis import paygame
@@ -18,7 +18,7 @@ class hierarchical(object):
 
     @staticmethod
     def reduce_game(full_game, red_players):
-        """Reduce a game using hierarchical reduction
+        '''Reduce a game using hierarchical reduction
 
         Parameters
         ----------
@@ -27,14 +27,15 @@ class hierarchical(object):
         red_players : ndarray-like
             The reduced number of players for each role. This will be coerced
             into the proper shape if necessary.
-        """
+        '''
         red_game = rsgame.emptygame_names(
             full_game.role_names, red_players, full_game.strat_names)
-        assert np.all(red_game.num_role_players > 0), \
-            "all reduced players must be greater than zero"
-        assert np.all(full_game.num_role_players >=
-                      red_game.num_role_players), \
-            "all full counts must not be less than reduced counts"
+        utils.check(
+            np.all(red_game.num_role_players > 0),
+            'all reduced players must be greater than zero')
+        utils.check(
+            np.all(full_game.num_role_players >= red_game.num_role_players),
+            'all full counts must not be less than reduced counts')
 
         if full_game.is_empty():
             return red_game
@@ -54,18 +55,20 @@ class hierarchical(object):
         return paygame.game_replace(red_game, red_profiles, payoffs[mask])
 
     def _reduce_profiles(sarr, reduced_players, profiles):
-        """Hierarchically reduces several role symmetric array profiles
+        '''Hierarchically reduces several role symmetric array profiles
 
         This returns the reduced profiles, and a boolean mask showing which of
         the input profiles were actually reduced, as they might not all reduce.
         This allows having different numbers of players for reducded_players
-        and profiles, but reduced players must be two dimensional."""
+        and profiles, but reduced players must be two dimensional.'''
         full_players = np.add.reduceat(profiles, sarr.role_starts, 1)
-        assert np.all(full_players >= reduced_players), \
-            "full_players must be at least reduced_players"
-        assert np.all((reduced_players > 0) |
-                      ((full_players == 0) & (reduced_players == 0))), \
-            "reduced players must be greater than 0"
+        utils.check(
+            np.all(full_players >= reduced_players),
+            'full_players must be at least reduced_players')
+        utils.check(
+            np.all((reduced_players > 0) | ((full_players == 0) &
+                                            (reduced_players == 0))),
+            'reduced players must be greater than 0')
 
         rep_red_players = reduced_players.repeat(sarr.num_role_strats, 1)
         rep_full_players = np.maximum(
@@ -128,7 +131,7 @@ class hierarchical(object):
 
     @staticmethod
     def reduce_profiles(red_game, profiles):
-        """Reduce profiles hierarchically
+        '''Reduce profiles hierarchically
 
         Parameters
         ----------
@@ -136,27 +139,30 @@ class hierarchical(object):
             Game that reduced profiles will be profiles for.
         profiles : ndarray-like
             The profiles to reduce.
-        """
+        '''
         profiles = np.asarray(profiles, int)
-        assert profiles.shape[-1] == red_game.num_strats, \
-            "profiles must be appropriate shape"
+        utils.check(
+            profiles.shape[-1] == red_game.num_strats,
+            'profiles must be appropriate shape')
         return hierarchical._reduce_profiles(
             red_game, red_game.num_role_players[None],
             profiles.reshape((-1, red_game.num_strats)))[0]
 
     def _expand_profiles(sarr, full_players, profiles):
-        """Hierarchically expands several role symmetric array profiles
+        '''Hierarchically expands several role symmetric array profiles
 
         In the event that `full_players` isn't divisible by `reduced_players`,
         we first assign by rounding error and break ties in favor of
         more-played strategies. The final tie-breaker is index / alphabetical
-        order."""
+        order.'''
         reduced_players = np.add.reduceat(profiles, sarr.role_starts, 1)
-        assert np.all(full_players >= reduced_players), \
-            "full_players must be at least as large as reduced_players"
-        assert np.all((reduced_players > 0) |
-                      ((full_players == 0) & (reduced_players == 0))), \
-            "reduced_players must be greater than zero"
+        utils.check(
+            np.all(full_players >= reduced_players),
+            'full_players must be at least as large as reduced_players')
+        utils.check(
+            np.all((reduced_players > 0) | ((full_players == 0) &
+                                            (reduced_players == 0))),
+            'reduced_players must be greater than zero')
         # Maximum prevents divide by zero error; equivalent to + eps
         rep_red_players = np.maximum(
             reduced_players, 1).repeat(sarr.num_role_strats, -1)
@@ -187,7 +193,7 @@ class hierarchical(object):
 
     @staticmethod
     def expand_profiles(full_game, profiles):
-        """Expand profiles hierarchically
+        '''Expand profiles hierarchically
 
         Parameters
         ----------
@@ -195,10 +201,11 @@ class hierarchical(object):
             Game that expanded profiles will be valid for.
         profiles : ndarray-like
             The profiles to expand
-        """
+        '''
         profiles = np.asarray(profiles, int)
-        assert profiles.shape[-1] == full_game.num_strats, \
-            "profiles must be appropriate shape"
+        utils.check(
+            profiles.shape[-1] == full_game.num_strats,
+            'profiles must be appropriate shape')
         return hierarchical._expand_profiles(
             full_game, full_game.num_role_players[None],
             profiles.reshape((-1, full_game.num_strats)))
@@ -206,7 +213,7 @@ class hierarchical(object):
     @staticmethod
     def expand_deviation_profiles(
             full_game, rest, red_players, role_index=None):
-        """Expand all deviation profiles from a restricted game
+        '''Expand all deviation profiles from a restricted game
 
         Parameters
         ----------
@@ -218,8 +225,9 @@ class hierarchical(object):
             The number of players in each role in the reduced game.
         role_index : int, optional
             If specified , only expand deviations for the role selected.
-        """
-        assert full_game.is_restriction(rest)
+        '''
+        utils.check(
+            full_game.is_restriction(rest), 'restriction must be valid')
         return hierarchical.expand_profiles(
             full_game, restrict.deviation_profiles(
                 rsgame.emptygame(red_players, full_game.num_role_strats),
@@ -232,14 +240,14 @@ class deviation_preserving(object):
 
     @staticmethod
     def _devs(game, num_profs):
-        """Return an array of the player counts after deviation"""
+        '''Return an array of the player counts after deviation'''
         return np.tile(np.repeat(
             game.num_role_players - np.eye(game.num_roles, dtype=int),
             game.num_role_strats, 0), (num_profs, 1))
 
     @staticmethod
     def reduce_game(full_game, red_players):
-        """Reduce a game using deviation preserving reduction
+        '''Reduce a game using deviation preserving reduction
 
         Parameters
         ----------
@@ -248,15 +256,16 @@ class deviation_preserving(object):
         red_players : ndarray-like
             The reduced number of players for each role. This will be coerced
             into the proper shape if necessary.
-        """
+        '''
         red_game = rsgame.emptygame_names(
             full_game.role_names, red_players, full_game.strat_names)
-        assert np.all((red_game.num_role_players > 1) |
-                      (full_game.num_role_players == 1)), \
-            "all reduced players must be greater than zero"
-        assert np.all(full_game.num_role_players >=
-                      red_game.num_role_players), \
-            "all full counts must not be less than reduced counts"
+        utils.check(
+            np.all((red_game.num_role_players > 1) |
+                   (full_game.num_role_players == 1)),
+            'all reduced players must be greater than zero')
+        utils.check(
+            np.all(full_game.num_role_players >= red_game.num_role_players),
+            'all full counts must not be less than reduced counts')
 
         if full_game.is_empty():
             return red_game
@@ -302,7 +311,7 @@ class deviation_preserving(object):
 
     @staticmethod
     def expand_profiles(full_game, profiles, *, return_contributions=False):
-        """Expand profiles using dpr
+        '''Expand profiles using dpr
 
         Parameters
         ----------
@@ -314,16 +323,18 @@ class deviation_preserving(object):
             If specified, returns a boolean array matching the shape is
             returned indicating the payoffs that are needed for the initial
             profiles.
-        """
+        '''
         profiles = np.asarray(profiles, int)
-        assert profiles.shape[-1] == full_game.num_strats, \
-            "profiles not a valid shape"
+        utils.check(
+            profiles.shape[-1] == full_game.num_strats,
+            'profiles not a valid shape')
         if not profiles.size:
             return np.empty((0, full_game.num_strats), int)
         profiles = profiles.reshape((-1, full_game.num_strats))
         all_red_players = np.add.reduceat(profiles, full_game.role_starts, 1)
         red_players = all_red_players[0]
-        assert np.all(all_red_players == red_players)
+        utils.check(
+            np.all(all_red_players == red_players), 'profiles must be valid')
 
         num_profs = profiles.shape[0]
         dev_profs = profiles[:, None] - np.eye(full_game.num_strats, dtype=int)
@@ -352,7 +363,7 @@ class deviation_preserving(object):
 
     @staticmethod
     def reduce_profiles(red_game, profiles, *, return_contributions=False):
-        """Reduce profiles using dpr
+        '''Reduce profiles using dpr
 
         Parameters
         ----------
@@ -363,16 +374,18 @@ class deviation_preserving(object):
         return_contributions : bool, optional
             If true return ancillary information about where the payoffs come
             from.
-        """
+        '''
         profiles = np.asarray(profiles, int)
-        assert profiles.shape[-1] == red_game.num_strats, \
-            "profiles not a valid shape"
+        utils.check(
+            profiles.shape[-1] == red_game.num_strats,
+            'profiles not a valid shape')
         if not profiles.size:
             return np.empty((0, red_game.num_strats), int)
         profiles = profiles.reshape((-1, red_game.num_strats))
         all_full_players = np.add.reduceat(profiles, red_game.role_starts, 1)
         full_players = all_full_players[0]
-        assert np.all(all_full_players == full_players)
+        utils.check(
+            np.all(all_full_players == full_players), 'profiles must be valid')
 
         num_profs = profiles.shape[0]
         dev_profs = profiles[:, None] - np.eye(red_game.num_strats, dtype=int)
@@ -399,7 +412,7 @@ class deviation_preserving(object):
     @staticmethod
     def expand_deviation_profiles(
             full_game, rest, red_players, role_index=None):
-        """Expand all deviation profiles from a restriction
+        '''Expand all deviation profiles from a restriction
 
         Parameters
         ----------
@@ -411,7 +424,7 @@ class deviation_preserving(object):
             The number of players in each role in the reduced game.
         role_index : int, optional
             If specified , only expand deviations for the role selected.
-        """
+        '''
         rest = np.asarray(rest, bool)
         rdev = np.eye(full_game.num_roles, dtype=int)
         red_players = np.broadcast_to(np.asarray(red_players, int),
@@ -457,7 +470,7 @@ class twins(object):
 
     @staticmethod
     def reduce_game(full_game, red_players=None):
-        """Reduce a game using twins reduction
+        '''Reduce a game using twins reduction
 
         Parameters
         ----------
@@ -466,16 +479,16 @@ class twins(object):
         red_players : ndarray-like, optional
             The reduced number of players for each role. This must be None or
             the reduced number of players for the twins reductions.
-        """
+        '''
         exp_red_players = np.minimum(full_game.num_role_players, 2)
-        assert (red_players is None or
-                np.all(exp_red_players == red_players)), \
-            "twins reduction didn't get expected reduced players"
+        utils.check(
+            red_players is None or np.all(exp_red_players == red_players),
+            'twins reduction didn\'t get expected reduced players')
         return deviation_preserving.reduce_game(full_game, exp_red_players)
 
     @staticmethod
     def expand_profiles(full_game, profiles):
-        """Expand profiles using twins reduction
+        '''Expand profiles using twins reduction
 
         Parameters
         ----------
@@ -483,16 +496,17 @@ class twins(object):
             Game that expanded profiles will be valid for.
         profiles : ndarray-like
             The profiles to expand
-        """
+        '''
         red_players = np.minimum(full_game.num_role_players, 2)
         profiles = np.asarray(profiles, int)
         red_game = rsgame.emptygame(red_players, full_game.num_role_strats)
-        assert red_game.is_profile(profiles).all()
+        utils.check(
+            red_game.is_profile(profiles).all(), 'profiles must be valid')
         return deviation_preserving.expand_profiles(full_game, profiles)
 
     @staticmethod
     def reduce_profiles(red_game, profiles):
-        """Reduce profiles using twins
+        '''Reduce profiles using twins
 
         Parameters
         ----------
@@ -501,15 +515,17 @@ class twins(object):
             have the valid twins reduction number of players.
         profiles : ndarray-like
             The profiles to reduce.
-        """
+        '''
         profiles = np.asarray(profiles, int)
-        assert np.all(red_game.num_role_players <= 2)
+        utils.check(
+            np.all(red_game.num_role_players <= 2),
+            'red game must be a twins game')
         return deviation_preserving.reduce_profiles(red_game, profiles)
 
     @staticmethod
     def expand_deviation_profiles(full_game, rest, red_players=None,
                                   role_index=None):
-        """Expand all deviation profiles from a restriction
+        '''Expand all deviation profiles from a restriction
 
         Parameters
         ----------
@@ -522,11 +538,11 @@ class twins(object):
             specified, it must match the expected number for twins reduction.
         role_index : int, optional
             If specified , only expand deviations for the role selected.
-        """
+        '''
         exp_red_players = np.minimum(full_game.num_role_players, 2)
-        assert (red_players is None or
-                np.all(exp_red_players == red_players)), \
-            "twins reduction didn't get expected reduced players"
+        utils.check(
+            red_players is None or np.all(exp_red_players == red_players),
+            'twins reduction didn\'t get expected reduced players')
         return deviation_preserving.expand_deviation_profiles(
             full_game, rest, exp_red_players, role_index)
 
@@ -537,7 +553,7 @@ class identity(object):
 
     @staticmethod
     def reduce_game(full_game, red_players=None):
-        """Return original game
+        '''Return original game
 
         Parameters
         ----------
@@ -546,15 +562,16 @@ class identity(object):
         red_players : ndarray-like, optional
             If specified, this must match the number of players per role in
             full_game.
-        """
-        assert (red_players is None or
-                np.all(full_game.num_role_players == red_players)), \
-            "identity reduction must have same number of players"
+        '''
+        utils.check(
+            red_players is None or np.all(
+                full_game.num_role_players == red_players),
+            'identity reduction must have same number of players')
         return paygame.game_copy(full_game)
 
     @staticmethod
     def expand_profiles(full_game, profiles):
-        """Return input profiles
+        '''Return input profiles
 
         Parameters
         ----------
@@ -564,14 +581,16 @@ class identity(object):
             The profiles.
         axis : int, optional
             The axis the profiles lie on.
-        """
+        '''
         profiles = np.asarray(profiles, int)
-        assert full_game.is_profile(profiles).all()
+        utils.check(
+            full_game.is_profile(profiles).all(),
+            'profiles must be valid')
         return profiles.reshape((-1, full_game.num_strats))
 
     @staticmethod
     def reduce_profiles(red_game, profiles):
-        """Return original profiles
+        '''Return original profiles
 
         Parameters
         ----------
@@ -581,15 +600,17 @@ class identity(object):
             The profiles.
         axis : int, optional
             The axis the profiles are on.
-        """
+        '''
         profiles = np.asarray(profiles, int)
-        assert red_game.is_profile(profiles).all()
+        utils.check(
+            red_game.is_profile(profiles).all(),
+            'profiles must be valid')
         return profiles.reshape((-1, red_game.num_strats))
 
     @staticmethod
     def expand_deviation_profiles(full_game, rest, red_players=None,
                                   role_index=None):
-        """Expand all deviation profiles from a restriction
+        '''Expand all deviation profiles from a restriction
 
         Parameters
         ----------
@@ -602,8 +623,9 @@ class identity(object):
             specified, it must match the number for full_game.
         role_index : int, optional
             If specified , only expand deviations for the role selected.
-        """
-        assert (red_players is None or
-                np.all(full_game.num_role_players == red_players)), \
-            "identity reduction must have same number of players"
+        '''
+        utils.check(
+            red_players is None or np.all(
+                full_game.num_role_players == red_players),
+            'identity reduction must have same number of players')
         return restrict.deviation_profiles(full_game, rest, role_index)

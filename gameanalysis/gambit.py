@@ -1,4 +1,4 @@
-"""Functions for reading and writing gambit nfg files"""
+'''Functions for reading and writing gambit nfg files'''
 import io
 import itertools
 import re
@@ -11,24 +11,24 @@ from gameanalysis import utils
 
 
 def load(filelike):
-    """Load a gambit game from a file"""
+    '''Load a gambit game from a file'''
     return loads(filelike.read())
 
 
 def loads(string):
-    """Load a gambit game from a string"""
+    '''Load a gambit game from a string'''
     match = _re_nfg.match(string)
     if match:  # payoff form
         return _read_payoffs(match)
     match = _re_nfgo.match(string)
     if match:  # outcome form
         return _read_outcomes(match)
-    assert False, "failed to parse gambit format"
+    utils.fail('failed to parse gambit format')
 
 
 def dump(game, filelike):
-    """Dump game to gambit file"""
-    assert game.is_complete()
+    '''Dump game to gambit file'''
+    utils.check(game.is_complete(), 'gambit games must be complete')
     game = matgame.matgame_copy(game)
     filelike.write('NFG 1 R "gameanalysis game"\n{ ')
 
@@ -59,26 +59,28 @@ def dump(game, filelike):
 
 
 def dumps(game):
-    """Dump game as gambit string"""
+    '''Dump game as gambit string'''
     filelike = io.StringIO()
     dump(game, filelike)
     return filelike.getvalue()
 
 
 def _read_payoffs(match):
-    """Read gambit payoff format"""
+    '''Read gambit payoff format'''
     role_names = _string_list(match.group('roles'))
     num_strats = tuple(map(int, match.group('strats')[1:-1].split()))
     num_roles = len(num_strats)
-    assert len(role_names) == num_roles, \
-        "player names didn't match number of strategies"
+    utils.check(
+        len(role_names) == num_roles,
+        'player names didn\'t match number of strategies')
     strats = utils.prefix_strings('s', sum(num_strats))
     strat_names = [list(itertools.islice(strats, n)) for n in num_strats]
 
     payoffs = list(map(float, match.group('payoffs').split()))
     matrix = np.empty(num_strats + (num_roles,))
-    assert len(payoffs) == matrix.size, \
-        "incorrect number of payoffs for strategies"
+    utils.check(
+        len(payoffs) == matrix.size,
+        'incorrect number of payoffs for strategies')
     inds = tuple(range(num_roles - 1, -1, -1)) + (num_roles,)
     np.transpose(matrix, inds).flat = payoffs
 
@@ -86,26 +88,28 @@ def _read_payoffs(match):
 
 
 def _read_outcomes(match):
-    """Read gambit outcome format"""
+    '''Read gambit outcome format'''
     role_names = _string_list(match.group('roles'))
     num_roles = len(role_names)
     strat_names = [_string_list(m.group()) for m
                    in _re_strats.finditer(match.group('strats')[1:-1])]
-    assert len(strat_names) == num_roles, \
-        "player names and strategies differed in length"
+    utils.check(
+        len(strat_names) == num_roles,
+        'player names and strategies differed in length')
     num_strats = np.fromiter(map(len, strat_names), int, num_roles)
 
     outcomes = [np.zeros(num_roles)]
     for m in _re_outcome.finditer(match.group('outcomes')[1:-1]):
         outcome = m.group()[1:-1]
         pays = outcome[next(_re_str.finditer(outcome)).end():].split()
-        assert len(pays) == num_roles, "outcome has wrong number of payoffs"
+        utils.check(
+            len(pays) == num_roles, 'outcome has wrong number of payoffs')
         outcomes.append(np.fromiter(  # pragma: no branch
             (float(s.rstrip(',')) for s in pays), float, num_roles))
     outcomes = np.stack(outcomes)
 
     inds = match.group('inds').split()
-    assert len(inds) == num_strats.prod(), "wrong number of outcomes"
+    utils.check(len(inds) == num_strats.prod(), 'wrong number of outcomes')
     inds = np.fromiter(map(int, inds), int, len(inds))
 
     matrix = np.empty(tuple(num_strats) + (num_roles,))
@@ -115,7 +119,7 @@ def _read_outcomes(match):
 
 
 def _dedup(lst):
-    """Given a list of strings, modify inplace to remove duplicates"""
+    '''Given a list of strings, modify inplace to remove duplicates'''
     dups = {}
     for i, string in enumerate(lst):
         dups.setdefault(string, []).append(i)
@@ -126,13 +130,13 @@ def _dedup(lst):
 
 
 def _normalize(role_names, strat_names, matrix):
-    """Take gambit data and make it comply with gameanalysis standards"""
+    '''Take gambit data and make it comply with gameanalysis standards'''
     num_roles = len(role_names)
 
     # Sort role names
     if not utils.is_sorted(role_names, strict=True):
-        warnings.warn("gambit player names aren't strictly sorted; modifying "
-                      "to comply with gameanalysis standards")
+        warnings.warn('gambit player names aren\'t strictly sorted; modifying '
+                      'to comply with gameanalysis standards')
         _dedup(role_names)
         if not utils.is_sorted(role_names):
             order = sorted(range(num_roles), key=lambda i: role_names[i])
@@ -143,8 +147,8 @@ def _normalize(role_names, strat_names, matrix):
 
     # Sort strat names
     if not all(utils.is_sorted(strats, strict=True) for strats in strat_names):
-        warnings.warn("gambit strategy names aren't strictly sorted; "
-                      "modifying to comply with gameanalysis standards")
+        warnings.warn('gambit strategy names aren\'t strictly sorted; '
+                      'modifying to comply with gameanalysis standards')
         new_strats = []
         for r, strats in enumerate(strat_names):
             if not utils.is_sorted(strats, strict=True):
@@ -162,7 +166,7 @@ def _normalize(role_names, strat_names, matrix):
 
 
 def _string_list(lst):
-    """Parse role names out of 'list'"""
+    '''Parse role names out of 'list' '''
     return [m.group()[1:-1].replace(r'\"', '"') for m
             in _re_str.finditer(lst[1:-1])]
 

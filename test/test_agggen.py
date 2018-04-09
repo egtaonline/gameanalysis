@@ -90,6 +90,6 @@ def test_congestion_game(players, facilities, required, deg):
 ])
 @pytest.mark.parametrize('prob', [0, 0.1, 0.5, 0.9, 1])
 def test_local_effect_game(players, strategies, prob):
-    """Test that deviation payoff formulation is accurate"""
+    '''Test that deviation payoff formulation is accurate'''
     verify(agggen.local_effect(players, strategies))
     verify(agggen.local_effect(players, strategies, edge_prob=prob))

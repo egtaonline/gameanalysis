@@ -309,7 +309,7 @@ def test_serialize_copy_role_lengths_unlikely():
 
 
 def random_names(num):
-    """Produce `num` random sorted unique strings"""
+    '''Produce `num` random sorted unique strings'''
     return tuple(sorted(itertools.islice(utils.iunique(
         utils.random_strings(1, 3)), num)))
 

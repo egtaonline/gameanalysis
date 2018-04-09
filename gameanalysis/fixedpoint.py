@@ -1,9 +1,11 @@
-"""Module for finding fixed points of functions on a simplex"""
+'''Module for finding fixed points of functions on a simplex'''
 import numpy as np
+
+from gameanalysis import utils
 
 
 def fixed_point(func, init, **kwargs):
-    """Compute an approximate fixed point of a function
+    '''Compute an approximate fixed point of a function
 
     Parameters
     ----------
@@ -15,14 +17,14 @@ def fixed_point(func, init, **kwargs):
     kwargs : options
         Additional options to pass on to labeled_subsimplex. See other options
         for details.
-    """
+    '''
     def fixed_func(mix):
         return np.argmin((mix == 0) - mix + func(mix))
     return labeled_subsimplex(fixed_func, init, **kwargs)
 
 
 def labeled_subsimplex(label_func, init, disc):
-    """Find approximate center of a fully labeled subsimplex
+    '''Find approximate center of a fully labeled subsimplex
 
     This runs once at the discretization provided. It is recommended that this
     be run several times with successively finer discretization and warm
@@ -53,7 +55,7 @@ def labeled_subsimplex(label_func, init, disc):
 
     .. [5] Kuhn and Mackinnon 1975. Sandwich Method for Finding Fixed Points.
     .. [6] Kuhn 1968. Simplicial Approximation Of Fixed Points.
-    """
+    '''
     init = np.asarray(init, float)
     dim = init.size
     # Base vertex of the subsimplex currently being used
@@ -101,8 +103,9 @@ def labeled_subsimplex(label_func, init, disc):
         new_vertex[perms[:index]] += 1
         new_vertex[perms[:index] - 1] -= 1
 
-        assert np.all(new_vertex >= 0) and new_vertex.sum() == disc + 1, \
-            "vertex rotation failed, check labeling function"
+        utils.check(
+            np.all(new_vertex >= 0) and new_vertex.sum() == disc + 1,
+            'vertex rotation failed, check labeling function')
 
         # Update label of new vertex
         if new_vertex[-1] == 2:
@@ -111,9 +114,9 @@ def labeled_subsimplex(label_func, init, disc):
             labels[index] = np.argmax(new_vertex[:-1] - label_vertex)
         else:  # == 1
             labels[index] = label_func(new_vertex[:-1] / disc)
-            assert (0 <= labels[index] < dim and
-                    new_vertex[labels[index]]), \
-                "labeling function was not proper (see help)"
+            utils.check(
+                0 <= labels[index] < dim and new_vertex[labels[index]],
+                'labeling function was not proper (see help)')
 
     # Average out all vertices in simplex we care about
     current = base
@@ -133,11 +136,11 @@ def labeled_subsimplex(label_func, init, disc):
 
 
 def _discretize_mixture(mix, k):
-    """Discretize a mixture
+    '''Discretize a mixture
 
     The returned value will have all integer components that sum to k, with the
     minimum error. Thus, discretizing the mixture.
-    """
+    '''
     disc = np.floor(mix * k).astype(int)
     inds = np.argsort(disc - mix * k)[:k - disc.sum()]
     disc[inds] += 1

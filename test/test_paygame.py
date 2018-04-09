@@ -93,17 +93,17 @@ def test_game_properties():
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game(1, 1, [[1]], [])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game(1, 1, [[2]], [[0]])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game(1, 2, [[1]], [[0]])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game(1, 2, [[2, -1]], [[0, 0]])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game(1, 2, [[1, 0]], [[0, 1]])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game(1, 2, [[1, 0], [1, 0]], [[0, 0], [0, 0]])
 
 
@@ -158,25 +158,25 @@ def test_game_verifications():
 
     profiles = [[3, -1]]
     payoffs = [[4, 5]]
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game_replace(game, profiles, payoffs)
 
     profiles = [[3, 0]]
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game_replace(game, profiles, payoffs)
 
     profiles = [[2, 0]]
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game_replace(game, profiles, payoffs)
 
     profiles = [[1, 1]]
     payoffs = [[np.nan, np.nan]]
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game_replace(game, profiles, payoffs)
 
     profiles = [[2, 0]]
     payoffs = [[np.nan, 0]]
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         paygame.game_replace(game, profiles, payoffs)
 
 
@@ -322,7 +322,7 @@ def test_get_payoffs():
     pay = game.get_payoffs([2, 0, 0, 3, 0])
     assert np.allclose([np.nan, 0, 0, np.nan, 0], pay, equal_nan=True)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.get_payoffs([1, 0, 0, 2, 1])
 
 
@@ -427,7 +427,7 @@ def test_different_samples():
     game = paygame.samplegame(1, [1, 2], profiles, payoffs)
 
     assert np.all([1, 2] == game.num_samples), \
-        "didn't get both sample sizes"
+        'didn\'t get both sample sizes'
     assert repr(game) is not None
 
 
@@ -1025,7 +1025,7 @@ def test_game_str():
     game = paygame.game_replace(base, profs, pays)
     egame = paygame.game_copy(base)
 
-    expected = """
+    expected = '''
 Game:
     Roles: r0, r1
     Players:
@@ -1040,10 +1040,10 @@ Game:
             s3
             s4
 payoff data for 0 out of 50 profiles
-"""[1:-1]
+'''[1:-1]
     assert str(egame) == expected
 
-    expected = """
+    expected = '''
 Game:
     Roles: r0, r1
     Players:
@@ -1058,7 +1058,7 @@ Game:
             s3
             s4
 payoff data for 21 out of 50 profiles
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
 
@@ -1216,9 +1216,9 @@ def test_get_sample_payoffs():
     pay = game.get_sample_payoffs([2, 0, 2])
     assert np.allclose([[5, 0, 2], [6, 0, 3]], pay)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.get_sample_payoffs([2, 1, 2])
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.get_sample_payoffs([2, 0, 2, 0])
 
 
@@ -1245,13 +1245,14 @@ def test_to_from_samplepay_json():
     jspay0 = game.samplepay_to_json(spay0)
     assert np.allclose(game.samplepay_from_json(jspay0), spay0)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         game.samplepay_from_json(
             json_spay, np.empty((0, 3)))
 
     json_profspay = {'r0': [('s0', 3, [3, 4, 5])],
                      'r1': [('s2', 4, [7, 8, 9])]}
-    with pytest.raises(AssertionError):
+    assert np.allclose(game.samplepay_from_json(json_profspay), spay)
+    with pytest.raises(ValueError):
         game.samplepay_from_json(
             json_profspay, np.empty((0, 3)))
 
@@ -1495,7 +1496,7 @@ def test_samplegame_str():
     profs = base.all_profiles()
 
     game = paygame.samplegame_copy(base)
-    expected = """
+    expected = '''
 SampleGame:
     Roles: r0, r1
     Players:
@@ -1512,11 +1513,11 @@ SampleGame:
 payoff data for 0 out of 50 profiles
 no payoff samples
 no observations
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
     game = paygame.samplegame_replace(base, profs[:1], [np.zeros((1, 1, 5))])
-    expected = """
+    expected = '''
 SampleGame:
     Roles: r0, r1
     Players:
@@ -1533,11 +1534,11 @@ SampleGame:
 payoff data for 1 out of 50 profiles
 1 payoff sample
 1 observation per profile
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
     game = paygame.samplegame_replace(base, profs[:13], [np.zeros((13, 1, 5))])
-    expected = """
+    expected = '''
 SampleGame:
     Roles: r0, r1
     Players:
@@ -1554,11 +1555,11 @@ SampleGame:
 payoff data for 13 out of 50 profiles
 13 payoff samples
 1 observation per profile
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
     game = paygame.samplegame_replace(base, profs[:13], [np.zeros((13, 2, 5))])
-    expected = """
+    expected = '''
 SampleGame:
     Roles: r0, r1
     Players:
@@ -1575,14 +1576,14 @@ SampleGame:
 payoff data for 13 out of 50 profiles
 26 payoff samples
 2 observations per profile
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
     game = paygame.samplegame_replace(base, profs[:35], [
         np.zeros((13, 2, 5)),
         np.zeros((12, 3, 5)),
         np.zeros((10, 4, 5))])
-    expected = """
+    expected = '''
 SampleGame:
     Roles: r0, r1
     Players:
@@ -1599,7 +1600,7 @@ SampleGame:
 payoff data for 35 out of 50 profiles
 102 payoff samples
 2 to 4 observations per profile
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
     game = paygame.samplegame_replace(base, profs[:40], [
@@ -1607,7 +1608,7 @@ payoff data for 35 out of 50 profiles
         np.zeros((12, 3, 5)),
         np.zeros((10, 4, 5)),
         np.zeros((5, 6, 5))])
-    expected = """
+    expected = '''
 SampleGame:
     Roles: r0, r1
     Players:
@@ -1624,7 +1625,7 @@ SampleGame:
 payoff data for 40 out of 50 profiles
 132 payoff samples
 2 to 6 observations per profile
-"""[1:-1]
+'''[1:-1]
     assert str(game) == expected
 
 
