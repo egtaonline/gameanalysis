@@ -7,6 +7,7 @@ import pytest
 from gameanalysis import agggen
 from gameanalysis import canongame
 from gameanalysis import paygame
+from gameanalysis import utils
 
 
 def test_canon():
@@ -42,17 +43,18 @@ def test_canon():
     ngame = cgame.normalize()
     expected = [[0, 0, 0],
                 [0.5, 1, 0]]
-    assert np.allclose(ngame.payoffs(), expected)
+    assert utils.allclose_perm(ngame.payoffs(), expected)
 
     rgame = cgame.restrict([True, True, False])
     expected = [[1, 0],
                 [2, 3]]
-    assert np.allclose(rgame.payoffs(), expected)
+    assert utils.allclose_perm(rgame.payoffs(), expected)
 
     copy_str = json.dumps(cgame.to_json())
     copy = canongame.canon_json(json.loads(copy_str))
-    assert cgame == copy
     assert hash(cgame) == hash(copy)
+    print('prior')
+    assert cgame == copy
 
     assert [2, 0, 0] in cgame
     assert [0, 2, 0] not in cgame
@@ -60,7 +62,7 @@ def test_canon():
     assert repr(cgame) == 'CanonGame([2], [3], 2 / 6)'
 
     other = canongame.canon(agggen.normal_aggfn([2, 2, 3], [3, 1, 1], 2))
-    other + cgame
+    assert other + cgame == cgame + other
 
 
 @pytest.mark.parametrize('strats', itertools.product(*[[1, 2]] * 3))

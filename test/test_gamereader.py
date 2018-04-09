@@ -69,9 +69,13 @@ def canon():
     return canongame.canon(game())
 
 
+def const():
+    return rsgame.const_replace(egame(), 0)
+
+
 @pytest.mark.parametrize('game', [
     egame, game, sgame, agg, mat, rbf, point, sample, neighbor, add, canon,
-    'gambit'])
+    const, 'gambit'])
 def test_automatic_deserialization(game):
     """Test that we can serialize and deserialize arbitrary games"""
     if game == 'gambit':
@@ -90,3 +94,5 @@ def test_automatic_deserialization(game):
 def test_parse_fail():
     with pytest.raises(AssertionError):
         gamereader.loads('')
+    with pytest.raises(AssertionError):
+        gamereader.loadj({'type': 'unknown.0'})

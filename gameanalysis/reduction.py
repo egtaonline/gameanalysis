@@ -107,8 +107,8 @@ class hierarchical(object):
             reduced_players, 1).repeat(sarr.num_role_strats, -1)
         rep_full_players = full_players.repeat(sarr.num_role_strats, -1)
         errors = alternates * rep_full_players / rep_red_players - profiles + 1
-        inds = np.lexsort(
-            (alpha_ord, -alternates, -errors, ~diffs, role_order), 1)
+        inds = np.asarray(np.argsort(np.rec.fromarrays(
+            [role_order, ~diffs, -errors, -alternates, alpha_ord]), 1))
 
         # Same as with expansion, map to new space
         rectified_inds = (inds + np.arange(num_reduceable)[:, None] *
@@ -172,7 +172,8 @@ class hierarchical(object):
         error = profiles * rep_full_players / rep_red_players - expand_profs
         alpha_inds = np.arange(sarr.num_strats)
         alpha_ord = np.broadcast_to(alpha_inds, (num_profs, sarr.num_strats))
-        inds = np.lexsort((alpha_ord, -profiles, -error, role_order), 1)
+        inds = np.asarray(np.argsort(np.rec.fromarrays(
+            [role_order, -error, -profiles, alpha_ord]), 1))
 
         # Map them to indices in the expand_profs array, and mask out the first
         # that are necessary to meet unassigned
@@ -384,7 +385,9 @@ class deviation_preserving(object):
                 .repeat(num_profs, 0)
                 .reshape((-1, red_game.num_strats))[mask][reduced])
         red_profs += devs
-        red_profs, red_inds = utils.unique_axis(red_profs, return_inverse=True)
+        red_profs, red_inds = np.unique(
+            utils.axis_to_elem(red_profs), return_inverse=True)
+        red_profs = utils.axis_from_elem(red_profs)
         if not return_contributions:
             return red_profs
         else:

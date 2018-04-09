@@ -71,7 +71,9 @@ def test_rbfgame_members(players, strats, dist):
 
     jgame = json.dumps(reggame.to_json())
     copy = learning.rbfgame_json(json.loads(jgame))
+    assert hash(copy) == hash(reggame)
     assert copy == reggame
+    assert reggame + copy == copy + reggame
 
 
 def test_rbfgame_duplicate_profiles():
@@ -116,6 +118,7 @@ def test_skltrain():
 
     with pytest.raises(ValueError):
         reggame.deviation_payoffs(game.random_mixture())
+    assert game + reggame == reggame + game
 
 
 @pytest.mark.parametrize('players,strats', games)
@@ -152,6 +155,7 @@ def test_rbfgame_restriction(players, strats, _):
 
     jgame = json.dumps(rreg.to_json())
     copy = learning.rbfgame_json(json.loads(jgame))
+    assert hash(copy) == hash(rreg)
     assert copy == rreg
 
     rrest = rreg.random_restriction()
@@ -164,6 +168,7 @@ def test_rbfgame_restriction(players, strats, _):
 
     jgame = json.dumps(rrreg.to_json())
     copy = learning.rbfgame_json(json.loads(jgame))
+    assert hash(copy) == hash(rrreg)
     assert copy == rrreg
 
 
@@ -282,7 +287,9 @@ def test_sample(_):
     learn = learning.sample(learning.rbfgame_train(game))
     jgame = json.dumps(learn.to_json())
     copy = learning.sample_json(json.loads(jgame))
+    assert hash(copy) == hash(learn)
     assert copy == learn
+    assert learn + copy == copy + learn
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -336,7 +343,9 @@ def test_point(_):
 
     jgame = json.dumps(learn.to_json())
     copy = learning.point_json(json.loads(jgame))
+    assert hash(copy) == hash(learn)
     assert copy == learn
+    assert learn + copy == copy + learn
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -372,7 +381,9 @@ def test_neighbor(_):
     learn = learning.neighbor(learning.rbfgame_train(game))
     jgame = json.dumps(learn.to_json())
     copy = learning.neighbor_json(json.loads(jgame))
+    assert hash(copy) == hash(learn)
     assert copy == learn
+    assert learn + copy == copy + learn
 
 
 @pytest.mark.parametrize('players,strats', [

@@ -343,49 +343,17 @@ def axis_to_elem(array, axis=-1):
         The axis to convert into a single element. Defaults to the last axis.
     """
     array = np.asarray(array)
-    # ascontiguousarray will make a copy of necessary
+    # ascontiguousarray will make a copy if necessary
     axis_at_end = np.ascontiguousarray(np.rollaxis(array, axis, array.ndim))
     new_shape = axis_at_end.shape
-    elems = axis_at_end.view(np.dtype((np.void, array.itemsize *
-                                       new_shape[-1])))
+    elems = axis_at_end.view([('axis', array.dtype, new_shape[-1:])])
     elems.shape = new_shape[:-1]
     return elems
 
 
-def elem_to_axis(array, dtype, axis=-1):
+def axis_from_elem(array, axis=-1):
     """Converts and array of axis elements back to an axis"""
-    dtype = np.dtype(dtype)
-    new_shape = array.shape + (array.itemsize // dtype.itemsize,)
-    return np.rollaxis(array.view(dtype).reshape(new_shape),
-                       -1, axis)
-
-
-def unique_axis(array, axis=-1, **kwargs):
-    """Find unique axis elements
-
-    Parameters
-    ----------
-    array : ndarray
-        The array to find unique axis elements of
-    axis : int, optional
-        The axis to find unique elements of. Defaults to the last axis.
-    **kwargs : flags
-        The flags to pass to numpys unique function
-
-    Returns
-    -------
-    uniques : ndarray
-        The unique axes as rows of a two dimensional array.
-    *args :
-        Any other results of the unique functions due to flags
-    """
-    elems = axis_to_elem(array, axis)
-    results = np.unique(elems, **kwargs)
-    if isinstance(results, tuple):
-        return ((elem_to_axis(results[0], array.dtype, axis),) +
-                results[1:])
-    else:
-        return elem_to_axis(results, array.dtype, axis)
+    return np.rollaxis(array['axis'], -1, axis)
 
 
 class hash_array(object):
@@ -473,6 +441,7 @@ def is_sorted(iterable, *, key=None, reverse=False, strict=False):
 
 def allclose_perm(a, b, **kwargs):
     """allclose but for any permutation of actual"""
+    a, b = np.asarray(a), np.asarray(b)
     assert a.ndim == 2 and a.shape == b.shape
     isclose = np.isclose(a[:, None], b, **kwargs).all(2)
     return isclose[optimize.linear_sum_assignment(~isclose)].all()

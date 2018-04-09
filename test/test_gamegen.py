@@ -366,5 +366,5 @@ def test_add_widths(players, strats, func):
 def test_sample_profiles(players, strats, _):
     game = gamegen.game(players, strats)
     profiles = gamegen.sample_profiles(game, 5)
-    uprofs = utils.unique_axis(profiles)
+    uprofs = utils.axis_from_elem(np.unique(utils.axis_to_elem(profiles)))
     assert uprofs.shape == (5, game.num_strats)

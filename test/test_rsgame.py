@@ -1837,7 +1837,7 @@ def test_add_const():
 
 def test_add_types():
     empty = rsgame.emptygame([1, 2], [3, 2])
-    const = rsgame.const_replace(empty, 1)
+    const = UnAddC(empty, 1)
 
     assert empty + const == empty
     assert const + empty == empty
@@ -1847,8 +1847,8 @@ def test_add_types():
 
 def test_add_game():
     empty = rsgame.emptygame([1, 2], [3, 2])
-    unadd1 = unadd_replace(empty, 1)
-    unadd2 = unadd_replace(empty, [1, 2])
+    unadd1 = UnAddC(empty, 1)
+    unadd2 = UnAddC(empty, [1, 2])
     add = unadd1 + unadd2
 
     assert add.is_complete()
@@ -1890,13 +1890,11 @@ def test_add_game():
     assert rsgame.emptygame_copy(add_rest) == empty.restrict(rest)
 
 
-class UnAddable(rsgame.ConstantGame):
+class UnAddC(rsgame.ConstantGame):
+    def __init__(self, copy, const):
+        super().__init__(
+            copy.role_names, copy.strat_names, copy.num_role_players,
+            np.asarray(const, float))
+
     def _add_game(self, other):
         assert False
-
-
-def unadd_replace(copy_game, constant):
-    """Replace a game with constant payoffs"""
-    return UnAddable(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players, np.asarray(constant, float))

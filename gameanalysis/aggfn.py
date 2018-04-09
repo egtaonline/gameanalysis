@@ -8,8 +8,6 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-# FIXME Remove function names, they're not necessary and clutter equality and
-# merging... and replace because we need replace_names
 class AgfnGame(rsgame.CompleteGame):
     """Action graph with function nodes game
 
@@ -262,8 +260,9 @@ class AgfnGame(rsgame.CompleteGame):
 
     @utils.memoize
     def __hash__(self):
-        # FIXME Can has function inputs
-        return hash((super().__hash__(), self.num_functions))
+        return hash((
+            super().__hash__(),
+            np.sort(utils.axis_to_elem(self.function_inputs.T)).tobytes()))
 
 
 def aggfn(num_role_players, num_role_strats, action_weights, function_inputs,

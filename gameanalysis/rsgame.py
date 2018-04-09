@@ -993,11 +993,14 @@ class GameLike(StratArray):
             from_dev_profs[:, supp] = sub.all_profiles()
             before_devs = profile - from_dev_profs
             before_devs = before_devs[np.all(before_devs >= 0, 1)]
-            before_devs = utils.unique_axis(before_devs)
+            before_devs = utils.axis_from_elem(np.unique(utils.axis_to_elem(
+                before_devs)))
             nearby = before_devs[:, None] + to_dev_profs
             nearby.shape = (-1, self.num_strats)
-            profiles.append(utils.unique_axis(nearby))
-        return utils.unique_axis(np.concatenate(profiles))
+            profiles.append(utils.axis_from_elem(np.unique(utils.axis_to_elem(
+                nearby))))
+        return utils.axis_from_elem(np.unique(utils.axis_to_elem(
+            np.concatenate(profiles))))
 
     def random_profile(self, mixture=None):
         return self.random_profiles(1, mixture)[0]

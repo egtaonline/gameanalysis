@@ -12,6 +12,7 @@ import warnings
 
 import numpy as np
 import sklearn
+from numpy.lib import recfunctions
 from sklearn import gaussian_process as gp
 
 from gameanalysis import gamereader
@@ -117,7 +118,7 @@ class DevRegressionGame(rsgame.CompleteGame):
                 np.all(self._rest == other._rest))
 
     def __hash__(self):
-        return super().__hash__()
+        return hash((super().__hash__(), self._rest.tobytes()))
 
 
 def _dev_profpay(game):
@@ -333,19 +334,20 @@ class RbfGpGame(rsgame.CompleteGame):
         zeros = (profiles[:, ~rest] /
                  lengths[:, ~rest].repeat(sizes, 0))
         removed = np.exp(-np.einsum('ij,ij->i', zeros, zeros) / 2)
-        new_profs, inds = utils.unique_axis(
-            np.concatenate([np.arange(rest.sum()).repeat(sizes)[:, None],
-                            profiles[:, rest]], 1),
+        uprofs, inds = np.unique(
+            recfunctions.merge_arrays([
+                np.arange(rest.sum()).repeat(sizes).view([('s', int)]),
+                utils.axis_to_elem(profiles[:, rest])], flatten=True),
             return_inverse=True)
         new_alpha = np.bincount(inds, removed * self._alpha[size_mask])
         new_sizes = np.diff(np.concatenate([
-            [-1], np.flatnonzero(np.diff(new_profs[:, 0])),
+            [-1], np.flatnonzero(np.diff(uprofs['s'])),
             [new_alpha.size - 1]]))
 
         return RbfGpGame(
             base.role_names, base.strat_names, base.num_role_players,
             self._offset[rest], self._coefs[rest],
-            lengths[:, rest], new_sizes, new_profs[:, 1:], new_alpha)
+            lengths[:, rest], new_sizes, uprofs['axis'], new_alpha)
 
     def _add_constant(self, role_array):
         return RbfGpGame(
@@ -397,26 +399,30 @@ class RbfGpGame(rsgame.CompleteGame):
         base['type'] = 'rbf.1'
         return base
 
-    def __eq__(self, other):
-        if not (super().__eq__(other) and
-                np.allclose(self._offset, other._offset) and
-                np.allclose(self._coefs, other._coefs) and
-                np.allclose(self._lengths, other._lengths) and
-                np.all(self._sizes == other._sizes)):
-            return False
+    def __eq__(self, othr):
+        return (super().__eq__(othr) and
+                np.allclose(self._offset, othr._offset) and
+                np.allclose(self._coefs, othr._coefs) and
+                np.allclose(self._lengths, othr._lengths) and
+                np.all(self._sizes == othr._sizes) and
+                self._eq_params(othr))
 
-        orda = np.lexsort(np.concatenate([
-            np.arange(self.num_strats).repeat(self._sizes)[None],
-            self._profiles.T]))
-        ordb = np.lexsort(np.concatenate([
-            np.arange(other.num_strats).repeat(other._sizes)[None],
-            other._profiles.T]))
-        return (np.all(self._profiles[orda] == other._profiles[ordb]) and
-                np.allclose(self._alpha[orda], other._alpha[ordb]))
+    def _eq_params(self, othr):
+        sord = np.argsort(recfunctions.merge_arrays([
+            np.arange(self.num_strats).repeat(self._sizes),
+            utils.axis_to_elem(self._profiles)], flatten=True))
+        oord = np.argsort(recfunctions.merge_arrays([
+            np.arange(othr.num_strats).repeat(othr._sizes),
+            utils.axis_to_elem(othr._profiles)], flatten=True))
+        return (np.all(self._profiles[sord] == othr._profiles[oord]) and
+                np.allclose(self._alpha[sord], othr._alpha[oord]))
 
     @utils.memoize
     def __hash__(self):
-        return hash((super().__hash__(), self._sizes.tobytes()))
+        hprofs = np.sort(utils.axis_to_elem(np.concatenate([
+            np.arange(self.num_strats).repeat(self._sizes)[:, None],
+            self._profiles], 1))).tobytes()
+        return hash((super().__hash__(), hprofs))
 
 
 def rbfgame_train(game, num_restarts=3):
@@ -460,11 +466,11 @@ def rbfgame_train(game, num_restarts=3):
         means[s] = pay_mean
         coefs[s] = reg.kernel_.k1.k1.constant_value
         lengths[s] = reg.kernel_.k1.k2.length_scale
-        uprofs, inds = utils.unique_axis(
-            profs, return_inverse=True)
-        profiles.append(uprofs)
+        uprofs, inds = np.unique(
+            utils.axis_to_elem(profs), return_inverse=True)
+        profiles.append(utils.axis_from_elem(uprofs))
         alpha.append(np.bincount(inds, reg.alpha_))
-        sizes.append(uprofs.shape[0])
+        sizes.append(uprofs.size)
 
     if np.any(lengths[..., None] == bounds):
         warnings.warn("some lengths were at their bounds, "
@@ -542,6 +548,14 @@ class _DeviationGame(rsgame.CompleteGame):
         base['model'] = self._model.to_json()
         return base
 
+    def __eq__(self, other):
+        return (super().__eq__(other) and
+                self._model == other._model)
+
+    @utils.memoize
+    def __hash__(self):
+        return hash((super().__hash__(), self._model))
+
 
 class SampleDeviationGame(_DeviationGame):
     """Deviation payoffs by sampling from mixture
@@ -607,6 +621,14 @@ class SampleDeviationGame(_DeviationGame):
         base['samples'] = self._num_samples
         base['type'] = 'sample.1'
         return base
+
+    def __eq__(self, other):
+        return (super().__eq__(other) and
+                self._num_samples == other._num_samples)
+
+    @utils.memoize
+    def __hash__(self):
+        return hash((super().__hash__(), self._num_samples))
 
 
 def sample(game, num_samples=100):
@@ -763,6 +785,13 @@ class NeighborDeviationGame(_DeviationGame):
         base['devs'] = self._num_devs
         base['type'] = 'neighbor.1'
         return base
+
+    def __eq__(self, other):
+        return (super().__eq__(other) and self._num_devs == other._num_devs)
+
+    @utils.memoize
+    def __hash__(self):
+        return hash((super().__hash__(), self._num_devs))
 
 
 def neighbor(game, num_devs=2):

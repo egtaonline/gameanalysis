@@ -440,20 +440,23 @@ class Game(rsgame.RsGame):
 
     @utils.memoize
     def __hash__(self):
-        return hash((super().__hash__(), self.num_profiles,
-                     self.num_complete_profiles))
+        return hash((super().__hash__(), self.num_complete_profiles,
+                     np.sort(utils.axis_to_elem(self._profiles)).tobytes()))
 
-    def __eq__(self, other):
-        return (super().__eq__(other) and
+    def __eq__(self, othr):
+        return (super().__eq__(othr) and
                 # Identical profiles
-                self.num_profiles == other.num_profiles and
-                self.num_complete_profiles == other.num_complete_profiles and
-                # Identical payoffs
-                not np.setxor1d(utils.axis_to_elem(self._profiles),
-                                utils.axis_to_elem(other._profiles)).size and
-                # Identical payoffs
-                all(np.allclose(pay, other.get_payoffs(prof), equal_nan=True)
-                    for prof, pay in zip(self._profiles, self._payoffs)))
+                self.num_profiles == othr.num_profiles and
+                self.num_complete_profiles == othr.num_complete_profiles and
+                self._eq_payoffs(othr))
+
+    def _eq_payoffs(self, othr):
+        """Identical profiles and payoffs conditioned on all else equal"""
+        sord = np.argsort(utils.axis_to_elem(self._profiles))
+        oord = np.argsort(utils.axis_to_elem(othr._profiles))
+        return (np.all(self._profiles[sord] == othr._profiles[oord]) and
+                np.allclose(self._payoffs[sord], othr._payoffs[oord],
+                            equal_nan=True))
 
     def to_json(self):
         """Fromat a Game as json"""
@@ -989,13 +992,8 @@ class SampleGame(Game):
 
 def _sample_payoffs_equal(p1, p2):
     """Returns true if two sample payoffs are almost equal"""
-    # Pathological payoffs will make this fail, e.g. small perturbations to
-    # almost equal payoffs that invert their order, but we're testing for
-    # equality, so that's not really an issue, as strict permutations will
-    # still be valid.
-    return (p1.shape[0] == p2.shape[0] and
-            np.allclose(p1[np.lexsort(p1.T)], p2[np.lexsort(p2.T)],
-                        equal_nan=True))
+    return p1.shape[0] == p2.shape[0] and utils.allclose_perm(
+        p1, p2, equal_nan=True)
 
 
 def samplegame(num_role_players, num_role_strats, profiles,
@@ -1146,8 +1144,9 @@ def samplegame_replace_flat(copy_game, profiles, payoffs):
     """
     profiles = np.asarray(profiles, int)
     payoffs = np.asarray(payoffs, float)
-    _, ind, inv, counts = utils.unique_axis(
-        profiles, return_index=True, return_inverse=True, return_counts=True)
+    _, ind, inv, counts = np.unique(
+        utils.axis_to_elem(profiles), return_index=True, return_inverse=True,
+        return_counts=True)
     countso = counts.argsort()
     countsoi = np.empty(counts.size, int)
     countsoi[countso] = np.arange(counts.size)

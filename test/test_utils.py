@@ -187,26 +187,18 @@ def test_elem_axis():
     x = np.array([[5.4, 2.2],
                   [5.7, 2.8],
                   [9.6, 1.2]], float)
-    assert np.all(x == utils.elem_to_axis(utils.axis_to_elem(x), float))
+    assert np.all(x == utils.axis_from_elem(utils.axis_to_elem(x)))
     assert np.all(x.astype(int) ==
-                  utils.elem_to_axis(utils.axis_to_elem(x.astype(int)), int))
-    assert utils.unique_axis(x).shape == (3, 2)
-    array, counts = utils.unique_axis(x.astype(int), return_counts=True)
-    assert array.shape == (2, 2)
-    assert not np.setxor1d(counts, [2, 1]).size
+                  utils.axis_from_elem(utils.axis_to_elem(x.astype(int))))
 
 
 def test_empty_elem_axis():
     x = np.empty((0, 2), float)
-    assert np.all(x.shape == utils.elem_to_axis(
-        utils.axis_to_elem(x), float).shape)
+    assert np.all(x.shape == utils.axis_from_elem(
+        utils.axis_to_elem(x)).shape)
     assert np.all(
         x.astype(int).shape ==
-        utils.elem_to_axis(utils.axis_to_elem(x.astype(int)), int).shape)
-    assert utils.unique_axis(x).shape == (0, 2)
-    array, counts = utils.unique_axis(x.astype(int), return_counts=True)
-    assert array.shape == (0, 2)
-    assert counts.shape == (0,)
+        utils.axis_from_elem(utils.axis_to_elem(x.astype(int))).shape)
 
 
 def test_hash_array():
@@ -268,6 +260,15 @@ def test_memoization():
     assert called[0] == 1
     assert func(obj) is None
     assert called[0] == 1
+
+
+@pytest.mark.parametrize('_', range(20))
+def test_allclose_perm(_):
+    a, c = np.random.random((2, 10, 4))
+    b = a.copy()
+    np.random.shuffle(b)
+    assert utils.allclose_perm(a, b)
+    assert not utils.allclose_perm(a, c)
 
 
 def test_deprecation():

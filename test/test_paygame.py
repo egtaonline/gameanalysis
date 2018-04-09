@@ -23,11 +23,11 @@ def random_game(role_players, role_strats, *, prob=0.5):
     base = rsgame.emptygame(role_players, role_strats)
     profs = base.all_profiles()
     rand.shuffle(profs)
-    num_profs = rand.binomial(base.num_all_profiles, prob)
-    profs = profs[:num_profs].copy()
-    pays = rand.random(profs.shape)
-    pays *= profs > 0
-    return paygame.game_replace(base, profs, pays)
+    pays = np.choose(
+        ((np.random.random(profs.shape) < prob) + 1) * (profs > 0),
+        [0, np.nan, np.random.random(profs.shape)])
+    mask = np.any(~np.isnan(pays) & (0 < profs), 1)
+    return paygame.game_replace(base, profs[mask], pays[mask])
 
 
 def random_samplegame(role_players, role_strats, *, prob=0.5):
@@ -330,7 +330,7 @@ def test_get_payoffs():
 def test_random_get_payoffs(role_players, role_strats):
     game = random_game(role_players, role_strats)
     for prof, pay in zip(game.profiles(), game.payoffs()):
-        assert np.allclose(pay, game.get_payoffs(prof))
+        assert np.allclose(pay, game.get_payoffs(prof), equal_nan=True)
 
 
 def test_get_dev_payoffs():
@@ -622,11 +622,10 @@ def test_flat_profile_payoffs():
     ], float)
 
     flat_profs = game.flat_profiles()
-    assert np.all(flat_profs[np.lexsort(flat_profs.T)] ==
-                  expected_profs[np.lexsort(expected_profs.T)])
+    assert np.all(np.sort(gu.axis_to_elem(flat_profs)) ==
+                  np.sort(gu.axis_to_elem(expected_profs)))
     flat_pays = game.flat_payoffs()
-    assert np.allclose(flat_pays[np.lexsort(flat_pays.T)],
-                       expected_pays[np.lexsort(expected_pays.T)])
+    assert gu.allclose_perm(flat_pays, expected_pays)
 
 
 def test_nan_mask_for_dev_payoffs():
@@ -994,7 +993,7 @@ def test_random_profpay_serialize(role_players, role_strats):
         jprofpay = json.dumps(game.profpay_to_json(pay, prof))
         profc, payc = game.profpay_from_json(json.loads(jprofpay))
         assert np.all(profc == prof)
-        assert np.allclose(payc, pay)
+        assert np.allclose(payc, pay, equal_nan=True)
 
 
 def test_game_hash_eq():
@@ -1325,13 +1324,10 @@ def test_samplegame_flat():
     assert np.allclose(gamen.get_sample_payoffs([1, 1]), [[3, 4]])
 
     expected = np.array([[1, 0], [2, 0]])
-    eord = np.lexsort(expected.T)
     spay = gamed.get_sample_payoffs([2, 0])
-    sord = np.lexsort(spay.T)
-    assert np.allclose(spay[sord], expected[eord])
+    assert gu.allclose_perm(spay, expected)
     spay = gamen.get_sample_payoffs([2, 0])
-    sord = np.lexsort(spay.T)
-    assert np.allclose(spay[sord], expected[eord])
+    assert gu.allclose_perm(spay, expected)
 
 
 @pytest.mark.parametrize('_', range(10))
@@ -1681,8 +1677,9 @@ def test_mix():
 # 0.99 because otherwise we're just the constant game and so the profiles are
 # all there
 @pytest.mark.parametrize('t', [0.0, 0.2, 0.5, 0.8, 0.99])
-def test_random_mix(players, strats, t):
-    game1 = random_game(players, strats, prob=0.5)
+@pytest.mark.parametrize('prob', [0.9, 1])
+def test_random_mix(players, strats, t, prob):
+    game1 = random_game(players, strats, prob=prob)
     game2 = rsgame.const(players, strats, 3)
     mgame = rsgame.mix(game1, game2, t)
 
@@ -1690,7 +1687,7 @@ def test_random_mix(players, strats, t):
     assert mgame.num_complete_profiles == game1.num_complete_profiles
     exp_pays = ((1 - t) * game1.get_payoffs(mgame.profiles()) +
                 t * game2.get_payoffs(mgame.profiles()))
-    assert np.allclose(exp_pays, mgame.payoffs())
+    assert np.allclose(exp_pays, mgame.payoffs(), equal_nan=True)
 
     for mix in mgame.random_mixtures(20):
         exp_devs = ((1 - t) * game1.deviation_payoffs(mix) +
@@ -1740,10 +1737,8 @@ def test_random_mix(players, strats, t):
 @pytest.mark.parametrize('players,strats', utils.games)
 def test_sparse_profile_addition(players, strats):
     base = random_game(players, strats, prob=0.5)
-    pay = UnAddPay(base.role_names, base.strat_names, base.num_role_players,
-                   base.profiles(), base.payoffs())
-    add = pay + UnAddConst(
-        base.role_names, base.strat_names, base.num_role_players, 3)
+    pay = UnAddP(base, base.profiles(), base.payoffs())
+    add = pay + UnAddC(base, 3)
     assert pay.num_profiles == add.num_profiles
     assert pay.num_complete_profiles == add.num_complete_profiles
     assert not np.setxor1d(gu.axis_to_elem(pay.profiles()),
@@ -1753,22 +1748,30 @@ def test_sparse_profile_addition(players, strats):
 @pytest.mark.parametrize('players,strats', utils.games)
 def test_empty_profile_addition(players, strats):
     base = rsgame.emptygame(players, strats)
-    pay = UnAddPay(base.role_names, base.strat_names, base.num_role_players,
-                   base.profiles(), base.payoffs())
-    add = pay + UnAddConst(
-        base.role_names, base.strat_names, base.num_role_players, 3)
+    pay = UnAddP(base, base.profiles(), base.payoffs())
+    add = pay + UnAddC(base, 3)
     assert pay.num_profiles == add.num_profiles
     assert pay.num_complete_profiles == add.num_complete_profiles
     assert not np.setxor1d(gu.axis_to_elem(pay.profiles()),
                            gu.axis_to_elem(add.profiles())).size
 
 
-class UnAddPay(paygame.Game):
+class UnAddP(paygame.Game):
+    def __init__(self, copy, profs, pays):
+        super().__init__(
+            copy.role_names, copy.strat_names, copy.num_role_players, profs,
+            pays)
+
     def _add_game(self, other):
         assert False
 
 
-class UnAddConst(rsgame.ConstantGame):
+class UnAddC(rsgame.ConstantGame):
+    def __init__(self, copy, const):
+        super().__init__(
+            copy.role_names, copy.strat_names, copy.num_role_players,
+            np.asarray(const, float))
+
     def _add_game(self, other):
         assert False
 

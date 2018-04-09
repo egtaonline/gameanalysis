@@ -83,13 +83,8 @@ class CanonGame(rsgame.RsGame):
         unprof = np.insert(profile, self._inds, self._players, -1)
         return unprof in self._game
 
-    def __eq__(self, other):
-        # XXX Is this appropriate? In some ways we want to allow different
-        # normalize roles and still be equal, but in general we don't verify
-        # profiles and payoffs for equality, we check the more strict,
-        # definitions are identical, which doesn't really work in all
-        # circumstances.
-        return (super().__eq__(other) and self._game == other._game)
+    def __eq__(self, othr):
+        return (super().__eq__(othr) and self._game == othr._game)
 
     def __hash__(self):
         return hash((super().__hash__(), self._game))
