@@ -1,3 +1,4 @@
+"""Test canon game"""
 import itertools
 import json
 
@@ -11,6 +12,7 @@ from gameanalysis import utils
 
 
 def test_canon():
+    """Test basic canon game"""
     profs = [[2, 0, 0, 3],
              [1, 1, 0, 3]]
     pays = [[1, 0, 0, 1],
@@ -67,6 +69,7 @@ def test_canon():
 
 @pytest.mark.parametrize('strats', itertools.product(*[[1, 2]] * 3))
 def test_random_canongame(strats):
+    """Test random canon games"""
     strats = np.array(strats)
     if np.all(strats == 1):
         return  # not a game

@@ -1,3 +1,4 @@
+"""Test matrix game"""
 import itertools
 import json
 import random
@@ -14,6 +15,7 @@ from gameanalysis import utils
 
 
 def full_game(role_names, role_players, strat_names):
+    """Return a full game"""
     base = rsgame.emptygame_names(
         role_names, role_players, strat_names)
     return paygame.game_replace(
@@ -29,6 +31,7 @@ def full_game(role_names, role_players, strat_names):
     [2, 3, 1],
 ])
 def test_random_min_max(strats):
+    """Test min and max"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
     game = paygame.game_copy(matg)
@@ -44,6 +47,7 @@ def test_random_min_max(strats):
     [2, 3, 1],
 ])
 def test_random_normalize(strats):
+    """Test normalize"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs).normalize()
 
@@ -52,6 +56,7 @@ def test_random_normalize(strats):
 
 
 def test_compress_profiles():
+    """Test compress profiles"""
     matg = matgame.matgame(rand.random((2, 3, 4, 3)))
     prof = [0, 1, 0, 1, 0, 1, 0, 0, 0]
     comp_prof = [1, 1, 0]
@@ -65,6 +70,7 @@ def test_compress_profiles():
 
 
 def test_profiles_payoffs():
+    """Test payoffs"""
     matg = matgame.matgame([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
     copy = paygame.game_copy(matg)
     profs = [[1, 0, 1, 0],
@@ -87,6 +93,7 @@ def test_profiles_payoffs():
     [2, 3, 1],
 ])
 def test_random_compress_profiles(strats):
+    """Test compress profiles"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
 
@@ -104,6 +111,7 @@ def test_random_compress_profiles(strats):
 
 
 def test_get_payoffs():
+    """Test get payoffs"""
     payoffs = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
     matg = matgame.matgame(payoffs)
 
@@ -128,6 +136,7 @@ def test_get_payoffs():
     [2, 3, 1],
 ])
 def test_random_get_payoffs(strats):
+    """Test random get payoffs"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
     profiles = matg.random_profiles(20).reshape((4, 5, -1))
@@ -144,6 +153,7 @@ def test_random_get_payoffs(strats):
     [2, 3, 1],
 ])
 def test_random_deviations(strats):
+    """Test random devs"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
     game = paygame.game_copy(matg)
@@ -173,6 +183,7 @@ def test_random_deviations(strats):
     [2, 3, 1],
 ])
 def test_random_invariants(strats):
+    """Test invariants"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
 
@@ -188,6 +199,7 @@ def test_random_invariants(strats):
 
 
 def test_is_constant_sum():
+    """Test constant sum"""
     payoffs = [[[2, -1], [0, 1]], [[5, -4], [0.5, 0.5]]]
     matg = matgame.matgame(payoffs)
     assert matg.is_constant_sum()
@@ -198,6 +210,7 @@ def test_is_constant_sum():
 
 
 def test_submatgame():
+    """Test restrict"""
     matrix = rand.random((2, 3, 4, 3))
     matg = matgame.matgame(matrix)
     mask = [True, True, True, False, True, False, False, True, True]
@@ -220,6 +233,7 @@ def test_submatgame():
     [2, 3, 1],
 ])
 def test_random_matgame_hash_eq(strats):
+    """Test hash and eq"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
 
@@ -234,6 +248,7 @@ def test_random_matgame_hash_eq(strats):
 
 
 def test_matgame_repr():
+    """Test repr"""
     matg = matgame.matgame(rand.random((2, 1)))
     assert repr(matg) == 'MatrixGame([2])'
     matg = matgame.matgame(rand.random((2, 3, 2)))
@@ -248,6 +263,7 @@ def test_matgame_repr():
     ([2, 3, 4], [4, 3, 2]),
 ])
 def test_random_matgame_copy(players, strats):
+    """Test copy"""
     game = gamegen.game(players, strats)
     matg = matgame.matgame_copy(game)
     inds = np.cumsum(game.num_role_players[:-1] * game.num_role_strats[:-1])
@@ -268,6 +284,7 @@ def test_random_matgame_copy(players, strats):
 
 
 def test_serialize_copy_role_lengths():
+    """Test role lengths"""
     game = full_game(
         ['a', 'b'], [1, 1], [['1', '2'], ['3', '4', '5']])
     matg = matgame.matgame_copy(game)
@@ -287,6 +304,7 @@ def test_serialize_copy_role_lengths():
 
 
 def test_serialize_copy_role_lengths_natural():
+    """Test natural role lengths"""
     game = full_game(
         ['q', 'qq'], [2, 1], [['1', '2'], ['3', '4', '5']])
     matg = matgame.matgame_copy(game)
@@ -298,6 +316,7 @@ def test_serialize_copy_role_lengths_natural():
 
 
 def test_serialize_copy_role_lengths_unlikely():
+    """Test unlikely role lengths"""
     game = full_game(
         ['a', 'aa'], [2, 1], [['1', '2'], ['3', '4', '5']])
     matg = matgame.matgame_copy(game)
@@ -309,13 +328,14 @@ def test_serialize_copy_role_lengths_unlikely():
 
 
 def random_names(num):
-    '''Produce `num` random sorted unique strings'''
+    """Produce `num` random sorted unique strings"""
     return tuple(sorted(itertools.islice(utils.iunique(
         utils.random_strings(1, 3)), num)))
 
 
 @pytest.mark.parametrize('_', range(100))
 def test_random_serialize_copy_role_lengths(_):
+    """Test serialization copy"""
     num_roles = random.randint(2, 4)
     roles = random_names(num_roles)
     strats = tuple(random_names(random.randint(2, 4))
@@ -327,6 +347,7 @@ def test_random_serialize_copy_role_lengths(_):
 
 
 def test_to_from_json():
+    """Test to and from json"""
     matg = matgame.matgame(
         [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]])
     mjson = {
@@ -355,6 +376,7 @@ def test_to_from_json():
     [2, 3, 1],
 ])
 def test_random_to_from_json(strats):
+    """Test to from json random"""
     payoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(payoffs)
     jgame = json.dumps(matg.to_json())
@@ -370,6 +392,7 @@ def test_random_to_from_json(strats):
     [2, 3, 1],
 ])
 def test_random_matrix_addition(strats):
+    """Test addition"""
     shape = tuple(strats) + (len(strats),)
     payoffs1 = rand.random(shape)
     matg1 = matgame.matgame(payoffs1)
@@ -386,6 +409,7 @@ def test_random_matrix_addition(strats):
     [2, 3, 1],
 ])
 def test_random_game_addition(strats):
+    """Test random addition"""
     mpayoffs = rand.random(tuple(strats) + (len(strats),))
     matg = matgame.matgame(mpayoffs)
     payoffs = rand.random(matg.payoffs().shape)

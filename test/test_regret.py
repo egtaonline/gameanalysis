@@ -1,3 +1,4 @@
+"""Test regret"""
 import numpy as np
 import pytest
 
@@ -9,6 +10,7 @@ from gameanalysis import rsgame
 
 
 def test_pure_strategy_deviation_gains():
+    """Test pure strategy deviation gains"""
     profiles = [[2, 0, 2, 0],
                 [2, 0, 1, 1],
                 [2, 0, 0, 2],
@@ -36,6 +38,7 @@ def test_pure_strategy_deviation_gains():
 
 
 def test_empty_pure_strategy_deviation_gains():
+    """Test empty pure strategy deviation gains"""
     game = rsgame.emptygame(2, [2, 2])
     gains = regret.pure_strategy_deviation_gains(game, [2, 0, 2, 0])
     assert np.allclose(gains, [np.nan, 0, np.nan, 0], equal_nan=True)
@@ -43,6 +46,7 @@ def test_empty_pure_strategy_deviation_gains():
 
 @pytest.mark.parametrize('_', range(20))
 def test_pure_prisoners_dilemma(_):
+    """Test pure prisoners dilemma"""
     game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
     eqm = [0, 2]
 
@@ -52,6 +56,7 @@ def test_pure_prisoners_dilemma(_):
 
 @pytest.mark.parametrize('_', range(20))
 def test_mixed_prisoners_dilemma(_):
+    """Test mixed prisoners dilemma"""
     game = gamegen.sym_2p2s_game(2, 0, 3, 1)  # prisoners dilemma
     eqm = [0, 1]
 
@@ -60,29 +65,32 @@ def test_mixed_prisoners_dilemma(_):
 
 
 def test_mixed_incomplete_data():
+    """Test mixed incomplete data"""
     profiles = [[2, 0],
                 [1, 1]]
     payoffs = [[4.3, 0],
                [6.2, 6.7]]
     game = paygame.game(2, 2, profiles, payoffs)
-    dg = regret.mixture_deviation_gains(game, [1, 0])
+    dev_gain = regret.mixture_deviation_gains(game, [1, 0])
     expected_gains = [0.0, 2.4]
-    assert np.allclose(dg, expected_gains), \
-        'mixture gains wrong {} instead of {}'.format(dg, expected_gains)
-    dg = regret.mixture_deviation_gains(game, game.uniform_mixture())
-    assert np.isnan(dg).all(), 'had data for mixture without data'
+    assert np.allclose(dev_gain, expected_gains), \
+        'mixture gains wrong {} instead of {}'.format(dev_gain, expected_gains)
+    dev_gain = regret.mixture_deviation_gains(game, game.uniform_mixture())
+    assert np.isnan(dev_gain).all(), 'had data for mixture without data'
 
 
 def test_mixed_incomplete_data_2():
+    """Test mixed with incomplete data"""
     profiles = [[2, 0]]
     payoffs = [[1.0, 0.0]]
     game = paygame.game(2, 2, profiles, payoffs)
-    dg = regret.mixture_deviation_gains(game, [1, 0])
-    assert np.allclose(dg, [0, np.nan], equal_nan=True), \
-        'nonzero regret or deviation without payoff didn\'t return nan'
+    devgains = regret.mixture_deviation_gains(game, [1, 0])
+    assert np.allclose(devgains, [0, np.nan], equal_nan=True), \
+        "nonzero regret or deviation without payoff didn't return nan"
 
 
 def test_pure_incomplete_data():
+    """Test pure regret with incomplete data"""
     profiles = [[2, 0]]
     payoffs = [[1.0, 0.0]]
     game = paygame.game(2, 2, profiles, payoffs)
@@ -92,30 +100,34 @@ def test_pure_incomplete_data():
 
 @pytest.mark.parametrize('strategies', list(range(1, 7)) * 20)
 def test_two_player_zero_sum_pure_wellfare(strategies):
+    """Test pure welfare in zero sum games"""
     game = gamegen.two_player_zero_sum_game(strategies)
     for prof in game.profiles():
         assert np.isclose(regret.pure_social_welfare(game, prof), 0), \
-            'zero sum profile wasn\'t zero sum'
+            "zero sum profile wasn't zero sum"
 
 
-def test_nonzero_profile_welfare():
+def test_non_zero_sum_profile_welfare():
+    """Test nonzero profile welfare"""
     game = matgame.matgame([[[3.5, 2.5]]])
     assert np.isclose(regret.pure_social_welfare(game, [1, 1]), 6), \
-        'Didn\'t properly sum welfare'
+        "didn't properly sum welfare"
 
 
 @pytest.mark.parametrize('strategies', list(range(1, 7)) * 20)
-def test_two_player_zero_sum_mixed_wellfare(strategies):
+def test_two_player_zero_sum_mixture_wellfare(strategies):
+    """test welfare in zero sum game"""
     game = gamegen.two_player_zero_sum_game(strategies)
     for prof in game.random_mixtures(20):
         assert np.isclose(regret.mixed_social_welfare(game, prof), 0), \
-            'zero sum profile wasn\'t zero sum'
+            "zero sum profile wasn't zero sum"
 
 
-def test_nonzero_mixed_welfare():
+def test_non_zero_sum_mixture_welfare():
+    """Test nonzero mixed welfare"""
     game = matgame.matgame([[[3.5, 2.5]]])
     assert np.isclose(regret.mixed_social_welfare(game, [1, 1]), 6), \
-        'Didn\'t properly sum welfare'
+        "Didn't properly sum welfare"
 
 
 @pytest.mark.parametrize('players,strategies', [
@@ -134,6 +146,7 @@ def test_nonzero_mixed_welfare():
 ])
 # Test that for complete games, there are never any nan deviations.
 def test_nan_deviations(players, strategies):
+    """Test nan deviations"""
     game = gamegen.game(players, strategies)
     for mix in game.random_mixtures(20, alpha=0.05):
         mix = game.trim_mixture_support(mix)
@@ -143,6 +156,7 @@ def test_nan_deviations(players, strategies):
 
 
 def test_max_pure_profile():
+    """Test max_pure_prof"""
     profiles = [[2, 0],
                 [1, 1],
                 [0, 2]]
@@ -154,17 +168,17 @@ def test_max_pure_profile():
     assert np.all(prof == [1, 1])
 
     game = rsgame.emptygame(2, 2)
-    sw, prof = regret.max_pure_social_welfare(game)
-    assert np.isnan(sw)
+    welfare, prof = regret.max_pure_social_welfare(game)
+    assert np.isnan(welfare)
     assert prof is None
 
-    (sw,), (prof,) = regret.max_pure_social_welfare(game, by_role=True)
-    assert np.isnan(sw)
+    (welfare,), (prof,) = regret.max_pure_social_welfare(game, by_role=True)
+    assert np.isnan(welfare)
     assert prof is None
 
 
 def test_max_pure_profile_profile_game():
-    '''Test that game are correct when profiles have incomplete data'''
+    """Test that game are correct when profiles have incomplete data"""
     profiles = [[2, 0, 2, 0],
                 [1, 1, 2, 0],
                 [1, 1, 1, 1]]

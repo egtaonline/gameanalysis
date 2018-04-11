@@ -1,11 +1,11 @@
-'''Module for computing dominated strategies'''
+"""Module for computing dominated strategies"""
 import numpy as np
 
 from gameanalysis import regret
 
 
 def _dev_inds(num_strats):
-    '''Returns the deviation strategy indices for a deviation array'''
+    """Returns the deviation strategy indices for a deviation array"""
     sizes = num_strats.repeat(num_strats)
     offsets = np.insert(sizes.cumsum(), 0, 0)
     strat_offs = offsets[:-1].repeat(sizes)
@@ -15,10 +15,10 @@ def _dev_inds(num_strats):
 
 
 def _gains(game):
-    '''Returns the gains for deviating for every profile in the game
+    """Returns the gains for deviating for every profile in the game
 
     Also returns the profile supports for indexing when the gains array should
-    be zero because it's invalid versus having an actual zero gain.'''
+    be zero because it's invalid versus having an actual zero gain."""
     return np.concatenate(
         [regret.pure_strategy_deviation_gains(game, prof)[None]
          for prof in game.profiles()])
@@ -26,20 +26,20 @@ def _gains(game):
 
 # XXX Remove when reduceat is fixed to handle empty slices with identity
 # instead of the value at the start...
-def _reduceat(ufunc, a, indices, axis=0):
-    '''Fix for the way reduceat handles empty slices'''
-    new_shape = list(a.shape)
+def _reduceat(ufunc, array, indices, axis=0):
+    """Fix for the way reduceat handles empty slices"""
+    new_shape = list(array.shape)
     new_shape[axis] = indices.size
-    out = np.full(new_shape, ufunc.identity, a.dtype)
-    valid = np.diff(np.insert(indices, indices.size, a.shape[axis])) > 0
+    out = np.full(new_shape, ufunc.identity, array.dtype)
+    valid = np.diff(np.insert(indices, indices.size, array.shape[axis])) > 0
     index = [slice(None)] * out.ndim
     index[axis] = valid
-    out[index] = ufunc.reduceat(a, indices[valid], axis)
+    out[index] = ufunc.reduceat(array, indices[valid], axis)
     return out
 
 
 def _weak_dominance(gains, supports, num_strats, conditional):
-    '''Returns the strategies that are weakly dominated'''
+    """Returns the strategies that are weakly dominated"""
     sizes = np.repeat(num_strats - 1, num_strats)
     offsets = np.insert(sizes[:-1].cumsum(), 0, 0)
     with np.errstate(invalid='ignore'):  # nans
@@ -52,7 +52,7 @@ def _weak_dominance(gains, supports, num_strats, conditional):
 
 
 def _strict_dominance(gains, supports, num_strats, conditional):
-    '''Returns the strategies that are strictly dominated'''
+    """Returns the strategies that are strictly dominated"""
     sizes = np.repeat(num_strats - 1, num_strats)
     offsets = np.insert(sizes[:-1].cumsum(), 0, 0)
     with np.errstate(invalid='ignore'):  # nans
@@ -65,7 +65,7 @@ def _strict_dominance(gains, supports, num_strats, conditional):
 
 
 def _never_best_response(gains, supports, num_strats, conditional):
-    '''Returns the strategies that are never a best response'''
+    """Returns the strategies that are never a best response"""
     # This way we include self (e.g. 0) in best response
     self_sizes = np.repeat(num_strats, num_strats)
     self_offsets = np.insert(self_sizes[:-1].cumsum(), 0, 0)
@@ -90,26 +90,26 @@ def _never_best_response(gains, supports, num_strats, conditional):
 
 
 def weakly_dominated(game, *, conditional=True):
-    '''Return a mask of the strategies that are weakly dominated
+    """Return a mask of the strategies that are weakly dominated
 
-    If conditional, then missing data will be treated as dominating.'''
+    If conditional, then missing data will be treated as dominating."""
     return _weak_dominance(_gains(game), game.profiles() > 0,
                            game.num_role_strats, conditional)
 
 
 def strictly_dominated(game, *, conditional=True):
-    '''Return a mask of the strategies that are strictly dominated
+    """Return a mask of the strategies that are strictly dominated
 
-    If conditional, then missing data will be treated as dominating.'''
+    If conditional, then missing data will be treated as dominating."""
     return _strict_dominance(_gains(game), game.profiles() > 0,
                              game.num_role_strats, conditional)
 
 
 def never_best_response(game, *, conditional=True):
-    '''Return a mask of the strategies that are never a best response
+    """Return a mask of the strategies that are never a best response
 
     If conditional, then missing data is treated as a best response. The
-    counted best response will be the largest deviation that has data.'''
+    counted best response will be the largest deviation that has data."""
     return _never_best_response(_gains(game), game.profiles() > 0,
                                 game.num_role_strats, conditional)
 
@@ -122,7 +122,7 @@ _CRITERIA = {
 
 
 def iterated_elimination(game, criterion, *, conditional=True):
-    '''Return a restriction resulting from iterated elimination of strategies
+    """Return a restriction resulting from iterated elimination of strategies
 
     Parameters
     ----------
@@ -134,7 +134,7 @@ def iterated_elimination(game, criterion, *, conditional=True):
         Whether to use conditional criteria. In general, conditional set to
         true will assume that unobserved payoffs are large. See the other
         methods for a more detailed explanation
-    '''
+    """
     # There's a few recomputed things that could be passed to save computation
     # time, but they're minimal and probably not that important
     cfunc = _CRITERIA[criterion]

@@ -1,11 +1,11 @@
-'''Module for finding fixed points of functions on a simplex'''
+"""Module for finding fixed points of functions on a simplex"""
 import numpy as np
 
 from gameanalysis import utils
 
 
 def fixed_point(func, init, **kwargs):
-    '''Compute an approximate fixed point of a function
+    """Compute an approximate fixed point of a function
 
     Parameters
     ----------
@@ -17,14 +17,15 @@ def fixed_point(func, init, **kwargs):
     kwargs : options
         Additional options to pass on to labeled_subsimplex. See other options
         for details.
-    '''
+    """
     def fixed_func(mix):
+        """Labeling function for a fixed point"""
         return np.argmin((mix == 0) - mix + func(mix))
     return labeled_subsimplex(fixed_func, init, **kwargs)
 
 
-def labeled_subsimplex(label_func, init, disc):
-    '''Find approximate center of a fully labeled subsimplex
+def labeled_subsimplex(label_func, init, disc): # pylint: disable=too-many-locals,too-many-statements
+    """Find approximate center of a fully labeled subsimplex
 
     This runs once at the discretization provided. It is recommended that this
     be run several times with successively finer discretization and warm
@@ -55,7 +56,7 @@ def labeled_subsimplex(label_func, init, disc):
 
     .. [5] Kuhn and Mackinnon 1975. Sandwich Method for Finding Fixed Points.
     .. [6] Kuhn 1968. Simplicial Approximation Of Fixed Points.
-    '''
+    """
     init = np.asarray(init, float)
     dim = init.size
     # Base vertex of the subsimplex currently being used
@@ -136,11 +137,11 @@ def labeled_subsimplex(label_func, init, disc):
 
 
 def _discretize_mixture(mix, k):
-    '''Discretize a mixture
+    """Discretize a mixture
 
     The returned value will have all integer components that sum to k, with the
     minimum error. Thus, discretizing the mixture.
-    '''
+    """
     disc = np.floor(mix * k).astype(int)
     inds = np.argsort(disc - mix * k)[:k - disc.sum()]
     disc[inds] += 1

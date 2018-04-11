@@ -1,4 +1,4 @@
-'''Module for using bootstrap in analysis'''
+"""Module for using bootstrap in analysis"""
 import multiprocessing
 
 import numpy as np
@@ -6,9 +6,10 @@ import numpy as np
 from gameanalysis import regret
 
 
+# FIXME use functools partial
 def game_function(game, function, num_resamples, num_returned, *,
                   percentiles=None, processes=None):
-    '''Bootstrap the value of a function over a sample game
+    """Bootstrap the value of a function over a sample game
 
     Parameters
     ----------
@@ -37,7 +38,7 @@ def game_function(game, function, num_resamples, num_returned, *,
         An ndarray of the percentiles from bootstrapping. The shape will depend
         on the number of percentiles and the number of values returned from
         your function.
-    '''
+    """
     results = np.empty((num_resamples, num_returned))
     func = _BootstrapPickleable(game, function)
     chunksize = num_resamples if processes == 1 else 4
@@ -46,7 +47,7 @@ def game_function(game, function, num_resamples, num_returned, *,
                 func, range(num_resamples), chunksize=chunksize)):
             results[i] = res
 
-    if percentiles is None:
+    if percentiles is None: # pylint: disable=no-else-return
         results.sort(0)
         return results.T
     else:
@@ -54,7 +55,7 @@ def game_function(game, function, num_resamples, num_returned, *,
 
 
 class _BootstrapPickleable(object):
-    '''A pickleable game function combo'''
+    """A pickleable game function combo"""
 
     def __init__(self, game, function):
         self.game = game
@@ -66,7 +67,7 @@ class _BootstrapPickleable(object):
 
 def profile_function(game, function, profiles, num_resamples, *,
                      percentiles=None, processes=None):
-    '''Compute a function over profiles
+    """Compute a function over profiles
 
     Parameters
     ----------
@@ -93,7 +94,7 @@ def profile_function(game, function, profiles, num_resamples, *,
         An ndarray of the percentiles from bootstrapping for each profile. The
         shape will depend on the number of percentiles and the number of
         profiles.
-    '''
+    """
     if profiles.ndim == 1:
         profiles = profiles[None]
     func = _ProfilePickleable(profiles, function)
@@ -113,7 +114,7 @@ class _ProfilePickleable(object):
 
 def mixture_regret(game, mixtures, num_resamples, *, percentiles=None,
                    processes=None):
-    '''Compute percentile bounds on mixture regret
+    """Compute percentile bounds on mixture regret
 
     Parameters
     ----------
@@ -135,7 +136,7 @@ def mixture_regret(game, mixtures, num_resamples, *, percentiles=None,
     -------
     regret_percentiles : ndarray
         An ndarray of the percentiles for bootstrap regret for each profile.
-    '''
+    """
     return profile_function(game, regret.mixture_regret, mixtures,
                             num_resamples, percentiles=percentiles,
                             processes=processes)
@@ -143,7 +144,7 @@ def mixture_regret(game, mixtures, num_resamples, *, percentiles=None,
 
 def mixture_welfare(game, mixtures, num_resamples, *, percentiles=None,
                     processes=None):
-    '''Compute percentile bounds on mixture welfare
+    """Compute percentile bounds on mixture welfare
 
     Parameters
     ----------
@@ -165,7 +166,7 @@ def mixture_welfare(game, mixtures, num_resamples, *, percentiles=None,
     -------
     bootstrap_percentiles : ndarray
         An ndarray of the percentiles for bootstrap welfare for each profile.
-    '''
+    """
     return profile_function(game, regret.mixed_social_welfare, mixtures,
                             num_resamples, percentiles=percentiles,
                             processes=processes)

@@ -1,3 +1,4 @@
+"""Test reductions"""
 import numpy as np
 import numpy.random as rand
 import pytest
@@ -23,9 +24,9 @@ from gameanalysis.reduction import twins as tr
     ([1, 4], [2, 1], [1, 2]),
     ([4, 9], [3, 2], [2, 3]),
 ])
-@pytest.mark.parametrize('_', range(10))
+@pytest.mark.parametrize('_', range(10)) # pylint: disable=too-many-locals
 def test_random_dpr(keep_prob, game_desc, _):
-    '''Simple test that dpr functions are consistent'''
+    """Simple test that dpr functions are consistent"""
     players, strategies, red_players = game_desc
     # Create game
     game = gamegen.game(players, strategies, keep_prob)
@@ -41,7 +42,7 @@ def test_random_dpr(keep_prob, game_desc, _):
     reduced_full_profiles = utils.axis_to_elem(
         dpr.reduce_profiles(red_game, game.profiles()))
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
-        'reduced game contained profiles it shouldn\'t have'
+        "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game, we need to first filter for complete profiles
@@ -63,11 +64,11 @@ def test_random_dpr(keep_prob, game_desc, _):
         game, restrict.deviation_profiles(red_game, rest)).shape[0]
     num = restrict.num_dpr_deviation_profiles(red_game, rest)
     assert dpr_devs == num, \
-        'num_dpr_deviation_profiles didn\'t return correct number'
+        "num_dpr_deviation_profiles didn't return correct number"
 
 
 def test_empty_dpr_1():
-    '''Reduction is empty because profile is invalid'''
+    """Reduction is empty because profile is invalid"""
     profiles = [
         [2, 4],
     ]
@@ -81,7 +82,7 @@ def test_empty_dpr_1():
 
 
 def test_empty_dpr_2():
-    '''Reduction is empty because profile doesn\'t have all payoffs'''
+    """Reduction is empty because profile doesn\'t have all payoffs"""
     profiles = [
         [1, 3],
     ]
@@ -96,6 +97,7 @@ def test_empty_dpr_2():
 
 
 def test_dpr_names():
+    """Test names for dpr game"""
     base = rsgame.emptygame(3, 2)
     game = paygame.game_names(
         ['role'], 3, [['a', 'b']], base.all_profiles(),
@@ -119,6 +121,7 @@ def test_dpr_names():
 ])
 @pytest.mark.parametrize('_', range(10))
 def test_random_twins(players, strategies, keep_prob, _):
+    """Test random twins reduction"""
     # Create game and reduction
     game = gamegen.game(players, strategies, keep_prob)
 
@@ -130,7 +133,7 @@ def test_random_twins(players, strategies, keep_prob, _):
         tr.reduce_profiles(red_game, game.profiles()))
     reduced_profiles = utils.axis_to_elem(red_game.profiles())
     assert np.setdiff1d(reduced_profiles, reduced_full_profiles).size == 0, \
-        'reduced game contained profiles it shouldn\'t have'
+        "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game. We need to remove partial profiles first
@@ -143,6 +146,7 @@ def test_random_twins(players, strategies, keep_prob, _):
 
 
 def test_twins_names():
+    """Test twins with names"""
     base = rsgame.emptygame(3, 2)
     game = paygame.game_names(
         ['role'], 3, [['a', 'b']], base.all_profiles(),
@@ -166,6 +170,7 @@ def test_twins_names():
 ])
 @pytest.mark.parametrize('_', range(10))
 def test_random_hierarchical(keep_prob, players, strategies, red_players, _):
+    """Test random hierarchical"""
     # Create game and reduction
     game = gamegen.game(players, strategies, keep_prob)
     assert (rsgame.emptygame(red_players, strategies) ==
@@ -179,7 +184,7 @@ def test_random_hierarchical(keep_prob, players, strategies, red_players, _):
         hr.reduce_profiles(red_game, game.profiles()))
     reduced_profiles = utils.axis_to_elem(red_game.profiles())
     assert np.setxor1d(reduced_profiles, reduced_full_profiles).size == 0, \
-        'reduced game contained profiles it shouldn\'t have'
+        "reduced game contained profiles it shouldn't have"
 
     # Assert that all contributing profiles are in the expansion of the reduced
     # game. Since hr doesn't add any incomplete profiles, it can't produce any
@@ -191,6 +196,7 @@ def test_random_hierarchical(keep_prob, players, strategies, red_players, _):
 
 
 def test_hierarchical_names():
+    """Test hierarchical with names"""
     base = rsgame.emptygame(4, 2)
     game = paygame.game_names(
         ['role'], 4, [['a', 'b']], base.all_profiles(),
@@ -215,6 +221,7 @@ def test_hierarchical_names():
 @pytest.mark.parametrize('_', range(10))
 # Simple test of identity reduction
 def test_random_identity(keep_prob, game_desc, _):
+    """Test random identity"""
     players, strategies = game_desc
     # Create game and reduction
     game = gamegen.game(players, strategies, keep_prob)
@@ -229,7 +236,7 @@ def test_random_identity(keep_prob, game_desc, _):
         ir.reduce_profiles(red_game, game.profiles()))
     reduced_profiles = utils.axis_to_elem(red_game.profiles())
     assert np.setxor1d(reduced_full_profiles, reduced_profiles).size == 0, \
-        'reduced game didn\'t match full game'
+        "reduced game didn't match full game"
 
     full_profiles = utils.axis_to_elem(game.profiles())
     full_reduced_profiles = utils.axis_to_elem(
@@ -239,6 +246,7 @@ def test_random_identity(keep_prob, game_desc, _):
 
 
 def test_identity_names():
+    """Test identity with names"""
     base = rsgame.emptygame(3, 2)
     game = paygame.game_names(
         ['role'], 3, [['a', 'b']], base.all_profiles(),
@@ -251,44 +259,47 @@ def test_identity_names():
 
 
 def test_expand_tie_breaking():
-    '''Test that standard expansion breaks ties appropriately'''
+    """Test that standard expansion breaks ties appropriately"""
 
     def expand(prof, full):
+        """Expand a profile"""
         return hr.expand_profiles(rsgame.emptygame(full, len(prof)), prof)
 
     full = expand([4, 2], 20)
     assert np.all(full == [13, 7]), \
-        'Didn\'t tie break on approximation first'
+        "Didn't tie break on approximation first"
     full = expand([1, 3], 10)
     assert np.all(full == [2, 8]), \
-        'Didn\'t tie break on larger count if approximations same'
+        "Didn't tie break on larger count if approximations same"
     full = expand([2, 2], 11)
     assert np.all(full == [6, 5]), \
-        'Didn\'t tie break on strategy name if all else same'
+        "Didn't tie break on strategy name if all else same"
 
 
 def test_reduce_tie_breaking():
-    '''Test that the standard reduction breaks ties appropriately'''
+    """Test that the standard reduction breaks ties appropriately"""
 
     def reduce_prof(prof, red):
+        """Reduce a profile"""
         return hr.reduce_profiles(rsgame.emptygame(red, len(prof)), prof)
 
     red = reduce_prof([13, 7], 6)
     assert np.all(red == [4, 2]), \
-        'Didn\'t tie break on approximation first'
+        "Didn't tie break on approximation first"
     # Expanded profile has no valid reduction
     red = reduce_prof([14, 6], 6)
-    assert red.size == 0, 'Didn\'t properly find no reduced profile'
+    assert red.size == 0, "Didn't properly find no reduced profile"
     red = reduce_prof([2, 8], 4)
     assert np.all(red == [1, 3]), \
-        'Didn\'t tie break on larger count if approximations same'
+        "Didn't tie break on larger count if approximations same"
     red = reduce_prof([6, 5], 4)
     assert np.all(red == [2, 2]), \
-        'Didn\'t tie break on strategy name if all else same'
+        "Didn't tie break on strategy name if all else same"
 
 
 @pytest.mark.parametrize('_', range(1000))
 def test_random_hr_identity(_):
+    """Test hierarchical identity"""
     num_strats = rand.randint(2, 20)
     profile = rand.randint(20, size=num_strats)[None]
     reduced_players = profile.sum()
@@ -300,11 +311,11 @@ def test_random_hr_identity(_):
     full_profile = hr.expand_profiles(
         rsgame.emptygame(full_players, num_strats), profile)
     red_profile = hr.reduce_profiles(game, full_profile)
-    assert np.all(red_profile == profile), 'reduction didn\'t pass identity'
+    assert np.all(red_profile == profile), "reduction didn't pass identity"
 
 
 def test_approximate_dpr_expansion():
-    '''Test expansion on approximate dpr'''
+    """Test expansion on approximate dpr"""
     full_game = rsgame.emptygame([8, 11], [2, 2])
     red_prof = [[1, 2, 2, 2]]
     full_profs, contributions = dpr.expand_profiles(
@@ -327,7 +338,7 @@ def test_approximate_dpr_expansion():
 
 
 def test_expansion_contributions():
-    '''Test expansion on approximate dpr'''
+    """Test expansion on approximate dpr"""
     full_game = rsgame.emptygame([4, 9], [2, 2])
     red_profs = [
         [2, 0, 0, 3],
@@ -352,7 +363,7 @@ def test_expansion_contributions():
 
 
 def test_approximate_dpr_reduce_game():
-    '''Test approximate dpr game reduction'''
+    """Test approximate dpr game reduction"""
     game = gamegen.game([3, 4], 2)
     redgame = dpr.reduce_game(game, 2)
     # Pure strategies are reduced properly
@@ -380,7 +391,7 @@ def test_approximate_dpr_reduce_game():
     ([4, 9], [3, 2]),
 ])
 def test_random_approximate_dpr(players, strategies, _):
-    '''Test approximate dpr preserves completeness on random games'''
+    """Test approximate dpr preserves completeness on random games"""
     game = gamegen.game(players, strategies)
     red_counts = 2 + (rand.random(game.num_roles) *
                       (game.num_role_players - 1)).astype(int)
@@ -394,7 +405,7 @@ def test_random_approximate_dpr(players, strategies, _):
 
 
 def test_identity_dev_expansion():
-    '''Test that identity dev expansion is correct'''
+    """Test that identity dev expansion is correct"""
     game = rsgame.emptygame([3, 4], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = ir.expand_deviation_profiles(game, mask)
@@ -431,7 +442,7 @@ def test_identity_dev_expansion():
 
 
 def test_hierarchical_dev_expansion():
-    '''Test that hierarchical dev expansion is correct'''
+    """Test that hierarchical dev expansion is correct"""
     game = rsgame.emptygame([9, 16], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = hr.expand_deviation_profiles(game, mask, [3, 4])
@@ -468,10 +479,10 @@ def test_hierarchical_dev_expansion():
 
 
 def test_dpr_dev_expansion():
-    '''Test that dpr dev expansion is correct
+    """Test that dpr dev expansion is correct
 
     Note, this is the only one that has "new" code, so it's the most important
-    to test.'''
+    to test."""
     game = rsgame.emptygame([9, 16], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = dpr.expand_deviation_profiles(game, mask, [3, 4])
@@ -508,10 +519,10 @@ def test_dpr_dev_expansion():
 
 
 def test_twins_dev_expansion():
-    '''Test that dpr dev expansion is correct
+    """Test that dpr dev expansion is correct
 
     Note, this is the only one that has "new" code, so it's the most important
-    to test.'''
+    to test."""
     game = rsgame.emptygame([9, 16], [4, 3])
     mask = [True, False, True, False, False, True, False]
     profs = tr.expand_deviation_profiles(game, mask)
@@ -552,7 +563,7 @@ def test_twins_dev_expansion():
     ([4, 9], [3, 2], [2, 3]),
 ])
 def test_rand_dpr_dev_expandion(players, strategies, red_players, _):
-    '''Test that dpr devs works for random games'''
+    """Test that dpr devs works for random games"""
     game = rsgame.emptygame(players, strategies)
     sup = (rand.random(game.num_roles) * game.num_role_strats).astype(int) + 1
     inds = np.concatenate(
@@ -569,7 +580,7 @@ def test_rand_dpr_dev_expandion(players, strategies, red_players, _):
 
 
 def test_dpr_incomplete_profile():
-    '''Test that when allow_incomplete, we get appropriate payoffs'''
+    """Test that when allow_incomplete, we get appropriate payoffs"""
     profiles = [[4, 0, 0, 9],
                 [1, 3, 9, 0],
                 [2, 2, 9, 0]]
@@ -585,6 +596,7 @@ def test_dpr_incomplete_profile():
 
 
 def test_reductions_not_constructable():
+    """Test that reductions can't be constructed"""
     with pytest.raises(AttributeError):
         hr()
     with pytest.raises(AttributeError):
@@ -596,6 +608,7 @@ def test_reductions_not_constructable():
 
 
 def test_remove_dpr_profiles_with_no_data():
+    """Test that dpr removes profiles with no data"""
     profiles = [[1, 3],
                 [3, 1]]
     payoffs = [[3, 4],

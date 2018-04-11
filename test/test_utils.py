@@ -1,3 +1,4 @@
+"""Test utils"""
 import itertools
 import warnings
 
@@ -8,12 +9,14 @@ import pytest
 from gameanalysis import utils
 
 
-def array_set_equals(a, b):
-    '''Returns true if the unique last dimensions are the same set'''
-    return not np.setxor1d(utils.axis_to_elem(a), utils.axis_to_elem(b)).size
+def array_set_equals(one, two):
+    """Returns true if the unique last dimensions are the same set"""
+    return not np.setxor1d(utils.axis_to_elem(one),
+                           utils.axis_to_elem(two)).size
 
 
 def test_comb():
+    """Test comb"""
     assert utils.comb(100, 10) == 17310309456440
     assert utils.comb(100, 20) == 535983370403809682970
     assert utils.comb([100], 20)[0] == 535983370403809682970
@@ -30,8 +33,9 @@ def test_comb():
 
 
 def test_only():
+    """Test only"""
     assert utils.only([None]) is None, \
-        'only didn\'t return only element'
+        "only didn't return only element"
     with pytest.raises(ValueError):
         utils.only([])
     with pytest.raises(ValueError):
@@ -41,6 +45,7 @@ def test_only():
 
 
 def test_check():
+    """Test that check works"""
     utils.check(True, '')
     with pytest.raises(ValueError):
         utils.check(False, '')
@@ -49,6 +54,7 @@ def test_check():
 
 
 def test_game_size():
+    """Test game size"""
     assert utils.game_size(2000, 10) == 1442989326579174917694151
     assert np.all(utils.game_size([10, 20, 100], 10) ==
                   [92378, 10015005, 4263421511271])
@@ -68,22 +74,25 @@ def test_game_size():
 
 
 def test_repeat():
+    """test repeat"""
     assert [1, 1, 2, 2, 2] == list(utils.repeat([1, 2], [2, 3]))
     assert [1, 1, 2, 2, 2] == list(utils.repeat([1, 2, 2], [2, 1, 2]))
     assert [1, 2] == list(utils.repeat([1, 3, 2], [1, 0, 1]))
 
 
 def test_one_line():
-    short = 'This is a short string, so it won\'t get truncated'
+    """test oneline"""
+    short = "This is a short string, so it won't get truncated"
     assert utils.one_line(short, 100) == short, \
         'short string still got truncated'
     long_str = 'This is relatively long'
     expected = 'This is rela...g'
     assert utils.one_line(long_str, 16) == expected, \
-        'one_line didn\'t truncate as expected'
+        "one_line didn't truncate as expected"
 
 
 def test_acomb():
+    """Test acomb"""
     actual = utils.acomb(5, 0)
     assert actual.shape == (1, 5)
     assert not actual.any()
@@ -107,39 +116,41 @@ def test_acomb():
 
 
 def test_acartesian2():
-    a = np.array([[1, 2, 3],
-                  [4, 5, 6]], int)
-    b = np.array([[7, 8],
-                  [9, 10],
-                  [11, 12]], int)
-    c = np.array([[13]], int)
+    """Test acartesian2"""
+    one = np.array([[1, 2, 3],
+                    [4, 5, 6]], int)
+    two = np.array([[7, 8],
+                    [9, 10],
+                    [11, 12]], int)
+    three = np.array([[13]], int)
 
-    assert array_set_equals(a, utils.acartesian2(a))
-    assert array_set_equals(b, utils.acartesian2(b))
-    assert array_set_equals(c, utils.acartesian2(c))
+    assert array_set_equals(one, utils.acartesian2(one))
+    assert array_set_equals(two, utils.acartesian2(two))
+    assert array_set_equals(three, utils.acartesian2(three))
 
-    expected = np.array([[1, 2, 3,  7,  8, 13],
-                         [1, 2, 3,  9, 10, 13],
+    expected = np.array([[1, 2, 3, 7, 8, 13],
+                         [1, 2, 3, 9, 10, 13],
                          [1, 2, 3, 11, 12, 13],
-                         [4, 5, 6,  7,  8, 13],
-                         [4, 5, 6,  9, 10, 13],
+                         [4, 5, 6, 7, 8, 13],
+                         [4, 5, 6, 9, 10, 13],
                          [4, 5, 6, 11, 12, 13]], int)
-    assert array_set_equals(expected[:, :-1], utils.acartesian2(a, b))
-    assert array_set_equals(expected, utils.acartesian2(a, b, c))
+    assert array_set_equals(expected[:, :-1], utils.acartesian2(one, two))
+    assert array_set_equals(expected, utils.acartesian2(one, two, three))
 
 
 def test_simplex_project():
+    """Test simplex project"""
     res = utils.simplex_project(np.array([0, 0, 0]))
     assert np.allclose(res, [1 / 3] * 3), \
-        'projecting [0, 0, 0] didn\'t result in uniform'
+        "projecting [0, 0, 0] didn't result in uniform"
 
     res = utils.simplex_project(np.array([1.2, 1.4]))
     assert np.allclose(res, [.4, .6]), \
-        'simplex project didn\'t return correct result'
+        "simplex project didn't return correct result"
 
     res = utils.simplex_project(np.array([-0.1, 0.8]))
     assert np.allclose(res, [0.05, 0.95]), \
-        'simplex project didn\'t return correct result'
+        "simplex project didn't return correct result"
 
 
 @pytest.mark.parametrize('array', [
@@ -150,6 +161,7 @@ def test_simplex_project():
     rand.random((5, 4)),
 ])
 def test_simplex_project_random(array):
+    """Test simplex project on random arrays"""
     simp = utils.simplex_project(array)
     assert simp.shape == array.shape
     assert np.all(simp >= 0)
@@ -157,6 +169,7 @@ def test_simplex_project_random(array):
 
 
 def test_multinomial_mode():
+    """Test multinomial mode"""
     actual = utils.multinomial_mode([1], 4)
     expected = [4]
     assert np.all(actual == expected)
@@ -179,37 +192,41 @@ def test_multinomial_mode():
 
 
 def test_geometric_histogram():
+    """test geometric histogram"""
     res = utils.geometric_histogram(1, .2)
     assert res.sum() == 1
-    assert np.all(0 <= res)
-    assert 0 < res[-1]
+    assert np.all(res >= 0)
+    assert res[-1] > 0
 
     res = utils.geometric_histogram(10000, .5)
-    assert 0 < res[0]  # Fails with prob .5 ^ 10000
+    assert res[0] > 0  # Fails with prob .5 ^ 10000
     assert res.sum() == 10000
-    assert np.all(0 <= res)
-    assert 0 < res[-1]
+    assert np.all(res >= 0)
+    assert res[-1] > 0
 
 
 def test_elem_axis():
-    x = np.array([[5.4, 2.2],
-                  [5.7, 2.8],
-                  [9.6, 1.2]], float)
-    assert np.all(x == utils.axis_from_elem(utils.axis_to_elem(x)))
-    assert np.all(x.astype(int) ==
-                  utils.axis_from_elem(utils.axis_to_elem(x.astype(int))))
+    """Test identity of axis_to_elem o axis_from_elem"""
+    arr = np.array([[5.4, 2.2],
+                    [5.7, 2.8],
+                    [9.6, 1.2]], float)
+    assert np.all(arr == utils.axis_from_elem(utils.axis_to_elem(arr)))
+    assert np.all(arr.astype(int) ==
+                  utils.axis_from_elem(utils.axis_to_elem(arr.astype(int))))
 
 
 def test_empty_elem_axis():
-    x = np.empty((0, 2), float)
-    assert np.all(x.shape == utils.axis_from_elem(
-        utils.axis_to_elem(x)).shape)
+    """Test axis_to_elem works for empty arrays"""
+    arr = np.empty((0, 2), float)
+    assert np.all(arr.shape == utils.axis_from_elem(
+        utils.axis_to_elem(arr)).shape)
     assert np.all(
-        x.astype(int).shape ==
-        utils.axis_from_elem(utils.axis_to_elem(x.astype(int))).shape)
+        arr.astype(int).shape ==
+        utils.axis_from_elem(utils.axis_to_elem(arr.astype(int))).shape)
 
 
 def test_hash_array():
+    """Test that hash array works"""
     arrayset = {utils.hash_array([3, 4, 5]), utils.hash_array([6, 7])}
 
     assert utils.hash_array([3, 4, 5]) in arrayset
@@ -218,6 +235,7 @@ def test_hash_array():
 
 
 def test_iunique():
+    """Test iter unique"""
     items = ['a', 'd', 'b', 'd', 'c', 'c', 'a']
     expected = ['a', 'd', 'b', 'c']
     actual = list(utils.iunique(items))
@@ -225,6 +243,7 @@ def test_iunique():
 
 
 def test_random_strings():
+    """Test random strings returns intended results"""
     assert next(utils.random_strings(5, digits='a')) == 'aaaaa'
     assert len(next(utils.random_strings(6))) == 6
     assert all(5 <= len(s) <= 10 for s
@@ -232,10 +251,12 @@ def test_random_strings():
 
 
 def test_prefix_strings():
+    """Test prefix strings returns sorted lists"""
     assert utils.is_sorted(utils.prefix_strings('', 13))
 
 
 def test_is_sorted():
+    """Test is_sorted"""
     assert utils.is_sorted([])
     assert utils.is_sorted([0])
     assert utils.is_sorted([[0], [1], [2]], key=lambda x: x[0])
@@ -252,14 +273,17 @@ def test_is_sorted():
 
 
 def test_memoization():
+    """Test that memoization works"""
     # We need an object we can memoize
-    class Obj(object):
+    class Obj(object): # pylint: disable=too-few-public-methods
+        """Object to memoize"""
         pass
 
     called = [0]
 
     @utils.memoize
-    def func(obj):
+    def func(_):
+        """Memoized"""
         called[0] += 1
 
     obj = Obj()
@@ -272,22 +296,24 @@ def test_memoization():
 
 @pytest.mark.parametrize('_', range(20))
 def test_allclose_perm(_):
-    a, c = np.random.random((2, 10, 4))
-    b = a.copy()
-    np.random.shuffle(b)
-    assert utils.allclose_perm(a, b)
-    assert not utils.allclose_perm(a, c)
+    """Test allclose_perm accurately detected permutation"""
+    one, two = np.random.random((2, 10, 4))
+    three = one.copy()
+    np.random.shuffle(three)
+    assert utils.allclose_perm(one, three)
+    assert not utils.allclose_perm(one, two)
 
 
 def test_deprecation():
-
+    """Test that deprecation works"""
     @utils.deprecated
-    def func(a, b):
-        return a, b
+    def func(aarg, barg):
+        """Test function"""
+        return aarg, barg
 
     with warnings.catch_warnings(record=True) as warns:
         warnings.simplefilter('always', DeprecationWarning)
-        assert func(3, b=4) == (3, 4)
+        assert func(3, barg=4) == (3, 4)
 
     assert len(warns) == 1
     assert issubclass(warns[0].category, DeprecationWarning)

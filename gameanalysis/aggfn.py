@@ -1,4 +1,4 @@
-'''An action graph game with additive function nodes'''
+"""An action graph game with additive function nodes"""
 import itertools
 
 import numpy as np
@@ -8,8 +8,8 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-class AgfnGame(rsgame.CompleteGame):
-    '''Action graph with function nodes game
+class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attributes
+    """Action graph with function nodes game
 
     Action node utilities have additive structure. Function nodes are
     contribution-independent. Graph is bipartite so that function nodes have
@@ -38,9 +38,9 @@ class AgfnGame(rsgame.CompleteGame):
         different roles ass simply different strategy sets, the later treats
         each nodes inputs as distinct, and so each function maps from the
         number of inputs from each role.
-    '''
+    """
 
-    def __init__(
+    def __init__( # pylint: disable=too-many-arguments
             self, role_names, strat_names, num_role_players, action_weights,
             function_inputs, function_table, offsets):
         super().__init__(role_names, strat_names, num_role_players)
@@ -70,7 +70,7 @@ class AgfnGame(rsgame.CompleteGame):
 
     @utils.memoize
     def min_strat_payoffs(self):
-        '''Returns a lower bound on the payoffs.'''
+        """Returns a lower bound on the payoffs."""
         node_table = self.function_table.reshape((self.num_functions, -1))
         minima = node_table.min(1, keepdims=True)
         maxima = node_table.max(1, keepdims=True)
@@ -82,7 +82,7 @@ class AgfnGame(rsgame.CompleteGame):
 
     @utils.memoize
     def max_strat_payoffs(self):
-        '''Returns an upper bound on the payoffs.'''
+        """Returns an upper bound on the payoffs."""
         node_table = self.function_table.reshape((self.num_functions, -1))
         minima = node_table.min(1, keepdims=True)
         maxima = node_table.max(1, keepdims=True)
@@ -93,7 +93,7 @@ class AgfnGame(rsgame.CompleteGame):
         return maxs.view()
 
     def get_payoffs(self, profile):
-        '''Returns an array of profile payoffs.'''
+        """Returns an array of profile payoffs."""
         profile = np.asarray(profile, int)
         function_inputs = np.add.reduceat(
             profile[..., None, :] * self.function_inputs.T,
@@ -107,8 +107,8 @@ class AgfnGame(rsgame.CompleteGame):
     # TODO override get_dev_payoffs to be more efficient, i.e. only compute the
     # dev payoff.
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_):
-        '''Get the deviation payoffs'''
+    def deviation_payoffs(self, mix, *, jacobian=False, **_): # pylint: disable=too-many-locals
+        """Get the deviation payoffs"""
         mix = np.asarray(mix, float)
         role_node_probs = np.minimum(
             np.add.reduceat(mix[:, None] * self.function_inputs,
@@ -148,15 +148,18 @@ class AgfnGame(rsgame.CompleteGame):
 
         deriv = np.empty((self.num_roles, self.num_roles, self.num_functions) +
                          tuple(self.num_role_players + 1), float)
-        for i, (num_play, probs, zp) in enumerate(zip(
+        for i, (num_play, probs, zprob) in enumerate(zip(
                 self.num_role_players, role_node_probs, self.zero_prob)):
-            # TODO This zp threshold causes large errors in the jacobian when
-            # we look at sparse mixtures. This should probably be addressed,
-            # but it's unclear how without making this significantly slower.
+            # TODO This zprob threshold causes large errors in the jacobian
+            # when we look at sparse mixtures. This should probably be
+            # addressed, but it's unclear how without making this significantly
+            # slower.
             configs = np.arange(num_play + 1)
-            der = configs / (probs + zp) - configs[::-1] / (1 - probs + zp)
-            dev_der = np.insert(configs[:-1] / (probs + zp) - configs[-2::-1] /
-                                (1 - probs + zp), num_play, 0, 1)
+            der = (configs / (probs + zprob) -
+                   configs[::-1] / (1 - probs + zprob))
+            dev_der = np.insert(
+                configs[:-1] / (probs + zprob) -
+                configs[-2::-1] / (1 - probs + zprob), num_play, 0, 1)
 
             new_shape = [self.num_functions] + [1] * self.num_roles
             new_shape[i + 1] = num_play + 1
@@ -228,8 +231,8 @@ class AgfnGame(rsgame.CompleteGame):
             [dict(zip(self.role_names, (c.item() for c in counts)),
                   value=val)
              for val, *counts in zip(
-                     tab.ravel(), *np.indices(tab.shape).reshape(
-                         self.num_roles, -1))
+                 tab.ravel(),
+                 *np.indices(tab.shape).reshape(self.num_roles, -1))
              if val != 0]
             for tab in self.function_table]
 
@@ -265,9 +268,10 @@ class AgfnGame(rsgame.CompleteGame):
             np.sort(utils.axis_to_elem(self.function_inputs.T)).tobytes()))
 
 
-def aggfn(num_role_players, num_role_strats, action_weights, function_inputs,
-          function_table, offsets=None):
-    '''Create an Aggfn with default names
+def aggfn( # pylint: disable=too-many-arguments
+        num_role_players, num_role_strats, action_weights, function_inputs,
+        function_table, offsets=None):
+    """Create an Aggfn with default names
 
     Parameters
     ----------
@@ -285,15 +289,16 @@ def aggfn(num_role_players, num_role_strats, action_weights, function_inputs,
         A constant offset for each strategies payoff. Constant functions are
         not allowed in the function table as they are clutter, instead,
         constant functions can be specified here.
-    '''
-    return aggfn_replace(rsgame.emptygame(num_role_players, num_role_strats),
-                         action_weights, function_inputs, function_table,
-                         offsets)
+    """
+    return aggfn_replace(
+        rsgame.emptygame(num_role_players, num_role_strats), action_weights,
+        function_inputs, function_table, offsets)
 
 
-def aggfn_names(role_names, num_role_players, strat_names, action_weights,
-                function_inputs, function_table, offsets=None):
-    '''Create an Aggfn with specified names
+def aggfn_names( # pylint: disable=too-many-arguments
+        role_names, num_role_players, strat_names, action_weights,
+        function_inputs, function_table, offsets=None):
+    """Create an Aggfn with specified names
 
     Parameters
     ----------
@@ -311,7 +316,7 @@ def aggfn_names(role_names, num_role_players, strat_names, action_weights,
         A constant offset for each strategies payoff. Constant functions are
         not allowed in the function table as they are clutter, instead,
         constant functions can be specified here.
-    '''
+    """
     return aggfn_replace(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
         action_weights, function_inputs, function_table, offsets)
@@ -323,7 +328,7 @@ def aggfn_names(role_names, num_role_players, strat_names, action_weights,
 
 def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
                   offsets=None):
-    '''Replace an existing game with an Aggfn
+    """Replace an existing game with an Aggfn
 
     Parameters
     ----------
@@ -339,7 +344,7 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
         A constant offset for each strategies payoff. Constant functions are
         not allowed in the function table as they are clutter, instead,
         constant functions can be specified here.
-    '''
+    """
     if offsets is None:
         offsets = np.zeros(copy_game.num_strats)
 
@@ -349,7 +354,7 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
     offsets = np.asarray(offsets, float)
     num_funcs, *one_plays = function_table.shape
 
-    utils.check(0 < num_funcs, 'must have at least one function')
+    utils.check(num_funcs > 0, 'must have at least one function')
     utils.check(
         action_weights.shape == (num_funcs, copy_game.num_strats),
         'action_weights must have shape (num_functions, num_strats) but got '
@@ -360,7 +365,7 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
         '{}', function_inputs.shape)
     utils.check(
         not function_inputs.all(0).any(),
-        'can\'t have a function with input from every strategy')
+        "can't have a function with input from every strategy")
     utils.check(
         function_inputs.any(0).all(),
         'every function must take input from at least one strategy')
@@ -373,10 +378,10 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
         not np.isclose(
             function_table.reshape((num_funcs, -1))[:, 0, None],
             function_table.reshape((num_funcs, -1))).all(1).any(),
-        'a function can\'t be constant (all identical values)')
+        "a function can't be constant (all identical values)")
     utils.check(
         not np.isclose(action_weights, 0).all(1).any(),
-        'a function can\'t have actions weights of all zero')
+        "a function can't have actions weights of all zero")
     utils.check(
         offsets.shape == (copy_game.num_strats,),
         'offsets must have shape (num_strats,) but got {}', offsets.shape)
@@ -387,9 +392,10 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
         function_table, offsets)
 
 
-def aggfn_funcs(num_role_players, num_role_strats, action_weights,
-                function_inputs, functions, offsets=None):
-    '''Construct and Aggfn with functions
+def aggfn_funcs( # pylint: disable=too-many-arguments
+        num_role_players, num_role_strats, action_weights, function_inputs,
+        functions, offsets=None):
+    """Construct and Aggfn with functions
 
     This is generally less efficient than just constructing the function table
     using vectorized operations or an existing function table.
@@ -408,7 +414,7 @@ def aggfn_funcs(num_role_players, num_role_strats, action_weights,
         List of functions that maps the player per role activations to a single
         value. The number of ordered arguments will be inferred from each
         function.
-    '''
+    """
     utils.check(functions, 'must have at least one function')
     num_functions = len(functions)
 
@@ -417,17 +423,18 @@ def aggfn_funcs(num_role_players, num_role_strats, action_weights,
         (num_functions,) + tuple(base.num_role_players + 1),
         float)
     for func, tab in zip(functions, function_table):
-        for p in itertools.product(*map(range, base.num_role_players + 1)):
-            tab[p] = func(*p)
+        for play in itertools.product(*map(range, base.num_role_players + 1)):
+            tab[play] = func(*play)
 
-    return aggfn_replace(base, action_weights, function_inputs, function_table)
+    return aggfn_replace(
+        base, action_weights, function_inputs, function_table, offsets)
 
 
-def aggfn_json(json):
-    '''Read an Aggfn from json
+def aggfn_json(json): # pylint: disable=too-many-locals
+    """Read an Aggfn from json
 
     Json versions of the game will generally have 'type': 'aggfn...' in them,
-    but as long as the proper fields exist, this will succeed.'''
+    but as long as the proper fields exist, this will succeed."""
     base = rsgame.emptygame_json(json)
 
     _, version = json.get('type', '.3').split('.', 1)

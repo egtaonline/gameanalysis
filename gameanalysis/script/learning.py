@@ -1,4 +1,4 @@
-'''Analyze a game using gp learn'''
+"""Analyze a game using gp learn"""
 import argparse
 import json
 import sys
@@ -11,52 +11,54 @@ from gameanalysis import regret
 
 
 def add_parser(subparsers):
+    """Parser for learning script"""
     parser = subparsers.add_parser(
-        'learning', help='''Analyze game using learning''',
-        description='''Perform game analysis with learned model''')
+        'learning', help="""Analyze game using learning""",
+        description="""Perform game analysis with learned model""")
     parser.add_argument(
         '--input', '-i', metavar='<input-file>', default=sys.stdin,
-        type=argparse.FileType('r'), help='''Input file for script.  (default:
-        stdin)''')
+        type=argparse.FileType('r'), help="""Input file for script.  (default:
+        stdin)""")
     parser.add_argument(
         '--output', '-o', metavar='<output-file>', default=sys.stdout,
-        type=argparse.FileType('w'), help='''Output file for script. (default:
-        stdout)''')
+        type=argparse.FileType('w'), help="""Output file for script. (default:
+        stdout)""")
     parser.add_argument(
         '--dist-thresh', metavar='<distance-threshold>', type=float,
-        default=1e-3, help='''L2 norm threshold, inside of which, equilibria
-        are considered identical.  (default: %(default)g)''')
+        default=1e-3, help="""L2 norm threshold, inside of which, equilibria
+        are considered identical.  (default: %(default)g)""")
     parser.add_argument(
         '--regret-thresh', '-r', metavar='<regret-threshold>', type=float,
-        default=1e-3, help='''Maximum regret to consider an equilibrium
-        confirmed. (default: %(default)g)''')
+        default=1e-3, help="""Maximum regret to consider an equilibrium
+        confirmed. (default: %(default)g)""")
     parser.add_argument(
         '--supp-thresh', '-t', metavar='<support-threshold>', type=float,
-        default=1e-3, help='''Maximum probability to consider a strategy in
-        support. (default: %(default)g)''')
+        default=1e-3, help="""Maximum probability to consider a strategy in
+        support. (default: %(default)g)""")
     parser.add_argument(
         '--rand-restarts', metavar='<random-restarts>', type=int, default=0,
-        help='''The number of random points to add to nash equilibrium finding.
-        (default: %(default)d)''')
+        help="""The number of random points to add to nash equilibrium finding.
+        (default: %(default)d)""")
     parser.add_argument(
         '--max-iters', '-m', metavar='<maximum-iterations>', type=int,
-        default=10000, help='''The maximum number of iterations to run through
-        replicator dynamics.  (default: %(default)d)''')
+        default=10000, help="""The maximum number of iterations to run through
+        replicator dynamics.  (default: %(default)d)""")
     parser.add_argument(
         '--converge-thresh', '-c', metavar='<convergence-threshold>',
-        type=float, default=1e-8, help='''The convergence threshold for
-        replicator dynamics. (default: %(default)g)''')
+        type=float, default=1e-8, help="""The convergence threshold for
+        replicator dynamics. (default: %(default)g)""")
     parser.add_argument(
-        '--processes', '-p', metavar='<num-procs>', type=int, help='''Number of
-        processes to use to run nash finding.  (default: number of cores)''')
+        '--processes', '-p', metavar='<num-procs>', type=int, help="""Number of
+        processes to use to run nash finding.  (default: number of cores)""")
     parser.add_argument(
-        '--one', action='store_true', help='''If specified, run a potentially
+        '--one', action='store_true', help="""If specified, run a potentially
         expensive algorithm to guarantee an approximate equilibrium, if none
-        are found via other methods.''')
+        are found via other methods.""")
     return parser
 
 
 def main(args):
+    """Entry point for learning script"""
     with warnings.catch_warnings(record=True) as warns:
         game = learning.rbfgame_train(gamereader.load(args.input))
     methods = {'replicator': {'max_iters': args.max_iters,

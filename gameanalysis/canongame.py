@@ -1,3 +1,4 @@
+"""A module containing a canonicalized game"""
 import functools
 
 import numpy as np
@@ -11,7 +12,7 @@ from gameanalysis import utils
 # contribute to incomplete profiles. There's not an obvious way to remedy this
 # with the current api in a way that works well.
 class CanonGame(rsgame.RsGame):
-    '''A game canonicalized to remove single strategy roles'''
+    """A game canonicalized to remove single strategy roles"""
 
     def __init__(self, game):
         role_mask = game.num_role_strats > 1
@@ -26,54 +27,67 @@ class CanonGame(rsgame.RsGame):
 
     @property
     def num_complete_profiles(self):
+        """Get the number of profiles with full data"""
         return self._game.num_complete_profiles
 
     @property
     def num_profiles(self):
+        """Get the number of profiles"""
         return self._game.num_profiles
 
     @functools.lru_cache(maxsize=1)
     def profiles(self):
+        """Get all profiles with any payoff data"""
         return self._game.profiles()[:, self._mask]
 
     @functools.lru_cache(maxsize=1)
     def payoffs(self):
+        """Get all payoff parallel with profiles()"""
         return self._game.payoffs()[:, self._mask]
 
     def deviation_payoffs(self, mix, *, jacobian=False, **kw):
+        """Get the deviation payoffs for a mixture"""
         unmix = np.insert(mix, self._inds, 1.0)
-        if jacobian:
+        if jacobian: # pylint: disable=no-else-return
             dev, jac = self._game.deviation_payoffs(unmix, jacobian=True, **kw)
             return dev[self._mask], jac[self._mask][:, self._mask]
         else:
             return self._game.deviation_payoffs(unmix, **kw)[self._mask]
 
     def get_payoffs(self, profile):
+        """Get the payoffs for a profile or profiles"""
         unprofs = np.insert(profile, self._inds, self._players, -1)
         return self._game.get_payoffs(unprofs)[..., self._mask]
 
     @utils.memoize
     def max_strat_payoffs(self):
+        """Get the maximum strategy payoffs"""
         return self._game.max_strat_payoffs()[self._mask]
 
     @utils.memoize
     def min_strat_payoffs(self):
+        """Get the minimum strategy payoffs"""
         return self._game.min_strat_payoffs()[self._mask]
 
     def restrict(self, rest):
+        """Restrict viable strategies for a canon game"""
         unrest = np.insert(rest, self._inds, True)
         return CanonGame(self._game.restrict(unrest))
 
     def _add_constant(self, role_array):
+        """Add a constant to a canon game"""
         return CanonGame(self._game + role_array)
 
     def _multiply_constant(self, role_array):
+        """Multiple canon game payoffs by a constant"""
         return CanonGame(self._game * role_array)
 
     def _add_game(self, other):
-        utils.fail('canon games can\'t be added')
+        """Add another game to canon game"""
+        utils.fail("canon games can't be added")
 
     def to_json(self):
+        """Convert canon game to json object"""
         base = super().to_json()
         base['game'] = self._game.to_json()
         base['type'] = 'canon.1'
@@ -84,7 +98,8 @@ class CanonGame(rsgame.RsGame):
         return unprof in self._game
 
     def __eq__(self, othr):
-        return (super().__eq__(othr) and self._game == othr._game)
+        # pylint: disable-msg=protected-access
+        return super().__eq__(othr) and self._game == othr._game
 
     def __hash__(self):
         return hash((super().__hash__(), self._game))
@@ -95,16 +110,16 @@ class CanonGame(rsgame.RsGame):
 
 
 def canon(game):
-    '''Canonicalize a game by removing single strategy roles
+    """Canonicalize a game by removing single strategy roles
 
     Parameters
     ----------
     game : RsGame
         The game to canonizalize.
-    '''
+    """
     return CanonGame(game)
 
 
 def canon_json(jgame):
-    '''Read a canonicalized game from json'''
+    """Read a canonicalized game from json"""
     return canon(gamereader.loadj(jgame['game']))

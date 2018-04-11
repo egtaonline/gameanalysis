@@ -1,3 +1,4 @@
+"""Test collections"""
 import numpy as np
 
 from gameanalysis import collect
@@ -5,6 +6,7 @@ from gameanalysis import utils
 
 
 def test_connected_component():
+    """Test that connected component works"""
     simset = collect.mcces(1)
     assert simset.add([0], 0)
     assert simset.add([1.5], 1)
@@ -29,27 +31,28 @@ def test_connected_component():
 
 
 def test_bitset():
+    """Test that bitset works"""
     bitset = collect.bitset(5)
     assert not bitset
-    a = np.array([0, 1, 1, 1, 0], bool)
-    b = np.array([1, 0, 0, 1, 1], bool)
-    c = np.array([0, 0, 0, 1, 0], bool)
-    assert bitset.add(a)
+    one = np.array([0, 1, 1, 1, 0], bool)
+    two = np.array([1, 0, 0, 1, 1], bool)
+    three = np.array([0, 0, 0, 1, 0], bool)
+    assert bitset.add(one)
     assert bitset
-    assert not bitset.add(c)
-    assert bitset.add(b)
-    assert not bitset.add(c)
-    assert not bitset.add(a)
-    assert not bitset.add(b)
+    assert not bitset.add(three)
+    assert bitset.add(two)
+    assert not bitset.add(three)
+    assert not bitset.add(one)
+    assert not bitset.add(two)
 
-    expected = frozenset(map(utils.hash_array, [a, b]))
+    expected = frozenset(map(utils.hash_array, [one, two]))
     actual = frozenset(map(utils.hash_array, bitset))
     assert expected == actual
     assert bitset
-    assert bitset == collect.bitset(5, [a, b])
+    assert bitset == collect.bitset(5, [one, two])
 
     bitset.clear()
     assert not bitset
     assert repr(bitset) == 'BitSet([0])'
     assert list(map(list, bitset)) == [[False] * 5]
-    assert bitset.add(a)
+    assert bitset.add(one)

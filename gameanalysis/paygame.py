@@ -1,4 +1,4 @@
-'''Module for games with potentially sparse payoff data'''
+"""Module for games with potentially sparse payoff data"""
 import contextlib
 import itertools
 from collections import abc
@@ -29,7 +29,7 @@ from gameanalysis import utils
 
 
 class Game(rsgame.RsGame):
-    '''Role-symmetric data game representation
+    """Role-symmetric data game representation
 
     This representation uses a sparse mapping from profiles to payoffs for role
     symmetric games. This allows it to capture arbitrary games, as well as
@@ -54,10 +54,11 @@ class Game(rsgame.RsGame):
         The payoffs for the game. This must contain zeros for profile, strategy
         pairs that are not played (i.e. zero). All valid payoffs for a profile
         can't be nan, the profile should be omitted instead.
-    '''
+    """
 
-    def __init__(self, role_names, strat_names, num_role_players, profiles,
-                 payoffs):
+    def __init__( # pylint: disable=too-many-arguments
+            self, role_names, strat_names, num_role_players, profiles,
+            payoffs):
         super().__init__(role_names, strat_names, num_role_players)
         self._profiles = profiles
         self._profiles.setflags(write=False)
@@ -102,7 +103,7 @@ class Game(rsgame.RsGame):
 
     @utils.memoize
     def min_strat_payoffs(self):
-        '''Returns the minimum payoff for each role'''
+        """Returns the minimum payoff for each role"""
         if not self.num_profiles:
             pays = np.full(self.num_strats, np.nan)
         else:
@@ -113,7 +114,7 @@ class Game(rsgame.RsGame):
 
     @utils.memoize
     def max_strat_payoffs(self):
-        '''Returns the maximum payoff for each role'''
+        """Returns the maximum payoff for each role"""
         if not self.num_profiles:
             pays = np.full(self.num_strats, np.nan)
         else:
@@ -123,10 +124,10 @@ class Game(rsgame.RsGame):
         return pays
 
     def get_payoffs(self, profiles):
-        '''Returns an array of profile payoffs
+        """Returns an array of profile payoffs
 
         If profile is not in game, an array of nans is returned where profile
-        has support.'''
+        has support."""
         profiles = np.asarray(profiles, int)
         utils.check(self.is_profile(profiles).all(), 'profiles must be valid')
         prof_view = profiles.reshape((-1, self.num_strats))
@@ -140,9 +141,9 @@ class Game(rsgame.RsGame):
                 np.copyto(pay, self._profile_map[hashed])
         return payoffs.reshape(profiles.shape)
 
-    def deviation_payoffs(self, mix, *, jacobian=False,
-                          ignore_incomplete=False, **_):
-        '''Computes the expected value of deviating
+    def deviation_payoffs( # pylint: disable=too-many-statements,too-many-branches,too-many-locals
+            self, mix, *, jacobian=False, ignore_incomplete=False, **_):
+        """Computes the expected value of deviating
 
         More specifically, this is the expected payoff of playing each pure
         strategy played against all opponents playing mix.
@@ -164,7 +165,7 @@ class Game(rsgame.RsGame):
             aren't known as nan, the probability will be renormalized by the
             mass that is known, creating a biased estimate based of the data
             that is present.
-        '''
+        """
         mix = np.asarray(mix, float)
         supp = mix > 0
         nan_mask = np.empty_like(mix, dtype=bool)
@@ -209,11 +210,11 @@ class Game(rsgame.RsGame):
                 payoffs = self._payoffs
 
             # Mask out nans
-            zp = self.zero_prob.dot(self.num_role_players)
+            zprob = self.zero_prob.dot(self.num_role_players)
             # TODO This threshold causes large errors in the jacobian when we
             # look at sparse mixtures. This should probably be addressed, but
             # it's unclear how without making this significantly slower.
-            nan_pays = np.where(probs > zp, payoffs, 0)
+            nan_pays = np.where(probs > zprob, payoffs, 0)
             devs = np.einsum('ij,ij->j', probs, nan_pays)
             devs[nan_mask] = np.nan
 
@@ -249,7 +250,7 @@ class Game(rsgame.RsGame):
         return devs, dev_jac
 
     def restrict(self, rest):
-        '''Remove possible strategies from consideration'''
+        """Remove possible strategies from consideration"""
         rest = np.asarray(rest, bool)
         base = rsgame.emptygame_copy(self).restrict(rest)
         prof_mask = ~np.any(self._profiles * ~rest, 1)
@@ -285,12 +286,12 @@ class Game(rsgame.RsGame):
             self._profiles[mask], new_pays[mask])
 
     def __contains__(self, profile):
-        '''Returns true if all data for that profile exists'''
+        """Returns true if all data for that profile exists"""
         return (utils.hash_array(np.asarray(profile, int))
                 in self._complete_profiles)
 
     def profile_from_json(self, prof, dest=None, *, verify=True):
-        '''Read a profile from json
+        """Read a profile from json
 
         A profile is an assignment from role-strategy pairs to counts. This
         method reads from several formats as specified in parameters.
@@ -306,7 +307,7 @@ class Game(rsgame.RsGame):
         dest : ndarray, optional
             If supplied, ``dest`` will be written to instead of allocating a
             new array.
-        '''
+        """
         if dest is None:
             dest = np.empty(self.num_strats, int)
         else:
@@ -329,7 +330,9 @@ class Game(rsgame.RsGame):
             '"{}" is not a valid profile', prof)
         return dest
 
+    # FIXME Is this identical to profile_to_repr?
     def profile_to_assignment(self, prof):
+        """Convert a profile to an assignment string"""
         return {
             role: list(itertools.chain.from_iterable(
                 itertools.repeat(strat, val.item()) for strat, val
@@ -340,7 +343,7 @@ class Game(rsgame.RsGame):
             if np.any(counts > 0)}
 
     def payoff_from_json(self, pays, dest=None, *, verify=True):
-        '''Read a set of payoffs from json
+        """Read a set of payoffs from json
 
         Parameters
         ----------
@@ -349,7 +352,7 @@ class Game(rsgame.RsGame):
         dest : ndarray, optional
             If supplied, ``dest`` will be written to instead of allocating a
             new array.
-        '''
+        """
         if dest is None:
             dest = np.empty(self.num_strats, float)
         else:
@@ -369,9 +372,9 @@ class Game(rsgame.RsGame):
 
         return dest
 
-    def profpay_from_json(self, prof, dest_prof=None, dest_pays=None, *,
-                          verify=True):
-        '''Read json as a profile and a payoff'''
+    def profpay_from_json(
+            self, prof, dest_prof=None, dest_pays=None, *, verify=True):
+        """Read json as a profile and a payoff"""
         if dest_prof is None:
             dest_prof = np.empty(self.num_strats, int)
         if dest_pays is None:
@@ -382,7 +385,7 @@ class Game(rsgame.RsGame):
         # observations but no data
         if not prof.get('observations', True):
             for symgrp in prof['symmetry_groups']:
-                _, role, strat, count, __ = _unpack_symgrp(**symgrp)
+                _, role, strat, count, _ = _unpack_symgrp(**symgrp)
                 index = self.role_strat_index(role, strat)
                 dest_prof[index] = count
                 dest_pays[index] = np.nan
@@ -405,8 +408,9 @@ class Game(rsgame.RsGame):
                 ids[i] = index
                 dest_prof[index] = count
 
+            # FIXME do we need counts, or is it equal to the enumerate
             counts = np.zeros(self.num_strats, int)
-            for j, obs in enumerate(prof['observations']):
+            for _, obs in enumerate(prof['observations']):
                 for symgrp in obs['symmetry_groups']:
                     i, pay = _unpack_obs(**symgrp)
                     k = ids[i]
@@ -422,8 +426,9 @@ class Game(rsgame.RsGame):
                 ids[i] = index
                 dest_prof[index] = count
 
+            # FIXME do we need counts, or is it equal to the enumerate
             counts = np.zeros(self.num_strats, int)
-            for j, obs in enumerate(prof['observations']):
+            for _, obs in enumerate(prof['observations']):
                 for player in obs['players']:
                     i, pay = _unpack_player(**player)
                     k = ids[i]
@@ -456,7 +461,7 @@ class Game(rsgame.RsGame):
         return dest_prof, dest_pays
 
     def profpay_to_json(self, payoffs, prof):
-        '''Format a profile and payoffs as json'''
+        """Format a profile and payoffs as json"""
         return {role: [(strat, int(count), float(pay)) for strat, count, pay
                        in zip(strats, counts, pays) if count > 0]
                 for role, strats, counts, pays
@@ -477,7 +482,8 @@ class Game(rsgame.RsGame):
                 self._eq_payoffs(othr))
 
     def _eq_payoffs(self, othr):
-        '''Identical profiles and payoffs conditioned on all else equal'''
+        """Identical profiles and payoffs conditioned on all else equal"""
+        # pylint: disable-msg=protected-access
         sord = np.argsort(utils.axis_to_elem(self._profiles))
         oord = np.argsort(utils.axis_to_elem(othr._profiles))
         return (np.all(self._profiles[sord] == othr._profiles[oord]) and
@@ -485,7 +491,7 @@ class Game(rsgame.RsGame):
                             equal_nan=True))
 
     def to_json(self):
-        '''Fromat a Game as json'''
+        """Fromat a Game as json"""
         res = super().to_json()
         res['profiles'] = [self.profpay_to_json(pay, prof) for prof, pay
                            in zip(self._profiles, self._payoffs)]
@@ -499,13 +505,13 @@ class Game(rsgame.RsGame):
             total=self.num_all_profiles)
 
     def __str__(self):
-        '''Fromat basegame as a printable string'''
+        """Fromat basegame as a printable string"""
         return '{}\npayoff data for {:d} out of {:d} profiles'.format(
             super().__str__(), self.num_profiles, self.num_all_profiles)
 
 
 def game(num_role_players, num_role_strats, profiles, payoffs):
-    '''Create a game with default names
+    """Create a game with default names
 
     Parameters
     ----------
@@ -517,13 +523,13 @@ def game(num_role_players, num_role_strats, profiles, payoffs):
         The profiles for the game, with shape (num_profiles, num_strats).
     payoffs : ndarray-like, float
         The payoffs for the game, with shape (num_profiles, num_strats).
-    '''
+    """
     return game_replace(rsgame.emptygame(num_role_players, num_role_strats),
                         profiles, payoffs)
 
 
 def game_names(role_names, num_role_players, strat_names, profiles, payoffs):
-    '''Create a game with specified names
+    """Create a game with specified names
 
     Parameters
     ----------
@@ -537,14 +543,14 @@ def game_names(role_names, num_role_players, strat_names, profiles, payoffs):
         The profiles for the game, with shape (num_profiles, num_strats).
     payoffs : ndarray-like, float
         The payoffs for the game, with shape (num_profiles, num_strats).
-    '''
+    """
     return game_replace(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
         profiles, payoffs)
 
 
 def game_json(json):
-    '''Read a Game from json
+    """Read a Game from json
 
     This takes a game in any valid payoff format (i.e. output by this or by
     EGTA Online), and converts it into a Game. If several payoff exist, the
@@ -553,7 +559,7 @@ def game_json(json):
     will truncate extra payoffs for an individual profile, while this will take
     the minimum.  Note, that there is no legitimate way to get a game with that
     structure, but it is possible to write the json.
-    '''
+    """
     base = game_copy(rsgame.emptygame_json(json))
     profiles = json.get('profiles', ())
     if not profiles:
@@ -568,21 +574,21 @@ def game_json(json):
 
 
 def game_copy(copy_game):
-    '''Copy structure and payoffs from an existing game
+    """Copy structure and payoffs from an existing game
 
     Parameters
     ----------
     copy_game : RsGame
         Game to copy data from. This will create a copy with the games profiles
         and payoffs.
-    '''
+    """
     return Game(copy_game.role_names, copy_game.strat_names,
                 copy_game.num_role_players, copy_game.profiles(),
                 copy_game.payoffs())
 
 
 def game_replace(copy_game, profiles, payoffs):
-    '''Copy structure from an existing game with new data
+    """Copy structure from an existing game with new data
 
     Parameters
     ----------
@@ -593,7 +599,7 @@ def game_replace(copy_game, profiles, payoffs):
         The profiles for the game, with shape (num_profiles, num_strats).
     payoffs : ndarray-like, float
         The payoffs for the game, with shape (num_profiles, num_strats).
-    '''
+    """
     profiles = np.asarray(profiles, int)
     payoffs = np.asarray(payoffs, float)
 
@@ -616,17 +622,17 @@ def game_replace(copy_game, profiles, payoffs):
         'there were nonzero payoffs for strategies without players')
     utils.check(
         not np.all(np.isnan(payoffs) | (profiles == 0), 1).any(),
-        'a profile can\'t have entirely nan payoffs')
+        "a profile can't have entirely nan payoffs")
     utils.check(
         profiles.shape[0] == np.unique(utils.axis_to_elem(profiles)).size,
-        'there can\'t be any duplicate profiles')
+        "there can't be any duplicate profiles")
 
     return Game(copy_game.role_names, copy_game.strat_names,
                 copy_game.num_role_players, profiles, payoffs)
 
 
 class SampleGame(Game):
-    '''A Role Symmetric Game that has multiple samples per profile
+    """A Role Symmetric Game that has multiple samples per profile
 
     This behaves the same as a normal Game object, except that it has methods
     for accessing several payoffs per profile. It also has a `resample` method
@@ -652,10 +658,11 @@ class SampleGame(Game):
         must be distinct, and an element with zero samples is disallowed, it
         should be omitted instead. All requirements for valid payoffs also
         apply.
-    '''
+    """
 
-    def __init__(self, role_names, strat_names, num_role_players, profiles,
-                 sample_payoffs):
+    def __init__( # pylint: disable=too-many-arguments
+            self, role_names, strat_names, num_role_players, profiles,
+            sample_payoffs):
         super().__init__(
             role_names, strat_names, num_role_players, profiles,
             np.concatenate([s.mean(1) for s in sample_payoffs])
@@ -681,7 +688,7 @@ class SampleGame(Game):
 
     @utils.memoize
     def min_strat_payoffs(self):
-        '''Returns the minimum payoff for each role'''
+        """Returns the minimum payoff for each role"""
         mins = np.full(self.num_strats, np.nan)
         for profs, spays in zip(
                 np.split(self._profiles, self.sample_starts[1:]),
@@ -694,7 +701,7 @@ class SampleGame(Game):
 
     @utils.memoize
     def max_strat_payoffs(self):
-        '''Returns the maximum payoff for each role'''
+        """Returns the maximum payoff for each role"""
         maxs = np.full(self.num_strats, np.nan)
         for profs, spays in zip(
                 np.split(self._profiles, self.sample_starts[1:]),
@@ -706,12 +713,12 @@ class SampleGame(Game):
         return maxs
 
     def sample_payoffs(self):
-        '''Get the underlying sample payoffs'''
+        """Get the underlying sample payoffs"""
         return self._sample_payoffs
 
     def resample(self, num_resamples=None, *, independent_profile=False,
                  independent_role=False, independent_strategy=False):
-        '''Fetch a game with bootstrap sampled payoffs
+        """Fetch a game with bootstrap sampled payoffs
 
         Arguments
         ---------
@@ -736,7 +743,7 @@ class SampleGame(Game):
         Each of the `independent_` arguments will increase the time to do a
         resample, but may produce better results as it will remove correlations
         between payoffs.
-        '''
+        """
         dim2 = (self.num_strats if independent_strategy
                 else self.num_roles if independent_role
                 else 1)
@@ -759,10 +766,10 @@ class SampleGame(Game):
                     self._profiles, payoffs)
 
     def get_sample_payoffs(self, profile):
-        '''Get sample payoffs associated with a profile
+        """Get sample payoffs associated with a profile
 
         This returns an array of shape (num_observations, num_role_strats). If
-        profile has no data, num_observations will be 0.'''
+        profile has no data, num_observations will be 0."""
         if self._sample_profile_map is None:
             self._sample_profile_map = dict(zip(
                 map(utils.hash_array, self._profiles),
@@ -770,22 +777,22 @@ class SampleGame(Game):
         profile = np.asarray(profile, int)
         utils.check(self.is_profile(profile), 'must pass a valid profile')
         hashed = utils.hash_array(profile)
-        if hashed not in self._sample_profile_map:
+        if hashed not in self._sample_profile_map: # pylint: disable=no-else-return
             return np.empty((0, self.num_strats), float)
         else:
             return self._sample_profile_map[hashed]
 
     def flat_profiles(self):
-        '''Profiles in parallel with flat_payoffs'''
-        if self.is_empty():
+        """Profiles in parallel with flat_payoffs"""
+        if self.is_empty(): # pylint: disable=no-else-return
             return np.empty((0, self.num_strats), int)
         else:
             return self._profiles.repeat(
                 self.num_samples.repeat(self.num_sample_profs), 0)
 
     def flat_payoffs(self):
-        '''All sample payoffs linearly concatenated together'''
-        if self.is_empty():
+        """All sample payoffs linearly concatenated together"""
+        if self.is_empty(): # pylint: disable=no-else-return
             return np.empty((0, self.num_strats))
         else:
             return np.concatenate([
@@ -813,7 +820,7 @@ class SampleGame(Game):
             self._profiles, new_pays)
 
     def restrict(self, rest):
-        '''Remove possible strategies from consideration'''
+        """Remove possible strategies from consideration"""
         rest = np.asarray(rest, bool)
         base = rsgame.emptygame_copy(self).restrict(rest)
         prof_mask = ~np.any(self._profiles * ~rest, 1)
@@ -827,7 +834,7 @@ class SampleGame(Game):
                           base.num_role_players, profiles, sample_payoffs)
 
     def samplepay_from_json(self, prof, dest=None):
-        '''Read a set of payoff samples
+        """Read a set of payoff samples
 
         Parameters
         ----------
@@ -838,7 +845,7 @@ class SampleGame(Game):
             If supplied, ``dest`` will be written to instead of allocting a new
             array. This may be hard to use as you need to know how many
             observations are in the json.
-        '''
+        """
         with contextlib.suppress(ValueError):
             # samplepay format with profile too
             _, dest = self.profsamplepay_from_json(prof, dest_samplepay=dest)
@@ -868,7 +875,7 @@ class SampleGame(Game):
         utils.fail('unknown format')
 
     def samplepay_to_json(self, samplepay):
-        '''Format sample payoffs as json'''
+        """Format sample payoffs as json"""
         # In a really weird degenerate case, if all payoffs are 0, we'll write
         # out an empty dictionary, which loses information about the number of
         # samples. In that case we arbitrarily write out the first strategy
@@ -877,23 +884,24 @@ class SampleGame(Game):
         if np.all(samplepay == 0):
             return {self.role_names[0]: {
                 self.strat_names[0][0]: [0] * samplepay.shape[0]}}
-        else:
-            return {role: {strat: pay.tolist() for strat, pay
-                           in zip(strats, pays)
-                           if np.any(pay != 0)}
-                    for role, strats, pays
-                    in zip(self.role_names, self.strat_names,
-                           np.split(samplepay.T, self.role_starts[1:]))
-                    if np.any(pays != 0)}
 
-    def profsamplepay_from_json(self, prof, dest_prof=None,
-                                dest_samplepay=None):
-        '''Convert json into a profile and an observation'''
+        return {role: {strat: pay.tolist() for strat, pay
+                       in zip(strats, pays)
+                       if np.any(pay != 0)}
+                for role, strats, pays
+                in zip(self.role_names, self.strat_names,
+                       np.split(samplepay.T, self.role_starts[1:]))
+                if np.any(pays != 0)}
+
+    def profsamplepay_from_json(
+            self, prof, dest_prof=None, dest_samplepay=None):
+        """Convert json into a profile and an observation"""
         if dest_prof is None:
             dest_prof = np.empty(self.num_strats, int)
         dest_prof.fill(0)
 
         def get_pay(num):
+            """Get the payoff given a certain number ot take"""
             dest = dest_samplepay
             if dest is None:
                 dest = np.empty((num, self.num_strats), float)
@@ -949,7 +957,7 @@ class SampleGame(Game):
                     dest[j, k] += (pay - dest[j, k]) / counts[k]
                 utils.check(
                     np.all(counts == dest_prof),
-                    'full format didn\'t have payoffs for the correct number '
+                    "full format didn't have payoffs for the correct number "
                     'of players')
 
         # profile payoff
@@ -971,7 +979,7 @@ class SampleGame(Game):
         return dest_prof, dest
 
     def profsamplepay_to_json(self, samplepay, prof):
-        '''Convery profile and observations to prof obs output'''
+        """Convery profile and observations to prof obs output"""
         return {role: [(strat, int(count), list(map(float, pay)))
                        for strat, count, pay
                        in zip(strats, counts, pays.T) if count > 0]
@@ -994,7 +1002,7 @@ class SampleGame(Game):
                     itertools.chain.from_iterable(self._sample_payoffs))))
 
     def to_json(self):
-        '''Fromat a SampleGame as json'''
+        """Fromat a SampleGame as json"""
         res = super().to_json()
         res['profiles'] = [
             self.profsamplepay_to_json(pay, prof) for prof, pay
@@ -1029,15 +1037,15 @@ class SampleGame(Game):
             '' if samples == 1 else 's', sampstr)
 
 
-def _sample_payoffs_equal(p1, p2):
-    '''Returns true if two sample payoffs are almost equal'''
-    return p1.shape[0] == p2.shape[0] and utils.allclose_perm(
-        p1, p2, equal_nan=True)
+def _sample_payoffs_equal(pay1, pay2):
+    """Returns true if two sample payoffs are almost equal"""
+    return pay1.shape[0] == pay2.shape[0] and utils.allclose_perm(
+        pay1, pay2, equal_nan=True)
 
 
 def samplegame(num_role_players, num_role_strats, profiles,
                sample_payoffs):
-    '''Create a SampleGame with default names
+    """Create a SampleGame with default names
 
     Parameters
     ----------
@@ -1049,14 +1057,14 @@ def samplegame(num_role_players, num_role_strats, profiles,
         The profiles for the game, with shape (num_profiles, num_strats).
     sample_payoffs : [ndarray-like, float]
         The sample payoffs for the game.
-    '''
+    """
     return samplegame_replace(
         rsgame.emptygame(num_role_players, num_role_strats),
         profiles, sample_payoffs)
 
 
 def samplegame_flat(num_role_players, num_role_strats, profiles, payoffs):
-    '''Create a SampleGame with default names and flat profiles
+    """Create a SampleGame with default names and flat profiles
 
     Parameters
     ----------
@@ -1070,14 +1078,14 @@ def samplegame_flat(num_role_players, num_role_strats, profiles, payoffs):
     payoffs : ndarray-like, float
         The sample payoffs for the game, in parallel with the profiles they're
         samples from, with shape (num_sample_profiles, num_strats).
-    '''
+    """
     return samplegame_replace_flat(
         rsgame.emptygame(num_role_players, num_role_strats), profiles, payoffs)
 
 
 def samplegame_names(role_names, num_role_players, strat_names, profiles,
                      sample_payoffs):
-    '''Create a SampleGame with specified names
+    """Create a SampleGame with specified names
 
     Parameters
     ----------
@@ -1090,7 +1098,7 @@ def samplegame_names(role_names, num_role_players, strat_names, profiles,
     profiles : ndarray
         The profiles for the game.
     sample_payoffs : [ndarray]
-        The sample payoffs for the game.'''
+        The sample payoffs for the game."""
     return samplegame_replace(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
         profiles, sample_payoffs)
@@ -1098,7 +1106,7 @@ def samplegame_names(role_names, num_role_players, strat_names, profiles,
 
 def samplegame_names_flat(role_names, num_role_players, strat_names, profiles,
                           payoffs):
-    '''Create a SampleGame with specified names and flat payoffs
+    """Create a SampleGame with specified names and flat payoffs
 
     Parameters
     ----------
@@ -1114,17 +1122,17 @@ def samplegame_names_flat(role_names, num_role_players, strat_names, profiles,
     payoffs : ndarray-like, float
         The sample payoffs for the game, in parallel with the profiles they're
         samples from, (num_sample_profiles, num_strats).
-    '''
+    """
     return samplegame_replace_flat(
         rsgame.emptygame_names(role_names, num_role_players, strat_names),
         profiles, payoffs)
 
 
 def samplegame_json(json):
-    '''Read a SampleGame from json
+    """Read a SampleGame from json
 
     This will read any valid payoff game as a sample game. Invalid games will
-    produce an empty sample game.'''
+    produce an empty sample game."""
     base = samplegame_copy(rsgame.emptygame_json(json))
     profiles = json.get('profiles', ())
     if not profiles:
@@ -1146,7 +1154,7 @@ def samplegame_json(json):
 
 
 def samplegame_copy(copy_game):
-    '''Copy a SampleGame from another game
+    """Copy a SampleGame from another game
 
     If game defined sample_payoffs, this will be created with those, otherwise
     it will create a game with one sample per payoff.
@@ -1155,7 +1163,7 @@ def samplegame_copy(copy_game):
     ----------
     copy_game : RsGame
         Game to copy data from.
-    '''
+    """
     if hasattr(copy_game, 'sample_payoffs'):
         sample_payoffs = copy_game.sample_payoffs()
     elif not copy_game.is_empty():
@@ -1167,8 +1175,8 @@ def samplegame_copy(copy_game):
                       sample_payoffs)
 
 
-def samplegame_replace_flat(copy_game, profiles, payoffs):
-    '''Replace sample payoff data for an existing game
+def samplegame_replace_flat(copy_game, profiles, payoffs): # pylint: disable=too-many-locals
+    """Replace sample payoff data for an existing game
 
     Parameters
     ----------
@@ -1180,7 +1188,7 @@ def samplegame_replace_flat(copy_game, profiles, payoffs):
     payoffs : ndarray-like, float
         The sample payoffs for the game, in parallel with the profiles they're
         samples from, with shape (num_sample_profiles, num_strats).
-    '''
+    """
     profiles = np.asarray(profiles, int)
     payoffs = np.asarray(payoffs, float)
     _, ind, inv, counts = np.unique(
@@ -1203,7 +1211,7 @@ def samplegame_replace_flat(copy_game, profiles, payoffs):
 
 
 def samplegame_replace(copy_game, profiles, sample_payoffs):
-    '''Replace sample payoff data for an existing game
+    """Replace sample payoff data for an existing game
 
     Parameters
     ----------
@@ -1213,7 +1221,7 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
         The profiles for the game, with shape (num_profiles, num_strats).
     sample_payoffs : [ndarray-like, float]
         The sample payoffs for the game.
-    '''
+    """
     profiles = np.asarray(profiles, int)
     sample_payoffs = tuple(np.asarray(sp) for sp in sample_payoffs)
 
@@ -1229,7 +1237,7 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
         'not all profiles equaled player total')
     utils.check(
         profiles.shape[0] == np.unique(utils.axis_to_elem(profiles)).size,
-        'there can\'t be any duplicate profiles')
+        "there can't be any duplicate profiles")
     utils.check(
         profiles.shape[0] == sum(sp.shape[0] for sp in sample_payoffs),
         'profiles and sample_payoffs must have the same number of "profiles"')
@@ -1238,7 +1246,7 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
         'all sample payoffs must have the appropriate number of strategies')
     utils.check(
         not any(pays.size == 0 for pays in sample_payoffs),
-        'sample_payoffs can\'t be empty')
+        "sample_payoffs can't be empty")
     utils.check(
         len({s.shape[1] for s in sample_payoffs}) == len(sample_payoffs),
         'each set of observations must have a unique number or be merged')
@@ -1250,7 +1258,7 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
             'some sample payoffs were nonzero for invalid payoffs')
         utils.check(
             not np.all(np.isnan(spays) | (profs == 0)[:, None], 2).any(),
-            'an observation can\'t have entirely nan payoffs')
+            "an observation can't have entirely nan payoffs")
         utils.check(
             np.all(np.isnan(spays).all(1) | ~np.isnan(spays).any()),
             'for a given strategy, all payoffs must be nan or non')
@@ -1265,28 +1273,33 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
 
 
 def _mean(vals):
-    if isinstance(vals, abc.Iterable):
-        count = 0
-        mean = 0
-        for v in vals:
-            count += 1
-            mean += (v - mean) / count
-        return mean if count > 0 else float('nan')
-    else:
+    """Streaming mean of some values"""
+    if not isinstance(vals, abc.Iterable):
         return vals
 
+    count = 0
+    mean = 0
+    for val in vals:
+        count += 1
+        mean += (val - mean) / count
+    return mean if count > 0 else float('nan')
 
-def _unpack_symgrp(role, strategy, count, payoff=None, id=None, **_):
+
+def _unpack_symgrp(role, strategy, count, payoff=None, id=None, **_): # pylint: disable=invalid-name,redefined-builtin
+    """Unpack a symmetry group"""
     return id, role, strategy, count, payoff
 
 
-def _unpack_obs(id, payoff, **_):
+def _unpack_obs(id, payoff, **_): # pylint: disable=invalid-name,redefined-builtin
+    """Unpack an observation"""
     return id, payoff
 
 
-def _unpack_player(sid, p, **_):
+def _unpack_player(sid, p, **_): # pylint: disable=invalid-name
+    """Unpack a player"""
     return sid, p
 
 
 def _unpack_obs_player(role, strategy, payoff, **_):
+    """Unpack an observation player"""
     return role, strategy, payoff

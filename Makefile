@@ -1,4 +1,4 @@
-FILES = gameanalysis test setup.py
+PYLINT_ARGS =
 PYTHON = python3
 
 help:
@@ -7,8 +7,6 @@ help:
 	@echo "setup   - setup environment for developing"
 	@echo "test    - run the tests and print coverage"
 	@echo "check   - check code for style"
-	@echo "format  - try to autoformat code"
-	@echo "todo    - list all XXX, TODO and FIXME flags"
 	@echo "docs    - generate html for documentation"
 	@echo "publish - upload package to pypi"
 	@echo "clean   - remove build objects"
@@ -18,13 +16,7 @@ test:
 	bin/pytest test --cov gameanalysis --cov test 2>/dev/null
 
 check:
-	bin/flake8 $(FILES)
-
-format:
-	bin/autopep8 -ri $(FILES)
-
-todo:
-	grep -nrIF -e TODO -e XXX -e FIXME --color=always README.md $(FILES)
+	bin/pylint $(PYLINT_ARGS) gameanalysis test
 
 setup:
 	$(PYTHON) -m venv .
@@ -44,5 +36,9 @@ publish:
 
 clean:
 	rm -rf bin build dist include lib lib64 share pyvenv.cfg gameanalysis.egg-info pip-selfcheck.json __pycache__ site-packages
+
+travis: PYTEST_ARGS += -v -n2
+travis: PYLINT_ARGS += -d fixme -j 2
+travis: check test
 
 .PHONY: test check format todo setup ubuntu-reqs docs publish clean

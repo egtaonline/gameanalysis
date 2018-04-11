@@ -1,6 +1,8 @@
+"""Test game generation"""
+from collections import abc
+
 import numpy as np
 import pytest
-from collections import abc
 
 from gameanalysis import agggen
 from gameanalysis import gamegen
@@ -19,14 +21,15 @@ from gameanalysis import utils
     [1, 3],
 ])
 def test_independent_game(strategies, _):
+    """Test independent game"""
     game = gamegen.independent_game(strategies)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert game.num_roles == len(strategies), \
-        'didn\'t generate correct number of players'
+        "didn't generate correct number of players"
     assert game.is_asymmetric(), \
-        'didn\'t generate an asymmetric game'
+        "didn't generate an asymmetric game"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -40,12 +43,13 @@ def test_independent_game(strategies, _):
     ([1, 2], [1, 2]),
 ])
 def test_game(players, strategies, _):
+    """Test game"""
     game = gamegen.game(players, strategies)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert np.all(players == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -59,13 +63,14 @@ def test_game(players, strategies, _):
     ([1, 2], [1, 2]),
 ])
 def test_sparse_game(players, strategies, _):
+    """Test sparse game"""
     game = gamegen.sparse_game(players, strategies, 1)
     assert not game.is_empty()
     assert game.num_profiles == 1
     assert np.all(players == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -79,15 +84,17 @@ def test_sparse_game(players, strategies, _):
     ([1, 2], [1, 2]),
 ])
 def test_samplegame(players, strategies, _):
+    """Test samplegame"""
     game = gamegen.samplegame(players, strategies)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert np.all(players == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
 
 
 def test_sparse_samplegame():
+    """Test sparse sample game"""
     game = gamegen.samplegame([4, 4], [4, 4], 0.5, 0)
     # Very unlikely to fail
     assert not game.is_complete()
@@ -104,16 +111,17 @@ def test_sparse_samplegame():
     ([1, 2], [1, 2]),
 ])
 def test_gen_profiles(players, strategies, _):
+    """Test gen profiles"""
     base = rsgame.emptygame(players, strategies)
     game = gamegen.gen_profiles(base)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert np.all(players == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
 
     game = gamegen.gen_profiles(base, 0.0)
-    assert game.is_empty(), 'didn\'t generate a full game'
+    assert game.is_empty(), "didn't generate a full game"
 
     game = gamegen.gen_profiles(base, 0.5)
 
@@ -122,6 +130,7 @@ def test_gen_profiles(players, strategies, _):
 
 
 def test_gen_profiles_large_game():
+    """Test generate profiles of a large game"""
     base = rsgame.emptygame([100] * 2, 30)
     game = gamegen.gen_profiles(base, 1e-55)
     assert game.num_profiles == 363
@@ -136,14 +145,15 @@ def test_gen_profiles_large_game():
     ([1, 4], [1, 2]),
 ])
 def test_keep_profiles(players, strategies, _):
+    """Test keep profiles"""
     game = gamegen.game(players, strategies)
     test = gamegen.keep_num_profiles(game, 4)
     assert test.num_profiles == 4
 
     test = gamegen.keep_profiles(game, 0.0)
-    assert test.is_empty(), 'didn\'t generate a full game'
+    assert test.is_empty(), "didn't generate a full game"
     test = gamegen.keep_num_profiles(game, 0)
-    assert test.is_empty(), 'didn\'t generate a full game'
+    assert test.is_empty(), "didn't generate a full game"
 
     gamegen.keep_profiles(game, 0.5)
 
@@ -157,6 +167,7 @@ def test_keep_profiles(players, strategies, _):
     ([1, 4], [1, 2]),
 ])
 def test_keep_num_profiles(players, strategies, _):
+    """Test keep a number of profiles"""
     game = gamegen.game(players, strategies, 0.5)
     num = game.num_profiles // 2
     test = gamegen.keep_num_profiles(game, num)
@@ -164,6 +175,8 @@ def test_keep_num_profiles(players, strategies, _):
 
 
 def test_keep_profiles_large_game():
+    """Test keeping profiles of a large game"""
+    # FIXME use constant game
     base = agggen.normal_aggfn([100] * 2, 30, 10)
     game = gamegen.keep_profiles(base, 1e-55)
     assert game.num_profiles == 363
@@ -182,64 +195,69 @@ def test_keep_profiles_large_game():
     [1, 3],
 ])
 def test_covariant_game(strategies, _):
+    """Test covariant game"""
     game = gamegen.covariant_game(strategies)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert game.is_asymmetric(), \
-        'didn\'t generate an asymmetric game'
+        "didn't generate an asymmetric game"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
 
 
 @pytest.mark.parametrize('strategies', [1, 2, 4, 6] * 20)
 def test_two_player_zero_sum_game(strategies):
+    """Test arbitrary 2pzs"""
     game = gamegen.two_player_zero_sum_game(strategies)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert game.num_roles == 2, 'not two player'
     assert game.is_asymmetric(), \
-        'didn\'t generate an asymmetric game'
+        "didn't generate an asymmetric game"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate right number of strategies'
+        "didn't generate right number of strategies"
     assert game.is_constant_sum(), 'game not constant sum'
 
 
 @pytest.mark.parametrize('_', range(20))
 def test_chicken(_):
+    """Test chicken"""
     game = gamegen.chicken()
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert game.is_symmetric(), \
-        'didn\'t generate a symmetric game'
-    assert np.all(2 == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
-    assert np.all(2 == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate a symmetric game"
+    assert np.all(game.num_role_players == 2), \
+        "didn't generate correct number of strategies"
+    assert np.all(game.num_role_strats == 2), \
+        "didn't generate correct number of strategies"
 
 
 @pytest.mark.parametrize('_', range(20))
 def test_prisonzers_dilemma(_):
+    """Test prisoners dilemma"""
     game = gamegen.prisoners_dilemma()
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert game.is_symmetric(), \
-        'didn\'t generate a symmetric game'
-    assert np.all(2 == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
-    assert np.all(2 == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate a symmetric game"
+    assert np.all(game.num_role_players == 2), \
+        "didn't generate correct number of strategies"
+    assert np.all(game.num_role_strats == 2), \
+        "didn't generate correct number of strategies"
 
 
 @pytest.mark.parametrize('eq_prob', (p / 10 for p in range(11)))
 def test_sym_2p2s_known_eq(eq_prob):
+    """Test known equilibrium game"""
     game = gamegen.sym_2p2s_known_eq(eq_prob)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert game.is_symmetric(), \
-        'didn\'t generate a symmetric game'
-    assert np.all(2 == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
-    assert np.all(2 == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate a symmetric game"
+    assert np.all(game.num_role_players == 2), \
+        "didn't generate correct number of strategies"
+    assert np.all(game.num_role_strats == 2), \
+        "didn't generate correct number of strategies"
     eqm = np.array([eq_prob, 1 - eq_prob])
     reg = regret.mixture_regret(game, eqm)
     assert np.isclose(reg, 0), \
-        'expected equilibrium wasn\'t an equilibrium, reg: {}'.format(reg)
+        "expected equilibrium wasn't an equilibrium, reg: {}".format(reg)
     for non_eqm in game.pure_mixtures():
         reg = regret.mixture_regret(game, non_eqm)
         # If eq_prob is 0 or 1, then pure is the desired mixture
@@ -257,13 +275,14 @@ def test_sym_2p2s_known_eq(eq_prob):
     (3, 3, 3),
 ])
 def test_polymatrix_game(players, strategies, matrix_players, _):
+    """Test polymatrix game"""
     game = gamegen.polymatrix_game(players, strategies,
                                    players_per_matrix=matrix_players)
-    assert game.is_complete(), 'didn\'t generate a full game'
+    assert game.is_complete(), "didn't generate a full game"
     assert game.is_asymmetric(), \
-        'didn\'t generate an asymmetric game'
+        "didn't generate an asymmetric game"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -280,19 +299,21 @@ def test_polymatrix_game(players, strategies, matrix_players, _):
     ([3], 4, 0, 1 / 3),
 ])
 def test_gen_noise(players, strategies, lower, prob, _):
+    """Test generate noise"""
     roles = max(np.array(players).size, np.array(strategies).size)
     base_game = gamegen.game(players, strategies)
     game = gamegen.gen_noise(base_game, prob, lower)
-    assert lower == 0 or game.is_complete(), 'didn\'t generate a full game'
+    assert lower == 0 or game.is_complete(), "didn't generate a full game"
     assert game.num_roles == roles, \
-        'didn\'t generate correct number of players'
+        "didn't generate correct number of players"
     assert np.all(strategies == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+        "didn't generate correct number of strategies"
     assert np.all(game.num_samples >= min(lower, 1)), \
-        'didn\'t generate appropriate number of samples'
+        "didn't generate appropriate number of samples"
 
 
 def test_empty_add_noise():
+    """Test adding noise to an empty game"""
     base_game = rsgame.emptygame([3, 3], [4, 4])
     game = gamegen.gen_noise(base_game)
     assert game.is_empty()
@@ -303,11 +324,8 @@ def test_empty_add_noise():
 
 
 def _first(val):
-    '''Retrun first val if its an iterable'''
-    if isinstance(val, abc.Iterable):
-        return next(iter(val))
-    else:
-        return val
+    """Retrun first val if its an iterable"""
+    return next(iter(val)) if isinstance(val, abc.Iterable) else val
 
 
 @pytest.mark.parametrize('win,loss', [
@@ -318,6 +336,7 @@ def _first(val):
     (1, [-2, -2, -3]),
 ])
 def test_rock_paper_scissors(win, loss):
+    """Test rock paper scissors"""
     game = gamegen.rock_paper_scissors(win, loss)
     assert game.strat_names == (('paper', 'rock', 'scissors'),)
     assert np.allclose(game.get_payoffs([1, 1, 0]),
@@ -325,17 +344,19 @@ def test_rock_paper_scissors(win, loss):
 
 
 def test_rock_paper_scissors_defaults():
+    """Test rock paper scissors with default arguments"""
     game = gamegen.rock_paper_scissors()
     assert np.allclose(game.get_payoffs([1, 1, 0]), [-1, 1, 0])
 
 
 def test_travellers_dilemma():
+    """Test travelers dilemma"""
     game = gamegen.travellers_dilemma(2, 10)
-    assert game.is_complete(), 'didn\'t generate a full game'
-    assert np.all(2 == game.num_role_players), \
-        'didn\'t generate correct number of strategies'
-    assert np.all(9 == game.num_role_strats), \
-        'didn\'t generate correct number of strategies'
+    assert game.is_complete(), "didn't generate a full game"
+    assert np.all(game.num_role_players == 2), \
+        "didn't generate correct number of strategies"
+    assert np.all(game.num_role_strats == 9), \
+        "didn't generate correct number of strategies"
     assert game.num_profiles == 45
 
 
@@ -349,6 +370,7 @@ FUNCTIONS = [
 
 @pytest.mark.parametrize('func', FUNCTIONS)
 def test_width_distribution(func):
+    """Test width distribution"""
     widths = np.random.uniform(0, 1, 5)
     stddevs = np.std(func(widths, 100000), 1)
     assert np.allclose(widths, stddevs, rtol=0.05)
@@ -357,6 +379,7 @@ def test_width_distribution(func):
 @pytest.mark.parametrize('players,strats', [([2], [3]), ([2, 3], [3, 2])])
 @pytest.mark.parametrize('func', FUNCTIONS)
 def test_add_widths(players, strats, func):
+    """Test add widths"""
     sgame = gamegen.samplegame(players, strats, noise_distribution=func)
     assert sgame.is_complete()
 
@@ -364,6 +387,7 @@ def test_add_widths(players, strats, func):
 @pytest.mark.parametrize('_', range(20))
 @pytest.mark.parametrize('players,strats', [([2], [3]), ([2, 3], [3, 2])])
 def test_sample_profiles(players, strats, _):
+    """Test sample profiles"""
     game = gamegen.game(players, strats)
     profiles = gamegen.sample_profiles(game, 5)
     uprofs = utils.axis_from_elem(np.unique(utils.axis_to_elem(profiles)))

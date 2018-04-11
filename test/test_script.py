@@ -1,3 +1,4 @@
+"""Test script"""
 import json
 import subprocess
 import tempfile
@@ -23,10 +24,10 @@ from gameanalysis.reduction import twins as tr
 DIR = path.dirname(path.realpath(__file__))
 GA = path.join(DIR, '..', 'bin', 'ga')
 HARD_GAME = path.join(DIR, '..', 'example_games', 'hard_nash.json')
-with open(HARD_GAME, 'r') as f:
-    HARD_GAME_STR = f.read()
-with open(path.join(DIR, '..', 'example_games', 'ugly.nfg'), 'r') as f:
-    GAMBIT_STR = f.read()
+with open(HARD_GAME, 'r') as fil:
+    HARD_GAME_STR = fil.read()
+with open(path.join(DIR, '..', 'example_games', 'ugly.nfg'), 'r') as fil:
+    GAMBIT_STR = fil.read()
 HARD_GAME_DATA = gamereader.loads(HARD_GAME_STR)
 GAME_DATA = gamegen.game([3, 2], [2, 3])
 GAME_JSON = GAME_DATA.to_json()
@@ -36,7 +37,9 @@ MATGAME = gamegen.independent_game([2, 3])
 MATGAME_STR = json.dumps(MATGAME.to_json())
 
 
+# FIXME Change this to patch stdin and out and call main directly
 def run(*cmd, input=''):
+    """Run a command"""
     res = subprocess.run((GA,) + cmd, input=input.encode('utf-8'),
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out = res.stdout.decode('utf-8')
@@ -45,12 +48,14 @@ def run(*cmd, input=''):
 
 
 def test_from_module():
+    """Test from module"""
     python = path.join(DIR, '..', 'bin', 'python')
     proc = subprocess.run([python, '-m', 'gameanalysis', '--help'])
     assert not proc.returncode
 
 
 def test_help():
+    """Test help"""
     assert not run()[0]
     assert not run('--fail')[0]
     success, out, err = run('--help')
@@ -62,6 +67,7 @@ def test_help():
 
 
 def test_dominance_1():
+    """Test dominance"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -72,6 +78,7 @@ def test_dominance_1():
 
 
 def test_dominance_2():
+    """Test dominance"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -81,11 +88,13 @@ def test_dominance_2():
 
 
 def test_dominance_3():
+    """Test dominance"""
     success, _, err = run('dom', '-cweakdom', '-o/dev/null', input=GAME_STR)
     assert success, err
 
 
 def test_dominance_4():
+    """Test dominance"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -95,6 +104,7 @@ def test_dominance_4():
 
 
 def test_dominance_5():
+    """Test dominance"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -104,7 +114,7 @@ def test_dominance_5():
 
 
 def test_dominance_6():
-    '''Test dom works for non Games'''
+    """Test dom works for non Games"""
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(MATGAME.to_json(), game)
         game.flush()
@@ -114,6 +124,7 @@ def test_dominance_6():
 
 
 def test_gamegen_1():
+    """Test gamegen"""
     assert not run('gen')[0]
     assert not run('gen', 'ursym')[0]
     success, _, err = run('gen', 'uzs', '6', '-n', '-o/dev/null')
@@ -121,12 +132,14 @@ def test_gamegen_1():
 
 
 def test_gamegen_2():
+    """Test gamegen"""
     success, out, err = run('gen', 'ursym', '3:4,4:3')
     assert success, err
     gamereader.loads(out)
 
 
 def test_gamegen_3():
+    """Test gamegen"""
     success, out, err = run(
         'gen', 'noise', '-d', 'uniform', '-w', '1.5', '-s', '5',
         input=GAME_STR)
@@ -135,6 +148,7 @@ def test_gamegen_3():
 
 
 def test_gamegen_4():
+    """Test gamegen"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -146,6 +160,7 @@ def test_gamegen_4():
 
 
 def test_gamegen_5():
+    """Test gamegen"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -157,6 +172,7 @@ def test_gamegen_5():
 
 
 def test_gamegen_noise():
+    """Test gamegen with noise"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -168,6 +184,7 @@ def test_gamegen_noise():
 
 
 def test_nash_fail():
+    """Test nash fail"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -178,6 +195,7 @@ def test_nash_fail():
 
 
 def test_nash_options():
+    """Test nash options"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -188,6 +206,7 @@ def test_nash_options():
 
 
 def test_nash_pure():
+    """Test pure nash"""
     success, out, err = run('nash', '-tpure', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
@@ -197,6 +216,7 @@ def test_nash_pure():
 
 
 def test_nash_prof():
+    """Test nash prof"""
     success, out, err = run('nash', '-tmin-reg-prof', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
@@ -206,6 +226,7 @@ def test_nash_prof():
 
 
 def test_nash_grid():
+    """Test nash grid"""
     success, out, err = run('nash', '-tmin-reg-grid', '-i', HARD_GAME)
     assert success, err
     assert any(  # pragma: no branch
@@ -215,6 +236,7 @@ def test_nash_grid():
 
 
 def test_nash_pure_one():
+    """Test nash with at_least_one"""
     with tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.rock_paper_scissors()
         json.dump(sgame.to_json(), game)
@@ -224,7 +246,7 @@ def test_nash_pure_one():
 
 
 def test_nash_mat():
-    '''Test nash works with non Game'''
+    """Test nash works with non Game"""
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(MATGAME.to_json(), game)
         game.flush()
@@ -233,6 +255,7 @@ def test_nash_mat():
 
 
 def test_payoff_pure():
+    """Test payoff pure"""
     with tempfile.NamedTemporaryFile('w') as pure:
         prof = [{
             'background': {
@@ -250,6 +273,7 @@ def test_payoff_pure():
 
 
 def test_payoff_mixed():
+    """Test mixed payoff"""
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = [{
             'background': {
@@ -268,6 +292,7 @@ def test_payoff_mixed():
 
 
 def test_payoff_pure_single():
+    """Test payoff pure single"""
     with tempfile.NamedTemporaryFile('w') as pure:
         prof = {
             'background': {
@@ -282,6 +307,7 @@ def test_payoff_pure_single():
 
 
 def test_payoff_pure_string():
+    """Test payoff pure string"""
     # Singleton payoff as string
     prof = {
         'background': {
@@ -295,6 +321,7 @@ def test_payoff_pure_string():
 
 
 def test_reduction_1():
+    """Test reduction"""
     success, out, err = run('red', 'background:2;hft:1', input=HARD_GAME_STR)
     assert success, err
     game = gamereader.loads(out)
@@ -302,6 +329,7 @@ def test_reduction_1():
 
 
 def test_reduction_3():
+    """Test reduction"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -312,6 +340,7 @@ def test_reduction_3():
 
 
 def test_reduction_4():
+    """Test reduction"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -322,7 +351,7 @@ def test_reduction_4():
 
 
 def test_reduction_5():
-    '''Test identity reduction'''
+    """Test identity reduction"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -333,7 +362,7 @@ def test_reduction_5():
 
 
 def test_reduction_6():
-    '''Test that reduction works for non Games'''
+    """Test that reduction works for non Games"""
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(MATGAME.to_json(), game)
         game.flush()
@@ -343,6 +372,7 @@ def test_reduction_6():
 
 
 def test_regret_pure():
+    """Test regret of pure profile"""
     with tempfile.NamedTemporaryFile('w') as pure:
         prof = {
             'background': {
@@ -370,6 +400,7 @@ def test_regret_pure():
 
 
 def test_regret_mixed():
+    """Test mixture regret"""
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = [{
             'background': {
@@ -390,6 +421,7 @@ def test_regret_mixed():
 
 
 def test_regret_single():
+    """Test regret of single profile"""
     with tempfile.NamedTemporaryFile('w') as pure:
         prof = {
             'background': {
@@ -403,27 +435,31 @@ def test_regret_single():
 
 
 def test_restriction_detect():
+    """Test detect maximal restrictions"""
     success, out, err = run('rest', '-nd', '-i', HARD_GAME)
     assert success, err
     assert HARD_GAME_DATA.restriction_from_json(json.loads(out)[0]).all()
 
 
 def test_restriction_extract_1():
+    """Test restriction extraction"""
     success, out, err = run(
         'rest', '-n', '-t',
         'background:markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9;'
         'hft:noop', '-s', '0,3,4', '-i', HARD_GAME)
     assert success, err
 
-    expected = {utils.hash_array([False,  True,  True, False, False, False,
-                                  False, False, False]),
-                utils.hash_array([True, False, False,  True,  True, False,
-                                  False, False, False])}
+    expected = {
+        utils.hash_array([
+            False, True, True, False, False, False, False, False, False]),
+        utils.hash_array([
+            True, False, False, True, True, False, False, False, False])}
     assert {utils.hash_array(HARD_GAME_DATA.restriction_from_json(s))
             for s in json.loads(out)} == expected
 
 
 def test_restriction_extract_2():
+    """Test restriction extraction"""
     with tempfile.NamedTemporaryFile('w') as sub, \
             tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
@@ -438,9 +474,10 @@ def test_restriction_extract_2():
 
 
 def test_analysis_output():
+    """Test analysis"""
     success, out, err = run('analyze', input=GAME_STR)
     assert success, err
-    start = '''Game Analysis
+    start = """Game Analysis
 =============
 Game:
     Roles: r0, r1
@@ -455,7 +492,7 @@ Game:
             s2
             s3
             s4
-payoff data for 24 out of 24 profiles'''
+payoff data for 24 out of 24 profiles"""
     assert out.startswith(start)
     assert 'Social Welfare\n--------------' in out
     assert 'Maximum social welfare profile:' in out
@@ -471,6 +508,7 @@ payoff data for 24 out of 24 profiles'''
 
 
 def test_analysis_dpr():
+    """Test analysis with dpr"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -483,6 +521,7 @@ def test_analysis_dpr():
 
 
 def test_analysis_hr():
+    """Test analysis with hr"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -493,6 +532,7 @@ def test_analysis_hr():
 
 
 def test_analysis_equilibria():
+    """Test analysis with equilibria"""
     profiles = [
         # Complete deviations but unexplored
         [4, 0, 0, 0, 0],
@@ -566,6 +606,7 @@ def test_analysis_equilibria():
 
 
 def test_analysis_dup_equilibria():
+    """Test analysis dpr equilibria"""
     # Two restrictions, but dominated, so identical equilibria
     profiles = [
         [2, 0, 0, 0],
@@ -598,6 +639,7 @@ def test_analysis_dup_equilibria():
 
 
 def test_analysis_dev_explored():
+    """Test analysis deviations explored"""
     # Beneficial deviation to an already explored restriction
     profiles = [
         [2, 0, 0, 0],
@@ -630,6 +672,7 @@ def test_analysis_dev_explored():
 
 
 def test_analysis_no_data():
+    """Test analysis on empty game"""
     game = paygame.game([2], [2], [[1, 1]], [[5, float('nan')]])
     game_str = json.dumps(game.to_json())
 
@@ -640,6 +683,7 @@ def test_analysis_no_data():
 
 
 def test_analysis_no_eqa():
+    """Test analysis with no equilibria"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -652,9 +696,10 @@ def test_analysis_no_eqa():
 
 
 def test_learning_output():
+    """Test learning output"""
     success, out, err = run('learning', input=GAME_STR)
     assert success, err
-    start = '''Game Learning
+    start = """Game Learning
 =============
 RbfGpGame:
     Roles: r0, r1
@@ -669,13 +714,14 @@ RbfGpGame:
             s2
             s3
             s4
-'''
+"""
     assert out.startswith(start)
     assert 'Equilibria\n----------' in out
     assert 'Json Data\n=========' in out
 
 
 def test_learning_args():
+    """Test learning options"""
     with tempfile.NamedTemporaryFile('w') as game:
         game.write(GAME_STR)
         game.flush()
@@ -687,6 +733,7 @@ def test_learning_args():
 
 
 def test_learning_no_eqa():
+    """Test learning with no equilibria"""
     data = agggen.congestion(10, 3, 1)
     with tempfile.NamedTemporaryFile('w') as game:
         json.dump(data.to_json(), game)
@@ -697,6 +744,7 @@ def test_learning_no_eqa():
 
 
 def test_boot_1():
+    """Test bootstrap"""
     with tempfile.NamedTemporaryFile('w') as mixed, \
             tempfile.NamedTemporaryFile('w') as game:
         sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
@@ -711,6 +759,7 @@ def test_boot_1():
 
 
 def test_boot_2():
+    """Test bootstrap"""
     with tempfile.NamedTemporaryFile('w') as mixed:
         sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
         game_str = json.dumps(sgame.to_json())
@@ -729,6 +778,7 @@ def test_boot_2():
 
 
 def test_boot_3():
+    """Test bootstrap"""
     with tempfile.NamedTemporaryFile('w') as mixed:
         sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
         game_str = json.dumps(sgame.to_json())
@@ -748,6 +798,7 @@ def test_boot_3():
 
 
 def test_samp_restriction():
+    """Test sample restriction"""
     success, out, err = run(
         'samp', '-i', HARD_GAME, 'restriction', '-p', '0.5')
     assert success, err
@@ -756,6 +807,7 @@ def test_samp_restriction():
 
 
 def test_samp_mix():
+    """Test sample mixture"""
     success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5')
     assert success, err
     sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
@@ -763,6 +815,7 @@ def test_samp_mix():
 
 
 def test_samp_sparse_mix():
+    """Test sample sparse mixture"""
     success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5', '-s')
     assert success, err
     sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
@@ -770,6 +823,7 @@ def test_samp_sparse_mix():
 
 
 def test_samp_sparse_mix_prob():
+    """Test sample sparse mixture probability"""
     success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5', '-s',
                             '0.5')
     assert success, err
@@ -778,6 +832,7 @@ def test_samp_sparse_mix_prob():
 
 
 def test_samp_prof():
+    """Test sample profile"""
     success, out, err = run('samp', '-i', HARD_GAME, 'prof')
     assert success, err
     sub = HARD_GAME_DATA.profile_from_json(json.loads(out))
@@ -785,6 +840,7 @@ def test_samp_prof():
 
 
 def test_samp_prof_alpha():
+    """Test sample profile alpha"""
     success, out, err = run('samp', '-i', HARD_GAME, 'prof', '-a', '0.5')
     assert success, err
     sub = HARD_GAME_DATA.profile_from_json(json.loads(out))
@@ -792,6 +848,7 @@ def test_samp_prof_alpha():
 
 
 def test_samp_prof_mix():
+    """Test sample profile mixture"""
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = {
             'background': {
@@ -807,6 +864,7 @@ def test_samp_prof_mix():
 
 
 def test_samp_prof_error():
+    """Test sample profile error"""
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = {
             'background': {
@@ -814,12 +872,13 @@ def test_samp_prof_error():
             'hft': {'noop': 1}}
         json.dump(prof, mixed)
         mixed.flush()
-        success, out, err = run('samp', '-i', HARD_GAME, 'prof', '-a', '0.5',
-                                '-m', mixed.name)
+        success, _, _ = run(
+            'samp', '-i', HARD_GAME, 'prof', '-a', '0.5', '-m', mixed.name)
         assert not success
 
 
 def test_samp_seed():
+    """Test sample seed"""
     with tempfile.NamedTemporaryFile('w') as mixed:
         prof = {
             'background': {
@@ -853,37 +912,44 @@ def test_samp_seed():
 
 
 def test_conv_game_empty():
+    """Test convert empty game"""
     success, _, err = run('conv', '-o/dev/null', 'empty', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_game():
+    """Test convert game"""
     success, _, err = run('conv', '-o/dev/null', 'game', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_sgame():
+    """Test convert game to sampel game"""
     success, _, err = run(
         'conv', '-o/dev/null', 'samp', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_mat():
+    """Test convert game to matrix game"""
     success, _, err = run('conv', '-o/dev/null', 'mat', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_str():
+    """Test convert game to string"""
     success, _, err = run('conv', '-o/dev/null', 'str', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_gambit():
+    """"Test convert game to gambit"""
     success, _, err = run('conv', '-o/dev/null', 'gambit', input=GAME_STR)
     assert success, err
 
 
 def test_conv_game_norm():
+    """Test game to normalized version"""
     success, out, err = run(
         'conv', 'norm', input=GAME_STR)
     assert success, err
@@ -894,53 +960,62 @@ def test_conv_game_norm():
 
 
 def test_conv_mat_empty():
+    """Test convert metrix to empty"""
     success, _, err = run(
         'conv', '-o/dev/null', 'empty', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_mat_game():
+    """Test convert matrix to game"""
     success, _, err = run('conv', '-o/dev/null', 'game', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_mat_sgame():
+    """Test convert matrix to sample game"""
     success, _, err = run(
         'conv', '-o/dev/null', 'samp', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_mat_mat():
+    """Test convert matrix to itself"""
     success, _, err = run(
         'conv', '-o/dev/null', 'mat', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_mat_str():
+    """test convert matrix to string"""
     success, _, err = run(
         'conv', '-o/dev/null', 'str', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_mat_gambit():
+    """Test convert matrix to gambit"""
     success, _, err = run(
         'conv', '-o/dev/null', 'gambit', input=MATGAME_STR)
     assert success, err
 
 
 def test_conv_gambit_mat():
+    """Test convert gambit to matrix"""
     success, _, err = run(
         'conv', '-o/dev/null', 'mat', input=GAMBIT_STR)
     assert success, err
 
 
 def test_conv_gambit_game():
+    """Test convert gambit to game"""
     success, _, err = run(
         'conv', '-o/dev/null', 'game', input=GAMBIT_STR)
     assert success, err
 
 
 def test_conv_mat_norm():
+    """Test convert matrix to normalized version"""
     success, out, err = run(
         'conv', 'norm', input=MATGAME_STR)
     assert success, err
@@ -951,6 +1026,7 @@ def test_conv_mat_norm():
 
 
 def test_conv_game_mat_inv():
+    """Test convert game to matrix and back"""
     success, out, err = run('conv', 'matgame', input=GAME_STR)
     assert success, err
     success, out, err = run('conv', 'game', input=out)
@@ -960,6 +1036,7 @@ def test_conv_game_mat_inv():
 
 
 def test_conv_game_gambit_inv():
+    """Test game to gambit and back"""
     success, out, err = run('conv', 'gambit', input=GAME_STR)
     assert success, err
     success, out, err = run('conv', 'game', input=out)
@@ -969,6 +1046,7 @@ def test_conv_game_gambit_inv():
 
 
 def test_conv_mat_game_inv():
+    """Test convert mat to game and back"""
     success, out, err = run('conv', 'game', input=MATGAME_STR)
     assert success, err
     success, out, err = run('conv', 'matgame', input=out)
@@ -978,6 +1056,7 @@ def test_conv_mat_game_inv():
 
 
 def test_conv_mat_gambit_inv():
+    """Test convert mat to gambit and back"""
     success, out, err = run('conv', 'gambit', input=MATGAME_STR)
     assert success, err
     success, out, err = run('conv', 'matgame', input=out)

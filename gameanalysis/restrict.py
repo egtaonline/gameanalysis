@@ -1,8 +1,8 @@
-'''Module for performing actions on restrictions
+"""Module for performing actions on restrictions
 
 A restriction is a subset of strategies that are considered viable. They are
 represented as a bit-mask over strategies with at least one true value per
-role.'''
+role."""
 import numpy as np
 
 from gameanalysis import rsgame
@@ -10,11 +10,11 @@ from gameanalysis import utils
 
 
 def num_deviation_profiles(game, rest):
-    '''Returns the number of deviation profiles
+    """Returns the number of deviation profiles
 
     This is a closed form way to compute `deviation_profiles(game,
     rest).shape[0]`.
-    '''
+    """
     rest = np.asarray(rest, bool)
     utils.check(game.is_restriction(rest), 'restriction must be valid')
     num_role_strats = np.add.reduceat(rest, game.role_starts)
@@ -25,10 +25,10 @@ def num_deviation_profiles(game, rest):
 
 
 def num_deviation_payoffs(game, rest):
-    '''Returns the number of deviation payoffs
+    """Returns the number of deviation payoffs
 
     This is a closed form way to compute `np.sum(deviation_profiles(game, rest)
-    > 0)`.'''
+    > 0)`."""
     rest = np.asarray(rest, bool)
     utils.check(game.is_restriction(rest), 'restriction must be valid')
     num_role_strats = np.add.reduceat(rest, game.role_starts)
@@ -41,7 +41,7 @@ def num_deviation_payoffs(game, rest):
 
 
 def num_dpr_deviation_profiles(game, rest):
-    '''Returns the number of dpr deviation profiles'''
+    """Returns the number of dpr deviation profiles"""
     rest = np.asarray(rest, bool)
     utils.check(game.is_restriction(rest), 'restriction must be valid')
     num_role_strats = np.add.reduceat(rest, game.role_starts)
@@ -67,7 +67,7 @@ def num_dpr_deviation_profiles(game, rest):
 
 
 def deviation_profiles(game, rest, role_index=None):
-    '''Return strict deviation profiles
+    """Return strict deviation profiles
 
     Strict means that all returned profiles will have exactly one player where
     rest is false, i.e.
@@ -75,26 +75,26 @@ def deviation_profiles(game, rest, role_index=None):
     `np.all(np.sum(profiles * ~rest, 1) == 1)`
 
     If `role_index` is specified, only profiles for that role will be
-    returned.'''
+    returned."""
     rest = np.asarray(rest, bool)
     utils.check(game.is_restriction(rest), 'restriction must be valid')
     support = np.add.reduceat(rest, game.role_starts)
 
-    def dev_profs(players, mask, rs):
+    def dev_profs(players, mask, rst):
+        """Get deviation profiles"""
         rgame = rsgame.emptygame(players, support)
         non_devs = translate(rgame.all_profiles(), rest)
         ndevs = np.sum(~mask)
         devs = np.zeros((ndevs, game.num_strats), int)
-        devs[:, rs:rs + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
+        devs[:, rst:rst + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
         profs = non_devs[:, None] + devs
         profs.shape = (-1, game.num_strats)
         return profs
 
-    if role_index is None:
+    if role_index is None: # pylint: disable=no-else-return
+        dev_players = game.num_role_players - np.eye(game.num_roles, dtype=int)
         profs = [dev_profs(players, mask, rs) for players, mask, rs
-                 in zip(game.num_role_players - np.eye(game.num_roles,
-                                                       dtype=int),
-                        np.split(rest, game.role_starts[1:]),
+                 in zip(dev_players, np.split(rest, game.role_starts[1:]),
                         game.role_starts)]
         return np.concatenate(profs)
 
@@ -102,12 +102,12 @@ def deviation_profiles(game, rest, role_index=None):
         players = game.num_role_players.copy()
         players[role_index] -= 1
         mask = np.split(rest, game.role_starts[1:])[role_index]
-        rs = game.role_starts[role_index]
-        return dev_profs(players, mask, rs)
+        rstart = game.role_starts[role_index]
+        return dev_profs(players, mask, rstart)
 
 
 def additional_strategy_profiles(game, rest, role_strat_ind):
-    '''Returns all profiles added by strategy at index'''
+    """Returns all profiles added by strategy at index"""
     # This uses the observation that the added profiles are all of the profiles
     # of the new restricted game with one less player in role, and then where
     # that last player always plays strat
@@ -126,21 +126,20 @@ def additional_strategy_profiles(game, rest, role_strat_ind):
 
 
 def translate(profiles, rest):
-    '''Translate a strategy object to the full game'''
+    """Translate a strategy object to the full game"""
     utils.check(
         profiles.shape[-1] == rest.sum(),
         'profiles must be valid for the restriction')
     if rest.all():
         return profiles
-    else:
-        new_profs = np.zeros(profiles.shape[:-1] + (rest.size,),
-                             profiles.dtype)
-        new_profs[..., rest] = profiles
-        return new_profs
+    new_profs = np.zeros(
+        profiles.shape[:-1] + (rest.size,), profiles.dtype)
+    new_profs[..., rest] = profiles
+    return new_profs
 
 
 def to_id(game, rest):
-    '''Return a unique integer representing a restriction'''
+    """Return a unique integer representing a restriction"""
     bits = np.ones(game.num_strats, int)
     bits[0] = 0
     bits[game.role_starts[1:]] -= game.num_role_strats[:-1]
@@ -151,7 +150,7 @@ def to_id(game, rest):
 
 
 def from_id(game, rest_id):
-    '''Return a restriction mask from its unique id'''
+    """Return a restriction mask from its unique id"""
     rest_id = np.asarray(rest_id)
     bits = np.ones(game.num_strats, int)
     bits[0] = 0
@@ -164,12 +163,12 @@ def from_id(game, rest_id):
 
 
 def maximal_restrictions(game):
-    '''Returns all maximally complete restrictions
+    """Returns all maximally complete restrictions
 
     This function returns an array of restrictions, such that no restriction is
     a sub_restriction (i.e. `np.all(sub <= rest)`) and that no restriction
     could be increased, and still contain complete payoff data for the game.
-    This is reducible to clique finding, and as such is NP Hard'''
+    This is reducible to clique finding, and as such is NP Hard"""
     # invariant that we have data for every restriction in queue
     # The reverse order is necessary for the order we explore
     pure_profs = game.pure_profiles()[::-1]

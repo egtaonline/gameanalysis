@@ -1,4 +1,4 @@
-'''Package for learning complete games from data
+"""Package for learning complete games from data
 
 The API of this individual module is still unstable and may change as
 improvements or refinements are made.
@@ -7,12 +7,12 @@ There are two general game types in this module: learned games and deviation
 games. Learned games vary by the method, but generally expose methods for
 computing payoffs and may other features. Deviation games use learned games and
 different functions to compute deviation payoffs via various methods.
-'''
+"""
 import warnings
 
 import numpy as np
-import sklearn
 from numpy.lib import recfunctions
+import sklearn
 from sklearn import gaussian_process as gp
 
 from gameanalysis import gamereader
@@ -23,15 +23,16 @@ from gameanalysis import utils
 
 
 class DevRegressionGame(rsgame.CompleteGame):
-    '''A game regression model that learns deviation payoffs
+    """A game regression model that learns deviation payoffs
 
     This model functions as a game, but doesn't have a default way of computing
     deviation payoffs. It must be wrapped with another game that uses payoff
     data to compute deviation payoffs.
-    '''
+    """
 
-    def __init__(self, game, regressors, offset, scale, min_payoffs,
-                 max_payoffs, rest):
+    def __init__( # pylint: disable=too-many-arguments
+            self, game, regressors, offset, scale, min_payoffs, max_payoffs,
+            rest):
         super().__init__(game.role_names, game.strat_names,
                          game.num_role_players)
         self._regressors = regressors
@@ -48,28 +49,28 @@ class DevRegressionGame(rsgame.CompleteGame):
 
     def deviation_payoffs(self, mix, *, jacobian=False, **_):
         utils.fail(
-            'regression games don\'t define deviation payoffs and must be '
+            "regression games don't define deviation payoffs and must be "
             'used as a model for a deviation game')
 
     def get_payoffs(self, profiles):
         utils.check(
             self.is_profile(profiles).all(), 'must pass valid profiles')
         payoffs = np.zeros(profiles.shape)
-        for i, (o, s, reg) in enumerate(zip(
+        for i, (off, scale, reg) in enumerate(zip(
                 self._offset, self._scale, self._regressors)):
             mask = profiles[..., i] > 0
             profs = profiles[mask]
             profs[:, i] -= 1
             if profs.size:
                 payoffs[mask, i] = reg.predict(restrict.translate(
-                    profs, self._rest)).ravel() * s + o
+                    profs, self._rest)).ravel() * scale + off
         return payoffs
 
     def get_dev_payoffs(self, profiles):
-        '''Compute the payoff for deviating
+        """Compute the payoff for deviating
 
         This implementation is more efficient than the default since we don't
-        need to compute the payoff for non deviators.'''
+        need to compute the payoff for non deviators."""
         prof_view = np.rollaxis(restrict.translate(profiles.reshape(
             (-1, self.num_roles, self.num_strats)), self._rest), 1, 0)
         payoffs = np.empty(profiles.shape[:-2] + (self.num_strats,))
@@ -111,19 +112,20 @@ class DevRegressionGame(rsgame.CompleteGame):
     def _add_game(self, other):
         utils.fail('no efficient add')
 
-    def __eq__(self, other):
-        return (super().__eq__(other) and
-                self._regressors == other._regressors and
-                np.allclose(self._offset, other._offset) and
-                np.allclose(self._scale, other._scale) and
-                np.all(self._rest == other._rest))
+    def __eq__(self, othr):
+        # pylint: disable-msg=protected-access
+        return (super().__eq__(othr) and
+                self._regressors == othr._regressors and
+                np.allclose(self._offset, othr._offset) and
+                np.allclose(self._scale, othr._scale) and
+                np.all(self._rest == othr._rest))
 
     def __hash__(self):
         return hash((super().__hash__(), self._rest.tobytes()))
 
 
 def _dev_profpay(game):
-    '''Iterate over deviation profiles and payoffs'''
+    """Iterate over deviation profiles and payoffs"""
     sgame = paygame.samplegame_copy(game)
     profiles = sgame.flat_profiles()
     payoffs = sgame.flat_payoffs()
@@ -131,20 +133,21 @@ def _dev_profpay(game):
     for i, pays in enumerate(payoffs.T):
         mask = (profiles[:, i] > 0) & ~np.isnan(pays)
         utils.check(
-            mask.any(), 'couldn\'t find deviation data for a strategy')
+            mask.any(), "couldn't find deviation data for a strategy")
         profs = profiles[mask]
         profs[:, i] -= 1
         yield i, profs, pays[mask]
 
 
-def nngame_train(game, epochs=100, layer_sizes=(32, 32), dropout=0.2,
-                 verbosity=0, optimizer='sgd', loss='mean_squared_error'):
-    '''Train a neural network regression model
+def nngame_train( # pylint: disable=too-many-arguments,too-many-locals
+        game, epochs=100, layer_sizes=(32, 32), dropout=0.2, verbosity=0,
+        optimizer='sgd', loss='mean_squared_error'):
+    """Train a neural network regression model
 
     This mostly exists as a proof of concept, individual testing should be done
     to make sure it is working sufficiently. This API will likely change to
     support more general architectures and training.
-    '''
+    """
     utils.check(layer_sizes, 'must have at least one layer')
     utils.check(0 <= dropout < 1, 'dropout must be a valid probability')
     # This is for delayed importing inf tensor flow
@@ -184,7 +187,7 @@ def nngame_train(game, epochs=100, layer_sizes=(32, 32), dropout=0.2,
 
 
 def sklgame_train(game, estimator):
-    '''Create a regression game from an arbitrary sklearn estimator
+    """Create a regression game from an arbitrary sklearn estimator
 
     Parameters
     ----------
@@ -193,9 +196,9 @@ def sklgame_train(game, estimator):
     estimator : sklearn estimator
         An estimator that supports clone, fit, and predict via the stand
         scikit-learn estimator API.
-    '''
+    """
     regs = []
-    for i, profs, pays in _dev_profpay(game):
+    for _, profs, pays in _dev_profpay(game):
         reg = sklearn.base.clone(estimator)
         reg.fit(profs, pays)
         regs.append(reg)
@@ -205,15 +208,16 @@ def sklgame_train(game, estimator):
         np.ones(game.num_strats, bool))
 
 
-class RbfGpGame(rsgame.CompleteGame):
-    '''A regression game using RBF Gaussian processes
+class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attributes
+    """A regression game using RBF Gaussian processes
 
     This regression game has a build in deviation payoff based off of a
     continuous approximation of the multinomial distribution.
-    '''
+    """
 
-    def __init__(self, role_names, strat_names, num_role_players, offset,
-                 coefs, lengths, sizes, profiles, alpha):
+    def __init__( # pylint: disable=too-many-locals,too-many-arguments
+            self, role_names, strat_names, num_role_players, offset, coefs,
+            lengths, sizes, profiles, alpha):
         super().__init__(role_names, strat_names, num_role_players)
         self._offset = offset
         self._offset.setflags(write=False)
@@ -241,7 +245,7 @@ class RbfGpGame(rsgame.CompleteGame):
         # accurate
         sdp = self._dev_players.repeat(self.num_role_strats, 1)
         max_rbf = np.einsum('ij,ij,ij->i', sdp, sdp, 1 / self._lengths)
-        minw = np.exp(-max_rbf / 2)
+        minw = np.exp(-max_rbf / 2) # pylint: disable=invalid-unary-operand-type
         mask = self._alpha > 0
         pos = np.add.reduceat(self._alpha * mask, self._size_starts)
         neg = np.add.reduceat(self._alpha * ~mask, self._size_starts)
@@ -260,7 +264,7 @@ class RbfGpGame(rsgame.CompleteGame):
                self._lengths.repeat(self._sizes, 0))
         rbf = np.einsum('...ij,...ij->...i', vec, vec)
         payoffs = self._offset + self._coefs * np.add.reduceat(
-            np.exp(-rbf / 2) * self._alpha, self._size_starts, -1)
+            np.exp(-rbf / 2) * self._alpha, self._size_starts, -1) # pylint: disable=invalid-unary-operand-type
         payoffs[profiles == 0] = 0
         return payoffs
 
@@ -270,7 +274,7 @@ class RbfGpGame(rsgame.CompleteGame):
         vec = ((dev_profiles - self._profiles) /
                self._lengths.repeat(self._sizes, 0))
         rbf = np.einsum('...ij,...ij->...i', vec, vec)
-        exp = np.exp(-rbf / 2) * self._alpha
+        exp = np.exp(-rbf / 2) * self._alpha # pylint: disable=invalid-unary-operand-type
         payoffs = self._offset + self._coefs * np.add.reduceat(
             exp, self._size_starts, -1)
 
@@ -287,7 +291,7 @@ class RbfGpGame(rsgame.CompleteGame):
     def min_strat_payoffs(self):
         return self._min_payoffs.view()
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_):
+    def deviation_payoffs(self, mix, *, jacobian=False, **_): # pylint: disable=too-many-locals
         players = self._dev_players.repeat(self.num_role_strats, 1)
         avg_prof = players * mix
         diag = 1 / (self._lengths ** 2 + avg_prof)
@@ -335,7 +339,7 @@ class RbfGpGame(rsgame.CompleteGame):
         lengths = self._lengths[rest]
         zeros = (profiles[:, ~rest] /
                  lengths[:, ~rest].repeat(sizes, 0))
-        removed = np.exp(-np.einsum('ij,ij->i', zeros, zeros) / 2)
+        removed = np.exp(-np.einsum('ij,ij->i', zeros, zeros) / 2) # pylint: disable=invalid-unary-operand-type
         uprofs, inds = np.unique(
             recfunctions.merge_arrays([
                 np.arange(rest.sum()).repeat(sizes).view([('s', int)]),
@@ -382,10 +386,10 @@ class RbfGpGame(rsgame.CompleteGame):
         base['lengths'] = lengths
 
         profs = {}
-        for r, (role, strats, data) in enumerate(zip(
+        for role, strats, data in zip(
                 self.role_names, self.strat_names,
                 np.split(np.split(self._profiles, self._size_starts[1:]),
-                         self.role_starts[1:]))):
+                         self.role_starts[1:])):
             profs[role] = {strat: [self.profile_to_json(p) for p in dat]
                            for strat, dat in zip(strats, data)}
         base['profiles'] = profs
@@ -402,6 +406,7 @@ class RbfGpGame(rsgame.CompleteGame):
         return base
 
     def __eq__(self, othr):
+        # pylint: disable-msg=protected-access
         return (super().__eq__(othr) and
                 np.allclose(self._offset, othr._offset) and
                 np.allclose(self._coefs, othr._coefs) and
@@ -410,6 +415,9 @@ class RbfGpGame(rsgame.CompleteGame):
                 self._eq_params(othr))
 
     def _eq_params(self, othr):
+        """Test if two rbf games have equal parameters"""
+        # pylint: disable-msg=protected-access
+        # FIXME This should use allclsoe_perm since profiles can be duplicated
         sord = np.argsort(recfunctions.merge_arrays([
             np.arange(self.num_strats).repeat(self._sizes),
             utils.axis_to_elem(self._profiles)], flatten=True))
@@ -427,8 +435,8 @@ class RbfGpGame(rsgame.CompleteGame):
         return hash((super().__hash__(), hprofs))
 
 
-def rbfgame_train(game, num_restarts=3):
-    '''Train a regression game with an RBF Gaussian process
+def rbfgame_train(game, num_restarts=3): # pylint: disable=too-many-locals
+    """Train a regression game with an RBF Gaussian process
 
     This model is somewhat well tests and has a few added benefits over
     standard regression models due the nature of its functional form.
@@ -441,7 +449,7 @@ def rbfgame_train(game, num_restarts=3):
         The number of random restarts to make with the optimizer. Higher
         numbers will give a better fit (in expectation), but will take
         longer.
-    '''
+    """
     dev_players = np.maximum(game.num_role_players - np.eye(
         game.num_roles, dtype=int), 1).repeat(
             game.num_role_strats, 0).repeat(game.num_role_strats, 1)
@@ -455,8 +463,7 @@ def rbfgame_train(game, num_restarts=3):
     profiles = []
     alpha = []
     sizes = []
-    for (s, profs, pays), bound, dplay in zip(
-            _dev_profpay(game), bounds, dev_players):
+    for (strat, profs, pays), bound in zip(_dev_profpay(game), bounds):
         pay_mean = pays.mean()
         pays -= pay_mean
         reg = gp.GaussianProcessRegressor(
@@ -465,9 +472,9 @@ def rbfgame_train(game, num_restarts=3):
             copy_X_train=False)
         reg.fit(profs, pays)
 
-        means[s] = pay_mean
-        coefs[s] = reg.kernel_.k1.k1.constant_value
-        lengths[s] = reg.kernel_.k1.k2.length_scale
+        means[strat] = pay_mean
+        coefs[strat] = reg.kernel_.k1.k1.constant_value
+        lengths[strat] = reg.kernel_.k1.k2.length_scale
         uprofs, inds = np.unique(
             utils.axis_to_elem(profs), return_inverse=True)
         profiles.append(utils.axis_from_elem(uprofs))
@@ -486,7 +493,7 @@ def rbfgame_train(game, num_restarts=3):
 
 
 def rbfgame_json(json):
-    '''Read an rbf game from json'''
+    """Read an rbf game from json"""
     utils.check(json['type'].split('.', 1)[0] == 'rbf', 'incorrect type')
     base = rsgame.emptygame_json(json)
 
@@ -521,8 +528,8 @@ def rbfgame_json(json):
         np.concatenate(alphas))
 
 
-class _DeviationGame(rsgame.CompleteGame):
-    '''A game that adds deviation payoffs'''
+class _DeviationGame(rsgame.CompleteGame): # pylint: disable=abstract-method
+    """A game that adds deviation payoffs"""
 
     def __init__(self, model_game):
         super().__init__(model_game.role_names, model_game.strat_names,
@@ -562,7 +569,7 @@ class _DeviationGame(rsgame.CompleteGame):
 
 
 class SampleDeviationGame(_DeviationGame):
-    '''Deviation payoffs by sampling from mixture
+    """Deviation payoffs by sampling from mixture
 
     This model produces unbiased deviation payoff estimates, but they're noisy
     and random and take a while to compute. This is accurate in the limit as
@@ -575,7 +582,7 @@ class SampleDeviationGame(_DeviationGame):
     num_samples : int, optional
         The number of samples to use for each deviation estimate. Higher means
         lower variance but higher computation time.
-    '''
+    """
 
     def __init__(self, model, num_samples=100):
         super().__init__(model)
@@ -587,11 +594,11 @@ class SampleDeviationGame(_DeviationGame):
         self._num_samples = num_samples
 
     def deviation_payoffs(self, mix, *, jacobian=False, **_):
-        '''Compute the deivation payoffs
+        """Compute the deivation payoffs
 
         The method computes the jacobian as if we were importance sampling the
         results, i.e. the function is really always sample according to mixture
-        m', but then importance sample to get the actual result.'''
+        m', but then importance sample to get the actual result."""
         profs = self.random_role_deviation_profiles(self._num_samples, mix)
         payoffs = self._model.get_dev_payoffs(profs)
         dev_pays = payoffs.mean(0)
@@ -628,9 +635,9 @@ class SampleDeviationGame(_DeviationGame):
         base['type'] = 'sample.1'
         return base
 
-    def __eq__(self, other):
-        return (super().__eq__(other) and
-                self._num_samples == other._num_samples)
+    def __eq__(self, othr):
+        return (super().__eq__(othr) and
+                self._num_samples == othr._num_samples)
 
     @utils.memoize
     def __hash__(self):
@@ -638,7 +645,7 @@ class SampleDeviationGame(_DeviationGame):
 
 
 def sample(game, num_samples=100):
-    '''Create a sample game from a model
+    """Create a sample game from a model
 
     Parameters
     ----------
@@ -647,14 +654,14 @@ def sample(game, num_samples=100):
         an existing deviation game, then this will use it's underlying model.
     num_samples : int, optional
         The number of samples to take.
-    '''
+    """
     if hasattr(game, '_model'):
         game = game._model
     return SampleDeviationGame(game, num_samples=num_samples)
 
 
 def sample_json(json):
-    '''Read sample game from json'''
+    """Read sample game from json"""
     utils.check(
         json['type'].split('.', 1)[0] == 'sample', 'incorrect type')
     return SampleDeviationGame(gamereader.loadj(json['model']),
@@ -662,7 +669,7 @@ def sample_json(json):
 
 
 class PointDeviationGame(_DeviationGame):
-    '''Deviation payoffs by point approximation
+    """Deviation payoffs by point approximation
 
     This model computes payoffs by finding the deviation payoffs from the point
     estimate of the mixture. It's fast but biased. This is accurate in the
@@ -677,7 +684,7 @@ class PointDeviationGame(_DeviationGame):
     ----------
     model : DevRegressionGame
         A payoff model
-    '''
+    """
 
     def __init__(self, model):
         super().__init__(model)
@@ -685,13 +692,13 @@ class PointDeviationGame(_DeviationGame):
             self.num_roles, dtype=int), self.num_role_strats, 1)
 
     def deviation_payoffs(self, mix, *, jacobian=False, **_):
-        if jacobian:
-            dev, jac = self._model.get_dev_payoffs(
-                self._dev_players * mix, jacobian=True)
-            jac *= self._dev_players.repeat(self.num_role_strats, 0)
-            return dev, jac
-        else:
+        if not jacobian:
             return self._model.get_dev_payoffs(self._dev_players * mix)
+
+        dev, jac = self._model.get_dev_payoffs(
+            self._dev_players * mix, jacobian=True)
+        jac *= self._dev_players.repeat(self.num_role_strats, 0)
+        return dev, jac
 
     def restrict(self, rest):
         return PointDeviationGame(self._model.restrict(rest))
@@ -715,28 +722,29 @@ class PointDeviationGame(_DeviationGame):
 
 
 def point(game):
-    '''Create a point game from a model
+    """Create a point game from a model
 
     Parameters
     ----------
     game : RsGame
         If this is a payoff model it will be used to take samples, if this is
         an existing deviation game, then this will use it's underlying model.
-    '''
-    if hasattr(game, '_model'):
-        game = game._model
-    return PointDeviationGame(game)
+    """
+    try:
+        return PointDeviationGame(game._model)
+    except AttributeError:
+        return PointDeviationGame(game)
 
 
 def point_json(json):
-    '''Read point game from json'''
+    """Read point game from json"""
     utils.check(
         json['type'].split('.', 1)[0] == 'point', 'incorrect type')
     return PointDeviationGame(gamereader.loadj(json['model']))
 
 
 class NeighborDeviationGame(_DeviationGame):
-    '''Create a neighbor game from a model
+    """Create a neighbor game from a model
 
     This takes a normalized weighted estimate of the deviation payoffs by
     finding all profiles within `num_devs` of the maximum probability profile
@@ -752,11 +760,11 @@ class NeighborDeviationGame(_DeviationGame):
         an existing deviation game, then this will use it's underlying model.
     num_devs : int, optional
         The number of deviations to take.
-    '''
+    """
 
     def __init__(self, model, num_devs=2):
         super().__init__(model)
-        utils.check(0 <= num_devs, 'num devs must be nonnegative')
+        utils.check(num_devs >= 0, 'num devs must be nonnegative')
         self._num_devs = num_devs
 
     def deviation_payoffs(self, mix, *, jacobian=False, **_):
@@ -783,12 +791,10 @@ class NeighborDeviationGame(_DeviationGame):
     def _multiply_constant(self, role_array):
         return NeighborDeviationGame(self._model * role_array, self._num_devs)
 
-    def _add_game(self, other):
-        utils.check(
-            isinstance(other, NeighborDeviationGame),
-            'only efficient add for neighbor games')
+    def _add_game(self, othr):
+        assert self._num_devs == othr._num_devs
         return NeighborDeviationGame(
-            self._model + other._model, self._num_devs)
+            self._model + othr._model, self._num_devs)
 
     def to_json(self):
         base = super().to_json()
@@ -796,8 +802,8 @@ class NeighborDeviationGame(_DeviationGame):
         base['type'] = 'neighbor.1'
         return base
 
-    def __eq__(self, other):
-        return (super().__eq__(other) and self._num_devs == other._num_devs)
+    def __eq__(self, othr):
+        return super().__eq__(othr) and self._num_devs == othr._num_devs
 
     @utils.memoize
     def __hash__(self):
@@ -805,7 +811,7 @@ class NeighborDeviationGame(_DeviationGame):
 
 
 def neighbor(game, num_devs=2):
-    '''Create a neighbor game from a model
+    """Create a neighbor game from a model
 
     Parameters
     ----------
@@ -814,14 +820,15 @@ def neighbor(game, num_devs=2):
         an existing deviation game, then this will use it's underlying model.
     num_devs : int, optional
         The number of deviations to explore out.
-    '''
-    if hasattr(game, '_model'):
-        game = game._model
-    return NeighborDeviationGame(game, num_devs=num_devs)
+    """
+    try:
+        return NeighborDeviationGame(game._model, num_devs=num_devs)
+    except AttributeError:
+        return NeighborDeviationGame(game, num_devs=num_devs)
 
 
 def neighbor_json(json):
-    '''Read neighbor game from json'''
+    """Read neighbor game from json"""
     utils.check(
         json['type'].split('.', 1)[0] == 'neighbor', 'incorrect type')
     return NeighborDeviationGame(gamereader.loadj(json['model']),

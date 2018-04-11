@@ -1,3 +1,4 @@
+"""Test bootstrap"""
 import numpy as np
 import pytest
 
@@ -39,6 +40,7 @@ GAMES = SMALL_GAMES + [
 @pytest.mark.parametrize('num_boots', [200])
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_mixture_welfare(players, strategies, num_mixes, num_boots):
+    """Test bootstrap mixture welfare"""
     game = gamegen.samplegame(players, strategies)
     mixes = game.random_mixtures(num_mixes)
     boots = bootstrap.mixture_welfare(game, mixes, num_boots, processes=1)
@@ -49,6 +51,7 @@ def test_mixture_welfare(players, strategies, num_mixes, num_boots):
 @pytest.mark.parametrize('num_boots', [200])
 @pytest.mark.parametrize('players,strategies', SMALL_GAMES)
 def test_mixture_regret(players, strategies, num_mixes, num_boots):
+    """Test bootstrap mixture regret"""
     game = gamegen.samplegame(players, strategies)
     mixes = game.random_mixtures(num_mixes)
     boots = bootstrap.mixture_regret(game, mixes, num_boots, processes=1)
@@ -64,6 +67,7 @@ def test_mixture_regret(players, strategies, num_mixes, num_boots):
 @pytest.mark.parametrize('num_boots', [200])
 @pytest.mark.parametrize('players,strategies', GAMES)
 def test_mixture_regret_single_mix(players, strategies, num_boots):
+    """Test bootstrap regret with a single mix"""
     num_boots = 200
     game = gamegen.samplegame(players, strategies)
     mix = game.random_mixture()
@@ -75,6 +79,7 @@ def test_mixture_regret_single_mix(players, strategies, num_boots):
 @pytest.mark.parametrize('num_mixes', [5])
 @pytest.mark.parametrize('num_boots', [200])
 def test_mixture_regret_parallel(num_mixes, num_boots):
+    """Test mixture regret run on multiple processors"""
     game = gamegen.samplegame([4, 3], [3, 4])
     mixes = game.random_mixtures(num_mixes)
     boots = bootstrap.mixture_regret(game, mixes, num_boots)

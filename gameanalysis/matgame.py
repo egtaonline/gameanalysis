@@ -1,4 +1,4 @@
-'''module for complete independent games'''
+"""module for complete independent games"""
 import functools
 import itertools
 
@@ -9,7 +9,7 @@ from gameanalysis import utils
 
 
 class MatrixGame(rsgame.CompleteGame):
-    '''Matrix game representation
+    """Matrix game representation
 
     This represents a complete independent game more compactly than a Game, but
     only works for complete independent games.
@@ -25,7 +25,7 @@ class MatrixGame(rsgame.CompleteGame):
         payoffs for each player, the first axes are the strategies for each
         player. matrix.shape[:-1] must correspond to the number of strategies
         for each player. matrix.ndim - 1 must equal matrix.shape[-1].
-    '''
+    """
 
     def __init__(self, role_names, strat_names, payoff_matrix):
         super().__init__(role_names, strat_names,
@@ -41,30 +41,30 @@ class MatrixGame(rsgame.CompleteGame):
         self._payoff_view.shape = (self.num_profiles, self.num_roles)
 
     def payoff_matrix(self):
-        '''Return the payoff matrix'''
+        """Return the payoff matrix"""
         return self._payoff_matrix.view()
 
     @utils.memoize
     def min_strat_payoffs(self):
-        '''Returns the minimum payoff for each role'''
+        """Returns the minimum payoff for each role"""
         mpays = np.empty(self.num_strats)
-        for r, (pays, min_pays, n) in enumerate(zip(
+        for role, (pays, min_pays, strats) in enumerate(zip(
                 np.rollaxis(self._payoff_matrix, -1),
                 np.split(mpays, self.role_starts[1:]),
                 self.num_role_strats)):
-            np.rollaxis(pays, r).reshape((n, -1)).min(1, min_pays)
+            np.rollaxis(pays, role).reshape((strats, -1)).min(1, min_pays)
         mpays.setflags(write=False)
         return mpays
 
     @utils.memoize
     def max_strat_payoffs(self):
-        '''Returns the minimum payoff for each role'''
+        """Returns the minimum payoff for each role"""
         mpays = np.empty(self.num_strats)
-        for r, (pays, max_pays, n) in enumerate(zip(
+        for role, (pays, max_pays, strats) in enumerate(zip(
                 np.rollaxis(self._payoff_matrix, -1),
                 np.split(mpays, self.role_starts[1:]),
                 self.num_role_strats)):
-            np.rollaxis(pays, r).reshape((n, -1)).max(1, max_pays)
+            np.rollaxis(pays, role).reshape((strats, -1)).max(1, max_pays)
         mpays.setflags(write=False)
         return mpays
 
@@ -76,19 +76,20 @@ class MatrixGame(rsgame.CompleteGame):
         return payoffs
 
     def compress_profile(self, profile):
-        '''Compress profile in array of ints
+        """Compress profile in array of ints
 
         Normal profiles are an array of number of players playing a strategy.
         Since matrix games always have one player per role, this compresses
         each roles counts into a single int representing the played strategy
         per role.
-        '''
+        """
         utils.check(self.is_profile(profile).all(), 'must pass vaid profiles')
         profile = np.asarray(profile, int)
         return np.add.reduceat(np.cumsum(self._prof_offset - profile, -1),
                                self.role_starts, -1)
 
     def uncompress_profile(self, comp_prof):
+        """Uncompress a profile"""
         comp_prof = np.asarray(comp_prof, int)
         utils.check(
             np.all(comp_prof >= 0) and
@@ -102,15 +103,15 @@ class MatrixGame(rsgame.CompleteGame):
         return profile
 
     def get_payoffs(self, profile):
-        '''Returns an array of profile payoffs'''
+        """Returns an array of profile payoffs"""
         profile = np.asarray(profile, int)
         ids = self.profile_to_id(profile)
         payoffs = np.zeros_like(profile, float)
         payoffs[profile > 0] = self._payoff_view[ids].flat
         return payoffs
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_):
-        '''Computes the expected value of each pure strategy played against all
+    def deviation_payoffs(self, mix, *, jacobian=False, **_): # pylint: disable=too-many-locals
+        """Computes the expected value of each pure strategy played against all
         opponents playing mix.
 
         Parameters
@@ -122,45 +123,39 @@ class MatrixGame(rsgame.CompleteGame):
             deviation payoffs with respect to the mixture. The first axis is
             the deviating strategy, the second axis is the strategy in the mix
             the jacobian is taken with respect to.
-        '''
-        rmix = []
-        for r, m in enumerate(np.split(mix, self.role_starts[1:])):
+        """
+        rmixes = []
+        for role, rmix in enumerate(np.split(mix, self.role_starts[1:])):
             shape = [1] * self.num_roles
-            shape[r] = -1
-            rmix.append(m.reshape(shape))
+            shape[role] = -1
+            rmixes.append(rmix.reshape(shape))
         devpays = np.empty(self.num_strats)
-        for r, (out, n) in enumerate(zip(
+        for role, (out, strats) in enumerate(zip(
                 np.split(devpays, self.role_starts[1:]),
                 self.num_role_strats)):
-            pays = self._payoff_matrix[..., r].copy()
-            for m in rmix[:r]:
-                pays *= m
-            for m in rmix[r + 1:]:
-                pays *= m
-            np.rollaxis(pays, r).reshape((n, -1)).sum(1, out=out)
+            pays = self._payoff_matrix[..., role].copy()
+            for rmix in (m for r, m in enumerate(rmixes) if r != role):
+                pays *= rmix
+            np.rollaxis(pays, role).reshape((strats, -1)).sum(1, out=out)
 
         if not jacobian:
             return devpays
 
         jac = np.zeros((self.num_strats, self.num_strats))
-        for r, (jout, nr) in enumerate(zip(
+        for role, (jout, rstrats) in enumerate(zip(
                 np.split(jac, self.role_starts[1:]),
                 self.num_role_strats)):
-            for d, (out, nd) in enumerate(zip(
+            for dev, (out, dstrats) in enumerate(zip(
                     np.split(jout, self.role_starts[1:], 1),
                     self.num_role_strats)):
-                if r == d:
+                if role == dev:
                     continue
-                pays = self._payoff_matrix[..., r].copy()
-                f, s = min(r, d), max(r, d)
-                for m in rmix[:f]:
-                    pays *= m
-                for m in rmix[f + 1:s]:
-                    pays *= m
-                for m in rmix[s + 1:]:
-                    pays *= m
-                np.rollaxis(np.rollaxis(pays, r), d + (r > d),
-                            1).reshape((nr, nd, -1)).sum(2, out=out)
+                pays = self._payoff_matrix[..., role].copy()
+                for rmix in (m for r, m in enumerate(rmixes)
+                             if r not in {role, dev}):
+                    pays *= rmix
+                np.rollaxis(np.rollaxis(pays, role), dev + (role > dev),
+                            1).reshape((rstrats, dstrats, -1)).sum(2, out=out)
 
         return devpays, jac
 
@@ -195,15 +190,15 @@ class MatrixGame(rsgame.CompleteGame):
             self._payoff_matrix + other_mat)
 
     def _mat_to_json(self, matrix, role_index):
-        '''Convert a sub matrix into json representation'''
+        """Convert a sub matrix into json representation"""
         if role_index == self.num_roles:
             return {role: float(pay) for role, pay
                     in zip(self.role_names, matrix)}
-        else:
-            strats = self.strat_names[role_index]
-            role_index += 1
-            return {strat: self._mat_to_json(mat, role_index)
-                    for strat, mat in zip(strats, matrix)}
+
+        strats = self.strat_names[role_index]
+        role_index += 1
+        return {strat: self._mat_to_json(mat, role_index)
+                for strat, mat in zip(strats, matrix)}
 
     def to_json(self):
         res = super().to_json()
@@ -215,10 +210,11 @@ class MatrixGame(rsgame.CompleteGame):
     def __hash__(self):
         return super().__hash__()
 
-    def __eq__(self, other):
-        return (super().__eq__(other) and
+    def __eq__(self, othr):
+        # pylint: disable-msg=protected-access
+        return (super().__eq__(othr) and
                 # Identical payoffs
-                np.allclose(self._payoff_matrix, other._payoff_matrix))
+                np.allclose(self._payoff_matrix, othr._payoff_matrix))
 
     def __repr__(self):
         return '{}({})'.format(
@@ -227,13 +223,13 @@ class MatrixGame(rsgame.CompleteGame):
 
 
 def matgame(payoff_matrix):
-    '''Create a game from a dense matrix with default names
+    """Create a game from a dense matrix with default names
 
     Parameters
     ----------
     payoff_matrix : ndarray-like
         The matrix of payoffs for an asymmetric game.
-    '''
+    """
     payoff_matrix = np.ascontiguousarray(payoff_matrix, float)
     return matgame_replace(
         rsgame.emptygame(
@@ -243,7 +239,7 @@ def matgame(payoff_matrix):
 
 
 def matgame_names(role_names, strat_names, payoff_matrix):
-    '''Create a game from a payoff matrix with names
+    """Create a game from a payoff matrix with names
 
     Parameters
     ----------
@@ -253,7 +249,7 @@ def matgame_names(role_names, strat_names, payoff_matrix):
         The name of each strategy for each role.
     payoff_matrix : ndarray-like
         The matrix mapping strategy indices to payoffs for each player.
-    '''
+    """
     return matgame_replace(
         rsgame.emptygame_names(
             role_names, np.ones(len(role_names), int), strat_names),
@@ -261,7 +257,7 @@ def matgame_names(role_names, strat_names, payoff_matrix):
 
 
 def _mat_from_json(base, dic, matrix, depth):
-    '''Copy roles to a matrix representation'''
+    """Copy roles to a matrix representation"""
     if depth == base.num_roles:
         for role, payoff in dic.items():
             matrix[base.role_index(role)] = payoff
@@ -275,11 +271,11 @@ def _mat_from_json(base, dic, matrix, depth):
 
 
 def matgame_json(json):
-    '''Read a matrix game from json
+    """Read a matrix game from json
 
     In general, the json will have 'type': 'matrix...' to indicate that it's a
     matrix game, but if the other fields are correct, this will still succeed.
-    '''
+    """
     # This uses the fact that roles are always in lexicographic order
     base = rsgame.emptygame_json(json)
 
@@ -290,13 +286,13 @@ def matgame_json(json):
 
 
 def matgame_copy(copy_game):
-    '''Copy a matrix game from an existing game
+    """Copy a matrix game from an existing game
 
     Parameters
     ----------
     copy_game : RsGame
         Game to copy payoff data out of. This game must be complete.
-    '''
+    """
     utils.check(copy_game.is_complete(), 'can only copy complete games')
 
     if hasattr(copy_game, 'payoff_matrix'):
@@ -342,7 +338,7 @@ def matgame_copy(copy_game):
 
 
 def matgame_replace(base, payoff_matrix):
-    '''Replace an existing game with a new payoff matrix
+    """Replace an existing game with a new payoff matrix
 
     Parameters
     ----------
@@ -350,7 +346,7 @@ def matgame_replace(base, payoff_matrix):
         Game to take structure out of.
     payoff_matrix : ndarray-like
         The new payoff matrix.
-    '''
+    """
     payoff_matrix = np.ascontiguousarray(payoff_matrix, float)
     utils.check(
         np.all(base.num_role_players == 1),
