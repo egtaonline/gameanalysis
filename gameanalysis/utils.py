@@ -101,40 +101,10 @@ def game_size_inv(size, players):
     return comb_inv(size, players) - players + 1
 
 
-# FIXME If this isn't used, it should be removed
-def only(iterable):
-    """Return the only element of an iterable
-
-    Throws a value error if the iterable doesn't contain only one element
-    """
-    try:
-        itr = iter(iterable)
-        value = next(itr)
-        try:
-            next(itr)
-        except StopIteration:
-            return value
-        raise ValueError('Iterable had more than one element')
-    except TypeError:
-        raise ValueError('Input was not iterable')
-    except StopIteration:
-        raise ValueError('Input was empty')
-
-
 def repeat(iterable, reps):
     """Repeat each element of iterable reps times"""
     return itertools.chain.from_iterable(
         itertools.repeat(e, r) for e, r in zip(iterable, reps))
-
-
-# FIXME If this is used, it can probably be replaced with `textwrap`
-def one_line(string, line_width=80):
-    """If string s is longer than line width, cut it off and append '...'"""
-    string = string.replace('\n', ' ')
-    if len(string) > line_width:
-        return '{}...{}'.format(string[:3 * line_width // 4],
-                                string[-line_width // 4 + 3:])
-    return string
 
 
 def acomb(n, k, repetition=False):

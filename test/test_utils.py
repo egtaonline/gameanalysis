@@ -32,18 +32,6 @@ def test_comb():
     assert np.all(utils.comb_inv(100, [1, 2, 5, 10]) == [100, 14, 8, 12])
 
 
-def test_only():
-    """Test only"""
-    assert utils.only([None]) is None, \
-        "only didn't return only element"
-    with pytest.raises(ValueError):
-        utils.only([])
-    with pytest.raises(ValueError):
-        utils.only([None, None])
-    with pytest.raises(ValueError):
-        utils.only(5)
-
-
 def test_check():
     """Test that check works"""
     utils.check(True, '')
@@ -78,17 +66,6 @@ def test_repeat():
     assert [1, 1, 2, 2, 2] == list(utils.repeat([1, 2], [2, 3]))
     assert [1, 1, 2, 2, 2] == list(utils.repeat([1, 2, 2], [2, 1, 2]))
     assert [1, 2] == list(utils.repeat([1, 3, 2], [1, 0, 1]))
-
-
-def test_one_line():
-    """test oneline"""
-    short = "This is a short string, so it won't get truncated"
-    assert utils.one_line(short, 100) == short, \
-        'short string still got truncated'
-    long_str = 'This is relatively long'
-    expected = 'This is rela...g'
-    assert utils.one_line(long_str, 16) == expected, \
-        "one_line didn't truncate as expected"
 
 
 def test_acomb():
