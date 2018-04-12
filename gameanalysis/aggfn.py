@@ -92,26 +92,26 @@ class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attribu
         maxs.setflags(write=False)
         return maxs.view()
 
-    def get_payoffs(self, profile):
+    def get_payoffs(self, profiles):
         """Returns an array of profile payoffs."""
-        profile = np.asarray(profile, int)
+        profiles = np.asarray(profiles, int)
         function_inputs = np.add.reduceat(
-            profile[..., None, :] * self.function_inputs.T,
+            profiles[..., None, :] * self.function_inputs.T,
             self.role_starts, -1)
         inds = function_inputs.dot(self._basis) + self._func_offset
         function_outputs = self.function_table.ravel()[inds]
         payoffs = function_outputs.dot(self.action_weights) + self.offsets
-        payoffs[profile == 0] = 0
+        payoffs[profiles == 0] = 0
         return payoffs
 
     # TODO override get_dev_payoffs to be more efficient, i.e. only compute the
     # dev payoff.
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_): # pylint: disable=too-many-locals
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_): # pylint: disable=too-many-locals
         """Get the deviation payoffs"""
-        mix = np.asarray(mix, float)
+        mixture = np.asarray(mixture, float)
         role_node_probs = np.minimum(
-            np.add.reduceat(mix[:, None] * self.function_inputs,
+            np.add.reduceat(mixture[:, None] * self.function_inputs,
                             self.role_starts), 1)[..., None]
         table_probs = np.ones(
             (self.num_roles, self.num_functions) +
@@ -184,38 +184,40 @@ class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attribu
                         self.action_weights)
         return devs, jac
 
-    def _add_constant(self, role_array):
+    def _add_constant(self, constant):
+        off = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         return AgfnGame(
             self.role_names, self.strat_names, self.num_role_players,
             self.action_weights, self.function_inputs, self.function_table,
-            self.offsets + np.repeat(role_array, self.num_role_strats))
+            self.offsets + off)
 
-    def _multiply_constant(self, role_array):
-        mul = np.repeat(role_array, self.num_role_strats)
+    def _multiply_constant(self, constant):
+        mul = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         return AgfnGame(
             self.role_names, self.strat_names, self.num_role_players,
             self.action_weights * mul, self.function_inputs,
             self.function_table, self.offsets * mul)
 
-    def _add_game(self, other):
-        utils.check(isinstance(other, AgfnGame), 'can only add other aggfns')
+    def _add_game(self, othr):
         return AgfnGame(
             self.role_names, self.strat_names, self.num_role_players,
-            np.concatenate([self.action_weights, other.action_weights]),
-            np.concatenate([self.function_inputs, other.function_inputs], 1),
-            np.concatenate([self.function_table, other.function_table]),
-            self.offsets + other.offsets)
+            np.concatenate([self.action_weights, othr.action_weights]),
+            np.concatenate([self.function_inputs, othr.function_inputs], 1),
+            np.concatenate([self.function_table, othr.function_table]),
+            self.offsets + othr.offsets)
 
-    def restrict(self, rest):
-        rest = np.asarray(rest, bool)
-        base = rsgame.emptygame_copy(self).restrict(rest)
-        action_weights = self.action_weights[:, rest]
+    def restrict(self, restriction):
+        restriction = np.asarray(restriction, bool)
+        base = rsgame.emptygame_copy(self).restrict(restriction)
+        action_weights = self.action_weights[:, restriction]
         func_mask = np.any(~np.isclose(action_weights, 0), 1)
         return AgfnGame(
             base.role_names, base.strat_names, base.num_role_players,
             action_weights[func_mask],
-            self.function_inputs[:, func_mask][rest],
-            self.function_table[func_mask], self.offsets[rest])
+            self.function_inputs[:, func_mask][restriction],
+            self.function_table[func_mask], self.offsets[restriction])
 
     def to_json(self):
         res = super().to_json()

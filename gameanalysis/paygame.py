@@ -141,8 +141,8 @@ class Game(rsgame.RsGame):
                 np.copyto(pay, self._profile_map[hashed])
         return payoffs.reshape(profiles.shape)
 
-    def deviation_payoffs( # pylint: disable=too-many-statements,too-many-branches,too-many-locals
-            self, mix, *, jacobian=False, ignore_incomplete=False, **_):
+    def deviation_payoffs( # pylint: disable=too-many-statements,too-many-branches,too-many-locals,arguments-differ
+            self, mixture, *, jacobian=False, ignore_incomplete=False, **_):
         """Computes the expected value of deviating
 
         More specifically, this is the expected payoff of playing each pure
@@ -150,7 +150,7 @@ class Game(rsgame.RsGame):
 
         Parameters
         ----------
-        mix : ndarray
+        mixture : ndarray
             The mix all other players are using
         jacobian : bool
             If true, the second returned argument will be the jacobian of the
@@ -166,9 +166,9 @@ class Game(rsgame.RsGame):
             mass that is known, creating a biased estimate based of the data
             that is present.
         """
-        mix = np.asarray(mix, float)
-        supp = mix > 0
-        nan_mask = np.empty_like(mix, dtype=bool)
+        mixture = np.asarray(mixture, float)
+        supp = mixture > 0
+        nan_mask = np.empty_like(mixture, dtype=bool)
 
         # Fill out mask where we don't have data
         if ignore_incomplete or self.is_complete():
@@ -193,7 +193,7 @@ class Game(rsgame.RsGame):
         # Compute values
         if not nan_mask.all():
             # zero_prob effectively makes 0^0=1 and 0/0=0.
-            zmix = mix + self.zero_prob.repeat(self.num_role_strats)
+            zmix = mixture + self.zero_prob.repeat(self.num_role_strats)
             log_mix = np.log(zmix)
             prof_prob = self._profiles.dot(log_mix)[:, None]
             with np.errstate(under='ignore'):
@@ -249,37 +249,37 @@ class Game(rsgame.RsGame):
 
         return devs, dev_jac
 
-    def restrict(self, rest):
+    def restrict(self, restriction):
         """Remove possible strategies from consideration"""
-        rest = np.asarray(rest, bool)
-        base = rsgame.emptygame_copy(self).restrict(rest)
-        prof_mask = ~np.any(self._profiles * ~rest, 1)
-        profiles = self._profiles[prof_mask][:, rest]
-        payoffs = self._payoffs[prof_mask][:, rest]
+        restriction = np.asarray(restriction, bool)
+        base = rsgame.emptygame_copy(self).restrict(restriction)
+        prof_mask = ~np.any(self._profiles * ~restriction, 1)
+        profiles = self._profiles[prof_mask][:, restriction]
+        payoffs = self._payoffs[prof_mask][:, restriction]
         return Game(
             base.role_names, base.strat_names, base.num_role_players, profiles,
             payoffs)
 
-    def _add_constant(self, role_array):
+    def _add_constant(self, constant):
         with np.errstate(invalid='ignore'):
-            new_pays = self._payoffs + np.repeat(
-                role_array, self.num_role_strats)
+            new_pays = self._payoffs + np.broadcast_to(
+                constant, self.num_roles).repeat(self.num_role_strats)
         new_pays[self._profiles == 0] = 0
         return Game(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
-    def _multiply_constant(self, role_array):
+    def _multiply_constant(self, constant):
         with np.errstate(invalid='ignore'):
-            new_pays = self._payoffs * np.repeat(
-                role_array, self.num_role_strats)
+            new_pays = self._payoffs * np.broadcast_to(
+                constant, self.num_roles).repeat(self.num_role_strats)
         return Game(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
-    def _add_game(self, other):
+    def _add_game(self, othr):
         with np.errstate(invalid='ignore'):
-            new_pays = self._payoffs + other.get_payoffs(self._profiles)
+            new_pays = self._payoffs + othr.get_payoffs(self._profiles)
         mask = np.any((~np.isnan(new_pays)) & (self._profiles > 0), 1)
         return Game(
             self.role_names, self.strat_names, self.num_role_players,
@@ -342,7 +342,7 @@ class Game(rsgame.RsGame):
                    self.role_names, self.strat_names)
             if np.any(counts > 0)}
 
-    def payoff_from_json(self, pays, dest=None, *, verify=True):
+    def payoff_from_json(self, pays, dest=None, *, verify=True): # pylint: disable=arguments-differ
         """Read a set of payoffs from json
 
         Parameters
@@ -799,8 +799,9 @@ class SampleGame(Game):
                 pay.reshape((-1, self.num_strats))
                 for pay in self._sample_payoffs])
 
-    def _add_constant(self, role_array):
-        off = np.repeat(role_array, self.num_role_strats)
+    def _add_constant(self, constant):
+        off = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         with np.errstate(invalid='ignore'):
             new_pays = tuple(
                 (profs > 0)[:, None] * (pays + off)
@@ -811,22 +812,23 @@ class SampleGame(Game):
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
-    def _multiply_constant(self, role_array):
-        mult = np.repeat(role_array, self.num_role_strats)
+    def _multiply_constant(self, constant):
+        mult = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         with np.errstate(invalid='ignore'):
             new_pays = tuple(pays * mult for pays in self._sample_payoffs)
         return SampleGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
-    def restrict(self, rest):
+    def restrict(self, restriction):
         """Remove possible strategies from consideration"""
-        rest = np.asarray(rest, bool)
-        base = rsgame.emptygame_copy(self).restrict(rest)
-        prof_mask = ~np.any(self._profiles * ~rest, 1)
-        profiles = self._profiles[prof_mask][:, rest]
+        restriction = np.asarray(restriction, bool)
+        base = rsgame.emptygame_copy(self).restrict(restriction)
+        prof_mask = ~np.any(self._profiles * ~restriction, 1)
+        profiles = self._profiles[prof_mask][:, restriction]
         sample_payoffs = tuple(
-            pays[pmask][..., rest] for pays, pmask
+            pays[pmask][..., restriction] for pays, pmask
             in zip(self._sample_payoffs,
                    np.split(prof_mask, self.sample_starts[1:]))
             if pmask.any())

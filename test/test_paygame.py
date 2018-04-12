@@ -1846,8 +1846,8 @@ class UnAddP(paygame.Game):
             copy.role_names, copy.strat_names, copy.num_role_players, profs,
             pays)
 
-    def _add_game(self, other):
-        assert False
+    def _add_game(self, _):
+        raise ValueError
 
 
 class UnAddC(rsgame.ConstantGame):
@@ -1857,8 +1857,8 @@ class UnAddC(rsgame.ConstantGame):
             copy.role_names, copy.strat_names, copy.num_role_players,
             np.asarray(const, float))
 
-    def _add_game(self, other):
-        assert False
+    def _add_game(self, _):
+        raise ValueError
 
 
 _EMPTYGAME_JSON = {'players': {'r0': 2}, 'strategies': {'r0': ['s0', 's1']}}

@@ -1993,5 +1993,5 @@ class UnAddC(rsgame.ConstantGame):
             copy.role_names, copy.strat_names, copy.num_role_players,
             np.asarray(const, float))
 
-    def _add_game(self, other):
-        assert False
+    def _add_game(self, _):
+        raise ValueError

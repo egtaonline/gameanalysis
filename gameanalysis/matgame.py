@@ -102,21 +102,21 @@ class MatrixGame(rsgame.CompleteGame):
         profile.flat[inds] = 1
         return profile
 
-    def get_payoffs(self, profile):
+    def get_payoffs(self, profiles):
         """Returns an array of profile payoffs"""
-        profile = np.asarray(profile, int)
-        ids = self.profile_to_id(profile)
-        payoffs = np.zeros_like(profile, float)
-        payoffs[profile > 0] = self._payoff_view[ids].flat
+        profiles = np.asarray(profiles, int)
+        ids = self.profile_to_id(profiles)
+        payoffs = np.zeros_like(profiles, float)
+        payoffs[profiles > 0] = self._payoff_view[ids].flat
         return payoffs
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_): # pylint: disable=too-many-locals
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_): # pylint: disable=too-many-locals
         """Computes the expected value of each pure strategy played against all
         opponents playing mix.
 
         Parameters
         ----------
-        mix : ndarray
+        mixture : ndarray
             The mix all other players are using
         jacobian : bool
             If true, the second returned argument will be the jacobian of the
@@ -125,7 +125,7 @@ class MatrixGame(rsgame.CompleteGame):
             the jacobian is taken with respect to.
         """
         rmixes = []
-        for role, rmix in enumerate(np.split(mix, self.role_starts[1:])):
+        for role, rmix in enumerate(np.split(mixture, self.role_starts[1:])):
             shape = [1] * self.num_roles
             shape[role] = -1
             rmixes.append(rmix.reshape(shape))
@@ -159,35 +159,35 @@ class MatrixGame(rsgame.CompleteGame):
 
         return devpays, jac
 
-    def restrict(self, rest):
-        base = rsgame.emptygame_copy(self).restrict(rest)
+    def restrict(self, restriction):
+        base = rsgame.emptygame_copy(self).restrict(restriction)
         matrix = self._payoff_matrix
-        for i, mask in enumerate(np.split(rest, self.role_starts[1:])):
+        for i, mask in enumerate(np.split(restriction, self.role_starts[1:])):
             matrix = matrix[(slice(None),) * i + (mask,)]
         return MatrixGame(base.role_names, base.strat_names, matrix.copy())
 
-    def _add_constant(self, role_array):
+    def _add_constant(self, constant):
         return MatrixGame(
             self.role_names, self.strat_names,
-            self._payoff_matrix + role_array)
+            self._payoff_matrix + constant)
 
-    def _multiply_constant(self, role_array):
+    def _multiply_constant(self, constant):
         return MatrixGame(
             self.role_names, self.strat_names,
-            self._payoff_matrix * role_array)
+            self._payoff_matrix * constant)
 
-    def _add_game(self, other):
+    def _add_game(self, othr):
         utils.check(
-            other.is_complete(), 'can only efficiently add complete games')
-        if hasattr(other, 'payoff_matrix'):
-            other_mat = other.payoff_matrix()
-        else:
-            other_mat = other.get_payoffs(
+            othr.is_complete(), 'can only efficiently add complete games')
+        try:
+            othr_mat = othr.payoff_matrix()
+        except AttributeError:
+            othr_mat = othr.get_payoffs(
                 self.all_profiles())[self.all_profiles() > 0].reshape(
                     self._payoff_matrix.shape)
         return MatrixGame(
             self.role_names, self.strat_names,
-            self._payoff_matrix + other_mat)
+            self._payoff_matrix + othr_mat)
 
     def _mat_to_json(self, matrix, role_index):
         """Convert a sub matrix into json representation"""

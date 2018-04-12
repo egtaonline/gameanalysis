@@ -47,7 +47,7 @@ class DevRegressionGame(rsgame.CompleteGame):
         self._rest = rest
         self._rest.setflags(write=False)
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_):
+    def deviation_payoffs(self, _, **_kw): # pylint: disable=arguments-differ
         utils.fail(
             "regression games don't define deviation payoffs and must be "
             'used as a model for a deviation game')
@@ -66,14 +66,14 @@ class DevRegressionGame(rsgame.CompleteGame):
                     profs, self._rest)).ravel() * scale + off
         return payoffs
 
-    def get_dev_payoffs(self, profiles):
+    def get_dev_payoffs(self, dev_profs):
         """Compute the payoff for deviating
 
         This implementation is more efficient than the default since we don't
         need to compute the payoff for non deviators."""
-        prof_view = np.rollaxis(restrict.translate(profiles.reshape(
+        prof_view = np.rollaxis(restrict.translate(dev_profs.reshape(
             (-1, self.num_roles, self.num_strats)), self._rest), 1, 0)
-        payoffs = np.empty(profiles.shape[:-2] + (self.num_strats,))
+        payoffs = np.empty(dev_profs.shape[:-2] + (self.num_strats,))
         pay_view = payoffs.reshape((-1, self.num_strats)).T
         for pays, profs, reg in zip(
                 pay_view, utils.repeat(prof_view, self.num_role_strats),
@@ -87,29 +87,31 @@ class DevRegressionGame(rsgame.CompleteGame):
     def min_strat_payoffs(self):
         return self._min_payoffs.view()
 
-    def restrict(self, rest):
-        base = rsgame.emptygame_copy(self).restrict(rest)
+    def restrict(self, restriction):
+        base = rsgame.emptygame_copy(self).restrict(restriction)
         new_rest = self._rest.copy()
-        new_rest[new_rest] = rest
-        regs = tuple(reg for reg, m in zip(self._regressors, rest) if m)
+        new_rest[new_rest] = restriction
+        regs = tuple(reg for reg, m in zip(self._regressors, restriction) if m)
         return DevRegressionGame(
-            base, regs, self._offset[rest], self._scale[rest],
-            self._min_payoffs[rest],
-            self._max_payoffs[rest], new_rest)
+            base, regs, self._offset[restriction], self._scale[restriction],
+            self._min_payoffs[restriction], self._max_payoffs[restriction],
+            new_rest)
 
-    def _add_constant(self, role_array):
-        off = np.repeat(role_array, self.num_role_strats)
+    def _add_constant(self, constant):
+        off = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         return DevRegressionGame(
             self, self._regressors, self._offset + off, self._scale,
             self._min_payoffs + off, self._max_payoffs + off, self._rest)
 
-    def _multiply_constant(self, role_array):
-        mul = np.repeat(role_array, self.num_role_strats)
+    def _multiply_constant(self, constant):
+        mul = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         return DevRegressionGame(
             self, self._regressors, self._offset * mul, self._scale * mul,
             self._min_payoffs * mul, self._max_payoffs * mul, self._rest)
 
-    def _add_game(self, other):
+    def _add_game(self, _):
         utils.fail('no efficient add')
 
     def __eq__(self, othr):
@@ -268,8 +270,10 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
         payoffs[profiles == 0] = 0
         return payoffs
 
-    def get_dev_payoffs(self, profiles, *, jacobian=False):
-        dev_profiles = profiles.repeat(
+    def get_dev_payoffs(self, dev_profs, *, jacobian=False): # pylint: disable=arguments-differ
+        # FIXME Test that doing this with functions that don't have jacobian
+        # works
+        dev_profiles = dev_profs.repeat(
             np.add.reduceat(self._sizes, self.role_starts), -2)
         vec = ((dev_profiles - self._profiles) /
                self._lengths.repeat(self._sizes, 0))
@@ -291,18 +295,18 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
     def min_strat_payoffs(self):
         return self._min_payoffs.view()
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_): # pylint: disable=too-many-locals
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_): # pylint: disable=too-many-locals
         players = self._dev_players.repeat(self.num_role_strats, 1)
-        avg_prof = players * mix
+        avg_prof = players * mixture
         diag = 1 / (self._lengths ** 2 + avg_prof)
         diag_sizes = diag.repeat(self._sizes, 0)
         diff = self._profiles - avg_prof.repeat(self._sizes, 0)
         det = 1 / (1 - self._dev_players * np.add.reduceat(
-            mix ** 2 * diag, self.role_starts, 1))
+            mixture ** 2 * diag, self.role_starts, 1))
         det_sizes = det.repeat(self._sizes, 0)
         cov_diag = np.einsum('ij,ij,ij->i', diff, diff, diag_sizes)
         cov_outer = np.add.reduceat(
-            mix * diag_sizes * diff, self.role_starts, 1)
+            mixture * diag_sizes * diff, self.role_starts, 1)
         sec_term = np.einsum(
             'ij,ij,ij,ij->i', self._dev_players.repeat(self._sizes, 0),
             det_sizes, cov_outer, cov_outer)
@@ -314,7 +318,7 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
         if not jacobian:
             return payoffs
 
-        beta = 1 - players * mix * diag
+        beta = 1 - players * mixture * diag
         jac_coef = (
             ((beta ** 2 - 1) * det.repeat(self.num_role_strats, 1) +
              players * diag) * avg[:, None])
@@ -329,21 +333,21 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
     # TODO Add function that creates sample game which draws payoffs from the
     # gp distribution
 
-    def restrict(self, rest):
-        rest = np.asarray(rest, bool)
-        base = rsgame.emptygame_copy(self).restrict(rest)
+    def restrict(self, restriction):
+        restriction = np.asarray(restriction, bool)
+        base = rsgame.emptygame_copy(self).restrict(restriction)
 
-        size_mask = rest.repeat(self._sizes)
-        sizes = self._sizes[rest]
+        size_mask = restriction.repeat(self._sizes)
+        sizes = self._sizes[restriction]
         profiles = self._profiles[size_mask]
-        lengths = self._lengths[rest]
-        zeros = (profiles[:, ~rest] /
-                 lengths[:, ~rest].repeat(sizes, 0))
+        lengths = self._lengths[restriction]
+        zeros = (profiles[:, ~restriction] /
+                 lengths[:, ~restriction].repeat(sizes, 0))
         removed = np.exp(-np.einsum('ij,ij->i', zeros, zeros) / 2) # pylint: disable=invalid-unary-operand-type
         uprofs, inds = np.unique(
             recfunctions.merge_arrays([
-                np.arange(rest.sum()).repeat(sizes).view([('s', int)]),
-                utils.axis_to_elem(profiles[:, rest])], flatten=True),
+                np.arange(restriction.sum()).repeat(sizes).view([('s', int)]),
+                utils.axis_to_elem(profiles[:, restriction])], flatten=True),
             return_inverse=True)
         new_alpha = np.bincount(inds, removed * self._alpha[size_mask])
         new_sizes = np.diff(np.concatenate([
@@ -352,24 +356,26 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
 
         return RbfGpGame(
             base.role_names, base.strat_names, base.num_role_players,
-            self._offset[rest], self._coefs[rest],
-            lengths[:, rest], new_sizes, uprofs['axis'], new_alpha)
+            self._offset[restriction], self._coefs[restriction],
+            lengths[:, restriction], new_sizes, uprofs['axis'], new_alpha)
 
-    def _add_constant(self, role_array):
+    def _add_constant(self, constant):
+        off = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         return RbfGpGame(
             self.role_names, self.strat_names, self.num_role_players,
-            self._offset + np.repeat(role_array, self.num_role_strats),
-            self._coefs, self._lengths, self._sizes, self._profiles,
-            self._alpha)
+            self._offset + off, self._coefs, self._lengths, self._sizes,
+            self._profiles, self._alpha)
 
-    def _multiply_constant(self, role_array):
-        mul = np.repeat(role_array, self.num_role_strats)
+    def _multiply_constant(self, constant):
+        mul = np.broadcast_to(constant, self.num_roles).repeat(
+            self.num_role_strats)
         return RbfGpGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._offset * mul, self._coefs * mul, self._lengths, self._sizes,
             self._profiles, self._alpha)
 
-    def _add_game(self, other):
+    def _add_game(self, _):
         utils.fail('no efficient add')
 
     def to_json(self):
@@ -593,41 +599,39 @@ class SampleDeviationGame(_DeviationGame):
         # convergence)
         self._num_samples = num_samples
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_):
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         """Compute the deivation payoffs
 
         The method computes the jacobian as if we were importance sampling the
         results, i.e. the function is really always sample according to mixture
         m', but then importance sample to get the actual result."""
-        profs = self.random_role_deviation_profiles(self._num_samples, mix)
+        profs = self.random_role_deviation_profiles(self._num_samples, mixture)
         payoffs = self._model.get_dev_payoffs(profs)
         dev_pays = payoffs.mean(0)
         if not jacobian:
             return dev_pays
 
-        supp = mix > 0
+        supp = mixture > 0
         weights = np.zeros(profs.shape)
-        weights[..., supp] = profs[..., supp] / mix[supp]
+        weights[..., supp] = profs[..., supp] / mixture[supp]
         jac = np.einsum('ij,ijk->jk', payoffs, weights.repeat(
             self.num_role_strats, 1)) / self._num_samples
         return dev_pays, jac
 
-    def restrict(self, rest):
-        return SampleDeviationGame(self._model.restrict(rest),
-                                   self._num_samples)
-
-    def _add_constant(self, role_array):
-        return SampleDeviationGame(self._model + role_array, self._num_samples)
-
-    def _multiply_constant(self, role_array):
-        return SampleDeviationGame(self._model * role_array, self._num_samples)
-
-    def _add_game(self, other):
-        utils.check(
-            isinstance(other, SampleDeviationGame),
-            'only efficient if sample game')
+    def restrict(self, restriction):
         return SampleDeviationGame(
-            self._model + other._model, self._num_samples)
+            self._model.restrict(restriction), self._num_samples)
+
+    def _add_constant(self, constant):
+        return SampleDeviationGame(self._model + constant, self._num_samples)
+
+    def _multiply_constant(self, constant):
+        return SampleDeviationGame(self._model * constant, self._num_samples)
+
+    def _add_game(self, othr):
+        assert self._num_samples == othr._num_samples
+        return SampleDeviationGame(
+            self._model + othr._model, self._num_samples)
 
     def to_json(self):
         base = super().to_json()
@@ -691,29 +695,31 @@ class PointDeviationGame(_DeviationGame):
         self._dev_players = np.repeat(self.num_role_players - np.eye(
             self.num_roles, dtype=int), self.num_role_strats, 1)
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_):
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         if not jacobian:
-            return self._model.get_dev_payoffs(self._dev_players * mix)
+            return self._model.get_dev_payoffs(self._dev_players * mixture)
 
         dev, jac = self._model.get_dev_payoffs(
-            self._dev_players * mix, jacobian=True)
+            self._dev_players * mixture, jacobian=True)
         jac *= self._dev_players.repeat(self.num_role_strats, 0)
         return dev, jac
 
-    def restrict(self, rest):
-        return PointDeviationGame(self._model.restrict(rest))
+    def restrict(self, restriction):
+        return PointDeviationGame(self._model.restrict(restriction))
 
-    def _add_constant(self, role_array):
-        return PointDeviationGame(self._model + role_array)
+    def _add_constant(self, constant):
+        return PointDeviationGame(self._model + constant)
 
-    def _multiply_constant(self, role_array):
-        return PointDeviationGame(self._model * role_array)
+    def _multiply_constant(self, constant):
+        return PointDeviationGame(self._model * constant)
 
-    def _add_game(self, other):
+    def _add_game(self, othr):
+        # FIXME Don't want is instance, but not sure how to check it's not
+        # another dev reg game
         utils.check(
-            isinstance(other, PointDeviationGame),
+            isinstance(othr, PointDeviationGame),
             'only efficient add for point games')
-        return PointDeviationGame(self._model + other._model)
+        return PointDeviationGame(self._model + othr._model)
 
     def to_json(self):
         base = super().to_json()
@@ -767,7 +773,7 @@ class NeighborDeviationGame(_DeviationGame):
         utils.check(num_devs >= 0, 'num devs must be nonnegative')
         self._num_devs = num_devs
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **_):
+    def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         # TODO This is not smooth because there are discontinuities when the
         # maximum probability profile jumps at the boundary. If we wanted to
         # make it smooth, one option would be to compute the smoother
@@ -775,21 +781,21 @@ class NeighborDeviationGame(_DeviationGame):
         # need to ensure smoothness is that the weight at profile
         # discontinuities is 0.
         profiles = self.nearby_profiles(
-            self.max_prob_prof(mix), self._num_devs)
+            self.max_prob_prof(mixture), self._num_devs)
         payoffs = self.get_payoffs(profiles)
         game = paygame.game_replace(self, profiles, payoffs)
-        return game.deviation_payoffs(mix, ignore_incomplete=True,
+        return game.deviation_payoffs(mixture, ignore_incomplete=True,
                                       jacobian=jacobian)
 
-    def restrict(self, rest):
+    def restrict(self, restriction):
         return NeighborDeviationGame(
-            self._model.restrict(rest), self._num_devs)
+            self._model.restrict(restriction), self._num_devs)
 
-    def _add_constant(self, role_array):
-        return NeighborDeviationGame(self._model + role_array, self._num_devs)
+    def _add_constant(self, constant):
+        return NeighborDeviationGame(self._model + constant, self._num_devs)
 
-    def _multiply_constant(self, role_array):
-        return NeighborDeviationGame(self._model * role_array, self._num_devs)
+    def _multiply_constant(self, constant):
+        return NeighborDeviationGame(self._model * constant, self._num_devs)
 
     def _add_game(self, othr):
         assert self._num_devs == othr._num_devs

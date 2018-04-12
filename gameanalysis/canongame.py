@@ -45,18 +45,18 @@ class CanonGame(rsgame.RsGame):
         """Get all payoff parallel with profiles()"""
         return self._game.payoffs()[:, self._mask]
 
-    def deviation_payoffs(self, mix, *, jacobian=False, **kw):
+    def deviation_payoffs(self, mixture, *, jacobian=False, **kw):
         """Get the deviation payoffs for a mixture"""
-        unmix = np.insert(mix, self._inds, 1.0)
-        if jacobian: # pylint: disable=no-else-return
-            dev, jac = self._game.deviation_payoffs(unmix, jacobian=True, **kw)
-            return dev[self._mask], jac[self._mask][:, self._mask]
-        else:
+        unmix = np.insert(mixture, self._inds, 1.0)
+        if not jacobian:
             return self._game.deviation_payoffs(unmix, **kw)[self._mask]
 
-    def get_payoffs(self, profile):
+        dev, jac = self._game.deviation_payoffs(unmix, jacobian=True, **kw)
+        return dev[self._mask], jac[self._mask][:, self._mask]
+
+    def get_payoffs(self, profiles):
         """Get the payoffs for a profile or profiles"""
-        unprofs = np.insert(profile, self._inds, self._players, -1)
+        unprofs = np.insert(profiles, self._inds, self._players, -1)
         return self._game.get_payoffs(unprofs)[..., self._mask]
 
     @utils.memoize
@@ -69,20 +69,20 @@ class CanonGame(rsgame.RsGame):
         """Get the minimum strategy payoffs"""
         return self._game.min_strat_payoffs()[self._mask]
 
-    def restrict(self, rest):
+    def restrict(self, restriction):
         """Restrict viable strategies for a canon game"""
-        unrest = np.insert(rest, self._inds, True)
+        unrest = np.insert(restriction, self._inds, True)
         return CanonGame(self._game.restrict(unrest))
 
-    def _add_constant(self, role_array):
+    def _add_constant(self, constant):
         """Add a constant to a canon game"""
-        return CanonGame(self._game + role_array)
+        return CanonGame(self._game + constant)
 
-    def _multiply_constant(self, role_array):
+    def _multiply_constant(self, constant):
         """Multiple canon game payoffs by a constant"""
-        return CanonGame(self._game * role_array)
+        return CanonGame(self._game * constant)
 
-    def _add_game(self, other):
+    def _add_game(self, _):
         """Add another game to canon game"""
         utils.fail("canon games can't be added")
 
