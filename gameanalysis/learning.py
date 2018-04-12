@@ -543,35 +543,35 @@ class _DeviationGame(rsgame.CompleteGame): # pylint: disable=abstract-method
         utils.check(
             model_game.is_complete(),
             'deviation models must be complete games')
-        self._model = model_game
+        self.model = model_game
 
     def get_payoffs(self, profiles):
-        return self._model.get_payoffs(profiles)
+        return self.model.get_payoffs(profiles)
 
     def profiles(self):
-        return self._model.profiles()
+        return self.model.profiles()
 
     def payoffs(self):
-        return self._model.payoffs()
+        return self.model.payoffs()
 
     def max_strat_payoffs(self):
-        return self._model.max_strat_payoffs()
+        return self.model.max_strat_payoffs()
 
     def min_strat_payoffs(self):
-        return self._model.min_strat_payoffs()
+        return self.model.min_strat_payoffs()
 
     def to_json(self):
         base = super().to_json()
-        base['model'] = self._model.to_json()
+        base['model'] = self.model.to_json()
         return base
 
-    def __eq__(self, other):
-        return (super().__eq__(other) and
-                self._model == other._model)
+    def __eq__(self, othr):
+        return (super().__eq__(othr) and
+                self.model == othr.model)
 
     @utils.memoize
     def __hash__(self):
-        return hash((super().__hash__(), self._model))
+        return hash((super().__hash__(), self.model))
 
 
 class SampleDeviationGame(_DeviationGame):
@@ -597,7 +597,7 @@ class SampleDeviationGame(_DeviationGame):
         # change the number of samples based off of the query number to
         # deviation payoffs (i.e. reduce variance as we get close to
         # convergence)
-        self._num_samples = num_samples
+        self.num_samples = num_samples
 
     def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         """Compute the deivation payoffs
@@ -605,8 +605,8 @@ class SampleDeviationGame(_DeviationGame):
         The method computes the jacobian as if we were importance sampling the
         results, i.e. the function is really always sample according to mixture
         m', but then importance sample to get the actual result."""
-        profs = self.random_role_deviation_profiles(self._num_samples, mixture)
-        payoffs = self._model.get_dev_payoffs(profs)
+        profs = self.random_role_deviation_profiles(self.num_samples, mixture)
+        payoffs = self.model.get_dev_payoffs(profs)
         dev_pays = payoffs.mean(0)
         if not jacobian:
             return dev_pays
@@ -615,37 +615,37 @@ class SampleDeviationGame(_DeviationGame):
         weights = np.zeros(profs.shape)
         weights[..., supp] = profs[..., supp] / mixture[supp]
         jac = np.einsum('ij,ijk->jk', payoffs, weights.repeat(
-            self.num_role_strats, 1)) / self._num_samples
+            self.num_role_strats, 1)) / self.num_samples
         return dev_pays, jac
 
     def restrict(self, restriction):
         return SampleDeviationGame(
-            self._model.restrict(restriction), self._num_samples)
+            self.model.restrict(restriction), self.num_samples)
 
     def _add_constant(self, constant):
-        return SampleDeviationGame(self._model + constant, self._num_samples)
+        return SampleDeviationGame(self.model + constant, self.num_samples)
 
     def _multiply_constant(self, constant):
-        return SampleDeviationGame(self._model * constant, self._num_samples)
+        return SampleDeviationGame(self.model * constant, self.num_samples)
 
     def _add_game(self, othr):
-        assert self._num_samples == othr._num_samples
+        assert self.num_samples == othr.num_samples
         return SampleDeviationGame(
-            self._model + othr._model, self._num_samples)
+            self.model + othr.model, self.num_samples)
 
     def to_json(self):
         base = super().to_json()
-        base['samples'] = self._num_samples
+        base['samples'] = self.num_samples
         base['type'] = 'sample.1'
         return base
 
     def __eq__(self, othr):
         return (super().__eq__(othr) and
-                self._num_samples == othr._num_samples)
+                self.num_samples == othr.num_samples)
 
     @utils.memoize
     def __hash__(self):
-        return hash((super().__hash__(), self._num_samples))
+        return hash((super().__hash__(), self.num_samples))
 
 
 def sample(game, num_samples=100):
@@ -659,9 +659,10 @@ def sample(game, num_samples=100):
     num_samples : int, optional
         The number of samples to take.
     """
-    if hasattr(game, '_model'):
-        game = game._model
-    return SampleDeviationGame(game, num_samples=num_samples)
+    try:
+        return SampleDeviationGame(game.model, num_samples=num_samples)
+    except AttributeError:
+        return SampleDeviationGame(game, num_samples=num_samples)
 
 
 def sample_json(json):
@@ -697,29 +698,25 @@ class PointDeviationGame(_DeviationGame):
 
     def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         if not jacobian:
-            return self._model.get_dev_payoffs(self._dev_players * mixture)
+            return self.model.get_dev_payoffs(self._dev_players * mixture)
 
-        dev, jac = self._model.get_dev_payoffs(
+        dev, jac = self.model.get_dev_payoffs(
             self._dev_players * mixture, jacobian=True)
         jac *= self._dev_players.repeat(self.num_role_strats, 0)
         return dev, jac
 
     def restrict(self, restriction):
-        return PointDeviationGame(self._model.restrict(restriction))
+        return PointDeviationGame(self.model.restrict(restriction))
 
     def _add_constant(self, constant):
-        return PointDeviationGame(self._model + constant)
+        return PointDeviationGame(self.model + constant)
 
     def _multiply_constant(self, constant):
-        return PointDeviationGame(self._model * constant)
+        return PointDeviationGame(self.model * constant)
 
     def _add_game(self, othr):
-        # FIXME Don't want is instance, but not sure how to check it's not
-        # another dev reg game
-        utils.check(
-            isinstance(othr, PointDeviationGame),
-            'only efficient add for point games')
-        return PointDeviationGame(self._model + othr._model)
+        assert isinstance(othr, PointDeviationGame)
+        return PointDeviationGame(self.model + othr.model)
 
     def to_json(self):
         base = super().to_json()
@@ -737,7 +734,7 @@ def point(game):
         an existing deviation game, then this will use it's underlying model.
     """
     try:
-        return PointDeviationGame(game._model)
+        return PointDeviationGame(game.model)
     except AttributeError:
         return PointDeviationGame(game)
 
@@ -753,9 +750,9 @@ class NeighborDeviationGame(_DeviationGame):
     """Create a neighbor game from a model
 
     This takes a normalized weighted estimate of the deviation payoffs by
-    finding all profiles within `num_devs` of the maximum probability profile
-    for the mixture and weighting them accordingly. This is biased, but
-    accurate in the limit as `num_devs` approaches `num_players`. It also
+    finding all profiles within `num_neighbors` of the maximum probability
+    profile for the mixture and weighting them accordingly. This is biased, but
+    accurate in the limit as `num_neighbors` approaches `num_players`. It also
     produces discontinuities every time the maximum probability profile
     switches.
 
@@ -764,14 +761,14 @@ class NeighborDeviationGame(_DeviationGame):
     game : RsGame
         If this is a payoff model it will be used to take samples, if this is
         an existing deviation game, then this will use it's underlying model.
-    num_devs : int, optional
+    num_neighbors : int, optional
         The number of deviations to take.
     """
 
-    def __init__(self, model, num_devs=2):
+    def __init__(self, model, num_neighbors=2):
         super().__init__(model)
-        utils.check(num_devs >= 0, 'num devs must be nonnegative')
-        self._num_devs = num_devs
+        utils.check(num_neighbors >= 0, 'num devs must be nonnegative')
+        self.num_neighbors = num_neighbors
 
     def deviation_payoffs(self, mixture, *, jacobian=False, **_):
         # TODO This is not smooth because there are discontinuities when the
@@ -781,7 +778,7 @@ class NeighborDeviationGame(_DeviationGame):
         # need to ensure smoothness is that the weight at profile
         # discontinuities is 0.
         profiles = self.nearby_profiles(
-            self.max_prob_prof(mixture), self._num_devs)
+            self.max_prob_prof(mixture), self.num_neighbors)
         payoffs = self.get_payoffs(profiles)
         game = paygame.game_replace(self, profiles, payoffs)
         return game.deviation_payoffs(mixture, ignore_incomplete=True,
@@ -789,34 +786,34 @@ class NeighborDeviationGame(_DeviationGame):
 
     def restrict(self, restriction):
         return NeighborDeviationGame(
-            self._model.restrict(restriction), self._num_devs)
+            self.model.restrict(restriction), self.num_neighbors)
 
     def _add_constant(self, constant):
-        return NeighborDeviationGame(self._model + constant, self._num_devs)
+        return NeighborDeviationGame(self.model + constant, self.num_neighbors)
 
     def _multiply_constant(self, constant):
-        return NeighborDeviationGame(self._model * constant, self._num_devs)
+        return NeighborDeviationGame(self.model * constant, self.num_neighbors)
 
     def _add_game(self, othr):
-        assert self._num_devs == othr._num_devs
+        assert self.num_neighbors == othr.num_neighbors
         return NeighborDeviationGame(
-            self._model + othr._model, self._num_devs)
+            self.model + othr.model, self.num_neighbors)
 
     def to_json(self):
         base = super().to_json()
-        base['devs'] = self._num_devs
-        base['type'] = 'neighbor.1'
+        base['neighbors'] = self.num_neighbors
+        base['type'] = 'neighbor.2'
         return base
 
     def __eq__(self, othr):
-        return super().__eq__(othr) and self._num_devs == othr._num_devs
+        return super().__eq__(othr) and self.num_neighbors == othr.num_neighbors
 
     @utils.memoize
     def __hash__(self):
-        return hash((super().__hash__(), self._num_devs))
+        return hash((super().__hash__(), self.num_neighbors))
 
 
-def neighbor(game, num_devs=2):
+def neighbor(game, num_neighbors=2):
     """Create a neighbor game from a model
 
     Parameters
@@ -824,18 +821,19 @@ def neighbor(game, num_devs=2):
     game : RsGame
         If this is a payoff model it will be used to take samples, if this is
         an existing deviation game, then this will use it's underlying model.
-    num_devs : int, optional
+    num_neighbors : int, optional
         The number of deviations to explore out.
     """
     try:
-        return NeighborDeviationGame(game._model, num_devs=num_devs)
+        return NeighborDeviationGame(game.model, num_neighbors=num_neighbors)
     except AttributeError:
-        return NeighborDeviationGame(game, num_devs=num_devs)
+        return NeighborDeviationGame(game, num_neighbors=num_neighbors)
 
 
 def neighbor_json(json):
     """Read neighbor game from json"""
     utils.check(
         json['type'].split('.', 1)[0] == 'neighbor', 'incorrect type')
-    return NeighborDeviationGame(gamereader.loadj(json['model']),
-                                 num_devs=json['devs'])
+    return NeighborDeviationGame(
+        gamereader.loadj(json['model']),
+        num_neighbors=json.get('neighbors', json.get('devs', None)))

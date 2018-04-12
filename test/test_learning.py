@@ -225,7 +225,7 @@ def test_sample(_): # pylint: disable=too-many-locals
     def sample_profs(mix):
         """Sample profiles"""
         return game.random_role_deviation_profiles(
-            learn._num_samples, mix).astype(float)
+            learn.num_samples, mix).astype(float)
 
     @autograd.primitive
     def model_pays(profs):
@@ -257,7 +257,7 @@ def test_sample(_): # pylint: disable=too-many-locals
         payoffs = model_pays(profs)
         numer = rep(anp.prod(mix ** profs, 2))
         denom = const_weights(profs, mix)
-        weights = numer / denom / learn._num_samples
+        weights = numer / denom / learn.num_samples
         return anp.einsum('ij,ij->j', weights, payoffs)
 
     devpays_jac = autograd.jacobian(devpays) # pylint: disable=no-value-for-parameter
@@ -294,7 +294,7 @@ def test_sample(_): # pylint: disable=too-many-locals
     assert np.allclose(norm.min_role_payoffs(), 0)
     assert np.allclose(norm.max_role_payoffs(), 1)
 
-    assert learning.sample(learn, learn._num_samples) == learn
+    assert learning.sample(learn, learn.num_samples) == learn
 
     learn = learning.sample(learning.rbfgame_train(game))
     jgame = json.dumps(learn.to_json())
@@ -394,7 +394,7 @@ def test_neighbor(_): # pylint: disable=too-many-locals
     assert np.allclose(norm.min_role_payoffs(), 0)
     assert np.allclose(norm.max_role_payoffs(), 1)
 
-    assert learning.neighbor(learn, learn._num_devs) == learn
+    assert learning.neighbor(learn, learn.num_neighbors) == learn
 
     learn = learning.neighbor(learning.rbfgame_train(game))
     jgame = json.dumps(learn.to_json())

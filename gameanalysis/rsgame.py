@@ -1517,6 +1517,7 @@ class RsGame(GameLike):
                 best_resps, self.role_starts).repeat(self.num_role_strats)
 
     def __mul__(self, constant):
+        constant = np.asarray(constant)
         utils.check(
             np.all(constant > 0),
             'game can only be multiplied by positive constants')
@@ -1526,6 +1527,7 @@ class RsGame(GameLike):
         return self * constant
 
     def __truediv__(self, constant):
+        constant = np.asarray(constant)
         return self * (1 / constant)
 
     def __add__(self, other):
@@ -1545,7 +1547,7 @@ class RsGame(GameLike):
         return self + other
 
     def __sub__(self, other):
-        return self + -other
+        return self + -np.asarray(other)
 
 
 class EmptyGame(RsGame):
