@@ -1,4 +1,5 @@
 """Module for computing nash equilibria"""
+import functools
 import itertools
 import multiprocessing
 import warnings
@@ -260,17 +261,9 @@ _AVAILABLE_METHODS = {
 }
 
 
-# FIXME Replace with functools.partial
-class _PickleableEqaFinding(object):
-    """This allows all of the nash equilibria functions to be pickled"""
-
-    def __init__(self, func, game, args):
-        self.func = func
-        self.game = game
-        self.args = args
-
-    def __call__(self, mix):
-        return self.func(self.game, mix, **self.args)
+def _find_eqm(function, game, mix, **kwargs):
+    """Pickleable function to find an equilibrium"""
+    return function(game, mix, **kwargs)
 
 
 def mixed_nash( # pylint: disable=too-many-locals
@@ -353,9 +346,10 @@ def mixed_nash( # pylint: disable=too-many-locals
 
     # Initialize pickleable methods
     methods = methods or {'replicator': {}, 'optimize': {}}
-    methods = (_PickleableEqaFinding(_AVAILABLE_METHODS[meth], game,
-                                     (opts or {}))
-               for meth, opts in methods.items())
+    methods = (
+        functools.partial(
+            _find_eqm, _AVAILABLE_METHODS[meth], game, **(opts or {}))
+        for meth, opts in methods.items())
 
     # what to do with each candidate equilibrium
     def process(i, eqm):
