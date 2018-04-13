@@ -1333,7 +1333,8 @@ def test_to_from_profsamplepay_json():
     assert np.all(prof == profile)
     assert np.allclose(spay, spayoff)
     prof = np.empty_like(prof)
-    _, spay = game.profsamplepay_from_json(json_profspay, dest_prof=prof)
+    spay = np.empty_like(spayoff)
+    game.profsamplepay_from_json(json_profspay, prof, spay)
     assert np.all(prof == profile)
     assert np.allclose(spay, spayoff)
 

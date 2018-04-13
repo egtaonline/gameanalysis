@@ -385,81 +385,99 @@ class Game(rsgame.RsGame):
 
         # observations but no data
         if not prof.get('observations', True):
-            for symgrp in prof['symmetry_groups']:
-                _, role, strat, count, _ = _unpack_symgrp(**symgrp)
-                index = self.role_strat_index(role, strat)
-                dest_prof[index] = count
-                dest_pays[index] = np.nan
-
+            self._profpay_from_json_empty_obs(prof, dest_prof, dest_pays)
         # summary format
         elif 'observations' not in prof and 'symmetry_groups' in prof:
-            for symgrp in prof['symmetry_groups']:
-                _, role, strat, count, pay = _unpack_symgrp(**symgrp)
-                index = self.role_strat_index(role, strat)
-                dest_prof[index] = count
-                dest_pays[index] = pay
-
+            self._profpay_from_json_summ(prof, dest_prof, dest_pays)
         # observations format
         elif ('observations' in prof
               and 'symmetry_groups' in prof['observations'][0]):
-            ids = {}
-            for symgrp in prof['symmetry_groups']:
-                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
-                index = self.role_strat_index(role, strat)
-                ids[i] = index
-                dest_prof[index] = count
-
-            # FIXME do we need counts, or is it equal to the enumerate
-            counts = np.zeros(self.num_strats, int)
-            for _, obs in enumerate(prof['observations']):
-                for symgrp in obs['symmetry_groups']:
-                    i, pay = _unpack_obs(**symgrp)
-                    k = ids[i]
-                    counts[k] += 1
-                    dest_pays[k] += (pay - dest_pays[k]) / counts[k]
-
+            self._profpay_from_json_obs(prof, dest_prof, dest_pays)
         # full format
         elif 'observations' in prof:
-            ids = {}
-            for symgrp in prof['symmetry_groups']:
-                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
-                index = self.role_strat_index(role, strat)
-                ids[i] = index
-                dest_prof[index] = count
-
-            # FIXME do we need counts, or is it equal to the enumerate
-            counts = np.zeros(self.num_strats, int)
-            for _, obs in enumerate(prof['observations']):
-                for player in obs['players']:
-                    i, pay = _unpack_player(**player)
-                    k = ids[i]
-                    counts[k] += 1
-                    dest_pays[k] += (pay - dest_pays[k]) / counts[k]
-
+            self._profpay_from_json_full(prof, dest_prof, dest_pays)
         # observation from simulation
         elif 'players' in prof:
-            for player in prof['players']:
-                role, strat, pay = _unpack_obs_player(**player)
-                ind = self.role_strat_index(role, strat)
-                dest_prof[ind] += 1
-                dest_pays[ind] += (pay - dest_pays[ind]) / dest_prof[ind]
-
+            self._profpay_from_json_observation(prof, dest_prof, dest_pays)
         # dict payoff
         elif all(not isinstance(v, abc.Mapping) for v in prof.values()):
-            for role, strats in prof.items():
-                for strat, count, pays in strats:
-                    index = self.role_strat_index(role, strat)
-                    dest_prof[index] = count
-                    dest_pays[index] = _mean(pays)
-
+            self._profpay_from_json_dict(prof, dest_prof, dest_pays)
         # error
         else:
-            utils.fail('unknown format')
+            raise ValueError('unknown format')
 
         utils.check(
             not verify or self.is_profile(dest_prof),
             '"{}" does not define a valid profile', prof)
         return dest_prof, dest_pays
+
+    def _profpay_from_json_empty_obs(self, prof, dest_prof, dest_pays):
+        """Get profile and payoff from empty observations format"""
+        for symgrp in prof['symmetry_groups']:
+            _, role, strat, count, _ = _unpack_symgrp(**symgrp)
+            index = self.role_strat_index(role, strat)
+            dest_prof[index] = count
+            dest_pays[index] = np.nan
+
+    def _profpay_from_json_summ(self, prof, dest_prof, dest_pays):
+        """Get profile and payoff from summary format"""
+        for symgrp in prof['symmetry_groups']:
+            _, role, strat, count, pay = _unpack_symgrp(**symgrp)
+            index = self.role_strat_index(role, strat)
+            dest_prof[index] = count
+            dest_pays[index] = pay
+
+    def _profpay_from_json_obs(self, prof, dest_prof, dest_pays): # pylint: disable=too-many-locals
+        """Get profile and payoff from observations format"""
+        ids = {}
+        for symgrp in prof['symmetry_groups']:
+            i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+            index = self.role_strat_index(role, strat)
+            ids[i] = index
+            dest_prof[index] = count
+
+        # FIXME do we need counts, or is it equal to the enumerate
+        counts = np.zeros(self.num_strats, int)
+        for _, obs in enumerate(prof['observations']):
+            for symgrp in obs['symmetry_groups']:
+                i, pay = _unpack_obs(**symgrp)
+                k = ids[i]
+                counts[k] += 1
+                dest_pays[k] += (pay - dest_pays[k]) / counts[k]
+
+    def _profpay_from_json_full(self, prof, dest_prof, dest_pays): # pylint: disable=too-many-locals
+        """Get profile and payoff from full format"""
+        ids = {}
+        for symgrp in prof['symmetry_groups']:
+            i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+            index = self.role_strat_index(role, strat)
+            ids[i] = index
+            dest_prof[index] = count
+
+        # FIXME do we need counts, or is it equal to the enumerate
+        counts = np.zeros(self.num_strats, int)
+        for _, obs in enumerate(prof['observations']):
+            for player in obs['players']:
+                i, pay = _unpack_player(**player)
+                k = ids[i]
+                counts[k] += 1
+                dest_pays[k] += (pay - dest_pays[k]) / counts[k]
+
+    def _profpay_from_json_observation(self, prof, dest_prof, dest_pays):
+        """Get profile and payoff from observation format"""
+        for player in prof['players']:
+            role, strat, pay = _unpack_obs_player(**player)
+            ind = self.role_strat_index(role, strat)
+            dest_prof[ind] += 1
+            dest_pays[ind] += (pay - dest_pays[ind]) / dest_prof[ind]
+
+    def _profpay_from_json_dict(self, prof, dest_prof, dest_pays):
+        """Get profile and payoff from dict format"""
+        for role, strats in prof.items():
+            for strat, count, pays in strats:
+                index = self.role_strat_index(role, strat)
+                dest_prof[index] = count
+                dest_pays[index] = _mean(pays)
 
     def profpay_to_json(self, payoffs, prof):
         """Format a profile and payoffs as json"""
@@ -903,82 +921,96 @@ class SampleGame(Game):
             dest_prof = np.empty(self.num_strats, int)
         dest_prof.fill(0)
 
-        def get_pay(num):
-            """Get the payoff given a certain number ot take"""
-            dest = dest_samplepay
-            if dest is None:
-                dest = np.empty((num, self.num_strats), float)
-            else:
-                utils.check(
-                    dest.shape[0] >= num,
-                    'dest_samplepay not large enough for observations')
-            dest.fill(0)
-            return dest
-
         # summary format
         if 'observations' not in prof and 'symmetry_groups' in prof:
-            dest = get_pay(1)
-            for symgrp in prof['symmetry_groups']:
-                _, role, strat, count, pay = _unpack_symgrp(**symgrp)
-                index = self.role_strat_index(role, strat)
-                dest_prof[index] = count
-                dest[0, index] = pay
-
+            return self._profsamplepay_from_json_summ(
+                prof, dest_prof, dest_samplepay)
         # observations format
         elif ('observations' in prof
               and 'symmetry_groups' in prof['observations'][0]):
-            dest = get_pay(len(prof['observations']))
-            ids = {}
-            for symgrp in prof['symmetry_groups']:
-                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
-                index = self.role_strat_index(role, strat)
-                ids[i] = index
-                dest_prof[index] = count
-
-            for j, obs in enumerate(prof['observations']):
-                for symgrp in obs['symmetry_groups']:
-                    i, pay = _unpack_obs(**symgrp)
-                    dest[j, ids[i]] = pay
-
+            return self._profsamplepay_from_json_obs(
+                prof, dest_prof, dest_samplepay)
         # full format
         elif 'observations' in prof:
-            dest = get_pay(len(prof['observations']))
-            ids = {}
-            for symgrp in prof['symmetry_groups']:
-                i, role, strat, count, _ = _unpack_symgrp(**symgrp)
-                index = self.role_strat_index(role, strat)
-                ids[i] = index
-                dest_prof[index] = count
-
-            counts = np.empty(self.num_strats, int)
-            for j, obs in enumerate(prof['observations']):
-                counts.fill(0)
-                for player in obs['players']:
-                    i, pay = _unpack_player(**player)
-                    k = ids[i]
-                    counts[k] += 1
-                    dest[j, k] += (pay - dest[j, k]) / counts[k]
-                utils.check(
-                    np.all(counts == dest_prof),
-                    "full format didn't have payoffs for the correct number "
-                    'of players')
-
+            return self._profsamplepay_from_json_full(
+                prof, dest_prof, dest_samplepay)
         # profile payoff
         elif all(not isinstance(v, abc.Mapping) for v in prof.values()):
-            num = max(max(len(p) if isinstance(p, abc.Iterable) else 1
-                          for _, __, p in sg)
-                      for sg in prof.values())
-            dest = get_pay(num)
-            for role, strats in prof.items():
-                for strat, count, pays in strats:
-                    index = self.role_strat_index(role, strat)
-                    dest_prof[index] = count
-                    dest[:, index] = pays
-
+            return self._profsamplepay_from_json_prof(
+                prof, dest_prof, dest_samplepay)
         # unrecognized
         else:
-            utils.fail('unrecognized format')
+            raise ValueError('unrecognized format')
 
+    def _get_spay_dest(self, dest, num):
+        """Get payoff dest for number of samples"""
+        if dest is None:
+            return np.zeros((num, self.num_strats), float)
+        utils.check(
+            dest.shape == (num, self.num_strats),
+            'dest_samplepay not large enough for observations')
+        dest.fill(0)
+        return dest
+
+    def _profsamplepay_from_json_summ(self, prof, dest_prof, dest):
+        """Get profile and sample payoff for summary format"""
+        dest = self._get_spay_dest(dest, 1)
+        for symgrp in prof['symmetry_groups']:
+            _, role, strat, count, pay = _unpack_symgrp(**symgrp)
+            index = self.role_strat_index(role, strat)
+            dest_prof[index] = count
+            dest[0, index] = pay
+        return dest_prof, dest
+
+    def _profsamplepay_from_json_obs(self, prof, dest_prof, dest): # pylint: disable=too-many-locals
+        """Get profile and sample payoff for observation format"""
+        dest = self._get_spay_dest(dest, len(prof['observations']))
+        ids = {}
+        for symgrp in prof['symmetry_groups']:
+            i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+            index = self.role_strat_index(role, strat)
+            ids[i] = index
+            dest_prof[index] = count
+        for j, obs in enumerate(prof['observations']):
+            for symgrp in obs['symmetry_groups']:
+                i, pay = _unpack_obs(**symgrp)
+                dest[j, ids[i]] = pay
+        return dest_prof, dest
+
+    def _profsamplepay_from_json_full(self, prof, dest_prof, dest): # pylint: disable=too-many-locals
+        """Get profile and sample payoff for full format"""
+        dest = self._get_spay_dest(dest, len(prof['observations']))
+        ids = {}
+        for symgrp in prof['symmetry_groups']:
+            i, role, strat, count, _ = _unpack_symgrp(**symgrp)
+            index = self.role_strat_index(role, strat)
+            ids[i] = index
+            dest_prof[index] = count
+        counts = np.empty(self.num_strats, int)
+        for j, obs in enumerate(prof['observations']):
+            counts.fill(0)
+            for player in obs['players']:
+                i, pay = _unpack_player(**player)
+                k = ids[i]
+                counts[k] += 1
+                dest[j, k] += (pay - dest[j, k]) / counts[k]
+            utils.check(
+                np.all(counts == dest_prof),
+                "full format didn't have payoffs for the correct number "
+                'of players')
+        return dest_prof, dest
+
+    def _profsamplepay_from_json_prof(self, prof, dest_prof, dest):
+        """Get profile and sample payoff for profile format"""
+        num = max(max(len(p) if isinstance(p, abc.Iterable) else 1
+                      for _, __, p in sg)
+                  for sg in prof.values())
+        dest = self._get_spay_dest(dest, num)
+        for role, strats in prof.items():
+            for strat, count, pays in strats:
+                index = self.role_strat_index(role, strat)
+                dest_prof[index] = count
+                dest[:, index] = pays
         return dest_prof, dest
 
     def profsamplepay_to_json(self, samplepay, prof):

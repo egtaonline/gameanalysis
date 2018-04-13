@@ -1941,15 +1941,15 @@ def test_add_types():
     assert rsgame.add(const, empty) == empty
 
     with pytest.raises(TypeError):
-        'string' + empty
+        assert 'string' + empty
     with pytest.raises(TypeError):
-        empty + 'string'
+        assert empty + 'string'
     with pytest.raises(TypeError):
-        empty - 'string'
+        assert empty - 'string'
     with pytest.raises(TypeError):
-        empty * 'string'
+        assert empty * 'string'
     with pytest.raises(TypeError):
-        empty / 'string'
+        assert empty / 'string'
 
 
 def test_add_game():
