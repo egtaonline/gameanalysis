@@ -55,7 +55,6 @@ def test_canon():
     copy_str = json.dumps(cgame.to_json())
     copy = canongame.canon_json(json.loads(copy_str))
     assert hash(cgame) == hash(copy)
-    print('prior')
     assert cgame == copy
 
     assert [2, 0, 0] in cgame

@@ -84,7 +84,7 @@ class CanonGame(rsgame.RsGame):
 
     def _add_game(self, _):
         """Add another game to canon game"""
-        utils.fail("canon games can't be added")
+        return NotImplemented
 
     def to_json(self):
         """Convert canon game to json object"""

@@ -177,8 +177,8 @@ class MatrixGame(rsgame.CompleteGame):
             self._payoff_matrix * constant)
 
     def _add_game(self, othr):
-        utils.check(
-            othr.is_complete(), 'can only efficiently add complete games')
+        if not othr.is_complete():
+            return NotImplemented
         try:
             othr_mat = othr.payoff_matrix()
         except AttributeError:

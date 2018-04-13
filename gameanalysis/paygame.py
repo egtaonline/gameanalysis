@@ -1,4 +1,5 @@
 """Module for games with potentially sparse payoff data"""
+# pylint: disable=too-many-lines
 import contextlib
 import itertools
 from collections import abc

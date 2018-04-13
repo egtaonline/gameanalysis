@@ -90,12 +90,6 @@ class StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-in
 
     @property
     @utils.memoize
-    def role_ends(self):
-        """End index for roles"""
-        return np.append(self.role_starts[1:], self.num_strats) - 1
-
-    @property
-    @utils.memoize
     def role_strat_names(self):
         """role and strat names indexed by role strat"""
         return tuple(itertools.chain.from_iterable(
@@ -1435,12 +1429,16 @@ class RsGame(GameLike):
 
     @abc.abstractmethod
     def _multiply_constant(self, constant):
-        """Multiply each roles payoffs by a constant"""
+        """Multiply each roles payoffs by a positive constant"""
         pass  # pragma: no cover
 
     @abc.abstractmethod
     def _add_game(self, othr):
-        """Add two games together, so payoffs are the sum"""
+        """Add two games together, so payoffs are the sum
+
+        othr is guaranteed to be a game like object with the same structure as
+        self. If no add can be done efficiently, then this should return
+        NotImplemented."""
         pass  # pragma: no cover
 
     # --------------------
@@ -1517,37 +1515,50 @@ class RsGame(GameLike):
                 best_resps, self.role_starts).repeat(self.num_role_strats)
 
     def __mul__(self, constant):
-        constant = np.asarray(constant)
-        utils.check(
-            np.all(constant > 0),
-            'game can only be multiplied by positive constants')
-        return self._multiply_constant(constant)
+        try:
+            constant = np.asarray(constant, float)
+            assert np.all(constant > 0)
+            return self._multiply_constant(constant)
+        except (TypeError, AssertionError, ValueError):
+            return NotImplemented
 
     def __rmul__(self, constant):
-        return self * constant
+        return self.__mul__(constant)
 
     def __truediv__(self, constant):
-        constant = np.asarray(constant)
-        return self * (1 / constant)
+        try:
+            return self.__mul__(1 / np.asarray(constant, float))
+        except (TypeError, ValueError):
+            return NotImplemented
 
-    def __add__(self, other):
-        if not hasattr(other, '_add_game'):
-            return self._add_constant(other)
+    def __add__(self, othr):
+        with contextlib.suppress(TypeError, ValueError):
+            return self._add_constant(np.asarray(othr, float))
+        try:
+            assert emptygame_copy(self) == emptygame_copy(othr)
+            attempt = self._add_game(othr)
+            if attempt is NotImplemented and type(self) is type(othr): # pylint: disable=no-else-return
+                return add(self, othr)
+            else:
+                return attempt
+        except (AttributeError, AssertionError):
+            return NotImplemented
 
-        utils.check(
-            emptygame_copy(self) == emptygame_copy(other),
-            'games must have the same structure')
-        with contextlib.suppress(Exception):
-            return self._add_game(other)
-        with contextlib.suppress(Exception):
-            return other._add_game(self)
-        return add(self, other)
+    def __radd__(self, othr):
+        with contextlib.suppress(TypeError, ValueError):
+            return self._add_constant(np.asarray(othr, float))
+        try:
+            assert emptygame_copy(self) == emptygame_copy(othr)
+            attempt = self._add_game(othr)
+            return add(self, othr) if attempt is NotImplemented else attempt
+        except (AttributeError, AssertionError):
+            return NotImplemented
 
-    def __radd__(self, other):
-        return self + other
-
-    def __sub__(self, other):
-        return self + -np.asarray(other)
+    def __sub__(self, othr):
+        try:
+            return self._add_constant(-np.asarray(othr, float))
+        except (TypeError, ValueError):
+            return NotImplemented
 
 
 class EmptyGame(RsGame):
@@ -1854,7 +1865,9 @@ class AddGame(RsGame):
             tuple(game.restrict(restriction) for game in self._games))
 
     def _add_constant(self, constant):
-        return add(const_replace(self, constant), *self._games)
+        avg_const = constant / len(self._games)
+        return AddGame(
+            tuple(game + avg_const for game in self._games))
 
     def _multiply_constant(self, constant):
         return AddGame(
@@ -1914,11 +1927,14 @@ def add(*games):
         current_game = games.pop()
         unmerged_games = []
         for game in games:
-            with contextlib.suppress(Exception):
-                current_game = current_game._add_game(game)
+            # pylint: disable-msg=protected-access
+            attempt = current_game._add_game(game)
+            if attempt is not NotImplemented:
+                current_game = attempt
                 continue
-            with contextlib.suppress(Exception):
-                current_game = game._add_game(current_game)
+            attempt = game._add_game(current_game)
+            if attempt is not NotImplemented:
+                current_game = attempt
                 continue
             unmerged_games.append(game)
         final_games.append(current_game)

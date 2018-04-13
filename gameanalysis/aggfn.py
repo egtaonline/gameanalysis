@@ -201,12 +201,16 @@ class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attribu
             self.function_table, self.offsets * mul)
 
     def _add_game(self, othr):
-        return AgfnGame(
-            self.role_names, self.strat_names, self.num_role_players,
-            np.concatenate([self.action_weights, othr.action_weights]),
-            np.concatenate([self.function_inputs, othr.function_inputs], 1),
-            np.concatenate([self.function_table, othr.function_table]),
-            self.offsets + othr.offsets)
+        try:
+            return AgfnGame(
+                self.role_names, self.strat_names, self.num_role_players,
+                np.concatenate([self.action_weights, othr.action_weights]),
+                np.concatenate([self.function_inputs, othr.function_inputs],
+                               1),
+                np.concatenate([self.function_table, othr.function_table]),
+                self.offsets + othr.offsets)
+        except AttributeError:
+            return NotImplemented
 
     def restrict(self, restriction):
         restriction = np.asarray(restriction, bool)

@@ -1,4 +1,5 @@
 """Test payoff games"""
+# pylint: disable=too-many-lines
 import collections
 import itertools
 import json
@@ -1847,7 +1848,7 @@ class UnAddP(paygame.Game):
             pays)
 
     def _add_game(self, _):
-        raise ValueError
+        return NotImplemented
 
 
 class UnAddC(rsgame.ConstantGame):
@@ -1858,7 +1859,7 @@ class UnAddC(rsgame.ConstantGame):
             np.asarray(const, float))
 
     def _add_game(self, _):
-        raise ValueError
+        return NotImplemented
 
 
 _EMPTYGAME_JSON = {'players': {'r0': 2}, 'strategies': {'r0': ['s0', 's1']}}

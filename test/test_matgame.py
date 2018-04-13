@@ -416,3 +416,6 @@ def test_random_game_addition(strats):
     payoffs[matg.profiles() == 0] = 0
     game = paygame.game_replace(matg, matg.profiles(), payoffs)
     assert paygame.game_copy(matg + game) == game + matg
+
+    empty = rsgame.emptygame_copy(matg)
+    assert matg + empty == empty

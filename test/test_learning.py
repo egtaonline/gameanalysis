@@ -14,6 +14,7 @@ from gameanalysis import gamegen
 from gameanalysis import learning
 from gameanalysis import paygame
 from gameanalysis import restrict
+from gameanalysis import rsgame
 
 
 GAMES = [
@@ -303,6 +304,9 @@ def test_sample(_): # pylint: disable=too-many-locals
     assert copy == learn
     assert learn + copy == copy + learn
 
+    empty = rsgame.emptygame_copy(learn)
+    assert learn + empty == empty
+
 
 @pytest.mark.parametrize('_', range(20))
 def test_point(_): # pylint: disable=too-many-locals
@@ -364,6 +368,9 @@ def test_point(_): # pylint: disable=too-many-locals
     assert copy == learn
     assert learn + copy == copy + learn
 
+    empty = rsgame.emptygame_copy(learn)
+    assert learn + empty == empty
+
 
 @pytest.mark.parametrize('_', range(20))
 def test_neighbor(_): # pylint: disable=too-many-locals
@@ -402,6 +409,9 @@ def test_neighbor(_): # pylint: disable=too-many-locals
     assert hash(copy) == hash(learn)
     assert copy == learn
     assert learn + copy == copy + learn
+
+    empty = rsgame.emptygame_copy(learn)
+    assert learn + empty == empty
 
 
 @pytest.mark.parametrize('players,strats', [

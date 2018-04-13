@@ -112,7 +112,7 @@ class DevRegressionGame(rsgame.CompleteGame):
             self._min_payoffs * mul, self._max_payoffs * mul, self._rest)
 
     def _add_game(self, _):
-        utils.fail('no efficient add')
+        return NotImplemented
 
     def __eq__(self, othr):
         # pylint: disable-msg=protected-access
@@ -376,7 +376,7 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
             self._profiles, self._alpha)
 
     def _add_game(self, _):
-        utils.fail('no efficient add')
+        return NotImplemented
 
     def to_json(self):
         base = super().to_json()
@@ -629,9 +629,12 @@ class SampleDeviationGame(_DeviationGame):
         return SampleDeviationGame(self.model * constant, self.num_samples)
 
     def _add_game(self, othr):
-        assert self.num_samples == othr.num_samples
-        return SampleDeviationGame(
-            self.model + othr.model, self.num_samples)
+        try:
+            assert self.num_samples == othr.num_samples
+            return SampleDeviationGame(
+                self.model + othr.model, self.num_samples)
+        except (AttributeError, AssertionError):
+            return NotImplemented
 
     def to_json(self):
         base = super().to_json()
@@ -715,8 +718,11 @@ class PointDeviationGame(_DeviationGame):
         return PointDeviationGame(self.model * constant)
 
     def _add_game(self, othr):
-        assert isinstance(othr, PointDeviationGame)
-        return PointDeviationGame(self.model + othr.model)
+        try:
+            assert isinstance(othr, PointDeviationGame)
+            return PointDeviationGame(self.model + othr.model)
+        except (AttributeError, AssertionError):
+            return NotImplemented
 
     def to_json(self):
         base = super().to_json()
@@ -795,9 +801,12 @@ class NeighborDeviationGame(_DeviationGame):
         return NeighborDeviationGame(self.model * constant, self.num_neighbors)
 
     def _add_game(self, othr):
-        assert self.num_neighbors == othr.num_neighbors
-        return NeighborDeviationGame(
-            self.model + othr.model, self.num_neighbors)
+        try:
+            assert self.num_neighbors == othr.num_neighbors
+            return NeighborDeviationGame(
+                self.model + othr.model, self.num_neighbors)
+        except (AttributeError, AssertionError):
+            return NotImplemented
 
     def to_json(self):
         base = super().to_json()

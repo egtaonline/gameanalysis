@@ -1,4 +1,5 @@
 """Test rsgame"""
+# pylint: disable=too-many-lines
 import itertools
 import json
 import warnings
@@ -1939,6 +1940,17 @@ def test_add_types():
     assert rsgame.add(empty, const) == empty
     assert rsgame.add(const, empty) == empty
 
+    with pytest.raises(TypeError):
+        'string' + empty
+    with pytest.raises(TypeError):
+        empty + 'string'
+    with pytest.raises(TypeError):
+        empty - 'string'
+    with pytest.raises(TypeError):
+        empty * 'string'
+    with pytest.raises(TypeError):
+        empty / 'string'
+
 
 def test_add_game():
     """Test add games"""
@@ -1994,4 +2006,4 @@ class UnAddC(rsgame.ConstantGame):
             np.asarray(const, float))
 
     def _add_game(self, _):
-        raise ValueError
+        return NotImplemented

@@ -1,4 +1,5 @@
 """Test script"""
+# pylint: disable=too-many-lines
 import json
 import subprocess
 import tempfile
