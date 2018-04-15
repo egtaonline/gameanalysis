@@ -24,15 +24,20 @@ def create_parser():
     return parser, subparsers.choices
 
 
-def main():
+def amain(*argv):
     """Entry point for game analysis"""
     parser, commands = create_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if args.command is None:
         parser.print_help()
         sys.exit(1)
     else:
         commands[args.command].main(args)
+
+
+def main():
+    """Entry point for game analysis"""
+    amain(*sys.argv[1:])
 
 
 if __name__ == '__main__':

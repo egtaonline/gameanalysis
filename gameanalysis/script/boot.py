@@ -64,7 +64,7 @@ def add_parser(subparsers):
 def main(args):
     """Entry point for bootstrap"""
     game = gamereader.load(args.input)
-    profiles = np.concatenate([game.profile_from_json(p)[None] for p
+    profiles = np.concatenate([game.mixture_from_json(p)[None] for p
                                in scriptutils.load_profiles(args.profiles)])
     bootf, meanf = CHOICES[args.type]
     results = bootf(game, profiles, args.num_bootstraps,

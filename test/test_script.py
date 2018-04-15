@@ -1,11 +1,16 @@
 """Test script"""
 # pylint: disable=too-many-lines
+import contextlib
+import io
 import json
 import subprocess
-import tempfile
+import sys
+import traceback
 from os import path
+from unittest import mock
 
 import numpy as np
+import pytest
 
 from gameanalysis import agggen
 from gameanalysis import gamegen
@@ -16,468 +21,549 @@ from gameanalysis import utils
 from gameanalysis.reduction import deviation_preserving as dpr
 from gameanalysis.reduction import hierarchical as hr
 from gameanalysis.reduction import twins as tr
-
-# To pass files to some scripts we use tempfile.NamedTemporaryFile and just
-# flush it prior to running the scripts. Some tests also use /dev/null. Both of
-# these will fail on windows.
+from gameanalysis import __main__ as main
 
 
-DIR = path.dirname(path.realpath(__file__))
-GA = path.join(DIR, '..', 'bin', 'ga')
-HARD_GAME = path.join(DIR, '..', 'example_games', 'hard_nash.json')
-with open(HARD_GAME, 'r') as fil:
-    HARD_GAME_STR = fil.read()
-with open(path.join(DIR, '..', 'example_games', 'ugly.nfg'), 'r') as fil:
-    GAMBIT_STR = fil.read()
-HARD_GAME_DATA = gamereader.loads(HARD_GAME_STR)
-GAME_DATA = gamegen.game([3, 2], [2, 3])
-GAME_JSON = GAME_DATA.to_json()
-GAME_STR = json.dumps(GAME_JSON)
-
-MATGAME = gamegen.independent_game([2, 3])
-MATGAME_STR = json.dumps(MATGAME.to_json())
+def run(*args):
+    """Run a command line and return if it ran successfully"""
+    try:
+        main.amain(*args)
+    except SystemExit as ex:
+        return not int(str(ex))
+    except Exception: # pylint: disable=broad-except
+        traceback.print_exc()
+        return False
+    return True
 
 
-# FIXME Change this to patch stdin and out and call main directly
-def run(*cmd, input=''):
-    """Run a command"""
-    res = subprocess.run((GA,) + cmd, input=input.encode('utf-8'),
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out = res.stdout.decode('utf-8')
-    err = res.stderr.decode('utf-8')
-    return not res.returncode, out, err
+def stdin(inp):
+    """Patch stdin with input"""
+    return mock.patch.object(sys, 'stdin', io.StringIO(inp))
+
+
+def stdout():
+    """Patch stdout and return stringio"""
+    return contextlib.redirect_stdout(io.StringIO())
+
+
+def stderr():
+    """Patch stderr and return stringio"""
+    return contextlib.redirect_stderr(io.StringIO())
+
+
+def array_set_equal(arr, brr):
+    """Return true if two sets of arrays are equal"""
+    return not np.setxor1d(
+        utils.axis_to_elem(arr), utils.axis_to_elem(brr)).size
+
+
+@pytest.fixture(scope='session', name='ggame_file')
+def fix_ggame_file():
+    """Gambit file name"""
+    return path.join(
+        path.dirname(path.realpath(__file__)), '..', 'example_games',
+        'ugly.nfg')
+
+
+@pytest.fixture(scope='session', name='ggame_str')
+def fix_ggame_str(ggame_file):
+    """Gambit string"""
+    with open(ggame_file) as fil:
+        return fil.read()
+
+
+@pytest.fixture(scope='session', name='game')
+def fix_game():
+    """Get a standard game"""
+    return gamegen.game([3, 2], [2, 3])
+
+
+@pytest.fixture(scope='session', name='game_json')
+def fix_game_json(game):
+    """Get the json structure for a game"""
+    return game.to_json()
+
+
+@pytest.fixture(scope='session', name='game_str')
+def fix_game_str(game_json):
+    """Get the json string for a game"""
+    return json.dumps(game_json)
+
+
+@pytest.fixture(scope='session', name='game_file')
+def fix_game_file(game_str, tmpdir_factory):
+    """Create info for handling a data game"""
+    game_file = str(tmpdir_factory.mktemp('games').join('game.json'))
+    with open(game_file, 'w') as fil:
+        fil.write(game_str)
+    return game_file
+
+
+@pytest.fixture(scope='session', name='sgame')
+def fix_sgame():
+    """Create a sample game"""
+    return gamegen.samplegame([2, 3], [4, 3], 0.05)
+
+
+@pytest.fixture(scope='session', name='sgame_str')
+def fix_sgame_str(sgame):
+    """Sample game string"""
+    return json.dumps(sgame.to_json())
+
+
+@pytest.fixture(scope='session', name='sgame_file')
+def fix_sgame_file(sgame_str, tmpdir_factory):
+    """Sample game file"""
+    sgame_file = str(tmpdir_factory.mktemp('games').join('sgame.json'))
+    with open(sgame_file, 'w') as fil:
+        fil.write(sgame_str)
+    return sgame_file
+
+
+@pytest.fixture(scope='session', name='hardgame_file')
+def fix_hardgame_file():
+    """Get the file for a hard nash game"""
+    return path.join(
+        path.dirname(path.realpath(__file__)), '..', 'example_games',
+        'hard_nash.json')
+
+
+@pytest.fixture(scope='session', name='hardgame_str')
+def fix_hardgame_str(hardgame_file):
+    """Get the string of a game with a hard nash equilibria"""
+    with open(hardgame_file) as fil:
+        return fil.read()
+
+
+@pytest.fixture(scope='session', name='hardgame')
+def fix_hardgame(hardgame_str):
+    """Get a game with hard nash equilibria"""
+    return gamereader.loads(hardgame_str)
+
+
+@pytest.fixture(scope='session', name='hardprof')
+def fix_hardprof():
+    """Fixture for a hard profile"""
+    return {
+        'background': {
+            'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
+        'hft': {'noop': 1}}
+
+
+@pytest.fixture(scope='session', name='hardprof_str')
+def fix_hardprof_str(hardprof):
+    """Fixture for a hard profile string"""
+    return json.dumps(hardprof)
+
+
+@pytest.fixture(scope='session', name='hardprof_file')
+def fix_hardprof_file(hardprof_str, tmpdir_factory):
+    """Fixture for a hard profile file"""
+    prof_file = str(tmpdir_factory.mktemp('profs').join('hardprof.json'))
+    with open(prof_file, 'w') as fil:
+        fil.write(hardprof_str)
+    return prof_file
+
+
+@pytest.fixture(scope='session', name='hardmix')
+def fix_hardmix():
+    """Fixture for a hard mixture"""
+    return {
+        'background': {
+            'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
+        'hft': {'noop': 1}}
+
+
+@pytest.fixture(scope='session', name='hardmix_str')
+def fix_hardmix_str(hardmix):
+    """Fixture for a hard profile string"""
+    return json.dumps(hardmix)
+
+
+@pytest.fixture(scope='session', name='hardmix_file')
+def fix_hardmix_file(hardmix_str, tmpdir_factory):
+    """Fixture for a hard profile file"""
+    mix_file = str(tmpdir_factory.mktemp('profs').join('hardmix.json'))
+    with open(mix_file, 'w') as fil:
+        fil.write(hardmix_str)
+    return mix_file
+
+
+@pytest.fixture(scope='session', name='mgame')
+def fix_mgame():
+    """Create a matrix game"""
+    return gamegen.independent_game([2, 3])
+
+
+@pytest.fixture(scope='session', name='mgame_str')
+def fix_mgame_str(mgame):
+    """Create info for handling a data game"""
+    return json.dumps(mgame.to_json())
+
+
+@pytest.fixture(scope='session', name='mgame_file')
+def fix_mgame_file(mgame_str, tmpdir_factory):
+    """Create info for handling a data game"""
+    mgame_file = str(tmpdir_factory.mktemp('games').join('matgame.json'))
+    with open(mgame_file, 'w') as fil:
+        fil.write(mgame_str)
+    return mgame_file
 
 
 def test_from_module():
     """Test from module"""
-    python = path.join(DIR, '..', 'bin', 'python')
+    python = path.join(
+        path.dirname(path.realpath(__file__)), '..', 'bin', 'python')
     proc = subprocess.run([python, '-m', 'gameanalysis', '--help'])
     assert not proc.returncode
 
 
 def test_help():
     """Test help"""
-    assert not run()[0]
-    assert not run('--fail')[0]
-    success, out, err = run('--help')
-    assert success, err
-    for cmd in (line.split()[0] for line in out.split('\n')
+    assert not run()
+    assert not run('--fail')
+    with stdout() as out, stderr() as err:
+        assert run('--help'), err.getvalue()
+    for cmd in (line.split()[0] for line in out.getvalue().split('\n')
                 if line.startswith('    ') and line[4] != ' '):
-        success, _, err = run(cmd, '--help')
-        assert success, err
+        with stderr() as err:
+            assert run(cmd, '--help'), err.getvalue()
 
 
-def test_dominance_1():
-    """Test dominance"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('dom', '-i', game.name)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == GAME_DATA
+def test_dominance_game(game, game_file):
+    """Test basic dominance"""
+    with stdout() as out, stderr() as err:
+        assert run('dom', '-i', game_file), err.getvalue()
+    game_dom = gamereader.loads(out.getvalue())
+    assert game_dom == game
 
 
-def test_dominance_2():
-    """Test dominance"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('dom', '-i', game.name, '-s')
-    assert success, err
-    assert json.loads(out) == GAME_JSON['strategies']
+def test_dominance_strats(game_json, game_file):
+    """Test dominance outputs strats"""
+    with stdout() as out, stderr() as err:
+        assert run('dom', '-i', game_file, '-s'), err.getvalue()
+    assert json.loads(out.getvalue()) == game_json['strategies']
 
 
-def test_dominance_3():
-    """Test dominance"""
-    success, _, err = run('dom', '-cweakdom', '-o/dev/null', input=GAME_STR)
-    assert success, err
+def test_dominance_weakdom(game_str):
+    """Test weak dominance and stdin"""
+    with stdin(game_str), stderr() as err:
+        assert run('dom', '-cweakdom', '-o/dev/null'), err.getvalue()
 
 
-def test_dominance_4():
-    """Test dominance"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('dom', '-cstrictdom', '-i', game.name)
-    assert success, err
-    gamereader.loads(out)
+def test_dominance_strictdom(game_file):
+    """Test strict dominance"""
+    with stdout() as out, stderr() as err:
+        assert run('dom', '-cstrictdom', '-i', game_file), err.getvalue()
+    gamereader.loads(out.getvalue())
 
 
-def test_dominance_5():
-    """Test dominance"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('dom', '-cneverbr', '-i', game.name)
-    assert success, err
-    gamereader.loads(out)
+def test_dominance_never_best_response(game_file):
+    """Test never best response"""
+    with stdout() as out, stderr() as err:
+        assert run('dom', '-cneverbr', '-i', game_file), err.getvalue()
+    gamereader.loads(out.getvalue())
 
 
-def test_dominance_6():
-    """Test dom works for non Games"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        json.dump(MATGAME.to_json(), game)
-        game.flush()
-        success, _, err = run('dom', '-cweakdom',
-                              '-o/dev/null', '-i', game.name)
-    assert success, err
+def test_dominance_matgame(mgame_file):
+    """Test dom works for other game types"""
+    with stderr() as err:
+        assert run(
+            'dom', '-cweakdom', '-o/dev/null', '-i',
+            mgame_file), err.getvalue()
 
 
-def test_gamegen_1():
+def test_gamegen_fail():
     """Test gamegen"""
-    assert not run('gen')[0]
-    assert not run('gen', 'ursym')[0]
-    success, _, err = run('gen', 'uzs', '6', '-n', '-o/dev/null')
-    assert success, err
+    assert not run('gen')
+    assert not run('gen', 'ursym')
 
 
-def test_gamegen_2():
-    """Test gamegen"""
-    success, out, err = run('gen', 'ursym', '3:4,4:3')
-    assert success, err
-    gamereader.loads(out)
+def test_gamegen_uzs():
+    """Test uniform zero sum gamegen"""
+    with stderr() as err:
+        assert run('gen', 'uzs', '6', '-n', '-o/dev/null'), err.getvalue()
 
 
-def test_gamegen_3():
-    """Test gamegen"""
-    success, out, err = run(
-        'gen', 'noise', '-d', 'uniform', '-w', '1.5', '-s', '5',
-        input=GAME_STR)
-    assert success, err
-    gamereader.loads(out)
+def test_gamegen_ursym():
+    """Test uniform role symmetric gamegen"""
+    with stdout() as out, stderr() as err:
+        assert run('gen', 'ursym', '3:4,4:3'), err.getvalue()
+    gamereader.loads(out.getvalue())
 
 
-def test_gamegen_4():
-    """Test gamegen"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run(
+def test_gamegen_noise_uniform(game_str):
+    """Test uniform noise gamegen"""
+    with stdin(game_str), stderr() as err, stdout() as out:
+        assert run(
+            'gen', 'noise', '-d', 'uniform', '-w', '1.5', '-s',
+            '5'), err.getvalue()
+    gamereader.loads(out.getvalue())
+
+
+def test_gamegen_noise_gumbel(game_file):
+    """Test gumbel noise gamegen"""
+    with stderr() as err, stdout() as out:
+        assert run(
             'gen', 'noise', '-d', 'gumbel', '-w', '1.5', '-s', '5', '-i',
-            game.name)
-    assert success, err
-    gamereader.loads(out)
+            game_file), err.getvalue()
+    gamereader.loads(out.getvalue())
 
 
-def test_gamegen_5():
-    """Test gamegen"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run(
+def test_gamegen_noise_bimodal(game_file):
+    """Test bimodal noise gamegen"""
+    with stderr() as err, stdout() as out:
+        assert run(
             'gen', 'noise', '-d', 'bimodal', '-w', '1.5', '-s', '5', '-i',
-            game.name)
-    assert success, err
-    gamereader.loads(out)
+            game_file), err.getvalue()
+    gamereader.loads(out.getvalue())
 
 
-def test_gamegen_noise():
-    """Test gamegen with noise"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run(
+def test_gamegen_noise_gaussian(game_file):
+    """Test gamegen with gaussian noise"""
+    with stderr() as err, stdout() as out:
+        assert run(
             'gen', 'noise', '-d', 'gaussian', '-w', '1.5', '-s', '5', '-i',
-            game.name)
-    assert success, err
-    gamereader.loads(out)
+            game_file), err.getvalue()
+    gamereader.loads(out.getvalue())
 
 
-def test_nash_fail():
+def test_nash_fail(game_file):
     """Test nash fail"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        assert not run('nash', '-tfail', '-i', game.name)[0]
-
-    success, _, err = run('nash', input=GAME_STR)
-    assert success, err
+    assert not run('nash', '-tfail', '-i', game_file)
 
 
-def test_nash_options():
+def test_nash_basic(game_str):
+    """Test basic nash works"""
+    with stdin(game_str), stderr() as err:
+        assert run('nash'), err.getvalue()
+
+
+def test_nash_options(game_file):
     """Test nash options"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, _, err = run(
-            'nash', '-i', game.name, '-o/dev/null', '-r1e-2', '-d1e-2',
-            '-c1e-7', '-x100', '-s1e-2', '-m5', '-n', '-p1')
-    assert success, err
+    with stderr() as err:
+        assert run(
+            'nash', '-i', game_file, '-o/dev/null', '-r1e-2', '-d1e-2',
+            '-c1e-7', '-x100', '-s1e-2', '-m5', '-n', '-p1'), err.getvalue()
 
 
-def test_nash_pure():
+def test_nash_pure(hardgame, hardgame_file):
     """Test pure nash"""
-    success, out, err = run('nash', '-tpure', '-i', HARD_GAME)
-    assert success, err
+    with stdout() as out, stderr() as err:
+        assert run('nash', '-tpure', '-i', hardgame_file), err.getvalue()
     assert any(  # pragma: no branch
-        np.all(HARD_GAME_DATA.profile_from_json(prof) ==
+        np.all(hardgame.profile_from_json(prof) ==
                [4, 2, 0, 0, 0, 1, 0, 0, 0])
-        for prof in json.loads(out))
+        for prof in json.loads(out.getvalue()))
 
 
-def test_nash_prof():
+def test_nash_prof(hardgame, hardgame_file):
     """Test nash prof"""
-    success, out, err = run('nash', '-tmin-reg-prof', '-i', HARD_GAME)
-    assert success, err
+    with stdout() as out, stderr() as err:
+        assert run(
+            'nash', '-tmin-reg-prof', '-i', hardgame_file), err.getvalue()
     assert any(  # pragma: no branch
-        np.all(HARD_GAME_DATA.profile_from_json(prof) ==
+        np.all(hardgame.profile_from_json(prof) ==
                [4, 2, 0, 0, 0, 1, 0, 0, 0])
-        for prof in json.loads(out))
+        for prof in json.loads(out.getvalue()))
 
 
-def test_nash_grid():
+def test_nash_grid(hardgame, hardgame_file):
     """Test nash grid"""
-    success, out, err = run('nash', '-tmin-reg-grid', '-i', HARD_GAME)
-    assert success, err
+    with stdout() as out, stderr() as err:
+        assert run(
+            'nash', '-tmin-reg-grid', '-i', hardgame_file), err.getvalue()
     assert any(  # pragma: no branch
-        np.allclose(HARD_GAME_DATA.mixture_from_json(
-            mix), [0, 1, 0, 0, 0, 1, 0, 0, 0])
-        for mix in json.loads(out))
+        np.allclose(hardgame.mixture_from_json(mix),
+                    [0, 1, 0, 0, 0, 1, 0, 0, 0])
+        for mix in json.loads(out.getvalue()))
 
 
 def test_nash_pure_one():
     """Test nash with at_least_one"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        sgame = gamegen.rock_paper_scissors()
-        json.dump(sgame.to_json(), game)
-        game.flush()
-        success, _, err = run('nash', '-tpure', '--one', '-i', game.name)
-        assert success, err
+    sgame = gamegen.rock_paper_scissors()
+    sgame_str = json.dumps(sgame.to_json())
+    with stdin(sgame_str), stderr() as err:
+        assert run('nash', '-tpure', '--one'), err.getvalue()
 
 
-def test_nash_mat():
-    """Test nash works with non Game"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        json.dump(MATGAME.to_json(), game)
-        game.flush()
-        success, _, err = run('nash', '-o/dev/null', '-i', game.name)
-    assert success, err
+def test_nash_mat(mgame_file):
+    """Test nash works with other games"""
+    with stderr() as err:
+        assert run('nash', '-o/dev/null', '-i', mgame_file), err.getvalue()
 
 
-def test_payoff_pure():
+def test_payoff_pure(hardgame_file, hardprof_str):
     """Test payoff pure"""
-    with tempfile.NamedTemporaryFile('w') as pure:
-        prof = [{
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
-            'hft': {'noop': 1}}]
-        json.dump(prof, pure)
-        pure.flush()
-        success, _, err = run('pay', '-i', HARD_GAME, pure.name, '-o/dev/null')
-        assert success, err
-
-        success, out, err = run(
-            'pay', pure.name, '-twelfare', input=HARD_GAME_STR)
-        assert success, err
-        assert np.isclose(json.loads(out)[0], -315.4034577992763)
+    with stdin(hardprof_str), stderr() as err:
+        assert run(
+            'pay', '-i', hardgame_file, '-', '-o/dev/null'), err.getvalue()
 
 
-def test_payoff_mixed():
+def test_payoff_pure_welfare(hardgame_str, hardprof_file):
+    """Test welfare payoff pure"""
+    with stdin(hardgame_str), stdout() as out, stderr() as err:
+        assert run(
+            'pay', hardprof_file, '-twelfare'), err.getvalue()
+    assert np.isclose(json.loads(out.getvalue())[0], -315.4034577992763)
+
+
+def test_payoff_mixed(hardgame_file, hardmix_str):
     """Test mixed payoff"""
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        prof = [{
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
-            'hft': {'noop': 1}}]
-        json.dump(prof, mixed)
-        mixed.flush()
-        success, _, err = run('pay', '-i', HARD_GAME,
-                              mixed.name, '-o/dev/null')
-        assert success, err
-
-        success, out, err = run(
-            'pay', mixed.name, '-twelfare', input=HARD_GAME_STR)
-        assert success, err
-        assert np.isclose(json.loads(out)[0], -315.4034577992763)
+    with stdin(hardmix_str), stderr() as err:
+        assert run(
+            'pay', '-i', hardgame_file, '-', '-o/dev/null'), err.getvalue()
 
 
-def test_payoff_pure_single():
+def test_payoff_mixed_welfare(hardgame_str, hardmix_file):
+    """Test mixed welfare"""
+    with stdin(hardgame_str), stdout() as out, stderr() as err:
+        assert run(
+            'pay', hardmix_file, '-twelfare'), err.getvalue()
+        assert np.isclose(json.loads(out.getvalue())[0], -315.4034577992763)
+
+
+def test_payoff_pure_single(hardgame, hardgame_file, hardprof_file):
     """Test payoff pure single"""
-    with tempfile.NamedTemporaryFile('w') as pure:
-        prof = {
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
-            'hft': {'noop': 1}}
-        json.dump(prof, pure)
-        pure.flush()
-        success, out, err = run('pay', '-i', HARD_GAME, pure.name)
-        assert success, err
-        assert np.allclose(HARD_GAME_DATA.payoff_from_json(json.loads(out)[0]),
-                           [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
+    with stdout() as out, stderr() as err:
+        assert run('pay', '-i', hardgame_file, hardprof_file), err.getvalue()
+    pay = hardgame.payoff_from_json(json.loads(out.getvalue())[0])
+    assert np.allclose(pay, [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
-def test_payoff_pure_string():
+def test_payoff_pure_string(hardgame, hardgame_file, hardprof_str):
     """Test payoff pure string"""
-    # Singleton payoff as string
-    prof = {
-        'background': {
-            'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
-        'hft': {'noop': 1}}
-    profstr = json.dumps(prof)
-    success, out, err = run('pay', '-i', HARD_GAME, profstr)
-    assert success, err
-    assert np.allclose(HARD_GAME_DATA.payoff_from_json(json.loads(out)[0]),
-                       [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
+    with stdout() as out, stderr() as err:
+        assert run('pay', '-i', hardgame_file, hardprof_str), err.getvalue()
+    pay = hardgame.payoff_from_json(json.loads(out.getvalue())[0])
+    assert np.allclose(pay, [0, -52.56724296654605, 0, 0, 0, 0, 0, 0, 0])
 
 
-def test_reduction_1():
-    """Test reduction"""
-    success, out, err = run('red', 'background:2;hft:1', input=HARD_GAME_STR)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == dpr.reduce_game(HARD_GAME_DATA, [2, 1])
+def test_reduction_basic(hardgame, hardgame_str):
+    """Test basic reduction"""
+    with stdin(hardgame_str), stdout() as out, stderr() as err:
+        assert run('red', 'background:2;hft:1'), err.getvalue()
+    game = gamereader.loads(out.getvalue())
+    assert game == dpr.reduce_game(hardgame, [2, 1])
 
 
-def test_reduction_3():
-    """Test reduction"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('red', '-thr', '-s', '2,1', '-i', game.name)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == hr.reduce_game(GAME_DATA, [2, 1])
+def test_reduction_hierarchical(game, game_file):
+    """Test hierarchical reduction"""
+    with stdout() as out, stderr() as err:
+        assert run('red', '-thr', '-s', '2,1', '-i', game_file), err.getvalue()
+    ogame = gamereader.loads(out.getvalue())
+    assert ogame == hr.reduce_game(game, [2, 1])
 
 
-def test_reduction_4():
-    """Test reduction"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('red', '-ttr', '-i', game.name)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == tr.reduce_game(GAME_DATA)
+def test_reduction_twins(game, game_file):
+    """Test twins reduction"""
+    with stdout() as out, stderr() as err:
+        assert run('red', '-ttr', '-i', game_file), err.getvalue()
+    ogame = gamereader.loads(out.getvalue())
+    assert ogame == tr.reduce_game(game)
 
 
-def test_reduction_5():
+def test_reduction_identity(game, game_file):
     """Test identity reduction"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run('red', '-tidr', '-i', game.name)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == paygame.game_copy(GAME_DATA)
+    with stdout() as out, stderr() as err:
+        assert run('red', '-tidr', '-i', game_file), err.getvalue()
+    ogame = gamereader.loads(out.getvalue())
+    assert ogame == game
 
 
-def test_reduction_6():
-    """Test that reduction works for non Games"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        json.dump(MATGAME.to_json(), game)
-        game.flush()
-        success, out, err = run('red', '-tidr', '-i', game.name)
-        assert success, err
-    gamereader.loads(out)
+def test_reduction_6(mgame_file):
+    """Test that reduction works for other games"""
+    with stdout() as out, stderr() as err:
+        assert run('red', '-tidr', '-i', mgame_file), err.getvalue()
+    gamereader.loads(out.getvalue())
 
 
-def test_regret_pure():
+def test_regret_pure(hardgame_file, hardprof_file):
     """Test regret of pure profile"""
-    with tempfile.NamedTemporaryFile('w') as pure:
-        prof = {
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
-            'hft': {'noop': 1}}
-        json.dump([prof], pure)
-        pure.flush()
-        success, out, err = run('reg', '-i', HARD_GAME, pure.name)
-        assert success, err
-        assert np.isclose(json.loads(out)[0], 7747.618428)
-
-        success, out, err = run(
-            'reg', pure.name, '-tgains', input=HARD_GAME_STR)
-        assert success, err
-        dev_pay = json.loads(out)[0]
-        for role, strats in dev_pay.items():
-            prof_strats = prof[role]
-            assert prof_strats.keys() == strats.keys()
-            role_strats = set(
-                HARD_GAME_DATA.strat_names[HARD_GAME_DATA.role_index(role)])
-            for strat, dev_strats in strats.items():
-                rstrats = role_strats.copy()
-                rstrats.remove(strat)
-                assert rstrats == dev_strats.keys()
+    with stdout() as out, stderr() as err:
+        assert run('reg', '-i', hardgame_file, hardprof_file), err.getvalue()
+    assert np.isclose(json.loads(out.getvalue())[0], 7747.618428)
 
 
-def test_regret_mixed():
+def test_regret_pure_gains(hardgame, hardgame_str, hardprof, hardprof_file):
+    """Test gains of pure profile"""
+    with stdin(hardgame_str), stdout() as out, stderr() as err:
+        assert run('reg', hardprof_file, '-tgains'), err.getvalue()
+    dev_pay = json.loads(out.getvalue())[0]
+    for role, strats in dev_pay.items():
+        prof_strats = hardprof[role]
+        assert prof_strats.keys() == strats.keys()
+        role_strats = set(hardgame.strat_names[hardgame.role_index(role)])
+        for strat, dev_strats in strats.items():
+            rstrats = role_strats.copy()
+            rstrats.remove(strat)
+            assert rstrats == dev_strats.keys()
+
+
+def test_regret_mixed(hardgame_file, hardmix_file):
     """Test mixture regret"""
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        prof = [{
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
-            'hft': {'noop': 1}}]
-        json.dump(prof, mixed)
-        mixed.flush()
-        success, out, err = run('reg', '-i', HARD_GAME, mixed.name)
-        assert success, err
-        assert np.isclose(json.loads(out)[0], 7747.618428)
-
-        success, out, err = run('reg', mixed.name, '-tgains', '-i', HARD_GAME)
-        assert success, err
-        assert np.allclose(HARD_GAME_DATA.payoff_from_json(json.loads(out)[0]),
-                           [581.18996992, 0., 0., 4696.19261, 3716.207196,
-                            7747.618428, 4569.842172, 4191.665254,
-                            4353.146694])
+    with stdout() as out, stderr() as err:
+        assert run('reg', '-i', hardgame_file, hardmix_file), err.getvalue()
+    assert np.isclose(json.loads(out.getvalue())[0], 7747.618428)
 
 
-def test_regret_single():
+def test_regret_mixed_gains(hardgame, hardgame_file, hardmix_file):
+    """Test mixture regret"""
+    with stdout() as out, stderr() as err:
+        assert run(
+            'reg', hardmix_file, '-tgains', '-i',
+            hardgame_file), err.getvalue()
+    assert np.allclose(
+        hardgame.payoff_from_json(json.loads(out.getvalue())[0]),
+        [581.18996992, 0., 0., 4696.19261, 3716.207196, 7747.618428,
+         4569.842172, 4191.665254, 4353.146694])
+
+
+def test_regret_single(hardgame_file, hardprof_file):
     """Test regret of single profile"""
-    with tempfile.NamedTemporaryFile('w') as pure:
-        prof = {
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 6},
-            'hft': {'noop': 1}}
-        json.dump(prof, pure)
-        pure.flush()
-        success, out, err = run('reg', '-i', HARD_GAME, pure.name)
-        assert success, err
-        assert np.isclose(json.loads(out)[0], 7747.618428)
+    with stdout() as out, stderr() as err:
+        assert run('reg', '-i', hardgame_file, hardprof_file), err.getvalue()
+    assert np.isclose(json.loads(out.getvalue())[0], 7747.618428)
 
 
-def test_restriction_detect():
+def test_restriction_detect(hardgame, hardgame_file):
     """Test detect maximal restrictions"""
-    success, out, err = run('rest', '-nd', '-i', HARD_GAME)
-    assert success, err
-    assert HARD_GAME_DATA.restriction_from_json(json.loads(out)[0]).all()
+    with stdout() as out, stderr() as err:
+        assert run('rest', '-nd', '-i', hardgame_file), err.getvalue()
+    assert hardgame.restriction_from_json(json.loads(out.getvalue())[0]).all()
 
 
-def test_restriction_extract_1():
+def test_restriction_extract_string(hardgame, hardgame_file):
+    """Test restriction extraction with a string"""
+    with stdout() as out, stderr() as err:
+        assert run(
+            'rest', '-n', '-t',
+            'background:markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9;'
+            'hft:noop', '-s', '0,3,4', '-i', hardgame_file), err.getvalue()
+
+    expected = np.array([
+        [0, 1, 1, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 1, 1, 0, 0, 0, 0]], bool)
+    assert array_set_equal(expected, [  # pragma: no branch
+        hardgame.restriction_from_json(s)
+        for s in json.loads(out.getvalue())])
+
+
+def test_restriction_extract_file(game, game_file):
     """Test restriction extraction"""
-    success, out, err = run(
-        'rest', '-n', '-t',
-        'background:markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9;'
-        'hft:noop', '-s', '0,3,4', '-i', HARD_GAME)
-    assert success, err
-
-    expected = {
-        utils.hash_array([
-            False, True, True, False, False, False, False, False, False]),
-        utils.hash_array([
-            True, False, False, True, True, False, False, False, False])}
-    assert {utils.hash_array(HARD_GAME_DATA.restriction_from_json(s))
-            for s in json.loads(out)} == expected
+    rest = game.random_restriction()
+    rest_str = json.dumps([game.restriction_to_json(rest)])
+    with stdin(rest_str), stdout() as out, stderr() as err:
+        assert run('rest', '-i', game_file, '-f', '-'), err.getvalue()
+    rgame = gamereader.loadj(json.loads(out.getvalue())[0])
+    assert rgame == game.restrict(rest)
 
 
-def test_restriction_extract_2():
-    """Test restriction extraction"""
-    with tempfile.NamedTemporaryFile('w') as sub, \
-            tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        rest = [False, True, True, True, False]
-        json.dump([GAME_DATA.restriction_to_json(rest)], sub)
-        sub.flush()
-        success, out, err = run('rest', '-i', game.name, '-f', sub.name)
-        assert success, err
-        game = gamereader.loadj(json.loads(out)[0])
-        assert game == GAME_DATA.restrict(rest)
-
-
-def test_analysis_output():
+def test_analysis_output(game_str):
     """Test analysis"""
-    success, out, err = run('analyze', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('analyze'), err.getvalue()
+    out = out.getvalue()
     start = """Game Analysis
 =============
 Game:
@@ -508,28 +594,24 @@ payoff data for 24 out of 24 profiles"""
     assert 'Json Data\n=========' in out
 
 
-def test_analysis_dpr():
+def test_analysis_dpr(game_file):
     """Test analysis with dpr"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run(
-            'analyze', '-i', game.name, '--restrictions', '--dominance',
+    with stdout() as out, stderr() as err:
+        assert run(
+            'analyze', '-i', game_file, '--restrictions', '--dominance',
             '--dpr', 'r0:3;r1:2', '-p1', '--dist-thresh', '1e-3', '-r1e-3',
-            '-t1e-3', '--rand-restarts', '0', '-m10000', '-c1e-8')
-    assert success, err
-    assert 'With deviation preserving reduction: r0:3 r1:2' in out
+            '-t1e-3', '--rand-restarts', '0', '-m10000',
+            '-c1e-8'), err.get_value()
+    assert 'With deviation preserving reduction: r0:3 r1:2' in out.getvalue()
 
 
-def test_analysis_hr():
+def test_analysis_hr(game_file):
     """Test analysis with hr"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run(
-            'analyze', '-i', game.name, '--hr', 'r0:3;r1:2', '-p1')
-    assert success, err
-    assert 'With hierarchical reduction: r0:3 r1:2' in out
+    with stdout() as out, stderr() as err:
+        assert run(
+            'analyze', '-i', game_file, '--hr', 'r0:3;r1:2',
+            '-p1'), err.getvalue()
+    assert 'With hierarchical reduction: r0:3 r1:2' in out.getvalue()
 
 
 def test_analysis_equilibria():
@@ -599,8 +681,9 @@ def test_analysis_equilibria():
     game = paygame.game([4], [5], profiles, payoffs)
     game_str = json.dumps(game.to_json())
 
-    success, out, err = run('analyze', '-sd', input=game_str)
-    assert success, err
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('analyze', '-sd'), err.getvalue()
+    out = out.getvalue()
     assert 'Found 1 dominated strategy' in out
     assert 'Found 1 unconfirmed candidate' in out
     assert 'Found 1 unexplored best-response restricted game' in out
@@ -634,9 +717,9 @@ def test_analysis_dup_equilibria():
     game = paygame.game(2, 4, profiles, payoffs)
     game_str = json.dumps(game.to_json())
 
-    success, out, err = run('analyze', '-s', input=game_str)
-    assert success, err
-    assert 'Found 2 maximal complete restricted games' in out
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('analyze', '-s'), err.getvalue()
+    assert 'Found 2 maximal complete restricted games' in out.getvalue()
 
 
 def test_analysis_dev_explored():
@@ -667,9 +750,10 @@ def test_analysis_dev_explored():
     game = paygame.game(2, 4, profiles, payoffs)
     game_str = json.dumps(game.to_json())
 
-    success, out, err = run('analyze', '-s', input=game_str)
-    assert success, err
-    assert 'Found no unexplored best-response restricted games' in out
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('analyze', '-s'), err.getvalue()
+    assert ('Found no unexplored best-response restricted games'
+            in out.getvalue())
 
 
 def test_analysis_no_data():
@@ -677,29 +761,29 @@ def test_analysis_no_data():
     game = paygame.game([2], [2], [[1, 1]], [[5, float('nan')]])
     game_str = json.dumps(game.to_json())
 
-    success, out, err = run('analyze', '-s', input=game_str)
-    assert success, err
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('analyze', '-s'), err.getvalue()
+    out = out.getvalue()
     assert 'There was no profile with complete payoff data' in out
     assert 'Found no complete restricted games' in out
 
 
-def test_analysis_no_eqa():
+def test_analysis_no_eqa(game_file):
     """Test analysis with no equilibria"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, out, err = run(
-            'analyze', '-i', game.name, '--restrictions', '--dominance',
-            '--dpr', 'r0:3;r1:2', '-p1', '-r0', '-m0')
-    assert success, err
+    with stdout() as out, stderr() as err:
+        assert run(
+            'analyze', '-i', game_file, '--restrictions', '--dominance',
+            '--dpr', 'r0:3;r1:2', '-p1', '-r0', '-m0'), err.getvalue()
+    out = out.getvalue()
     assert 'Found no equilibria' in out
     assert 'Found 1 no-equilibria restricted game' in out
 
 
-def test_learning_output():
+def test_learning_output(game_str):
     """Test learning output"""
-    success, out, err = run('learning', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('learning'), err.getvalue()
+    out = out.getvalue()
     start = """Game Learning
 =============
 RbfGpGame:
@@ -721,346 +805,298 @@ RbfGpGame:
     assert 'Json Data\n=========' in out
 
 
-def test_learning_args():
+def test_learning_args(game_file):
     """Test learning options"""
-    with tempfile.NamedTemporaryFile('w') as game:
-        game.write(GAME_STR)
-        game.flush()
-        success, _, err = run(
-            'learning', '-i', game.name, '-o/dev/null', '-p1', '--dist-thresh',
+    with stderr() as err:
+        assert run(
+            'learning', '-i', game_file, '-o/dev/null', '-p1', '--dist-thresh',
             '1e-3', '-r1e-3', '-t1e-3', '--rand-restarts', '0', '-m10000',
-            '-c1e-8')
-        assert success, err
+            '-c1e-8'), err.getvalue()
 
 
 def test_learning_no_eqa():
     """Test learning with no equilibria"""
-    data = agggen.congestion(10, 3, 1)
-    with tempfile.NamedTemporaryFile('w') as game:
-        json.dump(data.to_json(), game)
-        game.flush()
-        success, out, err = run('learning', '-i', game.name, '-m0', '-r0')
-    assert success, err
-    assert 'Found no equilibria' in out
+    game = agggen.congestion(10, 3, 1)
+    game_str = json.dumps(game.to_json())
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('learning', '-m0', '-r0'), err.getvalue()
+    assert 'Found no equilibria' in out.getvalue()
 
 
-def test_boot_1():
+def test_boot_basic(sgame, sgame_file):
     """Test bootstrap"""
-    with tempfile.NamedTemporaryFile('w') as mixed, \
-            tempfile.NamedTemporaryFile('w') as game:
-        sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
-        json.dump(sgame.to_json(), game)
-        game.flush()
-
-        profs = [sgame.profile_to_json(sgame.uniform_mixture())]
-        json.dump(profs, mixed)
-        mixed.flush()
-
-        run('boot', '-i', game.name, mixed.name, '-o/dev/null')
+    profs = [sgame.profile_to_json(sgame.uniform_mixture())]
+    profs_str = json.dumps(profs)
+    with stdin(profs_str), stderr() as err:
+        assert run('boot', '-i', sgame_file, '-', '-o/dev/null'), err.getvalue()
 
 
-def test_boot_2():
+def test_boot_keys_perc(sgame, sgame_file):
     """Test bootstrap"""
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
-        game_str = json.dumps(sgame.to_json())
-
-        profs = [sgame.profile_to_json(sgame.random_profile())]
-        json.dump(profs, mixed)
-        mixed.flush()
-
-        success, out, err = run(
-            'boot', mixed.name, '-tsurplus', '--processes', '1', '-n21', '-p',
-            '5', '-p', '95', input=game_str)
-        assert success, err
-        data = json.loads(out)
-        assert all(j.keys() == {'5', '95', 'mean'} for j in data)
-        assert all(j['5'] <= j['95'] for j in data)
+    profs = [sgame.mixture_to_json(sgame.random_mixture())]
+    profs_str = json.dumps(profs)
+    with stdin(profs_str), stdout() as out, stderr() as err:
+        assert run(
+            'boot', '-i', sgame_file, '-', '-tsurplus', '--processes', '1',
+            '-n21', '-p', '5', '-p', '95'), err.getvalue()
+    data = json.loads(out.getvalue())
+    assert all(j.keys() == {'5', '95', 'mean'} for j in data)
+    assert all(j['5'] <= j['95'] for j in data)
 
 
-def test_boot_3():
+def test_boot_keys(sgame, sgame_file):
     """Test bootstrap"""
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        sgame = gamegen.samplegame([2, 3], [4, 3], 0.05)
-        game_str = json.dumps(sgame.to_json())
-
-        profs = [sgame.profile_to_json(sgame.random_profile())]
-        json.dump(profs, mixed)
-        mixed.flush()
-
-        success, out, err = run(
-            'boot', mixed.name, '-tsurplus', '--processes', '1', '-n21',
-            input=game_str)
-        assert success, err
-        data = json.loads(out)
-        expected = {'mean'}.union(set(map(str, range(0, 101, 5))))
-        assert all(j.keys() == expected for j in data)
-        assert all(j['5'] <= j['95'] for j in data)
+    profs = [sgame.mixture_to_json(sgame.random_mixture())]
+    profs_str = json.dumps(profs)
+    with stdin(profs_str), stdout() as out, stderr() as err:
+        assert run(
+            'boot', '-i', sgame_file, '-', '-tsurplus', '--processes', '1',
+            '-n21'), err.getvalue()
+    data = json.loads(out.getvalue())
+    expected = {'mean'}.union(set(map(str, range(0, 101, 5))))
+    assert all(j.keys() == expected for j in data)
+    assert all(j['5'] <= j['95'] for j in data)
 
 
-def test_samp_restriction():
+def test_samp_restriction(hardgame, hardgame_file):
     """Test sample restriction"""
-    success, out, err = run(
-        'samp', '-i', HARD_GAME, 'restriction', '-p', '0.5')
-    assert success, err
-    sub = HARD_GAME_DATA.restriction_from_json(json.loads(out))
-    assert HARD_GAME_DATA.is_restriction(sub)
+    with stdout() as out, stderr() as err:
+        assert run(
+            'samp', '-i', hardgame_file, 'restriction', '-p',
+            '0.5'), err.getvalue()
+    hardgame.restriction_from_json(json.loads(out.getvalue()))
 
 
-def test_samp_mix():
+def test_samp_mix(hardgame, hardgame_file):
     """Test sample mixture"""
-    success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5')
-    assert success, err
-    sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
-    assert HARD_GAME_DATA.is_mixture(sub)
+    with stdout() as out, stderr() as err:
+        assert run(
+            'samp', '-i', hardgame_file, 'mix', '-a', '0.5'), err.getvalue()
+    hardgame.mixture_from_json(json.loads(out.getvalue()))
 
 
-def test_samp_sparse_mix():
+def test_samp_sparse_mix(hardgame, hardgame_file):
     """Test sample sparse mixture"""
-    success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5', '-s')
-    assert success, err
-    sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
-    assert HARD_GAME_DATA.is_mixture(sub)
+    with stdout() as out, stderr() as err:
+        assert run(
+            'samp', '-i', hardgame_file, 'mix', '-a', '0.5',
+            '-s'), err.getvalue()
+    hardgame.mixture_from_json(json.loads(out.getvalue()))
 
 
-def test_samp_sparse_mix_prob():
+def test_samp_sparse_mix_prob(hardgame, hardgame_file):
     """Test sample sparse mixture probability"""
-    success, out, err = run('samp', '-i', HARD_GAME, 'mix', '-a', '0.5', '-s',
-                            '0.5')
-    assert success, err
-    sub = HARD_GAME_DATA.mixture_from_json(json.loads(out))
-    assert HARD_GAME_DATA.is_mixture(sub)
+    with stdout() as out, stderr() as err:
+        assert run('samp', '-i', hardgame_file, 'mix', '-a', '0.5', '-s',
+                   '0.5'), err.getvalue()
+    hardgame.mixture_from_json(json.loads(out.getvalue()))
 
 
-def test_samp_prof():
+def test_samp_prof(hardgame, hardgame_file):
     """Test sample profile"""
-    success, out, err = run('samp', '-i', HARD_GAME, 'prof')
-    assert success, err
-    sub = HARD_GAME_DATA.profile_from_json(json.loads(out))
-    assert HARD_GAME_DATA.is_profile(sub)
+    with stdout() as out, stderr() as err:
+        assert run('samp', '-i', hardgame_file, 'prof'), err.getvalue()
+    hardgame.profile_from_json(json.loads(out.getvalue()))
 
 
-def test_samp_prof_alpha():
+def test_samp_prof_alpha(hardgame, hardgame_file):
     """Test sample profile alpha"""
-    success, out, err = run('samp', '-i', HARD_GAME, 'prof', '-a', '0.5')
-    assert success, err
-    sub = HARD_GAME_DATA.profile_from_json(json.loads(out))
-    assert HARD_GAME_DATA.is_profile(sub)
+    with stdout() as out, stderr() as err:
+        assert run(
+            'samp', '-i', hardgame_file, 'prof', '-a', '0.5'), err.getvalue()
+    hardgame.profile_from_json(json.loads(out.getvalue()))
 
 
-def test_samp_prof_mix():
+def test_samp_prof_mix(hardgame, hardgame_file, hardmix_file):
     """Test sample profile mixture"""
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        prof = {
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
-            'hft': {'noop': 1}}
-        json.dump(prof, mixed)
-        mixed.flush()
-        success, out, err = run('samp', '-i', HARD_GAME, 'prof', '-m',
-                                mixed.name)
-        assert success, err
-        prof = HARD_GAME_DATA.profile_from_json(json.loads(out))
-        assert HARD_GAME_DATA.is_profile(prof)
+    with stdout() as out, stderr() as err:
+        assert run(
+            'samp', '-i', hardgame_file, 'prof', '-m',
+            hardmix_file), err.getvalue()
+    hardgame.profile_from_json(json.loads(out.getvalue()))
 
 
-def test_samp_prof_error():
+def test_samp_prof_error(hardgame_file, hardmix_file):
     """Test sample profile error"""
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        prof = {
-            'background': {
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 1},
-            'hft': {'noop': 1}}
-        json.dump(prof, mixed)
-        mixed.flush()
-        success, _, _ = run(
-            'samp', '-i', HARD_GAME, 'prof', '-a', '0.5', '-m', mixed.name)
-        assert not success
+    assert not run(
+        'samp', '-i', hardgame_file, 'prof', '-a', '0.5', '-m', hardmix_file)
 
 
-def test_samp_seed():
+def test_samp_seed(hardgame, hardgame_file):
     """Test sample seed"""
-    with tempfile.NamedTemporaryFile('w') as mixed:
-        prof = {
-            'background': {
-                'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6':
-                0.5,
-                'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 0.5},
-            'hft': {'noop': 1}}
-        json.dump(prof, mixed)
-        mixed.flush()
-        success, out1, err1 = run(
-            'samp', '-i', HARD_GAME, '-n', '100', '--seed', '1234', 'prof',
-            '-m', mixed.name)
-        assert success, err1
-        for line in out1[:-1].split('\n'):
-            prof = HARD_GAME_DATA.profile_from_json(json.loads(line))
-            assert HARD_GAME_DATA.is_profile(prof)
+    prof = {
+        'background': {
+            'markov:rmin_30000_rmax_30000_thresh_0.001_priceVarEst_1e6': 0.5,
+            'markov:rmin_500_rmax_1000_thresh_0.8_priceVarEst_1e9': 0.5},
+        'hft': {'noop': 1}}
+    prof_str = json.dumps(prof)
 
-        # Setting seed produces identical output
-        success, out2, err2 = run(
-            'samp', '-i', HARD_GAME, '-n', '100', '--seed', '1234', 'prof',
-            '-m', mixed.name)
-        assert success, err2
-        assert out1 == out2
+    with stdin(prof_str), stdout() as out1, stderr() as err1:
+        assert run(
+            'samp', '-i', hardgame_file, '-n', '100', '--seed', '1234', 'prof',
+            '-m', '-'), err1.getvalue()
+    for line in out1.getvalue()[:-1].split('\n'):
+        hardgame.profile_from_json(json.loads(line))
 
-        # Not setting it causes failure
-        # This can technically fail, but the probability is very small
-        success, out3, err3 = run(
-            'samp', '-i', HARD_GAME, '-n', '100', 'prof', '-m', mixed.name)
-        assert success, err3
-        assert out1 != out3
+    # Setting seed produces identical output
+    with stdin(prof_str), stdout() as out2, stderr() as err2:
+        assert run(
+            'samp', '-i', hardgame_file, '-n', '100', '--seed', '1234', 'prof',
+            '-m', '-'), err2.getvalue()
+    assert out1.getvalue() == out2.getvalue()
+
+    # Not setting it causes failure
+    # This can technically fail, but the probability is very small
+    with stdin(prof_str), stdout() as out3, stderr() as err3:
+        assert run(
+            'samp', '-i', hardgame_file, '-n', '100', 'prof', '-m',
+            '-'), err3.getvalue()
+    assert out1.getvalue() != out3.getvalue()
 
 
-def test_conv_game_empty():
+def test_conv_game_empty(game_str):
     """Test convert empty game"""
-    success, _, err = run('conv', '-o/dev/null', 'empty', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'empty'), err.getvalue()
 
 
-def test_conv_game_game():
+def test_conv_game_game(game_str):
     """Test convert game"""
-    success, _, err = run('conv', '-o/dev/null', 'game', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'game'), err.getvalue()
 
 
-def test_conv_game_sgame():
+def test_conv_game_sgame(game_str):
     """Test convert game to sampel game"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'samp', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'samp'), err.getvalue()
 
 
-def test_conv_game_mat():
+def test_conv_game_mat(game_str):
     """Test convert game to matrix game"""
-    success, _, err = run('conv', '-o/dev/null', 'mat', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'mat'), err.getvalue()
 
 
-def test_conv_game_str():
+def test_conv_game_str(game_str):
     """Test convert game to string"""
-    success, _, err = run('conv', '-o/dev/null', 'str', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'str'), err.getvalue()
 
 
-def test_conv_game_gambit():
+def test_conv_game_gambit(game_str):
     """"Test convert game to gambit"""
-    success, _, err = run('conv', '-o/dev/null', 'gambit', input=GAME_STR)
-    assert success, err
+    with stdin(game_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'gambit'), err.getvalue()
 
 
-def test_conv_game_norm():
+def test_conv_game_norm(game_str):
     """Test game to normalized version"""
-    success, out, err = run(
-        'conv', 'norm', input=GAME_STR)
-    assert success, err
-    game = gamereader.loads(out)
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('conv', 'norm'), err.getvalue()
+    game = gamereader.loads(out.getvalue())
     assert np.allclose(game.min_role_payoffs(), 0)
     assert np.all(np.isclose(game.max_role_payoffs(), 1) |
                   np.isclose(game.max_role_payoffs(), 0))
 
 
-def test_conv_mat_empty():
+def test_conv_mat_empty(mgame_str):
     """Test convert metrix to empty"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'empty', input=MATGAME_STR)
-    assert success, err
+    with stdin(mgame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'empty'), err.getvalue()
 
 
-def test_conv_mat_game():
+def test_conv_mat_game(mgame_str):
     """Test convert matrix to game"""
-    success, _, err = run('conv', '-o/dev/null', 'game', input=MATGAME_STR)
-    assert success, err
+    with stdin(mgame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'game'), err.getvalue()
 
 
-def test_conv_mat_sgame():
+def test_conv_mat_sgame(mgame_str):
     """Test convert matrix to sample game"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'samp', input=MATGAME_STR)
-    assert success, err
+    with stdin(mgame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'samp'), err.getvalue()
 
 
-def test_conv_mat_mat():
+def test_conv_mat_mat(mgame_str):
     """Test convert matrix to itself"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'mat', input=MATGAME_STR)
-    assert success, err
+    with stdin(mgame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'mat'), err.getvalue()
 
 
-def test_conv_mat_str():
+def test_conv_mat_str(mgame_str):
     """test convert matrix to string"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'str', input=MATGAME_STR)
-    assert success, err
+    with stdin(mgame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'str'), err.getvalue()
 
 
-def test_conv_mat_gambit():
+def test_conv_mat_gambit(mgame_str):
     """Test convert matrix to gambit"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'gambit', input=MATGAME_STR)
-    assert success, err
+    with stdin(mgame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'gambit'), err.getvalue()
 
 
-def test_conv_gambit_mat():
+@pytest.mark.filterwarnings('ignore:gambit player names')
+@pytest.mark.filterwarnings('ignore:gambit strategy names')
+def test_conv_gambit_mat(ggame_str):
     """Test convert gambit to matrix"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'mat', input=GAMBIT_STR)
-    assert success, err
+    with stdin(ggame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'mat'), err.getvalue()
 
 
-def test_conv_gambit_game():
+@pytest.mark.filterwarnings('ignore:gambit player names')
+@pytest.mark.filterwarnings('ignore:gambit strategy names')
+def test_conv_gambit_game(ggame_str):
     """Test convert gambit to game"""
-    success, _, err = run(
-        'conv', '-o/dev/null', 'game', input=GAMBIT_STR)
-    assert success, err
+    with stdin(ggame_str), stderr() as err:
+        assert run('conv', '-o/dev/null', 'game'), err.getvalue()
 
 
-def test_conv_mat_norm():
+def test_conv_mat_norm(mgame_str):
     """Test convert matrix to normalized version"""
-    success, out, err = run(
-        'conv', 'norm', input=MATGAME_STR)
-    assert success, err
-    game = gamereader.loads(out)
+    with stdin(mgame_str), stdout() as out, stderr() as err:
+        assert run('conv', 'norm'), err.getvalue()
+    game = gamereader.loads(out.getvalue())
     assert np.allclose(game.min_role_payoffs(), 0)
     assert np.all(np.isclose(game.max_role_payoffs(), 1) |
                   np.isclose(game.max_role_payoffs(), 0))
 
 
-def test_conv_game_mat_inv():
+def test_conv_game_mat_inv(game, game_str):
     """Test convert game to matrix and back"""
-    success, out, err = run('conv', 'matgame', input=GAME_STR)
-    assert success, err
-    success, out, err = run('conv', 'game', input=out)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == paygame.game_copy(matgame.matgame_copy(GAME_DATA))
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('conv', 'matgame'), err.getvalue()
+    with stdin(out.getvalue()), stdout() as out, stderr() as err:
+        assert run('conv', 'game'), err.getvalue()
+    copy = gamereader.loads(out.getvalue())
+    assert copy == paygame.game_copy(matgame.matgame_copy(game))
 
 
-def test_conv_game_gambit_inv():
+def test_conv_game_gambit_inv(game, game_str):
     """Test game to gambit and back"""
-    success, out, err = run('conv', 'gambit', input=GAME_STR)
-    assert success, err
-    success, out, err = run('conv', 'game', input=out)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == paygame.game_copy(matgame.matgame_copy(GAME_DATA))
+    with stdin(game_str), stdout() as out, stderr() as err:
+        assert run('conv', 'gambit'), err.getvalue()
+    with stdin(out.getvalue()), stdout() as out, stderr() as err:
+        assert run('conv', 'game'), err.getvalue()
+    copy = gamereader.loads(out.getvalue())
+    assert copy == paygame.game_copy(matgame.matgame_copy(game))
 
 
-def test_conv_mat_game_inv():
+def test_conv_mat_game_inv(mgame, mgame_str):
     """Test convert mat to game and back"""
-    success, out, err = run('conv', 'game', input=MATGAME_STR)
-    assert success, err
-    success, out, err = run('conv', 'matgame', input=out)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == MATGAME
+    with stdin(mgame_str), stdout() as out, stderr() as err:
+        assert run('conv', 'game'), err.getvalue()
+    with stdin(out.getvalue()), stdout() as out, stderr() as err:
+        assert run('conv', 'matgame'), err.getvalue()
+    copy = gamereader.loads(out.getvalue())
+    assert copy == mgame
 
 
-def test_conv_mat_gambit_inv():
+def test_conv_mat_gambit_inv(mgame, mgame_str):
     """Test convert mat to gambit and back"""
-    success, out, err = run('conv', 'gambit', input=MATGAME_STR)
-    assert success, err
-    success, out, err = run('conv', 'matgame', input=out)
-    assert success, err
-    game = gamereader.loads(out)
-    assert game == MATGAME
+    with stdin(mgame_str), stdout() as out, stderr() as err:
+        assert run('conv', 'gambit'), err.getvalue()
+    with stdin(out.getvalue()), stdout() as out, stderr() as err:
+        assert run('conv', 'matgame'), err.getvalue()
+    copy = gamereader.loads(out.getvalue())
+    assert copy == mgame
