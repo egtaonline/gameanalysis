@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.rsgame &#8212; Game Analysis 7.0.0 documentation</title>
+    <title>gameanalysis.rsgame &#8212; Game Analysis 7.0.1 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -1710,8 +1710,8 @@
     <span class="n">role_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">num_roles</span><span class="p">))</span>
     <span class="n">strats</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
     <span class="n">strat_names</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="n">strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)))</span>
-                        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">num_role_strats</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">_EmptyGame</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">num_role_strats</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_EmptyGame</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="empty_names"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.empty_names">[docs]</a><span class="k">def</span> <span class="nf">empty_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">):</span>
@@ -1763,8 +1763,8 @@
             <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
                 <span class="n">_LEG_STRAT</span><span class="o">.</span><span class="n">issuperset</span><span class="p">(</span><span class="n">strat</span><span class="p">),</span>
                 <span class="s1">&#39;strategy </span><span class="si">{}</span><span class="s1"> contains illegal characters&#39;</span><span class="p">,</span> <span class="n">strat</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_EmptyGame</span><span class="p">(</span></div>
-        <span class="nb">tuple</span><span class="p">(</span><span class="n">role_names</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">)),</span> <span class="n">num_role_players</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_EmptyGame</span><span class="p">(</span>
+        <span class="nb">tuple</span><span class="p">(</span><span class="n">role_names</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">)),</span> <span class="n">num_role_players</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="empty_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.empty_json">[docs]</a><span class="k">def</span> <span class="nf">empty_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
@@ -1808,8 +1808,8 @@
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="nb">all</span><span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">_LEG_STRAT</span><span class="o">.</span><span class="n">issuperset</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strats</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">strats</span> <span class="ow">in</span> <span class="n">strat_names</span><span class="p">),</span>
-        <span class="s1">&#39;strat names must be valid&#39;</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">_EmptyGame</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span>
+        <span class="s1">&#39;strat names must be valid&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_EmptyGame</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="empty_copy"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.empty_copy">[docs]</a><span class="k">def</span> <span class="nf">empty_copy</span><span class="p">(</span><span class="n">copy_game</span><span class="p">):</span>
@@ -1824,8 +1824,8 @@
 <span class="sd">        Game to copy info from.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_EmptyGame</span><span class="p">(</span>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span></div>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">)</span></div>
 
 
 <span class="k">class</span> <span class="nc">_AddGame</span><span class="p">(</span><span class="n">_RsGame</span><span class="p">):</span>
@@ -1978,8 +1978,8 @@
         <span class="n">games</span> <span class="o">=</span> <span class="n">unmerged_games</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_games</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
         <span class="k">return</span> <span class="n">final_games</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span></div>
-        <span class="k">return</span> <span class="n">_AddGame</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">final_games</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_AddGame</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">final_games</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="add_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.add_json">[docs]</a><span class="k">def</span> <span class="nf">add_json</span><span class="p">(</span><span class="n">jgame</span><span class="p">):</span>
@@ -1988,8 +1988,8 @@
     <span class="n">games</span> <span class="o">=</span> <span class="p">[</span><span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">jg</span><span class="p">)</span> <span class="k">for</span> <span class="n">jg</span> <span class="ow">in</span> <span class="n">jgame</span><span class="p">[</span><span class="s1">&#39;games&#39;</span><span class="p">]]</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="nb">all</span><span class="p">(</span><span class="n">base</span> <span class="o">==</span> <span class="n">empty_copy</span><span class="p">(</span><span class="n">game</span><span class="p">)</span> <span class="k">for</span> <span class="n">game</span> <span class="ow">in</span> <span class="n">games</span><span class="p">),</span>
-        <span class="s2">&quot;game structure didn&#39;t match each added game&quot;</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="n">games</span><span class="p">)</span>
+        <span class="s2">&quot;game structure didn&#39;t match each added game&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">add</span><span class="p">(</span><span class="o">*</span><span class="n">games</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="mix"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.mix">[docs]</a><span class="k">def</span> <span class="nf">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">):</span>
@@ -2015,8 +2015,8 @@
         <span class="k">return</span> <span class="n">game0</span>
     <span class="k">elif</span> <span class="n">prob</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">game1</span>
-    <span class="k">else</span><span class="p">:</span></div>
-        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">*</span> <span class="n">game0</span> <span class="o">+</span> <span class="n">prob</span> <span class="o">*</span> <span class="n">game1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">*</span> <span class="n">game0</span> <span class="o">+</span> <span class="n">prob</span> <span class="o">*</span> <span class="n">game1</span></div>
 
 
 <span class="k">class</span> <span class="nc">_CompleteGame</span><span class="p">(</span><span class="n">_RsGame</span><span class="p">):</span> <span class="c1"># pylint: disable=abstract-method</span>
@@ -2109,28 +2109,28 @@
 
 <div class="viewcode-block" id="const"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.const">[docs]</a><span class="k">def</span> <span class="nf">const</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a new constant game&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">const_replace</span><span class="p">(</span></div>
-        <span class="n">empty</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">),</span> <span class="n">constant</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">const_replace</span><span class="p">(</span>
+        <span class="n">empty</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">),</span> <span class="n">constant</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="const_names"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.const_names">[docs]</a><span class="k">def</span> <span class="nf">const_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create a new constant game with names&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">const_replace</span><span class="p">(</span></div>
-        <span class="n">empty_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">),</span> <span class="n">constant</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">const_replace</span><span class="p">(</span>
+        <span class="n">empty_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">),</span> <span class="n">constant</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="const_replace"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.const_replace">[docs]</a><span class="k">def</span> <span class="nf">const_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Replace a game with constant payoffs&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_ConstantGame</span><span class="p">(</span>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span></div>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="const_json"><a class="viewcode-back" href="../../gameanalysis.rsgame.html#gameanalysis.rsgame.const_json">[docs]</a><span class="k">def</span> <span class="nf">const_json</span><span class="p">(</span><span class="n">jgame</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read a constant game from json&quot;&quot;&quot;</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">empty_json</span><span class="p">(</span><span class="n">jgame</span><span class="p">)</span>
-    <span class="n">constant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jgame</span><span class="p">[</span><span class="s1">&#39;const&#39;</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">const_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">constant</span><span class="p">)</span>
+    <span class="n">constant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jgame</span><span class="p">[</span><span class="s1">&#39;const&#39;</span><span class="p">],</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">const_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">constant</span><span class="p">)</span></div>
 
 
 <span class="c1"># Legal characters for roles and strategies</span>
@@ -2186,13 +2186,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
     </div>
   </body>
 </html>

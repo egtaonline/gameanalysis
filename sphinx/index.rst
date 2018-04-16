@@ -10,6 +10,7 @@ Welcome to Game Analysis's documentation!
    :maxdepth: 3
 
    gameanalysis
+   gameanalysis.reduction
    profile_counts
    cont_approx
    endogenous_mix_eqa

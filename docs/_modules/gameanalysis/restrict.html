@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.restrict &#8212; Game Analysis 7.0.0 documentation</title>
+    <title>gameanalysis.restrict &#8212; Game Analysis 7.0.1 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -58,8 +58,8 @@
     <span class="n">num_role_strats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
     <span class="n">num_devs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">-</span> <span class="n">num_role_strats</span>
     <span class="n">dev_players</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">dev_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span></div>
-                  <span class="n">num_devs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">dev_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span>
+                  <span class="n">num_devs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="num_deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.num_deviation_payoffs">[docs]</a><span class="k">def</span> <span class="nf">num_deviation_payoffs</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
@@ -74,8 +74,8 @@
     <span class="n">dev_players</span> <span class="o">=</span> <span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span> <span class="o">-</span>
                    <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">])</span>
     <span class="n">temp</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">dev_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">non_deviators</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">temp</span> <span class="o">*</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_devs</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">non_deviators</span> <span class="o">+</span> <span class="n">num_deviation_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">)</span>
+    <span class="n">non_deviators</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">temp</span> <span class="o">*</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_devs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">non_deviators</span> <span class="o">+</span> <span class="n">num_deviation_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="num_dpr_deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.num_dpr_deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">num_dpr_deviation_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
@@ -100,8 +100,8 @@
     <span class="n">unpure_counts</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">game_size</span><span class="p">(</span><span class="n">dev_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">)</span> <span class="o">-</span> <span class="n">pure_counts</span>
     <span class="n">pure_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">pure_counts</span> <span class="o">*</span> <span class="n">pure</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="o">~</span><span class="n">pure</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">unpure_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">unpure_counts</span> <span class="o">*</span> <span class="o">~</span><span class="n">pure</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">pure</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="n">overcount</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">card_counts</span> <span class="o">*</span> <span class="n">pure_counts</span> <span class="o">*</span> <span class="n">unpure_counts</span> <span class="o">*</span> <span class="n">num_devs</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">num_deviation_payoffs</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">)</span> <span class="o">-</span> <span class="n">overcount</span>
+    <span class="n">overcount</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">card_counts</span> <span class="o">*</span> <span class="n">pure_counts</span> <span class="o">*</span> <span class="n">unpure_counts</span> <span class="o">*</span> <span class="n">num_devs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">num_deviation_payoffs</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">)</span> <span class="o">-</span> <span class="n">overcount</span></div>
 
 
 <div class="viewcode-block" id="deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">deviation_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">role_index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -140,8 +140,8 @@
         <span class="n">players</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">players</span><span class="p">[</span><span class="n">role_index</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])[</span><span class="n">role_index</span><span class="p">]</span>
-        <span class="n">rstart</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="n">role_index</span><span class="p">]</span></div>
-        <span class="k">return</span> <span class="n">dev_profs</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rstart</span><span class="p">)</span>
+        <span class="n">rstart</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="n">role_index</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">dev_profs</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rstart</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="additional_strategy_profiles"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.additional_strategy_profiles">[docs]</a><span class="k">def</span> <span class="nf">additional_strategy_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">role_strat_ind</span><span class="p">):</span>
@@ -159,8 +159,8 @@
     <span class="n">profs</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">new_mask</span><span class="p">)</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
     <span class="n">expand_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">profs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">expand_profs</span><span class="p">[:,</span> <span class="n">new_mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">profs</span>
-    <span class="n">expand_profs</span><span class="p">[:,</span> <span class="n">role_strat_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
-    <span class="k">return</span> <span class="n">expand_profs</span>
+    <span class="n">expand_profs</span><span class="p">[:,</span> <span class="n">role_strat_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">expand_profs</span></div>
 
 
 <div class="viewcode-block" id="translate"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.translate">[docs]</a><span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
@@ -172,8 +172,8 @@
         <span class="k">return</span> <span class="n">profiles</span>
     <span class="n">new_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
         <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">rest</span><span class="o">.</span><span class="n">size</span><span class="p">,),</span> <span class="n">profiles</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">new_profs</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">rest</span><span class="p">]</span> <span class="o">=</span> <span class="n">profiles</span></div>
-    <span class="k">return</span> <span class="n">new_profs</span>
+    <span class="n">new_profs</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">rest</span><span class="p">]</span> <span class="o">=</span> <span class="n">profiles</span>
+    <span class="k">return</span> <span class="n">new_profs</span></div>
 
 
 <div class="viewcode-block" id="to_id"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.to_id">[docs]</a><span class="k">def</span> <span class="nf">to_id</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
@@ -183,8 +183,8 @@
     <span class="n">bits</span><span class="p">[</span><span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span> <span class="o">-=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">bits</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
     <span class="n">roles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">roles</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span></div>
-        <span class="n">rest</span> <span class="o">*</span> <span class="n">bits</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">roles</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
+        <span class="n">rest</span> <span class="o">*</span> <span class="n">bits</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="from_id"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.from_id">[docs]</a><span class="k">def</span> <span class="nf">from_id</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest_id</span><span class="p">):</span>
@@ -196,8 +196,8 @@
     <span class="n">bits</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">bits</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
     <span class="n">roles</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="n">rolesc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="n">roles</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">rest_id</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">//</span> <span class="n">rolesc</span> <span class="o">%</span> <span class="n">roles</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span></div>
-                      <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">bits</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">rest_id</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">//</span> <span class="n">rolesc</span> <span class="o">%</span> <span class="n">roles</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                      <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">bits</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="maximal_restrictions"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.maximal_restrictions">[docs]</a><span class="k">def</span> <span class="nf">maximal_restrictions</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
@@ -246,8 +246,8 @@
         <span class="c1"># subsets may actually be subsets of previous maximal subsets.</span>
         <span class="k">if</span> <span class="n">maximal</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">rest</span> <span class="o">&lt;=</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">maximals</span><span class="p">):</span>
             <span class="n">maximals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rest</span><span class="p">)</span>
-</div>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">maximals</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">maximals</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -280,13 +280,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
     </div>
   </body>
 </html>

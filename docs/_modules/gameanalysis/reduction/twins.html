@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.reduction.twins &#8212; Game Analysis 7.0.0 documentation</title>
+    <title>gameanalysis.reduction.twins &#8212; Game Analysis 7.0.1 documentation</title>
     <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -61,8 +61,8 @@
     <span class="n">exp_red_players</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">full_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">red_players</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">exp_red_players</span> <span class="o">==</span> <span class="n">red_players</span><span class="p">),</span>
-        <span class="s2">&quot;twins reduction didn&#39;t get expected reduced players&quot;</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">reduce_game</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">exp_red_players</span><span class="p">)</span>
+        <span class="s2">&quot;twins reduction didn&#39;t get expected reduced players&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">reduce_game</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">exp_red_players</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="expand_profiles"><a class="viewcode-back" href="../../../gameanalysis.reduction.twins.html#gameanalysis.reduction.twins.expand_profiles">[docs]</a><span class="k">def</span> <span class="nf">expand_profiles</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
@@ -79,8 +79,8 @@
     <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">red_game</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">red_players</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="n">red_game</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s1">&#39;profiles must be valid&#39;</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">expand_profiles</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">)</span>
+        <span class="n">red_game</span><span class="o">.</span><span class="n">is_profile</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span> <span class="s1">&#39;profiles must be valid&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">expand_profiles</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="reduce_profiles"><a class="viewcode-back" href="../../../gameanalysis.reduction.twins.html#gameanalysis.reduction.twins.reduce_profiles">[docs]</a><span class="k">def</span> <span class="nf">reduce_profiles</span><span class="p">(</span><span class="n">red_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
@@ -97,8 +97,8 @@
     <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">red_game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">),</span>
-        <span class="s1">&#39;red game must be a twins game&#39;</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">reduce_profiles</span><span class="p">(</span><span class="n">red_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">)</span>
+        <span class="s1">&#39;red game must be a twins game&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">reduce_profiles</span><span class="p">(</span><span class="n">red_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="expand_deviation_profiles"><a class="viewcode-back" href="../../../gameanalysis.reduction.twins.html#gameanalysis.reduction.twins.expand_deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">expand_deviation_profiles</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">red_players</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -121,8 +121,8 @@
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">red_players</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">exp_red_players</span> <span class="o">==</span> <span class="n">red_players</span><span class="p">),</span>
         <span class="s2">&quot;twins reduction didn&#39;t get expected reduced players&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">expand_deviation_profiles</span><span class="p">(</span></div>
-        <span class="n">full_game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">exp_red_players</span><span class="p">,</span> <span class="n">role_index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dpr</span><span class="o">.</span><span class="n">expand_deviation_profiles</span><span class="p">(</span>
+        <span class="n">full_game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">exp_red_players</span><span class="p">,</span> <span class="n">role_index</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -155,13 +155,13 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
     </div>
   </body>
 </html>

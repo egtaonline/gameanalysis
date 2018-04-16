@@ -1,13 +1,6 @@
 gameanalysis package
 ====================
 
-Subpackages
------------
-
-.. toctree::
-
-    gameanalysis.reduction
-
 Submodules
 ----------
 

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.learning &#8212; Game Analysis 7.0.0 documentation</title>
+    <title>gameanalysis.learning &#8212; Game Analysis 7.0.1 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -222,8 +222,8 @@
         <span class="n">regs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reg</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_DevRegressionGame</span><span class="p">(</span>
-        <span class="n">game</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">regs</span><span class="p">),</span> <span class="n">offsets</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">min_strat_payoffs</span><span class="p">(),</span></div>
-        <span class="n">game</span><span class="o">.</span><span class="n">max_strat_payoffs</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span>
+        <span class="n">game</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">regs</span><span class="p">),</span> <span class="n">offsets</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">min_strat_payoffs</span><span class="p">(),</span>
+        <span class="n">game</span><span class="o">.</span><span class="n">max_strat_payoffs</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="sklgame_train"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.sklgame_train">[docs]</a><span class="k">def</span> <span class="nf">sklgame_train</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">estimator</span><span class="p">):</span>
@@ -244,8 +244,8 @@
         <span class="n">regs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">reg</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_DevRegressionGame</span><span class="p">(</span>
         <span class="n">game</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">regs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span>
-        <span class="n">game</span><span class="o">.</span><span class="n">min_strat_payoffs</span><span class="p">(),</span> <span class="n">game</span><span class="o">.</span><span class="n">max_strat_payoffs</span><span class="p">(),</span></div>
-        <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span>
+        <span class="n">game</span><span class="o">.</span><span class="n">min_strat_payoffs</span><span class="p">(),</span> <span class="n">game</span><span class="o">.</span><span class="n">max_strat_payoffs</span><span class="p">(),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">bool</span><span class="p">))</span></div>
 
 
 <span class="k">class</span> <span class="nc">_RbfGpGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">_CompleteGame</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-instance-attributes,protected-access</span>
@@ -525,8 +525,8 @@
 
     <span class="k">return</span> <span class="n">_RbfGpGame</span><span class="p">(</span>
         <span class="n">game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">coefs</span><span class="p">,</span>
-        <span class="n">lengths</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sizes</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">profiles</span><span class="p">),</span></div>
-        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span>
+        <span class="n">lengths</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sizes</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">profiles</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="rbfgame_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.rbfgame_json">[docs]</a><span class="k">def</span> <span class="nf">rbfgame_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
@@ -561,8 +561,8 @@
 
     <span class="k">return</span> <span class="n">_RbfGpGame</span><span class="p">(</span>
         <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">offsets</span><span class="p">,</span>
-        <span class="n">coefs</span><span class="p">,</span> <span class="n">lengths</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">profiles</span><span class="p">),</span></div>
-        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">alphas</span><span class="p">))</span>
+        <span class="n">coefs</span><span class="p">,</span> <span class="n">lengths</span><span class="p">,</span> <span class="n">sizes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">profiles</span><span class="p">),</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">alphas</span><span class="p">))</span></div>
 
 
 <span class="k">class</span> <span class="nc">_DeviationGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">_CompleteGame</span><span class="p">):</span> <span class="c1"># pylint: disable=abstract-method,protected-access</span>
@@ -695,16 +695,16 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_SampleDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span></div>
-        <span class="k">return</span> <span class="n">_SampleDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_SampleDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="sample_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.sample_json">[docs]</a><span class="k">def</span> <span class="nf">sample_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read sample game from json&quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_SampleDeviationGame</span><span class="p">(</span></div>
-        <span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]),</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;samples&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">_SampleDeviationGame</span><span class="p">(</span>
+        <span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]),</span> <span class="n">num_samples</span><span class="o">=</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;samples&#39;</span><span class="p">])</span></div>
 
 
 <span class="k">class</span> <span class="nc">_PointDeviationGame</span><span class="p">(</span><span class="n">_DeviationGame</span><span class="p">):</span>
@@ -772,15 +772,15 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_PointDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span></div>
-        <span class="k">return</span> <span class="n">_PointDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_PointDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="point_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.point_json">[docs]</a><span class="k">def</span> <span class="nf">point_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Read point game from json&quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;point&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">_PointDeviationGame</span><span class="p">(</span><span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]))</span>
+        <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;point&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_PointDeviationGame</span><span class="p">(</span><span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]))</span></div>
 
 
 <span class="k">class</span> <span class="nc">_NeighborDeviationGame</span><span class="p">(</span><span class="n">_DeviationGame</span><span class="p">):</span>
@@ -866,8 +866,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_NeighborDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">num_neighbors</span><span class="o">=</span><span class="n">num_neighbors</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span></div>
-        <span class="k">return</span> <span class="n">_NeighborDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_neighbors</span><span class="o">=</span><span class="n">num_neighbors</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_NeighborDeviationGame</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num_neighbors</span><span class="o">=</span><span class="n">num_neighbors</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="neighbor_json"><a class="viewcode-back" href="../../gameanalysis.learning.html#gameanalysis.learning.neighbor_json">[docs]</a><span class="k">def</span> <span class="nf">neighbor_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>
@@ -875,8 +875,8 @@
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">json</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;neighbor&#39;</span><span class="p">,</span> <span class="s1">&#39;incorrect type&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_NeighborDeviationGame</span><span class="p">(</span>
-        <span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]),</span></div>
-        <span class="n">num_neighbors</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;neighbors&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;devs&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span>
+        <span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]),</span>
+        <span class="n">num_neighbors</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;neighbors&#39;</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;devs&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)))</span></div>
 </pre></div>
 
           </div>
@@ -909,13 +909,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
     </div>
   </body>
 </html>
