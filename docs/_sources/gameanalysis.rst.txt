@@ -1,13 +1,19 @@
 gameanalysis package
 ====================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    gameanalysis.reduction
+
 Submodules
 ----------
 
 .. toctree::
 
    gameanalysis.aggfn
-   gameanalysis.agggen
    gameanalysis.bootstrap
    gameanalysis.canongame
    gameanalysis.collect
@@ -20,7 +26,6 @@ Submodules
    gameanalysis.matgame
    gameanalysis.nash
    gameanalysis.paygame
-   gameanalysis.reduction
    gameanalysis.regret
    gameanalysis.restrict
    gameanalysis.rsgame

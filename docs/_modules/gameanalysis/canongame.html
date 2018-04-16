@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.canongame &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.canongame &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,7 +36,8 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.canongame</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">functools</span>
+<span></span><span class="sd">&quot;&quot;&quot;A module containing a canonicalized game&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">functools</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
@@ -48,8 +49,8 @@
 <span class="c1"># TODO There&#39;s an issue here where incomplete payoffs for single strategy roles</span>
 <span class="c1"># contribute to incomplete profiles. There&#39;s not an obvious way to remedy this</span>
 <span class="c1"># with the current api in a way that works well.</span>
-<div class="viewcode-block" id="CanonGame"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame">[docs]</a><span class="k">class</span> <span class="nc">CanonGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">RsGame</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;A game canonicalized to remove single strategy roles&#39;&#39;&#39;</span>
+<span class="k">class</span> <span class="nc">_CanonGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">_RsGame</span><span class="p">):</span> <span class="c1"># pylint: disable=protected-access</span>
+    <span class="sd">&quot;&quot;&quot;A game canonicalized to remove single strategy roles&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">game</span><span class="p">):</span>
         <span class="n">role_mask</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">&gt;</span> <span class="mi">1</span>
@@ -64,57 +65,70 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_complete_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the number of profiles with full data&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">num_complete_profiles</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the number of profiles&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">num_profiles</span>
 
-<div class="viewcode-block" id="CanonGame.profiles"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.profiles">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get all profiles with any payoff data&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
 
-<div class="viewcode-block" id="CanonGame.payoffs"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.payoffs">[docs]</a>    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get all payoff parallel with profiles()&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">payoffs</span><span class="p">()[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
 
-<div class="viewcode-block" id="CanonGame.deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.deviation_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mix</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-        <span class="n">unmix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inds</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">jacobian</span><span class="p">:</span>
-            <span class="n">dev</span><span class="p">,</span> <span class="n">jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">unmix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">dev</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">],</span> <span class="n">jac</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">][:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span></div>
+    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the deviation payoffs for a mixture&quot;&quot;&quot;</span>
+        <span class="n">unmix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inds</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">jacobian</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">unmix</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
 
-<div class="viewcode-block" id="CanonGame.get_payoffs"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.get_payoffs">[docs]</a>    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
-        <span class="n">unprofs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_players</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+        <span class="n">dev</span><span class="p">,</span> <span class="n">jac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">unmix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dev</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">],</span> <span class="n">jac</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">][:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the payoffs for a profile or profiles&quot;&quot;&quot;</span>
+        <span class="n">unprofs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_players</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">unprofs</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
 
-<div class="viewcode-block" id="CanonGame.max_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.max_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">max_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">max_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the maximum strategy payoffs&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">max_strat_payoffs</span><span class="p">()[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
 
-<div class="viewcode-block" id="CanonGame.min_strat_payoffs"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.min_strat_payoffs">[docs]</a>    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-    <span class="k">def</span> <span class="nf">min_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+    <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+    <span class="k">def</span> <span class="nf">min_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the minimum strategy payoffs&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">min_strat_payoffs</span><span class="p">()[</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">]</span>
 
-<div class="viewcode-block" id="CanonGame.restrict"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.restrict">[docs]</a>    <span class="k">def</span> <span class="nf">restrict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
-        <span class="n">unrest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inds</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
-        <span class="k">return</span> <span class="n">CanonGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">unrest</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">restrict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restriction</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Restrict viable strategies for a canon game&quot;&quot;&quot;</span>
+        <span class="n">unrest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">restriction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inds</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_CanonGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">unrest</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">CanonGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_game</span> <span class="o">+</span> <span class="n">role_array</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a constant to a canon game&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_CanonGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_game</span> <span class="o">+</span> <span class="n">constant</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">role_array</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">CanonGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_game</span> <span class="o">*</span> <span class="n">role_array</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Multiple canon game payoffs by a constant&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_CanonGame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_game</span> <span class="o">*</span> <span class="n">constant</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="n">utils</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;canon games can</span><span class="se">\&#39;</span><span class="s1">t be added&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add another game to canon game&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">NotImplemented</span>
 
-<div class="viewcode-block" id="CanonGame.to_json"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.CanonGame.to_json">[docs]</a>    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert canon game to json object&quot;&quot;&quot;</span>
         <span class="n">base</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
         <span class="n">base</span><span class="p">[</span><span class="s1">&#39;game&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
-        <span class="n">base</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;canon.1&#39;</span></div>
+        <span class="n">base</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;canon.1&#39;</span>
         <span class="k">return</span> <span class="n">base</span>
 
     <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
@@ -122,29 +136,30 @@
         <span class="k">return</span> <span class="n">unprof</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span>
 
     <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">othr</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">othr</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">_game</span><span class="p">)</span>
+        <span class="c1"># pylint: disable-msg=protected-access</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">othr</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">_game</span>
 
     <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_game</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">, </span><span class="si">{:d}</span><span class="s1"> / </span><span class="si">{:d}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span></div>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">, </span><span class="si">{:d}</span><span class="s1"> / </span><span class="si">{:d}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="canon"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.canon">[docs]</a><span class="k">def</span> <span class="nf">canon</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Canonicalize a game by removing single strategy roles</span>
+    <span class="sd">&quot;&quot;&quot;Canonicalize a game by removing single strategy roles</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    game : RsGame</span>
 <span class="sd">        The game to canonizalize.</span>
-<span class="sd">    &#39;&#39;&#39;</span></div>
-    <span class="k">return</span> <span class="n">CanonGame</span><span class="p">(</span><span class="n">game</span><span class="p">)</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+    <span class="k">return</span> <span class="n">_CanonGame</span><span class="p">(</span><span class="n">game</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="canon_json"><a class="viewcode-back" href="../../gameanalysis.canongame.html#gameanalysis.canongame.canon_json">[docs]</a><span class="k">def</span> <span class="nf">canon_json</span><span class="p">(</span><span class="n">jgame</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Read a canonicalized game from json&#39;&#39;&#39;</span></div>
+    <span class="sd">&quot;&quot;&quot;Read a canonicalized game from json&quot;&quot;&quot;</span></div>
     <span class="k">return</span> <span class="n">canon</span><span class="p">(</span><span class="n">gamereader</span><span class="o">.</span><span class="n">loadj</span><span class="p">(</span><span class="n">jgame</span><span class="p">[</span><span class="s1">&#39;game&#39;</span><span class="p">]))</span>
 </pre></div>
 
@@ -178,7 +193,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

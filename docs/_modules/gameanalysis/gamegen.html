@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.gamegen &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.gamegen &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,70 +36,73 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.gamegen</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span></span><span class="sd">&quot;&quot;&quot;Module for generating random games&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">abc</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">numpy.random</span> <span class="k">as</span> <span class="nn">rand</span>
 <span class="kn">import</span> <span class="nn">scipy.special</span> <span class="k">as</span> <span class="nn">sps</span>
 
+<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">aggfn</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">matgame</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">paygame</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">rsgame</span>
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<div class="viewcode-block" id="default_distribution"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.default_distribution">[docs]</a><span class="k">def</span> <span class="nf">default_distribution</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span></div>
+<div class="viewcode-block" id="default_distribution"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.default_distribution">[docs]</a><span class="k">def</span> <span class="nf">default_distribution</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Default distribution for payoffs&quot;&quot;&quot;</span></div>
     <span class="k">return</span> <span class="n">rand</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="gen_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.gen_profiles">[docs]</a><span class="k">def</span> <span class="nf">gen_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate profiles given game structure</span>
+<div class="viewcode-block" id="gen_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.gen_profiles">[docs]</a><span class="k">def</span> <span class="nf">gen_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate profiles given game structure</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    game : RsGame</span>
+<span class="sd">    base : RsGame</span>
 <span class="sd">        Game to generate payoffs for.</span>
 <span class="sd">    prob : float, optional</span>
 <span class="sd">        The probability to add a profile from the full game.</span>
 <span class="sd">    distribution : (shape) -&gt; ndarray, optional</span>
 <span class="sd">        Distribution function to draw payoffs from.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># First turn input into number of profiles to compute</span>
-    <span class="n">num_profs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span>
+    <span class="n">num_profs</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">prob</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;probability must be in [0, 1] but was </span><span class="si">{:g}</span><span class="s1">&#39;</span><span class="p">,</span>
                 <span class="n">prob</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">num_profs</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
         <span class="n">num</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">num_profs</span><span class="p">,</span> <span class="n">prob</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">num</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">num_profs</span> <span class="o">*</span> <span class="n">prob</span><span class="p">))</span></div>
-    <span class="k">return</span> <span class="n">gen_num_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gen_num_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="gen_num_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.gen_num_profiles">[docs]</a><span class="k">def</span> <span class="nf">gen_num_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate profiles given game structure</span>
+<div class="viewcode-block" id="gen_num_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.gen_num_profiles">[docs]</a><span class="k">def</span> <span class="nf">gen_num_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate profiles given game structure</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    game : RsGame</span>
+<span class="sd">    base : RsGame</span>
 <span class="sd">        Game to generate payoffs for.</span>
 <span class="sd">    count : int</span>
 <span class="sd">        The number of profiles to generate.</span>
 <span class="sd">    distribution : (shape) -&gt; ndarray, optional</span>
 <span class="sd">        Distribution function to draw payoffs from.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num</span> <span class="o">&lt;=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span>
-        <span class="s1">&#39;num must be in [0, </span><span class="si">{:d}</span><span class="s1">] but was </span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
-    <span class="n">profiles</span> <span class="o">=</span> <span class="n">sample_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+        <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num</span> <span class="o">&lt;=</span> <span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span>
+        <span class="s1">&#39;num must be in [0, </span><span class="si">{:d}</span><span class="s1">] but was </span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+    <span class="n">profiles</span> <span class="o">=</span> <span class="n">sample_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
     <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">profiles</span> <span class="o">&gt;</span> <span class="mi">0</span>
     <span class="n">payoffs</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">distribution</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span></div>
-    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_replace</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.game">[docs]</a><span class="k">def</span> <span class="nf">game</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a random role symmetric game with sparse profiles</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random role symmetric game with sparse profiles</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -111,12 +114,12 @@
 <span class="sd">        The probability of any profile being included in the game.</span>
 <span class="sd">    distribution : (shape) -&gt; ndarray, optional</span>
 <span class="sd">        Distribution function to draw payoffs from.</span>
-<span class="sd">    &#39;&#39;&#39;</span></div>
-    <span class="k">return</span> <span class="n">gen_profiles</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">),</span> <span class="n">prob</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+    <span class="k">return</span> <span class="n">gen_profiles</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">),</span> <span class="n">prob</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="sparse_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.sparse_game">[docs]</a><span class="k">def</span> <span class="nf">sparse_game</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a random role symmetric game with sparse profiles</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random role symmetric game with sparse profiles</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -128,24 +131,24 @@
 <span class="sd">        The number of profiles to draw payoffs for.</span>
 <span class="sd">    distribution : (shape) -&gt; ndarray, optional</span>
 <span class="sd">        Distribution function to draw payoffs from.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">gen_num_profiles</span><span class="p">(</span></div>
-        <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">),</span> <span class="n">num</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
+        <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">),</span> <span class="n">num</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="width_gaussian"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.width_gaussian">[docs]</a><span class="k">def</span> <span class="nf">width_gaussian</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Gaussian width distribution</span>
+    <span class="sd">&quot;&quot;&quot;Gaussian width distribution</span>
 
 <span class="sd">    Samples come from iid Gaussian distributions.</span>
-<span class="sd">    &#39;&#39;&#39;</span></div>
+<span class="sd">    &quot;&quot;&quot;</span></div>
     <span class="k">return</span> <span class="n">rand</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">widths</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="p">(</span><span class="n">widths</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="width_bimodal"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.width_bimodal">[docs]</a><span class="k">def</span> <span class="nf">width_bimodal</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Bimodal Gaussian width distribution</span>
+    <span class="sd">&quot;&quot;&quot;Bimodal Gaussian width distribution</span>
 
 <span class="sd">    Samples come from a uniform mixture between two symmetric Gaussians.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">squared_widths</span> <span class="o">=</span> <span class="n">widths</span> <span class="o">**</span> <span class="mi">2</span>
     <span class="n">variances</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">squared_widths</span><span class="p">)</span>
     <span class="n">sdevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variances</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
@@ -156,20 +159,20 @@
 
 
 <div class="viewcode-block" id="width_uniform"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.width_uniform">[docs]</a><span class="k">def</span> <span class="nf">width_uniform</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Uniform width distribution</span>
+    <span class="sd">&quot;&quot;&quot;Uniform width distribution</span>
 
 <span class="sd">    Samples come from iid uniform distributions.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">halfwidths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">widths</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span></div>
     <span class="k">return</span> <span class="n">rand</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">halfwidths</span><span class="p">,</span> <span class="n">halfwidths</span><span class="p">,</span> <span class="p">(</span><span class="n">widths</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">))</span>
 
 
 <div class="viewcode-block" id="width_gumbel"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.width_gumbel">[docs]</a><span class="k">def</span> <span class="nf">width_gumbel</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Gumbel width distribution</span>
+    <span class="sd">&quot;&quot;&quot;Gumbel width distribution</span>
 
 <span class="sd">    Samples come from iid Gumbel distributions. Distributions are randomly</span>
 <span class="sd">    inverted since Gumbels are skewed.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">scales</span> <span class="o">=</span> <span class="n">widths</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
     <span class="n">draws</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">gumbel</span><span class="p">(</span>
         <span class="o">-</span><span class="n">scales</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">euler_gamma</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="p">(</span><span class="n">widths</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">))</span>
@@ -177,9 +180,10 @@
     <span class="k">return</span> <span class="n">draws</span>
 
 
-<div class="viewcode-block" id="gen_noise"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.gen_noise">[docs]</a><span class="k">def</span> <span class="nf">gen_noise</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">min_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-              <span class="n">noise_distribution</span><span class="o">=</span><span class="n">width_gaussian</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate noise for profiles of a game</span>
+<div class="viewcode-block" id="gen_noise"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.gen_noise">[docs]</a><span class="k">def</span> <span class="nf">gen_noise</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-arguments,too-many-locals</span>
+        <span class="n">base</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">min_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">noise_distribution</span><span class="o">=</span><span class="n">width_gaussian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate noise for profiles of a game</span>
 
 <span class="sd">    This generates samples for payoff data by first generating some measure of</span>
 <span class="sd">    distribution spread for each payoff in the game. Then, for each sample,</span>
@@ -188,7 +192,7 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    game : Game</span>
+<span class="sd">    base : Game</span>
 <span class="sd">        The game to generate samples from. These samples are additive zero-mean</span>
 <span class="sd">        noise to the payoff values.</span>
 <span class="sd">    prob : float, optional</span>
@@ -213,12 +217,12 @@
 <span class="sd">        and the mean is zero.  Several default versions are specified in</span>
 <span class="sd">        gamegen, and they&#39;re all prefixed with `width_`. By default, this uses</span>
 <span class="sd">        `width_gaussian`.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">game</span><span class="o">.</span><span class="n">is_empty</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_copy</span><span class="p">(</span><span class="n">game</span><span class="p">)</span>
-    <span class="n">perm</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">)</span>
-    <span class="n">profiles</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[</span><span class="n">perm</span><span class="p">]</span>
-    <span class="n">payoffs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">payoffs</span><span class="p">()[</span><span class="n">perm</span><span class="p">]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">base</span><span class="o">.</span><span class="n">is_empty</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_copy</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+    <span class="n">perm</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">)</span>
+    <span class="n">profiles</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[</span><span class="n">perm</span><span class="p">]</span>
+    <span class="n">payoffs</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">payoffs</span><span class="p">()[</span><span class="n">perm</span><span class="p">]</span>
     <span class="n">samples</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">geometric_histogram</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">samples</span> <span class="o">&gt;</span> <span class="mi">0</span>
     <span class="n">observations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">size</span><span class="p">)[</span><span class="n">mask</span><span class="p">]</span> <span class="o">+</span> <span class="n">min_samples</span>
@@ -231,7 +235,7 @@
         <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">supp</span> <span class="o">=</span> <span class="n">prof</span> <span class="o">&gt;</span> <span class="mi">0</span>
-        <span class="n">spay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">pay</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
+        <span class="n">spay</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">pay</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
         <span class="n">pview</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">spay</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
         <span class="n">widths</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_width</span><span class="p">,</span> <span class="n">max_width</span><span class="p">,</span> <span class="n">supp</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
         <span class="n">pview</span><span class="p">[</span><span class="n">supp</span><span class="p">]</span> <span class="o">=</span> <span class="n">pay</span><span class="p">[</span><span class="n">supp</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">noise_distribution</span><span class="p">(</span><span class="n">widths</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
@@ -242,14 +246,15 @@
     <span class="k">if</span> <span class="n">new_profiles</span><span class="p">:</span>
         <span class="n">new_profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">new_profiles</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>  <span class="c1"># No data</span>
-        <span class="n">new_profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span></div>
-    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_replace</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">new_profiles</span><span class="p">,</span> <span class="n">sample_payoffs</span><span class="p">)</span>
+        <span class="n">new_profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">new_profiles</span><span class="p">,</span> <span class="n">sample_payoffs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="samplegame"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.samplegame">[docs]</a><span class="k">def</span> <span class="nf">samplegame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">min_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-               <span class="n">max_width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">payoff_distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">,</span>
-               <span class="n">noise_distribution</span><span class="o">=</span><span class="n">width_gaussian</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a random role symmetric sample game</span>
+<div class="viewcode-block" id="samplegame"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.samplegame">[docs]</a><span class="k">def</span> <span class="nf">samplegame</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-arguments</span>
+        <span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">,</span> <span class="n">prob</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">min_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">payoff_distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">,</span>
+        <span class="n">noise_distribution</span><span class="o">=</span><span class="n">width_gaussian</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random role symmetric sample game</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -272,7 +277,7 @@
 <span class="sd">    noise_distribution : width distribution, optional</span>
 <span class="sd">        The distribution used to add noise to each payoff. See `gen_noise` for</span>
 <span class="sd">        a description of width distributions.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">min_samples</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">base</span> <span class="o">=</span> <span class="n">game</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">strats</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">payoff_distribution</span><span class="p">)</span>
         <span class="n">min_samples</span> <span class="o">=</span> <span class="mi">1</span>
@@ -283,7 +288,7 @@
 
 
 <div class="viewcode-block" id="independent_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.independent_game">[docs]</a><span class="k">def</span> <span class="nf">independent_game</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a random independent (asymmetric) game</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random independent (asymmetric) game</span>
 
 <span class="sd">    All payoffs are generated independently from distribution.</span>
 
@@ -295,15 +300,15 @@
 <span class="sd">    distribution : (shape) -&gt; ndarray (shape)</span>
 <span class="sd">        The distribution to sample payoffs from. Must take a single shape</span>
 <span class="sd">        argument and return an ndarray of iid values with that shape.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame</span><span class="p">(</span><span class="n">distribution</span><span class="p">(</span></div>
         <span class="nb">tuple</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">),)))</span>
 
 
-<div class="viewcode-block" id="covariant_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.covariant_game">[docs]</a><span class="k">def</span> <span class="nf">covariant_game</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="n">mean_dist</span><span class="o">=</span><span class="k">lambda</span> <span class="n">shape</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span>
-                   <span class="n">var_dist</span><span class="o">=</span><span class="k">lambda</span> <span class="n">shape</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span>
-                   <span class="n">covar_dist</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a covariant game</span>
+<div class="viewcode-block" id="covariant_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.covariant_game">[docs]</a><span class="k">def</span> <span class="nf">covariant_game</span><span class="p">(</span>
+        <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">mean_dist</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">,</span> <span class="n">var_dist</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">,</span>
+        <span class="n">covar_dist</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a covariant game</span>
 
 <span class="sd">    Covariant games are asymmetric games where payoff values for each profile</span>
 <span class="sd">    drawn according to multivariate normal.</span>
@@ -323,7 +328,7 @@
 <span class="sd">    covar_dist : (shape) -&gt; ndarray (shape)</span>
 <span class="sd">        Distribution from which the value of the off-diagonal covariance matrix</span>
 <span class="sd">        entries for each profile is drawn. (default: uniform [-1, 1])</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Create sampling distributions and sample from them</span>
     <span class="n">num_role_strats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">)</span>
     <span class="n">num_players</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">)</span>
@@ -335,24 +340,24 @@
 
     <span class="c1"># The next couple of lines do multivariate Gaussian sampling for all</span>
     <span class="c1"># payoffs simultaneously</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">diag</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
     <span class="n">payoffs</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
-    <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;...i,...i,...ij-&gt;...j&#39;</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;...i,...i,...ij-&gt;...j&#39;</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">diag</span><span class="p">),</span> <span class="n">right</span><span class="p">)</span>
     <span class="n">payoffs</span> <span class="o">+=</span> <span class="n">mean_dist</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span></div>
     <span class="k">return</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame</span><span class="p">(</span><span class="n">payoffs</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="two_player_zero_sum_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.two_player_zero_sum_game">[docs]</a><span class="k">def</span> <span class="nf">two_player_zero_sum_game</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">,</span>
                              <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a two-player, zero-sum game&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Generate a two-player, zero-sum game&quot;&quot;&quot;</span>
     <span class="c1"># Generate player 1 payoffs</span>
     <span class="n">num_role_strats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">p1_payoffs</span> <span class="o">=</span> <span class="n">distribution</span><span class="p">(</span><span class="n">num_role_strats</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span></div>
     <span class="k">return</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">p1_payoffs</span><span class="p">,</span> <span class="o">-</span><span class="n">p1_payoffs</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="sym_2p2s_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.sym_2p2s_game">[docs]</a><span class="k">def</span> <span class="nf">sym_2p2s_game</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Create a symmetric 2-player 2-strategy game of the specified form.</span>
+<div class="viewcode-block" id="sym_2p2s_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.sym_2p2s_game">[docs]</a><span class="k">def</span> <span class="nf">sym_2p2s_game</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span> <span class="c1"># pylint: disable=invalid-name</span>
+    <span class="sd">&quot;&quot;&quot;Create a symmetric 2-player 2-strategy game of the specified form.</span>
 
 <span class="sd">    Four payoff values get drawn from U(min_val, max_val), and then are</span>
 <span class="sd">    assigned to profiles in order from smallest to largest according to the</span>
@@ -367,7 +372,7 @@
 <span class="sd">    +---+-----+-----+</span>
 
 <span class="sd">    distribution must accept a size parameter a la numpy distributions.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">({</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">}</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)),</span> <span class="s1">&#39;numbers must be each of 1-4&#39;</span><span class="p">)</span>
     <span class="c1"># Generate payoffs</span>
     <span class="n">payoffs</span> <span class="o">=</span> <span class="n">distribution</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
@@ -378,29 +383,30 @@
 
 
 <div class="viewcode-block" id="prisoners_dilemma"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.prisoners_dilemma">[docs]</a><span class="k">def</span> <span class="nf">prisoners_dilemma</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a random prisoners dilemma game&#39;&#39;&#39;</span></div>
+    <span class="sd">&quot;&quot;&quot;Return a random prisoners dilemma game&quot;&quot;&quot;</span></div>
     <span class="k">return</span> <span class="n">sym_2p2s_game</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="chicken"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.chicken">[docs]</a><span class="k">def</span> <span class="nf">chicken</span><span class="p">(</span><span class="n">distribution</span><span class="o">=</span><span class="n">default_distribution</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a random prisoners dilemma game&#39;&#39;&#39;</span></div>
+    <span class="sd">&quot;&quot;&quot;Return a random prisoners dilemma game&quot;&quot;&quot;</span></div>
     <span class="k">return</span> <span class="n">sym_2p2s_game</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">distribution</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="sym_2p2s_known_eq"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.sym_2p2s_known_eq">[docs]</a><span class="k">def</span> <span class="nf">sym_2p2s_known_eq</span><span class="p">(</span><span class="n">eq_prob</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a symmetric 2-player 2-strategy game</span>
+    <span class="sd">&quot;&quot;&quot;Generate a symmetric 2-player 2-strategy game</span>
 
 <span class="sd">    This game has a single mixed equilibrium where strategy one is played with</span>
 <span class="sd">    probability eq_prob.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">profiles</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span>
     <span class="n">payoffs</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">eq_prob</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">eq_prob</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span></div>
     <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="polymatrix_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.polymatrix_game">[docs]</a><span class="k">def</span> <span class="nf">polymatrix_game</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">matrix_game</span><span class="o">=</span><span class="n">independent_game</span><span class="p">,</span>
-                    <span class="n">players_per_matrix</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Creates a polymatrix game using the specified k-player matrix game function.</span>
+<div class="viewcode-block" id="polymatrix_game"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.polymatrix_game">[docs]</a><span class="k">def</span> <span class="nf">polymatrix_game</span><span class="p">(</span>
+        <span class="n">num_players</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">matrix_game</span><span class="o">=</span><span class="n">independent_game</span><span class="p">,</span>
+        <span class="n">players_per_matrix</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Creates a polymatrix game</span>
 
 <span class="sd">    Each player&#39;s payoff in each profile is a sum over independent games played</span>
 <span class="sd">    against each set of opponents. Each k-tuple of players plays an instance of</span>
@@ -420,7 +426,7 @@
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
 <span class="sd">    The actual roles and strategies of matrix game are ignored.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">num_strats</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_players</span> <span class="o">+</span> <span class="p">[</span><span class="n">num_players</span><span class="p">])</span>
     <span class="k">for</span> <span class="n">players</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_players</span><span class="p">),</span>
                                           <span class="n">players_per_matrix</span><span class="p">):</span>
@@ -434,7 +440,7 @@
 
 
 <div class="viewcode-block" id="rock_paper_scissors"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.rock_paper_scissors">[docs]</a><span class="k">def</span> <span class="nf">rock_paper_scissors</span><span class="p">(</span><span class="n">win</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">loss</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return an instance of rock paper scissors&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Return an instance of rock paper scissors&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">win</span><span class="p">,</span> <span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
         <span class="n">win</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">win</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -444,7 +450,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">loss</span> <span class="o">=</span> <span class="p">[</span><span class="n">loss</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="nb">all</span><span class="p">(</span><span class="n">l</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">loss</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">win</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+        <span class="nb">all</span><span class="p">(</span><span class="n">l</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">loss</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">w</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">win</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
         <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">win</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">,</span>
         <span class="s1">&#39;win must be greater than 0 and loss must be less than zero&#39;</span><span class="p">)</span>
     <span class="n">profiles</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
@@ -464,14 +470,14 @@
 
 
 <div class="viewcode-block" id="travellers_dilemma"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.travellers_dilemma">[docs]</a><span class="k">def</span> <span class="nf">travellers_dilemma</span><span class="p">(</span><span class="n">players</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return an instance of travellers dilemma</span>
+    <span class="sd">&quot;&quot;&quot;Return an instance of travellers dilemma</span>
 
 <span class="sd">    Strategies range from 2 to max_value, thus there will be max_value - 1</span>
-<span class="sd">    strategies.&#39;&#39;&#39;</span>
+<span class="sd">    strategies.&quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;players must be more than one&#39;</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">max_value</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;max value must be more than 2&#39;</span><span class="p">)</span>
-    <span class="n">game</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">max_value</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">profiles</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">max_value</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">profiles</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
     <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">mins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">profiles</span> <span class="o">&gt;</span> <span class="mi">0</span>
@@ -481,21 +487,21 @@
     <span class="n">lowest_pays</span> <span class="o">=</span> <span class="n">mins</span> <span class="o">+</span> <span class="mi">4</span>
     <span class="n">lowest_pays</span><span class="p">[</span><span class="n">ties</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">2</span>
     <span class="n">payoffs</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">mins</span><span class="p">]</span> <span class="o">=</span> <span class="n">lowest_pays</span></div>
-    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_replace</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="keep_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.keep_profiles">[docs]</a><span class="k">def</span> <span class="nf">keep_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">keep_prob</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Keep random profiles from an existing game</span>
+<div class="viewcode-block" id="keep_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.keep_profiles">[docs]</a><span class="k">def</span> <span class="nf">keep_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">keep_prob</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Keep random profiles from an existing game</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    game : RsGame</span>
+<span class="sd">    base : RsGame</span>
 <span class="sd">        The game to take profiles from.</span>
 <span class="sd">    keep_prob : float, optional</span>
 <span class="sd">        The probability of keeping a profile from the full game.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># First turn input into number of profiles to compute</span>
-    <span class="n">num_profs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_profiles</span>
+    <span class="n">num_profs</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">num_profiles</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">keep_prob</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;keep probability must be in [0, 1] but was </span><span class="si">{:g}</span><span class="s1">&#39;</span><span class="p">,</span>
         <span class="n">keep_prob</span><span class="p">)</span>
@@ -503,65 +509,324 @@
         <span class="n">num</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="n">num_profs</span><span class="p">,</span> <span class="n">keep_prob</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">num</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">num_profs</span> <span class="o">*</span> <span class="n">keep_prob</span><span class="p">))</span></div>
-    <span class="k">return</span> <span class="n">keep_num_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">keep_num_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="keep_num_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.keep_num_profiles">[docs]</a><span class="k">def</span> <span class="nf">keep_num_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Keep random profiles from an existing game</span>
+<div class="viewcode-block" id="keep_num_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.keep_num_profiles">[docs]</a><span class="k">def</span> <span class="nf">keep_num_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Keep random profiles from an existing game</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    game : RsGame</span>
+<span class="sd">    base : RsGame</span>
 <span class="sd">        Game to keep profiles from.</span>
 <span class="sd">    num : int</span>
 <span class="sd">        The number of profiles to keep from the game.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num</span> <span class="o">&lt;=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="s1">&#39;num must be in [0, </span><span class="si">{:d}</span><span class="s1">] but was </span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="p">,</span>
-        <span class="n">game</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+        <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num</span> <span class="o">&lt;=</span> <span class="n">base</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="s1">&#39;num must be in [0, </span><span class="si">{:d}</span><span class="s1">] but was </span><span class="si">{:d}</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">base</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
-    <span class="k">elif</span> <span class="n">game</span><span class="o">.</span><span class="n">is_complete</span><span class="p">():</span>
-        <span class="n">profiles</span> <span class="o">=</span> <span class="n">sample_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
-        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">base</span><span class="o">.</span><span class="n">is_complete</span><span class="p">():</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">sample_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">inds</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="n">profiles</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[</span><span class="n">inds</span><span class="p">]</span>
-        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">payoffs</span><span class="p">()[</span><span class="n">inds</span><span class="p">]</span></div>
-    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_replace</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">profiles</span><span class="p">()[</span><span class="n">inds</span><span class="p">]</span>
+        <span class="n">payoffs</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">payoffs</span><span class="p">()[</span><span class="n">inds</span><span class="p">]</span></div>
+    <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="sample_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.sample_profiles">[docs]</a><span class="k">def</span> <span class="nf">sample_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate unique profiles from a game</span>
+<div class="viewcode-block" id="sample_profiles"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.sample_profiles">[docs]</a><span class="k">def</span> <span class="nf">sample_profiles</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span> <span class="c1"># pylint: disable=inconsistent-return-statements</span>
+    <span class="sd">&quot;&quot;&quot;Generate unique profiles from a game</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    game : RsGame</span>
+<span class="sd">    base : RsGame</span>
 <span class="sd">        Game to generate random profiles from.</span>
 <span class="sd">    num : int</span>
 <span class="sd">        Number of profiles to sample from the game.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+        <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
     <span class="k">elif</span> <span class="n">num</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
-        <span class="n">inds</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">profile_from_id</span><span class="p">(</span><span class="n">inds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">&lt;=</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">:</span>
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">profile_from_id</span><span class="p">(</span><span class="n">inds</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Number of times we have to re-query</span>
-        <span class="n">ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">sps</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">))</span> <span class="o">-</span>
-                 <span class="n">sps</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">-</span> <span class="n">num</span><span class="p">)))</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">sps</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">))</span> <span class="o">-</span>
+                 <span class="n">sps</span><span class="o">.</span><span class="n">digamma</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span> <span class="o">-</span> <span class="n">num</span><span class="p">)))</span>
         <span class="c1"># Max is for underflow</span>
-        <span class="n">num_per</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">game</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">)),</span> <span class="n">num</span><span class="p">)</span>
+        <span class="n">num_per</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">base</span><span class="o">.</span><span class="n">num_all_profiles</span><span class="p">)),</span> <span class="n">num</span><span class="p">)</span>
         <span class="n">profiles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num</span><span class="p">:</span>
             <span class="n">profiles</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-                <span class="n">utils</span><span class="o">.</span><span class="n">hash_array</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">game</span><span class="o">.</span><span class="n">random_profiles</span><span class="p">(</span><span class="n">num_per</span><span class="p">))</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">hash_array</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">random_profiles</span><span class="p">(</span><span class="n">num_per</span><span class="p">))</span>
         <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">h</span><span class="o">.</span><span class="n">array</span> <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">profiles</span><span class="p">])</span>
         <span class="n">inds</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
         <span class="k">return</span> <span class="n">profiles</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_random_inputs</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a random mask without all true or all false per function&quot;&quot;&quot;</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">))</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">vals</span> <span class="o">&lt;</span> <span class="n">prob</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_funcs</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">vals</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">inds</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">vals</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">inds</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">mask</span>
+
+
+<span class="k">def</span> <span class="nf">_random_mask</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a random mask with at least one true in every row and col&quot;&quot;&quot;</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">))</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">vals</span> <span class="o">&lt;</span> <span class="n">prob</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_funcs</span><span class="p">),</span> <span class="n">vals</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">vals</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_strats</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">mask</span>
+
+
+<span class="k">def</span> <span class="nf">_random_weights</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns random action weights&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">_random_mask</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">)</span> <span class="o">*</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">)))</span>
+
+
+<div class="viewcode-block" id="normal_aggfn"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.normal_aggfn">[docs]</a><span class="k">def</span> <span class="nf">normal_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                 <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random normal AgfnGame</span>
+
+<span class="sd">    Each function value is an i.i.d Gaussian random walk.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_players : int or ndarray</span>
+<span class="sd">        The number of players per role.</span>
+<span class="sd">    role_strats : int or ndarray</span>
+<span class="sd">        The number of strategies per role.</span>
+<span class="sd">    functions : int</span>
+<span class="sd">        The number of functions to generate.</span>
+<span class="sd">    input_prob : float, optional</span>
+<span class="sd">        The probability of a strategy counting towards a function value.</span>
+<span class="sd">    weight_prob : float, optional</span>
+<span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">)</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_random_inputs</span><span class="p">(</span><span class="n">input_prob</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">_random_weights</span><span class="p">(</span><span class="n">weight_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">funcs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">shape</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">role</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">funcs</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">role</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">funcs</span><span class="p">)</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">funcs</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="n">mean</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">functions</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span>
+    <span class="n">funcs</span> <span class="o">-=</span> <span class="n">mean</span></div>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">funcs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_random_aggfn</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-arguments</span>
+        <span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span> <span class="n">weight_prob</span><span class="p">,</span>
+        <span class="n">role_dist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base form for structured random aggfn generation</span>
+
+<span class="sd">    role_dist takes a number of functions and a number of players and returns</span>
+<span class="sd">    an ndarray of the function values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">)</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_random_inputs</span><span class="p">(</span><span class="n">input_prob</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">_random_weights</span><span class="p">(</span><span class="n">weight_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
+
+    <span class="n">funcs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">base_shape</span> <span class="o">=</span> <span class="p">[</span><span class="n">functions</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span>
+    <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="n">play</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">):</span>
+        <span class="n">role_funcs</span> <span class="o">=</span> <span class="n">role_dist</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">play</span><span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">base_shape</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">shape</span><span class="p">[</span><span class="n">role</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">play</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">role_funcs</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+        <span class="n">funcs</span> <span class="o">*=</span> <span class="n">role_funcs</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">funcs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="poly_aggfn"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.poly_aggfn">[docs]</a><span class="k">def</span> <span class="nf">poly_aggfn</span><span class="p">(</span>
+        <span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random polynomial AgfnGame</span>
+
+<span class="sd">    Functions are generated by generating `degree` zeros in [0, num_players] to</span>
+<span class="sd">    serve as a polynomial functions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_players : int or ndarray</span>
+<span class="sd">        The number of players per role.</span>
+<span class="sd">    role_strats : int or ndarray</span>
+<span class="sd">        The number of strategies per role.</span>
+<span class="sd">    functions : int</span>
+<span class="sd">        The number of functions to generate.</span>
+<span class="sd">    input_prob : float, optional</span>
+<span class="sd">        The probability of a strategy counting towards a function value.</span>
+<span class="sd">    weight_prob : float, optional</span>
+<span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
+<span class="sd">    degree : int or [float], optional</span>
+<span class="sd">        Either an integer specifying the degree or a list of the probabilities</span>
+<span class="sd">        of degrees starting from one, e.g. 3 is the same as [0, 0, 1].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">degree</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">degree</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span>
+    <span class="n">max_degree</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">degree</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">role_dist</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">play</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Role distribution&quot;&quot;&quot;</span>
+        <span class="n">zeros</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">functions</span><span class="p">,</span> <span class="n">max_degree</span><span class="p">))</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="o">-</span> <span class="mf">0.25</span><span class="p">)</span> <span class="o">*</span> <span class="n">play</span>
+        <span class="n">terms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">zeros</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">choices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="n">max_degree</span><span class="p">,</span> <span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="kc">True</span><span class="p">,</span> <span class="n">degree</span><span class="p">)</span>
+        <span class="n">terms</span><span class="p">[</span><span class="n">choices</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_degree</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="n">terms</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">play</span> <span class="o">**</span> <span class="n">choices</span>
+
+        <span class="c1"># The prevents too many small polynomials from making functions</span>
+        <span class="c1"># effectively constant</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">poly</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">poly</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="n">scale</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span></div>
+                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="sine_aggfn"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.sine_aggfn">[docs]</a><span class="k">def</span> <span class="nf">sine_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+               <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random sinusodial AgfnGame</span>
+
+<span class="sd">    Functions are generated by generating sinusoids with uniform random shifts</span>
+<span class="sd">    and n periods in 0 to num_players, where n is chosen randomle between</span>
+<span class="sd">    min_period and max_period.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    role_players : int or ndarray</span>
+<span class="sd">        The number of players per role.</span>
+<span class="sd">    role_strats : int or ndarray</span>
+<span class="sd">        The number of strategies per role.</span>
+<span class="sd">    functions : int</span>
+<span class="sd">        The number of functions to generate.</span>
+<span class="sd">    input_prob : float, optional</span>
+<span class="sd">        The probability of a strategy counting towards a function value.</span>
+<span class="sd">    weight_prob : float, optional</span>
+<span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
+<span class="sd">    period : float, optional</span>
+<span class="sd">        The loose number of periods in the payoff for each function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">role_dist</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">play</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Distribution by role&quot;&quot;&quot;</span>
+        <span class="c1"># This setup makes it so that the beat frequencies approach period</span>
+        <span class="n">periods</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">functions</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span> <span class="o">*</span>
+                   <span class="n">period</span> <span class="o">/</span> <span class="n">functions</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">functions</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">periods</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span></div>
+                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_random_monotone_polynomial</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">players</span><span class="p">,</span> <span class="n">degree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates a random monotone polynomial table&quot;&quot;&quot;</span>
+    <span class="n">coefs</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">functions</span><span class="p">,</span> <span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span>
+             <span class="n">players</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">coefs</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">powers</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="congestion"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.congestion">[docs]</a><span class="k">def</span> <span class="nf">congestion</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_required</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a congestion game</span>
+
+<span class="sd">    A congestion game is a symmetric game, where there are a given number of</span>
+<span class="sd">    facilities, and each player must choose to use some amount of them. The</span>
+<span class="sd">    payoff for each facility decreases as more players use it, and a players</span>
+<span class="sd">    utility is the sum of the utilities for every facility.</span>
+
+<span class="sd">    In this formulation, facility payoffs are random polynomials of the number</span>
+<span class="sd">    of people using said facility.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    num_players : int &gt; 1</span>
+<span class="sd">        The number of players.</span>
+<span class="sd">    num_facilities : int &gt; 1</span>
+<span class="sd">        The number of facilities.</span>
+<span class="sd">    num_required : 0 &lt; int &lt; num_facilities</span>
+<span class="sd">        The number of required facilities.</span>
+<span class="sd">    degree : int &gt; 0, optional</span>
+<span class="sd">        Degree of payoff polynomials.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;must have more than one player&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_facilities</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;must have more than one facility&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">num_required</span> <span class="o">&lt;</span> <span class="n">num_facilities</span><span class="p">,</span>
+        <span class="s1">&#39;must require more than zero but less than num_facilities&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">degree</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;degree must be greater than zero&#39;</span><span class="p">)</span>
+
+    <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">acomb</span><span class="p">(</span><span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_required</span><span class="p">)</span>
+    <span class="n">functions</span> <span class="o">=</span> <span class="o">-</span><span class="n">_random_monotone_polynomial</span><span class="p">(</span><span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span>
+                                             <span class="n">degree</span><span class="p">)</span>
+
+    <span class="n">facs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">num_facilities</span><span class="p">))</span>
+    <span class="n">strats</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">facs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span><span class="p">)</span>
+                   <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">function_inputs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_names</span><span class="p">(</span>
+        <span class="p">[</span><span class="s1">&#39;all&#39;</span><span class="p">],</span> <span class="n">num_players</span><span class="p">,</span> <span class="p">[</span><span class="n">strats</span><span class="p">],</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span></div>
+        <span class="n">functions</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="local_effect"><a class="viewcode-back" href="../../gameanalysis.gamegen.html#gameanalysis.gamegen.local_effect">[docs]</a><span class="k">def</span> <span class="nf">local_effect</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">edge_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a local effect game</span>
+
+<span class="sd">    In a local effect game, strategies are connected by a graph, and utilities</span>
+<span class="sd">    are a function of the number of players playing our strategy and the number</span>
+<span class="sd">    of players playing a neighboring strategy, hence local effect.</span>
+
+<span class="sd">    In this formulation, payoffs for others playing our strategy are negative</span>
+<span class="sd">    quadratics, and payoffs for playing other strategies are positive cubics.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    num_players : int &gt; 1</span>
+<span class="sd">        The number of players.</span>
+<span class="sd">    num_strategies : int &gt; 1</span>
+<span class="sd">        The number of strategies.</span>
+<span class="sd">    edge_prob : float, optional</span>
+<span class="sd">        The probability that one strategy affects another.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t generate a single player game&quot;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_strategies</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t generate a single strategy game&quot;</span><span class="p">)</span>
+
+    <span class="n">local_effect_graph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
+        <span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">edge_prob</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">local_effect_graph</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">num_neighbors</span> <span class="o">=</span> <span class="n">local_effect_graph</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">num_functions</span> <span class="o">=</span> <span class="n">num_neighbors</span> <span class="o">+</span> <span class="n">num_strategies</span>
+
+    <span class="n">action_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_functions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">in_act</span><span class="p">,</span> <span class="n">out_act</span> <span class="o">=</span> <span class="n">local_effect_graph</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+    <span class="n">func_inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_functions</span><span class="p">)</span>
+    <span class="n">function_inputs</span><span class="p">[</span><span class="n">in_act</span><span class="p">,</span> <span class="n">func_inds</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">action_weights</span><span class="p">[</span><span class="n">func_inds</span><span class="p">,</span> <span class="n">out_act</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">num_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">function_table</span><span class="p">[:</span><span class="n">num_strategies</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">_random_monotone_polynomial</span><span class="p">(</span>
+        <span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">function_table</span><span class="p">[</span><span class="n">num_strategies</span><span class="p">:]</span> <span class="o">=</span> <span class="n">_random_monotone_polynomial</span><span class="p">(</span>
+        <span class="n">num_neighbors</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span></div>
+                       <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">)</span>
 </pre></div>
 
           </div>
@@ -594,7 +859,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

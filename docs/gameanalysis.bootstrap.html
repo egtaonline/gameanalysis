@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.bootstrap module &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.bootstrap module &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -16,7 +16,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.canongame module" href="gameanalysis.canongame.html" />
-    <link rel="prev" title="gameanalysis.agggen module" href="gameanalysis.agggen.html" /> 
+    <link rel="prev" title="gameanalysis.aggfn module" href="gameanalysis.aggfn.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -31,9 +31,9 @@
           <a href="gameanalysis.canongame.html" title="gameanalysis.canongame module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.agggen.html" title="gameanalysis.agggen module"
+          <a href="gameanalysis.aggfn.html" title="gameanalysis.aggfn module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -55,8 +55,8 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.SampleGame" title="gameanalysis.paygame.SampleGame"><em>SampleGame</em></a>) – The sample game to bootstrap the function value over.</li>
-<li><strong>function</strong> (<em>f</em><em>(</em><a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a><em>) </em><em>-&gt; float</em><em> or </em><em>f</em><em>(</em><a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a><em>) </em><em>-&gt;</em><em> [</em><em>float</em><em>]</em>) – The function of the game to compute. It must be pickleable unless
+<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
+<li><strong>function</strong> (<em>f</em><em>(</em><em>Game</em><em>) </em><em>-&gt; float</em><em> or </em><em>f</em><em>(</em><em>Game</em><em>) </em><em>-&gt;</em><em> [</em><em>float</em><em>]</em>) – The function of the game to compute. It must be pickleable unless
 processes is 1, and it must return either a float or an iterable of
 floats. If an iterable of floats, this bootstrap all indices of the
 return value independently.</li>
@@ -91,7 +91,7 @@ your function.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.SampleGame" title="gameanalysis.paygame.SampleGame"><em>SampleGame</em></a>) – The sample game to bootstrap the function value over.</li>
+<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
 <li><strong>mixtures</strong> (<em>ndararay</em>) – The profiles to compute mixture regret bounds for.</li>
 <li><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
 better accuracy.</li>
@@ -121,7 +121,7 @@ number of cores.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.SampleGame" title="gameanalysis.paygame.SampleGame"><em>SampleGame</em></a>) – The sample game to bootstrap the function value over.</li>
+<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
 <li><strong>mixtures</strong> (<em>ndarray</em>) – The profiles to compute mixture welfare bounds for.</li>
 <li><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
 better accuracy.</li>
@@ -151,8 +151,8 @@ number of cores.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.SampleGame" title="gameanalysis.paygame.SampleGame"><em>SampleGame</em></a>) – The sample game to bootstrap the function value over.</li>
-<li><strong>function</strong> (<a class="reference internal" href="gameanalysis.paygame.html#gameanalysis.paygame.Game" title="gameanalysis.paygame.Game"><em>Game</em></a><em>, </em><em>profile -&gt; float</em>) – The function of the game profile pair to compute. It must be
+<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
+<li><strong>function</strong> (<em>Game</em><em>, </em><em>profile -&gt; float</em>) – The function of the game profile pair to compute. It must be
 pickleable, and it must return a float (e.g. regret.mixture_regret).</li>
 <li><strong>profiles</strong> (<em>ndarray</em>) – The profiles to compute bootstrap bounds over for function.</li>
 <li><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
@@ -185,8 +185,8 @@ profiles.</p>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="gameanalysis.agggen.html"
-                        title="previous chapter">gameanalysis.agggen module</a></p>
+  <p class="topless"><a href="gameanalysis.aggfn.html"
+                        title="previous chapter">gameanalysis.aggfn module</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="gameanalysis.canongame.html"
                         title="next chapter">gameanalysis.canongame module</a></p>
@@ -226,9 +226,9 @@ profiles.</p>
           <a href="gameanalysis.canongame.html" title="gameanalysis.canongame module"
              >next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.agggen.html" title="gameanalysis.agggen module"
+          <a href="gameanalysis.aggfn.html" title="gameanalysis.aggfn module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

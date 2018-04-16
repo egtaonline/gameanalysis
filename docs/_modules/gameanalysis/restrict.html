@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.restrict &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.restrict &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,11 +36,11 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.restrict</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;Module for performing actions on restrictions</span>
+<span></span><span class="sd">&quot;&quot;&quot;Module for performing actions on restrictions</span>
 
 <span class="sd">A restriction is a subset of strategies that are considered viable. They are</span>
 <span class="sd">represented as a bit-mask over strategies with at least one true value per</span>
-<span class="sd">role.&#39;&#39;&#39;</span>
+<span class="sd">role.&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">rsgame</span>
@@ -48,11 +48,11 @@
 
 
 <div class="viewcode-block" id="num_deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.num_deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">num_deviation_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the number of deviation profiles</span>
+    <span class="sd">&quot;&quot;&quot;Returns the number of deviation profiles</span>
 
 <span class="sd">    This is a closed form way to compute `deviation_profiles(game,</span>
 <span class="sd">    rest).shape[0]`.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="s1">&#39;restriction must be valid&#39;</span><span class="p">)</span>
     <span class="n">num_role_strats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
@@ -63,10 +63,10 @@
 
 
 <div class="viewcode-block" id="num_deviation_payoffs"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.num_deviation_payoffs">[docs]</a><span class="k">def</span> <span class="nf">num_deviation_payoffs</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the number of deviation payoffs</span>
+    <span class="sd">&quot;&quot;&quot;Returns the number of deviation payoffs</span>
 
 <span class="sd">    This is a closed form way to compute `np.sum(deviation_profiles(game, rest)</span>
-<span class="sd">    &gt; 0)`.&#39;&#39;&#39;</span>
+<span class="sd">    &gt; 0)`.&quot;&quot;&quot;</span>
     <span class="n">rest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="s1">&#39;restriction must be valid&#39;</span><span class="p">)</span>
     <span class="n">num_role_strats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
@@ -79,7 +79,7 @@
 
 
 <div class="viewcode-block" id="num_dpr_deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.num_dpr_deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">num_dpr_deviation_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the number of dpr deviation profiles&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns the number of dpr deviation profiles&quot;&quot;&quot;</span>
     <span class="n">rest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="s1">&#39;restriction must be valid&#39;</span><span class="p">)</span>
     <span class="n">num_role_strats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
@@ -105,7 +105,7 @@
 
 
 <div class="viewcode-block" id="deviation_profiles"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">deviation_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">role_index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return strict deviation profiles</span>
+    <span class="sd">&quot;&quot;&quot;Return strict deviation profiles</span>
 
 <span class="sd">    Strict means that all returned profiles will have exactly one player where</span>
 <span class="sd">    rest is false, i.e.</span>
@@ -113,26 +113,26 @@
 <span class="sd">    `np.all(np.sum(profiles * ~rest, 1) == 1)`</span>
 
 <span class="sd">    If `role_index` is specified, only profiles for that role will be</span>
-<span class="sd">    returned.&#39;&#39;&#39;</span>
+<span class="sd">    returned.&quot;&quot;&quot;</span>
     <span class="n">rest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="s1">&#39;restriction must be valid&#39;</span><span class="p">)</span>
     <span class="n">support</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">dev_profs</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rs</span><span class="p">):</span>
-        <span class="n">rgame</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">support</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">dev_profs</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rst</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get deviation profiles&quot;&quot;&quot;</span>
+        <span class="n">rgame</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">support</span><span class="p">)</span>
         <span class="n">non_devs</span> <span class="o">=</span> <span class="n">translate</span><span class="p">(</span><span class="n">rgame</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">(),</span> <span class="n">rest</span><span class="p">)</span>
         <span class="n">ndevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">~</span><span class="n">mask</span><span class="p">)</span>
         <span class="n">devs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ndevs</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">devs</span><span class="p">[:,</span> <span class="n">rs</span><span class="p">:</span><span class="n">rs</span> <span class="o">+</span> <span class="n">mask</span><span class="o">.</span><span class="n">size</span><span class="p">][:,</span> <span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">ndevs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">devs</span><span class="p">[:,</span> <span class="n">rst</span><span class="p">:</span><span class="n">rst</span> <span class="o">+</span> <span class="n">mask</span><span class="o">.</span><span class="n">size</span><span class="p">][:,</span> <span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">ndevs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
         <span class="n">profs</span> <span class="o">=</span> <span class="n">non_devs</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">devs</span>
         <span class="n">profs</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">profs</span>
 
-    <span class="k">if</span> <span class="n">role_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">role_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+        <span class="n">dev_players</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
         <span class="n">profs</span> <span class="o">=</span> <span class="p">[</span><span class="n">dev_profs</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rs</span><span class="p">)</span> <span class="k">for</span> <span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rs</span>
-                 <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span>
-                                                       <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">),</span>
-                        <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
+                 <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">dev_players</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span>
                         <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">profs</span><span class="p">)</span>
 
@@ -140,12 +140,12 @@
         <span class="n">players</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
         <span class="n">players</span><span class="p">[</span><span class="n">role_index</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:])[</span><span class="n">role_index</span><span class="p">]</span>
-        <span class="n">rs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="n">role_index</span><span class="p">]</span></div>
-        <span class="k">return</span> <span class="n">dev_profs</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rs</span><span class="p">)</span>
+        <span class="n">rstart</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="n">role_index</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">dev_profs</span><span class="p">(</span><span class="n">players</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">rstart</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="additional_strategy_profiles"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.additional_strategy_profiles">[docs]</a><span class="k">def</span> <span class="nf">additional_strategy_profiles</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">role_strat_ind</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns all profiles added by strategy at index&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns all profiles added by strategy at index&quot;&quot;&quot;</span>
     <span class="c1"># This uses the observation that the added profiles are all of the profiles</span>
     <span class="c1"># of the new restricted game with one less player in role, and then where</span>
     <span class="c1"># that last player always plays strat</span>
@@ -153,7 +153,7 @@
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="s1">&#39;restriction must be valid&#39;</span><span class="p">)</span>
     <span class="n">new_players</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_players</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">new_players</span><span class="p">[</span><span class="n">game</span><span class="o">.</span><span class="n">role_indices</span><span class="p">[</span><span class="n">role_strat_ind</span><span class="p">]]</span> <span class="o">-=</span> <span class="mi">1</span>
-    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">new_players</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">new_players</span><span class="p">,</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
     <span class="n">new_mask</span> <span class="o">=</span> <span class="n">rest</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">new_mask</span><span class="p">[</span><span class="n">role_strat_ind</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">profs</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">new_mask</span><span class="p">)</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">()</span>
@@ -164,21 +164,20 @@
 
 
 <div class="viewcode-block" id="translate"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.translate">[docs]</a><span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Translate a strategy object to the full game&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Translate a strategy object to the full game&quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">rest</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
         <span class="s1">&#39;profiles must be valid for the restriction&#39;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">rest</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">profiles</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">new_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">rest</span><span class="o">.</span><span class="n">size</span><span class="p">,),</span>
-                             <span class="n">profiles</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="n">new_profs</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">rest</span><span class="p">]</span> <span class="o">=</span> <span class="n">profiles</span></div>
-        <span class="k">return</span> <span class="n">new_profs</span>
+    <span class="n">new_profs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+        <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">rest</span><span class="o">.</span><span class="n">size</span><span class="p">,),</span> <span class="n">profiles</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">new_profs</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">rest</span><span class="p">]</span> <span class="o">=</span> <span class="n">profiles</span></div>
+    <span class="k">return</span> <span class="n">new_profs</span>
 
 
 <div class="viewcode-block" id="to_id"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.to_id">[docs]</a><span class="k">def</span> <span class="nf">to_id</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a unique integer representing a restriction&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Return a unique integer representing a restriction&quot;&quot;&quot;</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">bits</span><span class="p">[</span><span class="n">game</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]</span> <span class="o">-=</span> <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -189,7 +188,7 @@
 
 
 <div class="viewcode-block" id="from_id"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.from_id">[docs]</a><span class="k">def</span> <span class="nf">from_id</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">rest_id</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a restriction mask from its unique id&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Return a restriction mask from its unique id&quot;&quot;&quot;</span>
     <span class="n">rest_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rest_id</span><span class="p">)</span>
     <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
@@ -202,12 +201,12 @@
 
 
 <div class="viewcode-block" id="maximal_restrictions"><a class="viewcode-back" href="../../gameanalysis.restrict.html#gameanalysis.restrict.maximal_restrictions">[docs]</a><span class="k">def</span> <span class="nf">maximal_restrictions</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns all maximally complete restrictions</span>
+    <span class="sd">&quot;&quot;&quot;Returns all maximally complete restrictions</span>
 
 <span class="sd">    This function returns an array of restrictions, such that no restriction is</span>
 <span class="sd">    a sub_restriction (i.e. `np.all(sub &lt;= rest)`) and that no restriction</span>
 <span class="sd">    could be increased, and still contain complete payoff data for the game.</span>
-<span class="sd">    This is reducible to clique finding, and as such is NP Hard&#39;&#39;&#39;</span>
+<span class="sd">    This is reducible to clique finding, and as such is NP Hard&quot;&quot;&quot;</span>
     <span class="c1"># invariant that we have data for every restriction in queue</span>
     <span class="c1"># The reverse order is necessary for the order we explore</span>
     <span class="n">pure_profs</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">pure_profiles</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -226,6 +225,16 @@
             <span class="c1"># profiles, np.isin(profs, game.profiles()) is faster for checking</span>
             <span class="c1"># multiple profiles. We can potentially avoid using a dictionary</span>
             <span class="c1"># and instead use numpy set operations</span>
+            <span class="c1"># TODO More to the point, the idea of checking if a profile is in</span>
+            <span class="c1"># the game, may be slow for certain game types, but fast for</span>
+            <span class="c1"># others. Additionally, the idea of `in` only working for complete</span>
+            <span class="c1"># profiles is a little counter intuitive given that now all games</span>
+            <span class="c1"># will return payoff data that may have nans. However, we also</span>
+            <span class="c1"># don&#39;t want to just expose is a restricted game is complete (or</span>
+            <span class="c1"># maybe complete payoff data) because that will require a lot of</span>
+            <span class="c1"># extra checks that this doesn&#39;t make. In some sense we want each</span>
+            <span class="c1"># game to implement something aking to &quot;all additional strategy</span>
+            <span class="c1"># profiles in&quot; or maybe, &quot;deviation in&quot;.</span>
             <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">p</span> <span class="ow">in</span> <span class="n">game</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">profs</span><span class="p">):</span>
                 <span class="n">maximal</span> <span class="o">=</span> <span class="kc">False</span>
                 <span class="n">rest_copy</span> <span class="o">=</span> <span class="n">rest</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -271,7 +280,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

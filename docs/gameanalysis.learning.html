@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.learning module &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.learning module &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -52,264 +52,18 @@ improvements or refinements are made.</p>
 games. Learned games vary by the method, but generally expose methods for
 computing payoffs and may other features. Deviation games use learned games and
 different functions to compute deviation payoffs via various methods.</p>
-<dl class="class">
-<dt id="gameanalysis.learning.DevRegressionGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.learning.</code><code class="descname">DevRegressionGame</code><span class="sig-paren">(</span><em>game</em>, <em>regressors</em>, <em>offset</em>, <em>scale</em>, <em>min_payoffs</em>, <em>max_payoffs</em>, <em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.CompleteGame" title="gameanalysis.rsgame.CompleteGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.CompleteGame</span></code></a></p>
-<p>A game regression model that learns deviation payoffs</p>
-<p>This model functions as a game, but doesn’t have a default way of computing
-deviation payoffs. It must be wrapped with another game that uses payoff
-data to compute deviation payoffs.</p>
-<dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The payoffs for deviating from mixture</p>
-<p>Optionally with the jacobian with respect to mixture. This is the
-primary method that needs to implemented for nash finding.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.get_dev_payoffs">
-<code class="descname">get_dev_payoffs</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.get_dev_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.get_dev_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the payoff for deviating</p>
-<p>This implementation is more efficient than the default since we don’t
-need to compute the payoff for non deviators.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.get_payoffs">
-<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The payoffs for all profiles</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.max_strat_payoffs">
-<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>An upper bound on the payoff for each strategy</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.min_strat_payoffs">
-<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>A lower bound on the payoff for each strategy</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.DevRegressionGame.restrict">
-<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#DevRegressionGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.DevRegressionGame.restrict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict viable strategies</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="gameanalysis.learning.NeighborDeviationGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.learning.</code><code class="descname">NeighborDeviationGame</code><span class="sig-paren">(</span><em>model</em>, <em>num_devs=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#NeighborDeviationGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.NeighborDeviationGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.learning._DeviationGame</span></code></p>
-<p>Create a neighbor game from a model</p>
-<p>This takes a normalized weighted estimate of the deviation payoffs by
-finding all profiles within <cite>num_devs</cite> of the maximum probability profile
-for the mixture and weighting them accordingly. This is biased, but
-accurate in the limit as <cite>num_devs</cite> approaches <cite>num_players</cite>. It also
-produces discontinuities every time the maximum probability profile
-switches.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – If this is a payoff model it will be used to take samples, if this is
-an existing deviation game, then this will use it’s underlying model.</li>
-<li><strong>num_devs</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of deviations to take.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="gameanalysis.learning.NeighborDeviationGame.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#NeighborDeviationGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.NeighborDeviationGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The payoffs for deviating from mixture</p>
-<p>Optionally with the jacobian with respect to mixture. This is the
-primary method that needs to implemented for nash finding.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.NeighborDeviationGame.restrict">
-<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#NeighborDeviationGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.NeighborDeviationGame.restrict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict viable strategies</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.NeighborDeviationGame.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#NeighborDeviationGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.NeighborDeviationGame.to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format game as json</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="gameanalysis.learning.PointDeviationGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.learning.</code><code class="descname">PointDeviationGame</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#PointDeviationGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.PointDeviationGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.learning._DeviationGame</span></code></p>
-<p>Deviation payoffs by point approximation</p>
-<p>This model computes payoffs by finding the deviation payoffs from the point
-estimate of the mixture. It’s fast but biased. This is accurate in the
-limit as the number of players goes to infinity.</p>
-<p>For this work, the underlying implementation of get_dev_payoffs must
-support floating point profiles, which only really makes sense for
-regression games. For deviation payoffs to have a jacobian, the underlying
-model must also support a jacobian for get_dev_payoffs.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model</strong> (<a class="reference internal" href="#gameanalysis.learning.DevRegressionGame" title="gameanalysis.learning.DevRegressionGame"><em>DevRegressionGame</em></a>) – A payoff model</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="gameanalysis.learning.PointDeviationGame.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#PointDeviationGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.PointDeviationGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The payoffs for deviating from mixture</p>
-<p>Optionally with the jacobian with respect to mixture. This is the
-primary method that needs to implemented for nash finding.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.PointDeviationGame.restrict">
-<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#PointDeviationGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.PointDeviationGame.restrict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict viable strategies</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.PointDeviationGame.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#PointDeviationGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.PointDeviationGame.to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format game as json</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="gameanalysis.learning.RbfGpGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.learning.</code><code class="descname">RbfGpGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em>, <em>offset</em>, <em>coefs</em>, <em>lengths</em>, <em>sizes</em>, <em>profiles</em>, <em>alpha</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.CompleteGame" title="gameanalysis.rsgame.CompleteGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.CompleteGame</span></code></a></p>
-<p>A regression game using RBF Gaussian processes</p>
-<p>This regression game has a build in deviation payoff based off of a
-continuous approximation of the multinomial distribution.</p>
-<dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The payoffs for deviating from mixture</p>
-<p>Optionally with the jacobian with respect to mixture. This is the
-primary method that needs to implemented for nash finding.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.get_dev_payoffs">
-<code class="descname">get_dev_payoffs</code><span class="sig-paren">(</span><em>profiles</em>, <em>*</em>, <em>jacobian=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.get_dev_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.get_dev_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the payoffs for deviating</p>
-<p>Given partial profiles per role, compute the mean
-payoff for deviating to each strategy.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dev_profs</strong> (<em>array-like</em><em>, </em><em>shape =</em><em> (</em><em>num_samples</em><em>, </em><em>num_roles</em><em>, </em><em>num_strats</em><em>)</em>) – A list of partial profiles by role. This is the same structure as
-returned by <cite>random_dev_profiles</cite>.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.get_payoffs">
-<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The payoffs for all profiles</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.max_strat_payoffs">
-<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>An upper bound on the payoff for each strategy</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.min_strat_payoffs">
-<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>A lower bound on the payoff for each strategy</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.restrict">
-<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.restrict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict viable strategies</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.RbfGpGame.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#RbfGpGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.RbfGpGame.to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format game as json</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="gameanalysis.learning.SampleDeviationGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.learning.</code><code class="descname">SampleDeviationGame</code><span class="sig-paren">(</span><em>model</em>, <em>num_samples=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#SampleDeviationGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.SampleDeviationGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.learning._DeviationGame</span></code></p>
-<p>Deviation payoffs by sampling from mixture</p>
-<p>This model produces unbiased deviation payoff estimates, but they’re noisy
-and random and take a while to compute. This is accurate in the limit as
-<cite>num_samples</cite> goes to infinity.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>model</strong> (<a class="reference internal" href="#gameanalysis.learning.DevRegressionGame" title="gameanalysis.learning.DevRegressionGame"><em>DevRegressionGame</em></a>) – A payoff model</li>
-<li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of samples to use for each deviation estimate. Higher means
-lower variance but higher computation time.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="gameanalysis.learning.SampleDeviationGame.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#SampleDeviationGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.SampleDeviationGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute the deivation payoffs</p>
-<p>The method computes the jacobian as if we were importance sampling the
-results, i.e. the function is really always sample according to mixture
-m’, but then importance sample to get the actual result.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.SampleDeviationGame.restrict">
-<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#SampleDeviationGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.SampleDeviationGame.restrict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict viable strategies</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.learning.SampleDeviationGame.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#SampleDeviationGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.SampleDeviationGame.to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format game as json</p>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="function">
 <dt id="gameanalysis.learning.neighbor">
-<code class="descclassname">gameanalysis.learning.</code><code class="descname">neighbor</code><span class="sig-paren">(</span><em>game</em>, <em>num_devs=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#neighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.neighbor" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.learning.</code><code class="descname">neighbor</code><span class="sig-paren">(</span><em>game</em>, <em>num_neighbors=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/learning.html#neighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.learning.neighbor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a neighbor game from a model</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – If this is a payoff model it will be used to take samples, if this is
+<li><strong>game</strong> (<em>RsGame</em>) – If this is a payoff model it will be used to take samples, if this is
 an existing deviation game, then this will use it’s underlying model.</li>
-<li><strong>num_devs</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of deviations to explore out.</li>
+<li><strong>num_neighbors</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of deviations to explore out.</li>
 </ul>
 </td>
 </tr>
@@ -340,7 +94,7 @@ support more general architectures and training.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – If this is a payoff model it will be used to take samples, if this is
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>game</strong> (<em>RsGame</em>) – If this is a payoff model it will be used to take samples, if this is
 an existing deviation game, then this will use it’s underlying model.</td>
 </tr>
 </tbody>
@@ -370,7 +124,7 @@ standard regression models due the nature of its functional form.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The game to learn. Must have at least one payoff per strategy.</li>
+<li><strong>game</strong> (<em>RsGame</em>) – The game to learn. Must have at least one payoff per strategy.</li>
 <li><strong>num_restarts</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of random restarts to make with the optimizer. Higher
 numbers will give a better fit (in expectation), but will take
 longer.</li>
@@ -390,7 +144,7 @@ longer.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – If this is a payoff model it will be used to take samples, if this is
+<li><strong>game</strong> (<em>RsGame</em>) – If this is a payoff model it will be used to take samples, if this is
 an existing deviation game, then this will use it’s underlying model.</li>
 <li><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of samples to take.</li>
 </ul>
@@ -415,7 +169,7 @@ an existing deviation game, then this will use it’s underlying model.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The game to learn, must have at least one payoff per strategy.</li>
+<li><strong>game</strong> (<em>RsGame</em>) – The game to learn, must have at least one payoff per strategy.</li>
 <li><strong>estimator</strong> (<em>sklearn estimator</em>) – An estimator that supports clone, fit, and predict via the stand
 scikit-learn estimator API.</li>
 </ul>
@@ -477,7 +231,7 @@ scikit-learn estimator API.</li>
         <li class="right" >
           <a href="gameanalysis.gamereader.html" title="gameanalysis.gamereader module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

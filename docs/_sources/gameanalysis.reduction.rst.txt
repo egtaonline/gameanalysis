@@ -1,5 +1,18 @@
-gameanalysis.reduction module
-=============================
+gameanalysis.reduction package
+==============================
+
+Submodules
+----------
+
+.. toctree::
+
+   gameanalysis.reduction.deviation_preserving
+   gameanalysis.reduction.hierarchical
+   gameanalysis.reduction.identity
+   gameanalysis.reduction.twins
+
+Module contents
+---------------
 
 .. automodule:: gameanalysis.reduction
     :members:

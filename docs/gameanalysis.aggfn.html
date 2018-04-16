@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.aggfn module &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.aggfn module &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -15,8 +15,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="gameanalysis.agggen module" href="gameanalysis.agggen.html" />
-    <link rel="prev" title="gameanalysis package" href="gameanalysis.html" /> 
+    <link rel="next" title="gameanalysis.bootstrap module" href="gameanalysis.bootstrap.html" />
+    <link rel="prev" title="gameanalysis.reduction.twins module" href="gameanalysis.reduction.twins.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
@@ -28,12 +28,12 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.agggen.html" title="gameanalysis.agggen module"
+          <a href="gameanalysis.bootstrap.html" title="gameanalysis.bootstrap module"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.html" title="gameanalysis package"
+          <a href="gameanalysis.reduction.twins.html" title="gameanalysis.reduction.twins module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -46,77 +46,6 @@
   <div class="section" id="module-gameanalysis.aggfn">
 <span id="gameanalysis-aggfn-module"></span><h1>gameanalysis.aggfn module<a class="headerlink" href="#module-gameanalysis.aggfn" title="Permalink to this headline">¶</a></h1>
 <p>An action graph game with additive function nodes</p>
-<dl class="class">
-<dt id="gameanalysis.aggfn.AgfnGame">
-<em class="property">class </em><code class="descclassname">gameanalysis.aggfn.</code><code class="descname">AgfnGame</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>num_role_players</em>, <em>action_weights</em>, <em>function_inputs</em>, <em>function_table</em>, <em>offsets</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#AgfnGame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.AgfnGame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.CompleteGame" title="gameanalysis.rsgame.CompleteGame"><code class="xref py py-class docutils literal notranslate"><span class="pre">gameanalysis.rsgame.CompleteGame</span></code></a></p>
-<p>Action graph with function nodes game</p>
-<p>Action node utilities have additive structure. Function nodes are
-contribution-independent. Graph is bipartite so that function nodes have
-in-edges only from action nodes and vise versa.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>role_names</strong> (<em>(</em><em>str</em><em>,</em><em>)</em>) – The name of each role.</li>
-<li><strong>strat_names</strong> (<em>(</em><em>(</em><em>str</em><em>,</em><em>)</em><em>,</em><em>)</em>) – The name of each strategy per role.</li>
-<li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players for each role.</li>
-<li><strong>action_weights</strong> (<em>ndarray</em>) – Each entry specifies the incoming weight in the action graph for the
-action node (column).  Must have shape (num_functions, num_strats). The
-action weights for a particular function can’t be all zero, otherwise
-that function should not exist.</li>
-<li><strong>function_inputs</strong> (<em>ndarray</em>) – Each entry specifies whether the action node (row) is an input to the
-function node (col). Must have shape (num_strats, num_functions).</li>
-<li><strong>function_table</strong> (<em>ndarray</em>) – Value of arbitrary functions for a number of players activating the
-function. This can either have shape (num_functions, num_players + 1)
-or (num_functions,) + tuple(num_role_players + 1). The former treats
-different roles ass simply different strategy sets, the later treats
-each nodes inputs as distinct, and so each function maps from the
-number of inputs from each role.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="gameanalysis.aggfn.AgfnGame.deviation_payoffs">
-<code class="descname">deviation_payoffs</code><span class="sig-paren">(</span><em>mix</em>, <em>*</em>, <em>jacobian=False</em>, <em>**_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#AgfnGame.deviation_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.AgfnGame.deviation_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the deviation payoffs</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.aggfn.AgfnGame.get_payoffs">
-<code class="descname">get_payoffs</code><span class="sig-paren">(</span><em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#AgfnGame.get_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.AgfnGame.get_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns an array of profile payoffs.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.aggfn.AgfnGame.max_strat_payoffs">
-<code class="descname">max_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#AgfnGame.max_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.AgfnGame.max_strat_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns an upper bound on the payoffs.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.aggfn.AgfnGame.min_strat_payoffs">
-<code class="descname">min_strat_payoffs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#AgfnGame.min_strat_payoffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.AgfnGame.min_strat_payoffs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a lower bound on the payoffs.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.aggfn.AgfnGame.restrict">
-<code class="descname">restrict</code><span class="sig-paren">(</span><em>rest</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#AgfnGame.restrict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.AgfnGame.restrict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restrict viable strategies</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.aggfn.AgfnGame.to_json">
-<code class="descname">to_json</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#AgfnGame.to_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.AgfnGame.to_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Format game as json</p>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="function">
 <dt id="gameanalysis.aggfn.aggfn">
 <code class="descclassname">gameanalysis.aggfn.</code><code class="descname">aggfn</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>action_weights</em>, <em>function_inputs</em>, <em>function_table</em>, <em>offsets=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn" title="Permalink to this definition">¶</a></dt>
@@ -207,7 +136,7 @@ constant functions can be specified here.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>copy_game</strong> (<a class="reference internal" href="gameanalysis.rsgame.html#gameanalysis.rsgame.RsGame" title="gameanalysis.rsgame.RsGame"><em>RsGame</em></a>) – The game to take game structure from.</li>
+<li><strong>copy_game</strong> (<em>RsGame</em>) – The game to take game structure from.</li>
 <li><strong>action_weights</strong> (<em>ndarray-like</em>) – The weights of each function to player payoffs.</li>
 <li><strong>function_inputs</strong> (<em>ndarray-like</em>) – The mask of each strategy to function.</li>
 <li><strong>function_table</strong> (<em>ndarray-like</em>) – The lookup table of number of incoming edges to function value.</li>
@@ -230,11 +159,11 @@ constant functions can be specified here.</li>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="gameanalysis.html"
-                        title="previous chapter">gameanalysis package</a></p>
+  <p class="topless"><a href="gameanalysis.reduction.twins.html"
+                        title="previous chapter">gameanalysis.reduction.twins module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="gameanalysis.agggen.html"
-                        title="next chapter">gameanalysis.agggen module</a></p>
+  <p class="topless"><a href="gameanalysis.bootstrap.html"
+                        title="next chapter">gameanalysis.bootstrap module</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -268,12 +197,12 @@ constant functions can be specified here.</li>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.agggen.html" title="gameanalysis.agggen module"
+          <a href="gameanalysis.bootstrap.html" title="gameanalysis.bootstrap module"
              >next</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.html" title="gameanalysis package"
+          <a href="gameanalysis.reduction.twins.html" title="gameanalysis.reduction.twins module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.trace &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.trace &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,7 +36,8 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.trace</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="sd">&quot;&quot;&quot;Module for tracing equilibria in mixture games&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">integrate</span>
 
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">regret</span>
@@ -44,67 +45,71 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<span class="k">def</span> <span class="nf">_ode</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">t_eq</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">t_dest</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-         <span class="n">singular</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Trace an equilibrium out to target</span>
+<span class="k">def</span> <span class="nf">_ode</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-locals</span>
+        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">p_eq</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">p_dest</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">singular</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Trace an equilibrium out to target</span>
 
 <span class="sd">    See trace_equilibrium for full info</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">egame</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_copy</span><span class="p">(</span><span class="n">game0</span><span class="p">)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">egame</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty_copy</span><span class="p">(</span><span class="n">game0</span><span class="p">)</span>
     <span class="n">eqm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eqm</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="n">egame</span><span class="o">.</span><span class="n">is_mixture</span><span class="p">(</span><span class="n">eqm</span><span class="p">),</span> <span class="s1">&#39;equilibrium wasn</span><span class="se">\&#39;</span><span class="s1">t a valid mixture&#39;</span><span class="p">)</span>
+        <span class="n">egame</span><span class="o">.</span><span class="n">is_mixture</span><span class="p">(</span><span class="n">eqm</span><span class="p">),</span> <span class="s2">&quot;equilibrium wasn&#39;t a valid mixture&quot;</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span>
-            <span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">t_eq</span><span class="p">),</span> <span class="n">eqm</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">regret_thresh</span> <span class="o">+</span> <span class="mf">1e-7</span><span class="p">,</span>
-        <span class="s1">&#39;equilibrium didn</span><span class="se">\&#39;</span><span class="s1">t have regret below threshold&#39;</span><span class="p">)</span>
+            <span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">p_eq</span><span class="p">),</span> <span class="n">eqm</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">regret_thresh</span> <span class="o">+</span> <span class="mf">1e-7</span><span class="p">,</span>
+        <span class="s2">&quot;equilibrium didn&#39;t have regret below threshold&quot;</span><span class="p">)</span>
     <span class="n">ivp_args</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">max_step</span><span class="o">=</span><span class="n">max_step</span><span class="p">)</span>
 
     <span class="c1"># It may be handy to have the derivative of this so that the ode solver can</span>
     <span class="c1"># be more efficient, except that computing the derivative w.r.t. t requires</span>
     <span class="c1"># the hessian of the deviation payoffs, which would be complicated and so</span>
     <span class="c1"># far has no use anywhere else.</span>
-    <span class="k">def</span> <span class="nf">ode</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">mix_neg</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">ode</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">mix_neg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;ODE function for solve_ivp&quot;&quot;&quot;</span>
         <span class="n">div</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">egame</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
         <span class="n">mix</span> <span class="o">=</span> <span class="n">egame</span><span class="o">.</span><span class="n">trim_mixture_support</span><span class="p">(</span><span class="n">mix_neg</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">supp</span> <span class="o">=</span> <span class="n">mix</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="n">rgame</span> <span class="o">=</span> <span class="n">egame</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">supp</span><span class="p">)</span>
 
-        <span class="n">d1</span><span class="p">,</span> <span class="n">j1</span> <span class="o">=</span> <span class="n">game0</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">d2</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="n">game1</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dev1</span><span class="p">,</span> <span class="n">jac1</span> <span class="o">=</span> <span class="n">game0</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dev2</span><span class="p">,</span> <span class="n">jac2</span> <span class="o">=</span> <span class="n">game1</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">gs</span> <span class="o">=</span> <span class="p">(</span><span class="n">d1</span> <span class="o">-</span> <span class="n">d2</span><span class="p">)[</span><span class="n">supp</span><span class="p">]</span>
-        <span class="n">fs</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">j1</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">j2</span><span class="p">)[</span><span class="n">supp</span><span class="p">][:,</span> <span class="n">supp</span><span class="p">]</span>
+        <span class="n">gvals</span> <span class="o">=</span> <span class="p">(</span><span class="n">dev1</span> <span class="o">-</span> <span class="n">dev2</span><span class="p">)[</span><span class="n">supp</span><span class="p">]</span>
+        <span class="n">fvecs</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">*</span> <span class="n">jac1</span> <span class="o">+</span> <span class="n">prob</span> <span class="o">*</span> <span class="n">jac2</span><span class="p">)[</span><span class="n">supp</span><span class="p">][:,</span> <span class="n">supp</span><span class="p">]</span>
 
-        <span class="n">g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">gs</span><span class="p">),</span> <span class="n">rgame</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">gvec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">gvals</span><span class="p">),</span> <span class="n">rgame</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
             <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">egame</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)])</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">rgame</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">fmat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">fvecs</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">rgame</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
             <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">egame</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">rgame</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span>
-        <span class="k">if</span> <span class="n">singular</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">f</span><span class="p">)):</span>
-            <span class="n">div</span><span class="p">[</span><span class="n">supp</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">singular</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">fmat</span><span class="p">)):</span>
+            <span class="n">div</span><span class="p">[</span><span class="n">supp</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">fmat</span><span class="p">,</span> <span class="n">gvec</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">div</span>
 
-    <span class="k">def</span> <span class="nf">below_regret_thresh</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">mix_neg</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">below_regret_thresh</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">mix_neg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Event for regret going above threshold&quot;&quot;&quot;</span>
         <span class="n">mix</span> <span class="o">=</span> <span class="n">egame</span><span class="o">.</span><span class="n">trim_mixture_support</span><span class="p">(</span><span class="n">mix_neg</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">reg</span> <span class="o">=</span> <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="n">mix</span><span class="p">)</span>
+        <span class="n">reg</span> <span class="o">=</span> <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">),</span> <span class="n">mix</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">reg</span> <span class="o">-</span> <span class="n">regret_thresh</span>
 
     <span class="n">below_regret_thresh</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">below_regret_thresh</span><span class="o">.</span><span class="n">direction</span> <span class="o">=</span> <span class="mi">1</span>
 
-    <span class="k">def</span> <span class="nf">singular_jacobian</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">mix_neg</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">singular_jacobian</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">mix_neg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Event for when jacobian is singular&quot;&quot;&quot;</span>
         <span class="n">mix</span> <span class="o">=</span> <span class="n">egame</span><span class="o">.</span><span class="n">trim_mixture_support</span><span class="p">(</span><span class="n">mix_neg</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">supp</span> <span class="o">=</span> <span class="n">mix</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="n">rgame</span> <span class="o">=</span> <span class="n">egame</span><span class="o">.</span><span class="n">restrict</span><span class="p">(</span><span class="n">supp</span><span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">j1</span> <span class="o">=</span> <span class="n">game0</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">j2</span> <span class="o">=</span> <span class="n">game1</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">fs</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">j1</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">j2</span><span class="p">)[</span><span class="n">supp</span><span class="p">][:,</span> <span class="n">supp</span><span class="p">]</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">rgame</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">jac1</span> <span class="o">=</span> <span class="n">game0</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">jac2</span> <span class="o">=</span> <span class="n">game1</span><span class="o">.</span><span class="n">deviation_payoffs</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">fvecs</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">*</span> <span class="n">jac1</span> <span class="o">+</span> <span class="n">prob</span> <span class="o">*</span> <span class="n">jac2</span><span class="p">)[</span><span class="n">supp</span><span class="p">][:,</span> <span class="n">supp</span><span class="p">]</span>
+        <span class="n">fmat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">fvecs</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">rgame</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
             <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">egame</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">rgame</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">1</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="o">-</span> <span class="n">singular</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">fmat</span><span class="p">))</span> <span class="o">-</span> <span class="n">singular</span>
 
     <span class="n">singular_jacobian</span><span class="o">.</span><span class="n">terminal</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">singular_jacobian</span><span class="o">.</span><span class="n">direction</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
@@ -113,24 +118,27 @@
 
     <span class="c1"># This is to scope the index</span>
     <span class="k">def</span> <span class="nf">create_support_loss</span><span class="p">(</span><span class="n">ind</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">support_loss</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create support loss for every ind&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">support_loss</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">mix</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Support loss event&quot;&quot;&quot;</span>
             <span class="k">return</span> <span class="n">mix</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
 
         <span class="n">support_loss</span><span class="o">.</span><span class="n">direction</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
         <span class="k">return</span> <span class="n">support_loss</span>
 
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">egame</span><span class="o">.</span><span class="n">num_strats</span><span class="p">):</span>
-        <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">create_support_loss</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">strat</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">egame</span><span class="o">.</span><span class="n">num_strats</span><span class="p">):</span>
+        <span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">create_support_loss</span><span class="p">(</span><span class="n">strat</span><span class="p">))</span>
 
     <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">solve_ivp</span><span class="p">(</span>
-            <span class="n">ode</span><span class="p">,</span> <span class="p">[</span><span class="n">t_eq</span><span class="p">,</span> <span class="n">t_dest</span><span class="p">],</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
+            <span class="n">ode</span><span class="p">,</span> <span class="p">[</span><span class="n">p_eq</span><span class="p">,</span> <span class="n">p_dest</span><span class="p">],</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">egame</span><span class="o">.</span><span class="n">trim_mixture_support</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="trace_equilibria"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_equilibria">[docs]</a><span class="k">def</span> <span class="nf">trace_equilibria</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-                     <span class="n">singular</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Trace an equilibrium between games</span>
+<div class="viewcode-block" id="trace_equilibria"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_equilibria">[docs]</a><span class="k">def</span> <span class="nf">trace_equilibria</span><span class="p">(</span>
+        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">singular</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Trace an equilibrium between games</span>
 
 <span class="sd">    Takes two games, a fraction that they&#39;re merged, and an equilibrium of the</span>
 <span class="sd">    merged game, and traces the equilibrium out to nearby merged games, as far</span>
@@ -139,14 +147,14 @@
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    game0 : RsGame</span>
-<span class="sd">        The first game that&#39;s merged. Represents the payoffs when `t` is 0.</span>
+<span class="sd">        The first game that&#39;s merged. Represents the payoffs when `prob` is 0.</span>
 <span class="sd">    game1 : RsGame</span>
-<span class="sd">        The second game that&#39;s merged. Represents the payoffs when `t` is 1.</span>
-<span class="sd">    t : float</span>
+<span class="sd">        The second game that&#39;s merged. Represents the payoffs when `prob` is 1.</span>
+<span class="sd">    prob : float</span>
 <span class="sd">        The amount that the two games are merged such that `eqm` is an</span>
 <span class="sd">        equilibrium. Must be in [0, 1].</span>
 <span class="sd">    eqm : ndarray</span>
-<span class="sd">        An equilibrium when `game0` and `game1` are merged a `t` fraction.</span>
+<span class="sd">        An equilibrium when `game0` and `game1` are merged a `prob` fraction.</span>
 <span class="sd">    regret_thresh : float, optional</span>
 <span class="sd">        The amount of gain from deviating to a strategy outside support can</span>
 <span class="sd">        have before it&#39;s considered a beneficial deviation and the tracing</span>
@@ -161,50 +169,50 @@
 <span class="sd">        a singular matrix.</span>
 <span class="sd">    ivp_args</span>
 <span class="sd">        Any remaining keyword arguments are passed to the ivp solver.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">tsb</span><span class="p">,</span> <span class="n">eqab</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="n">regret_thresh</span><span class="p">,</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">psb</span><span class="p">,</span> <span class="n">eqab</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span>
+        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="n">regret_thresh</span><span class="p">,</span>
         <span class="n">max_step</span><span class="o">=</span><span class="n">max_step</span><span class="p">,</span> <span class="n">singular</span><span class="o">=</span><span class="n">singular</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
-    <span class="n">tsf</span><span class="p">,</span> <span class="n">eqaf</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="n">regret_thresh</span><span class="p">,</span>
+    <span class="n">psf</span><span class="p">,</span> <span class="n">eqaf</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span>
+        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="n">regret_thresh</span><span class="p">,</span>
         <span class="n">max_step</span><span class="o">=</span><span class="n">max_step</span><span class="p">,</span> <span class="n">singular</span><span class="o">=</span><span class="n">singular</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
-    <span class="n">ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">tsb</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">tsf</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">psb</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">psf</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
     <span class="n">mixes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">eqab</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">eqaf</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span></div>
-    <span class="k">return</span> <span class="n">ts</span><span class="p">,</span> <span class="n">mixes</span>
+    <span class="k">return</span> <span class="n">probs</span><span class="p">,</span> <span class="n">mixes</span>
 
 
-<div class="viewcode-block" id="trace_interpolate"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_interpolate">[docs]</a><span class="k">def</span> <span class="nf">trace_interpolate</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">ts</span><span class="p">,</span> <span class="n">eqa</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Get an equilibrium at a specific time</span>
+<div class="viewcode-block" id="trace_interpolate"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_interpolate">[docs]</a><span class="k">def</span> <span class="nf">trace_interpolate</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">eqa</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get an equilibrium at a specific time</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    game0 : RsGame</span>
-<span class="sd">        The game to get data from when t is 0.</span>
+<span class="sd">        The game to get data from when prob is 0.</span>
 <span class="sd">    game1 : RsGame</span>
-<span class="sd">        The game to get data from when t is 1.</span>
-<span class="sd">    ts : [float]</span>
-<span class="sd">        A parallel list of times for each equilibria in a continuous trace.</span>
+<span class="sd">        The game to get data from when prob is 1.</span>
+<span class="sd">    probs : [float]</span>
+<span class="sd">        A parallel list of probs for each equilibria in a continuous trace.</span>
 <span class="sd">    eqa : [eqm]</span>
-<span class="sd">        A parallel list of equilibria for each time representing continuous</span>
-<span class="sd">        equilibria for t mixture games.</span>
-<span class="sd">    t : float</span>
-<span class="sd">        The time to compute an equilibrium at.</span>
+<span class="sd">        A parallel list of equilibria for each prob representing continuous</span>
+<span class="sd">        equilibria for prob mixture games.</span>
+<span class="sd">    prob : float</span>
+<span class="sd">        The probability to compute an equilibrium at.</span>
 <span class="sd">    kwargs : options</span>
 <span class="sd">        The same options as `trace_equilibria`.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">eqa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eqa</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">ts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="n">ts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;t must be in trace&#39;</span><span class="p">)</span>
-    <span class="n">ind</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">ts</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">prob</span> <span class="o">&lt;=</span> <span class="n">probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;t must be in trace&#39;</span><span class="p">)</span>
+    <span class="n">ind</span> <span class="o">=</span> <span class="n">probs</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">probs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">==</span> <span class="n">prob</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">eqa</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
     <span class="c1"># select nearby equilibrium with maximum support if tied, take lowest reg</span>
     <span class="n">ind</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ind</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">eqa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">ts</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">eqa</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">t_res</span><span class="p">),</span> <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">eqm_res</span><span class="p">)</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">ts</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">eqa</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">t</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">t_res</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="s1">&#39;ode solving failed to reach t&#39;</span><span class="p">)</span></div>
+        <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">probs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">eqa</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
+    <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">p_res</span><span class="p">),</span> <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">eqm_res</span><span class="p">)</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-star-expressions</span>
+        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">probs</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">eqa</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">prob</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">p_res</span><span class="p">,</span> <span class="n">prob</span><span class="p">),</span> <span class="s1">&#39;ode solving failed to reach prob&#39;</span><span class="p">)</span></div>
     <span class="k">return</span> <span class="n">eqm_res</span>
 </pre></div>
 
@@ -238,7 +246,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

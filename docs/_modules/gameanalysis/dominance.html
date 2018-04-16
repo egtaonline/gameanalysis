@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.dominance &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.dominance &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,14 +36,14 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.dominance</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;Module for computing dominated strategies&#39;&#39;&#39;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Module for computing dominated strategies&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">regret</span>
 
 
 <span class="k">def</span> <span class="nf">_dev_inds</span><span class="p">(</span><span class="n">num_strats</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the deviation strategy indices for a deviation array&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns the deviation strategy indices for a deviation array&quot;&quot;&quot;</span>
     <span class="n">sizes</span> <span class="o">=</span> <span class="n">num_strats</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_strats</span><span class="p">)</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">sizes</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="n">strat_offs</span> <span class="o">=</span> <span class="n">offsets</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">sizes</span><span class="p">)</span>
@@ -53,10 +53,10 @@
 
 
 <span class="k">def</span> <span class="nf">_gains</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the gains for deviating for every profile in the game</span>
+    <span class="sd">&quot;&quot;&quot;Returns the gains for deviating for every profile in the game</span>
 
 <span class="sd">    Also returns the profile supports for indexing when the gains array should</span>
-<span class="sd">    be zero because it&#39;s invalid versus having an actual zero gain.&#39;&#39;&#39;</span>
+<span class="sd">    be zero because it&#39;s invalid versus having an actual zero gain.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
         <span class="p">[</span><span class="n">regret</span><span class="o">.</span><span class="n">pure_strategy_deviation_gains</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">prof</span><span class="p">)[</span><span class="kc">None</span><span class="p">]</span>
          <span class="k">for</span> <span class="n">prof</span> <span class="ow">in</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()])</span>
@@ -64,20 +64,20 @@
 
 <span class="c1"># XXX Remove when reduceat is fixed to handle empty slices with identity</span>
 <span class="c1"># instead of the value at the start...</span>
-<span class="k">def</span> <span class="nf">_reduceat</span><span class="p">(</span><span class="n">ufunc</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Fix for the way reduceat handles empty slices&#39;&#39;&#39;</span>
-    <span class="n">new_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_reduceat</span><span class="p">(</span><span class="n">ufunc</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fix for the way reduceat handles empty slices&quot;&quot;&quot;</span>
+    <span class="n">new_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">new_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">size</span>
-    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">new_shape</span><span class="p">,</span> <span class="n">ufunc</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">indices</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">new_shape</span><span class="p">,</span> <span class="n">ufunc</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">indices</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span>
     <span class="n">index</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)]</span> <span class="o">*</span> <span class="n">out</span><span class="o">.</span><span class="n">ndim</span>
     <span class="n">index</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">valid</span>
-    <span class="n">out</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">ufunc</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">indices</span><span class="p">[</span><span class="n">valid</span><span class="p">],</span> <span class="n">axis</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">ufunc</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">indices</span><span class="p">[</span><span class="n">valid</span><span class="p">],</span> <span class="n">axis</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span>
 
 
 <span class="k">def</span> <span class="nf">_weak_dominance</span><span class="p">(</span><span class="n">gains</span><span class="p">,</span> <span class="n">supports</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the strategies that are weakly dominated&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns the strategies that are weakly dominated&quot;&quot;&quot;</span>
     <span class="n">sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_strats</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">)</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">sizes</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>  <span class="c1"># nans</span>
@@ -90,7 +90,7 @@
 
 
 <span class="k">def</span> <span class="nf">_strict_dominance</span><span class="p">(</span><span class="n">gains</span><span class="p">,</span> <span class="n">supports</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the strategies that are strictly dominated&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns the strategies that are strictly dominated&quot;&quot;&quot;</span>
     <span class="n">sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_strats</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">)</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">sizes</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>  <span class="c1"># nans</span>
@@ -103,7 +103,7 @@
 
 
 <span class="k">def</span> <span class="nf">_never_best_response</span><span class="p">(</span><span class="n">gains</span><span class="p">,</span> <span class="n">supports</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns the strategies that are never a best response&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns the strategies that are never a best response&quot;&quot;&quot;</span>
     <span class="c1"># This way we include self (e.g. 0) in best response</span>
     <span class="n">self_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">)</span>
     <span class="n">self_offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">self_sizes</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
@@ -128,26 +128,26 @@
 
 
 <div class="viewcode-block" id="weakly_dominated"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.weakly_dominated">[docs]</a><span class="k">def</span> <span class="nf">weakly_dominated</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a mask of the strategies that are weakly dominated</span>
+    <span class="sd">&quot;&quot;&quot;Return a mask of the strategies that are weakly dominated</span>
 
-<span class="sd">    If conditional, then missing data will be treated as dominating.&#39;&#39;&#39;</span>
+<span class="sd">    If conditional, then missing data will be treated as dominating.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_weak_dominance</span><span class="p">(</span><span class="n">_gains</span><span class="p">(</span><span class="n">game</span><span class="p">),</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span></div>
                            <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="strictly_dominated"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.strictly_dominated">[docs]</a><span class="k">def</span> <span class="nf">strictly_dominated</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a mask of the strategies that are strictly dominated</span>
+    <span class="sd">&quot;&quot;&quot;Return a mask of the strategies that are strictly dominated</span>
 
-<span class="sd">    If conditional, then missing data will be treated as dominating.&#39;&#39;&#39;</span>
+<span class="sd">    If conditional, then missing data will be treated as dominating.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_strict_dominance</span><span class="p">(</span><span class="n">_gains</span><span class="p">(</span><span class="n">game</span><span class="p">),</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span></div>
                              <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="never_best_response"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.never_best_response">[docs]</a><span class="k">def</span> <span class="nf">never_best_response</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a mask of the strategies that are never a best response</span>
+    <span class="sd">&quot;&quot;&quot;Return a mask of the strategies that are never a best response</span>
 
 <span class="sd">    If conditional, then missing data is treated as a best response. The</span>
-<span class="sd">    counted best response will be the largest deviation that has data.&#39;&#39;&#39;</span>
+<span class="sd">    counted best response will be the largest deviation that has data.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_never_best_response</span><span class="p">(</span><span class="n">_gains</span><span class="p">(</span><span class="n">game</span><span class="p">),</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span></div>
                                 <span class="n">game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="n">conditional</span><span class="p">)</span>
 
@@ -160,7 +160,7 @@
 
 
 <div class="viewcode-block" id="iterated_elimination"><a class="viewcode-back" href="../../gameanalysis.dominance.html#gameanalysis.dominance.iterated_elimination">[docs]</a><span class="k">def</span> <span class="nf">iterated_elimination</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">conditional</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Return a restriction resulting from iterated elimination of strategies</span>
+    <span class="sd">&quot;&quot;&quot;Return a restriction resulting from iterated elimination of strategies</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -172,7 +172,7 @@
 <span class="sd">        Whether to use conditional criteria. In general, conditional set to</span>
 <span class="sd">        true will assume that unobserved payoffs are large. See the other</span>
 <span class="sd">        methods for a more detailed explanation</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># There&#39;s a few recomputed things that could be passed to save computation</span>
     <span class="c1"># time, but they&#39;re minimal and probably not that important</span>
     <span class="n">cfunc</span> <span class="o">=</span> <span class="n">_CRITERIA</span><span class="p">[</span><span class="n">criterion</span><span class="p">]</span>
@@ -233,7 +233,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

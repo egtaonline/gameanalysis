@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.fixedpoint &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.fixedpoint &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,14 +36,14 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.fixedpoint</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;Module for finding fixed points of functions on a simplex&#39;&#39;&#39;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Module for finding fixed points of functions on a simplex&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
 <div class="viewcode-block" id="fixed_point"><a class="viewcode-back" href="../../gameanalysis.fixedpoint.html#gameanalysis.fixedpoint.fixed_point">[docs]</a><span class="k">def</span> <span class="nf">fixed_point</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Compute an approximate fixed point of a function</span>
+    <span class="sd">&quot;&quot;&quot;Compute an approximate fixed point of a function</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -55,14 +55,15 @@
 <span class="sd">    kwargs : options</span>
 <span class="sd">        Additional options to pass on to labeled_subsimplex. See other options</span>
 <span class="sd">        for details.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">fixed_func</span><span class="p">(</span><span class="n">mix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Labeling function for a fixed point&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">((</span><span class="n">mix</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">mix</span> <span class="o">+</span> <span class="n">func</span><span class="p">(</span><span class="n">mix</span><span class="p">))</span></div>
     <span class="k">return</span> <span class="n">labeled_subsimplex</span><span class="p">(</span><span class="n">fixed_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="labeled_subsimplex"><a class="viewcode-back" href="../../gameanalysis.fixedpoint.html#gameanalysis.fixedpoint.labeled_subsimplex">[docs]</a><span class="k">def</span> <span class="nf">labeled_subsimplex</span><span class="p">(</span><span class="n">label_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">disc</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Find approximate center of a fully labeled subsimplex</span>
+<div class="viewcode-block" id="labeled_subsimplex"><a class="viewcode-back" href="../../gameanalysis.fixedpoint.html#gameanalysis.fixedpoint.labeled_subsimplex">[docs]</a><span class="k">def</span> <span class="nf">labeled_subsimplex</span><span class="p">(</span><span class="n">label_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">disc</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-locals,too-many-statements</span>
+    <span class="sd">&quot;&quot;&quot;Find approximate center of a fully labeled subsimplex</span>
 
 <span class="sd">    This runs once at the discretization provided. It is recommended that this</span>
 <span class="sd">    be run several times with successively finer discretization and warm</span>
@@ -93,7 +94,7 @@
 
 <span class="sd">    .. [5] Kuhn and Mackinnon 1975. Sandwich Method for Finding Fixed Points.</span>
 <span class="sd">    .. [6] Kuhn 1968. Simplicial Approximation Of Fixed Points.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">init</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="n">size</span>
     <span class="c1"># Base vertex of the subsimplex currently being used</span>
@@ -174,11 +175,11 @@
 
 
 <span class="k">def</span> <span class="nf">_discretize_mixture</span><span class="p">(</span><span class="n">mix</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Discretize a mixture</span>
+    <span class="sd">&quot;&quot;&quot;Discretize a mixture</span>
 
 <span class="sd">    The returned value will have all integer components that sum to k, with the</span>
 <span class="sd">    minimum error. Thus, discretizing the mixture.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">disc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">mix</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
     <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">disc</span> <span class="o">-</span> <span class="n">mix</span> <span class="o">*</span> <span class="n">k</span><span class="p">)[:</span><span class="n">k</span> <span class="o">-</span> <span class="n">disc</span><span class="o">.</span><span class="n">sum</span><span class="p">()]</span>
     <span class="n">disc</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -215,7 +216,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

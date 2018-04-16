@@ -1,0 +1,187 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>gameanalysis.reduction.hierarchical module &#8212; Game Analysis 7.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="gameanalysis.reduction.identity module" href="gameanalysis.reduction.identity.html" />
+    <link rel="prev" title="gameanalysis.reduction.deviation_preserving module" href="gameanalysis.reduction.deviation_preserving.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.reduction.identity.html" title="gameanalysis.reduction.identity module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.reduction.deviation_preserving.html" title="gameanalysis.reduction.deviation_preserving module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="gameanalysis.reduction.html" accesskey="U">gameanalysis.reduction package</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-gameanalysis.reduction.hierarchical">
+<span id="gameanalysis-reduction-hierarchical-module"></span><h1>gameanalysis.reduction.hierarchical module<a class="headerlink" href="#module-gameanalysis.reduction.hierarchical" title="Permalink to this headline">¶</a></h1>
+<p>Hierarchical reduction</p>
+<dl class="function">
+<dt id="gameanalysis.reduction.hierarchical.expand_deviation_profiles">
+<code class="descclassname">gameanalysis.reduction.hierarchical.</code><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>rest</em>, <em>red_players</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/hierarchical.html#expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.hierarchical.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand all deviation profiles from a restricted game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>full_game</strong> (<em>Game</em>) – The game the deviations profiles will be valid for.</li>
+<li><strong>rest</strong> (<em>[</em><em>bool</em><em>]</em>) – The restriction to get deviations from.</li>
+<li><strong>red_players</strong> (<em>ndarray-like</em>) – The number of players in each role in the reduced game.</li>
+<li><strong>role_index</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified , only expand deviations for the role selected.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.reduction.hierarchical.expand_profiles">
+<code class="descclassname">gameanalysis.reduction.hierarchical.</code><code class="descname">expand_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/hierarchical.html#expand_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.hierarchical.expand_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand profiles hierarchically</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>full_game</strong> (<em>Game</em>) – Game that expanded profiles will be valid for.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em>) – The profiles to expand</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.reduction.hierarchical.reduce_game">
+<code class="descclassname">gameanalysis.reduction.hierarchical.</code><code class="descname">reduce_game</code><span class="sig-paren">(</span><em>full_game</em>, <em>red_players</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/hierarchical.html#reduce_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.hierarchical.reduce_game" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce a game using hierarchical reduction</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>full_game</strong> (<em>Game</em>) – The game to reduce.</li>
+<li><strong>red_players</strong> (<em>ndarray-like</em>) – The reduced number of players for each role. This will be coerced
+into the proper shape if necessary.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.reduction.hierarchical.reduce_profiles">
+<code class="descclassname">gameanalysis.reduction.hierarchical.</code><code class="descname">reduce_profiles</code><span class="sig-paren">(</span><em>red_game</em>, <em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/hierarchical.html#reduce_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.hierarchical.reduce_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce profiles hierarchically</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>red_game</strong> (<em>Game</em>) – Game that reduced profiles will be profiles for.</li>
+<li><strong>profiles</strong> (<em>ndarray-like</em>) – The profiles to reduce.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="gameanalysis.reduction.deviation_preserving.html"
+                        title="previous chapter">gameanalysis.reduction.deviation_preserving module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="gameanalysis.reduction.identity.html"
+                        title="next chapter">gameanalysis.reduction.identity module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/gameanalysis.reduction.hierarchical.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.reduction.identity.html" title="gameanalysis.reduction.identity module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="gameanalysis.reduction.deviation_preserving.html" title="gameanalysis.reduction.deviation_preserving module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="gameanalysis.reduction.html" >gameanalysis.reduction package</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Strategic Reasoning Group.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+    </div>
+  </body>
+</html>

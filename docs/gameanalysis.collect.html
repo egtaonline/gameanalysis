@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.collect module &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.collect module &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.canongame.html" title="gameanalysis.canongame module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -45,61 +45,18 @@
             
   <div class="section" id="module-gameanalysis.collect">
 <span id="gameanalysis-collect-module"></span><h1>gameanalysis.collect module<a class="headerlink" href="#module-gameanalysis.collect" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
-<dt id="gameanalysis.collect.BitSet">
-<em class="property">class </em><code class="descclassname">gameanalysis.collect.</code><code class="descname">BitSet</code><span class="sig-paren">(</span><em>dim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#BitSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.BitSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Set of bitmasks</p>
-<p>A bitmask is in the set if all of the true bits have been added
-together. When iterating, all maximal bitsets are returned. An empty bitset
-still contains 0.</p>
-<dl class="method">
-<dt id="gameanalysis.collect.BitSet.add">
-<code class="descname">add</code><span class="sig-paren">(</span><em>bitmask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#BitSet.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.BitSet.add" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.collect.BitSet.clear">
-<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#BitSet.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.BitSet.clear" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="gameanalysis.collect.MinimumConnectedComponentElementSet">
-<em class="property">class </em><code class="descclassname">gameanalysis.collect.</code><code class="descname">MinimumConnectedComponentElementSet</code><span class="sig-paren">(</span><em>thresh</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#MinimumConnectedComponentElementSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.MinimumConnectedComponentElementSet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>A class for returning vectors with the minimum weight</p>
-<p>Vectors are only returned if they have the minimum weight in their
-connected component, where two vectors are connected if they’re closer than
-<cite>thresh</cite> distance apart.</p>
-<p>Inserts can take up to <cite>O(n)</cite> where <cite>n</cite> is the number of elements inserted.
-If this is problematic, a better data structure will probably be
-necessary.</p>
-<dl class="method">
-<dt id="gameanalysis.collect.MinimumConnectedComponentElementSet.add">
-<code class="descname">add</code><span class="sig-paren">(</span><em>vector</em>, <em>weight</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#MinimumConnectedComponentElementSet.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.MinimumConnectedComponentElementSet.add" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a vector with a weight</p>
-<p>Returns true if the element is distinct from every element in the
-container</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="gameanalysis.collect.MinimumConnectedComponentElementSet.clear">
-<code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#MinimumConnectedComponentElementSet.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.MinimumConnectedComponentElementSet.clear" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<p>Module with useful collections for game analysis</p>
 <dl class="function">
 <dt id="gameanalysis.collect.bitset">
 <code class="descclassname">gameanalysis.collect.</code><code class="descname">bitset</code><span class="sig-paren">(</span><em>dim</em>, <em>iterable=()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#bitset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.bitset" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Create a new bitset</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="gameanalysis.collect.mcces">
 <code class="descclassname">gameanalysis.collect.</code><code class="descname">mcces</code><span class="sig-paren">(</span><em>thresh</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/collect.html#mcces"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.collect.mcces" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Create a new minimum connected component set</p>
+</dd></dl>
 
 </div>
 
@@ -153,7 +110,7 @@ container</p>
         <li class="right" >
           <a href="gameanalysis.canongame.html" title="gameanalysis.canongame module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

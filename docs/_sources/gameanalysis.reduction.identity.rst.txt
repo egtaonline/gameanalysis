@@ -1,0 +1,7 @@
+gameanalysis.reduction.identity module
+======================================
+
+.. automodule:: gameanalysis.reduction.identity
+    :members:
+    :undoc-members:
+    :show-inheritance:

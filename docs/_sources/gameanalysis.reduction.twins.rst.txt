@@ -1,0 +1,7 @@
+gameanalysis.reduction.twins module
+===================================
+
+.. automodule:: gameanalysis.reduction.twins
+    :members:
+    :undoc-members:
+    :show-inheritance:

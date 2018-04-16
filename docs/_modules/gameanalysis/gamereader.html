@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.gamereader &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.gamereader &#8212; Game Analysis 7.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -36,51 +36,49 @@
           <div class="body" role="main">
             
   <h1>Source code for gameanalysis.gamereader</h1><div class="highlight"><pre>
-<span></span><span class="sd">&#39;&#39;&#39;Module for loading an arbitrary game with its associated serializer&#39;&#39;&#39;</span>
+<span></span><span class="sd">&quot;&quot;&quot;Module for loading an arbitrary game with its associated serializer&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">contextlib</span>
 <span class="kn">import</span> <span class="nn">json</span>
 
-<span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
-
 
 <div class="viewcode-block" id="load"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.load">[docs]</a><span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">filelike</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Read a game from a file</span>
+    <span class="sd">&quot;&quot;&quot;Read a game from a file</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    filelike : file-like</span>
 <span class="sd">        A file-like object to read the game from. The entire file will be</span>
 <span class="sd">        consumed by this action.</span>
-<span class="sd">    &#39;&#39;&#39;</span></div>
+<span class="sd">    &quot;&quot;&quot;</span></div>
     <span class="k">return</span> <span class="n">loads</span><span class="p">(</span><span class="n">filelike</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
 
 
 <div class="viewcode-block" id="loads"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.loads">[docs]</a><span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Read a game from a string</span>
+    <span class="sd">&quot;&quot;&quot;Read a game from a string</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    string : str</span>
 <span class="sd">        A string representation of the game.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">):</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">gambit</span>
         <span class="k">return</span> <span class="n">gambit</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
-    <span class="n">utils</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;no known format for game&#39;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;no known format for game&#39;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="loadj"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.loadj">[docs]</a><span class="k">def</span> <span class="nf">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Read a game from serializable python objects</span>
+<div class="viewcode-block" id="loadj"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.loadj">[docs]</a><span class="k">def</span> <span class="nf">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-branches,too-many-return-statements</span>
+    <span class="sd">&quot;&quot;&quot;Read a game from serializable python objects</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    json : {...}</span>
 <span class="sd">        The python object representation of a game encoded as json. Any valid</span>
 <span class="sd">        game will be read and returned.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">game_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;samplegame.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;add&#39;</span><span class="p">:</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">rsgame</span>
@@ -96,7 +94,7 @@
         <span class="k">return</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">const_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;empty&#39;</span> <span class="ow">or</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;emptygame&#39;</span><span class="p">:</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">rsgame</span>
-        <span class="k">return</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;game&#39;</span><span class="p">:</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">paygame</span>
         <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
@@ -119,7 +117,7 @@
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">paygame</span>
         <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span></div>
-        <span class="n">utils</span><span class="o">.</span><span class="n">fail</span><span class="p">(</span><span class="s1">&#39;unknown game type </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">game_type</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown game type </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">game_type</span><span class="p">))</span>
 </pre></div>
 
           </div>
@@ -152,7 +150,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
