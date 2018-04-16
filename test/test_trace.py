@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from gameanalysis import agggen
+from gameanalysis import gamegen
 from gameanalysis import nash
 from gameanalysis import paygame
 from gameanalysis import regret
@@ -40,8 +40,8 @@ def test_trace_equilibria():
 @pytest.mark.parametrize('players,strats', utils.GAMES)
 def test_random_trace_equilibria(players, strats):
     """Test random equilibrium trace"""
-    game0 = agggen.normal_aggfn(players, strats, 6)
-    game1 = agggen.normal_aggfn(players, strats, 6)
+    game0 = gamegen.normal_aggfn(players, strats, 6)
+    game1 = gamegen.normal_aggfn(players, strats, 6)
 
     eqa = game0.trim_mixture_support(nash.mixed_nash(
         game0, regret_thresh=1e-4))
@@ -69,8 +69,8 @@ def test_random_trace_equilibria(players, strats):
 @pytest.mark.parametrize('players,strats', utils.GAMES)
 def test_random_trace_interpolate(players, strats):
     """Test random trace interpolation"""
-    game0 = agggen.normal_aggfn(players, strats, 6)
-    game1 = agggen.normal_aggfn(players, strats, 6)
+    game0 = gamegen.normal_aggfn(players, strats, 6)
+    game1 = gamegen.normal_aggfn(players, strats, 6)
 
     prob = np.random.random()
     eqa = game0.trim_mixture_support(nash.mixed_nash(

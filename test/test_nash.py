@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 import timeout_decorator
 
-from gameanalysis import agggen
 from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import nash
@@ -257,6 +256,6 @@ def test_at_least_one_big(_):
     players = np.random.randint(2, 5, num_roles)
     strategies = np.random.randint(2, 5, num_roles)
     functions = np.random.randint(2, 8)
-    agame = agggen.normal_aggfn(players, strategies, functions)
+    agame = gamegen.normal_aggfn(players, strategies, functions)
     eqa = nash.mixed_nash(agame, at_least_one=True)
     assert eqa.size, "didn't find equilibrium but should always find one"

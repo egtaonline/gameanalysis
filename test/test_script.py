@@ -12,7 +12,6 @@ from unittest import mock
 import numpy as np
 import pytest
 
-from gameanalysis import agggen
 from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import matgame
@@ -816,7 +815,7 @@ def test_learning_args(game_file):
 
 def test_learning_no_eqa():
     """Test learning with no equilibria"""
-    game = agggen.congestion(10, 3, 1)
+    game = gamegen.congestion(10, 3, 1)
     game_str = json.dumps(game.to_json())
     with stdin(game_str), stdout() as out, stderr() as err:
         assert run('learning', '-m0', '-r0'), err.getvalue()

@@ -5,8 +5,8 @@ import json
 import numpy as np
 import pytest
 
-from gameanalysis import agggen
 from gameanalysis import canongame
+from gameanalysis import gamegen
 from gameanalysis import paygame
 from gameanalysis import utils
 
@@ -62,7 +62,7 @@ def test_canon():
 
     assert repr(cgame) == 'CanonGame([2], [3], 2 / 6)'
 
-    other = canongame.canon(agggen.normal_aggfn([2, 2, 3], [3, 1, 1], 2))
+    other = canongame.canon(gamegen.normal_aggfn([2, 2, 3], [3, 1, 1], 2))
     assert other + cgame == cgame + other
 
 
@@ -72,6 +72,6 @@ def test_random_canongame(strats):
     strats = np.array(strats)
     if np.all(strats == 1):
         return  # not a game
-    game = agggen.normal_aggfn(2, strats, strats.sum())
+    game = gamegen.normal_aggfn(2, strats, strats.sum())
     cgame = canongame.canon(game)
     paygame.game_copy(cgame)

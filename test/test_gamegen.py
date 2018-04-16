@@ -1,13 +1,42 @@
 """Test game generation"""
+import json
 from collections import abc
 
 import numpy as np
 import pytest
 
+from gameanalysis import aggfn
 from gameanalysis import gamegen
 from gameanalysis import regret
 from gameanalysis import rsgame
 from gameanalysis import utils
+
+
+_SIZES = [
+    (2 * [1], 2, 2),
+    (2 * [2], 2, 2),
+    (5 * [1], 2, 3),
+    (2 * [1], 5, 3),
+    (2 * [2], 5, 4),
+    ([1, 2], 2, 5),
+    ([1, 2], [2, 1], 4),
+    (2, [1, 2], 4),
+    ([3, 4], [2, 3], 6),
+]
+_PROBS = [
+    (0.2, 0.2),
+    (0.5, 0.5),
+    (0.9, 0.9),
+    (0.3, 0.8),
+    (0.8, 0.3),
+]
+
+
+def aggfn_verify(game):
+    """Verify that games is serializeable"""
+    jgame = json.dumps(game.to_json())
+    copy = aggfn.aggfn_json(json.loads(jgame))
+    assert game == copy
 
 
 @pytest.mark.parametrize('_', range(20))
@@ -390,3 +419,72 @@ def test_sample_profiles(players, strats, _):
     profiles = gamegen.sample_profiles(game, 5)
     uprofs = utils.axis_from_elem(np.unique(utils.axis_to_elem(profiles)))
     assert uprofs.shape == (5, game.num_strats)
+
+
+@pytest.mark.parametrize('players,strategies,functions', _SIZES)
+@pytest.mark.parametrize('inp,weight', _PROBS)
+def test_normal_game(players, strategies, functions, inp, weight):
+    """Test normal aggfn"""
+    aggfn_verify(gamegen.normal_aggfn(players, strategies, functions))
+    aggfn_verify(gamegen.normal_aggfn(
+        players, strategies, functions, input_prob=inp, weight_prob=weight))
+
+
+@pytest.mark.parametrize('players,strategies,functions', _SIZES)
+@pytest.mark.parametrize('inp,weight', _PROBS)
+@pytest.mark.parametrize('deg', [1, 2, 4, [0.1, 0.5, 0.4], [0, 0, 1]])
+def test_random_poly_game(players, strategies, functions, inp, weight, deg): # pylint: disable=too-many-arguments
+    """Test poly aggfn"""
+    aggfn_verify(gamegen.poly_aggfn(players, strategies, functions))
+    aggfn_verify(gamegen.poly_aggfn(
+        players, strategies, functions, input_prob=inp, weight_prob=weight,
+        degree=deg))
+
+
+@pytest.mark.parametrize('players,strategies,functions', _SIZES)
+@pytest.mark.parametrize('inp,weight', _PROBS)
+@pytest.mark.parametrize('period', [0.5, 1, 2, 10])
+def test_random_sine_game(players, strategies, functions, inp, weight, period): # pylint: disable=too-many-arguments
+    """Test sine aggfn"""
+    aggfn_verify(gamegen.sine_aggfn(players, strategies, functions))
+    aggfn_verify(gamegen.sine_aggfn(
+        players, strategies, functions, input_prob=inp, weight_prob=weight,
+        period=period))
+
+
+@pytest.mark.parametrize('players,facilities,required', [
+    (2, 2, 1),
+    (2, 3, 2),
+    (3, 4, 2),
+    (4, 3, 2),
+    (5, 6, 4),
+])
+@pytest.mark.parametrize('deg', [1, 2, 4])
+def test_congestion_game(players, facilities, required, deg):
+    """Test congestion game creation"""
+    game = gamegen.congestion(players, facilities, required)
+    aggfn_verify(game)
+    # Check that function serial has the right format
+    assert all(sum(c == '_' for c in strat) == required - 1
+               for strat in game.strat_names[0])
+
+    game = gamegen.congestion(players, facilities, required, degree=deg)
+    aggfn_verify(game)
+    # Check that function serial has the right format
+    assert all(sum(c == '_' for c in strat) == required - 1
+               for strat in game.strat_names[0])
+
+
+@pytest.mark.parametrize('players,strategies', [
+    (2, 2),
+    (2, 2),
+    (2, 3),
+    (3, 4),
+    (4, 3),
+    (5, 6),
+])
+@pytest.mark.parametrize('prob', [0, 0.1, 0.5, 0.9, 1])
+def test_local_effect_game(players, strategies, prob):
+    """Test that deviation payoff formulation is accurate"""
+    aggfn_verify(gamegen.local_effect(players, strategies))
+    aggfn_verify(gamegen.local_effect(players, strategies, edge_prob=prob))

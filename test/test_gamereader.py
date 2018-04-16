@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 import pytest
 
-from gameanalysis import agggen
 from gameanalysis import canongame
 from gameanalysis import gambit
 from gameanalysis import gamegen
@@ -37,7 +36,7 @@ def sgame():
 @functools.lru_cache()
 def agg():
     """Action graph game"""
-    return agggen.normal_aggfn([3, 4], [4, 3], 10)
+    return gamegen.normal_aggfn([3, 4], [4, 3], 10)
 
 
 def mat():
