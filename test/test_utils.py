@@ -292,3 +292,29 @@ def test_deprecation():
 
     assert len(warns) == 1
     assert issubclass(warns[0].category, DeprecationWarning)
+
+
+def test_subsequences():
+    """Test that sub-sequences work"""
+    expected = [(i, i+1) for i in range(4)]
+    assert list(utils.subsequences(range(5))) == expected
+
+    expected = [(i, i+1, i+2) for i in range(3)]
+    assert list(utils.subsequences(range(5), 3)) == expected
+
+
+def test_asubsequences_1d():
+    """Test that 1d sub-sequences work"""
+    array = np.arange(5)
+    expected = np.stack([np.arange(4), np.arange(1, 5)])
+    assert np.all(utils.asubsequences(array) == expected)
+
+    expected = np.stack([np.arange(3), np.arange(1, 4), np.arange(2, 5)])
+    assert np.all(utils.asubsequences(array, 3) == expected)
+
+
+def test_asubsequences_2d():
+    """Test that 1d sub-sequences work"""
+    array = np.random.random((5, 3))
+    expected = np.stack([array[:-1], array[1:]])
+    assert np.all(utils.asubsequences(array) == expected)

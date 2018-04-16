@@ -10,6 +10,7 @@ import warnings
 from collections import abc
 
 import numpy as np
+from numpy.lib import stride_tricks
 import scipy.special as sps
 from scipy import optimize
 
@@ -473,3 +474,40 @@ def deprecated(func):
         return func(*args, **kwargs)
 
     return wrapped
+
+
+def subsequences(iterable, seq=2):
+    """Return subsequences of an iterable
+
+    Each element in the generator will be a tuple of `seq` elements that were
+    ordered in the iterable.
+    """
+    iters = itertools.tee(iterable, seq)
+    for i, itr in enumerate(iters):
+        for _ in range(i):
+            next(itr, None)
+    return zip(*iters)
+
+
+def asubsequences(array, seq=2, axis=0):
+    """Return sub-sequences of an array
+
+    This returns a new array with leading dimension `seq` representing a length
+    `seq` sub-sequence of the input array. The following dimensions are
+    preserved except for `axis`, which is `seq - 1` shorter due to edge
+    effects. This method returns a view, so no data copying happens.
+
+    Parameters
+    ----------
+    array : ndarray
+        Array to take subsequences over.
+    seq : int, optional
+        Length of subsequences to take.
+    axis : int, optional
+        The axis to treat as the sequence to take sub-sequences of.
+    """
+    new_shape = list(array.shape)
+    new_shape[axis] -= seq - 1
+    return stride_tricks.as_strided(
+        array, shape=[seq] + new_shape,
+        strides=(array.strides[axis],) + array.strides)
