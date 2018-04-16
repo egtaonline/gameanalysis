@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.trace &#8212; Game Analysis 7.0.1 documentation</title>
+    <title>gameanalysis.trace &#8212; Game Analysis 7.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -45,12 +45,44 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<span class="k">def</span> <span class="nf">_ode</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-locals</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">p_eq</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">p_dest</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+<div class="viewcode-block" id="trace_equilibrium"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_equilibrium">[docs]</a><span class="k">def</span> <span class="nf">trace_equilibrium</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-locals</span>
+        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">peq</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
         <span class="n">singular</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Trace an equilibrium out to target</span>
+    <span class="sd">&quot;&quot;&quot;Try to trace an equilibrium out to target</span>
 
-<span class="sd">    See trace_equilibrium for full info</span>
+<span class="sd">    Takes two games, a fraction that they&#39;re mixed (`peq`), and an equilibrium</span>
+<span class="sd">    of the mixed game (`eqm`). It then attempts to find the equilibrium at the</span>
+<span class="sd">    `target` mixture. It may not reach target, but will return as far as it</span>
+<span class="sd">    got. The return value is two parallel arrays for the probabilities with</span>
+<span class="sd">    known equilibria and the equilibria.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    game0 : RsGame</span>
+<span class="sd">        The first game that&#39;s merged. Represents the payoffs when `peq` is 0.</span>
+<span class="sd">    game1 : RsGame</span>
+<span class="sd">        The second game that&#39;s merged. Represents the payoffs when `peq` is 1.</span>
+<span class="sd">    peq : float</span>
+<span class="sd">        The amount that the two games are merged such that `eqm` is an</span>
+<span class="sd">        equilibrium. Must be in [0, 1].</span>
+<span class="sd">    eqm : ndarray</span>
+<span class="sd">        An equilibrium when `game0` and `game1` are merged a `peq` fraction.</span>
+<span class="sd">    target : float</span>
+<span class="sd">        The desired mixture probability to have an equilibrium at.</span>
+<span class="sd">    regret_thresh : float, optional</span>
+<span class="sd">        The amount of gain from deviating to a strategy outside support can</span>
+<span class="sd">        have before it&#39;s considered a beneficial deviation and the tracing</span>
+<span class="sd">        stops. This should be larger than zero as most equilibria are</span>
+<span class="sd">        approximate due to floating point precision.</span>
+<span class="sd">    max_step : float, optional</span>
+<span class="sd">        The maximum step to take in t when evaluating.</span>
+<span class="sd">    singular : float, optional</span>
+<span class="sd">        An absolute determinant below this value is considered singular.</span>
+<span class="sd">        Occasionally the derivative doesn&#39;t exist, and this is one way in which</span>
+<span class="sd">        that manifests. This values regulate when ODE solving terminates due to</span>
+<span class="sd">        a singular matrix.</span>
+<span class="sd">    ivp_args</span>
+<span class="sd">        Any remaining keyword arguments are passed to the ivp solver.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">egame</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty_copy</span><span class="p">(</span><span class="n">game0</span><span class="p">)</span>
     <span class="n">eqm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eqm</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
@@ -58,7 +90,7 @@
         <span class="n">egame</span><span class="o">.</span><span class="n">is_mixture</span><span class="p">(</span><span class="n">eqm</span><span class="p">),</span> <span class="s2">&quot;equilibrium wasn&#39;t a valid mixture&quot;</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span>
-            <span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">p_eq</span><span class="p">),</span> <span class="n">eqm</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">regret_thresh</span> <span class="o">+</span> <span class="mf">1e-7</span><span class="p">,</span>
+            <span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">peq</span><span class="p">),</span> <span class="n">eqm</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">regret_thresh</span> <span class="o">+</span> <span class="mf">1e-7</span><span class="p">,</span>
         <span class="s2">&quot;equilibrium didn&#39;t have regret below threshold&quot;</span><span class="p">)</span>
     <span class="n">ivp_args</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">max_step</span><span class="o">=</span><span class="n">max_step</span><span class="p">)</span>
 
@@ -131,89 +163,69 @@
 
     <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">integrate</span><span class="o">.</span><span class="n">solve_ivp</span><span class="p">(</span>
-            <span class="n">ode</span><span class="p">,</span> <span class="p">[</span><span class="n">p_eq</span><span class="p">,</span> <span class="n">p_dest</span><span class="p">],</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">egame</span><span class="o">.</span><span class="n">trim_mixture_support</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">ode</span><span class="p">,</span> <span class="p">[</span><span class="n">peq</span><span class="p">,</span> <span class="n">target</span><span class="p">],</span> <span class="n">eqm</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">egame</span><span class="o">.</span><span class="n">trim_mixture_support</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="trace_equilibria"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_equilibria">[docs]</a><span class="k">def</span> <span class="nf">trace_equilibria</span><span class="p">(</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">max_step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-        <span class="n">singular</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Trace an equilibrium between games</span>
-
-<span class="sd">    Takes two games, a fraction that they&#39;re merged, and an equilibrium of the</span>
-<span class="sd">    merged game, and traces the equilibrium out to nearby merged games, as far</span>
-<span class="sd">    as possible.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    game0 : RsGame</span>
-<span class="sd">        The first game that&#39;s merged. Represents the payoffs when `prob` is 0.</span>
-<span class="sd">    game1 : RsGame</span>
-<span class="sd">        The second game that&#39;s merged. Represents the payoffs when `prob` is 1.</span>
-<span class="sd">    prob : float</span>
-<span class="sd">        The amount that the two games are merged such that `eqm` is an</span>
-<span class="sd">        equilibrium. Must be in [0, 1].</span>
-<span class="sd">    eqm : ndarray</span>
-<span class="sd">        An equilibrium when `game0` and `game1` are merged a `prob` fraction.</span>
-<span class="sd">    regret_thresh : float, optional</span>
-<span class="sd">        The amount of gain from deviating to a strategy outside support can</span>
-<span class="sd">        have before it&#39;s considered a beneficial deviation and the tracing</span>
-<span class="sd">        stops. This should be larger than zero as most equilibria are</span>
-<span class="sd">        approximate due to floating point precision.</span>
-<span class="sd">    max_step : float, optional</span>
-<span class="sd">        The maximum step to take in t when evaluating.</span>
-<span class="sd">    singular : float, optional</span>
-<span class="sd">        An absolute determinant below this value is considered singular.</span>
-<span class="sd">        Occasionally the derivative doesn&#39;t exist, and this is one way in which</span>
-<span class="sd">        that manifests. This values regulate when ODE solving terminates due to</span>
-<span class="sd">        a singular matrix.</span>
-<span class="sd">    ivp_args</span>
-<span class="sd">        Any remaining keyword arguments are passed to the ivp solver.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">psb</span><span class="p">,</span> <span class="n">eqab</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="n">regret_thresh</span><span class="p">,</span>
-        <span class="n">max_step</span><span class="o">=</span><span class="n">max_step</span><span class="p">,</span> <span class="n">singular</span><span class="o">=</span><span class="n">singular</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
-    <span class="n">psf</span><span class="p">,</span> <span class="n">eqaf</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="n">eqm</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">regret_thresh</span><span class="o">=</span><span class="n">regret_thresh</span><span class="p">,</span>
-        <span class="n">max_step</span><span class="o">=</span><span class="n">max_step</span><span class="p">,</span> <span class="n">singular</span><span class="o">=</span><span class="n">singular</span><span class="p">,</span> <span class="o">**</span><span class="n">ivp_args</span><span class="p">)</span>
-    <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">psb</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">psf</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
-    <span class="n">mixes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">eqab</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">eqaf</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
-    <span class="k">return</span> <span class="n">probs</span><span class="p">,</span> <span class="n">mixes</span></div>
-
-
-<div class="viewcode-block" id="trace_interpolate"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_interpolate">[docs]</a><span class="k">def</span> <span class="nf">trace_interpolate</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">eqa</span><span class="p">,</span> <span class="n">prob</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="trace_interpolate"><a class="viewcode-back" href="../../gameanalysis.trace.html#gameanalysis.trace.trace_interpolate">[docs]</a><span class="k">def</span> <span class="nf">trace_interpolate</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">peqs</span><span class="p">,</span> <span class="n">eqa</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="sd">&quot;&quot;&quot;Get an equilibrium at a specific time</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    game0 : RsGame</span>
-<span class="sd">        The game to get data from when prob is 0.</span>
+<span class="sd">        The game to get data from when the mixture probability is 0.</span>
 <span class="sd">    game1 : RsGame</span>
-<span class="sd">        The game to get data from when prob is 1.</span>
-<span class="sd">    probs : [float]</span>
-<span class="sd">        A parallel list of probs for each equilibria in a continuous trace.</span>
+<span class="sd">        The game to get data from when the mixture probability is 1.</span>
+<span class="sd">    peqs : [float]</span>
+<span class="sd">        A parallel list of probabilities for each equilibria in a continuous</span>
+<span class="sd">        trace.</span>
 <span class="sd">    eqa : [eqm]</span>
-<span class="sd">        A parallel list of equilibria for each prob representing continuous</span>
-<span class="sd">        equilibria for prob mixture games.</span>
-<span class="sd">    prob : float</span>
-<span class="sd">        The probability to compute an equilibrium at.</span>
+<span class="sd">        A parallel list of equilibria for each probability representing</span>
+<span class="sd">        continuous equilibria for prob mixture games.</span>
+<span class="sd">    targets : [float]</span>
+<span class="sd">        The probabilities to compute an equilibria at.</span>
 <span class="sd">    kwargs : options</span>
-<span class="sd">        The same options as `trace_equilibria`.</span>
+<span class="sd">        The same options as `trace_equilibrium`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">probs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+    <span class="n">peqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">peqs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">eqa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">eqa</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">probs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">prob</span> <span class="o">&lt;=</span> <span class="n">probs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="s1">&#39;t must be in trace&#39;</span><span class="p">)</span>
-    <span class="n">ind</span> <span class="o">=</span> <span class="n">probs</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">prob</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">probs</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="o">==</span> <span class="n">prob</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">eqa</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
-    <span class="c1"># select nearby equilibrium with maximum support if tied, take lowest reg</span>
-    <span class="n">ind</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ind</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ind</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="p">(</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">eqa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">probs</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">eqa</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
-    <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">p_res</span><span class="p">),</span> <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">eqm_res</span><span class="p">)</span> <span class="o">=</span> <span class="n">_ode</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-star-expressions</span>
-        <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">probs</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">eqa</span><span class="p">[</span><span class="n">ind</span><span class="p">],</span> <span class="n">prob</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">p_res</span><span class="p">,</span> <span class="n">prob</span><span class="p">),</span> <span class="s1">&#39;ode solving failed to reach prob&#39;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">eqm_res</span></div>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+
+    <span class="c1"># Make everything sorted</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">peqs</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">peqs</span> <span class="o">=</span> <span class="n">peqs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">eqa</span> <span class="o">=</span> <span class="n">eqa</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">peqs</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">),</span> <span class="s1">&#39;trace probabilities must be sorted&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
+        <span class="n">peqs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="n">targets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">peqs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+        <span class="s1">&#39;targets must be internal to trace&#39;</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">targets</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">game0</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
+    <span class="n">scan</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">subsequences</span><span class="p">(</span><span class="n">peqs</span><span class="p">),</span> <span class="n">utils</span><span class="o">.</span><span class="n">subsequences</span><span class="p">(</span><span class="n">eqa</span><span class="p">))</span>
+    <span class="p">(</span><span class="n">pi1</span><span class="p">,</span> <span class="n">pi2</span><span class="p">),</span> <span class="p">(</span><span class="n">eqm1</span><span class="p">,</span> <span class="n">eqm2</span><span class="p">)</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">scan</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
+        <span class="k">while</span> <span class="n">target</span> <span class="o">&gt;</span> <span class="n">pi2</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">pi1</span><span class="p">,</span> <span class="n">pi2</span><span class="p">),</span> <span class="p">(</span><span class="n">eqm1</span><span class="p">,</span> <span class="n">eqm2</span><span class="p">)</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">scan</span><span class="p">)</span>
+        <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">pt1</span><span class="p">),</span> <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">eqt1</span><span class="p">)</span> <span class="o">=</span> <span class="n">trace_equilibrium</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-star-expressions</span>
+            <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">pi1</span><span class="p">,</span> <span class="n">eqm1</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">pt2</span><span class="p">),</span> <span class="p">(</span><span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">eqt2</span><span class="p">)</span> <span class="o">=</span> <span class="n">trace_equilibrium</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-star-expressions</span>
+            <span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">pi2</span><span class="p">,</span> <span class="n">eqm2</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">pt1</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">pt2</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+            <span class="n">mixgame</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">mix</span><span class="p">(</span><span class="n">game0</span><span class="p">,</span> <span class="n">game1</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">mixgame</span><span class="p">,</span> <span class="n">eqt1</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">eqt1</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">mixgame</span><span class="p">,</span> <span class="n">eqt2</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">eqt2</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">pt1</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">eqt1</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">pt2</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">eqt2</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># pragma: no cover</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;ode solving failed to reach prob&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
 </pre></div>
 
           </div>
@@ -246,7 +258,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

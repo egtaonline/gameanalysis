@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.trace module &#8212; Game Analysis 7.0.1 documentation</title>
+    <title>gameanalysis.trace module &#8212; Game Analysis 7.1.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.scriptutils.html" title="gameanalysis.scriptutils module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -47,22 +47,25 @@
 <span id="gameanalysis-trace-module"></span><h1>gameanalysis.trace module<a class="headerlink" href="#module-gameanalysis.trace" title="Permalink to this headline">¶</a></h1>
 <p>Module for tracing equilibria in mixture games</p>
 <dl class="function">
-<dt id="gameanalysis.trace.trace_equilibria">
-<code class="descclassname">gameanalysis.trace.</code><code class="descname">trace_equilibria</code><span class="sig-paren">(</span><em>game0</em>, <em>game1</em>, <em>prob</em>, <em>eqm</em>, <em>*</em>, <em>regret_thresh=0.001</em>, <em>max_step=0.1</em>, <em>singular=1e-07</em>, <em>**ivp_args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/trace.html#trace_equilibria"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.trace.trace_equilibria" title="Permalink to this definition">¶</a></dt>
-<dd><p>Trace an equilibrium between games</p>
-<p>Takes two games, a fraction that they’re merged, and an equilibrium of the
-merged game, and traces the equilibrium out to nearby merged games, as far
-as possible.</p>
+<dt id="gameanalysis.trace.trace_equilibrium">
+<code class="descclassname">gameanalysis.trace.</code><code class="descname">trace_equilibrium</code><span class="sig-paren">(</span><em>game0</em>, <em>game1</em>, <em>peq</em>, <em>eqm</em>, <em>target</em>, <em>*</em>, <em>regret_thresh=0.001</em>, <em>max_step=0.1</em>, <em>singular=1e-07</em>, <em>**ivp_args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/trace.html#trace_equilibrium"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.trace.trace_equilibrium" title="Permalink to this definition">¶</a></dt>
+<dd><p>Try to trace an equilibrium out to target</p>
+<p>Takes two games, a fraction that they’re mixed (<cite>peq</cite>), and an equilibrium
+of the mixed game (<cite>eqm</cite>). It then attempts to find the equilibrium at the
+<cite>target</cite> mixture. It may not reach target, but will return as far as it
+got. The return value is two parallel arrays for the probabilities with
+known equilibria and the equilibria.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game0</strong> (<em>RsGame</em>) – The first game that’s merged. Represents the payoffs when <cite>prob</cite> is 0.</li>
-<li><strong>game1</strong> (<em>RsGame</em>) – The second game that’s merged. Represents the payoffs when <cite>prob</cite> is 1.</li>
-<li><strong>prob</strong> (<em>float</em>) – The amount that the two games are merged such that <cite>eqm</cite> is an
+<li><strong>game0</strong> (<em>RsGame</em>) – The first game that’s merged. Represents the payoffs when <cite>peq</cite> is 0.</li>
+<li><strong>game1</strong> (<em>RsGame</em>) – The second game that’s merged. Represents the payoffs when <cite>peq</cite> is 1.</li>
+<li><strong>peq</strong> (<em>float</em>) – The amount that the two games are merged such that <cite>eqm</cite> is an
 equilibrium. Must be in [0, 1].</li>
-<li><strong>eqm</strong> (<em>ndarray</em>) – An equilibrium when <cite>game0</cite> and <cite>game1</cite> are merged a <cite>prob</cite> fraction.</li>
+<li><strong>eqm</strong> (<em>ndarray</em>) – An equilibrium when <cite>game0</cite> and <cite>game1</cite> are merged a <cite>peq</cite> fraction.</li>
+<li><strong>target</strong> (<em>float</em>) – The desired mixture probability to have an equilibrium at.</li>
 <li><strong>regret_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – The amount of gain from deviating to a strategy outside support can
 have before it’s considered a beneficial deviation and the tracing
 stops. This should be larger than zero as most equilibria are
@@ -82,20 +85,21 @@ a singular matrix.</li>
 
 <dl class="function">
 <dt id="gameanalysis.trace.trace_interpolate">
-<code class="descclassname">gameanalysis.trace.</code><code class="descname">trace_interpolate</code><span class="sig-paren">(</span><em>game0</em>, <em>game1</em>, <em>probs</em>, <em>eqa</em>, <em>prob</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/trace.html#trace_interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.trace.trace_interpolate" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.trace.</code><code class="descname">trace_interpolate</code><span class="sig-paren">(</span><em>game0</em>, <em>game1</em>, <em>peqs</em>, <em>eqa</em>, <em>targets</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/trace.html#trace_interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.trace.trace_interpolate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get an equilibrium at a specific time</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game0</strong> (<em>RsGame</em>) – The game to get data from when prob is 0.</li>
-<li><strong>game1</strong> (<em>RsGame</em>) – The game to get data from when prob is 1.</li>
-<li><strong>probs</strong> (<em>[</em><em>float</em><em>]</em>) – A parallel list of probs for each equilibria in a continuous trace.</li>
-<li><strong>eqa</strong> (<em>[</em><em>eqm</em><em>]</em>) – A parallel list of equilibria for each prob representing continuous
-equilibria for prob mixture games.</li>
-<li><strong>prob</strong> (<em>float</em>) – The probability to compute an equilibrium at.</li>
-<li><strong>kwargs</strong> (<em>options</em>) – The same options as <cite>trace_equilibria</cite>.</li>
+<li><strong>game0</strong> (<em>RsGame</em>) – The game to get data from when the mixture probability is 0.</li>
+<li><strong>game1</strong> (<em>RsGame</em>) – The game to get data from when the mixture probability is 1.</li>
+<li><strong>peqs</strong> (<em>[</em><em>float</em><em>]</em>) – A parallel list of probabilities for each equilibria in a continuous
+trace.</li>
+<li><strong>eqa</strong> (<em>[</em><em>eqm</em><em>]</em>) – A parallel list of equilibria for each probability representing
+continuous equilibria for prob mixture games.</li>
+<li><strong>targets</strong> (<em>[</em><em>float</em><em>]</em>) – The probabilities to compute an equilibria at.</li>
+<li><strong>kwargs</strong> (<em>options</em>) – The same options as <cite>trace_equilibrium</cite>.</li>
 </ul>
 </td>
 </tr>
@@ -155,7 +159,7 @@ equilibria for prob mixture games.</li>
         <li class="right" >
           <a href="gameanalysis.scriptutils.html" title="gameanalysis.scriptutils module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>

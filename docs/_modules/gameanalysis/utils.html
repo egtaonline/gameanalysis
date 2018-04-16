@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.utils &#8212; Game Analysis 7.0.1 documentation</title>
+    <title>gameanalysis.utils &#8212; Game Analysis 7.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -48,6 +48,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">abc</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.lib</span> <span class="k">import</span> <span class="n">stride_tricks</span>
 <span class="kn">import</span> <span class="nn">scipy.special</span> <span class="k">as</span> <span class="nn">sps</span>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">optimize</span>
 
@@ -511,6 +512,43 @@
         <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">wrapped</span></div>
+
+
+<div class="viewcode-block" id="subsequences"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.subsequences">[docs]</a><span class="k">def</span> <span class="nf">subsequences</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return subsequences of an iterable</span>
+
+<span class="sd">    Each element in the generator will be a tuple of `seq` elements that were</span>
+<span class="sd">    ordered in the iterable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">iters</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">tee</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">seq</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">itr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">iters</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+            <span class="nb">next</span><span class="p">(</span><span class="n">itr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">iters</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="asubsequences"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.asubsequences">[docs]</a><span class="k">def</span> <span class="nf">asubsequences</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">seq</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return sub-sequences of an array</span>
+
+<span class="sd">    This returns a new array with leading dimension `seq` representing a length</span>
+<span class="sd">    `seq` sub-sequence of the input array. The following dimensions are</span>
+<span class="sd">    preserved except for `axis`, which is `seq - 1` shorter due to edge</span>
+<span class="sd">    effects. This method returns a view, so no data copying happens.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    array : ndarray</span>
+<span class="sd">        Array to take subsequences over.</span>
+<span class="sd">    seq : int, optional</span>
+<span class="sd">        Length of subsequences to take.</span>
+<span class="sd">    axis : int, optional</span>
+<span class="sd">        The axis to treat as the sequence to take sub-sequences of.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">new_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">-=</span> <span class="n">seq</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">stride_tricks</span><span class="o">.</span><span class="n">as_strided</span><span class="p">(</span>
+        <span class="n">array</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">seq</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_shape</span><span class="p">,</span>
+        <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="n">axis</span><span class="p">],)</span> <span class="o">+</span> <span class="n">array</span><span class="o">.</span><span class="n">strides</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -543,7 +581,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
