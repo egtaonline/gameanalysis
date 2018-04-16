@@ -10,8 +10,6 @@ from gameanalysis import matgame
 from gameanalysis import utils
 
 
-# FIXME Remove pluses for format
-
 def load(filelike):
     """Load a gambit game from a file"""
     return loads(filelike.read())
@@ -182,15 +180,15 @@ def _list(element):
 
 _STR = r'"(.|\n)*?(?<!\\)"'
 _FLOAT = r'[-+]?(\d*\.?\d+|\d+\.\d*)([eE][-+]?\d+)?'
-_OUTCOME = r'{\s+' + _STR + r'(\s+' + _FLOAT + r',?)+\s+}'
+_OUTCOME = r'{{\s+{}(\s+{},?)+\s+}}'.format(_STR, _FLOAT)
 _RE_STR = re.compile(_STR)
 _RE_STRATS = re.compile(_list(_STR))
 _RE_OUTCOME = re.compile(_OUTCOME)
-_RE_NFG = re.compile(
-    r'NFG\s+1\s+R\s+' + _STR + r'\s+(?P<roles>' + _list(_STR) +
-    r')\s+(?P<strats>' + _list(r'\d+') + r')(\s+' + _STR +
-    r')?(?P<payoffs>(\s+' + _FLOAT + r')+)\s*$')
-_RE_NFGO = re.compile(
-    r'NFG\s+1\s+R\s+' + _STR + r'\s+(?P<roles>' + _list(_STR) +
-    r')\s+(?P<strats>' + _list(_list(_STR)) + r')(\s+' + _STR +
-    r')?\s+(?P<outcomes>' + _list(_OUTCOME) + r')(?P<inds>(\s+\d+)+)\s*$')
+_RE_NFG = re.compile((
+    r'NFG\s+1\s+R\s+{}\s+(?P<roles>{})\s+(?P<strats>{})(\s+{})?'
+    r'(?P<payoffs>(\s+{})+)\s*$').format(
+        _STR, _list(_STR), _list(r'\d+'), _STR, _FLOAT))
+_RE_NFGO = re.compile((
+    r'NFG\s+1\s+R\s+{}\s+(?P<roles>{})\s+(?P<strats>{})(\s+{})?\s+'
+    r'(?P<outcomes>{})(?P<inds>(\s+\d+)+)\s*$').format(
+        _STR, _list(_STR), _list(_list(_STR)), _STR, _list(_OUTCOME)))

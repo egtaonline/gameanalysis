@@ -37,8 +37,6 @@ def test_check():
     utils.check(True, '')
     with pytest.raises(ValueError):
         utils.check(False, '')
-    with pytest.raises(ValueError):
-        utils.fail('')
 
 
 def test_game_size():

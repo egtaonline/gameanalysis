@@ -445,12 +445,6 @@ def check(condition, message, *args, **kwargs):
         raise ValueError(message.format(*args, **kwargs))
 
 
-# FIXME Remove and just raise formatted value error
-def fail(message, *args, **kwargs):
-    """Call when a fail state is entered"""
-    check(False, message, *args, **kwargs)
-
-
 def memoize(member_function):
     """Memoize computation of single object functions"""
     check(

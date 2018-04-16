@@ -331,7 +331,6 @@ class Game(rsgame.RsGame):
             '"{}" is not a valid profile', prof)
         return dest
 
-    # FIXME Is this identical to profile_to_repr?
     def profile_to_assignment(self, prof):
         """Convert a profile to an assignment string"""
         return {
@@ -436,14 +435,11 @@ class Game(rsgame.RsGame):
             ids[i] = index
             dest_prof[index] = count
 
-        # FIXME do we need counts, or is it equal to the enumerate
-        counts = np.zeros(self.num_strats, int)
-        for _, obs in enumerate(prof['observations']):
+        for j, obs in enumerate(prof['observations'], 1):
             for symgrp in obs['symmetry_groups']:
                 i, pay = _unpack_obs(**symgrp)
                 k = ids[i]
-                counts[k] += 1
-                dest_pays[k] += (pay - dest_pays[k]) / counts[k]
+                dest_pays[k] += (pay - dest_pays[k]) / j
 
     def _profpay_from_json_full(self, prof, dest_prof, dest_pays): # pylint: disable=too-many-locals
         """Get profile and payoff from full format"""
@@ -454,9 +450,8 @@ class Game(rsgame.RsGame):
             ids[i] = index
             dest_prof[index] = count
 
-        # FIXME do we need counts, or is it equal to the enumerate
         counts = np.zeros(self.num_strats, int)
-        for _, obs in enumerate(prof['observations']):
+        for obs in prof['observations']:
             for player in obs['players']:
                 i, pay = _unpack_player(**player)
                 k = ids[i]
@@ -893,7 +888,7 @@ class SampleGame(Game):
                     dest[:, self.role_strat_index(role, strat)] = pay
             return dest
 
-        utils.fail('unknown format')
+        raise ValueError('unknown format')
 
     def samplepay_to_json(self, samplepay):
         """Format sample payoffs as json"""

@@ -4,7 +4,6 @@ from collections import abc
 import numpy as np
 import pytest
 
-from gameanalysis import agggen
 from gameanalysis import gamegen
 from gameanalysis import regret
 from gameanalysis import rsgame
@@ -176,8 +175,7 @@ def test_keep_num_profiles(players, strategies, _):
 
 def test_keep_profiles_large_game():
     """Test keeping profiles of a large game"""
-    # FIXME use constant game
-    base = agggen.normal_aggfn([100] * 2, 30, 10)
+    base = rsgame.const([100] * 2, 30, 1)
     game = gamegen.keep_profiles(base, 1e-55)
     assert game.num_profiles == 363
 

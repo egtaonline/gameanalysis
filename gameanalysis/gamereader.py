@@ -2,8 +2,6 @@
 import contextlib
 import json
 
-from gameanalysis import utils
-
 
 def load(filelike):
     """Read a game from a file
@@ -31,7 +29,7 @@ def loads(string):
     with contextlib.suppress(ValueError):
         from gameanalysis import gambit
         return gambit.loads(string)
-    utils.fail('no known format for game')
+    raise ValueError('no known format for game')
 
 
 def loadj(obj): # pylint: disable=too-many-branches,too-many-return-statements

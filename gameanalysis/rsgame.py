@@ -1749,7 +1749,7 @@ def emptygame_json(json):
         desc = [(r, players[r], sorted(s)) for r, s
                 in json['strategies'].items()]
     else:
-        utils.fail('"{}" does not describe a game', json)
+        raise ValueError('"{}" does not describe a game'.format(json))
     desc.sort()
     role_names = tuple(r for r, _, _ in desc)
     strat_names = tuple(tuple(sorted(s)) for _, _, s in desc)

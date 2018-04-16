@@ -48,7 +48,7 @@ class DevRegressionGame(rsgame.CompleteGame):
         self._rest.setflags(write=False)
 
     def deviation_payoffs(self, _, **_kw): # pylint: disable=arguments-differ
-        utils.fail(
+        raise ValueError(
             "regression games don't define deviation payoffs and must be "
             'used as a model for a deviation game')
 
@@ -271,8 +271,6 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
         return payoffs
 
     def get_dev_payoffs(self, dev_profs, *, jacobian=False): # pylint: disable=arguments-differ
-        # FIXME Test that doing this with functions that don't have jacobian
-        # works
         dev_profiles = dev_profs.repeat(
             np.add.reduceat(self._sizes, self.role_starts), -2)
         vec = ((dev_profiles - self._profiles) /
@@ -418,20 +416,15 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
                 np.allclose(self._coefs, othr._coefs) and
                 np.allclose(self._lengths, othr._lengths) and
                 np.all(self._sizes == othr._sizes) and
-                self._eq_params(othr))
-
-    def _eq_params(self, othr):
-        """Test if two rbf games have equal parameters"""
-        # pylint: disable-msg=protected-access
-        # FIXME This should use allclsoe_perm since profiles can be duplicated
-        sord = np.argsort(recfunctions.merge_arrays([
-            np.arange(self.num_strats).repeat(self._sizes),
-            utils.axis_to_elem(self._profiles)], flatten=True))
-        oord = np.argsort(recfunctions.merge_arrays([
-            np.arange(othr.num_strats).repeat(othr._sizes),
-            utils.axis_to_elem(othr._profiles)], flatten=True))
-        return (np.all(self._profiles[sord] == othr._profiles[oord]) and
-                np.allclose(self._alpha[sord], othr._alpha[oord]))
+                utils.allclose_perm(
+                    np.concatenate([
+                        np.arange(self.num_strats).repeat(
+                            self._sizes)[:, None],
+                        self._profiles, self._alpha[:, None]], 1),
+                    np.concatenate([
+                        np.arange(othr.num_strats).repeat(
+                            othr._sizes)[:, None],
+                        othr._profiles, othr._alpha[:, None]], 1)))
 
     @utils.memoize
     def __hash__(self):
