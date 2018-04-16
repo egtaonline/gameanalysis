@@ -187,6 +187,16 @@ def maximal_restrictions(game):
             # profiles, np.isin(profs, game.profiles()) is faster for checking
             # multiple profiles. We can potentially avoid using a dictionary
             # and instead use numpy set operations
+            # TODO More to the point, the idea of checking if a profile is in
+            # the game, may be slow for certain game types, but fast for
+            # others. Additionally, the idea of `in` only working for complete
+            # profiles is a little counter intuitive given that now all games
+            # will return payoff data that may have nans. However, we also
+            # don't want to just expose is a restricted game is complete (or
+            # maybe complete payoff data) because that will require a lot of
+            # extra checks that this doesn't make. In some sense we want each
+            # game to implement something aking to "all additional strategy
+            # profiles in" or maybe, "deviation in".
             if all(p in game for p in profs):
                 maximal = False
                 rest_copy = rest.copy()
