@@ -29,7 +29,7 @@ from gameanalysis import utils
 # sparsity, so it should probably be done on a case by case basis.
 
 
-class Game(rsgame.RsGame):
+class _Game(rsgame._RsGame): # pylint: disable=protected-access
     """Role-symmetric data game representation
 
     This representation uses a sparse mapping from profiles to payoffs for role
@@ -257,7 +257,7 @@ class Game(rsgame.RsGame):
         prof_mask = ~np.any(self._profiles * ~restriction, 1)
         profiles = self._profiles[prof_mask][:, restriction]
         payoffs = self._payoffs[prof_mask][:, restriction]
-        return Game(
+        return _Game(
             base.role_names, base.strat_names, base.num_role_players, profiles,
             payoffs)
 
@@ -266,7 +266,7 @@ class Game(rsgame.RsGame):
             new_pays = self._payoffs + np.broadcast_to(
                 constant, self.num_roles).repeat(self.num_role_strats)
         new_pays[self._profiles == 0] = 0
-        return Game(
+        return _Game(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
@@ -274,7 +274,7 @@ class Game(rsgame.RsGame):
         with np.errstate(invalid='ignore'):
             new_pays = self._payoffs * np.broadcast_to(
                 constant, self.num_roles).repeat(self.num_role_strats)
-        return Game(
+        return _Game(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
@@ -282,7 +282,7 @@ class Game(rsgame.RsGame):
         with np.errstate(invalid='ignore'):
             new_pays = self._payoffs + othr.get_payoffs(self._profiles)
         mask = np.any((~np.isnan(new_pays)) & (self._profiles > 0), 1)
-        return Game(
+        return _Game(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles[mask], new_pays[mask])
 
@@ -596,9 +596,9 @@ def game_copy(copy_game):
         Game to copy data from. This will create a copy with the games profiles
         and payoffs.
     """
-    return Game(copy_game.role_names, copy_game.strat_names,
-                copy_game.num_role_players, copy_game.profiles(),
-                copy_game.payoffs())
+    return _Game(
+        copy_game.role_names, copy_game.strat_names,
+        copy_game.num_role_players, copy_game.profiles(), copy_game.payoffs())
 
 
 def game_replace(copy_game, profiles, payoffs):
@@ -641,11 +641,12 @@ def game_replace(copy_game, profiles, payoffs):
         profiles.shape[0] == np.unique(utils.axis_to_elem(profiles)).size,
         "there can't be any duplicate profiles")
 
-    return Game(copy_game.role_names, copy_game.strat_names,
-                copy_game.num_role_players, profiles, payoffs)
+    return _Game(
+        copy_game.role_names, copy_game.strat_names,
+        copy_game.num_role_players, profiles, payoffs)
 
 
-class SampleGame(Game):
+class _SampleGame(_Game):
     """A Role Symmetric Game that has multiple samples per profile
 
     This behaves the same as a normal Game object, except that it has methods
@@ -776,8 +777,9 @@ class SampleGame(Game):
                 sample = sample.repeat(self.num_role_strats, 1)
             np.copyto(pays, np.mean(obs * sample, 2) *
                       (num_samples / num_obs_resamples))
-        return Game(self.role_names, self.strat_names, self.num_role_players,
-                    self._profiles, payoffs)
+        return _Game(
+            self.role_names, self.strat_names, self.num_role_players,
+            self._profiles, payoffs)
 
     def get_sample_payoffs(self, profile):
         """Get sample payoffs associated with a profile
@@ -822,7 +824,7 @@ class SampleGame(Game):
                 for profs, pays in zip(
                     np.split(self._profiles, self.sample_starts[1:]),
                     self._sample_payoffs))
-        return SampleGame(
+        return _SampleGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
@@ -831,7 +833,7 @@ class SampleGame(Game):
             self.num_role_strats)
         with np.errstate(invalid='ignore'):
             new_pays = tuple(pays * mult for pays in self._sample_payoffs)
-        return SampleGame(
+        return _SampleGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._profiles, new_pays)
 
@@ -846,8 +848,9 @@ class SampleGame(Game):
             in zip(self._sample_payoffs,
                    np.split(prof_mask, self.sample_starts[1:]))
             if pmask.any())
-        return SampleGame(base.role_names, base.strat_names,
-                          base.num_role_players, profiles, sample_payoffs)
+        return _SampleGame(
+            base.role_names, base.strat_names, base.num_role_players, profiles,
+            sample_payoffs)
 
     def samplepay_from_json(self, prof, dest=None):
         """Read a set of payoff samples
@@ -1200,9 +1203,9 @@ def samplegame_copy(copy_game):
         sample_payoffs = (copy_game.payoffs()[:, None],)
     else:
         sample_payoffs = ()
-    return SampleGame(copy_game.role_names, copy_game.strat_names,
-                      copy_game.num_role_players, copy_game.profiles(),
-                      sample_payoffs)
+    return _SampleGame(
+        copy_game.role_names, copy_game.strat_names,
+        copy_game.num_role_players, copy_game.profiles(), sample_payoffs)
 
 
 def samplegame_replace_flat(copy_game, profiles, payoffs): # pylint: disable=too-many-locals
@@ -1293,8 +1296,9 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
             np.all(np.isnan(spays).all(1) | ~np.isnan(spays).any()),
             'for a given strategy, all payoffs must be nan or non')
 
-    return SampleGame(copy_game.role_names, copy_game.strat_names,
-                      copy_game.num_role_players, profiles, sample_payoffs)
+    return _SampleGame(
+        copy_game.role_names, copy_game.strat_names,
+        copy_game.num_role_players, profiles, sample_payoffs)
 
 
 # ---------

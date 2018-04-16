@@ -8,10 +8,10 @@ from gameanalysis import utils
 
 def mcces(thresh):
     """Create a new minimum connected component set"""
-    return MinimumConnectedComponentElementSet(thresh)
+    return _MinimumConnectedComponentElementSet(thresh)
 
 
-class MinimumConnectedComponentElementSet(object):
+class _MinimumConnectedComponentElementSet(object):
     """A class for returning vectors with the minimum weight
 
     Vectors are only returned if they have the minimum weight in their
@@ -63,18 +63,18 @@ class MinimumConnectedComponentElementSet(object):
 
     def __repr__(self):
         return '{}({}, {})'.format(
-            self.__class__.__name__, self._thresh, list(self))
+            self.__class__.__name__[1:], self._thresh, list(self))
 
 
 def bitset(dim, iterable=()):
     """Create a new bitset"""
-    bits = BitSet(dim)
+    bits = _BitSet(dim)
     for bit in iterable:
         bits.add(bit)
     return bits
 
 
-class BitSet(object):
+class _BitSet(object):
     """Set of bitmasks
 
     A bitmask is in the set if all of the true bits have been added
@@ -123,4 +123,4 @@ class BitSet(object):
         return len(self._masks) > 1 or bool(self._masks[0] != 0)
 
     def __repr__(self):
-        return '{}({!r})'.format(self.__class__.__name__, self._masks)
+        return '{}({!r})'.format(self.__class__.__name__[1:], self._masks)

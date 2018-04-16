@@ -11,7 +11,7 @@ from gameanalysis import utils
 # TODO There's an issue here where incomplete payoffs for single strategy roles
 # contribute to incomplete profiles. There's not an obvious way to remedy this
 # with the current api in a way that works well.
-class CanonGame(rsgame.RsGame):
+class _CanonGame(rsgame._RsGame): # pylint: disable=protected-access
     """A game canonicalized to remove single strategy roles"""
 
     def __init__(self, game):
@@ -72,15 +72,15 @@ class CanonGame(rsgame.RsGame):
     def restrict(self, restriction):
         """Restrict viable strategies for a canon game"""
         unrest = np.insert(restriction, self._inds, True)
-        return CanonGame(self._game.restrict(unrest))
+        return _CanonGame(self._game.restrict(unrest))
 
     def _add_constant(self, constant):
         """Add a constant to a canon game"""
-        return CanonGame(self._game + constant)
+        return _CanonGame(self._game + constant)
 
     def _multiply_constant(self, constant):
         """Multiple canon game payoffs by a constant"""
-        return CanonGame(self._game * constant)
+        return _CanonGame(self._game * constant)
 
     def _add_game(self, _):
         """Add another game to canon game"""
@@ -117,7 +117,7 @@ def canon(game):
     game : RsGame
         The game to canonizalize.
     """
-    return CanonGame(game)
+    return _CanonGame(game)
 
 
 def canon_json(jgame):

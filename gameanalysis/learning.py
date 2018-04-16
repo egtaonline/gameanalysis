@@ -22,7 +22,7 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-class DevRegressionGame(rsgame.CompleteGame):
+class _DevRegressionGame(rsgame._CompleteGame): # pylint: disable=protected-access
     """A game regression model that learns deviation payoffs
 
     This model functions as a game, but doesn't have a default way of computing
@@ -92,7 +92,7 @@ class DevRegressionGame(rsgame.CompleteGame):
         new_rest = self._rest.copy()
         new_rest[new_rest] = restriction
         regs = tuple(reg for reg, m in zip(self._regressors, restriction) if m)
-        return DevRegressionGame(
+        return _DevRegressionGame(
             base, regs, self._offset[restriction], self._scale[restriction],
             self._min_payoffs[restriction], self._max_payoffs[restriction],
             new_rest)
@@ -100,14 +100,14 @@ class DevRegressionGame(rsgame.CompleteGame):
     def _add_constant(self, constant):
         off = np.broadcast_to(constant, self.num_roles).repeat(
             self.num_role_strats)
-        return DevRegressionGame(
+        return _DevRegressionGame(
             self, self._regressors, self._offset + off, self._scale,
             self._min_payoffs + off, self._max_payoffs + off, self._rest)
 
     def _multiply_constant(self, constant):
         mul = np.broadcast_to(constant, self.num_roles).repeat(
             self.num_role_strats)
-        return DevRegressionGame(
+        return _DevRegressionGame(
             self, self._regressors, self._offset * mul, self._scale * mul,
             self._min_payoffs * mul, self._max_payoffs * mul, self._rest)
 
@@ -183,7 +183,7 @@ def nngame_train( # pylint: disable=too-many-arguments,too-many-locals
                 verbose=verbosity)
         regs.append(reg)
 
-    return DevRegressionGame(
+    return _DevRegressionGame(
         game, tuple(regs), offsets, scales, game.min_strat_payoffs(),
         game.max_strat_payoffs(), np.ones(game.num_strats, bool))
 
@@ -204,13 +204,13 @@ def sklgame_train(game, estimator):
         reg = sklearn.base.clone(estimator)
         reg.fit(profs, pays)
         regs.append(reg)
-    return DevRegressionGame(
+    return _DevRegressionGame(
         game, tuple(regs), np.zeros(game.num_strats), np.ones(game.num_strats),
         game.min_strat_payoffs(), game.max_strat_payoffs(),
         np.ones(game.num_strats, bool))
 
 
-class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attributes
+class _RbfGpGame(rsgame._CompleteGame): # pylint: disable=too-many-instance-attributes,protected-access
     """A regression game using RBF Gaussian processes
 
     This regression game has a build in deviation payoff based off of a
@@ -352,7 +352,7 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
             [-1], np.flatnonzero(np.diff(uprofs['s'])),
             [new_alpha.size - 1]]))
 
-        return RbfGpGame(
+        return _RbfGpGame(
             base.role_names, base.strat_names, base.num_role_players,
             self._offset[restriction], self._coefs[restriction],
             lengths[:, restriction], new_sizes, uprofs['axis'], new_alpha)
@@ -360,7 +360,7 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
     def _add_constant(self, constant):
         off = np.broadcast_to(constant, self.num_roles).repeat(
             self.num_role_strats)
-        return RbfGpGame(
+        return _RbfGpGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._offset + off, self._coefs, self._lengths, self._sizes,
             self._profiles, self._alpha)
@@ -368,7 +368,7 @@ class RbfGpGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attrib
     def _multiply_constant(self, constant):
         mul = np.broadcast_to(constant, self.num_roles).repeat(
             self.num_role_strats)
-        return RbfGpGame(
+        return _RbfGpGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._offset * mul, self._coefs * mul, self._lengths, self._sizes,
             self._profiles, self._alpha)
@@ -485,7 +485,7 @@ def rbfgame_train(game, num_restarts=3): # pylint: disable=too-many-locals
             'some lengths were at their bounds, this may indicate a poor '
             'fit')
 
-    return RbfGpGame(
+    return _RbfGpGame(
         game.role_names, game.strat_names, game.num_role_players, means, coefs,
         lengths, np.array(sizes), np.concatenate(profiles),
         np.concatenate(alpha))
@@ -521,13 +521,13 @@ def rbfgame_json(json):
     sizes = np.fromiter(  # pragma: no branch
         (a.size for a in alphas), int, base.num_strats)
 
-    return RbfGpGame(
+    return _RbfGpGame(
         base.role_names, base.strat_names, base.num_role_players, offsets,
         coefs, lengths, sizes, np.concatenate(profiles),
         np.concatenate(alphas))
 
 
-class _DeviationGame(rsgame.CompleteGame): # pylint: disable=abstract-method
+class _DeviationGame(rsgame._CompleteGame): # pylint: disable=abstract-method,protected-access
     """A game that adds deviation payoffs"""
 
     def __init__(self, model_game):
@@ -567,7 +567,7 @@ class _DeviationGame(rsgame.CompleteGame): # pylint: disable=abstract-method
         return hash((super().__hash__(), self.model))
 
 
-class SampleDeviationGame(_DeviationGame):
+class _SampleDeviationGame(_DeviationGame):
     """Deviation payoffs by sampling from mixture
 
     This model produces unbiased deviation payoff estimates, but they're noisy
@@ -612,19 +612,19 @@ class SampleDeviationGame(_DeviationGame):
         return dev_pays, jac
 
     def restrict(self, restriction):
-        return SampleDeviationGame(
+        return _SampleDeviationGame(
             self.model.restrict(restriction), self.num_samples)
 
     def _add_constant(self, constant):
-        return SampleDeviationGame(self.model + constant, self.num_samples)
+        return _SampleDeviationGame(self.model + constant, self.num_samples)
 
     def _multiply_constant(self, constant):
-        return SampleDeviationGame(self.model * constant, self.num_samples)
+        return _SampleDeviationGame(self.model * constant, self.num_samples)
 
     def _add_game(self, othr):
         try:
             assert self.num_samples == othr.num_samples
-            return SampleDeviationGame(
+            return _SampleDeviationGame(
                 self.model + othr.model, self.num_samples)
         except (AttributeError, AssertionError):
             return NotImplemented
@@ -656,20 +656,20 @@ def sample(game, num_samples=100):
         The number of samples to take.
     """
     try:
-        return SampleDeviationGame(game.model, num_samples=num_samples)
+        return _SampleDeviationGame(game.model, num_samples=num_samples)
     except AttributeError:
-        return SampleDeviationGame(game, num_samples=num_samples)
+        return _SampleDeviationGame(game, num_samples=num_samples)
 
 
 def sample_json(json):
     """Read sample game from json"""
     utils.check(
         json['type'].split('.', 1)[0] == 'sample', 'incorrect type')
-    return SampleDeviationGame(gamereader.loadj(json['model']),
-                               num_samples=json['samples'])
+    return _SampleDeviationGame(
+        gamereader.loadj(json['model']), num_samples=json['samples'])
 
 
-class PointDeviationGame(_DeviationGame):
+class _PointDeviationGame(_DeviationGame):
     """Deviation payoffs by point approximation
 
     This model computes payoffs by finding the deviation payoffs from the point
@@ -702,18 +702,18 @@ class PointDeviationGame(_DeviationGame):
         return dev, jac
 
     def restrict(self, restriction):
-        return PointDeviationGame(self.model.restrict(restriction))
+        return _PointDeviationGame(self.model.restrict(restriction))
 
     def _add_constant(self, constant):
-        return PointDeviationGame(self.model + constant)
+        return _PointDeviationGame(self.model + constant)
 
     def _multiply_constant(self, constant):
-        return PointDeviationGame(self.model * constant)
+        return _PointDeviationGame(self.model * constant)
 
     def _add_game(self, othr):
         try:
-            assert isinstance(othr, PointDeviationGame)
-            return PointDeviationGame(self.model + othr.model)
+            assert isinstance(othr, _PointDeviationGame)
+            return _PointDeviationGame(self.model + othr.model)
         except (AttributeError, AssertionError):
             return NotImplemented
 
@@ -733,19 +733,19 @@ def point(game):
         an existing deviation game, then this will use it's underlying model.
     """
     try:
-        return PointDeviationGame(game.model)
+        return _PointDeviationGame(game.model)
     except AttributeError:
-        return PointDeviationGame(game)
+        return _PointDeviationGame(game)
 
 
 def point_json(json):
     """Read point game from json"""
     utils.check(
         json['type'].split('.', 1)[0] == 'point', 'incorrect type')
-    return PointDeviationGame(gamereader.loadj(json['model']))
+    return _PointDeviationGame(gamereader.loadj(json['model']))
 
 
-class NeighborDeviationGame(_DeviationGame):
+class _NeighborDeviationGame(_DeviationGame):
     """Create a neighbor game from a model
 
     This takes a normalized weighted estimate of the deviation payoffs by
@@ -784,19 +784,19 @@ class NeighborDeviationGame(_DeviationGame):
                                       jacobian=jacobian)
 
     def restrict(self, restriction):
-        return NeighborDeviationGame(
+        return _NeighborDeviationGame(
             self.model.restrict(restriction), self.num_neighbors)
 
     def _add_constant(self, constant):
-        return NeighborDeviationGame(self.model + constant, self.num_neighbors)
+        return _NeighborDeviationGame(self.model + constant, self.num_neighbors)
 
     def _multiply_constant(self, constant):
-        return NeighborDeviationGame(self.model * constant, self.num_neighbors)
+        return _NeighborDeviationGame(self.model * constant, self.num_neighbors)
 
     def _add_game(self, othr):
         try:
             assert self.num_neighbors == othr.num_neighbors
-            return NeighborDeviationGame(
+            return _NeighborDeviationGame(
                 self.model + othr.model, self.num_neighbors)
         except (AttributeError, AssertionError):
             return NotImplemented
@@ -827,15 +827,15 @@ def neighbor(game, num_neighbors=2):
         The number of deviations to explore out.
     """
     try:
-        return NeighborDeviationGame(game.model, num_neighbors=num_neighbors)
+        return _NeighborDeviationGame(game.model, num_neighbors=num_neighbors)
     except AttributeError:
-        return NeighborDeviationGame(game, num_neighbors=num_neighbors)
+        return _NeighborDeviationGame(game, num_neighbors=num_neighbors)
 
 
 def neighbor_json(json):
     """Read neighbor game from json"""
     utils.check(
         json['type'].split('.', 1)[0] == 'neighbor', 'incorrect type')
-    return NeighborDeviationGame(
+    return _NeighborDeviationGame(
         gamereader.loadj(json['model']),
         num_neighbors=json.get('neighbors', json.get('devs', None)))

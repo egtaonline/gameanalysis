@@ -37,9 +37,8 @@ import scipy.special as sps
 from gameanalysis import gamereader
 from gameanalysis import utils
 
-# FIXME Protect all classes with _s and instead use python style duck typing
 
-class StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-instance-attributes
+class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-instance-attributes
     """A class with knowledge of the number of strategies per role
 
     This has methods common to working with strategy arrays, which essentially
@@ -868,7 +867,7 @@ class StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-in
                 self.strat_names == other.strat_names)
 
 
-class GameLike(StratArray): # pylint: disable=too-many-public-methods
+class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
@@ -1310,7 +1309,7 @@ class GameLike(StratArray): # pylint: disable=too-many-public-methods
 
     def __repr__(self):
         return '{}({}, {})'.format(
-            self.__class__.__name__,
+            self.__class__.__name__[1:],
             self.num_role_players,
             self.num_role_strats)
 
@@ -1319,7 +1318,7 @@ class GameLike(StratArray): # pylint: disable=too-many-public-methods
         return (
             ('{}:\n    Roles: {}\n    Players:\n        {}\n    '
              'Strategies:\n        {}').format(
-                 self.__class__.__name__,
+                 self.__class__.__name__[1:],
                  ', '.join(self.role_names),
                  '\n        '.join(
                      '{:d}x {}'.format(count, role)
@@ -1340,7 +1339,7 @@ class GameLike(StratArray): # pylint: disable=too-many-public-methods
                 np.all(self.num_role_players == other.num_role_players))
 
 
-class RsGame(GameLike):
+class _RsGame(_GameLike):
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
@@ -1561,7 +1560,7 @@ class RsGame(GameLike):
             return NotImplemented
 
 
-class EmptyGame(RsGame):
+class _EmptyGame(_RsGame):
     """A game with no payoff data"""
 
     def __init__(self, role_names, strat_names, num_role_players):
@@ -1623,7 +1622,7 @@ class EmptyGame(RsGame):
             tuple(s for s, m in zip(strats, mask) if m)
             for strats, mask in zip(
                 self.strat_names, np.split(restriction, self.role_starts[1:])))
-        return EmptyGame(self.role_names, new_strats, self.num_role_players)
+        return _EmptyGame(self.role_names, new_strats, self.num_role_players)
 
     def _add_constant(self, _):
         return self
@@ -1675,7 +1674,7 @@ def emptygame(num_role_players, num_role_strats):
     strats = utils.prefix_strings('s', num_role_strats.sum())
     strat_names = tuple(tuple(itertools.islice(strats, int(n)))
                         for n in num_role_strats)
-    return EmptyGame(role_names, strat_names, num_role_players)
+    return _EmptyGame(role_names, strat_names, num_role_players)
 
 
 def emptygame_names(role_names, num_role_players, strat_names):
@@ -1727,8 +1726,8 @@ def emptygame_names(role_names, num_role_players, strat_names):
             utils.check(
                 _LEG_STRAT.issuperset(strat),
                 'strategy {} contains illegal characters', strat)
-    return EmptyGame(tuple(role_names), tuple(map(tuple, strat_names)),
-                     num_role_players)
+    return _EmptyGame(
+        tuple(role_names), tuple(map(tuple, strat_names)), num_role_players)
 
 
 def emptygame_json(json):
@@ -1773,7 +1772,7 @@ def emptygame_json(json):
         all(all(_LEG_STRAT.issuperset(s) for s in strats)
             for strats in strat_names),
         'strat names must be valid')
-    return EmptyGame(role_names, strat_names, num_role_players)
+    return _EmptyGame(role_names, strat_names, num_role_players)
 
 
 def emptygame_copy(copy_game):
@@ -1787,11 +1786,12 @@ def emptygame_copy(copy_game):
     copy_game : RsGame
         Game to copy info from.
     """
-    return EmptyGame(copy_game.role_names, copy_game.strat_names,
-                     copy_game.num_role_players)
+    return _EmptyGame(
+        copy_game.role_names, copy_game.strat_names,
+        copy_game.num_role_players)
 
 
-class AddGame(RsGame):
+class _AddGame(_RsGame):
     """A Game representing the addition of two games
 
     Payoffs in this game are the sum of the payoffs from each game. Some game
@@ -1861,16 +1861,16 @@ class AddGame(RsGame):
         return sum(game.min_strat_payoffs() for game in self._games)
 
     def restrict(self, restriction):
-        return AddGame(
+        return _AddGame(
             tuple(game.restrict(restriction) for game in self._games))
 
     def _add_constant(self, constant):
         avg_const = constant / len(self._games)
-        return AddGame(
+        return _AddGame(
             tuple(game + avg_const for game in self._games))
 
     def _multiply_constant(self, constant):
-        return AddGame(
+        return _AddGame(
             tuple(game * constant for game in self._games))
 
     def _add_game(self, othr):
@@ -1942,7 +1942,7 @@ def add(*games):
     if len(final_games) == 1: # pylint: disable=no-else-return
         return final_games[0]
     else:
-        return AddGame(tuple(final_games))
+        return _AddGame(tuple(final_games))
 
 
 def add_json(jgame):
@@ -1982,7 +1982,7 @@ def mix(game0, game1, prob):
         return (1 - prob) * game0 + prob * game1
 
 
-class CompleteGame(RsGame): # pylint: disable=abstract-method
+class _CompleteGame(_RsGame): # pylint: disable=abstract-method
     """A game that defines everything for complete games
 
     Extend this if your game by default has payoff data for every profile."""
@@ -2008,7 +2008,7 @@ class CompleteGame(RsGame): # pylint: disable=abstract-method
         return True
 
 
-class ConstantGame(CompleteGame):
+class _ConstantGame(_CompleteGame):
     """A game with constant payoffs"""
     def __init__(self, role_names, strat_names, num_role_players, constant):
         super().__init__(role_names, strat_names, num_role_players)
@@ -2034,16 +2034,17 @@ class ConstantGame(CompleteGame):
 
     def restrict(self, restriction):
         base = emptygame_copy(self).restrict(restriction)
-        return ConstantGame(base.role_names, base.strat_names,
-                            base.num_role_players, self._role_const)
+        return _ConstantGame(
+            base.role_names, base.strat_names, base.num_role_players,
+            self._role_const)
 
     def _add_constant(self, constant):
-        return ConstantGame(
+        return _ConstantGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._role_const + constant)
 
     def _multiply_constant(self, constant):
-        return ConstantGame(
+        return _ConstantGame(
             self.role_names, self.strat_names, self.num_role_players,
             self._role_const * constant)
 
@@ -2083,7 +2084,7 @@ def const_names(role_names, num_role_players, strat_names, constant):
 
 def const_replace(copy_game, constant):
     """Replace a game with constant payoffs"""
-    return ConstantGame(
+    return _ConstantGame(
         copy_game.role_names, copy_game.strat_names,
         copy_game.num_role_players, np.asarray(constant, float))
 

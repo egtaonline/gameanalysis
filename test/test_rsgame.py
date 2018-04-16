@@ -1,6 +1,5 @@
 """Test rsgame"""
 # pylint: disable=too-many-lines
-import itertools
 import json
 import warnings
 
@@ -25,10 +24,7 @@ EPS = 5 * np.finfo(float).eps
 
 def stratarray(num_strats):
     """Create a strat array"""
-    roles = tuple(chr(97 + i) for i in range(len(num_strats)))
-    sit = (chr(97 + i) for i in range(sum(num_strats)))  # pragma: no branch
-    strats = tuple(tuple(itertools.islice(sit, s)) for s in num_strats)
-    return rsgame.StratArray(roles, strats)
+    return rsgame.emptygame(np.ones_like(num_strats), num_strats)
 
 
 def test_stratarray_properties(): # pylint: disable=too-many-statements
@@ -731,29 +727,30 @@ def test_random_fixed_mixtures(_, role_strats):
 def test_strat_name():
     """Test strat names"""
     sarr = stratarray([3, 2])
-    for i, strat in enumerate(['a', 'b', 'c', 'd', 'e']):
+    for i, strat in enumerate(['s0', 's1', 's2', 's3', 's4']):
         assert strat == sarr.strat_name(i)
 
 
 def test_indices():
     """Test indices"""
     sarr = stratarray([3, 2])
-    assert sarr.role_index('a') == 0
-    assert sarr.role_index('b') == 1
-    assert sarr.role_strat_index('a', 'a') == 0
-    assert sarr.role_strat_index('a', 'b') == 1
-    assert sarr.role_strat_index('a', 'c') == 2
-    assert sarr.role_strat_index('b', 'd') == 3
-    assert sarr.role_strat_index('b', 'e') == 4
-    assert sarr.role_strat_dev_index('a', 'a', 'b') == 0
-    assert sarr.role_strat_dev_index('a', 'a', 'c') == 1
-    assert sarr.role_strat_dev_index('a', 'b', 'a') == 2
-    assert sarr.role_strat_dev_index('a', 'b', 'c') == 3
-    assert sarr.role_strat_dev_index('a', 'c', 'a') == 4
-    assert sarr.role_strat_dev_index('a', 'c', 'b') == 5
-    assert sarr.role_strat_dev_index('b', 'd', 'e') == 6
-    assert sarr.role_strat_dev_index('b', 'e', 'd') == 7
-    rs_names = (('a', 'a'), ('a', 'b'), ('a', 'c'), ('b', 'd'), ('b', 'e'))
+    assert sarr.role_index('r0') == 0
+    assert sarr.role_index('r1') == 1
+    assert sarr.role_strat_index('r0', 's0') == 0
+    assert sarr.role_strat_index('r0', 's1') == 1
+    assert sarr.role_strat_index('r0', 's2') == 2
+    assert sarr.role_strat_index('r1', 's3') == 3
+    assert sarr.role_strat_index('r1', 's4') == 4
+    assert sarr.role_strat_dev_index('r0', 's0', 's1') == 0
+    assert sarr.role_strat_dev_index('r0', 's0', 's2') == 1
+    assert sarr.role_strat_dev_index('r0', 's1', 's0') == 2
+    assert sarr.role_strat_dev_index('r0', 's1', 's2') == 3
+    assert sarr.role_strat_dev_index('r0', 's2', 's0') == 4
+    assert sarr.role_strat_dev_index('r0', 's2', 's1') == 5
+    assert sarr.role_strat_dev_index('r1', 's3', 's4') == 6
+    assert sarr.role_strat_dev_index('r1', 's4', 's3') == 7
+    rs_names = (
+        ('r0', 's0'), ('r0', 's1'), ('r0', 's2'), ('r1', 's3'), ('r1', 's4'))
     assert rs_names == sarr.role_strat_names
 
 
@@ -761,7 +758,7 @@ def test_to_mixture_from_json():
     """Test mixture to from json"""
     sarr = stratarray([2, 1])
     mix = [.6, .4, 1]
-    json_mix = {'a': {'b': .4, 'a': .6}, 'b': {'c': 1}}
+    json_mix = {'r0': {'s1': .4, 's0': .6}, 'r1': {'s2': 1}}
     assert sarr.mixture_to_json(mix) == json_mix
     new_mix = sarr.mixture_from_json(json_mix)
     assert np.allclose(new_mix, mix)
@@ -788,7 +785,7 @@ def test_to_from_mix_repr():
     """Test to from repr"""
     sarr = stratarray([2, 1])
     mix = [.6, .4, 1]
-    expected = 'a: 60.00% a, 40.00% b; b: 100.00% c'
+    expected = 'r0: 60.00% s0, 40.00% s1; r1: 100.00% s2'
     assert sarr.mixture_to_repr(mix) == expected
     new_mix = sarr.mixture_from_repr(expected)
     assert np.allclose(new_mix, mix)
@@ -804,11 +801,11 @@ def test_to_from_mix_str():
     sarr = stratarray([2, 1])
     mix = [0.3, 0.7, 1]
     expected = """
-a:
-    a:  30.00%
-    b:  70.00%
-b:
-    c: 100.00%
+r0:
+    s0:  30.00%
+    s1:  70.00%
+r1:
+    s2: 100.00%
 """[1:-1]
     assert sarr.mixture_to_str(mix) == expected
     new_mix = sarr.mixture_from_str(expected)
@@ -824,7 +821,7 @@ def test_to_from_restriction_json():
     """Test to from restriction json"""
     sarr = stratarray([2, 1])
     sub = [True, False, True]
-    json_sub = {'a': ['a'], 'b': ['c']}
+    json_sub = {'r0': ['s0'], 'r1': ['s2']}
     assert sarr.restriction_to_json(sub) == json_sub
     new_sub = sarr.restriction_from_json(json_sub)
     assert np.all(new_sub == sub)
@@ -851,7 +848,7 @@ def test_to_from_restriction_repr():
     """Test random restriction repr"""
     sarr = stratarray([2, 1])
     sub = [True, False, True]
-    sub_repr = 'a: a; b: c'
+    sub_repr = 'r0: s0; r1: s2'
     assert sarr.restriction_to_repr(sub) == sub_repr
     new_sub = sarr.restriction_from_repr(sub_repr)
     assert np.all(new_sub == sub)
@@ -867,10 +864,10 @@ def test_to_from_restriction_str():
     sarr = stratarray([2, 1])
     sub = [True, False, True]
     sub_str = """
-a:
-    a
-b:
-    c
+r0:
+    s0
+r1:
+    s2
 """[1:-1]
     assert sarr.restriction_to_str(sub) == sub_str
     new_sub = sarr.restriction_from_str(sub_str)
@@ -886,7 +883,7 @@ def test_to_from_role_json():
     """Test to from role json"""
     sarr = stratarray([2, 1])
     role = [6, 3]
-    json_role = {'a': 6, 'b': 3}
+    json_role = {'r0': 6, 'r1': 3}
     assert sarr.role_to_json(role) == json_role
     arr = sarr.role_from_json(json_role)
     assert np.allclose(arr, role)
@@ -901,7 +898,7 @@ def test_to_from_role_repr():
     """Test to from role repr"""
     sarr = stratarray([2, 1])
     role = [6, 3]
-    rep_role = 'a: 6; b: 3'
+    rep_role = 'r0: 6; r1: 3'
     assert sarr.role_to_repr(role) == rep_role
     arr = sarr.role_from_repr(rep_role)
     assert np.allclose(arr, role)
@@ -910,7 +907,7 @@ def test_to_from_role_repr():
     sarr.role_from_repr(rep_role, dest=arr)
     assert np.allclose(arr, role)
     assert arr.dtype == float
-    assert np.allclose(sarr.role_from_repr('a:6,b:3'), role)
+    assert np.allclose(sarr.role_from_repr('r0:6,r1:3'), role)
 
 
 def test_trim_precision():
@@ -1998,7 +1995,7 @@ def test_add_game():
     assert rsgame.emptygame_copy(add_rest) == empty.restrict(rest)
 
 
-class UnAddC(rsgame.ConstantGame):
+class UnAddC(rsgame._ConstantGame): # pylint: disable=protected-access
     """A constant game that doesn't support adding"""
     def __init__(self, copy, const):
         super().__init__(

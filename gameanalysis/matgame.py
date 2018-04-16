@@ -8,7 +8,7 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-class MatrixGame(rsgame.CompleteGame):
+class _MatrixGame(rsgame._CompleteGame): # pylint: disable=protected-access
     """Matrix game representation
 
     This represents a complete independent game more compactly than a Game, but
@@ -164,15 +164,15 @@ class MatrixGame(rsgame.CompleteGame):
         matrix = self._payoff_matrix
         for i, mask in enumerate(np.split(restriction, self.role_starts[1:])):
             matrix = matrix[(slice(None),) * i + (mask,)]
-        return MatrixGame(base.role_names, base.strat_names, matrix.copy())
+        return _MatrixGame(base.role_names, base.strat_names, matrix.copy())
 
     def _add_constant(self, constant):
-        return MatrixGame(
+        return _MatrixGame(
             self.role_names, self.strat_names,
             self._payoff_matrix + constant)
 
     def _multiply_constant(self, constant):
-        return MatrixGame(
+        return _MatrixGame(
             self.role_names, self.strat_names,
             self._payoff_matrix * constant)
 
@@ -185,7 +185,7 @@ class MatrixGame(rsgame.CompleteGame):
             othr_mat = othr.get_payoffs(
                 self.all_profiles())[self.all_profiles() > 0].reshape(
                     self._payoff_matrix.shape)
-        return MatrixGame(
+        return _MatrixGame(
             self.role_names, self.strat_names,
             self._payoff_matrix + othr_mat)
 
@@ -218,7 +218,7 @@ class MatrixGame(rsgame.CompleteGame):
 
     def __repr__(self):
         return '{}({})'.format(
-            self.__class__.__name__,
+            self.__class__.__name__[1:],
             self.num_role_strats)
 
 
@@ -334,7 +334,7 @@ def matgame_copy(copy_game):
         strats = tuple(itertools.chain.from_iterable(
             itertools.repeat(s, p) for s, p
             in zip(copy_game.strat_names, copy_game.num_role_players)))
-    return MatrixGame(roles, strats, payoff_matrix)
+    return _MatrixGame(roles, strats, payoff_matrix)
 
 
 def matgame_replace(base, payoff_matrix):
@@ -355,4 +355,4 @@ def matgame_replace(base, payoff_matrix):
         payoff_matrix.shape == (tuple(base.num_role_strats) +
                                 (base.num_roles,)),
         'payoff matrix not consistent shape with game')
-    return MatrixGame(base.role_names, base.strat_names, payoff_matrix)
+    return _MatrixGame(base.role_names, base.strat_names, payoff_matrix)

@@ -8,7 +8,7 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
-class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attributes
+class _AgfnGame(rsgame._CompleteGame): # pylint: disable=too-many-instance-attributes,protected-access
     """Action graph with function nodes game
 
     Action node utilities have additive structure. Function nodes are
@@ -187,7 +187,7 @@ class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attribu
     def _add_constant(self, constant):
         off = np.broadcast_to(constant, self.num_roles).repeat(
             self.num_role_strats)
-        return AgfnGame(
+        return _AgfnGame(
             self.role_names, self.strat_names, self.num_role_players,
             self.action_weights, self.function_inputs, self.function_table,
             self.offsets + off)
@@ -195,14 +195,14 @@ class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attribu
     def _multiply_constant(self, constant):
         mul = np.broadcast_to(constant, self.num_roles).repeat(
             self.num_role_strats)
-        return AgfnGame(
+        return _AgfnGame(
             self.role_names, self.strat_names, self.num_role_players,
             self.action_weights * mul, self.function_inputs,
             self.function_table, self.offsets * mul)
 
     def _add_game(self, othr):
         try:
-            return AgfnGame(
+            return _AgfnGame(
                 self.role_names, self.strat_names, self.num_role_players,
                 np.concatenate([self.action_weights, othr.action_weights]),
                 np.concatenate([self.function_inputs, othr.function_inputs],
@@ -217,7 +217,7 @@ class AgfnGame(rsgame.CompleteGame): # pylint: disable=too-many-instance-attribu
         base = rsgame.emptygame_copy(self).restrict(restriction)
         action_weights = self.action_weights[:, restriction]
         func_mask = np.any(~np.isclose(action_weights, 0), 1)
-        return AgfnGame(
+        return _AgfnGame(
             base.role_names, base.strat_names, base.num_role_players,
             action_weights[func_mask],
             self.function_inputs[:, func_mask][restriction],
@@ -392,7 +392,7 @@ def aggfn_replace(copy_game, action_weights, function_inputs, function_table,
         offsets.shape == (copy_game.num_strats,),
         'offsets must have shape (num_strats,) but got {}', offsets.shape)
 
-    return AgfnGame(
+    return _AgfnGame(
         copy_game.role_names, copy_game.strat_names,
         copy_game.num_role_players, action_weights, function_inputs,
         function_table, offsets)

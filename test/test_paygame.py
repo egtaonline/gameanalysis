@@ -1841,7 +1841,7 @@ def test_empty_profile_addition(players, strats):
                            gu.axis_to_elem(add.profiles())).size
 
 
-class UnAddP(paygame.Game):
+class UnAddP(paygame._Game): # pylint: disable=protected-access
     """Payoff game that is not addable"""
     def __init__(self, copy, profs, pays):
         super().__init__(
@@ -1852,7 +1852,7 @@ class UnAddP(paygame.Game):
         return NotImplemented
 
 
-class UnAddC(rsgame.ConstantGame):
+class UnAddC(rsgame._ConstantGame): # pylint: disable=protected-access
     """Constant game that is not addable"""
     def __init__(self, copy, const):
         super().__init__(
