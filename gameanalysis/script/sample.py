@@ -85,7 +85,7 @@ def add_parser(subparsers):
 
 def main(args):
     """Sample objects entry point"""
-    game = rsgame.emptygame_copy(gamereader.load(args.input))
+    game = rsgame.empty_copy(gamereader.load(args.input))
     if args.seed is not None:
         # Python hash is randomly salted, so we use this to guarantee
         # determinism

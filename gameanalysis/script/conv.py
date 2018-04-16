@@ -17,7 +17,7 @@ _TYPES = {
         and return only its base structure---role and strategy names and player
         counts.""",
         lambda game, out: json.dump(
-            rsgame.emptygame_copy(game).to_json(), out)),
+            rsgame.empty_copy(game).to_json(), out)),
     'game': (
         [], 'Sparse payoff format', """Convert a game to a sparse mapping of
         profiles to their corresponding payoff data.""",

@@ -26,7 +26,7 @@ def random_game(role_players, role_strats, *, prob=0.5):
 
     This bypasses the need to import gamegen.
     """
-    base = rsgame.emptygame(role_players, role_strats)
+    base = rsgame.empty(role_players, role_strats)
     profs = base.all_profiles()
     rand.shuffle(profs)
     pays = np.choose(
@@ -41,7 +41,7 @@ def random_samplegame(role_players, role_strats, *, prob=0.5):
 
     This bypasses the need to import gamegen.
     """
-    base = rsgame.emptygame(role_players, role_strats)
+    base = rsgame.empty(role_players, role_strats)
     profs = base.all_profiles()
     rand.shuffle(profs)
     spays = []
@@ -86,19 +86,19 @@ def test_game_properties():
     assert game.num_profiles == 2
     assert game.num_complete_profiles == 1
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     assert game.profiles().shape == (0, 4)
     assert game.payoffs().shape == (0, 4)
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
 
-    game = rsgame.emptygame([3, 2, 1], 3)
+    game = rsgame.empty([3, 2, 1], 3)
     assert game.profiles().shape == (0, 9)
     assert game.payoffs().shape == (0, 9)
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     assert game.profiles().shape == (0, 6)
     assert game.payoffs().shape == (0, 6)
     assert game.num_profiles == 0
@@ -121,7 +121,7 @@ def test_game_properties():
 @pytest.mark.parametrize('role_players,role_strats', utils.GAMES)
 def test_random_emptygame_const_properties(role_players, role_strats):
     """Test empty game properties"""
-    game = paygame.game_copy(rsgame.emptygame(role_players, role_strats))
+    game = paygame.game_copy(rsgame.empty(role_players, role_strats))
 
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
@@ -167,7 +167,7 @@ def test_random_emptygame_const_properties(role_players, role_strats):
 
 def test_game_verifications():
     """Test verify methods"""
-    game = rsgame.emptygame(2, 2)
+    game = rsgame.empty(2, 2)
 
     profiles = [[3, -1]]
     payoffs = [[4, 5]]
@@ -223,7 +223,7 @@ def test_dev_reps_on_large_games():
 
 def test_min_max_payoffs():
     """Test min and max payoffs"""
-    game = rsgame.emptygame([2, 2], 2)
+    game = rsgame.empty([2, 2], 2)
     mins = game.min_strat_payoffs()
     assert np.allclose([np.nan] * 4, mins, equal_nan=True)
     mins = game.min_role_payoffs()
@@ -379,7 +379,7 @@ def test_get_dev_payoffs():
 @pytest.mark.parametrize('role_players,role_strats', utils.GAMES)
 def test_random_empty_get_payoffs(role_players, role_strats):
     """Test random empty get payoffs"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
 
     for prof in game.all_profiles():
         supp = prof > 0
@@ -390,7 +390,7 @@ def test_random_empty_get_payoffs(role_players, role_strats):
 
 def test_deviation_mixture_support():
     """Test get deviation mixture support"""
-    base = rsgame.emptygame([2, 2], 3)
+    base = rsgame.empty([2, 2], 3)
     profiles1 = [
         [2, 0, 0, 2, 0, 0],
         [1, 1, 0, 2, 0, 0],
@@ -459,7 +459,7 @@ def test_different_samples():
 
 def test_deviation_payoffs_jacobian():
     """Test jacobian of deviation payoffs"""
-    game = rsgame.emptygame(2, 3)
+    game = rsgame.empty(2, 3)
     eqm = np.ones(3) / 3
     dpay, dpayj = game.deviation_payoffs(eqm, jacobian=True)
     assert np.isnan(dpay).all()
@@ -506,7 +506,7 @@ def test_deviation_payoffs_jacobian_nans():
 @pytest.mark.parametrize('_', range(5))
 def test_random_deviation_payoffs_jacobian(players, strats, ignore, _):
     """Test random deviation payoff jacobians"""
-    base = rsgame.emptygame(players, strats)
+    base = rsgame.empty(players, strats)
     profs = base.all_profiles()
     np.random.shuffle(profs)
     if ignore:
@@ -542,7 +542,7 @@ def test_random_deviation_payoffs_jacobian(players, strats, ignore, _):
 @pytest.mark.parametrize('_', range(5))
 def test_random_deviation_payoffs_jacobian_nan(players, strats, _):
     """Test nans in random deviation payoffs jacobian"""
-    base = rsgame.emptygame(players, strats)
+    base = rsgame.empty(players, strats)
     profs = base.all_profiles()
     pays = np.random.random(profs.shape)
     pays[profs == 0] = 0
@@ -566,7 +566,7 @@ def test_random_deviation_payoffs_jacobian_nan(players, strats, _):
 @pytest.mark.parametrize('players,strats', utils.GAMES)
 def test_random_deviation_payoffs_ignore_incomplete(players, strats):
     """Test ignore incomplete in deviation payoffs"""
-    base = rsgame.emptygame(players, strats)
+    base = rsgame.empty(players, strats)
     profs = base.all_profiles()
     pays = np.random.random((base.num_all_profiles, base.num_strats))
     pays[profs == 0] = 0
@@ -728,7 +728,7 @@ def test_deviation_nans_2(play_1, play_2):
 
 def test_expected_payoffs():
     """Test expected payoffs"""
-    game = rsgame.emptygame(2, [2, 2])
+    game = rsgame.empty(2, [2, 2])
     pays = game.expected_payoffs([0.2, 0.8, 0.4, 0.6])
     assert np.allclose([np.nan, np.nan], pays, equal_nan=True)
 
@@ -790,7 +790,7 @@ def test_expected_payoffs():
 @pytest.mark.parametrize('role_players,role_strats', utils.GAMES)
 def test_random_is_empty(role_players, role_strats):
     """Test is_empty for random games"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     assert game.is_empty()
 
     game = paygame.game_replace(game, np.empty((0, game.num_strats), int),
@@ -805,7 +805,7 @@ def test_random_is_empty(role_players, role_strats):
 @pytest.mark.parametrize('role_players,role_strats', utils.GAMES)
 def test_random_is_complete(role_players, role_strats):
     """Test is_complete for random games"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     assert not game.is_complete()
 
     game = paygame.game_replace(
@@ -819,7 +819,7 @@ def test_random_is_complete(role_players, role_strats):
 
 def test_is_constant_sum():
     """Test constant_sum"""
-    game = rsgame.emptygame(2, 3)
+    game = rsgame.empty(2, 3)
     assert game.is_constant_sum()
 
     profiles = [
@@ -879,7 +879,7 @@ def test_game_restrict():
     assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
-    sgame = paygame.game_copy(rsgame.emptygame_names(
+    sgame = paygame.game_copy(rsgame.empty_names(
         ['r0', 'r1'], 2, [['s0', 's1'], ['s3']]))
     assert sgame == game.restrict(mask)
 
@@ -902,7 +902,7 @@ def test_game_restrict():
     assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
-    sgame = paygame.game_copy(rsgame.emptygame_names(
+    sgame = paygame.game_copy(rsgame.empty_names(
         ['r0', 'r1'], 2, [['s0', 's1'], ['s3']]))
     assert sgame == game.restrict(mask)
 
@@ -922,7 +922,7 @@ def test_contains():
 @pytest.mark.parametrize('role_players,role_strats', utils.GAMES)
 def test_random_contains(role_players, role_strats):
     """Test contaisn for random games"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     for prof in game.all_profiles():
         assert prof not in game
 
@@ -935,7 +935,7 @@ def test_random_contains(role_players, role_strats):
 
 def test_to_from_prof_json():
     """Test to/from profile json"""
-    game = paygame.game_copy(rsgame.emptygame([11, 3], [2, 1]))
+    game = paygame.game_copy(rsgame.empty([11, 3], [2, 1]))
     prof = [6, 5, 3]
     json_prof = {'r0': {'s1': 5, 's0': 6}, 'r1': {'s2': 3}}
     assert game.profile_to_json(prof) == json_prof
@@ -969,7 +969,7 @@ def test_to_from_prof_json():
 
 def test_to_assignment_json():
     """Test to assignment json"""
-    game = paygame.game_copy(rsgame.emptygame([5, 3], [2, 1]))
+    game = paygame.game_copy(rsgame.empty([5, 3], [2, 1]))
     prof = [3, 2, 3]
     assignment = {'r0': ['s0'] * 3 + ['s1'] * 2, 'r1': ['s2'] * 3}
     jprof = game.profile_to_assignment(prof)
@@ -979,7 +979,7 @@ def test_to_assignment_json():
 
 def test_to_from_payoff_json():
     """Test to/from payoff json"""
-    game = paygame.game_copy(rsgame.emptygame([11, 3], [2, 1]))
+    game = paygame.game_copy(rsgame.empty([11, 3], [2, 1]))
     pay = [1.0, 2.0, 3.0]
     json_pay = {'r0': {'s1': 2.0, 's0': 1.0}, 'r1': {'s2': 3.0}}
     assert game.payoff_to_json(pay) == json_pay
@@ -1013,7 +1013,7 @@ def test_to_from_payoff_json():
 
 def test_load_empty_observations():
     """Test loading empty observations"""
-    game = paygame.game_copy(rsgame.emptygame(1, [2, 1]))
+    game = paygame.game_copy(rsgame.empty(1, [2, 1]))
     profile = {
         'symmetry_groups': [
             {'strategy': 's0', 'id': 0, 'role': 'r0', 'count': 1},
@@ -1050,8 +1050,8 @@ def test_random_profpay_serialize(role_players, role_strats):
 
 def test_game_hash_eq():
     """Test game hash and equality"""
-    one = rsgame.emptygame(4, 5)
-    two = rsgame.emptygame([4], [5])
+    one = rsgame.empty(4, 5)
+    two = rsgame.empty([4], [5])
     assert one == two and hash(one) == hash(two)
 
     one = paygame.game(4, 2, [[3, 1], [2, 2]], [[1, 2], [3, 4]])
@@ -1061,11 +1061,11 @@ def test_game_hash_eq():
 
 def test_game_repr():
     """Test game repr"""
-    game = paygame.game_copy(rsgame.emptygame(3, 4))
+    game = paygame.game_copy(rsgame.empty(3, 4))
     expected = 'Game([3], [4], 0 / 20)'
     assert repr(game) == expected
 
-    game = rsgame.emptygame(3, [4, 5])
+    game = rsgame.empty(3, [4, 5])
     game = paygame.game_replace(game, game.all_profiles()[:21],
                                 np.zeros((21, game.num_strats)))
     expected = 'Game([3 3], [4 5], 21 / 700)'
@@ -1074,7 +1074,7 @@ def test_game_repr():
 
 def test_game_str():
     """Test game string"""
-    base = rsgame.emptygame([3, 4], [3, 2])
+    base = rsgame.empty([3, 4], [3, 2])
     profs = base.all_profiles()[:21]
     pays = np.zeros_like(profs, float)
     game = paygame.game_replace(base, profs, pays)
@@ -1143,7 +1143,7 @@ def test_game_from_json():
     for jgame in [_GAME_JSON, _SAMPLEGAME_JSON, _SUMMARY_JSON,
                   _OBSERVATIONS_JSON, _FULL_JSON]:
         assert game == paygame.game_json(jgame)
-    game = paygame.game_copy(rsgame.emptygame_copy(game))
+    game = paygame.game_copy(rsgame.empty_copy(game))
     for jgame in [_EMPTYGAME_JSON, _NOPROFS_JSON]:
         assert game == paygame.game_json(jgame)
 
@@ -1155,7 +1155,7 @@ def test_game_from_json():
 
 def test_samplegame_properties():
     """Test sample game properties"""
-    game = paygame.samplegame_copy(rsgame.emptygame(2, 3))
+    game = paygame.samplegame_copy(rsgame.empty(2, 3))
     assert np.all([] == game.num_sample_profs)
     assert np.all([] == game.sample_starts)
     assert np.all([] == game.num_samples)
@@ -1164,14 +1164,14 @@ def test_samplegame_properties():
     assert game.flat_profiles().shape == (0, 3)
     assert game.flat_payoffs().shape == (0, 3)
 
-    base = rsgame.emptygame(1, [4, 3])
+    base = rsgame.empty(1, [4, 3])
     game = paygame.samplegame_replace(
         base, base.all_profiles(), [np.zeros((12, 2, 7))])
     assert np.all([12] == game.num_sample_profs)
     assert np.all([0] == game.sample_starts)
     assert np.all([2] == game.num_samples)
 
-    game = rsgame.emptygame([3, 4], [4, 3])
+    game = rsgame.empty([3, 4], [4, 3])
     profiles = game.all_profiles()[:30]
     spays = [np.zeros((9, 4, game.num_strats)),
              np.zeros((11, 1, game.num_strats)),
@@ -1184,11 +1184,11 @@ def test_samplegame_properties():
 
 def test_empty_samplegame_resample():
     """Test resampling sample games"""
-    sgame = paygame.samplegame_copy(rsgame.emptygame([2, 3], [3, 2]))
+    sgame = paygame.samplegame_copy(rsgame.empty([2, 3], [3, 2]))
     assert paygame.game_copy(sgame) == sgame.resample()
     assert paygame.game_copy(sgame) == sgame.resample(1)
 
-    sgame = paygame.samplegame_copy(rsgame.emptygame([2, 3], [3, 2]))
+    sgame = paygame.samplegame_copy(rsgame.empty([2, 3], [3, 2]))
     assert paygame.game_copy(sgame) == sgame.resample()
     assert paygame.game_copy(sgame) == sgame.resample(1)
 
@@ -1224,7 +1224,7 @@ def test_random_samplegame_singlesample_resample(role_players, role_strats):
 
 def test_samplegame_resample_changes():
     """Test that games with many samples change on resample"""
-    base = rsgame.emptygame(1, [3, 2])
+    base = rsgame.empty(1, [3, 2])
     profiles = base.all_profiles()
     payoffs = rand.random((base.num_all_profiles, 1000, base.num_strats))
     payoffs *= profiles[:, None] > 0
@@ -1257,7 +1257,7 @@ def test_samplegame_resample_changes():
 
 def test_get_sample_payoffs():
     """Test get sample payoffs"""
-    base = rsgame.emptygame(2, [1, 2])
+    base = rsgame.empty(2, [1, 2])
     profiles = [
         [2, 2, 0],
         [2, 0, 2],
@@ -1296,7 +1296,7 @@ def test_random_samplegame_normalize(role_players, role_strats):
 
 def test_to_from_samplepay_json():
     """Test to/from sample payoff json"""
-    game = paygame.samplegame_copy(rsgame.emptygame([3, 4], [2, 1]))
+    game = paygame.samplegame_copy(rsgame.empty([3, 4], [2, 1]))
     spay = [[3, 0, 7], [4, 0, 8], [5, 0, 9]]
     json_spay = {'r0': {'s0': [3, 4, 5]}, 'r1': {'s2': [7, 8, 9]}}
     json_spay_0 = {'r0': {'s0': [3, 4, 5], 's1': [0, 0, 0]},
@@ -1323,7 +1323,7 @@ def test_to_from_samplepay_json():
 
 def test_to_from_profsamplepay_json():
     """Test to/from profile and sample payoff json"""
-    game = paygame.samplegame_copy(rsgame.emptygame([3, 4], [2, 1]))
+    game = paygame.samplegame_copy(rsgame.empty([3, 4], [2, 1]))
     profile = [3, 0, 4]
     spayoff = [[3, 0, 7], [4, 0, 8], [5, 0, 9]]
     json_profspay = {'r0': [('s0', 3, [3, 4, 5])],
@@ -1341,8 +1341,8 @@ def test_to_from_profsamplepay_json():
 
 def test_samplegame_hash_eq():
     """Test hash and equality for sample games"""
-    one = paygame.samplegame_copy(rsgame.emptygame(4, 5))
-    two = paygame.samplegame_copy(rsgame.emptygame([4], [5]))
+    one = paygame.samplegame_copy(rsgame.empty(4, 5))
+    two = paygame.samplegame_copy(rsgame.empty([4], [5]))
     assert one == two and hash(one) == hash(two)
 
     one = paygame.samplegame(
@@ -1414,7 +1414,7 @@ def test_random_samplegame_flat(players, strats, _):
 # Test sample game with different number of samples
 def test_samplegame_different_samples():
     """Test sample games with different numbers of samples"""
-    base = rsgame.emptygame(1, [1, 2])
+    base = rsgame.empty(1, [1, 2])
     profiles = [
         [1, 1, 0],
         [1, 0, 1],
@@ -1461,7 +1461,7 @@ def test_samplegame_restrict():
     assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
-    sgame = paygame.samplegame_copy(rsgame.emptygame_names(
+    sgame = paygame.samplegame_copy(rsgame.empty_names(
         ('r0', 'r1'), 2, (('s0', 's1'), ('s3',))))
     assert sgame == game.restrict(mask)
 
@@ -1488,7 +1488,7 @@ def test_samplegame_restrict():
     assert sgame == game.restrict(mask)
 
     mask = [True, True, False, True]
-    sgame = paygame.samplegame_copy(rsgame.emptygame_names(
+    sgame = paygame.samplegame_copy(rsgame.empty_names(
         ('r0', 'r1'), 2, (('s0', 's1'), ('s3',))))
     assert sgame == game.restrict(mask)
 
@@ -1527,17 +1527,17 @@ def test_random_profsamplepay_serialize(role_players, role_strats):
 
 def test_samplegame_repr():
     """Test repr of sample games"""
-    game = paygame.samplegame_copy(rsgame.emptygame(2, 3))
+    game = paygame.samplegame_copy(rsgame.empty(2, 3))
     expected = 'SampleGame([2], [3], 0 / 6, 0)'
     assert repr(game) == expected
 
-    base = rsgame.emptygame(1, [4, 3])
+    base = rsgame.empty(1, [4, 3])
     game = paygame.samplegame_replace(
         base, base.all_profiles(), [np.zeros((12, 2, 7))])
     expected = 'SampleGame([1 1], [4 3], 12 / 12, 2)'
     assert repr(game) == expected
 
-    base = rsgame.emptygame(1, [1, 2])
+    base = rsgame.empty(1, [1, 2])
     profiles = [
         [1, 1, 0],
         [1, 0, 1],
@@ -1569,7 +1569,7 @@ def test_samplegame_repr():
 
 def test_samplegame_str():
     """Test sample game strings"""
-    base = rsgame.emptygame([3, 4], [3, 2])
+    base = rsgame.empty([3, 4], [3, 2])
     profs = base.all_profiles()
 
     game = paygame.samplegame_copy(base)
@@ -1723,7 +1723,7 @@ def test_samplegame_from_json():
     game = paygame.samplegame_copy(paygame.game_copy(game))
     for jgame in [_GAME_JSON, _SUMMARY_JSON]:
         assert game == paygame.samplegame_json(jgame)
-    game = paygame.samplegame_copy(rsgame.emptygame_copy(game))
+    game = paygame.samplegame_copy(rsgame.empty_copy(game))
     for jgame in [_EMPTYGAME_JSON, _NOPROFS_JSON]:
         assert game == paygame.samplegame_json(jgame)
 
@@ -1809,8 +1809,8 @@ def test_random_mix(players, strats, prob, prof_prob): # pylint: disable=too-man
     rest = mgame.random_restriction()
     rgame = mgame.restrict(rest)
     rgame1 = game1.restrict(rest)
-    assert (rsgame.emptygame_copy(rgame) ==
-            rsgame.emptygame_copy(rgame1))
+    assert (rsgame.empty_copy(rgame) ==
+            rsgame.empty_copy(rgame1))
     assert rgame.num_profiles == rgame1.num_profiles
 
     rev = rsgame.mix(game2, game1, 1 - prob)
@@ -1832,7 +1832,7 @@ def test_sparse_profile_addition(players, strats):
 @pytest.mark.parametrize('players,strats', utils.GAMES)
 def test_empty_profile_addition(players, strats):
     """Test empty profile addition"""
-    base = rsgame.emptygame(players, strats)
+    base = rsgame.empty(players, strats)
     pay = UnAddP(base, base.profiles(), base.payoffs())
     add = pay + UnAddC(base, 3)
     assert pay.num_profiles == add.num_profiles

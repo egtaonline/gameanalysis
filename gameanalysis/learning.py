@@ -88,7 +88,7 @@ class _DevRegressionGame(rsgame._CompleteGame): # pylint: disable=protected-acce
         return self._min_payoffs.view()
 
     def restrict(self, restriction):
-        base = rsgame.emptygame_copy(self).restrict(restriction)
+        base = rsgame.empty_copy(self).restrict(restriction)
         new_rest = self._rest.copy()
         new_rest[new_rest] = restriction
         regs = tuple(reg for reg, m in zip(self._regressors, restriction) if m)
@@ -333,7 +333,7 @@ class _RbfGpGame(rsgame._CompleteGame): # pylint: disable=too-many-instance-attr
 
     def restrict(self, restriction):
         restriction = np.asarray(restriction, bool)
-        base = rsgame.emptygame_copy(self).restrict(restriction)
+        base = rsgame.empty_copy(self).restrict(restriction)
 
         size_mask = restriction.repeat(self._sizes)
         sizes = self._sizes[restriction]
@@ -494,7 +494,7 @@ def rbfgame_train(game, num_restarts=3): # pylint: disable=too-many-locals
 def rbfgame_json(json):
     """Read an rbf game from json"""
     utils.check(json['type'].split('.', 1)[0] == 'rbf', 'incorrect type')
-    base = rsgame.emptygame_json(json)
+    base = rsgame.empty_json(json)
 
     offsets = base.payoff_from_json(json['offsets'])
     coefs = base.payoff_from_json(json['coefs'])

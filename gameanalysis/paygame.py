@@ -253,7 +253,7 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
     def restrict(self, restriction):
         """Remove possible strategies from consideration"""
         restriction = np.asarray(restriction, bool)
-        base = rsgame.emptygame_copy(self).restrict(restriction)
+        base = rsgame.empty_copy(self).restrict(restriction)
         prof_mask = ~np.any(self._profiles * ~restriction, 1)
         profiles = self._profiles[prof_mask][:, restriction]
         payoffs = self._payoffs[prof_mask][:, restriction]
@@ -538,7 +538,7 @@ def game(num_role_players, num_role_strats, profiles, payoffs):
     payoffs : ndarray-like, float
         The payoffs for the game, with shape (num_profiles, num_strats).
     """
-    return game_replace(rsgame.emptygame(num_role_players, num_role_strats),
+    return game_replace(rsgame.empty(num_role_players, num_role_strats),
                         profiles, payoffs)
 
 
@@ -559,7 +559,7 @@ def game_names(role_names, num_role_players, strat_names, profiles, payoffs):
         The payoffs for the game, with shape (num_profiles, num_strats).
     """
     return game_replace(
-        rsgame.emptygame_names(role_names, num_role_players, strat_names),
+        rsgame.empty_names(role_names, num_role_players, strat_names),
         profiles, payoffs)
 
 
@@ -574,7 +574,7 @@ def game_json(json):
     the minimum.  Note, that there is no legitimate way to get a game with that
     structure, but it is possible to write the json.
     """
-    base = game_copy(rsgame.emptygame_json(json))
+    base = game_copy(rsgame.empty_json(json))
     profiles = json.get('profiles', ())
     if not profiles:
         return base
@@ -840,7 +840,7 @@ class _SampleGame(_Game):
     def restrict(self, restriction):
         """Remove possible strategies from consideration"""
         restriction = np.asarray(restriction, bool)
-        base = rsgame.emptygame_copy(self).restrict(restriction)
+        base = rsgame.empty_copy(self).restrict(restriction)
         prof_mask = ~np.any(self._profiles * ~restriction, 1)
         profiles = self._profiles[prof_mask][:, restriction]
         sample_payoffs = tuple(
@@ -1092,7 +1092,7 @@ def samplegame(num_role_players, num_role_strats, profiles,
         The sample payoffs for the game.
     """
     return samplegame_replace(
-        rsgame.emptygame(num_role_players, num_role_strats),
+        rsgame.empty(num_role_players, num_role_strats),
         profiles, sample_payoffs)
 
 
@@ -1113,7 +1113,7 @@ def samplegame_flat(num_role_players, num_role_strats, profiles, payoffs):
         samples from, with shape (num_sample_profiles, num_strats).
     """
     return samplegame_replace_flat(
-        rsgame.emptygame(num_role_players, num_role_strats), profiles, payoffs)
+        rsgame.empty(num_role_players, num_role_strats), profiles, payoffs)
 
 
 def samplegame_names(role_names, num_role_players, strat_names, profiles,
@@ -1133,7 +1133,7 @@ def samplegame_names(role_names, num_role_players, strat_names, profiles,
     sample_payoffs : [ndarray]
         The sample payoffs for the game."""
     return samplegame_replace(
-        rsgame.emptygame_names(role_names, num_role_players, strat_names),
+        rsgame.empty_names(role_names, num_role_players, strat_names),
         profiles, sample_payoffs)
 
 
@@ -1157,7 +1157,7 @@ def samplegame_names_flat(role_names, num_role_players, strat_names, profiles,
         samples from, (num_sample_profiles, num_strats).
     """
     return samplegame_replace_flat(
-        rsgame.emptygame_names(role_names, num_role_players, strat_names),
+        rsgame.empty_names(role_names, num_role_players, strat_names),
         profiles, payoffs)
 
 
@@ -1166,7 +1166,7 @@ def samplegame_json(json):
 
     This will read any valid payoff game as a sample game. Invalid games will
     produce an empty sample game."""
-    base = samplegame_copy(rsgame.emptygame_json(json))
+    base = samplegame_copy(rsgame.empty_json(json))
     profiles = json.get('profiles', ())
     if not profiles:
         return base

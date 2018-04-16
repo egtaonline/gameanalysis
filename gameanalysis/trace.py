@@ -14,7 +14,7 @@ def _ode( # pylint: disable=too-many-locals
 
     See trace_equilibrium for full info
     """
-    egame = rsgame.emptygame_copy(game0)
+    egame = rsgame.empty_copy(game0)
     eqm = np.asarray(eqm, float)
     utils.check(
         egame.is_mixture(eqm), "equilibrium wasn't a valid mixture")

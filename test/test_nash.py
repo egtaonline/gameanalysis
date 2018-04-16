@@ -219,7 +219,7 @@ def test_mixed_nash_at_least_one(methods, strategies):
 
 def test_empty_game():
     """Test on empty game"""
-    game = rsgame.emptygame(2, 3)
+    game = rsgame.empty(2, 3)
     with pytest.raises(ValueError):
         nash.min_regret_profile(game)
 

@@ -24,7 +24,7 @@ EPS = 5 * np.finfo(float).eps
 
 def stratarray(num_strats):
     """Create a strat array"""
-    return rsgame.emptygame(np.ones_like(num_strats), num_strats)
+    return rsgame.empty(np.ones_like(num_strats), num_strats)
 
 
 def test_stratarray_properties(): # pylint: disable=too-many-statements
@@ -772,7 +772,7 @@ def test_to_mixture_from_json():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_mixture_serialization(role_players, role_strats):
     """Test mixture serialization"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     mixes = game.random_mixtures(20)
     copies = np.empty(mixes.shape)
     for mix, copy in zip(mixes, copies):
@@ -835,7 +835,7 @@ def test_to_from_restriction_json():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_restriction_serialization(role_players, role_strats):
     """Test random restriction serialization"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     subs = game.random_restrictions(20)
     copies = np.empty(subs.shape, bool)
     for sub, copy in zip(subs, copies):
@@ -926,7 +926,7 @@ def test_trim_precision():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_role_serialization(role_players, role_strats):
     """Test role serialization"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     roles = np.random.random((20, game.num_roles))
     copies = np.empty(roles.shape)
     for role, copy in zip(roles, copies):
@@ -941,7 +941,7 @@ def test_random_role_serialization(role_players, role_strats):
 
 def test_emptygame_properties():
     """Test empty game"""
-    game = rsgame.emptygame(1, 1)
+    game = rsgame.empty(1, 1)
     assert np.all(game.num_role_players == [1])
     assert game.num_players == 1
     assert game.zero_prob.shape == (1,)
@@ -951,17 +951,17 @@ def test_emptygame_properties():
     assert jac.shape == (1, 1)
     assert np.isnan(jac).all()
 
-    game = rsgame.emptygame(3, 1)
+    game = rsgame.empty(3, 1)
     assert np.all(game.num_role_players == [3])
     assert game.num_players == 3
     assert game.zero_prob.shape == (1,)
 
-    game = rsgame.emptygame([1, 3], 1)
+    game = rsgame.empty([1, 3], 1)
     assert np.all(game.num_role_players == [1, 3])
     assert game.num_players == 4
     assert game.zero_prob.shape == (2,)
 
-    game = rsgame.emptygame([3, 2, 1], 1)
+    game = rsgame.empty([3, 2, 1], 1)
     assert np.all(game.num_role_players == [3, 2, 1])
     assert game.num_players == 6
     assert game.zero_prob.shape == (3,)
@@ -970,7 +970,7 @@ def test_emptygame_properties():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_emptygame_const_properties(role_players, role_strats):
     """Test empty game properties"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
 
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
@@ -1034,19 +1034,19 @@ def test_random_emptygame_const_properties(role_players, role_strats):
 
 def test_empty_restriction():
     """Test empty game restriction"""
-    game = rsgame.emptygame(1, [2, 3])
+    game = rsgame.empty(1, [2, 3])
     rgame = game.restrict([False, True, True, False, True])
-    expected = rsgame.emptygame_names(('r0', 'r1'), 1, (('s1',), ('s2', 's4')))
+    expected = rsgame.empty_names(('r0', 'r1'), 1, (('s1',), ('s2', 's4')))
     assert rgame == expected
 
-    game = rsgame.emptygame([3, 4, 5], [4, 3, 2])
+    game = rsgame.empty([3, 4, 5], [4, 3, 2])
     rgame = game.restrict(
         [False, True, True, False, False, False, True, True, False])
-    expected = rsgame.emptygame_names(
+    expected = rsgame.empty_names(
         ('r0', 'r1', 'r2'), [3, 4, 5], (('s1', 's2'), ('s6',), ('s7',)))
     assert rgame == expected
 
-    game = rsgame.emptygame(1, [2, 3])
+    game = rsgame.empty(1, [2, 3])
     with pytest.raises(ValueError):
         game.restrict([False, False, True, True, True])
 
@@ -1054,7 +1054,7 @@ def test_empty_restriction():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_empty_restriction(role_players, role_strats):
     """TEst random empty restriction"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     rest = game.random_restriction()
     rgame = game.restrict(rest)
     assert np.all(game.num_role_players == rgame.num_role_players)
@@ -1063,81 +1063,81 @@ def test_random_empty_restriction(role_players, role_strats):
 
 def test_num_all_profiles():
     """Test num all profiles"""
-    game = rsgame.emptygame(1, 1)
+    game = rsgame.empty(1, 1)
     assert np.all(game.num_all_role_profiles == [1])
     assert game.num_all_profiles == 1
 
-    game = rsgame.emptygame(3, 2)
+    game = rsgame.empty(3, 2)
     assert np.all(game.num_all_role_profiles == [4])
     assert game.num_all_profiles == 4
 
-    game = rsgame.emptygame([1, 3], 2)
+    game = rsgame.empty([1, 3], 2)
     assert np.all(game.num_all_role_profiles == [2, 4])
     assert game.num_all_profiles == 8
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     assert np.all(game.num_all_role_profiles == [3, 1])
     assert game.num_all_profiles == 3
 
-    game = rsgame.emptygame([3, 2, 1], 3)
+    game = rsgame.empty([3, 2, 1], 3)
     assert np.all(game.num_all_role_profiles == [10, 6, 3])
     assert game.num_all_profiles == 180
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     assert np.all(game.num_all_role_profiles == [1, 3, 3])
     assert game.num_all_profiles == 9
 
-    game = rsgame.emptygame([20, 20], 20)
+    game = rsgame.empty([20, 20], 20)
     assert np.all(game.num_all_role_profiles == [68923264410, 68923264410])
     assert game.num_all_profiles == 4750416376930772648100
 
 
 def test_num_all_payoffs():
     """Test num all payoffs"""
-    game = rsgame.emptygame(1, 1)
+    game = rsgame.empty(1, 1)
     assert game.num_all_payoffs == 1
 
-    game = rsgame.emptygame(3, 2)
+    game = rsgame.empty(3, 2)
     assert game.num_all_payoffs == 6
 
-    game = rsgame.emptygame([1, 3], 2)
+    game = rsgame.empty([1, 3], 2)
     assert game.num_all_payoffs == 20
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     assert game.num_all_payoffs == 6
 
-    game = rsgame.emptygame([3, 2, 1], 3)
+    game = rsgame.empty([3, 2, 1], 3)
     assert game.num_all_payoffs == 774
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     assert game.num_all_payoffs == 30
 
 
 def test_num_all_dpr_profiles():
     """Test num dpr profiles"""
-    game = rsgame.emptygame(1, 1)
+    game = rsgame.empty(1, 1)
     assert game.num_all_dpr_profiles == 1
 
-    game = rsgame.emptygame(3, 2)
+    game = rsgame.empty(3, 2)
     assert game.num_all_dpr_profiles == 6
 
-    game = rsgame.emptygame([1, 3], 2)
+    game = rsgame.empty([1, 3], 2)
     assert game.num_all_dpr_profiles == 16
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     assert game.num_all_dpr_profiles == 3
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     assert game.num_all_dpr_profiles == 15
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_profile_counts(role_players, role_strats):
     """Test random profile counts"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
 
     num_role_profiles = np.fromiter(  # pragma: no branch
-        (rsgame.emptygame(p, s).all_profiles().shape[0] for p, s
+        (rsgame.empty(p, s).all_profiles().shape[0] for p, s
          in zip(game.num_role_players, game.num_role_strats)),
         int, game.num_roles)
     assert np.all(num_role_profiles == game.num_all_role_profiles)
@@ -1151,7 +1151,7 @@ def test_random_profile_counts(role_players, role_strats):
 
 def test_profile_id():
     """Test profile ids"""
-    game = rsgame.emptygame(3, [2, 2])
+    game = rsgame.empty(3, [2, 2])
     profs = [[[0, 3, 2, 1],
               [2, 1, 3, 0]],
              [[2, 1, 2, 1],
@@ -1162,12 +1162,12 @@ def test_profile_id():
     assert ids.shape == (3, 2)
     assert np.all((ids >= 0) & (ids < game.num_all_profiles))
 
-    game = rsgame.emptygame(3, [1, 2])
+    game = rsgame.empty(3, [1, 2])
     prof = [3, 1, 2]
     assert game.profile_to_id(prof) == 2
     assert np.all(game.profile_from_id(2) == prof)
 
-    game = rsgame.emptygame([1, 1, 1], [2, 2, 2])
+    game = rsgame.empty([1, 1, 1], [2, 2, 2])
     ids = np.arange(game.num_all_profiles)
     profs = game.profile_from_id(ids)
     assert np.all(profs == game.all_profiles())
@@ -1175,13 +1175,13 @@ def test_profile_id():
 
 def test_profile_id_big():
     """Test large profile ids"""
-    game = rsgame.emptygame([20, 20], 20)
+    game = rsgame.empty([20, 20], 20)
     profile = np.zeros(40, int)
     profile[[19, 39]] = 20
     assert game.profile_to_id(profile) == 4750416376930772648099
     assert np.all(game.profile_from_id(4750416376930772648099) == profile)
 
-    game = rsgame.emptygame(40, 40)
+    game = rsgame.empty(40, 40)
     profile = np.zeros(40, int)
     profile[39] = 40
     assert game.profile_to_id(profile) == 53753604366668088230809
@@ -1193,7 +1193,7 @@ def test_random_profile_id(role_players, role_strats):
     """Test random profile ids"""
     # Here we have an expectation that all_profiles always returns profiles in
     # order of id
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     expected = np.arange(game.num_all_profiles)
     actual = game.profile_to_id(game.all_profiles())
     assert np.all(expected == actual)
@@ -1201,7 +1201,7 @@ def test_random_profile_id(role_players, role_strats):
 
 def test_big_game_functions():
     """Test that everything works when game_size > int max"""
-    game = rsgame.emptygame([100, 100], [30, 30])
+    game = rsgame.empty([100, 100], [30, 30])
     assert game.num_all_profiles > np.iinfo(int).max
     assert game.num_all_dpr_profiles > np.iinfo(int).max
     assert np.all(game.profile_to_id(game.random_profiles(1000)) >= 0)
@@ -1209,7 +1209,7 @@ def test_big_game_functions():
 
 def test_is_profile():
     """Test is profile"""
-    game = rsgame.emptygame([2, 3], [3, 2])
+    game = rsgame.empty([2, 3], [3, 2])
     assert game.is_profile([1, 0, 1, 2, 1])
     assert not game.is_profile([1, 0, 2, 2, 1])
     assert not game.is_profile([1, -1, 2, 2, 1])
@@ -1235,7 +1235,7 @@ def test_is_profile():
 
 def test_is_pure_profile():
     """Test is pure profile"""
-    game = rsgame.emptygame([2, 3], [3, 2])
+    game = rsgame.empty([2, 3], [3, 2])
     assert game.is_pure_profile([2, 0, 0, 3, 0])
     assert not game.is_pure_profile([1, 0, 2, 2, 1])
     assert not game.is_pure_profile([1, 0, 1, 3, 0])
@@ -1247,12 +1247,12 @@ def test_is_pure_profile():
 
 def test_all_profiles():
     """Test all profiles"""
-    game = rsgame.emptygame(1, 1)
+    game = rsgame.empty(1, 1)
     expected = [[1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.emptygame(3, 2)
+    game = rsgame.empty(3, 2)
     expected = [[3, 0],
                 [2, 1],
                 [1, 2],
@@ -1260,7 +1260,7 @@ def test_all_profiles():
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.emptygame([1, 3], 2)
+    game = rsgame.empty([1, 3], 2)
     expected = [[1, 0, 3, 0],
                 [1, 0, 2, 1],
                 [1, 0, 1, 2],
@@ -1272,14 +1272,14 @@ def test_all_profiles():
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     expected = [[1, 0, 0, 1],
                 [0, 1, 0, 1],
                 [0, 0, 1, 1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.all_profiles())).size
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     expected = [[3, 2, 0, 1, 0, 0],
                 [3, 2, 0, 0, 1, 0],
                 [3, 2, 0, 0, 0, 1],
@@ -1295,18 +1295,18 @@ def test_all_profiles():
 
 def test_pure_profiles():
     """Test pure profiles"""
-    game = rsgame.emptygame(1, 1)
+    game = rsgame.empty(1, 1)
     expected = [[1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.emptygame(3, 2)
+    game = rsgame.empty(3, 2)
     expected = [[3, 0],
                 [0, 3]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.emptygame([1, 3], 2)
+    game = rsgame.empty([1, 3], 2)
     expected = [[1, 0, 3, 0],
                 [1, 0, 0, 3],
                 [0, 1, 3, 0],
@@ -1314,14 +1314,14 @@ def test_pure_profiles():
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     expected = [[1, 0, 0, 1],
                 [0, 1, 0, 1],
                 [0, 0, 1, 1]]
     assert not np.setxor1d(utils.axis_to_elem(expected),
                            utils.axis_to_elem(game.pure_profiles())).size
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     expected = [[3, 2, 0, 1, 0, 0],
                 [3, 2, 0, 0, 1, 0],
                 [3, 2, 0, 0, 0, 1],
@@ -1334,7 +1334,7 @@ def test_pure_profiles():
 
 def test_nearby_profiles_1():
     """This is essentially just testing single deviations"""
-    game = rsgame.emptygame(1, 1)
+    game = rsgame.empty(1, 1)
     prof = [1]
     expected = [1]
     actual = game.nearby_profiles(prof, 1)
@@ -1342,7 +1342,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.emptygame(3, 2)
+    game = rsgame.empty(3, 2)
     prof = [3, 0]
     expected = [[3, 0],
                 [2, 1]]
@@ -1359,7 +1359,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.emptygame([1, 3], 2)
+    game = rsgame.empty([1, 3], 2)
     prof = [1, 0, 0, 3]
     expected = [[0, 1, 0, 3],
                 [1, 0, 0, 3],
@@ -1378,7 +1378,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     prof = [0, 0, 1, 1]
     expected = [[1, 0, 0, 1],
                 [0, 0, 1, 1],
@@ -1388,7 +1388,7 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(expected),
         utils.axis_to_elem(actual)).size
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     prof = [3, 2, 0, 1, 0, 0]
     expected = [[3, 1, 1, 1, 0, 0],
                 [3, 2, 0, 1, 0, 0],
@@ -1414,7 +1414,7 @@ def test_nearby_profiles_1():
 @pytest.mark.parametrize('num_devs', range(5))
 def test_random_nearby_profiles(role_players, role_strats, num_devs):
     """Test random nearby profiles"""
-    base = rsgame.emptygame(role_players, role_strats)
+    base = rsgame.empty(role_players, role_strats)
     prof = base.random_profile()
     nearby = base.nearby_profiles(prof, num_devs)
     diff = nearby - prof
@@ -1429,7 +1429,7 @@ def test_random_nearby_profiles(role_players, role_strats, num_devs):
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_fixed_profiles(role_players, role_strats):
     """Test fixed profiles"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     all_profiles = game.all_profiles()
     assert game.num_all_profiles == all_profiles.shape[0]
     assert game.is_profile(all_profiles).all()
@@ -1440,7 +1440,7 @@ def test_random_fixed_profiles(role_players, role_strats):
 
 def test_random_profiles():
     """Test random profiles"""
-    game = rsgame.emptygame(3, 3)
+    game = rsgame.empty(3, 3)
     mixes = game.random_profiles(100, [0, 0.4, 0.6])
     assert np.all(mixes[:, 0] == 0)
 
@@ -1448,13 +1448,13 @@ def test_random_profiles():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_random_profiles(role_players, role_strats):
     """Test random profiles"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     assert game.is_profile(game.random_profiles(100)).all()
 
 
 def test_round_mixture_to_profile():
     """Test round mixture"""
-    game = rsgame.emptygame(3, 3)
+    game = rsgame.empty(3, 3)
 
     prof = game.round_mixture_to_profile([1 / 3, 1 / 3, 1 / 3])
     assert np.all(prof == 1)
@@ -1469,7 +1469,7 @@ def test_round_mixture_to_profile():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_round_mixture_to_profile(role_players, role_strats):
     """Test round mixture to profile"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     mixtures = np.concatenate([
         game.random_mixtures(100),
         game.random_sparse_mixtures(100),
@@ -1480,12 +1480,12 @@ def test_random_round_mixture_to_profile(role_players, role_strats):
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_random_dev_profiles(role_players, role_strats):
     """Test random dev profiles"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     prof = game.random_role_deviation_profile()
     for role, dprof in enumerate(prof):
         role_players = game.num_role_players.copy()
         role_players[role] -= 1
-        dgame = rsgame.emptygame(role_players, game.num_role_strats)
+        dgame = rsgame.empty(role_players, game.num_role_strats)
         assert dgame.is_profile(dprof).all()
 
     profs = game.random_role_deviation_profiles(100)
@@ -1493,14 +1493,14 @@ def test_random_random_dev_profiles(role_players, role_strats):
     for role, dprofs in enumerate(np.rollaxis(profs, 1, 0)):
         role_players = game.num_role_players.copy()
         role_players[role] -= 1
-        dgame = rsgame.emptygame(role_players, game.num_role_strats)
+        dgame = rsgame.empty(role_players, game.num_role_strats)
         assert dgame.is_profile(dprofs).all()
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_random_deviator_profiles(role_players, role_strats):
     """Test random deviator profiles"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     profs = game.random_deviation_profile()
     assert profs.shape == (game.num_strats, game.num_strats)
     assert game.is_profile(profs).all()
@@ -1520,7 +1520,7 @@ def test_random_random_deviator_profiles(role_players, role_strats):
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_max_prob_prof(role_players, role_strats):
     """Test max probability profile"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     profiles = game.all_profiles()
     log_prob = (np.sum(sps.gammaln(game.num_role_players + 1)) -
                 np.sum(sps.gammaln(profiles + 1), 1))
@@ -1535,7 +1535,7 @@ def test_random_max_prob_prof(role_players, role_strats):
 
 def test_to_from_prof_json():
     """Test to from profile json"""
-    game = rsgame.emptygame([11, 3], [2, 1])
+    game = rsgame.empty([11, 3], [2, 1])
     prof = [6, 5, 3]
     json_prof = {'r0': {'s1': 5, 's0': 6}, 'r1': {'s2': 3}}
     assert game.profile_to_json(prof) == json_prof
@@ -1551,7 +1551,7 @@ def test_to_from_prof_json():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_profile_serialization(role_players, role_strats):
     """Test profile serialization"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     profs = game.random_profiles(20)
     copies = np.empty(profs.shape, int)
     for prof, copy in zip(profs, copies):
@@ -1562,7 +1562,7 @@ def test_random_profile_serialization(role_players, role_strats):
 
 def test_to_from_payoff_json():
     """Test to from payoff json"""
-    game = rsgame.emptygame([11, 3], [2, 1])
+    game = rsgame.empty([11, 3], [2, 1])
     pay = [1, 2, 3]
     json_pay = {'r0': {'s1': 2, 's0': 1}, 'r1': {'s2': 3}}
     assert game.payoff_to_json(pay) == json_pay
@@ -1593,7 +1593,7 @@ def test_to_from_payoff_json():
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_payoff_serialization(role_players, role_strats):
     """Test payoff serialization"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     pays = np.random.random((20, game.num_strats))
     pays *= pays < 0.8
     copies = np.empty(pays.shape)
@@ -1605,7 +1605,7 @@ def test_random_payoff_serialization(role_players, role_strats):
 
 def test_to_from_prof_repr():
     """Test profile repr"""
-    game = rsgame.emptygame([11, 3], [2, 1])
+    game = rsgame.empty([11, 3], [2, 1])
     prof = [6, 5, 3]
     prof_str = 'r0: 6 s0, 5 s1; r1: 3 s2'
     assert game.profile_to_repr(prof) == prof_str
@@ -1618,7 +1618,7 @@ def test_to_from_prof_repr():
 
 def test_to_from_prof_str():
     """Test profile string"""
-    game = rsgame.emptygame([11, 3], [2, 1])
+    game = rsgame.empty([11, 3], [2, 1])
     prof = [6, 5, 3]
     prof_str = """
 r0:
@@ -1641,7 +1641,7 @@ def test_dev_payoff_json():
             'at some point, but currently extra care must be taken for these '
             'cases.',
             UserWarning)
-        game = rsgame.emptygame([11, 3], [2, 1])
+        game = rsgame.empty([11, 3], [2, 1])
         devpay = [5, 0]
         json_devpay = {'r0': {'s0': {'s1': 5}}}
         json_devpay2 = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 0}},
@@ -1666,7 +1666,7 @@ def test_dev_payoff_json():
 @pytest.mark.parametrize('role_strats', [2, 4, [2, 3, 4]])
 def test_random_devpay_serialization(role_players, role_strats):
     """Test dev payoff serialization"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     pays = np.random.random((20, game.num_devs))
     pays *= pays < 0.8
     copies = np.empty(pays.shape)
@@ -1678,19 +1678,19 @@ def test_random_devpay_serialization(role_players, role_strats):
 
 def test_is_symmetric():
     """Test is symmetric"""
-    assert rsgame.emptygame(3, 4).is_symmetric()
-    assert not rsgame.emptygame([2, 2], 3).is_symmetric()
+    assert rsgame.empty(3, 4).is_symmetric()
+    assert not rsgame.empty([2, 2], 3).is_symmetric()
 
 
 def test_is_asymmetric():
     """Test asymmetric"""
-    assert rsgame.emptygame(1, 4).is_asymmetric()
-    assert not rsgame.emptygame([1, 2], 3).is_asymmetric()
+    assert rsgame.empty(1, 4).is_asymmetric()
+    assert not rsgame.empty([1, 2], 3).is_asymmetric()
 
 
 def test_to_from_json():
     """Test to from json"""
-    game = rsgame.emptygame(4, 5)
+    game = rsgame.empty(4, 5)
     jgame = {'players': {'r0': 4},
              'strategies': {'r0': ['s0', 's1', 's2', 's3', 's4']},
              'type': 'empty.1'}
@@ -1698,11 +1698,11 @@ def test_to_from_json():
                             'strategies': ['s0', 's1', 's2', 's3', 's4'],
                             'count': 4}]}
     assert game.to_json() == jgame
-    assert rsgame.emptygame_json(jgame) == game
-    assert rsgame.emptygame_json(old_jgame) == game
+    assert rsgame.empty_json(jgame) == game
+    assert rsgame.empty_json(old_jgame) == game
     json.dumps(game.to_json())  # serializable
 
-    game = rsgame.emptygame([4, 3], [3, 4])
+    game = rsgame.empty([4, 3], [3, 4])
     jgame = {'players': {'r0': 4, 'r1': 3},
              'strategies': {'r0': ['s0', 's1', 's2'],
                             'r1': ['s3', 's4', 's5', 's6']},
@@ -1715,62 +1715,62 @@ def test_to_from_json():
                             'count': 3}]}
     assert game.to_json() == jgame
     assert json.loads(json.dumps(game.to_json())) == jgame
-    assert rsgame.emptygame_json(jgame) == game
-    assert rsgame.emptygame_json(old_jgame) == game
+    assert rsgame.empty_json(jgame) == game
+    assert rsgame.empty_json(old_jgame) == game
 
     with pytest.raises(ValueError):
-        rsgame.emptygame_json({})
+        rsgame.empty_json({})
 
 
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_json_serialization(role_players, role_strats):
     """Test random serialization"""
-    game = rsgame.emptygame(role_players, role_strats)
+    game = rsgame.empty(role_players, role_strats)
     jgame = json.dumps(game.to_json())
-    copy = rsgame.emptygame_json(json.loads(jgame))
+    copy = rsgame.empty_json(json.loads(jgame))
     assert copy == game
 
 
 def test_emptygame_hash_eq():
     """Test random hash and equality"""
-    one = rsgame.emptygame(4, 5)
-    two = rsgame.emptygame([4], [5])
+    one = rsgame.empty(4, 5)
+    two = rsgame.empty([4], [5])
     assert one == two and hash(one) == hash(two)
 
-    one = rsgame.emptygame([1, 2], [3, 2])
-    two = rsgame.emptygame([1, 2], [3, 2])
+    one = rsgame.empty([1, 2], [3, 2])
+    two = rsgame.empty([1, 2], [3, 2])
     assert one == two and hash(one) == hash(two)
 
-    one = rsgame.emptygame([2], [3, 2])
-    two = rsgame.emptygame([2, 2], [3, 2])
+    one = rsgame.empty([2], [3, 2])
+    two = rsgame.empty([2, 2], [3, 2])
     assert one == two and hash(one) == hash(two)
 
-    one = rsgame.emptygame([2, 3], [3])
-    two = rsgame.emptygame([2, 3], [3, 3])
+    one = rsgame.empty([2, 3], [3])
+    two = rsgame.empty([2, 3], [3, 3])
     assert one == two and hash(one) == hash(two)
 
-    assert rsgame.emptygame(3, 4) != rsgame.emptygame(3, 5)
-    assert rsgame.emptygame(3, 4) != rsgame.emptygame(2, 4)
-    assert rsgame.emptygame([1, 2], 4) != rsgame.emptygame([2, 2], 4)
-    assert rsgame.emptygame([1, 2], 4) != rsgame.emptygame([2, 1], 4)
-    assert rsgame.emptygame(2, [2, 3]) != rsgame.emptygame(2, [2, 2])
-    assert rsgame.emptygame(2, [2, 3]) != rsgame.emptygame(2, [3, 2])
+    assert rsgame.empty(3, 4) != rsgame.empty(3, 5)
+    assert rsgame.empty(3, 4) != rsgame.empty(2, 4)
+    assert rsgame.empty([1, 2], 4) != rsgame.empty([2, 2], 4)
+    assert rsgame.empty([1, 2], 4) != rsgame.empty([2, 1], 4)
+    assert rsgame.empty(2, [2, 3]) != rsgame.empty(2, [2, 2])
+    assert rsgame.empty(2, [2, 3]) != rsgame.empty(2, [3, 2])
 
 
 def test_emptygame_repr():
     """Test emptygame repr"""
-    game = rsgame.emptygame(3, 4)
+    game = rsgame.empty(3, 4)
     expected = 'EmptyGame([3], [4])'
     assert repr(game) == expected
 
-    game = rsgame.emptygame(3, [4, 5])
+    game = rsgame.empty(3, [4, 5])
     expected = 'EmptyGame([3 3], [4 5])'
     assert repr(game) == expected
 
 
 def test_emptygame_str():
     """Test emptygame string"""
-    game = rsgame.emptygame(3, 4)
+    game = rsgame.empty(3, 4)
     expected = """
 EmptyGame:
     Roles: r0
@@ -1785,7 +1785,7 @@ EmptyGame:
 """[1:-1]
     assert str(game) == expected
 
-    game = rsgame.emptygame([3, 4], [4, 3])
+    game = rsgame.empty([3, 4], [4, 3])
     expected = """
 EmptyGame:
     Roles: r0, r1
@@ -1809,14 +1809,14 @@ EmptyGame:
 @pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
 def test_random_emptygame_copy(role_players, role_strats):
     """Test emptygame copy"""
-    game = rsgame.emptygame(role_players, role_strats)
-    copy = rsgame.emptygame_copy(game)
+    game = rsgame.empty(role_players, role_strats)
+    copy = rsgame.empty_copy(game)
     assert game == copy and hash(game) == hash(copy)
 
 
 def test_empty_add_multiply():
     """Test emptygame add and multiply"""
-    empty = rsgame.emptygame([1, 2], [3, 2])
+    empty = rsgame.empty([1, 2], [3, 2])
 
     assert empty + 1 == empty
     assert empty - 1 == empty
@@ -1872,7 +1872,7 @@ def test_repr():
 
 def test_const_add_multiply():
     """Test const add multiple"""
-    empty = rsgame.emptygame([1, 2], [3, 2])
+    empty = rsgame.empty([1, 2], [3, 2])
     const1 = rsgame.const_replace(empty, 1)
     assert np.allclose(const1.payoffs(), const1.profiles() > 0)
     const2 = rsgame.const_replace(empty, [2, 3])
@@ -1908,7 +1908,7 @@ def test_const_names():
 
 def test_mix():
     """Test mixture game"""
-    empty = rsgame.emptygame([1, 2], [3, 2])
+    empty = rsgame.empty([1, 2], [3, 2])
     const1 = rsgame.const_replace(empty, [1, 5])
     const2 = rsgame.const_replace(empty, [4, -1])
     mix = rsgame.mix(const1, const2, 1/3)
@@ -1919,7 +1919,7 @@ def test_mix():
 
 def test_add_const():
     """Test add constant"""
-    empty = rsgame.emptygame([1, 2], [3, 2])
+    empty = rsgame.empty([1, 2], [3, 2])
     const1 = rsgame.const_replace(empty, [1, 5])
     const2 = rsgame.const_replace(empty, [4, -1])
     const3 = rsgame.const_replace(empty, 1)
@@ -1929,7 +1929,7 @@ def test_add_const():
 
 def test_add_types():
     """Test add types"""
-    empty = rsgame.emptygame([1, 2], [3, 2])
+    empty = rsgame.empty([1, 2], [3, 2])
     const = UnAddC(empty, 1)
 
     assert empty + const == empty
@@ -1951,7 +1951,7 @@ def test_add_types():
 
 def test_add_game():
     """Test add games"""
-    empty = rsgame.emptygame([1, 2], [3, 2])
+    empty = rsgame.empty([1, 2], [3, 2])
     unadd1 = UnAddC(empty, 1)
     unadd2 = UnAddC(empty, [1, 2])
     add = unadd1 + unadd2
@@ -1992,7 +1992,7 @@ def test_add_game():
 
     rest = [True, True, False, True, True]
     add_rest = add.restrict(rest)
-    assert rsgame.emptygame_copy(add_rest) == empty.restrict(rest)
+    assert rsgame.empty_copy(add_rest) == empty.restrict(rest)
 
 
 class UnAddC(rsgame._ConstantGame): # pylint: disable=protected-access

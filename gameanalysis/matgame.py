@@ -160,7 +160,7 @@ class _MatrixGame(rsgame._CompleteGame): # pylint: disable=protected-access
         return devpays, jac
 
     def restrict(self, restriction):
-        base = rsgame.emptygame_copy(self).restrict(restriction)
+        base = rsgame.empty_copy(self).restrict(restriction)
         matrix = self._payoff_matrix
         for i, mask in enumerate(np.split(restriction, self.role_starts[1:])):
             matrix = matrix[(slice(None),) * i + (mask,)]
@@ -232,7 +232,7 @@ def matgame(payoff_matrix):
     """
     payoff_matrix = np.ascontiguousarray(payoff_matrix, float)
     return matgame_replace(
-        rsgame.emptygame(
+        rsgame.empty(
             np.ones(payoff_matrix.ndim - 1, int),
             np.array(payoff_matrix.shape[:-1], int)),
         payoff_matrix)
@@ -251,7 +251,7 @@ def matgame_names(role_names, strat_names, payoff_matrix):
         The matrix mapping strategy indices to payoffs for each player.
     """
     return matgame_replace(
-        rsgame.emptygame_names(
+        rsgame.empty_names(
             role_names, np.ones(len(role_names), int), strat_names),
         payoff_matrix)
 
@@ -277,7 +277,7 @@ def matgame_json(json):
     matrix game, but if the other fields are correct, this will still succeed.
     """
     # This uses the fact that roles are always in lexicographic order
-    base = rsgame.emptygame_json(json)
+    base = rsgame.empty_json(json)
 
     matrix = np.empty(tuple(base.num_role_strats) + (base.num_roles,),
                       float)

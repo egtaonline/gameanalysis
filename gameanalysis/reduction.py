@@ -32,7 +32,7 @@ class hierarchical(object): # pylint: disable=invalid-name
             The reduced number of players for each role. This will be coerced
             into the proper shape if necessary.
         """
-        red_game = rsgame.emptygame_names(
+        red_game = rsgame.empty_names(
             full_game.role_names, red_players, full_game.strat_names)
         utils.check(
             np.all(red_game.num_role_players > 0),
@@ -116,7 +116,7 @@ class hierarchical(object): # pylint: disable=invalid-name
             full_game.is_restriction(rest), 'restriction must be valid')
         return hierarchical.expand_profiles(
             full_game, restrict.deviation_profiles(
-                rsgame.emptygame(red_players, full_game.num_role_strats),
+                rsgame.empty(red_players, full_game.num_role_strats),
                 rest, role_index))
 
 
@@ -144,7 +144,7 @@ class deviation_preserving(object): # pylint: disable=invalid-name
             The reduced number of players for each role. This will be coerced
             into the proper shape if necessary.
         """
-        red_game = rsgame.emptygame_names(
+        red_game = rsgame.empty_names(
             full_game.role_names, red_players, full_game.strat_names)
         utils.check(
             np.all((red_game.num_role_players > 1) |
@@ -321,9 +321,9 @@ class deviation_preserving(object): # pylint: disable=invalid-name
 
         def dev_profs(red_players, full_players, mask, rst):
             """Deviation profiles for a particular role"""
-            rgame = rsgame.emptygame(red_players, support)
+            rgame = rsgame.empty(red_players, support)
             sub_profs = restrict.translate(rgame.all_profiles(), rest)
-            game = rsgame.emptygame(full_players, full_game.num_role_strats)
+            game = rsgame.empty(full_players, full_game.num_role_strats)
             non_devs = hierarchical.expand_profiles(game, sub_profs)
             ndevs = np.sum(~mask)
             devs = np.zeros((ndevs, full_game.num_strats), int)
@@ -392,7 +392,7 @@ class twins(object): # pylint: disable=invalid-name
         """
         red_players = np.minimum(full_game.num_role_players, 2)
         profiles = np.asarray(profiles, int)
-        red_game = rsgame.emptygame(red_players, full_game.num_role_strats)
+        red_game = rsgame.empty(red_players, full_game.num_role_strats)
         utils.check(
             red_game.is_profile(profiles).all(), 'profiles must be valid')
         return deviation_preserving.expand_profiles(full_game, profiles)

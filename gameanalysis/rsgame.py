@@ -1036,9 +1036,9 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
 
         profiles = [profile[None]]
         for players in dev_players:
-            to_dev_profs = emptygame(
+            to_dev_profs = empty(
                 players, self.num_role_strats).all_profiles()
-            sub = emptygame(players, sub_strats)
+            sub = empty(players, sub_strats)
             from_dev_profs = np.zeros((sub.num_all_profiles,
                                        self.num_strats), int)
             from_dev_profs[:, supp] = sub.all_profiles()
@@ -1118,7 +1118,7 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         profs = np.empty((num_samples, self.num_roles, self.num_strats),
                          int)
         for i, players in enumerate(dev_players):
-            base = emptygame(players, self.num_role_strats)
+            base = empty(players, self.num_role_strats)
             profs[:, i] = base.random_profiles(num_samples, mixture)
         return profs
 
@@ -1534,7 +1534,7 @@ class _RsGame(_GameLike):
         with contextlib.suppress(TypeError, ValueError):
             return self._add_constant(np.asarray(othr, float))
         try:
-            assert emptygame_copy(self) == emptygame_copy(othr)
+            assert empty_copy(self) == empty_copy(othr)
             attempt = self._add_game(othr)
             if attempt is NotImplemented and type(self) is type(othr): # pylint: disable=no-else-return
                 return add(self, othr)
@@ -1547,7 +1547,7 @@ class _RsGame(_GameLike):
         with contextlib.suppress(TypeError, ValueError):
             return self._add_constant(np.asarray(othr, float))
         try:
-            assert emptygame_copy(self) == emptygame_copy(othr)
+            assert empty_copy(self) == empty_copy(othr)
             attempt = self._add_game(othr)
             return add(self, othr) if attempt is NotImplemented else attempt
         except (AttributeError, AssertionError):
@@ -1645,8 +1645,7 @@ class _EmptyGame(_RsGame):
         return res
 
 
-# FIXME Change emptygame to empty
-def emptygame(num_role_players, num_role_strats):
+def empty(num_role_players, num_role_strats):
     """Create an empty game with default names
 
     Parameters
@@ -1677,7 +1676,7 @@ def emptygame(num_role_players, num_role_strats):
     return _EmptyGame(role_names, strat_names, num_role_players)
 
 
-def emptygame_names(role_names, num_role_players, strat_names):
+def empty_names(role_names, num_role_players, strat_names):
     """Create an empty game with names
 
     PArameters
@@ -1730,7 +1729,7 @@ def emptygame_names(role_names, num_role_players, strat_names):
         tuple(role_names), tuple(map(tuple, strat_names)), num_role_players)
 
 
-def emptygame_json(json):
+def empty_json(json):
     """Read a EmptyGame from json
 
     Parameters
@@ -1775,7 +1774,7 @@ def emptygame_json(json):
     return _EmptyGame(role_names, strat_names, num_role_players)
 
 
-def emptygame_copy(copy_game):
+def empty_copy(copy_game):
     """Copy parameters of a game into an empty game
 
     This method is useful to keep convenience methods of game without attached
@@ -1907,9 +1906,9 @@ def add(*games):
         The games to add together
     """
     utils.check(games, 'must add at least one game')
-    base = emptygame_copy(games[0])
+    base = empty_copy(games[0])
     utils.check(
-        all(base == emptygame_copy(game) for game in games[1:]),
+        all(base == empty_copy(game) for game in games[1:]),
         'all games must have same structure')
 
     def get_games(game):
@@ -1947,10 +1946,10 @@ def add(*games):
 
 def add_json(jgame):
     """Read added games from json"""
-    base = emptygame_json(jgame)
+    base = empty_json(jgame)
     games = [gamereader.loadj(jg) for jg in jgame['games']]
     utils.check(
-        all(base == emptygame_copy(game) for game in games),
+        all(base == empty_copy(game) for game in games),
         "game structure didn't match each added game")
     return add(*games)
 
@@ -2033,7 +2032,7 @@ class _ConstantGame(_CompleteGame):
         return self._strat_const.view()
 
     def restrict(self, restriction):
-        base = emptygame_copy(self).restrict(restriction)
+        base = empty_copy(self).restrict(restriction)
         return _ConstantGame(
             base.role_names, base.strat_names, base.num_role_players,
             self._role_const)
@@ -2073,13 +2072,13 @@ class _ConstantGame(_CompleteGame):
 def const(num_role_players, num_role_strats, constant):
     """Create a new constant game"""
     return const_replace(
-        emptygame(num_role_players, num_role_strats), constant)
+        empty(num_role_players, num_role_strats), constant)
 
 
 def const_names(role_names, num_role_players, strat_names, constant):
     """Create a new constant game with names"""
     return const_replace(
-        emptygame_names(role_names, num_role_players, strat_names), constant)
+        empty_names(role_names, num_role_players, strat_names), constant)
 
 
 def const_replace(copy_game, constant):
@@ -2091,7 +2090,7 @@ def const_replace(copy_game, constant):
 
 def const_json(jgame):
     """Read a constant game from json"""
-    base = emptygame_json(jgame)
+    base = empty_json(jgame)
     constant = np.asarray(jgame['const'], float)
     return const_replace(base, constant)
 

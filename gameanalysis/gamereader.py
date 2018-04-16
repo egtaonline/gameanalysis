@@ -56,7 +56,7 @@ def loadj(obj): # pylint: disable=too-many-branches,too-many-return-statements
         return rsgame.const_json(obj)
     elif game_type == 'empty' or game_type == 'emptygame':
         from gameanalysis import rsgame
-        return rsgame.emptygame_json(obj)
+        return rsgame.empty_json(obj)
     elif game_type == 'game':
         from gameanalysis import paygame
         return paygame.game_json(obj)

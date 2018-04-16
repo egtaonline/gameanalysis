@@ -16,7 +16,7 @@ from gameanalysis import utils
 
 def full_game(role_names, role_players, strat_names):
     """Return a full game"""
-    base = rsgame.emptygame_names(
+    base = rsgame.empty_names(
         role_names, role_players, strat_names)
     return paygame.game_replace(
         base, base.all_profiles(),
@@ -417,5 +417,5 @@ def test_random_game_addition(strats):
     game = paygame.game_replace(matg, matg.profiles(), payoffs)
     assert paygame.game_copy(matg + game) == game + matg
 
-    empty = rsgame.emptygame_copy(matg)
+    empty = rsgame.empty_copy(matg)
     assert matg + empty == empty

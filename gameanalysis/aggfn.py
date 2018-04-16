@@ -214,7 +214,7 @@ class _AgfnGame(rsgame._CompleteGame): # pylint: disable=too-many-instance-attri
 
     def restrict(self, restriction):
         restriction = np.asarray(restriction, bool)
-        base = rsgame.emptygame_copy(self).restrict(restriction)
+        base = rsgame.empty_copy(self).restrict(restriction)
         action_weights = self.action_weights[:, restriction]
         func_mask = np.any(~np.isclose(action_weights, 0), 1)
         return _AgfnGame(
@@ -297,7 +297,7 @@ def aggfn( # pylint: disable=too-many-arguments
         constant functions can be specified here.
     """
     return aggfn_replace(
-        rsgame.emptygame(num_role_players, num_role_strats), action_weights,
+        rsgame.empty(num_role_players, num_role_strats), action_weights,
         function_inputs, function_table, offsets)
 
 
@@ -324,7 +324,7 @@ def aggfn_names( # pylint: disable=too-many-arguments
         constant functions can be specified here.
     """
     return aggfn_replace(
-        rsgame.emptygame_names(role_names, num_role_players, strat_names),
+        rsgame.empty_names(role_names, num_role_players, strat_names),
         action_weights, function_inputs, function_table, offsets)
 
 
@@ -424,7 +424,7 @@ def aggfn_funcs( # pylint: disable=too-many-arguments
     utils.check(functions, 'must have at least one function')
     num_functions = len(functions)
 
-    base = rsgame.emptygame(num_role_players, num_role_strats)
+    base = rsgame.empty(num_role_players, num_role_strats)
     function_table = np.empty(
         (num_functions,) + tuple(base.num_role_players + 1),
         float)
@@ -441,7 +441,7 @@ def aggfn_json(json): # pylint: disable=too-many-locals
 
     Json versions of the game will generally have 'type': 'aggfn...' in them,
     but as long as the proper fields exist, this will succeed."""
-    base = rsgame.emptygame_json(json)
+    base = rsgame.empty_json(json)
 
     _, version = json.get('type', '.3').split('.', 1)
     utils.check(

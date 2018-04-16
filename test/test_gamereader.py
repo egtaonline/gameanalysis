@@ -20,7 +20,7 @@ from gameanalysis import rsgame
 @functools.lru_cache()
 def egame():
     """Empty game"""
-    return rsgame.emptygame([3, 4], [4, 3])
+    return rsgame.empty([3, 4], [4, 3])
 
 
 @functools.lru_cache()

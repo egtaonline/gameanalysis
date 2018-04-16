@@ -76,7 +76,7 @@ def game(players, strats, prob=1.0, distribution=default_distribution):
     distribution : (shape) -> ndarray, optional
         Distribution function to draw payoffs from.
     """
-    return gen_profiles(rsgame.emptygame(players, strats), prob, distribution)
+    return gen_profiles(rsgame.empty(players, strats), prob, distribution)
 
 
 def sparse_game(players, strats, num, distribution=default_distribution):
@@ -94,7 +94,7 @@ def sparse_game(players, strats, num, distribution=default_distribution):
         Distribution function to draw payoffs from.
     """
     return gen_num_profiles(
-        rsgame.emptygame(players, strats), num, distribution)
+        rsgame.empty(players, strats), num, distribution)
 
 
 def width_gaussian(widths, num_samples):
@@ -437,7 +437,7 @@ def travellers_dilemma(players=2, max_value=100):
     strategies."""
     utils.check(players > 1, 'players must be more than one')
     utils.check(max_value > 2, 'max value must be more than 2')
-    base = rsgame.emptygame(players, max_value - 1)
+    base = rsgame.empty(players, max_value - 1)
     profiles = base.all_profiles()
     payoffs = np.zeros(profiles.shape)
     mins = np.argmax(profiles, -1)

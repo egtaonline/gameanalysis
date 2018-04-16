@@ -82,7 +82,7 @@ def deviation_profiles(game, rest, role_index=None):
 
     def dev_profs(players, mask, rst):
         """Get deviation profiles"""
-        rgame = rsgame.emptygame(players, support)
+        rgame = rsgame.empty(players, support)
         non_devs = translate(rgame.all_profiles(), rest)
         ndevs = np.sum(~mask)
         devs = np.zeros((ndevs, game.num_strats), int)
@@ -115,7 +115,7 @@ def additional_strategy_profiles(game, rest, role_strat_ind):
     utils.check(game.is_restriction(rest), 'restriction must be valid')
     new_players = game.num_role_players.copy()
     new_players[game.role_indices[role_strat_ind]] -= 1
-    base = rsgame.emptygame(new_players, game.num_role_strats)
+    base = rsgame.empty(new_players, game.num_role_strats)
     new_mask = rest.copy()
     new_mask[role_strat_ind] = True
     profs = base.restrict(new_mask).all_profiles()

@@ -111,7 +111,7 @@ def test_sparse_samplegame():
 ])
 def test_gen_profiles(players, strategies, _):
     """Test gen profiles"""
-    base = rsgame.emptygame(players, strategies)
+    base = rsgame.empty(players, strategies)
     game = gamegen.gen_profiles(base)
     assert game.is_complete(), "didn't generate a full game"
     assert np.all(players == game.num_role_players), \
@@ -130,7 +130,7 @@ def test_gen_profiles(players, strategies, _):
 
 def test_gen_profiles_large_game():
     """Test generate profiles of a large game"""
-    base = rsgame.emptygame([100] * 2, 30)
+    base = rsgame.empty([100] * 2, 30)
     game = gamegen.gen_profiles(base, 1e-55)
     assert game.num_profiles == 363
 
@@ -312,7 +312,7 @@ def test_gen_noise(players, strategies, lower, prob, _):
 
 def test_empty_add_noise():
     """Test adding noise to an empty game"""
-    base_game = rsgame.emptygame([3, 3], [4, 4])
+    base_game = rsgame.empty([3, 3], [4, 4])
     game = gamegen.gen_noise(base_game)
     assert game.is_empty()
 

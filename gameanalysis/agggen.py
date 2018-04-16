@@ -52,7 +52,7 @@ def normal_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
     weight_prob : float, optional
         The probability of a function producing non-zero payoffs to a strategy.
     """
-    base = rsgame.emptygame(role_players, role_strats)
+    base = rsgame.empty(role_players, role_strats)
     inputs = _random_inputs(input_prob, base.num_strats, functions)
     weights = _random_weights(weight_prob, functions, base.num_strats)
 
@@ -74,7 +74,7 @@ def _random_aggfn( # pylint: disable=too-many-arguments
     role_dist takes a number of functions and a number of players and returns
     an ndarray of the function values.
     """
-    base = rsgame.emptygame(role_players, role_strats)
+    base = rsgame.empty(role_players, role_strats)
     inputs = _random_inputs(input_prob, base.num_strats, functions)
     weights = _random_weights(weight_prob, functions, base.num_strats)
 

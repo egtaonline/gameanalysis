@@ -28,7 +28,7 @@ _GAME = aggfn.aggfn(
 
 def rand(players, strategies, functions):
     """Create random game"""
-    base = rsgame.emptygame(players, strategies)
+    base = rsgame.empty(players, strategies)
     action_weights = np.random.normal(0, 1, (functions, base.num_strats))
     function_inputs = np.random.random((base.num_strats, functions)) < .5
     for func in function_inputs.T:

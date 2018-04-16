@@ -39,7 +39,7 @@ def test_pure_strategy_deviation_gains():
 
 def test_empty_pure_strategy_deviation_gains():
     """Test empty pure strategy deviation gains"""
-    game = rsgame.emptygame(2, [2, 2])
+    game = rsgame.empty(2, [2, 2])
     gains = regret.pure_strategy_deviation_gains(game, [2, 0, 2, 0])
     assert np.allclose(gains, [np.nan, 0, np.nan, 0], equal_nan=True)
 
@@ -167,7 +167,7 @@ def test_max_pure_profile():
     prof = regret.max_pure_social_welfare(game)[1]
     assert np.all(prof == [1, 1])
 
-    game = rsgame.emptygame(2, 2)
+    game = rsgame.empty(2, 2)
     welfare, prof = regret.max_pure_social_welfare(game)
     assert np.isnan(welfare)
     assert prof is None

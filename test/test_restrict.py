@@ -12,7 +12,7 @@ from test import utils as testutils # pylint: disable=wrong-import-order
 
 def test_restriction():
     """Test basic restriction"""
-    game = rsgame.emptygame([3, 4], [3, 2])
+    game = rsgame.empty([3, 4], [3, 2])
     rest = np.asarray([1, 0, 1, 0, 1], bool)
     devs = restrict.deviation_profiles(game, rest)
     assert devs.shape[0] == 7, \
@@ -52,7 +52,7 @@ def test_missing_data_maximal_restrictions(players, strategies, prob):
             'One maximal restriction dominated another'
 
     for rest in rests:
-        rgame = rsgame.emptygame_copy(game).restrict(rest)
+        rgame = rsgame.empty_copy(game).restrict(rest)
         restprofs = restrict.translate(rgame.all_profiles(), rest)
         assert all(p in game for p in restprofs), \
             "Maximal restriction didn't have all profiles"
@@ -68,7 +68,7 @@ def test_missing_data_maximal_restrictions(players, strategies, prob):
 @pytest.mark.parametrize('players,strategies', testutils.GAMES)
 def test_random_deviation_profile_count(players, strategies, _):
     """Test dev profile count"""
-    game = rsgame.emptygame(players, strategies)
+    game = rsgame.empty(players, strategies)
     rest = game.random_restriction()
 
     devs = restrict.deviation_profiles(game, rest)
@@ -88,22 +88,22 @@ def test_random_deviation_profile_count(players, strategies, _):
 
 def test_dpr_deviation_count():
     """Test dpr dev count"""
-    game = rsgame.emptygame(3, 2)
+    game = rsgame.empty(3, 2)
     num_devs = restrict.num_dpr_deviation_profiles(
         game, [True, False])
     assert num_devs == 2
 
-    game = rsgame.emptygame([1, 3], 2)
+    game = rsgame.empty([1, 3], 2)
     num_devs = restrict.num_dpr_deviation_profiles(
         game, [True, True, True, False])
     assert num_devs == 6
 
-    game = rsgame.emptygame(1, [3, 1])
+    game = rsgame.empty(1, [3, 1])
     num_devs = restrict.num_dpr_deviation_profiles(
         game, [True, True, False, True])
     assert num_devs == 1
 
-    game = rsgame.emptygame([3, 2, 1], [1, 2, 3])
+    game = rsgame.empty([3, 2, 1], [1, 2, 3])
     num_devs = restrict.num_dpr_deviation_profiles(
         game, [True, True, False, True, False, True])
     assert num_devs == 7
@@ -111,7 +111,7 @@ def test_dpr_deviation_count():
 
 def test_big_game_counts():
     """Test that everything works when game_size > int max"""
-    game = rsgame.emptygame([100, 100], [30, 30])
+    game = rsgame.empty([100, 100], [30, 30])
     num_devs = restrict.num_dpr_deviation_profiles(
         game, [False] + [True] * 58 + [False])
     assert num_devs > np.iinfo(int).max
@@ -163,7 +163,7 @@ def test_maximal_restrictions_partial_profiles():
 @pytest.mark.parametrize('players,strategies', testutils.GAMES)
 def test_restriction_to_from_id(players, strategies):
     """Test that restriction function preserves completeness"""
-    game = rsgame.emptygame(players, strategies)
+    game = rsgame.empty(players, strategies)
     rests = game.all_restrictions()
     rests2 = restrict.from_id(game, restrict.to_id(game, rests))
     assert np.all(rests == rests2)

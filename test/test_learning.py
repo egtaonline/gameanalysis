@@ -304,7 +304,7 @@ def test_sample(_): # pylint: disable=too-many-locals
     assert copy == learn
     assert learn + copy == copy + learn
 
-    empty = rsgame.emptygame_copy(learn)
+    empty = rsgame.empty_copy(learn)
     assert learn + empty == empty
 
 
@@ -368,7 +368,7 @@ def test_point(_): # pylint: disable=too-many-locals
     assert copy == learn
     assert learn + copy == copy + learn
 
-    empty = rsgame.emptygame_copy(learn)
+    empty = rsgame.empty_copy(learn)
     assert learn + empty == empty
 
 
@@ -410,7 +410,7 @@ def test_neighbor(_): # pylint: disable=too-many-locals
     assert copy == learn
     assert learn + copy == copy + learn
 
-    empty = rsgame.emptygame_copy(learn)
+    empty = rsgame.empty_copy(learn)
     assert learn + empty == empty
 
 
