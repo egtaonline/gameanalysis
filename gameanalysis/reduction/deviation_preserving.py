@@ -52,8 +52,8 @@ def reduce_game(full_game, red_players): # pylint: disable=too-many-locals
         full_payoffs = full_payoffs[valid]
 
     # Reduce
-    red_profiles, red_inds, full_inds, strat_inds = reduce_profiles(
-        red_game, full_profiles, return_contributions=True)
+    red_profiles, red_inds, full_inds, strat_inds = _reduce_profiles(
+        red_game, full_profiles, True)
 
     if red_profiles.size == 0:  # Empty reduction
         return red_game
@@ -79,10 +79,7 @@ def reduce_game(full_game, red_players): # pylint: disable=too-many-locals
                                 red_payoffs[valid])
 
 
-# FIXME All methods should have the same signature. Either, remove
-# return_contributions because it shouldn't be in api, or add it to all
-# reductions.
-def expand_profiles(full_game, profiles, *, return_contributions=False): # pylint: disable=too-many-locals
+def expand_profiles(full_game, profiles): # pylint: disable=too-many-locals
     """Expand profiles using dpr
 
     Parameters
@@ -120,21 +117,23 @@ def expand_profiles(full_game, profiles, *, return_contributions=False): # pylin
     dev_full_profs = _common.expand_profiles(
         full_game, dev_full_players[mask], dev_profs[mask]) + devs
     ids = utils.axis_to_elem(dev_full_profs)
-    if not return_contributions:
-        return dev_full_profs[np.unique(ids, return_index=True)[1]]
-
-    # This is more complicated because we need to line up devs for the
-    # same profile se we can "reduceat" to merge them
-    order = np.argsort(ids)
-    sids = ids[order]
-    mask = np.insert(sids[1:] != sids[:-1], 0, True)
-    profs = dev_full_profs[order[mask]]
-    ored_devs = np.bitwise_or.reduceat(devs[order],
-                                       mask.nonzero()[0], 0)
-    return profs, ored_devs
+    return dev_full_profs[np.unique(ids, return_index=True)[1]]
 
 
-def reduce_profiles(red_game, profiles, *, return_contributions=False): # pylint: disable=too-many-locals
+def reduce_profiles(red_game, profiles):
+    """Reduce profiles using dpr
+
+    Parameters
+    ----------
+    red_game : Game
+        Game that reduced profiles will be profiles for.
+    profiles : ndarray-like
+        The profiles to reduce.
+    """
+    return _reduce_profiles(red_game, profiles, False)
+
+
+def _reduce_profiles(red_game, profiles, return_contributions): # pylint: disable=too-many-locals
     """Reduce profiles using dpr
 
     Parameters

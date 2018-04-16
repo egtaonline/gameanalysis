@@ -318,8 +318,8 @@ def test_approximate_dpr_expansion():
     """Test expansion on approximate dpr"""
     full_game = rsgame.empty([8, 11], [2, 2])
     red_prof = [[1, 2, 2, 2]]
-    full_profs, contributions = dpr.expand_profiles(
-        full_game, red_prof, return_contributions=True)
+    full_profs = dpr.expand_profiles(
+        full_game, red_prof)
     profs = utils.axis_to_elem(full_profs)
     expected = utils.axis_to_elem([
         [4, 4, 6, 5],
@@ -328,38 +328,6 @@ def test_approximate_dpr_expansion():
         [3, 5, 7, 4]])
     assert np.setxor1d(profs, expected).size == 0, \
         'generated different profiles than expected'
-    conts = utils.axis_to_elem(contributions)
-    expected_conts = utils.axis_to_elem(np.array([
-        [0, 1, 0, 0],
-        [1, 0, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]], bool))
-    assert np.setxor1d(conts, expected_conts).size == 0
-
-
-def test_expansion_contributions():
-    """Test expansion on approximate dpr"""
-    full_game = rsgame.empty([4, 9], [2, 2])
-    red_profs = [
-        [2, 0, 0, 3],
-        [1, 1, 3, 0]]
-    full_profs, contributions = dpr.expand_profiles(
-        full_game, red_profs, return_contributions=True)
-    profs = utils.axis_to_elem(full_profs)
-    expected = utils.axis_to_elem([
-        [4, 0, 0, 9],
-        [1, 3, 9, 0],
-        [3, 1, 9, 0],
-        [2, 2, 9, 0]])
-    assert np.setxor1d(profs, expected).size == 0, \
-        'generated different profiles than expected'
-    conts = utils.axis_to_elem(contributions)
-    expected_conts = utils.axis_to_elem(np.array([
-        [1, 0, 0, 1],
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0]], bool))
-    assert np.setxor1d(conts, expected_conts).size == 0
 
 
 def test_approximate_dpr_reduce_game():
