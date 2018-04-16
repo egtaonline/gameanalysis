@@ -595,18 +595,6 @@ def test_dpr_incomplete_profile():
     assert np.allclose(actual, [3, np.nan, 8, 0], equal_nan=True)
 
 
-def test_reductions_not_constructable():
-    """Test that reductions can't be constructed"""
-    with pytest.raises(AttributeError):
-        hr()
-    with pytest.raises(AttributeError):
-        dpr()
-    with pytest.raises(AttributeError):
-        ir()
-    with pytest.raises(AttributeError):
-        tr()
-
-
 def test_remove_dpr_profiles_with_no_data():
     """Test that dpr removes profiles with no data"""
     profiles = [[1, 3],
