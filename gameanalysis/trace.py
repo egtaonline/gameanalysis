@@ -7,6 +7,11 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# FIXME Doesn't matter if F is singular, it matters if any solution exists. If
+# F is nonsingular, then a solution definitely exists, otherwise, it might, and
+# we can use np.linalg.lstsq to find it. We need to text that we've found a
+# solution afterwards. This should be done with np.linalg.norm <
+# np.finfo(dtype).eps * num_strats
 def trace_equilibrium( # pylint: disable=too-many-locals
         game0, game1, peq, eqm, target, *, regret_thresh=1e-3, max_step=0.1,
         singular=1e-7, **ivp_args):
