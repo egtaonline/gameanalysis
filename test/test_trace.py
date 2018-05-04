@@ -107,17 +107,17 @@ def test_random_trace_interpolate(game0, game1, _): # pylint: disable=too-many-l
             interp_mix, = trace.trace_interpolate(
                 game0, game1, [probs[start], probs[end]],
                 [mixes[start], mixes[end]], [probs[interp]])
-            assert np.allclose(interp_mix, mixes[interp], rtol=1e-3, atol=1e-5)
+            assert np.allclose(interp_mix, mixes[interp], rtol=1e-2, atol=1e-4)
 
             # Test interp at first
             mix, = trace.trace_interpolate(
                 game0, game1, probs, mixes, [probs[0]])
-            assert np.allclose(mix, mixes[0], rtol=1e-3, atol=1e-5)
+            assert np.allclose(mix, mixes[0], rtol=1e-2, atol=1e-4)
 
             # Test interp at last
             mix, = trace.trace_interpolate(
                 game0, game1, probs, mixes, [probs[-1]])
-            assert np.allclose(mix, mixes[-1], rtol=1e-3, atol=1e-5)
+            assert np.allclose(mix, mixes[-1], rtol=1e-2, atol=1e-4)
 
             # Test random t
             p_interp = np.random.uniform(probs[0], probs[-1])

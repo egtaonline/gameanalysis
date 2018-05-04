@@ -421,7 +421,7 @@ def test_neighbor(_): # pylint: disable=too-many-locals
 @pytest.mark.parametrize('_', range(20))
 def test_rbfgame_min_max_payoffs(players, strats, _):
     """Test min and max payoffs of rbf game"""
-    game = gamegen.sparse_game(players, strats, 10)
+    game = gamegen.sparse_game(players, strats, 11)
     reggame = learning.rbfgame_train(game)
     full = paygame.game_copy(reggame)
 

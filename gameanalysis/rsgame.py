@@ -431,7 +431,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         with np.errstate(invalid='ignore'):
             ratio = np.where(np.isposinf(simp_alpha) & np.isposinf(alpha), 0,
                              alpha / simp_alpha)
-        return center + ratio * grad
+        return self.trim_mixture_support(center + ratio * grad, thresh=0)
 
     def uniform_mixture(self):
         """Returns the uniform mixed profile"""
