@@ -395,7 +395,9 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         with np.errstate(invalid='ignore'):
             ratio = np.where(np.isposinf(simp_alpha) & np.isposinf(alpha), 0,
                              simp_alpha / alpha)
-        return simp_center + ratio * simp_grad
+        simp = simp_center + ratio * simp_grad
+        simp *= simp > 0
+        return simp / simp.sum(-1, keepdims=True)
 
     def mixture_from_simplex(self, simp):
         """Convert a simplex back into a valid mixture
