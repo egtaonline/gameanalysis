@@ -335,7 +335,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
             [utils.simplex_project(r) for r
              in np.split(mixture, self.role_starts[1:], -1)], -1)
 
-    def mixture_to_simplex(self, mixture):
+    def mixture_to_simplex(self, mixture): # pylint: disable=too-many-locals
         """Convert a mixture to a simplex
 
         The simplex will have dimension `num_role_strats - num_roles + 1`. This
