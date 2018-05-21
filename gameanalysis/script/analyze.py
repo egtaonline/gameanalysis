@@ -4,8 +4,8 @@ import json
 import sys
 
 import numpy as np
-from numpy import linalg
 
+from gameanalysis import collect
 from gameanalysis import dominance
 from gameanalysis import gamereader
 from gameanalysis import nash
@@ -111,16 +111,13 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
         eqa = restrict.translate(rgame.trim_mixture_support(
             reqa, thresh=args.supp_thresh), rest)
         if eqa.size:
-            for eqm in eqa:
-                if not any(linalg.norm(eqm - eq) < args.dist_thresh
-                           for eq in candidates):
-                    candidates.append(eqm)
+            candidates.extend(eqa)
         else:
             noeq_restrictions.append(rest)
 
-    equilibria = []
-    unconfirmed = []
-    unexplored = []
+    equilibria = collect.mcces(args.dist_thresh)
+    unconfirmed = collect.mcces(args.dist_thresh)
+    unexplored = {}
     for eqm in candidates:
         support = eqm > 0
         gains = regret.mixture_deviation_gains(game, eqm)
@@ -129,7 +126,7 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
 
         if np.isnan(gains).any() and gain <= args.regret_thresh:
             # Not fully explored but might be good
-            unconfirmed.append((eqm, gain))
+            unconfirmed.add(eqm, gain)
 
         elif np.any(role_gains > args.regret_thresh):
             # There are deviations, did we explore them?
@@ -141,11 +138,14 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
                 devsupp = support.copy()
                 devsupp[dind] = True
                 if not np.all(devsupp <= restrictions, -1).any():
-                    unexplored.append((devsupp, dind, gains[dind], eqm))
+                    ind = restrict.to_id(game, devsupp)
+                    new_info = (gains[dind], dind, eqm)
+                    old_info = unexplored.get(ind, (0, 0, None))
+                    unexplored[ind] = max(new_info, old_info)
 
         else:
             # Equilibrium!
-            equilibria.append((eqm, np.max(gains)))
+            equilibria.add(eqm, np.max(gains))
 
     # Output Game
     args.output.write('Game Analysis\n')
@@ -239,8 +239,9 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
     if unconfirmed:
         args.output.write('Found {:d} unconfirmed candidate{}\n\n'.format(
             len(unconfirmed), '' if len(unconfirmed) == 1 else 's'))
-        unconfirmed.sort(key=lambda x: ((x[0] > 0).sum(), x[1]))
-        for i, (eqm, reg_bound) in enumerate(unconfirmed, 1):
+        ordered = sorted(
+            (sum(e > 0 for e in m), r, m) for m, r in unconfirmed)
+        for i, (_, reg_bound, eqm) in enumerate(ordered, 1):
             args.output.write('Unconfirmed candidate {:d}:\n'.format(i))
             args.output.write(game.mixture_to_str(eqm))
             args.output.write('\nRegret at least: {:.4f}\n\n'.format(
@@ -253,7 +254,7 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
     args.output.write('Unexplored Best-response Subgames\n')
     args.output.write('---------------------------------\n')
     if unexplored:
-        min_supp = min(supp.sum() for supp, _, _, _ in unexplored)
+        min_supp = min(restrict.from_id(game, sid).sum() for sid in unexplored)
         args.output.write(
             'Found {:d} unexplored best-response restricted game{}\n'.format(
                 len(unexplored), '' if len(unexplored) == 1 else 's'))
@@ -261,12 +262,17 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
             'Smallest unexplored restricted game has support {:d}\n\n'.format(
                 min_supp))
 
-        unexplored.sort(key=lambda x: (x[0].sum(), -x[2]))
-        for i, (sub, dev, gain, eqm) in enumerate(unexplored, 1):
+        ordered = sorted((
+            restrict.from_id(game, sind).sum(),
+            -gain, dev,
+            restrict.from_id(game, sind),
+            eqm,
+        ) for sind, (gain, dev, eqm) in unexplored.items())
+        for i, (_, ngain, dev, sub, eqm) in enumerate(ordered, 1):
             args.output.write('Unexplored restricted game {:d}:\n'.format(i))
             args.output.write(game.restriction_to_str(sub))
             args.output.write('\n{:.4f} for deviating to {} from:\n'.format(
-                gain, game.strat_name(dev)))
+                -ngain, game.strat_name(dev)))
             args.output.write(game.mixture_to_str(eqm))
             args.output.write('\n\n')
     else:

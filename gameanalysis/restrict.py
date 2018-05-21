@@ -9,6 +9,9 @@ from gameanalysis import rsgame
 from gameanalysis import utils
 
 
+# TODO Do these really need to be in a separate file, they should probably just
+# be in rsgame
+
 def num_deviation_profiles(game, rest):
     """Returns the number of deviation profiles
 
