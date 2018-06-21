@@ -1,2 +1,2 @@
 """Module for performing game analysis"""
-__version__ = '7.1.2'
+__version__ = '7.2.0'

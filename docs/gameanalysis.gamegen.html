@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.gamegen module &#8212; Game Analysis 7.1.2 documentation</title>
+    <title>gameanalysis.gamegen module &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.2.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -80,7 +80,7 @@ of people using said facility.</p>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.covariant_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">covariant_game</code><span class="sig-paren">(</span><em>num_role_strats</em>, <em>mean_dist=&lt;OrderingMock name='mock.zeros' id='140524196201920'&gt;</em>, <em>var_dist=&lt;OrderingMock name='mock.ones' id='140524194725056'&gt;</em>, <em>covar_dist=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#covariant_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.covariant_game" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">covariant_game</code><span class="sig-paren">(</span><em>num_role_strats</em>, <em>mean_dist=&lt;OrderingMock name='mock.zeros' id='139634899646280'&gt;</em>, <em>var_dist=&lt;OrderingMock name='mock.ones' id='139634899982880'&gt;</em>, <em>covar_dist=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#covariant_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.covariant_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a covariant game</p>
 <p>Covariant games are asymmetric games where payoff values for each profile
 drawn according to multivariate normal.</p>
@@ -129,6 +129,13 @@ entries for each profile is drawn. (default: uniform [-1, 1])</li>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.game_replace">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">game_replace</code><span class="sig-paren">(</span><em>base</em>, <em>prob=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game_replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace a games profiles with random ones</p>
+<p>This is identical to gen_profiles, but provides a more common name.</p>
 </dd></dl>
 
 <dl class="function">
@@ -393,7 +400,7 @@ the specified random k-player matrix game.</p>
 
 <dl class="function">
 <dt id="gameanalysis.gamegen.samplegame">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob=0.5</em>, <em>min_samples=1</em>, <em>min_width=0</em>, <em>max_width=1</em>, <em>payoff_distribution=&lt;function default_distribution&gt;</em>, <em>noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random role symmetric sample game</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -402,6 +409,24 @@ the specified random k-player matrix game.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
 <li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
+<li><strong>**args</strong> – The arguments to pass to samplegame_replace.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.gamegen.samplegame_replace">
+<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame_replace</code><span class="sig-paren">(</span><em>base</em>, <em>prob=0.5</em>, <em>min_samples=1</em>, <em>min_width=0</em>, <em>max_width=1</em>, <em>payoff_distribution=&lt;function default_distribution&gt;</em>, <em>noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame_replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a random role symmetric sample game</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>base</strong> (<em>RsGame</em>) – The structure of the game to generate.</li>
 <li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of adding another sample above min_samples. These draws
 are repeated, so 0.5 will add one extra sample in expectation.</li>
 <li><strong>min_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of samples to generate for each profile. If 0, the
@@ -597,7 +622,7 @@ inverted since Gumbels are skewed.</p>
         <li class="right" >
           <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.1.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.2.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
