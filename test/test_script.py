@@ -525,11 +525,11 @@ def test_regret_single(hardgame_file, hardprof_file):
     assert np.isclose(json.loads(out.getvalue())[0], 7747.618428)
 
 
-def test_restriction_detect(hardgame, hardgame_file):
+def test_restriction_detect(game, game_file):
     """Test detect maximal restrictions"""
     with stdout() as out, stderr() as err:
-        assert run('rest', '-nd', '-i', hardgame_file), err.getvalue()
-    assert hardgame.restriction_from_json(json.loads(out.getvalue())[0]).all()
+        assert run('rest', '-nd', '-i', game_file), err.getvalue()
+    assert game.restriction_from_json(json.loads(out.getvalue())[0]).all()
 
 
 def test_restriction_extract_string(hardgame, hardgame_file):

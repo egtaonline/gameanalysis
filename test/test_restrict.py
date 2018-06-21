@@ -27,10 +27,10 @@ def test_restriction():
         "additional profiles didn't return the proper amount"
 
 
-@pytest.mark.parametrize('players,strategies', testutils.GAMES)
-def test_maximal_restrictions(players, strategies):
+@pytest.mark.parametrize('base', testutils.basic_games())
+def test_maximal_restrictions(base):
     """Test maximal restrictions"""
-    game = gamegen.game(players, strategies)
+    game = gamegen.game_replace(base)
     rests = restrict.maximal_restrictions(game)
     assert rests.shape[0] == 1, \
         'found more than maximal restriction in a complete game'
@@ -38,11 +38,11 @@ def test_maximal_restrictions(players, strategies):
         "found restriction wasn't the full one"
 
 
-@pytest.mark.parametrize('players,strategies', testutils.GAMES)
+@pytest.mark.parametrize('base', testutils.basic_games())
 @pytest.mark.parametrize('prob', [0.9, 0.6, 0.4])
-def test_missing_data_maximal_restrictions(players, strategies, prob):
+def test_missing_data_maximal_restrictions(base, prob):
     """Test missing data"""
-    game = gamegen.game(players, strategies, prob)
+    game = gamegen.game_replace(base, prob)
     rests = restrict.maximal_restrictions(game)
 
     if rests.size:
@@ -65,10 +65,9 @@ def test_missing_data_maximal_restrictions(players, strategies, prob):
 
 
 @pytest.mark.parametrize('_', range(20))
-@pytest.mark.parametrize('players,strategies', testutils.GAMES)
-def test_random_deviation_profile_count(players, strategies, _):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_deviation_profile_count(game, _):
     """Test dev profile count"""
-    game = rsgame.empty(players, strategies)
     rest = game.random_restriction()
 
     devs = restrict.deviation_profiles(game, rest)
@@ -118,10 +117,10 @@ def test_big_game_counts():
 
 
 @pytest.mark.parametrize('_', range(20))
-@pytest.mark.parametrize('players,strategies', testutils.GAMES)
-def test_random_restriction_preserves_completeness(players, strategies, _):
+@pytest.mark.parametrize('base', testutils.basic_games())
+def test_random_restriction_preserves_completeness(base, _):
     """Test that restriction function preserves completeness"""
-    game = gamegen.game(players, strategies)
+    game = gamegen.game_replace(base)
     assert game.is_complete(), "gamegen didn't create complete game"
 
     rest = game.random_restriction()
@@ -160,10 +159,9 @@ def test_maximal_restrictions_partial_profiles():
         "Didn't produce both pure restrictions"
 
 
-@pytest.mark.parametrize('players,strategies', testutils.GAMES)
-def test_restriction_to_from_id(players, strategies):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_restriction_to_from_id(game):
     """Test that restriction function preserves completeness"""
-    game = rsgame.empty(players, strategies)
     rests = game.all_restrictions()
     rests2 = restrict.from_id(game, restrict.to_id(game, rests))
     assert np.all(rests == rests2)

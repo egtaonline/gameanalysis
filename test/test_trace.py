@@ -37,11 +37,12 @@ def test_trace_equilibria():
     assert np.allclose(mixes, [0, 1])
 
 
-@pytest.mark.parametrize('players,strats', utils.GAMES)
-def test_random_trace_equilibria(players, strats):
+@utils.timeout(20)
+@pytest.mark.parametrize('base', utils.edge_games())
+def test_random_trace_equilibria(base):
     """Test random equilibrium trace"""
-    game0 = gamegen.normal_aggfn(players, strats, 6)
-    game1 = gamegen.normal_aggfn(players, strats, 6)
+    game0 = gamegen.poly_aggfn(base.num_role_players, base.num_role_strats, 6)
+    game1 = gamegen.poly_aggfn(base.num_role_players, base.num_role_strats, 6)
 
     eqa = game0.trim_mixture_support(nash.mixed_nash(
         game0, regret_thresh=1e-4))
@@ -66,24 +67,26 @@ def test_random_trace_equilibria(players, strats):
             assert reg <= 1.1e-3
 
 
-MIX = gamegen.sym_2p2s_known_eq(.5)
-DOM1 = paygame.game(
-    2, 2, [[2, 0], [1, 1], [0, 2]], [[.1, 0], [.1, 0], [0, 0]])
-DOM2 = paygame.game(
-    2, 2, [[2, 0], [1, 1], [0, 2]], [[0, 0], [0, .1], [0, .1]])
-OTHERS = [
-    (gamegen.normal_aggfn(play, strt, 6), gamegen.normal_aggfn(play, strt, 6))
-    for play, strt in utils.GAMES]
+def random_pairs():
+    """Generate random pairs of games"""
+    mix = gamegen.sym_2p2s_known_eq(.5)
+    dom1 = paygame.game(
+        2, 2, [[2, 0], [1, 1], [0, 2]], [[.1, 0], [.1, 0], [0, 0]])
+    dom2 = paygame.game(
+        2, 2, [[2, 0], [1, 1], [0, 2]], [[0, 0], [0, .1], [0, .1]])
+    yield mix, dom1
+    yield dom1, mix
+    yield mix, dom2
+    yield dom2, mix
+    for base in utils.edge_games():
+        play, strats = base.num_role_players, base.num_role_strats
+        yield (gamegen.poly_aggfn(play, strats, 6),
+               gamegen.poly_aggfn(play, strats, 6))
 
 
-@pytest.mark.parametrize('game0,game1', [
-    (MIX, DOM1),
-    (DOM1, MIX),
-    (MIX, DOM2),
-    (DOM2, MIX),
-] + OTHERS)
-@pytest.mark.parametrize('_', range(3))
-def test_random_trace_interpolate(game0, game1, _): # pylint: disable=too-many-locals
+@utils.timeout(20)
+@pytest.mark.parametrize('game0,game1', random_pairs())
+def test_random_trace_interpolate(game0, game1): # pylint: disable=too-many-locals
     """Test random trace interpolation"""
     prob = np.random.random()
     eqa = game0.trim_mixture_support(nash.mixed_nash(
@@ -107,17 +110,17 @@ def test_random_trace_interpolate(game0, game1, _): # pylint: disable=too-many-l
             interp_mix, = trace.trace_interpolate(
                 game0, game1, [probs[start], probs[end]],
                 [mixes[start], mixes[end]], [probs[interp]])
-            assert np.allclose(interp_mix, mixes[interp], rtol=1e-2, atol=1e-4)
+            assert np.allclose(interp_mix, mixes[interp], rtol=1e-2, atol=2e-2)
 
             # Test interp at first
             mix, = trace.trace_interpolate(
                 game0, game1, probs, mixes, [probs[0]])
-            assert np.allclose(mix, mixes[0], rtol=1e-2, atol=1e-4)
+            assert np.allclose(mix, mixes[0], rtol=1e-2, atol=2e-2)
 
             # Test interp at last
             mix, = trace.trace_interpolate(
                 game0, game1, probs, mixes, [probs[-1]])
-            assert np.allclose(mix, mixes[-1], rtol=1e-2, atol=1e-4)
+            assert np.allclose(mix, mixes[-1], rtol=1e-2, atol=2e-2)
 
             # Test random t
             p_interp = np.random.uniform(probs[0], probs[-1])

@@ -5,24 +5,32 @@ from os import path
 
 import numpy as np
 import pytest
-import timeout_decorator
 
 from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import nash
 from gameanalysis import regret
 from gameanalysis import rsgame
+from test import utils # pylint: disable=wrong-import-order
 
 
-METHS = [('optimize', {}), ('replicator', {}), ('fictitious', {})]
-METHODS = [{k: v} for k, v in METHS]
-ALL_METHODS = list(map(dict, itertools.chain.from_iterable(
-    itertools.combinations(METHS, i)
-    for i in range(1, len(METHS) + 1))))
+_METHODS = [('optimize', {}), ('replicator', {}), ('fictitious', {})]
 
 
-@pytest.mark.parametrize('_', range(20))
-def test_pure_prisoners_dilemma(_):
+def methods():
+    """Each individual method"""
+    for key, val in _METHODS:
+        yield {key: val}
+
+
+def all_methods():
+    """All combinations of methods"""
+    for num in range(1, len(_METHODS) + 1):
+        for pairs in itertools.combinations(_METHODS, num):
+            yield dict(pairs)
+
+
+def test_pure_prisoners_dilemma():
     """Test prisoners dilemma"""
     game = gamegen.prisoners_dilemma()
     eqa = nash.pure_nash(game)
@@ -33,12 +41,11 @@ def test_pure_prisoners_dilemma(_):
         "didn't find pd equilibrium"
 
 
-@pytest.mark.parametrize('_', range(20))
-@pytest.mark.parametrize('methods', ALL_METHODS)
-def test_mixed_prisoners_dilemma(methods, _):
+@pytest.mark.parametrize('meths', all_methods())
+def test_mixed_prisoners_dilemma(meths):
     """Test prisoners dilemma mixed nash"""
     game = gamegen.prisoners_dilemma()
-    eqa = nash.mixed_nash(game, dist_thresh=1e-3, **methods)
+    eqa = nash.mixed_nash(game, dist_thresh=1e-3, **meths)
 
     assert eqa.shape[0] >= 1, \
         "didn't find at least one equilibria in pd {}".format(eqa)
@@ -49,12 +56,13 @@ def test_mixed_prisoners_dilemma(methods, _):
         "didn't find pd equilibrium {}".format(eqa)
 
 
-@pytest.mark.parametrize('methods', METHODS)
-@pytest.mark.parametrize('eq_prob', [0, .1, .2, .3, .5, .7, .8, .9, 1])
-def test_mixed_known_eq(methods, eq_prob):
+@utils.timeout(20)
+@pytest.mark.parametrize('meths', methods())
+@pytest.mark.parametrize('eq_prob', [0, .1, .5, .9, 1])
+def test_mixed_known_eq(meths, eq_prob):
     """Test mixed nash with known eq"""
     game = gamegen.sym_2p2s_known_eq(eq_prob)
-    eqa = nash.mixed_nash(game, **methods)
+    eqa = nash.mixed_nash(game, **meths)
     assert eqa.shape[0] >= 1, "didn't find equilibrium"
     expected = [eq_prob, 1 - eq_prob]
     assert np.isclose(eqa, expected, atol=1e-2, rtol=1e-2).all(1).any(), \
@@ -102,11 +110,11 @@ def test_minreg_rand_roshambo():
         'Found a mixture with greater than maximum regret'
 
 
-@pytest.mark.parametrize('methods', METHODS)
-def test_mixed_roshambo(methods):
+@pytest.mark.parametrize('meths', methods())
+def test_mixed_roshambo(meths):
     """Test roshambo"""
     game = gamegen.rock_paper_scissors()
-    eqa = nash.mixed_nash(game, dist_thresh=1e-2, **methods)
+    eqa = nash.mixed_nash(game, dist_thresh=1e-2, **meths)
     assert eqa.shape[0] == 1, \
         "didn't find right number of equilibria in roshambo"
     assert np.allclose(1 / 3, eqa, rtol=1e-3, atol=1e-3), \
@@ -149,69 +157,26 @@ def test_min_reg_nash():
     assert eqa.shape[0] == 1, "min_reg didn't return anything"
 
 
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [1, 3],
-    ]))
-def test_mixed_nash(methods, strategies):
-    """Test mixed nash"""
-    game = gamegen.independent_game(strategies)
-    eqa = nash.mixed_nash(game, **methods)
-    assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
-
-
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [1, 3],
-    ]))
-def test_mixed_nash_multi_process(methods, strategies):
+def test_mixed_nash_multi_process():
     """Test multiprocessing"""
-    game = gamegen.independent_game(strategies)
-    eqa = nash.mixed_nash(game, processes=2, **methods)
+    game = gamegen.independent_game(2)
+    eqa = nash.mixed_nash(game, processes=2)
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
 
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [1, 3],
-    ]))
-def test_mixed_nash_best(methods, strategies):
+def test_mixed_nash_best():
     """Test mixed nash with min reg"""
-    game = gamegen.independent_game(strategies)
-    eqa = nash.mixed_nash(game, min_reg=True, **methods)
+    game = gamegen.independent_game(2)
+    eqa = nash.mixed_nash(
+        game, min_reg=True, replicator=dict(max_iters=0))
     assert eqa.size, "didn't return something"
 
 
-@pytest.mark.slow
-@pytest.mark.parametrize('methods,strategies', zip(
-    ALL_METHODS * 2,
-    [
-        [1],
-        [2],
-        [1, 1],
-        [2, 2],
-        [4, 4, 4],
-        [1, 3],
-    ]))
-def test_mixed_nash_at_least_one(methods, strategies):
+def test_mixed_nash_at_least_one():
     """Test at least one"""
-    game = gamegen.independent_game(strategies)
-    eqa = nash.mixed_nash(game, at_least_one=True, **methods)
+    game = gamegen.independent_game(2)
+    eqa = nash.mixed_nash(
+        game, at_least_one=True, replicator=dict(max_iters=0))
     assert eqa.size, "didn't return at least one equilibria"
     assert all(regret.mixture_regret(game, eqm) <= 1e-3 for eqm in eqa)
 
@@ -236,8 +201,7 @@ def test_hard_nash():
         "Didn't find equilibrium in known hard instance"
 
 
-@timeout_decorator.timeout(2)
-@pytest.mark.xfail(raises=timeout_decorator.timeout_decorator.TimeoutError)
+@utils.timeout(20)
 def test_hard_scarf():
     """A buggy instance of scarfs algorithm
 
@@ -246,16 +210,3 @@ def test_hard_scarf():
     with open(path.join('example_games', 'hard_scarf.json')) as fil:
         game = gamereader.load(fil)
     nash.scarfs_algorithm(game, game.uniform_mixture())
-
-
-@pytest.mark.slow
-@pytest.mark.parametrize('_', range(20))
-def test_at_least_one_big(_):
-    """Test at least one on big game"""
-    num_roles = np.random.randint(1, 4)
-    players = np.random.randint(2, 5, num_roles)
-    strategies = np.random.randint(2, 5, num_roles)
-    functions = np.random.randint(2, 8)
-    agame = gamegen.normal_aggfn(players, strategies, functions)
-    eqa = nash.mixed_nash(agame, at_least_one=True)
-    assert eqa.size, "didn't find equilibrium but should always find one"

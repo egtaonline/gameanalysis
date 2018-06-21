@@ -11,5 +11,5 @@ install:
     - "deactivate"
     - "make setup PYTHON=/opt/python/3.5/bin/python"
     - "bin/pip install coveralls"
-script: "travis_wait 60 make travis && make docs"
+script: "travis_wait 50 make travis && make docs"
 after_success: "bin/coveralls"

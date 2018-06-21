@@ -15,13 +15,7 @@ from gameanalysis import learning
 from gameanalysis import paygame
 from gameanalysis import restrict
 from gameanalysis import rsgame
-
-
-GAMES = [
-    (4, 3),
-    ([3, 2], [2, 3]),
-    ([2, 2, 2], 2),
-]
+from test import utils # pylint: disable=wrong-import-order
 
 
 @pytest.fixture(autouse=True)
@@ -35,11 +29,11 @@ def ignore_fit():
         yield
 
 
-@pytest.mark.parametrize('players,strats', GAMES)
-def test_rbfgame_members(players, strats):
+@pytest.mark.parametrize('base', utils.edge_games())
+def test_rbfgame_members(base):
     """Test that all functions can be called without breaking"""
     # pylint: disable-msg=protected-access
-    game = gamegen.sparse_game(players, strats, 10)
+    game = gamegen.gen_num_profiles(base, 10)
     reggame = learning.rbfgame_train(game)
 
     prof = reggame.random_profile()
@@ -128,11 +122,10 @@ def test_skltrain():
     assert game + reggame == reggame + game
 
 
-@pytest.mark.parametrize('players,strats', GAMES)
-@pytest.mark.parametrize('_', range(5))
-def test_rbfgame_restriction(players, strats, _): # pylint: disable=too-many-locals
+@pytest.mark.parametrize('base', utils.edge_games())
+def test_rbfgame_restriction(base): # pylint: disable=too-many-locals
     """Test rbf game restriction"""
-    game = gamegen.sparse_game(players, strats, 13)
+    game = gamegen.gen_num_profiles(base, 13)
     reggame = learning.rbfgame_train(game)
 
     rest = game.random_restriction()
@@ -176,11 +169,10 @@ def test_rbfgame_restriction(players, strats, _): # pylint: disable=too-many-loc
     assert copy == rrreg
 
 
-@pytest.mark.parametrize('players,strats', GAMES)
-@pytest.mark.parametrize('_', range(5))
-def test_rbfgame_normalize(players, strats, _):
+@pytest.mark.parametrize('base', utils.edge_games())
+def test_rbfgame_normalize(base):
     """Test normalize"""
-    game = gamegen.sparse_game(players, strats, 13)
+    game = gamegen.gen_num_profiles(base, 13)
     reggame = learning.rbfgame_train(game)
     normreg = reggame.normalize()
     assert reggame != normreg
@@ -211,8 +203,7 @@ def test_rbfgame_normalize(players, strats, _):
     assert copy == normreg
 
 
-@pytest.mark.parametrize('_', range(20))
-def test_sample(_): # pylint: disable=too-many-locals
+def test_sample(): # pylint: disable=too-many-locals
     """Test sample game"""
     # pylint: disable-msg=protected-access
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
@@ -308,8 +299,7 @@ def test_sample(_): # pylint: disable=too-many-locals
     assert learn + empty == empty
 
 
-@pytest.mark.parametrize('_', range(20))
-def test_point(_): # pylint: disable=too-many-locals
+def test_point(): # pylint: disable=too-many-locals
     """Test point
 
     We increase player number so point is a more accurate estimator.
@@ -372,8 +362,7 @@ def test_point(_): # pylint: disable=too-many-locals
     assert learn + empty == empty
 
 
-@pytest.mark.parametrize('_', range(20))
-def test_neighbor(_): # pylint: disable=too-many-locals
+def test_neighbor(): # pylint: disable=too-many-locals
     """Test neighbor games"""
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
     model = gp.GaussianProcessRegressor(
@@ -418,8 +407,7 @@ def test_neighbor(_): # pylint: disable=too-many-locals
     [[1, 5], [2, 2]],
     [[2, 3], [3, 2]],
 ])
-@pytest.mark.parametrize('_', range(20))
-def test_rbfgame_min_max_payoffs(players, strats, _):
+def test_rbfgame_min_max_payoffs(players, strats):
     """Test min and max payoffs of rbf game"""
     game = gamegen.sparse_game(players, strats, 11)
     reggame = learning.rbfgame_train(game)
@@ -463,16 +451,11 @@ def test_rbfgame_equality():
     assert regg != copy
 
 
-@pytest.mark.parametrize('players,strats,num', [
-    (10, 3, 15),
-    ([2, 3], [3, 2], 15),
-    ([1, 3], [2, 2], 8),
-])
-@pytest.mark.parametrize('_', range(10)) # pylint: disable=too-many-locals
-def test_continuous_approximation(players, strats, num, _): # pylint: disable=too-many-locals
+@pytest.mark.parametrize('base,num', zip(utils.edge_games(), [15, 15, 8]))
+def test_continuous_approximation(base, num): # pylint: disable=too-many-locals
     """Test continuous approximation"""
     # pylint: disable-msg=protected-access
-    game = gamegen.sparse_game(players, strats, num)
+    game = gamegen.gen_num_profiles(base, num)
     learn = learning.rbfgame_train(game)
     full = paygame.game_copy(learn)
     red = np.eye(game.num_roles).repeat(game.num_role_strats, 0)

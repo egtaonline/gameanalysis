@@ -196,10 +196,9 @@ def test_is_pure_restriction():
         sarr.is_pure_restriction([False, False, False, False])
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_stratarray_restrictions(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_stratarray_restrictions(sarr):
     """Test random restrictions"""
-    sarr = stratarray(role_strats)
     all_restrictions = sarr.all_restrictions()
     assert sarr.is_restriction(all_restrictions).all()
     assert sarr.num_all_restrictions == all_restrictions.shape[0]
@@ -234,10 +233,9 @@ def test_random_restrictions():
     assert np.all([True, True, True, False, False] == rests.all(0))
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_random_restrictions(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_random_restrictions(sarr):
     """Test random random restrictions"""
-    sarr = stratarray(role_strats)
     rest = sarr.random_restriction()
     assert len(rest.shape) == 1
 
@@ -339,10 +337,9 @@ def test_mixture_project():
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_mixture_project(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_mixture_project(sarr):
     """Test random mixture project"""
-    sarr = stratarray(role_strats)
     for non_mixture in rand.uniform(-1, 1, (100, sarr.num_strats)):
         new_mix = sarr.mixture_project(non_mixture)
         assert sarr.is_mixture(new_mix), \
@@ -389,20 +386,18 @@ def test_random_one_role_to_from_simplex(strats):
     assert np.allclose(inits, mixtures)
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_uniform_simplex_homotopy(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_uniform_simplex_homotopy(sarr):
     """Test homotopy"""
-    sarr = stratarray(role_strats)
     uniform = sarr.uniform_mixture()
     simp = sarr.mixture_to_simplex(uniform)
     assert np.allclose(simp[0], simp[1:])
     assert np.allclose(uniform, sarr.mixture_from_simplex(simp))
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_simplex_homotopy(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_simplex_homotopy(sarr):
     """Test random homotopy"""
-    sarr = stratarray(role_strats)
     mixes = sarr.random_mixtures(100)
 
     simp = sarr.mixture_to_simplex(mixes[0])
@@ -423,10 +418,9 @@ def test_random_simplex_homotopy(_, role_strats):
     assert np.allclose(mixes, sarr.mixture_from_simplex(simps))
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_uniform_simplex_homotopy(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_uniform_simplex_homotopy(sarr):
     """Test uniform homotopy"""
-    sarr = stratarray(role_strats)
     rand_mixes = sarr.random_mixtures(100)
     mask = np.repeat(rand.random((100, sarr.num_roles))
                      < 0.5, sarr.num_role_strats, 1)
@@ -465,10 +459,9 @@ def test_uniform_mixture():
     assert np.allclose([1 / 3] * 3 + [1 / 2] * 2 + [1], sarr.uniform_mixture())
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_mixtures(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_mixtures(sarr):
     """Test random mixtures"""
-    sarr = stratarray(role_strats)
     mix = sarr.random_mixture()
     assert len(mix.shape) == 1
 
@@ -507,10 +500,9 @@ def test_random_sparse_mixtures():
     assert np.all([True, True, True, False, False] == np.all(mixes > 0, 0))
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_random_sparse_mixtures(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_random_sparse_mixtures(sarr):
     """Test random sparse mixtures"""
-    sarr = stratarray(role_strats)
     mix = sarr.random_sparse_mixture()
     assert len(mix.shape) == 1
 
@@ -704,19 +696,17 @@ def test_grid_mixtures():
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_grid_pure_equivelance(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_grid_pure_equivelance(sarr):
     """Test random grid close"""
-    sarr = stratarray(role_strats)
     expected = sarr.pure_mixtures()
     actual = sarr.grid_mixtures(2)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
 
-@pytest.mark.parametrize('_,role_strats', testutils.GAMES)
-def test_random_fixed_mixtures(_, role_strats):
+@pytest.mark.parametrize('sarr', testutils.basic_games())
+def test_random_fixed_mixtures(sarr):
     """Test random fixed mixtures"""
-    sarr = stratarray(role_strats)
     assert sarr.is_mixture(sarr.biased_mixtures()).all()
     assert sarr.is_mixture(sarr.role_biased_mixtures()).all()
     assert sarr.is_mixture(sarr.pure_mixtures()).all()
@@ -769,10 +759,9 @@ def test_to_mixture_from_json():
     assert new_mix.dtype == float
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_mixture_serialization(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_mixture_serialization(game):
     """Test mixture serialization"""
-    game = rsgame.empty(role_players, role_strats)
     mixes = game.random_mixtures(20)
     copies = np.empty(mixes.shape)
     for mix, copy in zip(mixes, copies):
@@ -832,10 +821,9 @@ def test_to_from_restriction_json():
     assert new_sub.dtype == bool
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_restriction_serialization(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_restriction_serialization(game):
     """Test random restriction serialization"""
-    game = rsgame.empty(role_players, role_strats)
     subs = game.random_restrictions(20)
     copies = np.empty(subs.shape, bool)
     for sub, copy in zip(subs, copies):
@@ -923,10 +911,9 @@ def test_trim_precision():
     assert np.allclose(trimmed, [0.5, 0.25, 0.25, 0.5, 0.5])
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_role_serialization(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_role_serialization(game):
     """Test role serialization"""
-    game = rsgame.empty(role_players, role_strats)
     roles = np.random.random((20, game.num_roles))
     copies = np.empty(roles.shape)
     for role, copy in zip(roles, copies):
@@ -967,11 +954,9 @@ def test_emptygame_properties():
     assert game.zero_prob.shape == (3,)
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_emptygame_const_properties(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_emptygame_const_properties(game):
     """Test empty game properties"""
-    game = rsgame.empty(role_players, role_strats)
-
     assert game.num_profiles == 0
     assert game.num_complete_profiles == 0
 
@@ -1051,10 +1036,9 @@ def test_empty_restriction():
         game.restrict([False, False, True, True, True])
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_empty_restriction(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_empty_restriction(game):
     """TEst random empty restriction"""
-    game = rsgame.empty(role_players, role_strats)
     rest = game.random_restriction()
     rgame = game.restrict(rest)
     assert np.all(game.num_role_players == rgame.num_role_players)
@@ -1131,11 +1115,9 @@ def test_num_all_dpr_profiles():
     assert game.num_all_dpr_profiles == 15
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_profile_counts(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_profile_counts(game):
     """Test random profile counts"""
-    game = rsgame.empty(role_players, role_strats)
-
     num_role_profiles = np.fromiter(  # pragma: no branch
         (rsgame.empty(p, s).all_profiles().shape[0] for p, s
          in zip(game.num_role_players, game.num_role_strats)),
@@ -1188,12 +1170,11 @@ def test_profile_id_big():
     assert np.all(game.profile_from_id(53753604366668088230809) == profile)
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_profile_id(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_profile_id(game):
     """Test random profile ids"""
     # Here we have an expectation that all_profiles always returns profiles in
     # order of id
-    game = rsgame.empty(role_players, role_strats)
     expected = np.arange(game.num_all_profiles)
     actual = game.profile_to_id(game.all_profiles())
     assert np.all(expected == actual)
@@ -1410,11 +1391,10 @@ def test_nearby_profiles_1():
         utils.axis_to_elem(actual)).size
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
+@pytest.mark.parametrize('base', testutils.basic_games())
 @pytest.mark.parametrize('num_devs', range(5))
-def test_random_nearby_profiles(role_players, role_strats, num_devs):
+def test_random_nearby_profiles(base, num_devs):
     """Test random nearby profiles"""
-    base = rsgame.empty(role_players, role_strats)
     prof = base.random_profile()
     nearby = base.nearby_profiles(prof, num_devs)
     diff = nearby - prof
@@ -1426,10 +1406,9 @@ def test_random_nearby_profiles(role_players, role_strats, num_devs):
     assert np.all(base.is_profile(nearby))
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_fixed_profiles(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_fixed_profiles(game):
     """Test fixed profiles"""
-    game = rsgame.empty(role_players, role_strats)
     all_profiles = game.all_profiles()
     assert game.num_all_profiles == all_profiles.shape[0]
     assert game.is_profile(all_profiles).all()
@@ -1445,10 +1424,9 @@ def test_random_profiles():
     assert np.all(mixes[:, 0] == 0)
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_random_profiles(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_random_profiles(game):
     """Test random profiles"""
-    game = rsgame.empty(role_players, role_strats)
     assert game.is_profile(game.random_profiles(100)).all()
 
 
@@ -1466,10 +1444,9 @@ def test_round_mixture_to_profile():
     assert np.all(prof == [0, 1, 2])
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_round_mixture_to_profile(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_round_mixture_to_profile(game):
     """Test round mixture to profile"""
-    game = rsgame.empty(role_players, role_strats)
     mixtures = np.concatenate([
         game.random_mixtures(100),
         game.random_sparse_mixtures(100),
@@ -1477,10 +1454,9 @@ def test_random_round_mixture_to_profile(role_players, role_strats):
     assert game.is_profile(game.round_mixture_to_profile(mixtures)).all()
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_random_dev_profiles(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_random_dev_profiles(game):
     """Test random dev profiles"""
-    game = rsgame.empty(role_players, role_strats)
     prof = game.random_role_deviation_profile()
     for role, dprof in enumerate(prof):
         role_players = game.num_role_players.copy()
@@ -1497,10 +1473,9 @@ def test_random_random_dev_profiles(role_players, role_strats):
         assert dgame.is_profile(dprofs).all()
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_random_deviator_profiles(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_random_deviator_profiles(game):
     """Test random deviator profiles"""
-    game = rsgame.empty(role_players, role_strats)
     profs = game.random_deviation_profile()
     assert profs.shape == (game.num_strats, game.num_strats)
     assert game.is_profile(profs).all()
@@ -1517,10 +1492,9 @@ def test_random_random_deviator_profiles(role_players, role_strats):
     assert game.is_profile(profs).all()
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_max_prob_prof(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_max_prob_prof(game):
     """Test max probability profile"""
-    game = rsgame.empty(role_players, role_strats)
     profiles = game.all_profiles()
     log_prob = (np.sum(sps.gammaln(game.num_role_players + 1)) -
                 np.sum(sps.gammaln(profiles + 1), 1))
@@ -1548,10 +1522,9 @@ def test_to_from_prof_json():
     assert new_prof.dtype == int
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_profile_serialization(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_profile_serialization(game):
     """Test profile serialization"""
-    game = rsgame.empty(role_players, role_strats)
     profs = game.random_profiles(20)
     copies = np.empty(profs.shape, int)
     for prof, copy in zip(profs, copies):
@@ -1590,10 +1563,9 @@ def test_to_from_payoff_json():
     assert np.allclose(new_pay, pay)
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_payoff_serialization(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_payoff_serialization(game):
     """Test payoff serialization"""
-    game = rsgame.empty(role_players, role_strats)
     pays = np.random.random((20, game.num_strats))
     pays *= pays < 0.8
     copies = np.empty(pays.shape)
@@ -1722,10 +1694,9 @@ def test_to_from_json():
         rsgame.empty_json({})
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_json_serialization(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_json_serialization(game):
     """Test random serialization"""
-    game = rsgame.empty(role_players, role_strats)
     jgame = json.dumps(game.to_json())
     copy = rsgame.empty_json(json.loads(jgame))
     assert copy == game
@@ -1806,10 +1777,9 @@ EmptyGame:
     assert str(game) == expected
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_random_emptygame_copy(role_players, role_strats):
+@pytest.mark.parametrize('game', testutils.basic_games())
+def test_random_emptygame_copy(game):
     """Test emptygame copy"""
-    game = rsgame.empty(role_players, role_strats)
     copy = rsgame.empty_copy(game)
     assert game == copy and hash(game) == hash(copy)
 
@@ -1837,10 +1807,10 @@ def test_empty_add_multiply():
     assert empty + empty == empty
 
 
-@pytest.mark.parametrize('role_players,role_strats', testutils.GAMES)
-def test_const_game(role_players, role_strats):
+@pytest.mark.parametrize('base', testutils.basic_games())
+def test_const_game(base):
     """Test constant game"""
-    game = rsgame.const(role_players, role_strats, 0)
+    game = rsgame.const_replace(base, 0)
     assert game.is_complete()
     assert game.is_constant_sum()
     assert not game.is_empty()

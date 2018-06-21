@@ -1,4 +1,5 @@
 PYLINT_ARGS =
+PYTEST_ARGS =
 PYTHON = python3
 
 help:
@@ -13,7 +14,7 @@ help:
 	@echo "ubuntu-reqs - install necessary packages on ubuntu (requires root)"
 
 test:
-	bin/pytest test --cov gameanalysis --cov test 2>/dev/null
+	bin/pytest test $(PYTEST_ARGS) --cov gameanalysis --cov test 2>/dev/null
 
 check:
 	bin/pylint $(PYLINT_ARGS) gameanalysis test
@@ -38,7 +39,7 @@ clean:
 	rm -rf bin build dist include lib lib64 share pyvenv.cfg gameanalysis.egg-info pip-selfcheck.json __pycache__ site-packages
 
 travis: PYTEST_ARGS += -v -n2
-travis: PYLINT_ARGS += -d fixme -j 2
+travis: PYLINT_ARGS += -d fixme -j2
 travis: check test
 
 .PHONY: test check format todo setup ubuntu-reqs docs publish clean

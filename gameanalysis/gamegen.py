@@ -77,7 +77,14 @@ def game(players, strats, prob=1.0, distribution=default_distribution):
     distribution : (shape) -> ndarray, optional
         Distribution function to draw payoffs from.
     """
-    return gen_profiles(rsgame.empty(players, strats), prob, distribution)
+    return game_replace(rsgame.empty(players, strats), prob, distribution)
+
+
+def game_replace(base, prob=1.0, distribution=default_distribution):
+    """Replace a games profiles with random ones
+
+    This is identical to gen_profiles, but provides a more common name."""
+    return gen_profiles(base, prob, distribution)
 
 
 def sparse_game(players, strats, num, distribution=default_distribution):
@@ -212,10 +219,7 @@ def gen_noise( # pylint: disable=too-many-arguments,too-many-locals
     return paygame.samplegame_replace(base, new_profiles, sample_payoffs)
 
 
-def samplegame( # pylint: disable=too-many-arguments
-        players, strats, prob=0.5, min_samples=1, min_width=0, max_width=1,
-        payoff_distribution=default_distribution,
-        noise_distribution=width_gaussian):
+def samplegame(players, strats, *args, **kwargs):
     """Generate a random role symmetric sample game
 
     Parameters
@@ -224,6 +228,22 @@ def samplegame( # pylint: disable=too-many-arguments
         The number of players per role.
     strats : int or [int]
         The number of strategies per role.
+    **args
+        The arguments to pass to samplegame_replace.
+    """
+    return samplegame_replace(rsgame.empty(players, strats), *args, **kwargs)
+
+
+def samplegame_replace( # pylint: disable=too-many-arguments
+        base, prob=0.5, min_samples=1, min_width=0, max_width=1,
+        payoff_distribution=default_distribution,
+        noise_distribution=width_gaussian):
+    """Generate a random role symmetric sample game
+
+    Parameters
+    ----------
+    base : RsGame
+        The structure of the game to generate.
     prob : float, optional
         The probability of adding another sample above min_samples. These draws
         are repeated, so 0.5 will add one extra sample in expectation.
@@ -241,11 +261,11 @@ def samplegame( # pylint: disable=too-many-arguments
         a description of width distributions.
     """
     if min_samples == 0:
-        base = game(players, strats, prob, payoff_distribution)
+        profs = game_replace(base, prob, payoff_distribution)
         min_samples = 1
     else:
-        base = game(players, strats, distribution=payoff_distribution)
-    return gen_noise(base, prob, min_samples, min_width, max_width,
+        profs = game_replace(base, distribution=payoff_distribution)
+    return gen_noise(profs, prob, min_samples, min_width, max_width,
                      noise_distribution)
 
 
@@ -263,8 +283,9 @@ def independent_game(num_role_strats, distribution=default_distribution):
         The distribution to sample payoffs from. Must take a single shape
         argument and return an ndarray of iid values with that shape.
     """
-    return matgame.matgame(distribution(
-        tuple(num_role_strats) + (len(num_role_strats),)))
+    num_role_strats = np.asarray(num_role_strats, int)
+    shape = np.append(num_role_strats, num_role_strats.size)
+    return matgame.matgame(distribution(shape))
 
 
 def covariant_game(

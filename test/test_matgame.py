@@ -333,12 +333,12 @@ def random_names(num):
         utils.random_strings(1, 3)), num)))
 
 
-@pytest.mark.parametrize('_', range(100))
+@pytest.mark.parametrize('_', range(20))
 def test_random_serialize_copy_role_lengths(_):
     """Test serialization copy"""
-    num_roles = random.randint(2, 4)
+    num_roles = random.randint(2, 3)
     roles = random_names(num_roles)
-    strats = tuple(random_names(random.randint(2, 4))
+    strats = tuple(random_names(random.randint(2, 3))
                    for _ in range(num_roles))
     players = [random.randint(1, 3) for _ in range(num_roles)]
     game = full_game(roles, players, strats)
