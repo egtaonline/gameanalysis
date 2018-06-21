@@ -32,6 +32,7 @@ ubuntu-reqs:
 	sudo apt-get install python3 libatlas-base-dev gfortran python3-venv moreutils jq
 
 docs:
+	rm -f sphinx/gameanalysis.rst sphinx/gameanalysis.*.rst
 	bin/python setup.py build_sphinx -b html
 
 publish:
