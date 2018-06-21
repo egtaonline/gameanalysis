@@ -38,7 +38,7 @@ publish:
 clean:
 	rm -rf bin build dist include lib lib64 share pyvenv.cfg gameanalysis.egg-info pip-selfcheck.json __pycache__ site-packages
 
-travis: PYTEST_ARGS += -v -n2
+travis: PYTEST_ARGS += -n2
 travis: PYLINT_ARGS += -d fixme -j2
 travis: check test
 
