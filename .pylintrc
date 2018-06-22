@@ -170,7 +170,7 @@ ignore-mixin-members=yes
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set).
-ignored-classes=redirect_stdout,redirect_stderr,finfo,minimum,maximum,fmin,fmax,bitwise_or,scipy.special,autograd.numpy
+ignored-classes=redirect_stdout,redirect_stderr,finfo,minimum,maximum,fmin,fmax,logical_or,logaddexp,scipy.special,autograd.numpy
 
 # When zope mode is activated, add a predefined set of Zope acquired attributes
 # to generated-members.

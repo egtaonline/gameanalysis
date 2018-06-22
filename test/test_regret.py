@@ -32,16 +32,17 @@ def test_pure_strategy_deviation_gains():
     game = paygame.game(2, [2, 2], profiles, payoffs)
 
     gains = regret.pure_strategy_deviation_gains(game, [2, 0, 2, 0])
-    assert np.allclose(gains, [8, 0, 3, 0])
+    assert np.allclose(gains, [0, 8, 0, 0, 0, 3, 0, 0])
     gains = regret.pure_strategy_deviation_gains(game, [1, 1, 1, 1])
-    assert np.allclose(gains, [9, -9, 4, -4])
+    assert np.allclose(gains, [0, 9, -9, 0, 0, 4, -4, 0])
 
 
 def test_empty_pure_strategy_deviation_gains():
     """Test empty pure strategy deviation gains"""
     game = rsgame.empty(2, [2, 2])
     gains = regret.pure_strategy_deviation_gains(game, [2, 0, 2, 0])
-    assert np.allclose(gains, [np.nan, 0, np.nan, 0], equal_nan=True)
+    expected = [np.nan, np.nan, 0, 0, np.nan, np.nan, 0, 0]
+    assert np.allclose(gains, expected, equal_nan=True)
 
 
 @pytest.mark.parametrize('_', range(20))

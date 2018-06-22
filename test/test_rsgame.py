@@ -37,19 +37,11 @@ def test_stratarray_properties(): # pylint: disable=too-many-statements
     assert np.all(sarr.role_indices == [0])
     assert sarr.num_all_restrictions == 1
     assert sarr.num_pure_restrictions == 1
-    assert np.all(sarr.num_strat_devs == [0])
-    assert np.all(sarr.num_role_devs == [0])
-    assert sarr.num_devs == 0
-    with warnings.catch_warnings(record=True) as warns:
-        warnings.simplefilter('always')
-        assert np.all(sarr.dev_strat_starts == [0])
-        assert len(warns) == 1
-        assert issubclass(warns[0].category, UserWarning)
-    with warnings.catch_warnings(record=True) as warns:
-        warnings.simplefilter('always')
-        assert np.all(sarr.dev_role_starts == [0])
-        assert len(warns) == 1
-        assert issubclass(warns[0].category, UserWarning)
+    assert np.all(sarr.num_strat_devs == [1])
+    assert np.all(sarr.num_role_devs == [1])
+    assert sarr.num_devs == 1
+    assert np.all(sarr.dev_strat_starts == [0])
+    assert np.all(sarr.dev_role_starts == [0])
     assert np.all(sarr.dev_from_indices == [])
     assert np.all(sarr.dev_to_indices == [])
 
@@ -61,13 +53,13 @@ def test_stratarray_properties(): # pylint: disable=too-many-statements
     assert np.all(sarr.role_indices == [0, 0, 0])
     assert sarr.num_all_restrictions == 7
     assert sarr.num_pure_restrictions == 3
-    assert np.all(sarr.num_strat_devs == [2, 2, 2])
-    assert np.all(sarr.num_role_devs == [6])
-    assert sarr.num_devs == 6
-    assert np.all(sarr.dev_strat_starts == [0, 2, 4])
+    assert np.all(sarr.num_strat_devs == [3, 3, 3])
+    assert np.all(sarr.num_role_devs == [9])
+    assert sarr.num_devs == 9
+    assert np.all(sarr.dev_strat_starts == [0, 3, 6])
     assert np.all(sarr.dev_role_starts == [0])
-    assert np.all(sarr.dev_from_indices == [0, 0, 1, 1, 2, 2])
-    assert np.all(sarr.dev_to_indices == [1, 2, 0, 2, 0, 1])
+    assert np.all(sarr.dev_from_indices == [0, 0, 0, 1, 1, 1, 2, 2, 2])
+    assert np.all(sarr.dev_to_indices == [0, 1, 2, 0, 1, 2, 0, 1, 2])
 
     sarr = stratarray([1, 3])
     assert sarr.num_strats == 4
@@ -77,21 +69,13 @@ def test_stratarray_properties(): # pylint: disable=too-many-statements
     assert np.all(sarr.role_indices == [0, 1, 1, 1])
     assert sarr.num_all_restrictions == 7
     assert sarr.num_pure_restrictions == 3
-    assert np.all(sarr.num_strat_devs == [0, 2, 2, 2])
-    assert np.all(sarr.num_role_devs == [0, 6])
-    assert sarr.num_devs == 6
-    with warnings.catch_warnings(record=True) as warns:
-        warnings.simplefilter('always')
-        assert np.all(sarr.dev_strat_starts == [0, 0, 2, 4])
-        assert len(warns) == 1
-        assert issubclass(warns[0].category, UserWarning)
-    with warnings.catch_warnings(record=True) as warns:
-        warnings.simplefilter('always')
-        assert np.all(sarr.dev_role_starts == [0, 0])
-        assert len(warns) == 1
-        assert issubclass(warns[0].category, UserWarning)
-    assert np.all(sarr.dev_from_indices == [1, 1, 2, 2, 3, 3])
-    assert np.all(sarr.dev_to_indices == [2, 3, 1, 3, 1, 2])
+    assert np.all(sarr.num_strat_devs == [1, 3, 3, 3])
+    assert np.all(sarr.num_role_devs == [1, 9])
+    assert sarr.num_devs == 10
+    assert np.all(sarr.dev_strat_starts == [0, 1, 4, 7])
+    assert np.all(sarr.dev_role_starts == [0, 1])
+    assert np.all(sarr.dev_from_indices == [0, 1, 1, 1, 2, 2, 2, 3, 3, 3])
+    assert np.all(sarr.dev_to_indices == [0, 1, 2, 3, 1, 2, 3, 1, 2, 3])
 
     sarr = stratarray([3, 2, 1])
     assert sarr.num_strats == 6
@@ -101,21 +85,15 @@ def test_stratarray_properties(): # pylint: disable=too-many-statements
     assert np.all(sarr.role_indices == [0, 0, 0, 1, 1, 2])
     assert sarr.num_all_restrictions == 21
     assert sarr.num_pure_restrictions == 6
-    assert np.all(sarr.num_strat_devs == [2, 2, 2, 1, 1, 0])
-    assert np.all(sarr.num_role_devs == [6, 2, 0])
-    assert sarr.num_devs == 8
-    with warnings.catch_warnings(record=True) as warns:
-        warnings.simplefilter('always')
-        assert np.all(sarr.dev_strat_starts == [0, 2, 4, 6, 7, 8])
-        assert len(warns) == 1
-        assert issubclass(warns[0].category, UserWarning)
-    with warnings.catch_warnings(record=True) as warns:
-        warnings.simplefilter('always')
-        assert np.all(sarr.dev_role_starts == [0, 6, 8])
-        assert len(warns) == 1
-        assert issubclass(warns[0].category, UserWarning)
-    assert np.all(sarr.dev_from_indices == [0, 0, 1, 1, 2, 2, 3, 4])
-    assert np.all(sarr.dev_to_indices == [1, 2, 0, 2, 0, 1, 4, 3])
+    assert np.all(sarr.num_strat_devs == [3, 3, 3, 2, 2, 1])
+    assert np.all(sarr.num_role_devs == [9, 4, 1])
+    assert sarr.num_devs == 14
+    assert np.all(sarr.dev_strat_starts == [0, 3, 6, 9, 11, 13])
+    assert np.all(sarr.dev_role_starts == [0, 9, 13])
+    expected = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5]
+    assert np.all(sarr.dev_from_indices == expected)
+    expected = [0, 1, 2, 0, 1, 2, 0, 1, 2, 3, 4, 3, 4, 5]
+    assert np.all(sarr.dev_to_indices == expected)
 
 
 def test_restriction_enumeration():
@@ -731,14 +709,19 @@ def test_indices():
     assert sarr.role_strat_index('r0', 's2') == 2
     assert sarr.role_strat_index('r1', 's3') == 3
     assert sarr.role_strat_index('r1', 's4') == 4
-    assert sarr.role_strat_dev_index('r0', 's0', 's1') == 0
-    assert sarr.role_strat_dev_index('r0', 's0', 's2') == 1
-    assert sarr.role_strat_dev_index('r0', 's1', 's0') == 2
-    assert sarr.role_strat_dev_index('r0', 's1', 's2') == 3
-    assert sarr.role_strat_dev_index('r0', 's2', 's0') == 4
-    assert sarr.role_strat_dev_index('r0', 's2', 's1') == 5
-    assert sarr.role_strat_dev_index('r1', 's3', 's4') == 6
-    assert sarr.role_strat_dev_index('r1', 's4', 's3') == 7
+    assert sarr.role_strat_dev_index('r0', 's0', 's0') == 0
+    assert sarr.role_strat_dev_index('r0', 's0', 's1') == 1
+    assert sarr.role_strat_dev_index('r0', 's0', 's2') == 2
+    assert sarr.role_strat_dev_index('r0', 's1', 's0') == 3
+    assert sarr.role_strat_dev_index('r0', 's1', 's1') == 4
+    assert sarr.role_strat_dev_index('r0', 's1', 's2') == 5
+    assert sarr.role_strat_dev_index('r0', 's2', 's0') == 6
+    assert sarr.role_strat_dev_index('r0', 's2', 's1') == 7
+    assert sarr.role_strat_dev_index('r0', 's2', 's2') == 8
+    assert sarr.role_strat_dev_index('r1', 's3', 's3') == 9
+    assert sarr.role_strat_dev_index('r1', 's3', 's4') == 10
+    assert sarr.role_strat_dev_index('r1', 's4', 's3') == 11
+    assert sarr.role_strat_dev_index('r1', 's4', 's4') == 12
     rs_names = (
         ('r0', 's0'), ('r0', 's1'), ('r0', 's2'), ('r1', 's3'), ('r1', 's4'))
     assert rs_names == sarr.role_strat_names
@@ -1614,7 +1597,7 @@ def test_dev_payoff_json():
             'cases.',
             UserWarning)
         game = rsgame.empty([11, 3], [2, 1])
-        devpay = [5, 0]
+        devpay = [0, 5, 0, 0, 0]
         json_devpay = {'r0': {'s0': {'s1': 5}}}
         json_devpay2 = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 0}},
                         'r1': {'s2': {}}}
@@ -1625,7 +1608,7 @@ def test_dev_payoff_json():
         assert np.allclose(game.devpay_from_json(json_devpay), devpay)
         assert np.allclose(game.devpay_from_json(json_devpay2), devpay)
 
-        devpay = [5, 4]
+        devpay = [0, 5, 4, 0, 0]
         json_devpay = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 4}}}
         assert game.devpay_to_json(devpay) == json_devpay
         dest = np.empty(game.num_devs)

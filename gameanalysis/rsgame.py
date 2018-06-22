@@ -78,7 +78,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
             (r, s, d): i for i, (r, s, d)
             in enumerate(itertools.chain.from_iterable(
                 itertools.chain.from_iterable(
-                    ((r, s, d) for d in strats if d != s)
+                    ((r, s, d) for d in strats)
                     for s in strats)
                 for r, strats
                 in zip(self.role_names, self.strat_names)))}
@@ -113,7 +113,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     @utils.memoize
     def num_strat_devs(self):
         """The number of deviations for each strategy"""
-        devs = np.repeat(self.num_role_strats - 1, self.num_role_strats)
+        devs = np.repeat(self.num_role_strats, self.num_role_strats)
         devs.setflags(write=False)
         return devs
 
@@ -121,7 +121,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     @utils.memoize
     def num_role_devs(self):
         """The number of deviations for each role"""
-        devs = (self.num_role_strats - 1) * self.num_role_strats
+        devs = self.num_role_strats ** 2
         devs.setflags(write=False)
         return devs
 
@@ -135,12 +135,6 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     @utils.memoize
     def dev_strat_starts(self):
         """The start index for each strategy deviation"""
-        if np.any(self.num_role_strats == 1):
-            warnings.warn(
-                'using reduceat with dev_strat_starts will not produce '
-                'correct results if any role only has one strategy. This '
-                'might get fixed at some point, but currently extra care must '
-                'be taken for these cases.')
         starts = np.insert(self.num_strat_devs[:-1].cumsum(), 0, 0)
         starts.setflags(write=False)
         return starts
@@ -149,12 +143,6 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     @utils.memoize
     def dev_role_starts(self):
         """The start index for each role deviation"""
-        if np.any(self.num_role_strats == 1):
-            warnings.warn(
-                'using reduceat with dev_role_starts will not produce '
-                'correct results if any role only has one strategy. This '
-                'might get fixed at some point, but currently extra care must '
-                'be taken for these cases.')
         starts = np.insert(self.num_role_devs[:-1].cumsum(), 0, 0)
         starts.setflags(write=False)
         return starts
@@ -171,19 +159,9 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     @utils.memoize
     def dev_to_indices(self):
         """The strategy deviating to for each deviation"""
-        inds = (np.arange(self.num_devs) -
-                self.dev_strat_starts.repeat(self.num_strat_devs) +
-                self.role_starts.repeat(self.num_role_devs))
-
-        # The use of bincount here allows for one strategy roles
-        pos_offset = np.bincount(np.arange(self.num_strats) -
-                                 self.role_starts.repeat(self.num_role_strats)
-                                 + self.dev_strat_starts,
-                                 minlength=self.num_devs + 1)[:-1]
-        neg_offset = np.bincount(self.dev_strat_starts[1:],
-                                 minlength=self.num_devs + 1)[:-1]
-        inds += np.cumsum(pos_offset - neg_offset)
-
+        inds = np.concatenate([
+            np.tile(np.arange(n) + s, n) for n, s
+            in zip(self.num_role_strats, self.role_starts)])
         inds.setflags(write=False)
         return inds
 
@@ -261,7 +239,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         utils.check(
             restrict.shape[axis] == self.num_strats,
             'restriction must have valid shape')
-        return np.all(np.bitwise_or.reduceat(restrict, self.role_starts, axis),
+        return np.all(np.logical_or.reduceat(restrict, self.role_starts, axis),
                       axis)
 
     def _is_pure_restriction(self, restrict, *, axis=-1):
@@ -1289,7 +1267,7 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         """Format a profile and deviation payoffs as json"""
         payoffs = np.asarray(payoffs, float)
         return {r: {s: {d: pay.item() for pay, d  # pragma: no branch
-                        in zip(spays, (d for d in ses if d != s))
+                        in zip(spays, ses)
                         if pay != 0}
                     for spays, s
                     in zip(np.split(rpay, n), ses)

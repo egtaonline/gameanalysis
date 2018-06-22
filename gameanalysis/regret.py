@@ -2,24 +2,36 @@
 import numpy as np
 
 
-# FIXME Fix this to return 0 for devs to self
-def pure_strategy_deviation_gains(game, profile):
-    """Returns the pure strategy deviations gains
+def pure_strategy_deviation_pays(game, profile):
+    """Returns the pure strategy deviation payoffs
 
-    The result is a compact array of deviation gains. Each element corresponds
-    to the deviation from strategy i to strategy j ordered by (i, j) for all
-    valid deviations."""
+    The result is a compact array of deviation payoffs. Each element
+    corresponds to the payoff of deviating to strategy i from strategy j for
+    all valid deviations."""
     profile = np.asarray(profile, int)
-    dev_profs = profile[None].repeat(game.num_devs, 0)
-    dev_profs[np.arange(game.num_devs), game.dev_from_indices] -= 1
-    dev_profs[np.arange(game.num_devs), game.dev_to_indices] += 1
-
     pays = game.get_payoffs(profile)
-    return np.fromiter(  # pragma: no branch
-        (game.get_payoffs(prof)[t] - pays[f] if np.all(prof >= 0) else 0
-         for prof, f, t
-         in zip(dev_profs, game.dev_from_indices, game.dev_to_indices)),
-        float, game.num_devs)
+    devs = np.empty(game.num_devs)
+
+    for dev_ind, (from_ind, to_ind) in enumerate(zip(
+            game.dev_from_indices, game.dev_to_indices)):
+        if profile[from_ind] == 0:
+            devs[dev_ind] = 0
+        elif from_ind == to_ind:
+            devs[dev_ind] = pays[from_ind]
+        else:
+            prof_copy = profile.copy()
+            prof_copy[from_ind] -= 1
+            prof_copy[to_ind] += 1
+            devs[dev_ind] = game.get_payoffs(prof_copy)[to_ind]
+    return devs
+
+
+def pure_strategy_deviation_gains(game, profile):
+    """Returns the pure strategy deviations gains"""
+    profile = np.asarray(profile, int)
+    pays = game.get_payoffs(profile)
+    devs = pure_strategy_deviation_pays(game, profile)
+    return devs - pays.repeat(game.num_strat_devs)
 
 
 def pure_strategy_regret(game, prof):
@@ -27,7 +39,7 @@ def pure_strategy_regret(game, prof):
 
     If prof has more than one dimension, the last dimension is taken as a set
     of profiles and returned as a new array."""
-    return max(pure_strategy_deviation_gains(game, prof).max(), 0)
+    return pure_strategy_deviation_gains(game, prof).max()
 
 
 def mixture_deviation_gains(game, mix):
