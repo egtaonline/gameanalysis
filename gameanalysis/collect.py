@@ -6,9 +6,12 @@ import numpy as np
 from gameanalysis import utils
 
 
-def mcces(thresh):
+def mcces(thresh, iterable=()):
     """Create a new minimum connected component set"""
-    return _MinimumConnectedComponentElementSet(thresh)
+    mset = _MinimumConnectedComponentElementSet(thresh)
+    for vector, weight in iterable:
+        mset.add(vector, weight)
+    return mset
 
 
 class _MinimumConnectedComponentElementSet(object):
@@ -51,12 +54,24 @@ class _MinimumConnectedComponentElementSet(object):
         self._set = new_set
         return len(vecs) == 1
 
+    def get(self, vector):
+        """Get the representative vector if contained else None"""
+        vector = tuple(vector)
+        for set_tup in self._set:
+            (_, rep), svecs = set_tup
+            if any(self._similar(vector, v) for v in svecs):
+                return rep
+        return None
+
     def clear(self):
         """Remove all vectors added to the set"""
         self._set.clear()
 
     def __len__(self):
         return len(self._set)
+
+    def __contains__(self, vector):
+        return self.get(vector) is not None
 
     def __iter__(self):
         return iter((v, w) for (w, v), _ in self._set)

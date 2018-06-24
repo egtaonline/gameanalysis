@@ -27,6 +27,8 @@ def add_parser(subparsers):
         '--output', '-o', metavar='<output-file>', default=sys.stdout,
         type=argparse.FileType('w'), help="""Output file for script. (default:
         stdout)""")
+    # FIXME Change this so that it's normalized to be in [0, 1] (multiply by
+    # sqrt(2 * num_roles))
     parser.add_argument(
         '--dist-thresh', metavar='<distance-threshold>', type=float,
         default=0.1, help="""L2 norm threshold, inside of which, equilibria

@@ -422,14 +422,6 @@ def polymatrix_game(
     return matgame.matgame(payoffs)
 
 
-# FIXME Make sure this is the game
-def shapley(p=1, r=1, s=1):
-    """Return a Shapley game with optional weights for different strategies"""
-    return matgame.matgame([[[0, 0], [2 * r, p], [s, 2 * p]],
-                            [[p, 2 * r], [0, 0], [2 * s, r]],
-                            [[2 * p, s], [r, 2 * s], [0, 0]]])
-
-
 def rock_paper_scissors(win=1, loss=-1):
     """Return an instance of rock paper scissors"""
     if isinstance(win, abc.Iterable):

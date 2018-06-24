@@ -39,7 +39,8 @@ def pure_strategy_regret(game, prof):
 
     If prof has more than one dimension, the last dimension is taken as a set
     of profiles and returned as a new array."""
-    return pure_strategy_deviation_gains(game, prof).max()
+    with np.errstate(invalid='ignore'): # keep nans
+        return pure_strategy_deviation_gains(game, prof).max()
 
 
 def mixture_deviation_gains(game, mix):

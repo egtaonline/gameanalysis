@@ -52,13 +52,14 @@ def random_agg_large():
     return players, strats, functions
 
 
-def generate_games(num):
+# FIXME Make sure to test scarf too
+def generate_games(num): # pylint: disable=too-many-branches
     """Produce num random games per type"""
     np.random.seed(0)
-    with open(path.join(_DIR, 'example_games', 'hard_nash.json')) as f:
-        yield 'hard', gamereader.load(f).normalize()
-    with open(path.join(_DIR, 'example_games', '2x2x2.nfg')) as f:
-        yield 'gambit', gamereader.load(f).normalize()
+    with open(path.join(_DIR, 'example_games', 'hard_nash.json')) as fil:
+        yield 'hard', gamereader.load(fil).normalize()
+    with open(path.join(_DIR, 'example_games', '2x2x2.nfg')) as fil:
+        yield 'gambit', gamereader.load(fil).normalize()
     for _ in range(num):
         yield 'random', gamegen.game(*random_small()).normalize()
     for _ in range(num):
@@ -79,12 +80,12 @@ def generate_games(num):
         plays = np.random.randint(2, 4)
         yield 'polymatrix', gamegen.polymatrix_game(plays, strats).normalize()
     for _ in range(num):
-        params = np.random.random(3) + .5
-        yield 'shapley', gamegen.shapley(*params).normalize()
-    for _ in range(num):
         wins = np.random.random(3) + .5
         loss = -np.random.random(3) - .5
         yield 'roshambo', gamegen.rock_paper_scissors(wins, loss).normalize()
+    yield 'shapley easy', gamegen.rock_paper_scissors(win=2).normalize()
+    yield 'shapley normal', gamegen.rock_paper_scissors(win=1).normalize()
+    yield 'shapley hard', gamegen.rock_paper_scissors(win=0.5).normalize()
     for _ in range(num):
         yield 'normagg small', gamegen.normal_aggfn(*random_agg_small())
     for _ in range(num):
@@ -115,8 +116,9 @@ def generate_games(num):
 
 def compute(sets):
     """Compute overlap information from dictionary of sets"""
+    # FIXME Use appropriate set
     counts = collections.Counter(itertools.chain.from_iterable(sets.values()))
-    if counts:
+    if counts: # pylint: disable=no-else-return
         cards = {k: len(s) / len(counts) for k, s in sets.items()}
         weights = {k: sum(1 / counts[e] for e in s) / len(counts)
                    for k, s in sets.items()}
@@ -126,7 +128,7 @@ def compute(sets):
         return set(), zeros, zeros
 
 
-def process_game(args):
+def process_game(args): # pylint: disable=too-many-locals
     """Compute information about a game"""
     i, (name, game) = args
     np.random.seed(i)  # Reproducible randomness
@@ -141,7 +143,7 @@ def process_game(args):
     equilibria = []
     meth_eqa = {}
     methods = {}
-    for method, func in nash._AVAILABLE_METHODS.items():
+    for method, func in nash._AVAILABLE_METHODS.items(): # pylint: disable=protected-access,too-many-nested-blocks
         logging.warning('Starting {} for {} {:d}'.format(
             method, name, i))
         speed = 0
@@ -161,7 +163,7 @@ def process_game(args):
                         profs.add(ind)
                         if ind == len(equilibria):
                             equilibria.append(eqm)
-                except Exception as ex:
+                except Exception as ex: # pylint: disable=broad-except
                     speed += time.time() - start
                     logging.error(ex)
             prof_eqa[prof] = profs
@@ -189,12 +191,12 @@ def process_game(args):
 
 def update(means, new, count, num=1):
     """Recursively update mean dictionary"""
-    for k, v in new.items():
-        if isinstance(v, dict):
-            update(means.setdefault(k, {}), v, count)
+    for key, val in new.items():
+        if isinstance(val, dict):
+            update(means.setdefault(key, {}), val, count)
         else:
-            val = means.get(k, 0)
-            means[k] = val + (v - val) * num / count
+            value = means.get(key, 0)
+            means[key] = value + (val - value) * num / count
 
 
 def profile(num):
@@ -245,8 +247,8 @@ def write_file(results):
             names.get(m, w.capitalize()) for w in m.split('_')), m)
         for m in results}
 
-    with open(path.join(_DIR, 'sphinx', 'profile_nash.rst'), 'w') as f:
-        f.write(""".. _profile_nash:
+    with open(path.join(_DIR, 'sphinx', 'profile_nash.rst'), 'w') as fil:
+        fil.write(""".. _profile_nash:
 
 Nash Equilibrium Methods Comparison
 ===================================
@@ -264,9 +266,10 @@ certain games may be more difficult than others. It also provides an easy
 comparison metric to for baseline timing.
 
 """)
-        f.write('Comparisons Between Methods\n'
-                '----------------------------------\n\n')
-        f.write(tabulate.tabulate(
+        fil.write(
+            'Comparisons Between Methods\n'
+            '----------------------------------\n\n')
+        fil.write(tabulate.tabulate(
             sorted(([titles[m], v['card'], v['weight'], v['speed'],
                      v['norm_speed']]
                     for m, v in agg_results.items()),
@@ -274,51 +277,54 @@ comparison metric to for baseline timing.
             headers=['Method', 'Fraction of Eqa', 'Weighted Fraction',
                      'Time (sec)', 'Normalized Time'],
             tablefmt='rst'))
-        f.write('\n\n')
+        fil.write('\n\n')
 
         for method, game_info in results.items():
             title = titles[method]
-            f.write(title)
-            f.write('\n')
-            f.writelines(itertools.repeat('-', len(title)))
-            f.write('\n\n')
+            fil.write(title)
+            fil.write('\n')
+            fil.writelines(itertools.repeat('-', len(title)))
+            fil.write('\n\n')
 
             agg_info = agg_results[method]
-            f.write('Initial Profile Rates\n'
-                    '^^^^^^^^^^^^^^^^^^^^^\n\n')
-            f.write(tabulate.tabulate(
+            fil.write(
+                'Initial Profile Rates\n'
+                '^^^^^^^^^^^^^^^^^^^^^\n\n')
+            fil.write(tabulate.tabulate(
                 sorted(([k.capitalize(), v, agg_info['profweight'][k]]
                         for k, v in agg_info['profcard'].items()),
                        key=lambda x: x[1], reverse=True),
                 headers=['Starting Type', 'Fraction of Eqa',
                          'Weighted Fraction'], tablefmt='rst'))
-            f.write('\n\n')
+            fil.write('\n\n')
 
-            f.write('Compared to Other Methods\n'
-                    '^^^^^^^^^^^^^^^^^^^^^^^^^\n\n')
-            f.write(tabulate.tabulate(
+            fil.write(
+                'Compared to Other Methods\n'
+                '^^^^^^^^^^^^^^^^^^^^^^^^^\n\n')
+            fil.write(tabulate.tabulate(
                 sorted(([titles[m], v,
                          agg_info['norm_speed'] / agg_results[m]['norm_speed']]
                         for m, v in agg_info['pair'].items()),
                        key=lambda x: x[1], reverse=True),
                 headers=['Method', 'Fraction of Eqa', 'Time Ratio'],
                 tablefmt='rst'))
-            f.write('\n\n')
+            fil.write('\n\n')
 
-            f.write('By Game Type\n'
-                    '^^^^^^^^^^^^\n\n')
+            fil.write(
+                'By Game Type\n'
+                '^^^^^^^^^^^^\n\n')
             for game, info in game_info.items():
-                f.write(game.capitalize())
-                f.write('\n')
-                f.writelines(itertools.repeat('"', len(game)))
-                f.write('\n\n')
-                f.write(tabulate.tabulate([
+                fil.write(game.capitalize())
+                fil.write('\n')
+                fil.writelines(itertools.repeat('"', len(game)))
+                fil.write('\n\n')
+                fil.write(tabulate.tabulate([
                     ['Fraction of Eqa', info['card']],
                     ['Weighted Fraction of Eqa', info['weight']],
                     ['Time (sec)', info['speed']],
                     ['Normalized Time', info['norm_speed']],
                 ], headers=['Metric', 'Value'], tablefmt='rst'))
-                f.write('\n\n')
+                fil.write('\n\n')
 
 
 # TODO Use argparse to set number of samples, logging, and number of processes

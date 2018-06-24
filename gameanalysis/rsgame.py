@@ -27,7 +27,6 @@ import contextlib
 import functools
 import itertools
 import string
-import warnings
 import collections.abc as cabc
 
 import numpy as np
@@ -289,6 +288,11 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
             if inc > 0:
                 rmix[np.argpartition(err, inc - 1)[:inc]] += 1
         return imix / ires
+
+    def minimum_prob(self, mixture, *, min_prob=1e-3):
+        """Ensure each strategy is played with `min_prob`"""
+        return min_prob +  mixture * np.repeat(
+            1 - self.num_role_strats * min_prob, self.num_role_strats)
 
     def is_mixture(self, mixture, *, axis=-1):
         """Verify that a mixture is valid for game"""

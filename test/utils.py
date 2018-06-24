@@ -1,23 +1,7 @@
 """Utilities for testing"""
 import itertools
 
-import pytest
-import timeout_decorator
-
 from gameanalysis import rsgame
-
-
-def timeout(seconds):
-    """Timeout test without error"""
-    def decorator(func):
-        """Decorator of function"""
-        for decorator in [
-                timeout_decorator.timeout(seconds),
-                pytest.mark.xfail(
-                    raises=timeout_decorator.timeout_decorator.TimeoutError)]:
-            func = decorator(func)
-        return func
-    return decorator
 
 
 def basic_games():

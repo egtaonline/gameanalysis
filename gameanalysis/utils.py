@@ -1,13 +1,17 @@
 """Utilities helpful for game analysis"""
+from collections import abc
+import contextlib
 import functools
 import inspect
 import itertools
 import math
 import operator
 import random
+import signal
 import string
+import sys
+import threading
 import warnings
-from collections import abc
 
 import numpy as np
 from numpy.lib import stride_tricks
@@ -430,14 +434,44 @@ def is_sorted(iterable, *, key=None, reverse=False, strict=False):
         return all(a <= b for a, b in zip(ait, bit))
 
 
-def allclose_perm(aarr, barr, **kwargs):
-    """allclose but for any permutation of actual"""
-    aarr, barr = np.asarray(aarr), np.asarray(barr)
+def allequal_perm(aarr, barr):
+    """Test if two arrays are equal for any permutation of their first axis
+
+    Parameters
+    ----------
+    aarr, barr : array_like
+        Identically sized arrays. This will determine if any permutation of
+        their first axis will make them equal.
+    """
+    aarr, barr = map(np.asarray, [aarr, barr])
     check(
-        aarr.ndim == 2 and aarr.shape == barr.shape,
-        'can only compare identically sized 2d arrays')
-    isclose = np.isclose(aarr[:, None], barr, **kwargs).all(2)
-    return isclose[optimize.linear_sum_assignment(~isclose)].all()
+        aarr.shape == barr.shape,
+        'can only compare identically sized arrays')
+    auniq, acounts = np.unique(
+        axis_to_elem(aarr.reshape(aarr.shape[0], -1)), return_counts=True)
+    buniq, bcounts = np.unique(
+        axis_to_elem(barr.reshape(barr.shape[0], -1)), return_counts=True)
+    return np.all(acounts == bcounts) and np.all(auniq == buniq)
+
+
+def allclose_perm(aarr, barr, **kwargs):
+    """allclose but for any permutation of aarr and barr
+
+    Parameters
+    ----------
+    aarr, barr : array_like
+        Identically sized arrays of floats. This will determine if any
+        permutation of their first axis will make `allclose` true.
+    kwargs
+        Additional arguments to pass to `isclose`.
+    """
+    aarr, barr = map(np.asarray, [aarr, barr])
+    check(
+        aarr.shape == barr.shape,
+        'can only compare identically sized arrays')
+    isclose = np.isclose(aarr[:, None], barr, **kwargs)
+    isclose.shape = isclose.shape[:2] + (-1,)
+    return isclose[optimize.linear_sum_assignment(~isclose.all(2))].all()
 
 
 def check(condition, message, *args, **kwargs):
@@ -511,3 +545,114 @@ def asubsequences(array, seq=2, axis=0):
     return stride_tricks.as_strided(
         array, shape=[seq] + new_shape,
         strides=(array.strides[axis],) + array.strides)
+
+
+
+def _raise_handler(exception):
+    """Create handler for exception"""
+    def handler(_signum, _frame):
+        """Raise timeout error"""
+        raise exception
+    return handler
+
+
+def _timeout_context(seconds, exception):
+    """Timeout context manager that works in parent or child thread"""
+    if seconds is None or seconds <= 0: # pylint: disable=no-else-return
+        return _noop()
+    elif threading.current_thread() == threading.main_thread():
+        return _timeout_context_main(seconds, exception)
+    else:
+        return _timeout_context_child(seconds, exception)
+
+
+@contextlib.contextmanager
+def _noop():
+    """Noop for irrelevant time"""
+    yield
+
+
+@contextlib.contextmanager
+def _timeout_context_main(seconds, exception):
+    """Timeout context manager for main thread"""
+    old = signal.signal(signal.SIGALRM, _raise_handler(exception))
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    yield
+    signal.setitimer(signal.ITIMER_REAL, 0)
+    signal.signal(signal.SIGALRM, old)
+
+
+@contextlib.contextmanager
+def _timeout_context_child(seconds, exception):
+    """Timeout context manager for child thread"""
+    timedout = threading.Event()
+    complete = threading.Event()
+
+    def globaltrace(_frame, why, _arg): # pragma: no cover
+        """Global trace to set local trace"""
+        if why == 'call': # pylint: disable=no-else-return
+            return localtrace
+        else:
+            return None
+
+    def localtrace(_frame, why, _arg): # pragma: no cover
+        """Local trace to check for timeout"""
+        if complete.is_set(): # pylint: disable=no-else-return
+            return None
+        elif timedout.is_set() and why == 'line':
+            complete.set()
+            raise exception
+        else:
+            return localtrace
+
+    timer = threading.Timer(seconds, timedout.set)
+    timer.start()
+    sys.settrace(globaltrace)
+    yield
+    # These are executed, but coverage misses them, potentially due to messing
+    # with the trace
+    complete.set() # pragma: no cover
+    timer.cancel() # pragma: no cover
+
+
+class _Timeout(object): # pylint: disable=too-few-public-methods
+    """Timeout class"""
+    def __init__(self, seconds, exception):
+        self._create = functools.partial(_timeout_context, seconds, exception)
+        self._seconds = seconds
+        self._exception = exception
+        self._context = None
+
+    def __enter__(self):
+        self._context = self._create()
+        self._context.__enter__() # pylint: disable=no-member
+
+    def __exit__(self, typ, value, traceback):
+        self._context.__exit__(typ, value, traceback) # pylint: disable=no-member
+        self._context = None
+
+    def __call__(self, func):
+        @functools.wraps(func)
+        def wrapped(*args, **kwargs):
+            """Wrapped function"""
+            with self._create():
+                return func(*args, **kwargs)
+        return wrapped
+
+
+def timeout(seconds=None, exception=TimeoutError):
+    """Timeout code
+
+    A TimeoutError is raised if code doesn't finish within seconds. The result
+    can be used as a decorator or as a context manager. This will work in child
+    threads, but as a significant performance hit.
+
+    Parameters
+    ----------
+    seconds : int, optional
+        The number of seconds until timeout. If omitted, no timeout is used,
+        and this is essentially a no op
+    exception : Exception, optional
+        The exception to raise. IF omitted, a generic TimeoutError is used.
+    """
+    return _Timeout(seconds, exception)

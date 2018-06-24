@@ -80,3 +80,18 @@ def loadj(obj): # pylint: disable=too-many-branches,too-many-return-statements
         return paygame.samplegame_json(obj)
     else:
         raise ValueError('unknown game type {}'.format(game_type))
+
+
+def dumpj(game):
+    """Dump a game to json"""
+    return game.to_json()
+
+
+def dumps(game):
+    """Dump a game to a string"""
+    return json.dumps(dumpj(game))
+
+
+def dump(game, file_like):
+    """Dump a game to a file object"""
+    return json.dump(dumpj(game), file_like)

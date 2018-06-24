@@ -1,5 +1,8 @@
 """Test utils"""
+from concurrent import futures
 import itertools
+import threading
+import time
 import warnings
 
 import numpy as np
@@ -318,3 +321,48 @@ def test_asubsequences_2d():
     array = np.random.random((5, 3))
     expected = np.stack([array[:-1], array[1:]])
     assert np.all(utils.asubsequences(array) == expected)
+
+
+def test_no_timeout():
+    """Test no timeout when omitted"""
+    with utils.timeout():
+        time.sleep(1)
+
+
+def test_timeout_nothing():
+    """Test that less than timeout, nothing happens"""
+    with utils.timeout(2):
+        time.sleep(1)
+
+
+def test_timeout_raises():
+    """Test that longer code raises error"""
+    with pytest.raises(TimeoutError), utils.timeout(1):
+        time.sleep(2)
+
+
+@utils.timeout(1)
+def timeout_thread(): # pragma: no cover
+    """Timeout in child thread"""
+    assert threading.current_thread() != threading.main_thread()
+    time.sleep(2)
+
+
+def test_timeout_thread():
+    """Test that timeout even works in a child thread"""
+    with futures.ThreadPoolExecutor(1) as executor:
+        with pytest.raises(TimeoutError):
+            executor.submit(timeout_thread).result()
+
+
+def no_timeout_thread():
+    """No timeout in child thread"""
+    assert threading.current_thread() != threading.main_thread()
+    with utils.timeout(2):
+        time.sleep(1)
+
+
+def test_not_timeout_thread():
+    """Test that timeout even works in a child thread"""
+    with futures.ThreadPoolExecutor(1) as executor:
+        assert executor.submit(no_timeout_thread).result() is None

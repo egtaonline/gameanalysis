@@ -8,7 +8,8 @@ from gameanalysis import paygame
 from gameanalysis import regret
 from gameanalysis import rsgame
 from gameanalysis import trace
-from test import utils # pylint: disable=wrong-import-order
+from gameanalysis import utils
+from test import utils as tu # pylint: disable=wrong-import-order
 
 
 # This tests the edge case for non-differentiability of the equilibrium is
@@ -37,8 +38,9 @@ def test_trace_equilibria():
     assert np.allclose(mixes, [0, 1])
 
 
+@pytest.mark.xfail(raises=TimeoutError)
 @utils.timeout(20)
-@pytest.mark.parametrize('base', utils.edge_games())
+@pytest.mark.parametrize('base', tu.edge_games())
 def test_random_trace_equilibria(base):
     """Test random equilibrium trace"""
     game0 = gamegen.poly_aggfn(base.num_role_players, base.num_role_strats, 6)
@@ -78,12 +80,13 @@ def random_pairs():
     yield dom1, mix
     yield mix, dom2
     yield dom2, mix
-    for base in utils.edge_games():
+    for base in tu.edge_games():
         play, strats = base.num_role_players, base.num_role_strats
         yield (gamegen.poly_aggfn(play, strats, 6),
                gamegen.poly_aggfn(play, strats, 6))
 
 
+@pytest.mark.xfail(raises=TimeoutError)
 @utils.timeout(20)
 @pytest.mark.parametrize('game0,game1', random_pairs())
 def test_random_trace_interpolate(game0, game1): # pylint: disable=too-many-locals
