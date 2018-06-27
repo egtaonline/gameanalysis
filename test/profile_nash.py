@@ -3,7 +3,9 @@
 This script compiles the results into a restructured text file in the
 documentation.
 """
+import argparse
 import collections
+import functools
 import itertools
 import logging
 import multiprocessing
@@ -13,9 +15,9 @@ import warnings
 from os import path
 
 import numpy as np
-from numpy import linalg
 import tabulate
 
+from gameanalysis import collect
 from gameanalysis import gamegen
 from gameanalysis import gamereader
 from gameanalysis import learning
@@ -52,7 +54,6 @@ def random_agg_large():
     return players, strats, functions
 
 
-# FIXME Make sure to test scarf too
 def generate_games(num): # pylint: disable=too-many-branches
     """Produce num random games per type"""
     np.random.seed(0)
@@ -114,71 +115,98 @@ def generate_games(num): # pylint: disable=too-many-branches
             yield 'rbf', learning.rbfgame_train(agg)
 
 
-def compute(sets):
+def compute(thresh, sets):
     """Compute overlap information from dictionary of sets"""
-    # FIXME Use appropriate set
-    counts = collections.Counter(itertools.chain.from_iterable(sets.values()))
-    if counts: # pylint: disable=no-else-return
-        cards = {k: len(s) / len(counts) for k, s in sets.items()}
-        weights = {k: sum(1 / counts[e] for e in s) / len(counts)
-                   for k, s in sets.items()}
-        return set(counts.keys()), cards, weights
+    joined = collect.mcces(thresh, itertools.chain.from_iterable(
+        sets.values()))
+    if joined: # pylint: disable=no-else-return
+        uniqs = {k: set(joined.get(v) for v, _ in vecs)
+                 for k, vecs in sets.items()}
+        counts = collections.Counter(itertools.chain.from_iterable(
+            uniqs.values()))
+        cards = {k: len(uniq) / len(joined) for k, uniq in uniqs.items()}
+        weights = {k: sum(1 / counts[u] for u in uniq) / len(joined)
+                   for k, uniq in uniqs.items()}
+        return joined, cards, weights
     else:
         zeros = {k: 0.0 for k in sets}
-        return set(), zeros, zeros
+        return joined, zeros, zeros
+
+
+def gen_profiles(game):
+    """Generate profile types and names"""
+    return {
+        'uniform': lambda: [game.uniform_mixture()],
+        'pure': game.pure_mixtures,
+        'biased': game.biased_mixtures,
+        'role biased': game.role_biased_mixtures,
+        'random': lambda: game.random_mixtures(game.num_role_strats.prod()),
+    }
+
+
+def gen_methods():
+    """Generate meothds and their names"""
+    yield 'replicator dynamics', False, nash.replicator_dynamics
+    yield 'regret matching', False, nash._regret_matching_mix # pylint: disable=protected-access
+    yield 'regret minimization', False, nash.regret_minimize
+    yield 'fictitious play', False, nash.fictitious_play
+    yield 'fictitious play long', False, functools.partial(
+        nash.fictitious_play, max_iters=10**7)
+    yield (
+        'multiplicative weights dist', False, nash.multiplicative_weights_dist)
+    yield (
+        'multiplicative weights stoch', False,
+        nash.multiplicative_weights_stoch)
+    yield (
+        'multiplicative weights bandit', False,
+        nash.multiplicative_weights_bandit)
+    yield 'scarf 1', True, functools.partial(nash.scarfs_algorithm, timeout=60)
+    yield 'scarf 5', True, functools.partial(
+        nash.scarfs_algorithm, timeout=5 * 60)
 
 
 def process_game(args): # pylint: disable=too-many-locals
     """Compute information about a game"""
     i, (name, game) = args
     np.random.seed(i)  # Reproducible randomness
-    profiles = {
-        'uniform': [game.uniform_mixture()],
-        'pure': game.grid_mixtures(2),
-        'biased': game.biased_mixtures(),
-        'role biased': game.role_biased_mixtures(),
-        'random': game.random_mixtures(game.num_role_strats.prod())
-    }
+    profiles = gen_profiles(game)
 
-    equilibria = []
+    reg_thresh = 1e-2 # FIXME
+    conv_thresh = 1e-2 * np.sqrt(2 * game.num_roles) # FIXME
+
     meth_eqa = {}
     methods = {}
-    for method, func in nash._AVAILABLE_METHODS.items(): # pylint: disable=protected-access,too-many-nested-blocks
-        logging.warning('Starting {} for {} {:d}'.format(
-            method, name, i))
+    for method, single, func in gen_methods():
+        logging.warning('Starting {} for {} {:d}'.format(method, name, i))
         speed = 0
+        count = 0
         prof_eqa = {}
-        for prof, mixes in profiles.items():
-            profs = set()
-            for mix in mixes:
+        for prof, mix_gen in profiles.items():
+            if prof != 'uniform' and single:
+                continue
+            profs = collect.mcces(conv_thresh)
+            for mix in mix_gen():
+                count += 1
                 start = time.time()
-                try:
-                    eqm = func(game, mix)
-                    speed += time.time() - start
-                    reg = regret.mixture_regret(game, eqm)
-                    if reg < 1e-3:
-                        ind = next((i for i, eq in enumerate(equilibria)
-                                    if linalg.norm(eqm - eq) < 1e-2),
-                                   len(equilibria))
-                        profs.add(ind)
-                        if ind == len(equilibria):
-                            equilibria.append(eqm)
-                except Exception as ex: # pylint: disable=broad-except
-                    speed += time.time() - start
-                    logging.error(ex)
+                eqm = func(game, mix)
+                speed += (time.time() - start) / count
+                reg = regret.mixture_regret(game, eqm)
+                if reg < reg_thresh:
+                    profs.add(eqm, reg)
             prof_eqa[prof] = profs
-        meth, prof_card, prof_weight = compute(prof_eqa)
+        meth, prof_card, prof_weight = compute(conv_thresh, prof_eqa)
         meth_eqa[method] = meth
         methods[method] = {'profcard': prof_card,
                            'profweight': prof_weight,
                            'speed': speed}
         logging.warning('Finished {} for {} {:d} - took {:f} seconds'.format(
             method, name, i, speed))
-    _, meth_card, meth_weight = compute(meth_eqa)
+    _, meth_card, meth_weight = compute(conv_thresh, meth_eqa)
     info = {
         ma: {
             'pair': {
-                mb: len(set.intersection(sa, sb)) / len(sb)
+                mb: (len(set(sb.get(e) for e, _ in sa).difference({None})) /
+                     len(sb))
                     if sb else 1.0
                 for mb, sb in meth_eqa.items()
                 if mb != ma},
@@ -232,21 +260,6 @@ def write_file(results):
             update(agg_info, info, game_count, count)
         agg_results[method] = agg_info
 
-    names = {
-        'replicator': 'Replicator Dynamics',
-        'fictitious': 'Fictitious Play',
-        'matching': 'Regret Matching',
-        'optimize': 'Regret Minimization',
-        'scarf': 'Simplical Subdivision',
-        'regret': 'EXP3',
-        'regret_dev': 'EXP3 Pure Deviations',
-        'regret_pay': 'EXP3 Single Payoff',
-    }
-    titles = {
-        m: '{} ({})'.format(' '.join(
-            names.get(m, w.capitalize()) for w in m.split('_')), m)
-        for m in results}
-
     with open(path.join(_DIR, 'sphinx', 'profile_nash.rst'), 'w') as fil:
         fil.write(""".. _profile_nash:
 
@@ -270,7 +283,7 @@ comparison metric to for baseline timing.
             'Comparisons Between Methods\n'
             '----------------------------------\n\n')
         fil.write(tabulate.tabulate(
-            sorted(([titles[m], v['card'], v['weight'], v['speed'],
+            sorted(([m.title(), v['card'], v['weight'], v['speed'],
                      v['norm_speed']]
                     for m, v in agg_results.items()),
                    key=lambda x: x[1], reverse=True),
@@ -280,7 +293,7 @@ comparison metric to for baseline timing.
         fil.write('\n\n')
 
         for method, game_info in results.items():
-            title = titles[method]
+            title = method.title()
             fil.write(title)
             fil.write('\n')
             fil.writelines(itertools.repeat('-', len(title)))
@@ -302,7 +315,7 @@ comparison metric to for baseline timing.
                 'Compared to Other Methods\n'
                 '^^^^^^^^^^^^^^^^^^^^^^^^^\n\n')
             fil.write(tabulate.tabulate(
-                sorted(([titles[m], v,
+                sorted(([m.title(), v,
                          agg_info['norm_speed'] / agg_results[m]['norm_speed']]
                         for m, v in agg_info['pair'].items()),
                        key=lambda x: x[1], reverse=True),
@@ -327,11 +340,20 @@ comparison metric to for baseline timing.
                 fil.write('\n\n')
 
 
-# TODO Use argparse to set number of samples, logging, and number of processes
-def main():
+def main(*argv):
     """Run profiling"""
-    write_file(profile(int(sys.argv[1]) if len(sys.argv) > 1 else 1))
+    parser = argparse.ArgumentParser(
+        description="""Run nash profiling and update documentation with
+        results.""")
+    parser.add_argument(
+        'num', nargs='?', metavar='<num>', type=int, default=1, help="""Number
+        of each game type to generate, when games are drawn from a
+        distribution.""")
+    # TODO Set logging and number of processes
+    args = parser.parse_args(argv)
+
+    write_file(profile(args.num))
 
 
 if __name__ == '__main__':
-    main()
+    main(*sys.argv[1:])
