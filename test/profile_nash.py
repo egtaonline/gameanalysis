@@ -17,13 +17,7 @@ from os import path
 import numpy as np
 import tabulate
 
-from gameanalysis import collect
-from gameanalysis import gamegen
-from gameanalysis import gamereader
-from gameanalysis import learning
-from gameanalysis import nash
-from gameanalysis import regret
-
+from gameanalysis import collect, gamegen, gamereader, learning, nash, regret
 
 _DIR = path.join(path.dirname(__file__), '..')
 
@@ -102,12 +96,9 @@ def generate_games(num): # pylint: disable=too-many-branches
         strats = np.random.randint(2, 6)
         players = np.random.randint(2, 11)
         yield 'local effect', gamegen.local_effect(players, strats)
-    for _ in range(num):
-        yield 'normagg large', gamegen.normal_aggfn(*random_agg_large())
-    for _ in range(num):
-        yield 'polyagg large', gamegen.poly_aggfn(*random_agg_large())
-    for _ in range(num):
-        yield 'sineagg large', gamegen.sine_aggfn(*random_agg_large())
+    yield 'normagg large', gamegen.normal_aggfn(*random_agg_large())
+    yield 'polyagg large', gamegen.poly_aggfn(*random_agg_large())
+    yield 'sineagg large', gamegen.sine_aggfn(*random_agg_large())
     for _ in range(num):
         agg = gamegen.sine_aggfn(*random_agg_small())
         with warnings.catch_warnings():
@@ -151,7 +142,7 @@ def gen_methods():
     yield 'regret minimization', False, nash.regret_minimize
     yield 'fictitious play', False, nash.fictitious_play
     yield 'fictitious play long', False, functools.partial(
-        nash.fictitious_play, max_iters=10**7)
+        nash.fictitious_play, max_iters=10**7, timeout=30 * 60)
     yield (
         'multiplicative weights dist', False, nash.multiplicative_weights_dist)
     yield (
@@ -163,6 +154,8 @@ def gen_methods():
     yield 'scarf 1', True, functools.partial(nash.scarfs_algorithm, timeout=60)
     yield 'scarf 5', True, functools.partial(
         nash.scarfs_algorithm, timeout=5 * 60)
+    yield 'scarf 30', True, functools.partial(
+        nash.scarfs_algorithm, timeout=30 * 60)
 
 
 def process_game(args): # pylint: disable=too-many-locals

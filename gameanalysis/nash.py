@@ -287,7 +287,8 @@ def regret_minimize(game, mix, *, gtol=1e-8):
         return game.mixture_project(mix)
 
 
-def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-6):
+def fictitious_play(
+        game, mix, *, max_iters=10000, converge_thresh=1e-6, timeout=None):
     """Run fictitious play on a mixture
 
     In fictitious play, players continually best respond to the empirical
@@ -304,14 +305,19 @@ def fictitious_play(game, mix, *, max_iters=10000, converge_thresh=1e-6):
         The maximum number of iterations before stopping.
     converge_thresh : float, optional
         How small updates need to be in order to stop iteration. [0, 1]
+    timeout : int, optional
+        If specified, the total time of this function will be capped at timeout
+        seconds, returning whatever mixture it last confirmed if time goes
+        above it.
     """
     empirical = mix.copy()
     converge_thresh *= np.sqrt(2 * game.num_roles)
-    for i in range(2, max_iters + 2):
-        update = (game.best_response(empirical) - empirical) / i
-        empirical += update
-        if i > 1000 and np.linalg.norm(update) < converge_thresh:
-            break
+    with contextlib.suppress(_Sentinel), utils.timeout(timeout, _Sentinel):
+        for i in range(2, max_iters + 2):
+            update = (game.best_response(empirical) - empirical) / i
+            empirical += update
+            if i > 1000 and np.linalg.norm(update) < converge_thresh:
+                break
     return empirical
 
 
@@ -487,11 +493,6 @@ def multiplicative_weights_bandit(
 
 
 # TODO Implement other equilibria finding methods that are found in gambit
-
-
-class _Sentinel(Exception):
-    """A sentinel for scarf timeout"""
-    pass
 
 
 def scarfs_algorithm(game, mix, *, regret_thresh=1e-2, disc=8, timeout=None):
@@ -805,3 +806,8 @@ def mixed_nash( # pylint: disable=too-many-locals
         return best[-1][None] # pylint: disable=unsubscriptable-object
     else:
         return np.empty((0, game.num_strats))
+
+
+class _Sentinel(Exception):
+    """A sentinel for timeouts"""
+    pass
