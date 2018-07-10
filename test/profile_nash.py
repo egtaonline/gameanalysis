@@ -96,9 +96,12 @@ def generate_games(num): # pylint: disable=too-many-branches
         strats = np.random.randint(2, 6)
         players = np.random.randint(2, 11)
         yield 'local effect', gamegen.local_effect(players, strats)
-    yield 'normagg large', gamegen.normal_aggfn(*random_agg_large())
-    yield 'polyagg large', gamegen.poly_aggfn(*random_agg_large())
-    yield 'sineagg large', gamegen.sine_aggfn(*random_agg_large())
+    for _ in range(num):
+        yield 'normagg large', gamegen.normal_aggfn(*random_agg_large())
+    for _ in range(num):
+        yield 'polyagg large', gamegen.poly_aggfn(*random_agg_large())
+    for _ in range(num):
+        yield 'sineagg large', gamegen.sine_aggfn(*random_agg_large())
     for _ in range(num):
         agg = gamegen.sine_aggfn(*random_agg_small())
         with warnings.catch_warnings():
@@ -151,8 +154,8 @@ def gen_methods():
     yield (
         'multiplicative weights bandit', False,
         nash.multiplicative_weights_bandit)
-    yield 'scarf 1', True, functools.partial(nash.scarfs_algorithm, timeout=60)
-    yield 'scarf 5', True, functools.partial(
+    yield 'scarf 1', False, functools.partial(nash.scarfs_algorithm, timeout=60)
+    yield 'scarf 5', False, functools.partial(
         nash.scarfs_algorithm, timeout=5 * 60)
     yield 'scarf 30', True, functools.partial(
         nash.scarfs_algorithm, timeout=30 * 60)
