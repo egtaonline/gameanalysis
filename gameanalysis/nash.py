@@ -3,6 +3,7 @@ import contextlib
 import functools
 import itertools
 import multiprocessing
+import sys
 import warnings
 
 import numpy as np
@@ -86,8 +87,45 @@ def min_regret_rand_mixture(game, mixtures):
     return mixes[np.nanargmin(regs)]
 
 
-def replicator_dynamics(
-        game, mix, *, max_iters=10000, converge_thresh=1e-8, slack=1e-3):
+class _Sentinel(Exception):
+    """A sentinel for timeouts"""
+    pass
+
+
+def _iter_nash(
+        *, def_max_iters=10000, def_converge_thresh=1e-8, def_converge_disc=1,
+        def_timeout=None, first_check=1000):
+    """Decorator for iterative nash finding methods"""
+    # TODO potentially also take regret_thresh and check every that regret is
+    # below thresh at most every second?
+    def wrap(func):
+        """The actual decorator"""
+        @functools.wraps(func)
+        def wrapped( # pylint: disable=too-many-arguments
+                game, prof, *args, max_iters=def_max_iters,
+                timeout=def_timeout, converge_thresh=def_converge_thresh,
+                converge_disc=def_converge_disc, **kwargs):
+            """The wrapped nash function"""
+            converge_thresh *= np.sqrt(2 * game.num_roles)
+            smooth_update = np.zeros(game.num_strats)
+            mix = last_mix = game.trim_mixture_support(prof, thresh=0)
+            with contextlib.suppress(_Sentinel), utils.timeout(
+                timeout, _Sentinel):
+                for i, mix in zip(
+                        range(max_iters), func(game, prof, *args, **kwargs)):
+                    smooth_update *= 1 - converge_disc
+                    smooth_update += converge_disc * (mix - last_mix)
+                    if (i * converge_disc > first_check and
+                            np.linalg.norm(smooth_update) < converge_thresh):
+                        break
+                    last_mix = mix.copy()
+            return game.mixture_project(mix)
+        return wrapped
+    return wrap
+
+
+@_iter_nash(first_check=100)
+def replicator_dynamics(game, mix, *, slack=1e-3):
     """Replicator Dynamics
 
     Run replicator dynamics on a game starting at mix. Replicator dynamics may
@@ -101,12 +139,6 @@ def replicator_dynamics(
         `deviation_payoffs`.
     mix : mixture
         The mixture to initialize replicator dynamics with.
-    max_iters : int
-        Replicator dynamics may never converge and this prevents replicator
-        dynamics from running forever.
-    converge_thresh : float
-        This will terminate early if successive updates differ with a
-        normalized norm smaller than `converge_thresh`. [0, 1]
     slack : float
         For repliactor dynamics to operate, it must know the minimum and
         maximum payoffs for a role such that deviations always have positive
@@ -117,10 +149,8 @@ def replicator_dynamics(
     mix = mix.copy()
     minp = game.min_role_payoffs().copy()
     maxp = game.max_role_payoffs().copy()
-    converge_thresh *= np.sqrt(2 * game.num_roles)
 
-    for i in range(max_iters):
-        old_mix = mix.copy()
+    while True:
         dev_pays = game.deviation_payoffs(mix)
         np.minimum(minp, np.minimum.reduceat(dev_pays, game.role_starts), minp)
         np.maximum(maxp, np.maximum.reduceat(dev_pays, game.role_starts), maxp)
@@ -130,16 +160,13 @@ def replicator_dynamics(
         mix *= dev_pays - offset
         mix /= np.add.reduceat(
             mix, game.role_starts).repeat(game.num_role_strats)
-        if i > 100 and np.linalg.norm(mix - old_mix) <= converge_thresh:
-            break
-
-    # Probabilities are occasionally negative
-    return game.mixture_project(mix)
+        yield mix
 
 
-def regret_matching( # pylint: disable=too-many-arguments,too-many-locals
-        game, profile, *, max_iters=100000, slack=0.1, converge_thresh=1e-6,
-        converge_disc=0.2):
+@_iter_nash(
+    def_max_iters=100000, def_converge_thresh=1e-6, def_converge_disc=0.2,
+    first_check=10)
+def regret_matching(game, profile, *, slack=0.1): # pylint: disable=too-many-locals
     """Regret matching
 
     Run regret matching. This selects new strategies to play proportionally to
@@ -149,32 +176,22 @@ def regret_matching( # pylint: disable=too-many-arguments,too-many-locals
     ----------
     game : Game
         The game to run replicator dynamics on. Game must support
-        `deviation_payoffs`. FIXME
+        `deviation_payoffs`.
     profile : array_like
         The initial profile to start with.
-    max_iters : int, optional
-        The maximum number of iterations.
     slack : float, optional
         The amount to make sure agents will always play their last played
         strategy. (0, 1)
-    converge_thresh : float, optional
-        How close updates need to be to stop early. [0, 1]
-    converge_disc : float, optional
-        Since this algorithm is random, we used weighted updates to determine
-        convergence, this is that weighting. Larger numbers weight more recent
-        updates higher. (0, 1]
     """
     strat_players = game.num_role_players.repeat(
         game.num_role_strats).astype(float)
-    converge_thresh *= np.sqrt(2 * game.num_roles)
 
     profile = np.asarray(profile, int)
     mean_gains = np.zeros(game.num_devs)
     mean_mix = profile / strat_players
     mus = np.full(game.num_roles, np.finfo(float).tiny)
 
-    smooth_update = np.zeros(game.num_strats)
-    for i in range(1, max_iters + 1):
+    for i in itertools.count(1):
         # Regret matching
         gains = regret.pure_strategy_deviation_gains(game, profile)
         gains *= profile.repeat(game.num_strat_devs)
@@ -199,15 +216,8 @@ def regret_matching( # pylint: disable=too-many-arguments,too-many-locals
 
         # Test for convergence
         profile = new_profile
-        update = (profile / strat_players - mean_mix) / (i + 1)
-        mean_mix += update
-        smooth_update *= 1 - converge_disc
-        smooth_update += converge_disc * update
-        if (i * converge_disc > 10 and
-                np.linalg.norm(smooth_update) <= converge_thresh):
-            break
-
-    return mean_mix
+        mean_mix += (profile / strat_players - mean_mix) / (i + 1)
+        yield mean_mix
 
 
 def _regret_matching_mix(game, mix, **kwargs):
@@ -283,12 +293,11 @@ def regret_minimize(game, mix, *, gtol=1e-8):
         mix = optimize.minimize(
             grad, mix, jac=True, bounds=[(0, 1)] * game.num_strats,
             options={'gtol': gtol}).x
-        # Project it onto the simplex, it might not be due to the penalty
         return game.mixture_project(mix)
 
 
-def fictitious_play(
-        game, mix, *, max_iters=10000, converge_thresh=1e-6, timeout=None):
+@_iter_nash(def_converge_thresh=1e-6)
+def fictitious_play(game, mix):
     """Run fictitious play on a mixture
 
     In fictitious play, players continually best respond to the empirical
@@ -301,28 +310,15 @@ def fictitious_play(
         The game to compute an equilibrium of.
     mix : array_like
         The initial mixture to respond to.
-    max_iters : int, optional
-        The maximum number of iterations before stopping.
-    converge_thresh : float, optional
-        How small updates need to be in order to stop iteration. [0, 1]
-    timeout : int, optional
-        If specified, the total time of this function will be capped at timeout
-        seconds, returning whatever mixture it last confirmed if time goes
-        above it.
     """
     empirical = mix.copy()
-    converge_thresh *= np.sqrt(2 * game.num_roles)
-    with contextlib.suppress(_Sentinel), utils.timeout(timeout, _Sentinel):
-        for i in range(2, max_iters + 2):
-            update = (game.best_response(empirical) - empirical) / i
-            empirical += update
-            if i > 1000 and np.linalg.norm(update) < converge_thresh:
-                break
-    return empirical
+    for i in itertools.count(2):
+        empirical += (game.best_response(empirical) - empirical) / i
+        yield empirical
 
 
-def _multiplicative_weights( # pylint: disable=too-many-arguments
-        game, mix, func, epsilon, max_iters, converge_thresh, converge_disc):
+@_iter_nash()
+def _multiplicative_weights(game, mix, func, epsilon):
     """Generic multiplicative weights algorithm
 
     Parameters
@@ -338,38 +334,20 @@ def _multiplicative_weights( # pylint: disable=too-many-arguments
     epsilon : float
         The rate of update for new payoffs. Convergence results hold when
         epsilon in [0, 3/5].
-    max_iters : int
-        The maximum number of iterations before stopping without convergence.
-    converge_thresh : float
-        Algorithm stops when candidate equilibria's change in an iteration has
-        a norm below this value. [0, 1]
-    converge_disc : float
-        How much to wait recent updates for convergence checking. 1 means only
-        count the most previous update, and approaching 0 approaches an average
-        over all time. (0, 1]
     """
     average = mix.copy()
     # This is done in log space to prevent weights zeroing out for limit cycles
     with np.errstate(divide='ignore'):
         log_weights = np.log(mix)
     learning = np.log(1 + epsilon)
-    converge_thresh *= np.sqrt(2 * game.num_roles)
-    smooth_update = np.zeros(game.num_strats)
 
-    for i in range(2, max_iters + 2):
+    for i in itertools.count(2):
         pays = func(game, np.exp(log_weights))
         log_weights += pays * learning
         log_weights -= np.logaddexp.reduceat(
             log_weights, game.role_starts).repeat(game.num_role_strats)
-        update = (np.exp(log_weights) - average) / i
-        average += update
-        smooth_update *= 1 - converge_disc
-        smooth_update += converge_disc * update
-        if (i * converge_disc > 10 and
-                np.linalg.norm(smooth_update) < converge_thresh):
-            break
-
-    return average
+        average += (np.exp(log_weights) - average) / i
+        yield average
 
 
 def _mw_dist(game, mix):
@@ -393,14 +371,10 @@ def multiplicative_weights_dist(
     epsilon : float, optional
         The rate of update for new payoffs. Convergence results hold when
         epsilon in [0, 3/5].
-    max_iters : int, optional
-        The maximum number of iterations before stopping without convergence.
-    converge_thresh : float, optional
-        Algorithm stops when candidate equilibria's change in an iteration has
-        a norm below this value. [0, 1]
     """
-    return _multiplicative_weights(
-        game, mix, _mw_dist, epsilon, max_iters, converge_thresh, 1)
+    return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
+        game, mix, _mw_dist, epsilon, max_iters=max_iters,
+        converge_thresh=converge_thresh, converge_disc=1)
 
 
 def _mw_stoch(game, mix):
@@ -429,19 +403,10 @@ def multiplicative_weights_stoch(
     epsilon : float, optional
         The rate of update for new payoffs. Convergence results hold when
         epsilon in [0, 3/5].
-    max_iters : int, optional
-        The maximum number of iterations before stopping without convergence.
-    converge_thresh : float, optional
-        Algorithm stops when candidate equilibria's change in an iteration has
-        a norm below this value. [0, 1]
-    converge_disc : float, optional
-        How much to wait recent updates for convergence checking. 1 means only
-        count the most previous update, and approaching 0 approaches an average
-        over all time. (0, 1]
     """
-    return _multiplicative_weights(
-        game, mix, _mw_stoch, epsilon, max_iters, converge_thresh,
-        converge_disc)
+    return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
+        game, mix, _mw_stoch, epsilon, max_iters=max_iters,
+        converge_thresh=converge_thresh, converge_disc=converge_disc)
 
 
 def _mw_bandit(min_prob, game, mix):
@@ -471,15 +436,6 @@ def multiplicative_weights_bandit(
     epsilon : float, optional
         The rate of update for new payoffs. Convergence results hold when
         epsilon in [0, 3/5].
-    max_iters : int, optional
-        The maximum number of iterations before stopping without convergence.
-    converge_thresh : float, optional
-        Algorithm stops when candidate equilibria's change in an iteration has
-        a norm below this value. [0, 1]
-    converge_disc : float, optional
-        How much to wait recent updates for convergence checking. 1 means only
-        count the most previous update, and approaching 0 approaches an average
-        over all time. (0, 1]
     min_prob : float, optional
         The minimum probability a mixture is given when sampling from a
         profile. This is necessary to prevent the bandit from getting stuck in
@@ -487,15 +443,17 @@ def multiplicative_weights_bandit(
         divided by the probability to get unbiased estimates. However, larger
         settings of this will bias the overall result. (0, 1)
     """
-    return _multiplicative_weights(
-        game, mix, functools.partial(_mw_bandit, min_prob), epsilon, max_iters,
-        converge_thresh, converge_disc)
+    return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
+        game, mix, functools.partial(_mw_bandit, min_prob), epsilon,
+        max_iters=max_iters, converge_thresh=converge_thresh,
+        converge_disc=converge_disc)
 
 
 # TODO Implement other equilibria finding methods that are found in gambit
 
 
-def scarfs_algorithm(game, mix, *, regret_thresh=1e-2, disc=8, timeout=None):
+@_iter_nash(def_converge_thresh=0, def_max_iters=sys.maxsize)
+def scarfs_algorithm(game, mix, *, regret_thresh=1e-2, disc=8):
     """Uses fixed point method to find nash eqm
 
     This is guaranteed to find an equilibrium with regret below regret_thresh
@@ -521,10 +479,6 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-2, disc=8, timeout=None):
         discretization will be seeded with an approximate equilibrium from a
         lower discretization. For example, with `disc=2` there are only
         `game.num_strats - game.num_roles + 1` possible starting points.
-    timeout : int, optional
-        If specified, the total time of this function will be capped at timeout
-        seconds, returning whatever mixture it last confirmed if time goes
-        above it.
     """
     def eqa_func(mixture):
         """Equilibrium fixed point function"""
@@ -536,14 +490,15 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-2, disc=8, timeout=None):
 
     disc = min(disc, 8)
     reg = regret.mixture_regret(game, mix)
-    with contextlib.suppress(_Sentinel), utils.timeout(timeout, _Sentinel):
-        while reg > regret_thresh:
-            mix = game.mixture_from_simplex(fixedpoint.fixed_point(
-                eqa_func, game.mixture_to_simplex(mix), disc=disc))
-            reg = regret.mixture_regret(game, mix)
-            disc *= 2
+    while reg > regret_thresh:
+        mix = game.mixture_from_simplex(fixedpoint.fixed_point(
+            eqa_func, game.mixture_to_simplex(mix), disc=disc))
+        reg = regret.mixture_regret(game, mix)
+        disc *= 2
+        yield mix
 
-    return mix
+    # Two yields in a row means convergence
+    yield mix
 
 
 def _noop(_game, mix):
@@ -800,14 +755,9 @@ def mixed_nash( # pylint: disable=too-many-locals
     if equilibria: # pylint: disable=no-else-return
         return np.array([e for e, _ in equilibria])
     elif at_least_one:
-        return scarfs_algorithm(
+        return scarfs_algorithm( # pylint: disable=unsubscriptable-object
             game, best[-1], regret_thresh=regret_thresh)[None]
     elif min_reg:
         return best[-1][None] # pylint: disable=unsubscriptable-object
     else:
         return np.empty((0, game.num_strats))
-
-
-class _Sentinel(Exception):
-    """A sentinel for timeouts"""
-    pass
