@@ -18,10 +18,10 @@ test:
 	bin/pytest test $(PYTEST_ARGS) --cov gameanalysis --cov test 2>/dev/null
 
 check:
-	bin/pylint $(PYLINT_ARGS) gameanalysis test
+	bin/pylint $(PYLINT_ARGS) gameanalysis test profile
 
 nash:
-	bin/python test/profile_nash.py 10
+	bin/python profile/run.py 20 | tee profile/data.json | bin/python profile/display.py > sphinx/profile_nash.rst
 
 setup:
 	$(PYTHON) -m venv .

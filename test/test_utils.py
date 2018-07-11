@@ -1,5 +1,6 @@
 """Test utils"""
 from concurrent import futures
+import io
 import itertools
 import threading
 import time
@@ -366,3 +367,10 @@ def test_not_timeout_thread():
     """Test that timeout even works in a child thread"""
     with futures.ThreadPoolExecutor(1) as executor:
         assert executor.submit(no_timeout_thread).result() is None
+
+
+def test_iload():
+    """Test that iload works"""
+    string = '{} null [] 7'
+    result = list(utils.iload(io.StringIO(string)))
+    assert result == [{}, None, [], 7]

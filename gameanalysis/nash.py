@@ -356,7 +356,8 @@ def _mw_dist(game, mix):
 
 
 def multiplicative_weights_dist(
-        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8):
+        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8,
+        **kwargs):
     """Compute an equilibrium using the distribution multiplicative weights
 
     This version of multiplicative weights takes the longest per iteration, but
@@ -374,7 +375,7 @@ def multiplicative_weights_dist(
     """
     return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
         game, mix, _mw_dist, epsilon, max_iters=max_iters,
-        converge_thresh=converge_thresh, converge_disc=1)
+        converge_thresh=converge_thresh, converge_disc=1, **kwargs)
 
 
 def _mw_stoch(game, mix):
@@ -388,7 +389,7 @@ def _mw_stoch(game, mix):
 
 def multiplicative_weights_stoch(
         game, mix, *, epsilon=0.5, max_iters=100000, converge_thresh=1e-7,
-        converge_disc=0.2):
+        converge_disc=0.2, **kwargs):
     """Compute an equilibrium using the stochastic multiplicative weights
 
     This version of multiplicative weights takes a medium amount of time per
@@ -406,7 +407,7 @@ def multiplicative_weights_stoch(
     """
     return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
         game, mix, _mw_stoch, epsilon, max_iters=max_iters,
-        converge_thresh=converge_thresh, converge_disc=converge_disc)
+        converge_thresh=converge_thresh, converge_disc=converge_disc, **kwargs)
 
 
 def _mw_bandit(min_prob, game, mix):
@@ -421,7 +422,7 @@ def _mw_bandit(min_prob, game, mix):
 
 def multiplicative_weights_bandit(
         game, mix, *, epsilon=0.5, max_iters=100000, converge_thresh=1e-7,
-        converge_disc=0.1, min_prob=1e-3):
+        converge_disc=0.1, min_prob=1e-3, **kwargs):
     """Compute an equilibrium using the bandit multiplicative weights
 
     This version of multiplicative weights takes the shortest amount of time
@@ -446,7 +447,7 @@ def multiplicative_weights_bandit(
     return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
         game, mix, functools.partial(_mw_bandit, min_prob), epsilon,
         max_iters=max_iters, converge_thresh=converge_thresh,
-        converge_disc=converge_disc)
+        converge_disc=converge_disc, **kwargs)
 
 
 # TODO Implement other equilibria finding methods that are found in gambit

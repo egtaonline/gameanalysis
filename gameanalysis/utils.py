@@ -4,6 +4,7 @@ import contextlib
 import functools
 import inspect
 import itertools
+import json
 import math
 import operator
 import random
@@ -656,3 +657,18 @@ def timeout(seconds=None, exception=TimeoutError):
         The exception to raise. IF omitted, a generic TimeoutError is used.
     """
     return _Timeout(seconds, exception)
+
+
+def iloads(jstring, **kwargs):
+    """Load a string as a generator of json objects"""
+    decoder = json.JSONDecoder(**kwargs)
+    idx = json.decoder.WHITESPACE.match(jstring, 0).end()
+    while idx < len(jstring):
+        obj, end = decoder.raw_decode(jstring, idx)
+        yield obj
+        idx = json.decoder.WHITESPACE.match(jstring, end).end()
+
+
+def iload(jfp, **kwargs):
+    """Load a file as a generator of json objects"""
+    return iloads(jfp.read(), **kwargs)
