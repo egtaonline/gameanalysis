@@ -6,10 +6,10 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.agggen &#8212; Game Analysis 6.0.0 documentation</title>
+    <title>gameanalysis.agggen &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.2.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -44,7 +44,7 @@
 
 
 <span class="k">def</span> <span class="nf">_random_inputs</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns a random mask without all true or all false per function&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns a random mask without all true or all false per function&quot;&quot;&quot;</span>
     <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">))</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">vals</span> <span class="o">&lt;</span> <span class="n">prob</span>
     <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_funcs</span><span class="p">)</span>
@@ -54,7 +54,7 @@
 
 
 <span class="k">def</span> <span class="nf">_random_mask</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns a random mask with at least one true in every row and col&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns a random mask with at least one true in every row and col&quot;&quot;&quot;</span>
     <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">))</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">vals</span> <span class="o">&lt;</span> <span class="n">prob</span>
     <span class="n">mask</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_funcs</span><span class="p">),</span> <span class="n">vals</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
@@ -63,14 +63,14 @@
 
 
 <span class="k">def</span> <span class="nf">_random_weights</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Returns random action weights&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Returns random action weights&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">_random_mask</span><span class="p">(</span><span class="n">prob</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">)</span> <span class="o">*</span>
             <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">num_strats</span><span class="p">)))</span>
 
 
 <div class="viewcode-block" id="normal_aggfn"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.normal_aggfn">[docs]</a><span class="k">def</span> <span class="nf">normal_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
                  <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a random normal AgfnGame</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random normal AgfnGame</span>
 
 <span class="sd">    Each function value is an i.i.d Gaussian random walk.</span>
 
@@ -86,7 +86,7 @@
 <span class="sd">        The probability of a strategy counting towards a function value.</span>
 <span class="sd">    weight_prob : float, optional</span>
 <span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">)</span>
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">_random_inputs</span><span class="p">(</span><span class="n">input_prob</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">)</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">_random_weights</span><span class="p">(</span><span class="n">weight_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
@@ -97,17 +97,17 @@
         <span class="n">funcs</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">funcs</span><span class="p">)</span>
     <span class="n">mean</span> <span class="o">=</span> <span class="n">funcs</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span>
     <span class="n">mean</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">functions</span><span class="p">,)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="n">base</span><span class="o">.</span><span class="n">num_roles</span>
-    <span class="n">funcs</span> <span class="o">-=</span> <span class="n">mean</span></div>
-    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">funcs</span><span class="p">)</span>
+    <span class="n">funcs</span> <span class="o">-=</span> <span class="n">mean</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">funcs</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span>
                   <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Base form for structured random aggfn generation</span>
+    <span class="sd">&quot;&quot;&quot;Base form for structured random aggfn generation</span>
 
 <span class="sd">    role_dist takes a number of functions and a number of players and returns</span>
 <span class="sd">    an ndarray of the function values.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">emptygame</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">)</span>
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">_random_inputs</span><span class="p">(</span><span class="n">input_prob</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">)</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">_random_weights</span><span class="p">(</span><span class="n">weight_prob</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
@@ -125,7 +125,7 @@
 
 <div class="viewcode-block" id="poly_aggfn"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.poly_aggfn">[docs]</a><span class="k">def</span> <span class="nf">poly_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
                <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a random polynomial AgfnGame</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random polynomial AgfnGame</span>
 
 <span class="sd">    Functions are generated by generating `degree` zeros in [0, num_players] to</span>
 <span class="sd">    serve as a polynomial functions.</span>
@@ -145,7 +145,7 @@
 <span class="sd">    degree : int or [float], optional</span>
 <span class="sd">        Either an integer specifying the degree or a list of the probabilities</span>
 <span class="sd">        of degrees starting from one, e.g. 3 is the same as [0, 0, 1].</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">degree</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">degree</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="n">degree</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span>
     <span class="n">max_degree</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">degree</span><span class="p">)</span>
@@ -164,13 +164,13 @@
         <span class="n">offset</span> <span class="o">=</span> <span class="n">poly</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">poly</span> <span class="o">-</span> <span class="n">offset</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">else</span> <span class="n">scale</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span></div>
-                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span>
+                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="sine_aggfn"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.sine_aggfn">[docs]</a><span class="k">def</span> <span class="nf">sine_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">input_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
                <span class="n">weight_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a random sinusodial AgfnGame</span>
+    <span class="sd">&quot;&quot;&quot;Generate a random sinusodial AgfnGame</span>
 
 <span class="sd">    Functions are generated by generating sinusoids with uniform random shifts</span>
 <span class="sd">    and n periods in 0 to num_players, where n is chosen randomle between</span>
@@ -190,7 +190,7 @@
 <span class="sd">        The probability of a function producing non-zero payoffs to a strategy.</span>
 <span class="sd">    period : float, optional</span>
 <span class="sd">        The loose number of periods in the payoff for each function.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">role_dist</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
         <span class="c1"># This setup makes it so that the beat frequencies approach period</span>
         <span class="n">periods</span> <span class="o">=</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">functions</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span>
@@ -200,12 +200,12 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">periods</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">)</span> <span class="o">*</span>
                       <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span></div>
-                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_random_aggfn</span><span class="p">(</span><span class="n">role_players</span><span class="p">,</span> <span class="n">role_strats</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="n">input_prob</span><span class="p">,</span>
+                         <span class="n">weight_prob</span><span class="p">,</span> <span class="n">role_dist</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_random_monotone_polynomial</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">players</span><span class="p">,</span> <span class="n">degree</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generates a random monotone polynomial table&#39;&#39;&#39;</span>
+    <span class="sd">&quot;&quot;&quot;Generates a random monotone polynomial table&quot;&quot;&quot;</span>
     <span class="n">coefs</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="n">functions</span><span class="p">,</span> <span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span>
              <span class="n">players</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">powers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">degree</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
@@ -213,7 +213,7 @@
 
 
 <div class="viewcode-block" id="congestion"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.congestion">[docs]</a><span class="k">def</span> <span class="nf">congestion</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_required</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">degree</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a congestion game</span>
+    <span class="sd">&quot;&quot;&quot;Generate a congestion game</span>
 
 <span class="sd">    A congestion game is a symmetric game, where there are a given number of</span>
 <span class="sd">    facilities, and each player must choose to use some amount of them. The</span>
@@ -233,13 +233,12 @@
 <span class="sd">        The number of required facilities.</span>
 <span class="sd">    degree : int &gt; 0, optional</span>
 <span class="sd">        Degree of payoff polynomials.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;must have more than one player&#39;</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_facilities</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;must have more than one facility&#39;</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">num_required</span> <span class="o">&lt;</span> <span class="n">num_facilities</span><span class="p">,</span>
-        <span class="s1">&#39;must require more than zero but less than num_facilities&#39;</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">degree</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;degree must be greater than zero&#39;</span><span class="p">)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;must have more than one player&quot;</span>
+    <span class="k">assert</span> <span class="n">num_facilities</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;must have more than one facility&quot;</span>
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">num_required</span> <span class="o">&lt;</span> <span class="n">num_facilities</span><span class="p">,</span> \
+        <span class="s2">&quot;must require more than zero but less than num_facilities&quot;</span>
+    <span class="k">assert</span> <span class="n">degree</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;degree must be greater than zero&quot;</span>
 
     <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">acomb</span><span class="p">(</span><span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_required</span><span class="p">)</span>
     <span class="n">functions</span> <span class="o">=</span> <span class="o">-</span><span class="n">_random_monotone_polynomial</span><span class="p">(</span><span class="n">num_facilities</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span>
@@ -248,13 +247,12 @@
     <span class="n">facs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">prefix_strings</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">num_facilities</span><span class="p">))</span>
     <span class="n">strats</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">facs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="k">if</span> <span class="n">m</span><span class="p">)</span>
                    <span class="k">for</span> <span class="n">mask</span> <span class="ow">in</span> <span class="n">function_inputs</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_names</span><span class="p">(</span>
-        <span class="p">[</span><span class="s1">&#39;all&#39;</span><span class="p">],</span> <span class="n">num_players</span><span class="p">,</span> <span class="p">[</span><span class="n">strats</span><span class="p">],</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span></div>
-        <span class="n">functions</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_names</span><span class="p">([</span><span class="s1">&#39;all&#39;</span><span class="p">],</span> <span class="n">num_players</span><span class="p">,</span> <span class="p">[</span><span class="n">strats</span><span class="p">],</span> <span class="n">facs</span><span class="p">,</span>
+                             <span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">functions</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="local_effect"><a class="viewcode-back" href="../../gameanalysis.agggen.html#gameanalysis.agggen.local_effect">[docs]</a><span class="k">def</span> <span class="nf">local_effect</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">edge_prob</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
-    <span class="sd">&#39;&#39;&#39;Generate a local effect game</span>
+    <span class="sd">&quot;&quot;&quot;Generate a local effect game</span>
 
 <span class="sd">    In a local effect game, strategies are connected by a graph, and utilities</span>
 <span class="sd">    are a function of the number of players playing our strategy and the number</span>
@@ -271,9 +269,9 @@
 <span class="sd">        The number of strategies.</span>
 <span class="sd">    edge_prob : float, optional</span>
 <span class="sd">        The probability that one strategy affects another.</span>
-<span class="sd">    &#39;&#39;&#39;</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;can</span><span class="se">\&#39;</span><span class="s1">t generate a single player game&#39;</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_strategies</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;can</span><span class="se">\&#39;</span><span class="s1">t generate a single strategy game&#39;</span><span class="p">)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">num_players</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t generate a single player game&quot;</span>
+    <span class="k">assert</span> <span class="n">num_strategies</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;can&#39;t generate a single strategy game&quot;</span>
 
     <span class="n">local_effect_graph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span>
         <span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">edge_prob</span>
@@ -293,8 +291,8 @@
         <span class="n">num_strategies</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
     <span class="n">function_table</span><span class="p">[</span><span class="n">num_strategies</span><span class="p">:]</span> <span class="o">=</span> <span class="n">_random_monotone_polynomial</span><span class="p">(</span>
         <span class="n">num_neighbors</span><span class="p">,</span> <span class="n">num_players</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span></div>
-                       <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn</span><span class="p">(</span><span class="n">num_players</span><span class="p">,</span> <span class="n">num_strategies</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
+                       <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -327,13 +325,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 6.0.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.2.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>

@@ -9,7 +9,7 @@
     <title>gameanalysis.nash module &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -48,10 +48,23 @@
 <p>Module for computing nash equilibria</p>
 <dl class="function">
 <dt id="gameanalysis.nash.fictitious_play">
-<code class="descclassname">gameanalysis.nash.</code><code class="descname">fictitious_play</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>max_iters=10000</em>, <em>converge_thresh=1e-08</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#fictitious_play"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.fictitious_play" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">fictitious_play</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#fictitious_play"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.fictitious_play" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run fictitious play on a mixture</p>
 <p>In fictitious play, players continually best respond to the empirical
-distribution of their opponents at each round.</p>
+distribution of their opponents at each round. This tends to have very slow
+convergence.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<em>RsGame</em>) – The game to compute an equilibrium of.</li>
+<li><strong>mix</strong> (<em>array_like</em>) – The initial mixture to respond to.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -92,6 +105,34 @@ distribution of their opponents at each round.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="gameanalysis.nash.mixed_equilibria">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">mixed_equilibria</code><span class="sig-paren">(</span><em>game</em>, <em>style='best'</em>, <em>*</em>, <em>regret_thresh=0.01</em>, <em>dist_thresh=0.1</em>, <em>processes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#mixed_equilibria"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.mixed_equilibria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute mixed equilibria</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<em>RsGame</em>) – Game to compute equilibria of.</li>
+<li><strong>style</strong> (<em>str</em><em>, </em><em>optional</em>) – <p>The style of equilibria funding to run. Available styles are:</p>
+<p>fast   - run minimal algorithms and return nothing on failure
+more   - run minimal and if nothing run other reasonable algorithms
+best   - run extra and if nothing run exponential with timeout
+one    - run extra and if nothing run exponential
+&lt;any&gt;* - if nothing found, return minimum regret</p>
+</li>
+<li><strong>regret_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum regret for a mixture to count as an equilibrium.</li>
+<li><strong>dist_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – Minimum role norm for equilibria to be considered distinct. [0, 1]</li>
+<li><strong>processes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of processes to compute equilibria with. If None, all available
+processes will be used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="gameanalysis.nash.mixed_nash">
 <code class="descclassname">gameanalysis.nash.</code><code class="descname">mixed_nash</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>regret_thresh=0.001</em>, <em>dist_thresh=0.1</em>, <em>grid_points=2</em>, <em>random_restarts=0</em>, <em>processes=0</em>, <em>min_reg=False</em>, <em>at_least_one=False</em>, <em>**methods</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#mixed_nash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.mixed_nash" title="Permalink to this definition">¶</a></dt>
 <dd><p>Finds role-symmetric mixed Nash equilibria</p>
@@ -100,6 +141,8 @@ individual methods in a convenient front end that also support parallel
 execution. Scipy optimize, and hence nash finding with the optimize method
 is NOT thread safe. This can be mitigated by running nash finding in a
 separate process (by setting processes &gt; 0) if the game is pickleable.</p>
+<p>This is the old style nash finding and provides more options. For new
+methods, mixture_equilibria is the preferred interface.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -148,9 +191,110 @@ failing with a faster method and only called once.</li>
 </dd></dl>
 
 <dl class="function">
+<dt id="gameanalysis.nash.multiplicative_weights_bandit">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">multiplicative_weights_bandit</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>epsilon=0.5</em>, <em>max_iters=100000</em>, <em>converge_thresh=1e-07</em>, <em>converge_disc=0.1</em>, <em>min_prob=0.001</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#multiplicative_weights_bandit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.multiplicative_weights_bandit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute an equilibrium using the bandit multiplicative weights</p>
+<p>This version of multiplicative weights takes the shortest amount of time
+per iteration but is less likely to converge to an equilibrium.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<em>RsGame</em>) – The game to compute an equilibrium of.</li>
+<li><strong>mix</strong> (<em>ndarray</em>) – The initial mixture for searching.</li>
+<li><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – The rate of update for new payoffs. Convergence results hold when
+epsilon in [0, 3/5].</li>
+<li><strong>min_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum probability a mixture is given when sampling from a
+profile. This is necessary to prevent the bandit from getting stuck in
+pure mixtures, and to bound the potential payoffs, as payoffs are
+divided by the probability to get unbiased estimates. However, larger
+settings of this will bias the overall result. (0, 1)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.multiplicative_weights_dist">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">multiplicative_weights_dist</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>epsilon=0.5</em>, <em>max_iters=10000</em>, <em>converge_thresh=1e-08</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#multiplicative_weights_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.multiplicative_weights_dist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute an equilibrium using the distribution multiplicative weights</p>
+<p>This version of multiplicative weights takes the longest per iteration, but
+also has less variance and likely converges better.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<em>RsGame</em>) – The game to compute an equilibrium of.</li>
+<li><strong>mix</strong> (<em>ndarray</em>) – The initial mixture for searching.</li>
+<li><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – The rate of update for new payoffs. Convergence results hold when
+epsilon in [0, 3/5].</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.multiplicative_weights_stoch">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">multiplicative_weights_stoch</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>epsilon=0.5</em>, <em>max_iters=100000</em>, <em>converge_thresh=1e-07</em>, <em>converge_disc=0.2</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#multiplicative_weights_stoch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.multiplicative_weights_stoch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute an equilibrium using the stochastic multiplicative weights</p>
+<p>This version of multiplicative weights takes a medium amount of time per
+iteration and converges better than the bandit version.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<em>RsGame</em>) – The game to compute an equilibrium of.</li>
+<li><strong>mix</strong> (<em>ndarray</em>) – The initial mixture for searching.</li>
+<li><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – The rate of update for new payoffs. Convergence results hold when
+epsilon in [0, 3/5].</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.pure_equilibria">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">pure_equilibria</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>epsilon=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#pure_equilibria"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.pure_equilibria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array of all pure nash profiles</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="gameanalysis.nash.pure_nash">
 <code class="descclassname">gameanalysis.nash.</code><code class="descname">pure_nash</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>epsilon=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#pure_nash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.pure_nash" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an array of all pure nash profiles</p>
+<p>This is the old syntax.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.nash.regret_matching">
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">regret_matching</code><span class="sig-paren">(</span><em>game</em>, <em>profile</em>, <em>*</em>, <em>slack=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#regret_matching"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.regret_matching" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regret matching</p>
+<p>Run regret matching. This selects new strategies to play proportionally to
+the gain they receive from deviating from the current profile.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>game</strong> (<em>Game</em>) – The game to run replicator dynamics on. Game must support
+<cite>deviation_payoffs</cite>.</li>
+<li><strong>profile</strong> (<em>array_like</em>) – The initial profile to start with.</li>
+<li><strong>slack</strong> (<em>float</em><em>, </em><em>optional</em>) – The amount to make sure agents will always play their last played
+strategy. (0, 1)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -169,7 +313,7 @@ equilibrium.</p>
 <li><strong>game</strong> (<em>Game</em>) – The game to run replicator dynamics on. Game must support
 <cite>deviation_payoffs</cite>.</li>
 <li><strong>mix</strong> (<em>mixture</em>) – The mixture to initialize replicator dynamics with.</li>
-<li><strong>gtol</strong> (<em>float</em>) – The gradient tolerance used for optimization convergence. See
+<li><strong>gtol</strong> (<em>float</em><em>, </em><em>optional</em>) – The gradient tolerance used for optimization convergence. See
 <cite>scipy.optimize.minimize</cite>.</li>
 </ul>
 </td>
@@ -180,7 +324,7 @@ equilibrium.</p>
 
 <dl class="function">
 <dt id="gameanalysis.nash.replicator_dynamics">
-<code class="descclassname">gameanalysis.nash.</code><code class="descname">replicator_dynamics</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>max_iters=10000</em>, <em>converge_thresh=1e-08</em>, <em>slack=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#replicator_dynamics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.replicator_dynamics" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">replicator_dynamics</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>slack=0.001</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#replicator_dynamics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.replicator_dynamics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replicator Dynamics</p>
 <p>Run replicator dynamics on a game starting at mix. Replicator dynamics may
 not converge, and so the resulting mixture may not actually represent a
@@ -193,10 +337,6 @@ nash equilibrium.</p>
 <li><strong>game</strong> (<em>Game</em>) – The game to run replicator dynamics on. Game must support
 <cite>deviation_payoffs</cite>.</li>
 <li><strong>mix</strong> (<em>mixture</em>) – The mixture to initialize replicator dynamics with.</li>
-<li><strong>max_iters</strong> (<em>int</em>) – Replicator dynamics may never converge and this prevents replicator
-dynamics from running forever.</li>
-<li><strong>converge_thresh</strong> (<em>float</em>) – This will terminate early if successive updates differ with a norm
-smaller than <cite>converge_thresh</cite>.</li>
 <li><strong>slack</strong> (<em>float</em>) – For repliactor dynamics to operate, it must know the minimum and
 maximum payoffs for a role such that deviations always have positive
 probability. This is the proportional slack that given relative to the
@@ -211,12 +351,14 @@ actual effect isn’t really know.</li>
 
 <dl class="function">
 <dt id="gameanalysis.nash.scarfs_algorithm">
-<code class="descclassname">gameanalysis.nash.</code><code class="descname">scarfs_algorithm</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>regret_thresh=0.001</em>, <em>disc=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#scarfs_algorithm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.scarfs_algorithm" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">gameanalysis.nash.</code><code class="descname">scarfs_algorithm</code><span class="sig-paren">(</span><em>game</em>, <em>mix</em>, <em>*</em>, <em>regret_thresh=0.01</em>, <em>disc=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#scarfs_algorithm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.scarfs_algorithm" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uses fixed point method to find nash eqm</p>
-<p>This is guaranteed to find an equilibrium with regret below regret_thresh,
-however, it’s guaranteed convergence is assured by potentially exponential
-running time, and therefore is not recommended unless you’re willing to
-wait. The underlying algorithm is solving for an approximate fixed point.</p>
+<p>This is guaranteed to find an equilibrium with regret below regret_thresh
+if given enough time. However, it’s guaranteed convergence is assured by
+potentially exponential running time, and therefore is not recommended
+unless you’re willing to wait. The underlying algorithm is solving for an
+approximate Nash fixed point with greater and great approximation until its
+regret is below the threshold.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -225,8 +367,8 @@ wait. The underlying algorithm is solving for an approximate fixed point.</p>
 <li><strong>game</strong> (<em>Game</em>) – The game to run replicator dynamics on. Game must support
 <cite>deviation_payoffs</cite>.</li>
 <li><strong>mix</strong> (<em>mixture</em>) – The mixture to initialize replicator dynamics with.</li>
-<li><strong>regret_thresh</strong> (<em>float</em>) – The maximum regret of the returned mixture.</li>
-<li><strong>disc</strong> (<em>int</em>) – The initial discretization of the mixture. A lower initial
+<li><strong>regret_thresh</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum regret of the returned mixture.</li>
+<li><strong>disc</strong> (<em>int</em><em>, </em><em>optional</em>) – The initial discretization of the mixture. A lower initial
 discretization means fewer possible starting points for search in the
 mixture space, but is likely to converge faster as the search at higher
 discretization will be seeded with an approximate equilibrium from a
@@ -297,7 +439,7 @@ lower discretization. For example, with <cite>disc=2</cite> there are only
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>

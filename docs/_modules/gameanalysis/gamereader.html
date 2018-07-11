@@ -9,7 +9,7 @@
     <title>gameanalysis.gamereader &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
@@ -118,6 +118,21 @@
         <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown game type </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">game_type</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="dumpj"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.dumpj">[docs]</a><span class="k">def</span> <span class="nf">dumpj</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dump a game to json&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">game</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="dumps"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.dumps">[docs]</a><span class="k">def</span> <span class="nf">dumps</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dump a game to a string&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dumpj</span><span class="p">(</span><span class="n">game</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="dump"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.dump">[docs]</a><span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">file_like</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dump a game to a file object&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dumpj</span><span class="p">(</span><span class="n">game</span><span class="p">),</span> <span class="n">file_like</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -156,7 +171,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>

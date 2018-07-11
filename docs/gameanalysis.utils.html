@@ -9,13 +9,13 @@
     <title>gameanalysis.utils module &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="gameanalysis.reduction package" href="gameanalysis.reduction.html" />
+    <link rel="next" title="Nash Equilibrium Methods Comparison" href="profile_nash.html" />
     <link rel="prev" title="gameanalysis.trace module" href="gameanalysis.trace.html" /> 
   </head><body>
     <div class="related" role="navigation" aria-label="related navigation">
@@ -28,7 +28,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.reduction.html" title="gameanalysis.reduction package"
+          <a href="profile_nash.html" title="Nash Equilibrium Methods Comparison"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="gameanalysis.trace.html" title="gameanalysis.trace module"
@@ -75,7 +75,35 @@ with repetitions.</p>
 <dl class="function">
 <dt id="gameanalysis.utils.allclose_perm">
 <code class="descclassname">gameanalysis.utils.</code><code class="descname">allclose_perm</code><span class="sig-paren">(</span><em>aarr</em>, <em>barr</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#allclose_perm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.allclose_perm" title="Permalink to this definition">¶</a></dt>
-<dd><p>allclose but for any permutation of actual</p>
+<dd><p>allclose but for any permutation of aarr and barr</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>barr</strong> (<em>aarr</em><em>,</em>) – Identically sized arrays of floats. This will determine if any
+permutation of their first axis will make <cite>allclose</cite> true.</li>
+<li><strong>kwargs</strong> – Additional arguments to pass to <cite>isclose</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.allequal_perm">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">allequal_perm</code><span class="sig-paren">(</span><em>aarr</em>, <em>barr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#allequal_perm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.allequal_perm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if two arrays are equal for any permutation of their first axis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>barr</strong> (<em>aarr</em><em>,</em>) – Identically sized arrays. This will determine if any permutation of
+their first axis will make them equal.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
@@ -188,6 +216,18 @@ efficiently.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="gameanalysis.utils.iload">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">iload</code><span class="sig-paren">(</span><em>jfp</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#iload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.iload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a file as a generator of json objects</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.utils.iloads">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">iloads</code><span class="sig-paren">(</span><em>jstring</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#iloads"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.iloads" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a string as a generator of json objects</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="gameanalysis.utils.is_sorted">
 <code class="descclassname">gameanalysis.utils.</code><code class="descname">is_sorted</code><span class="sig-paren">(</span><em>iterable</em>, <em>*</em>, <em>key=None</em>, <em>reverse=False</em>, <em>strict=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#is_sorted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.is_sorted" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns true if iterable is sorted</p>
@@ -294,6 +334,28 @@ single string, otherwise it returns a generator with length <cite>num</cite>.</l
 ordered in the iterable.</p>
 </dd></dl>
 
+<dl class="function">
+<dt id="gameanalysis.utils.timeout">
+<code class="descclassname">gameanalysis.utils.</code><code class="descname">timeout</code><span class="sig-paren">(</span><em>seconds=None</em>, <em>exception=&lt;class 'TimeoutError'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/utils.html#timeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.utils.timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Timeout code</p>
+<p>A TimeoutError is raised if code doesn’t finish within seconds. The result
+can be used as a decorator or as a context manager. This will work in child
+threads, but as a significant performance hit.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>seconds</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of seconds until timeout. If omitted, no timeout is used,
+and this is essentially a no op</li>
+<li><strong>exception</strong> (<em>Exception</em><em>, </em><em>optional</em>) – The exception to raise. IF omitted, a generic TimeoutError is used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 
 
@@ -306,8 +368,8 @@ ordered in the iterable.</p>
   <p class="topless"><a href="gameanalysis.trace.html"
                         title="previous chapter">gameanalysis.trace module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="gameanalysis.reduction.html"
-                        title="next chapter">gameanalysis.reduction package</a></p>
+  <p class="topless"><a href="profile_nash.html"
+                        title="next chapter">Nash Equilibrium Methods Comparison</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -341,7 +403,7 @@ ordered in the iterable.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="gameanalysis.reduction.html" title="gameanalysis.reduction package"
+          <a href="profile_nash.html" title="Nash Equilibrium Methods Comparison"
              >next</a> |</li>
         <li class="right" >
           <a href="gameanalysis.trace.html" title="gameanalysis.trace module"
@@ -352,7 +414,7 @@ ordered in the iterable.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>

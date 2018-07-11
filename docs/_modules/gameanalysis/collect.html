@@ -9,7 +9,7 @@
     <title>gameanalysis.collect &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
@@ -44,9 +44,12 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<div class="viewcode-block" id="mcces"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.mcces">[docs]</a><span class="k">def</span> <span class="nf">mcces</span><span class="p">(</span><span class="n">thresh</span><span class="p">):</span>
+<div class="viewcode-block" id="mcces"><a class="viewcode-back" href="../../gameanalysis.collect.html#gameanalysis.collect.mcces">[docs]</a><span class="k">def</span> <span class="nf">mcces</span><span class="p">(</span><span class="n">thresh</span><span class="p">,</span> <span class="n">iterable</span><span class="o">=</span><span class="p">()):</span>
     <span class="sd">&quot;&quot;&quot;Create a new minimum connected component set&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_MinimumConnectedComponentElementSet</span><span class="p">(</span><span class="n">thresh</span><span class="p">)</span></div>
+    <span class="n">mset</span> <span class="o">=</span> <span class="n">_MinimumConnectedComponentElementSet</span><span class="p">(</span><span class="n">thresh</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">vector</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="n">mset</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mset</span></div>
 
 
 <span class="k">class</span> <span class="nc">_MinimumConnectedComponentElementSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -89,12 +92,24 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span> <span class="o">=</span> <span class="n">new_set</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">vecs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
 
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vector</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the representative vector if contained else None&quot;&quot;&quot;</span>
+        <span class="n">vector</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">set_tup</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">rep</span><span class="p">),</span> <span class="n">svecs</span> <span class="o">=</span> <span class="n">set_tup</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_similar</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">svecs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">rep</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
     <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Remove all vectors added to the set&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vector</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">vector</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">((</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">),</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set</span><span class="p">)</span>
@@ -200,7 +215,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>

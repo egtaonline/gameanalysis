@@ -9,7 +9,7 @@
     <title>gameanalysis.rsgame &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
@@ -65,7 +65,6 @@
 <span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">string</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">collections.abc</span> <span class="k">as</span> <span class="nn">cabc</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -116,7 +115,7 @@
             <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
             <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
                 <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
-                    <span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">strats</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">s</span><span class="p">)</span>
+                    <span class="p">((</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">strats</span><span class="p">)</span>
                     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strats</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">strats</span>
                 <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">)))}</span>
@@ -151,7 +150,7 @@
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">num_strat_devs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The number of deviations for each strategy&quot;&quot;&quot;</span>
-        <span class="n">devs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="n">devs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
         <span class="n">devs</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">devs</span>
 
@@ -159,7 +158,7 @@
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">num_role_devs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The number of deviations for each role&quot;&quot;&quot;</span>
-        <span class="n">devs</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span>
+        <span class="n">devs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">devs</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">devs</span>
 
@@ -173,12 +172,6 @@
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">dev_strat_starts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The start index for each strategy deviation&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s1">&#39;using reduceat with dev_strat_starts will not produce &#39;</span>
-                <span class="s1">&#39;correct results if any role only has one strategy. This &#39;</span>
-                <span class="s1">&#39;might get fixed at some point, but currently extra care must &#39;</span>
-                <span class="s1">&#39;be taken for these cases.&#39;</span><span class="p">)</span>
         <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strat_devs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">starts</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">starts</span>
@@ -187,12 +180,6 @@
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">dev_role_starts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The start index for each role deviation&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s1">&#39;using reduceat with dev_role_starts will not produce &#39;</span>
-                <span class="s1">&#39;correct results if any role only has one strategy. This &#39;</span>
-                <span class="s1">&#39;might get fixed at some point, but currently extra care must &#39;</span>
-                <span class="s1">&#39;be taken for these cases.&#39;</span><span class="p">)</span>
         <span class="n">starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_devs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">starts</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">starts</span>
@@ -209,19 +196,9 @@
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">dev_to_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The strategy deviating to for each deviation&quot;&quot;&quot;</span>
-        <span class="n">inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_devs</span><span class="p">)</span> <span class="o">-</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">dev_strat_starts</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strat_devs</span><span class="p">)</span> <span class="o">+</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_devs</span><span class="p">))</span>
-
-        <span class="c1"># The use of bincount here allows for one strategy roles</span>
-        <span class="n">pos_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span> <span class="o">-</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
-                                 <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dev_strat_starts</span><span class="p">,</span>
-                                 <span class="n">minlength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_devs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">neg_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dev_strat_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
-                                 <span class="n">minlength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_devs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">inds</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">pos_offset</span> <span class="o">-</span> <span class="n">neg_offset</span><span class="p">)</span>
-
+        <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">+</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">s</span>
+            <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">)])</span>
         <span class="n">inds</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">inds</span>
 
@@ -299,7 +276,7 @@
         <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
             <span class="n">restrict</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span>
             <span class="s1">&#39;restriction must have valid shape&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bitwise_or</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="n">axis</span><span class="p">),</span>
                       <span class="n">axis</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_is_pure_restriction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
@@ -349,6 +326,11 @@
             <span class="k">if</span> <span class="n">inc</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">rmix</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argpartition</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">inc</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)[:</span><span class="n">inc</span><span class="p">]]</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">imix</span> <span class="o">/</span> <span class="n">ires</span>
+
+    <span class="k">def</span> <span class="nf">minimum_prob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">min_prob</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Ensure each strategy is played with `min_prob`&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">min_prob</span> <span class="o">+</span>  <span class="n">mixture</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
+            <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span> <span class="o">*</span> <span class="n">min_prob</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">is_mixture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Verify that a mixture is valid for game&quot;&quot;&quot;</span>
@@ -1327,7 +1309,7 @@
         <span class="sd">&quot;&quot;&quot;Format a profile and deviation payoffs as json&quot;&quot;&quot;</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">payoffs</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">r</span><span class="p">:</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">pay</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">pay</span><span class="p">,</span> <span class="n">d</span>  <span class="c1"># pragma: no branch</span>
-                        <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">spays</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ses</span> <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="n">s</span><span class="p">))</span>
+                        <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">spays</span><span class="p">,</span> <span class="n">ses</span><span class="p">)</span>
                         <span class="k">if</span> <span class="n">pay</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">}</span>
                     <span class="k">for</span> <span class="n">spays</span><span class="p">,</span> <span class="n">s</span>
                     <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rpay</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">ses</span><span class="p">)</span>
@@ -2194,7 +2176,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>

@@ -9,7 +9,7 @@
     <title>gameanalysis.regret module &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -84,9 +84,15 @@ an arbitrary profile will be returned.</p>
 <dt id="gameanalysis.regret.pure_strategy_deviation_gains">
 <code class="descclassname">gameanalysis.regret.</code><code class="descname">pure_strategy_deviation_gains</code><span class="sig-paren">(</span><em>game</em>, <em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/regret.html#pure_strategy_deviation_gains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.regret.pure_strategy_deviation_gains" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the pure strategy deviations gains</p>
-<p>The result is a compact array of deviation gains. Each element corresponds
-to the deviation from strategy i to strategy j ordered by (i, j) for all
-valid deviations.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="gameanalysis.regret.pure_strategy_deviation_pays">
+<code class="descclassname">gameanalysis.regret.</code><code class="descname">pure_strategy_deviation_pays</code><span class="sig-paren">(</span><em>game</em>, <em>profile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/regret.html#pure_strategy_deviation_pays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.regret.pure_strategy_deviation_pays" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the pure strategy deviation payoffs</p>
+<p>The result is a compact array of deviation payoffs. Each element
+corresponds to the payoff of deviating to strategy i from strategy j for
+all valid deviations.</p>
 </dd></dl>
 
 <dl class="function">
@@ -155,7 +161,7 @@ of profiles and returned as a new array.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>

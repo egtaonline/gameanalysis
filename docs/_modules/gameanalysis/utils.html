@@ -9,7 +9,7 @@
     <title>gameanalysis.utils &#8212; Game Analysis 7.2.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
@@ -37,15 +37,20 @@
             
   <h1>Source code for gameanalysis.utils</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Utilities helpful for game analysis&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">abc</span>
+<span class="kn">import</span> <span class="nn">contextlib</span>
 <span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">operator</span>
 <span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">signal</span>
 <span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">abc</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numpy.lib</span> <span class="k">import</span> <span class="n">stride_tricks</span>
@@ -468,14 +473,44 @@
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span> <span class="o">&lt;=</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ait</span><span class="p">,</span> <span class="n">bit</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="allclose_perm"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.allclose_perm">[docs]</a><span class="k">def</span> <span class="nf">allclose_perm</span><span class="p">(</span><span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;allclose but for any permutation of actual&quot;&quot;&quot;</span>
-    <span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">aarr</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">barr</span><span class="p">)</span>
+<div class="viewcode-block" id="allequal_perm"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.allequal_perm">[docs]</a><span class="k">def</span> <span class="nf">allequal_perm</span><span class="p">(</span><span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Test if two arrays are equal for any permutation of their first axis</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    aarr, barr : array_like</span>
+<span class="sd">        Identically sized arrays. This will determine if any permutation of</span>
+<span class="sd">        their first axis will make them equal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">,</span> <span class="p">[</span><span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span><span class="p">])</span>
     <span class="n">check</span><span class="p">(</span>
-        <span class="n">aarr</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">aarr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-        <span class="s1">&#39;can only compare identically sized 2d arrays&#39;</span><span class="p">)</span>
-    <span class="n">isclose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">aarr</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">barr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">isclose</span><span class="p">[</span><span class="n">optimize</span><span class="o">.</span><span class="n">linear_sum_assignment</span><span class="p">(</span><span class="o">~</span><span class="n">isclose</span><span class="p">)]</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></div>
+        <span class="n">aarr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+        <span class="s1">&#39;can only compare identically sized arrays&#39;</span><span class="p">)</span>
+    <span class="n">auniq</span><span class="p">,</span> <span class="n">acounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+        <span class="n">axis_to_elem</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">buniq</span><span class="p">,</span> <span class="n">bcounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+        <span class="n">axis_to_elem</span><span class="p">(</span><span class="n">barr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">acounts</span> <span class="o">==</span> <span class="n">bcounts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">auniq</span> <span class="o">==</span> <span class="n">buniq</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="allclose_perm"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.allclose_perm">[docs]</a><span class="k">def</span> <span class="nf">allclose_perm</span><span class="p">(</span><span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;allclose but for any permutation of aarr and barr</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    aarr, barr : array_like</span>
+<span class="sd">        Identically sized arrays of floats. This will determine if any</span>
+<span class="sd">        permutation of their first axis will make `allclose` true.</span>
+<span class="sd">    kwargs</span>
+<span class="sd">        Additional arguments to pass to `isclose`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">,</span> <span class="p">[</span><span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span><span class="p">])</span>
+    <span class="n">check</span><span class="p">(</span>
+        <span class="n">aarr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+        <span class="s1">&#39;can only compare identically sized arrays&#39;</span><span class="p">)</span>
+    <span class="n">isclose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">aarr</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">barr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">isclose</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">isclose</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span>
+    <span class="k">return</span> <span class="n">isclose</span><span class="p">[</span><span class="n">optimize</span><span class="o">.</span><span class="n">linear_sum_assignment</span><span class="p">(</span><span class="o">~</span><span class="n">isclose</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">2</span><span class="p">))]</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="check"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.check">[docs]</a><span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -549,6 +584,132 @@
     <span class="k">return</span> <span class="n">stride_tricks</span><span class="o">.</span><span class="n">as_strided</span><span class="p">(</span>
         <span class="n">array</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">seq</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_shape</span><span class="p">,</span>
         <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="n">axis</span><span class="p">],)</span> <span class="o">+</span> <span class="n">array</span><span class="o">.</span><span class="n">strides</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_raise_handler</span><span class="p">(</span><span class="n">exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create handler for exception&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="n">_signum</span><span class="p">,</span> <span class="n">_frame</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Raise timeout error&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="n">exception</span>
+    <span class="k">return</span> <span class="n">handler</span>
+
+
+<span class="k">def</span> <span class="nf">_timeout_context</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Timeout context manager that works in parent or child thread&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">seconds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">seconds</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+        <span class="k">return</span> <span class="n">_noop</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span> <span class="o">==</span> <span class="n">threading</span><span class="o">.</span><span class="n">main_thread</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">_timeout_context_main</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_timeout_context_child</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
+
+
+<span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">_noop</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Noop for irrelevant time&quot;&quot;&quot;</span>
+    <span class="k">yield</span>
+
+
+<span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">_timeout_context_main</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Timeout context manager for main thread&quot;&quot;&quot;</span>
+    <span class="n">old</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">_raise_handler</span><span class="p">(</span><span class="n">exception</span><span class="p">))</span>
+    <span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+    <span class="k">yield</span>
+    <span class="n">signal</span><span class="o">.</span><span class="n">setitimer</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">ITIMER_REAL</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">old</span><span class="p">)</span>
+
+
+<span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">_timeout_context_child</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Timeout context manager for child thread&quot;&quot;&quot;</span>
+    <span class="n">timedout</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+    <span class="n">complete</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">globaltrace</span><span class="p">(</span><span class="n">_frame</span><span class="p">,</span> <span class="n">why</span><span class="p">,</span> <span class="n">_arg</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+        <span class="sd">&quot;&quot;&quot;Global trace to set local trace&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">why</span> <span class="o">==</span> <span class="s1">&#39;call&#39;</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+            <span class="k">return</span> <span class="n">localtrace</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">localtrace</span><span class="p">(</span><span class="n">_frame</span><span class="p">,</span> <span class="n">why</span><span class="p">,</span> <span class="n">_arg</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+        <span class="sd">&quot;&quot;&quot;Local trace to check for timeout&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">complete</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span> <span class="c1"># pylint: disable=no-else-return</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">timedout</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span> <span class="ow">and</span> <span class="n">why</span> <span class="o">==</span> <span class="s1">&#39;line&#39;</span><span class="p">:</span>
+            <span class="n">complete</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">exception</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">localtrace</span>
+
+    <span class="n">timer</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">timedout</span><span class="o">.</span><span class="n">set</span><span class="p">)</span>
+    <span class="n">timer</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">settrace</span><span class="p">(</span><span class="n">globaltrace</span><span class="p">)</span>
+    <span class="k">yield</span>
+    <span class="c1"># These are executed, but coverage misses them, potentially due to messing</span>
+    <span class="c1"># with the trace</span>
+    <span class="n">complete</span><span class="o">.</span><span class="n">set</span><span class="p">()</span> <span class="c1"># pragma: no cover</span>
+    <span class="n">timer</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span> <span class="c1"># pragma: no cover</span>
+
+
+<span class="k">class</span> <span class="nc">_Timeout</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span> <span class="c1"># pylint: disable=too-few-public-methods</span>
+    <span class="sd">&quot;&quot;&quot;Timeout class&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_timeout_context</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seconds</span> <span class="o">=</span> <span class="n">seconds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exception</span> <span class="o">=</span> <span class="n">exception</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span> <span class="c1"># pylint: disable=no-member</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span> <span class="c1"># pylint: disable=no-member</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Wrapped function&quot;&quot;&quot;</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wrapped</span>
+
+
+<div class="viewcode-block" id="timeout"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.timeout">[docs]</a><span class="k">def</span> <span class="nf">timeout</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="ne">TimeoutError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Timeout code</span>
+
+<span class="sd">    A TimeoutError is raised if code doesn&#39;t finish within seconds. The result</span>
+<span class="sd">    can be used as a decorator or as a context manager. This will work in child</span>
+<span class="sd">    threads, but as a significant performance hit.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    seconds : int, optional</span>
+<span class="sd">        The number of seconds until timeout. If omitted, no timeout is used,</span>
+<span class="sd">        and this is essentially a no op</span>
+<span class="sd">    exception : Exception, optional</span>
+<span class="sd">        The exception to raise. IF omitted, a generic TimeoutError is used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_Timeout</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="iloads"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.iloads">[docs]</a><span class="k">def</span> <span class="nf">iloads</span><span class="p">(</span><span class="n">jstring</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load a string as a generator of json objects&quot;&quot;&quot;</span>
+    <span class="n">decoder</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecoder</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">decoder</span><span class="o">.</span><span class="n">WHITESPACE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">jstring</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">jstring</span><span class="p">):</span>
+        <span class="n">obj</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">raw_decode</span><span class="p">(</span><span class="n">jstring</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">obj</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">decoder</span><span class="o">.</span><span class="n">WHITESPACE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">jstring</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span><span class="o">.</span><span class="n">end</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="iload"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.iload">[docs]</a><span class="k">def</span> <span class="nf">iload</span><span class="p">(</span><span class="n">jfp</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load a file as a generator of json objects&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">iloads</span><span class="p">(</span><span class="n">jfp</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
@@ -587,7 +748,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
     </div>
   </body>
 </html>
