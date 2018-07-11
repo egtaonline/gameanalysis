@@ -256,6 +256,13 @@ def test_faststar_failure(hardgame):
     assert reg > 1e-2
 
 
+@pytest.mark.xfail(raises=TimeoutError)
+@utils.timeout(5)
+def test_one_timesout(hardgame):
+    """Test that one works but we can't wait, so timeout"""
+    nash.mixed_equilibria(hardgame, 'one', processes=1)
+
+
 # FIXME Ideally remove timeout
 @pytest.mark.xfail(raises=TimeoutError)
 @utils.timeout(60)

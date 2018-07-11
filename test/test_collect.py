@@ -7,8 +7,7 @@ from gameanalysis import utils
 
 def test_connected_component():
     """Test that connected component works"""
-    simset = collect.mcces(1)
-    assert simset.add([0], 0)
+    simset = collect.mcces(1, [([0], 0)])
     assert simset.add([1.5], 1)
     assert not simset.add([0.75], .5)
     assert len(simset) == 1
@@ -28,6 +27,10 @@ def test_connected_component():
     assert not simset.add([1.5], 0.5)
     assert simset.add([3], 2)
     assert [((0,), 0), ((3,), 2)] == list(simset)
+
+    assert [1.5] in simset
+    assert [-0.5] in simset
+    assert [5] not in simset
 
 
 def test_bitset():

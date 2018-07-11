@@ -188,7 +188,7 @@ def regret_matching(game, profile, *, slack=0.1): # pylint: disable=too-many-loc
     mean_mix = profile / strat_players
     mus = np.full(game.num_roles, np.finfo(float).tiny)
 
-    for i in itertools.count(1):
+    for i in itertools.count(1): # pragma: no branch
         # Regret matching
         gains = regret.pure_strategy_deviation_gains(game, profile)
         gains *= profile.repeat(game.num_strat_devs)
@@ -309,7 +309,7 @@ def fictitious_play(game, mix):
         The initial mixture to respond to.
     """
     empirical = mix.copy()
-    for i in itertools.count(2):
+    for i in itertools.count(2): # pragma: no branch
         empirical += (game.best_response(empirical) - empirical) / i
         yield empirical
 
@@ -338,7 +338,7 @@ def _multiplicative_weights(game, mix, func, epsilon):
         log_weights = np.log(mix)
     learning = np.log(1 + epsilon)
 
-    for i in itertools.count(2):
+    for i in itertools.count(2): # pragma: no branch
         pays = func(game, np.exp(log_weights))
         log_weights += pays * learning
         log_weights -= np.logaddexp.reduceat(

@@ -57,7 +57,7 @@ def game_function(game, function, num_resamples, num_returned, *,
 
 def _resample_function(function, game, _):
     """Function for resampling"""
-    return function(game.resample())
+    return function(game.resample()) # pragma: no cover
 
 
 def profile_function(game, function, profiles, num_resamples, *,
@@ -99,7 +99,7 @@ def profile_function(game, function, profiles, num_resamples, *,
 
 def _profile_function(function, profiles, game):
     """Map a profile function over profiles"""
-    return [function(game, prof) for prof in profiles]
+    return [function(game, prof) for prof in profiles] # pragma: no cover
 
 
 def mixture_regret(game, mixtures, num_resamples, *, percentiles=None,

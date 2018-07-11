@@ -1,7 +1,6 @@
 """Test game reader"""
 import functools
 import io
-import json
 import warnings
 
 import numpy as np
@@ -93,13 +92,18 @@ def test_automatic_deserialization(base):
     if base == 'gambit':
         base = mat()
         string = gambit.dumps(base)
+        fil = io.StringIO(string)
     else:
         base = base()
-        string = json.dumps(base.to_json())
+        string = gamereader.dumps(base)
+        fil = io.StringIO()
+        gamereader.dump(base, fil)
+        fil.seek(0)
+
     copy = gamereader.loads(string)
     assert base == copy
 
-    copy = gamereader.load(io.StringIO(string))
+    copy = gamereader.load(fil)
     assert base == copy
 
 
