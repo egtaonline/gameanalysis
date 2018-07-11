@@ -4,9 +4,7 @@ This script compiles the results into a restructured text file in the
 documentation.
 """
 import argparse
-import collections
 import functools
-import itertools
 import json
 import logging
 import multiprocessing
@@ -16,7 +14,6 @@ import warnings
 from os import path
 
 import numpy as np
-import tabulate
 
 from gameanalysis import collect, gamegen, gamereader, learning, nash, regret
 
@@ -126,8 +123,8 @@ def gen_methods():
     timeout = 30 * 60
     yield 'replicator dynamics', False, functools.partial(
         nash.replicator_dynamics, timeout=timeout)
-    yield 'regret matching', False, functools.partial( # pylint: disable=protected-access
-        nash._regret_matching_mix, timeout=timeout)
+    yield 'regret matching', False, functools.partial(
+        nash._regret_matching_mix, timeout=timeout) # pylint: disable=protected-access
     yield 'regret minimization', False, nash.regret_minimize
     yield 'fictitious play', False, functools.partial(
         nash.fictitious_play, timeout=timeout)
@@ -188,10 +185,10 @@ def process_game(args): # pylint: disable=too-many-locals
     for norm, _ in all_eqa:
         inds[norm] = len(inds)
 
-    for meth, prof_eqa in meth_eqa.items():
+    for prof_eqa in meth_eqa.values():
         for prof, eqa in prof_eqa.items():
             prof_eqa[prof] = list({inds[all_eqa.get(e)] for e in eqa})
-        
+
     return name, meth_times, meth_eqa
 
 

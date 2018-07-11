@@ -1,4 +1,8 @@
-from gameanalysis import utils
+"""Aggregate profiling data and generate an rst file"""
+import itertools
+
+import tabulate
+
 
 def update(means, new, count, num=1):
     """Recursively update mean dictionary"""
@@ -10,7 +14,7 @@ def update(means, new, count, num=1):
             means[key] = value + (val - value) * num / count
 
 
-def write_file(results):
+def write_file(results, fil):
     """Write file with results"""
     # Compute normalized speeds
     for game in next(iter(results.values())):
@@ -29,8 +33,7 @@ def write_file(results):
             update(agg_info, info, game_count, count)
         agg_results[method] = agg_info
 
-    with open(path.join(_DIR, 'sphinx', 'profile_nash.rst'), 'w') as fil:
-        fil.write(""".. _profile_nash:
+    fil.write(""".. _profile_nash:
 
 Nash Equilibrium Methods Comparison
 ===================================
@@ -48,64 +51,62 @@ certain games may be more difficult than others. It also provides an easy
 comparison metric to for baseline timing.
 
 """)
+    fil.write(
+        'Comparisons Between Methods\n'
+        '----------------------------------\n\n')
+    fil.write(tabulate.tabulate(
+        sorted(([m.title(), v['card'], v['weight'], v['speed'],
+                 v['norm_speed']]
+                for m, v in agg_results.items()),
+               key=lambda x: x[1], reverse=True),
+        headers=['Method', 'Fraction of Eqa', 'Weighted Fraction',
+                 'Time (sec)', 'Normalized Time'],
+        tablefmt='rst'))
+    fil.write('\n\n')
+
+    for method, game_info in results.items():
+        title = method.title()
+        fil.write(title)
+        fil.write('\n')
+        fil.writelines(itertools.repeat('-', len(title)))
+        fil.write('\n\n')
+
+        agg_info = agg_results[method]
         fil.write(
-            'Comparisons Between Methods\n'
-            '----------------------------------\n\n')
+            'Initial Profile Rates\n'
+            '^^^^^^^^^^^^^^^^^^^^^\n\n')
         fil.write(tabulate.tabulate(
-            sorted(([m.title(), v['card'], v['weight'], v['speed'],
-                     v['norm_speed']]
-                    for m, v in agg_results.items()),
+            sorted(([k.capitalize(), v, agg_info['profweight'][k]]
+                    for k, v in agg_info['profcard'].items()),
                    key=lambda x: x[1], reverse=True),
-            headers=['Method', 'Fraction of Eqa', 'Weighted Fraction',
-                     'Time (sec)', 'Normalized Time'],
+            headers=['Starting Type', 'Fraction of Eqa',
+                     'Weighted Fraction'], tablefmt='rst'))
+        fil.write('\n\n')
+
+        fil.write(
+            'Compared to Other Methods\n'
+            '^^^^^^^^^^^^^^^^^^^^^^^^^\n\n')
+        fil.write(tabulate.tabulate(
+            sorted(([m.title(), v,
+                     agg_info['norm_speed'] / agg_results[m]['norm_speed']]
+                    for m, v in agg_info['pair'].items()),
+                   key=lambda x: x[1], reverse=True),
+            headers=['Method', 'Fraction of Eqa', 'Time Ratio'],
             tablefmt='rst'))
         fil.write('\n\n')
 
-        for method, game_info in results.items():
-            title = method.title()
-            fil.write(title)
+        fil.write(
+            'By Game Type\n'
+            '^^^^^^^^^^^^\n\n')
+        for game, info in game_info.items():
+            fil.write(game.capitalize())
             fil.write('\n')
-            fil.writelines(itertools.repeat('-', len(title)))
+            fil.writelines(itertools.repeat('"', len(game)))
             fil.write('\n\n')
-
-            agg_info = agg_results[method]
-            fil.write(
-                'Initial Profile Rates\n'
-                '^^^^^^^^^^^^^^^^^^^^^\n\n')
-            fil.write(tabulate.tabulate(
-                sorted(([k.capitalize(), v, agg_info['profweight'][k]]
-                        for k, v in agg_info['profcard'].items()),
-                       key=lambda x: x[1], reverse=True),
-                headers=['Starting Type', 'Fraction of Eqa',
-                         'Weighted Fraction'], tablefmt='rst'))
+            fil.write(tabulate.tabulate([
+                ['Fraction of Eqa', info['card']],
+                ['Weighted Fraction of Eqa', info['weight']],
+                ['Time (sec)', info['speed']],
+                ['Normalized Time', info['norm_speed']],
+            ], headers=['Metric', 'Value'], tablefmt='rst'))
             fil.write('\n\n')
-
-            fil.write(
-                'Compared to Other Methods\n'
-                '^^^^^^^^^^^^^^^^^^^^^^^^^\n\n')
-            fil.write(tabulate.tabulate(
-                sorted(([m.title(), v,
-                         agg_info['norm_speed'] / agg_results[m]['norm_speed']]
-                        for m, v in agg_info['pair'].items()),
-                       key=lambda x: x[1], reverse=True),
-                headers=['Method', 'Fraction of Eqa', 'Time Ratio'],
-                tablefmt='rst'))
-            fil.write('\n\n')
-
-            fil.write(
-                'By Game Type\n'
-                '^^^^^^^^^^^^\n\n')
-            for game, info in game_info.items():
-                fil.write(game.capitalize())
-                fil.write('\n')
-                fil.writelines(itertools.repeat('"', len(game)))
-                fil.write('\n\n')
-                fil.write(tabulate.tabulate([
-                    ['Fraction of Eqa', info['card']],
-                    ['Weighted Fraction of Eqa', info['weight']],
-                    ['Time (sec)', info['speed']],
-                    ['Normalized Time', info['norm_speed']],
-                ], headers=['Metric', 'Value'], tablefmt='rst'))
-                fil.write('\n\n')
-
-

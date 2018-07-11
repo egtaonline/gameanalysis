@@ -15,9 +15,6 @@ from gameanalysis import regret
 from gameanalysis import utils
 
 
-# FIXME Tune max_iters
-
-
 # FIXME Remove
 def pure_nash(game, *, epsilon=0):
     """Returns an array of all pure nash profiles
@@ -526,29 +523,25 @@ def _serial_nash_func(game, spec):
     return req, func(game, mix)
 
 
-# FIXME Tweak these
 def _required(game):
     """Required methods for due diligence"""
     return itertools.chain(
-        ((replicator_dynamics, mix) for mix in _initial_mixtures(game)),
         ((regret_minimize, mix) for mix in itertools.chain(
             _initial_mixtures(game),
             game.pure_mixtures())),
         ((_noop, mix) for mix in game.pure_mixtures()))
 
 
-# FIXME Tweak these
-def _more(game, _reg):
+def _more(game, reg):
     """Extra methods for `more`"""
     return itertools.chain.from_iterable(
         ((func, mix) for mix in _initial_mixtures(game)) for func in [
-            _regret_matching_mix, multiplicative_weights_dist,
-            multiplicative_weights_stoch, multiplicative_weights_bandit,
-            fictitious_play])
+            functools.partial(scarfs_algorithm, timeout=60, regret_thresh=reg),
+            replicator_dynamics, multiplicative_weights_dist, fictitious_play,
+            _regret_matching_mix, multiplicative_weights_stoch,
+            multiplicative_weights_bandit])
 
 
-# FIXME Potentially add other long running versions here (fp with high max
-# iters) Also add to _one
 def _best(game, reg):
     """Extra methods for `best`"""
     return itertools.chain(

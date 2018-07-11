@@ -85,7 +85,7 @@ def test_minreg_rand():
 def test_replicator_dynamics_noop():
     """Test that max_iters stops replicator dynamics"""
     game = gamegen.sym_2p2s_known_eq(1 / np.sqrt(2))
-    eqm = nash.replicator_dynamics(game, [1/2, 1/2], max_iters=0)
+    eqm = nash.replicator_dynamics(game, [1/2, 1/2], max_iters=0) # pylint: disable=unexpected-keyword-arg
     assert np.allclose(eqm, [1/2, 1/2])
 
 
@@ -106,7 +106,7 @@ def test_replicator_dynamics_failure():
 def test_regret_matching_noop():
     """Test that we can make fictitious play noop"""
     game = gamegen.rock_paper_scissors()
-    eqm = nash.regret_matching(game, [2, 0, 0], max_iters=0)
+    eqm = nash.regret_matching(game, [2, 0, 0], max_iters=0) # pylint: disable=unexpected-keyword-arg
     assert np.allclose(eqm, [1, 0, 0])
 
 
@@ -144,28 +144,28 @@ def test_regret_minimize_failure():
 def test_fictitious_play_noop():
     """Test that we can make fictitious play noop"""
     game = gamegen.rock_paper_scissors()
-    eqm = nash.fictitious_play(game, [0.6, 0.3, 0.1], max_iters=0)
+    eqm = nash.fictitious_play(game, [0.6, 0.3, 0.1], max_iters=0) # pylint: disable=unexpected-keyword-arg
     assert np.allclose(eqm, [0.6, 0.3, 0.1])
 
 
 def test_fictitious_play():
     """Test that fictitious play works"""
     game = gamegen.rock_paper_scissors(win=2)
-    eqm = nash.fictitious_play(game, [0.6, 0.3, 0.1], max_iters=10000)
+    eqm = nash.fictitious_play(game, [0.6, 0.3, 0.1], max_iters=10000) # pylint: disable=unexpected-keyword-arg
     assert np.allclose(eqm, [1/3, 1/3, 1/3], atol=1e-4)
 
 
 def test_fictitious_play_convergence():
     """Test that fictitious play converges"""
     game = gamegen.rock_paper_scissors(win=2)
-    eqm = nash.fictitious_play(game, [0.3, 0.4, 0.3], converge_thresh=1e-3)
+    eqm = nash.fictitious_play(game, [0.3, 0.4, 0.3], converge_thresh=1e-3) # pylint: disable=unexpected-keyword-arg
     assert np.allclose(eqm, [1/3, 1/3, 1/3], atol=1e-3)
 
 
 def test_fictitious_play_failure():
     """Test that fictitious play fails"""
     game = gamegen.rock_paper_scissors(win=0.5)
-    eqm = nash.fictitious_play(game, [0.6, 0.3, 0.1], max_iters=10000)
+    eqm = nash.fictitious_play(game, [0.6, 0.3, 0.1], max_iters=10000) # pylint: disable=unexpected-keyword-arg
     assert regret.mixture_regret(game, eqm) > 0.1
 
 
@@ -274,7 +274,7 @@ def test_hard_scarf():
     immediately, e.g. a timeout of 2s is fine"""
     with open(path.join('example_games', 'hard_scarf.json')) as fil:
         game = gamereader.load(fil)
-    eqm = nash.scarfs_algorithm(game, game.uniform_mixture(), timeout=5)
+    eqm = nash.scarfs_algorithm(game, game.uniform_mixture(), timeout=5) # pylint: disable=unexpected-keyword-arg
     assert game.is_mixture(eqm)
 
 
