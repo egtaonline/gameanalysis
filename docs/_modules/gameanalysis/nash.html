@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.nash &#8212; Game Analysis 7.3.0 documentation</title>
+    <title>gameanalysis.nash &#8212; Game Analysis 8.0.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
       </ul>
     </div>  
@@ -53,15 +53,6 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="k">import</span> <span class="n">utils</span>
 
 
-<span class="c1"># FIXME Remove</span>
-<div class="viewcode-block" id="pure_nash"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.pure_nash">[docs]</a><span class="k">def</span> <span class="nf">pure_nash</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Returns an array of all pure nash profiles</span>
-
-<span class="sd">    This is the old syntax.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pure_equilibria</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">)</span></div>
-
-
 <div class="viewcode-block" id="pure_equilibria"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.pure_equilibria">[docs]</a><span class="k">def</span> <span class="nf">pure_equilibria</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns an array of all pure nash profiles&quot;&quot;&quot;</span>
     <span class="n">eqa</span> <span class="o">=</span> <span class="p">[</span><span class="n">prof</span> <span class="k">for</span> <span class="n">prof</span> <span class="ow">in</span> <span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span>
@@ -85,41 +76,6 @@
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">prof</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()))</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">reg</span><span class="p">),</span> <span class="s1">&#39;No profiles had valid regret&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">prof</span></div>
-
-
-<span class="c1"># TODO Remove</span>
-<div class="viewcode-block" id="min_regret_grid_mixture"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.min_regret_grid_mixture">[docs]</a><span class="k">def</span> <span class="nf">min_regret_grid_mixture</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">points</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Finds the mixed profile with the confirmed lowest regret</span>
-
-<span class="sd">    The search is done over a grid with `points` per dimensions.</span>
-
-<span class="sd">    Arguments</span>
-<span class="sd">    ---------</span>
-<span class="sd">    points : int &gt; 1</span>
-<span class="sd">        Number of points per dimension to search.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">mixes</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">grid_mixtures</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
-    <span class="n">regs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span>  <span class="c1"># pragma: no branch</span>
-                        <span class="k">for</span> <span class="n">mix</span> <span class="ow">in</span> <span class="n">mixes</span><span class="p">),</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mixes</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">mixes</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">regs</span><span class="p">)]</span></div>
-
-
-<span class="c1"># TODO Remove</span>
-<div class="viewcode-block" id="min_regret_rand_mixture"><a class="viewcode-back" href="../../gameanalysis.nash.html#gameanalysis.nash.min_regret_rand_mixture">[docs]</a><span class="k">def</span> <span class="nf">min_regret_rand_mixture</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Finds the mixed profile with the confirmed lowest regret</span>
-
-<span class="sd">    The search is done over a random sampling of `mixtures` mixed profiles.</span>
-
-<span class="sd">    Arguments</span>
-<span class="sd">    ---------</span>
-<span class="sd">    mixtures : int &gt; 0</span>
-<span class="sd">        Number of mixtures to evaluate the regret of.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">mixtures</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;mixtures must be greater than 0&#39;</span><span class="p">)</span>
-    <span class="n">mixes</span> <span class="o">=</span> <span class="n">game</span><span class="o">.</span><span class="n">random_mixtures</span><span class="p">(</span><span class="n">mixtures</span><span class="p">)</span>
-    <span class="n">regs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">((</span><span class="n">regret</span><span class="o">.</span><span class="n">mixture_regret</span><span class="p">(</span><span class="n">game</span><span class="p">,</span> <span class="n">mix</span><span class="p">)</span>  <span class="c1"># pragma: no branch</span>
-                        <span class="k">for</span> <span class="n">mix</span> <span class="ow">in</span> <span class="n">mixes</span><span class="p">),</span> <span class="nb">float</span><span class="p">,</span> <span class="n">mixtures</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">mixes</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmin</span><span class="p">(</span><span class="n">regs</span><span class="p">)]</span></div>
 
 
 <span class="k">class</span> <span class="nc">_Sentinel</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -825,7 +781,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 7.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
       </ul>
     </div>

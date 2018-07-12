@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>gameanalysis.nash module &#8212; Game Analysis 7.3.0 documentation</title>
+    <title>gameanalysis.nash module &#8212; Game Analysis 8.0.0 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -33,7 +33,7 @@
         <li class="right" >
           <a href="gameanalysis.matgame.html" title="gameanalysis.matgame module"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
       </ul>
     </div>  
@@ -68,40 +68,10 @@ convergence.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="gameanalysis.nash.min_regret_grid_mixture">
-<code class="descclassname">gameanalysis.nash.</code><code class="descname">min_regret_grid_mixture</code><span class="sig-paren">(</span><em>game</em>, <em>points</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#min_regret_grid_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.min_regret_grid_mixture" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds the mixed profile with the confirmed lowest regret</p>
-<p>The search is done over a grid with <cite>points</cite> per dimensions.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>points</strong> (<em>int &gt; 1</em>) – Number of points per dimension to search.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
 <dt id="gameanalysis.nash.min_regret_profile">
 <code class="descclassname">gameanalysis.nash.</code><code class="descname">min_regret_profile</code><span class="sig-paren">(</span><em>game</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#min_regret_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.min_regret_profile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Finds the profile with the confirmed lowest regret</p>
 <p>An error will be raised if there are no profiles with a defined regret.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="gameanalysis.nash.min_regret_rand_mixture">
-<code class="descclassname">gameanalysis.nash.</code><code class="descname">min_regret_rand_mixture</code><span class="sig-paren">(</span><em>game</em>, <em>mixtures</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#min_regret_rand_mixture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.min_regret_rand_mixture" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds the mixed profile with the confirmed lowest regret</p>
-<p>The search is done over a random sampling of <cite>mixtures</cite> mixed profiles.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mixtures</strong> (<em>int &gt; 0</em>) – Number of mixtures to evaluate the regret of.</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="function">
@@ -268,13 +238,6 @@ epsilon in [0, 3/5].</li>
 </dd></dl>
 
 <dl class="function">
-<dt id="gameanalysis.nash.pure_nash">
-<code class="descclassname">gameanalysis.nash.</code><code class="descname">pure_nash</code><span class="sig-paren">(</span><em>game</em>, <em>*</em>, <em>epsilon=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#pure_nash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.pure_nash" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns an array of all pure nash profiles</p>
-<p>This is the old syntax.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="gameanalysis.nash.regret_matching">
 <code class="descclassname">gameanalysis.nash.</code><code class="descname">regret_matching</code><span class="sig-paren">(</span><em>game</em>, <em>profile</em>, <em>*</em>, <em>slack=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/nash.html#regret_matching"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.nash.regret_matching" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regret matching</p>
@@ -433,7 +396,7 @@ lower discretization. For example, with <cite>disc=2</cite> there are only
         <li class="right" >
           <a href="gameanalysis.matgame.html" title="gameanalysis.matgame module"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 7.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
       </ul>
     </div>
