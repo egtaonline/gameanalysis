@@ -44,42 +44,12 @@ def test_pure_roshambo():
         'found profiles with more than 2 regret in roshambo'
 
 
-def test_deprecated_pure():
-    """Test that deprecated pure nash still works"""
-    game = gamegen.prisoners_dilemma()
-    eqa = nash.pure_nash(game)
-
-    assert eqa.shape[0] == 1, "didn't find exactly one equilibria in pd"
-    expected = [0, 2]
-    assert np.all(expected == eqa), \
-        "didn't find pd equilibrium"
-
-
 def test_min_regret_profile():
     """Test minimum regret profile on rps"""
     game = gamegen.rock_paper_scissors()
     eqm = nash.min_regret_profile(game)
     assert utils.allequal_perm(eqm, [0, 0, 2]), \
         'min regret profile was not rr, pp, or ss'
-
-
-def test_minreg_grid():
-    """Test min regret grid search"""
-    game = gamegen.rock_paper_scissors()
-    eqm = nash.min_regret_grid_mixture(game, 3)  # Not enough for eq
-    assert np.isclose(regret.mixture_regret(game, eqm), .5), \
-        "min regret grid didn't find [.5, .5, 0] profile with regret .5"
-    eqm = nash.min_regret_grid_mixture(game, 4)  # hit eqa perfectly
-    assert np.isclose(regret.mixture_regret(game, eqm), 0), \
-        "min regret grid didn't find equilibrium"
-
-
-def test_minreg_rand():
-    """Test min regret random search"""
-    game = gamegen.rock_paper_scissors()
-    eqm = nash.min_regret_rand_mixture(game, 20)
-    assert regret.mixture_regret(game, eqm) < 2 + 1e-7, \
-        'Found a mixture with greater than maximum regret'
 
 
 def test_replicator_dynamics_noop():

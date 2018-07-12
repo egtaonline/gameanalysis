@@ -27,39 +27,22 @@ def add_parser(subparsers):
         '--output', '-o', metavar='<output-file>', default=sys.stdout,
         type=argparse.FileType('w'), help="""Output file for script. (default:
         stdout)""")
-    # FIXME Change this so that it's normalized to be in [0, 1] (multiply by
-    # sqrt(2 * num_roles))
     parser.add_argument(
         '--dist-thresh', metavar='<distance-threshold>', type=float,
-        default=0.1, help="""L2 norm threshold, inside of which, equilibria
-        are considered identical.  (default: %(default)g)""")
+        default=0.1, help="""Average normalized per-role L2-norm threshold,
+        inside of which, equilibria are considered identical. Valid in [0, 1].
+        (default: %(default)g)""")
     parser.add_argument(
         '--regret-thresh', '-r', metavar='<regret-threshold>', type=float,
         default=1e-3, help="""Maximum regret to consider an equilibrium
         confirmed. (default: %(default)g)""")
     parser.add_argument(
-        '--supp-thresh', '-t', metavar='<support-threshold>', type=float,
+        '--support', '-t', metavar='<support-threshold>', type=float,
         default=1e-3, help="""Maximum probability to consider a strategy in
         support. (default: %(default)g)""")
     parser.add_argument(
-        '--rand-restarts', metavar='<random-restarts>', type=int, default=0,
-        help="""The number of random points to add to nash equilibrium finding.
-        (default: %(default)d)""")
-    parser.add_argument(
-        '--max-iters', '-m', metavar='<maximum-iterations>', type=int,
-        default=10000, help="""The maximum number of iterations to run through
-        replicator dynamics.  (default: %(default)d)""")
-    parser.add_argument(
-        '--converge-thresh', '-c', metavar='<convergence-threshold>',
-        type=float, default=1e-8, help="""The convergence threshold for
-        replicator dynamics. (default: %(default)g)""")
-    parser.add_argument(
         '--processes', '-p', metavar='<num-procs>', type=int, help="""Number of
-        processes to use to run nash finding.  (default: number of cores)""")
-    parser.add_argument(
-        '--one', action='store_true', help="""If specified, run a potentially
-        expensive algorithm to guarantee an approximate equilibrium, if none
-        are found via other methods.""")
+        processes to use to run nash finding. (default: number of cores)""")
     parser.add_argument(
         '--dominance', '-d', action='store_true', help="""Remove dominated
         strategies.""")
@@ -67,6 +50,16 @@ def add_parser(subparsers):
         '--restrictions', '-s', action='store_true', help="""Extract maximal
         restricted games, and analyze each individually instead of considering
         the game as a whole.""")
+    parser.add_argument(
+        '--style', default='best',
+        choices=['fast', 'fast*', 'more', 'more*', 'best', 'best*', 'one'],
+        help="""The `style` of mixed equilibrium finding. `fast` runs the
+        fastest algorithms that should find an equilibrium. `more` will try
+        slower ones until it finds one. `best` is more but will do an
+        exhaustive search with a timeout of a half hour. `one` is the same as
+        best with no timeout. The starred* versions do the same, but will
+        return the minimum regret mixture if no equilibria were found.
+        (default: %(default)s)""")
     reductions = parser.add_mutually_exclusive_group()
     reductions.add_argument(
         '--dpr', metavar='<role:count;role:count,...>', help="""Specify a
@@ -97,28 +90,21 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
     else:
         restrictions = np.ones((1, game.num_strats), bool)
 
-    methods = {
-        'replicator': {
-            'max_iters': args.max_iters,
-            'converge_thresh': args.converge_thresh},
-        'optimize': {}}
     noeq_restrictions = []
     candidates = []
     for rest in restrictions:
         rgame = game.restrict(rest)
-        reqa = nash.mixed_nash(
-            rgame, regret_thresh=args.regret_thresh,
-            dist_thresh=args.dist_thresh, processes=args.processes,
-            at_least_one=args.one, **methods)
-        eqa = restrict.translate(rgame.trim_mixture_support(
-            reqa, thresh=args.supp_thresh), rest)
+        reqa = nash.mixed_equilibria(
+            rgame, style=args.style, regret_thresh=args.regret_thresh,
+            dist_thresh=args.dist_thresh, processes=args.processes)
+        eqa = restrict.translate(reqa, rest)
         if eqa.size:
             candidates.extend(eqa)
         else:
             noeq_restrictions.append(rest)
 
-    equilibria = collect.mcces(args.dist_thresh)
-    unconfirmed = collect.mcces(args.dist_thresh)
+    equilibria = collect.mcces(args.dist_thresh * np.sqrt(2 * game.num_roles))
+    unconfirmed = collect.mcces(args.dist_thresh * np.sqrt(2 * game.num_roles))
     unexplored = {}
     for eqm in candidates:
         support = eqm > 0
@@ -128,7 +114,8 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
 
         if np.isnan(gains).any() and gain <= args.regret_thresh:
             # Not fully explored but might be good
-            unconfirmed.add(eqm, gain)
+            unconfirmed.add(game.trim_mixture_support(
+                eqm, thresh=args.support), gain)
 
         elif np.any(role_gains > args.regret_thresh):
             # There are deviations, did we explore them?
@@ -147,7 +134,9 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
 
         else:
             # Equilibrium!
-            equilibria.add(eqm, np.max(gains))
+            equilibria.add(
+                game.trim_mixture_support(eqm, thresh=args.support),
+                np.max(gains))
 
     # Output Game
     args.output.write('Game Analysis\n')

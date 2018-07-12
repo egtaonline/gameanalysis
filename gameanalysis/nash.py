@@ -15,15 +15,6 @@ from gameanalysis import regret
 from gameanalysis import utils
 
 
-# FIXME Remove
-def pure_nash(game, *, epsilon=0):
-    """Returns an array of all pure nash profiles
-
-    This is the old syntax.
-    """
-    return pure_equilibria(game, epsilon=epsilon)
-
-
 def pure_equilibria(game, *, epsilon=0):
     """Returns an array of all pure nash profiles"""
     eqa = [prof for prof in game.profiles()
@@ -47,41 +38,6 @@ def min_regret_profile(game):
         for i, prof in enumerate(game.profiles()))
     utils.check(not np.isinf(reg), 'No profiles had valid regret')
     return prof
-
-
-# TODO Remove
-def min_regret_grid_mixture(game, points):
-    """Finds the mixed profile with the confirmed lowest regret
-
-    The search is done over a grid with `points` per dimensions.
-
-    Arguments
-    ---------
-    points : int > 1
-        Number of points per dimension to search.
-    """
-    mixes = game.grid_mixtures(points)
-    regs = np.fromiter((regret.mixture_regret(game, mix)  # pragma: no branch
-                        for mix in mixes), float, mixes.shape[0])
-    return mixes[np.nanargmin(regs)]
-
-
-# TODO Remove
-def min_regret_rand_mixture(game, mixtures):
-    """Finds the mixed profile with the confirmed lowest regret
-
-    The search is done over a random sampling of `mixtures` mixed profiles.
-
-    Arguments
-    ---------
-    mixtures : int > 0
-        Number of mixtures to evaluate the regret of.
-    """
-    utils.check(mixtures > 0, 'mixtures must be greater than 0')
-    mixes = game.random_mixtures(mixtures)
-    regs = np.fromiter((regret.mixture_regret(game, mix)  # pragma: no branch
-                        for mix in mixes), float, mixtures)
-    return mixes[np.nanargmin(regs)]
 
 
 class _Sentinel(Exception):

@@ -329,7 +329,7 @@ def test_gamegen_noise_gaussian(game_file):
 
 def test_nash_fail(game_file):
     """Test nash fail"""
-    assert not run('nash', '-tfail', '-i', game_file)
+    assert not run('nash', '--fail', '-i', game_file)
 
 
 def test_nash_basic(game_str):
@@ -343,39 +343,17 @@ def test_nash_options(game_file):
     with stderr() as err:
         assert run(
             'nash', '-i', game_file, '-o/dev/null', '-r1e-2', '-d1e-2',
-            '-c1e-7', '-x100', '-s1e-2', '-m5', '-n', '-p1'), err.getvalue()
+            '-s1e-2', '-p1'), err.getvalue()
 
 
 def test_nash_pure(hardgame, hardgame_file):
     """Test pure nash"""
     with stdout() as out, stderr() as err:
-        assert run('nash', '-tpure', '-i', hardgame_file), err.getvalue()
+        assert run('nash', '--pure', '-i', hardgame_file), err.getvalue()
     assert any(  # pragma: no branch
         np.all(hardgame.profile_from_json(prof) ==
                [4, 2, 0, 0, 0, 1, 0, 0, 0])
         for prof in json.loads(out.getvalue()))
-
-
-def test_nash_prof(hardgame, hardgame_file):
-    """Test nash prof"""
-    with stdout() as out, stderr() as err:
-        assert run(
-            'nash', '-tmin-reg-prof', '-i', hardgame_file), err.getvalue()
-    assert any(  # pragma: no branch
-        np.all(hardgame.profile_from_json(prof) ==
-               [4, 2, 0, 0, 0, 1, 0, 0, 0])
-        for prof in json.loads(out.getvalue()))
-
-
-def test_nash_grid(hardgame, hardgame_file):
-    """Test nash grid"""
-    with stdout() as out, stderr() as err:
-        assert run(
-            'nash', '-tmin-reg-grid', '-i', hardgame_file), err.getvalue()
-    assert any(  # pragma: no branch
-        np.allclose(hardgame.mixture_from_json(mix),
-                    [0, 1, 0, 0, 0, 1, 0, 0, 0])
-        for mix in json.loads(out.getvalue()))
 
 
 def test_nash_pure_one():
@@ -383,7 +361,7 @@ def test_nash_pure_one():
     sgame = gamegen.rock_paper_scissors()
     sgame_str = json.dumps(sgame.to_json())
     with stdin(sgame_str), stderr() as err:
-        assert run('nash', '-tpure', '--one'), err.getvalue()
+        assert run('nash', '--pure', '--style', 'best*'), err.getvalue()
 
 
 def test_nash_mat(mgame_file):
@@ -599,8 +577,7 @@ def test_analysis_dpr(game_file):
         assert run(
             'analyze', '-i', game_file, '--restrictions', '--dominance',
             '--dpr', 'r0:3;r1:2', '-p1', '--dist-thresh', '1e-3', '-r1e-3',
-            '-t1e-3', '--rand-restarts', '0', '-m10000',
-            '-c1e-8'), err.get_value()
+            '-t1e-3'), err.get_value()
     assert 'With deviation preserving reduction: r0:3 r1:2' in out.getvalue()
 
 
@@ -767,12 +744,12 @@ def test_analysis_no_data():
     assert 'Found no complete restricted games' in out
 
 
-def test_analysis_no_eqa(game_file):
+def test_analysis_no_eqa(hardgame_file):
     """Test analysis with no equilibria"""
     with stdout() as out, stderr() as err:
         assert run(
-            'analyze', '-i', game_file, '--restrictions', '--dominance',
-            '--dpr', 'r0:3;r1:2', '-p1', '-r0', '-m0'), err.getvalue()
+            'analyze', '-i', hardgame_file, '--restrictions', '--dominance',
+            '-p1', '--style', 'fast'), err.getvalue()
     out = out.getvalue()
     assert 'Found no equilibria' in out
     assert 'Found 1 no-equilibria restricted game' in out

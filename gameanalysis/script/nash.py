@@ -23,59 +23,37 @@ def add_parser(subparsers):
         stdout)""")
     parser.add_argument(
         '--regret', '-r', metavar='<thresh>', type=float, default=1e-3,
-        help="""Max allowed regret for approximate Nash equilibria/ (default:
+        help="""Max allowed regret for approximate Nash equilibria. (default:
         %(default)g)""")
     parser.add_argument(
         '--distance', '-d', metavar='<distance>', type=float, default=0.1,
-        help="""L2-distance threshold to consider equilibria distinct.
-        (default: %(default)g)""")
-    parser.add_argument(
-        '--convergence', '-c', metavar='<convergence>', type=float,
-        default=1e-8, help="""Replicator dynamics convergence thrshold.
-        (default: %(default)g)""")
-    parser.add_argument(
-        '--max-iterations', '-x', metavar='<iterations>', type=int,
-        default=10000, help="""Max replicator dynamics iterations.  (default:
-        %(default)d)""")
+        help="""Average normalized per-role L2-norm threshold to consider
+        equilibria distinct. Valid in [0, 1]. (default: %(default)g)""")
     parser.add_argument(
         '--support', '-s', metavar='<support>', type=float, default=1e-3,
         help="""Min probability for a strategy to be considered in support.
         (default: %(default)g)""")
     parser.add_argument(
-        '--type', '-t', metavar='<type>', default='mixed',
-        choices=('mixed', 'pure', 'min-reg-prof', 'min-reg-grid'),
-        help="""Type of equilibrium to compute: `mixed` - role-symmetric
-        mixed-strategy Nash. `pure` - pure-strategy Nash.  `min-reg-prof` -
-        minimum regret profile.  `min-reg-grid` - minimum regret mixture over a
-        grid search with `grid-points` points along each dimension.
-        `min-reg-rand` - minimum regret mixture over `random-mixtures` number
-        of random mixtures.  `rand` - simply returns `random-mixtures` number
-        of random mixtures.  (default %(default)s)""")
-    parser.add_argument(
-        '--random-mixtures', '-m', metavar='<num-mixtures>', type=int,
-        default=0, help="""Number of random mixtures to use when finding the
-        minimum regret random profile or when initializing replicator dynamics.
-        (default: %(default)d)""")
-    parser.add_argument(
-        '--min', action='store_true', help="""Always report at least one
-        equilibrium per game. This will return the minimum regret equilibrium
-        candidate found, regardless of whether it was below the regret
-        threshold""")
-    parser.add_argument(
-        '--one', '-n', action='store_true', help="""Always report at least one
-        equilibrium per game. This will use a method guaranteed to find an
-        equilibrium, but it may take exponential time. This argument overrides
-        `--min`""")
-    parser.add_argument(
         '--processes', '-p', type=int, metavar='<num-processes>', default=None,
         help="""The number of processes to use when finding a mixed nash.
-        Setting to zero will cause nash finding to occur in the main process,
-        which is useful when games are not pickleable. (default: num-cores)""")
+        (default: num-cores)""")
     parser.add_argument(
-        '--grid-points', '-g', metavar='<num-grid-points>', type=int,
-        default=2, help="""Number of grid points to use per dimension on the
-        grid search of mixed strategies / Nash finding. 2 is the same as only
-        searching pure profiles.  (default: %(default)d)""")
+        '--style', default='best',
+        choices=['fast', 'fast*', 'more', 'more*', 'best', 'best*', 'one'],
+        help="""The `style` of mixed equilibrium finding. `fast` runs the
+        fastest algorithms that should find an equilibrium. `more` will try
+        slower ones until it finds one. `best` is more but will do an
+        exhaustive search with a timeout of a half hour. `one` is the same as
+        best with no timeout. The starred* versions do the same, but will
+        return the minimum regret mixture if no equilibria were found.
+        (default: %(default)s)""")
+
+    type_group = parser.add_mutually_exclusive_group()
+    type_group.add_argument(
+        '--pure', action='store_true', help="""Compute pure equilibria.""")
+    type_group.add_argument(
+        '--mixed', action='store_false', dest='pure', help="""Compute mixed
+        equilibria. (default)""")
     return parser
 
 
@@ -83,38 +61,20 @@ def main(args):
     """Entry point for nash finding"""
     game = gamereader.load(args.input)
 
-    if args.type == 'pure':
-        equilibria = nash.pure_nash(game, epsilon=args.regret)
-        if args.one and not equilibria:
+    if args.pure:
+        equilibria = nash.pure_equilibria(game, epsilon=args.regret)
+        if args.style.endswith('*') and not equilibria:
             equilibria = nash.min_regret_profile(game)[None]
         json.dump([game.profile_to_json(eqm) for eqm in equilibria],
                   args.output)
 
-    elif args.type == 'mixed':
-        rep_args = {
-            'max_iters': args.max_iterations,
-            'converge_thresh': args.convergence
-        }
-        equilibria = nash.mixed_nash(
-            game, regret_thresh=args.regret, dist_thresh=args.distance,
-            random_restarts=args.random_mixtures, grid_points=args.grid_points,
-            min_reg=args.min, at_least_one=args.one, processes=args.processes,
-            replicator=rep_args, optimize={})
+    else:
+        equilibria = nash.mixed_equilibria(
+            game, style=args.style, regret_thresh=args.regret,
+            dist_thresh=args.distance, processes=args.processes)
         json.dump(
             [game.mixture_to_json(eqm) for eqm
              in game.trim_mixture_support(equilibria, thresh=args.support)],
-            args.output)
-
-    elif args.type == 'min-reg-prof':
-        prof = nash.min_regret_profile(game)
-        json.dump([game.profile_to_json(prof)], args.output)
-
-    elif args.type == 'min-reg-grid':  # pragma: no branch
-        mix = nash.min_regret_grid_mixture(
-            game, args.grid_points)
-        json.dump(
-            [game.mixture_to_json(game.trim_mixture_support(
-                mix, thresh=args.support))],
             args.output)
 
     args.output.write('\n')
