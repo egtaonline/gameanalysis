@@ -151,7 +151,7 @@ def test_multiplicative_weights_stoch():
     game = gamegen.rock_paper_scissors(win=2)
     eqm = nash.multiplicative_weights_stoch(
         game, [0.6, 0.3, 0.1], max_iters=10000)
-    assert np.allclose(eqm, [1/3, 1/3, 1/3], atol=1e-2)
+    assert np.allclose(eqm, [1/3, 1/3, 1/3], atol=2e-2)
 
 
 def test_multiplicative_weights_bandit():

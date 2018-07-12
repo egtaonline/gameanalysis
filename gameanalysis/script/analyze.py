@@ -97,7 +97,8 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
         reqa = nash.mixed_equilibria(
             rgame, style=args.style, regret_thresh=args.regret_thresh,
             dist_thresh=args.dist_thresh, processes=args.processes)
-        eqa = restrict.translate(reqa, rest)
+        eqa = restrict.translate(rgame.trim_mixture_support(
+            reqa, thresh=args.support), rest)
         if eqa.size:
             candidates.extend(eqa)
         else:
@@ -108,14 +109,16 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
     unexplored = {}
     for eqm in candidates:
         support = eqm > 0
+        # FIXME This treats trimming support differently than quiesce does,
+        # which means quiesce could find an equilibria, and this would fail to
+        # find it.
         gains = regret.mixture_deviation_gains(game, eqm)
         role_gains = np.fmax.reduceat(gains, game.role_starts)
         gain = np.nanmax(role_gains)
 
         if np.isnan(gains).any() and gain <= args.regret_thresh:
             # Not fully explored but might be good
-            unconfirmed.add(game.trim_mixture_support(
-                eqm, thresh=args.support), gain)
+            unconfirmed.add(eqm, gain)
 
         elif np.any(role_gains > args.regret_thresh):
             # There are deviations, did we explore them?
@@ -134,9 +137,7 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
 
         else:
             # Equilibrium!
-            equilibria.add(
-                game.trim_mixture_support(eqm, thresh=args.support),
-                np.max(gains))
+            equilibria.add(eqm, np.max(gains))
 
     # Output Game
     args.output.write('Game Analysis\n')
