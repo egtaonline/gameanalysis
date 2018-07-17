@@ -131,8 +131,8 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
                 devsupp[dind] = True
                 if not np.all(devsupp <= restrictions, -1).any():
                     ind = restrict.to_id(game, devsupp)
-                    new_info = (gains[dind], dind, eqm)
-                    old_info = unexplored.get(ind, (0, 0, None))
+                    old_info = unexplored.get(ind, (0, 0, 0, None))
+                    new_info = (gains[dind], dind, old_info[2] + 1, eqm)
                     unexplored[ind] = max(new_info, old_info)
 
         else:
@@ -259,7 +259,7 @@ def main(args): # pylint: disable=too-many-statements,too-many-branches,too-many
             -gain, dev,
             restrict.from_id(game, sind),
             eqm,
-        ) for sind, (gain, dev, eqm) in unexplored.items())
+        ) for sind, (gain, dev, _, eqm) in unexplored.items())
         for i, (_, ngain, dev, sub, eqm) in enumerate(ordered, 1):
             args.output.write('Unexplored restricted game {:d}:\n'.format(i))
             args.output.write(game.restriction_to_str(sub))
