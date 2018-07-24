@@ -160,26 +160,25 @@ def _reduce_profiles(red_game, profiles, return_contributions): # pylint: disabl
         np.all(all_full_players == full_players), 'profiles must be valid')
 
     num_profs = profiles.shape[0]
-    dev_profs = profiles[:, None] - np.eye(red_game.num_strats, dtype=int)
-    dev_profs = np.reshape(dev_profs, (-1, red_game.num_strats))
+    dev_profs = profiles.repeat(np.sum(profiles > 0, 1), 0)
+    _, strat_inds = profiles.nonzero()
+    dev_profs[np.arange(dev_profs.shape[0]), strat_inds] -= 1
     dev_red_players = _devs(red_game, num_profs)
-    mask = ~np.any(dev_profs < 0, 1)
+    mask = (profiles > 0).ravel()
+
     red_profs, reduced = _common.reduce_profiles(
-        red_game, dev_red_players[mask], dev_profs[mask])
-    devs = (np.eye(red_game.num_strats, dtype=int)[None]
-            .repeat(num_profs, 0)
-            .reshape((-1, red_game.num_strats))[mask][reduced])
-    red_profs += devs
+        red_game, dev_red_players[mask], dev_profs)
+    rstrat_inds = strat_inds[reduced]
+    red_profs[np.arange(red_profs.shape[0]), rstrat_inds] += 1
     red_profs, red_inds = np.unique(
         utils.axis_to_elem(red_profs), return_inverse=True)
     red_profs = utils.axis_from_elem(red_profs)
     if not return_contributions:
         return red_profs
 
-    full_inds = np.arange(num_profs)[:, None].repeat(
-        red_game.num_strats, 1).flat[mask][reduced]
-    strat_inds = devs.nonzero()[1]
-    return red_profs, red_inds, full_inds, strat_inds
+    full_inds = np.arange(num_profs).repeat(
+        red_game.num_strats)[mask][reduced]
+    return red_profs, red_inds, full_inds, rstrat_inds
 
 
 def expand_deviation_profiles(
