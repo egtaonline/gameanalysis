@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>gameanalysis.aggfn module &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.bootstrap module" href="gameanalysis.bootstrap.html" />
@@ -34,7 +34,8 @@
           <a href="gameanalysis.reduction.twins.html" title="gameanalysis.reduction.twins module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.aggfn module</a></li> 
       </ul>
     </div>  
 
@@ -46,113 +47,98 @@
   <div class="section" id="module-gameanalysis.aggfn">
 <span id="gameanalysis-aggfn-module"></span><h1>gameanalysis.aggfn module<a class="headerlink" href="#module-gameanalysis.aggfn" title="Permalink to this headline">¶</a></h1>
 <p>An action graph game with additive function nodes</p>
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.aggfn.aggfn">
-<code class="descclassname">gameanalysis.aggfn.</code><code class="descname">aggfn</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>action_weights</em>, <em>function_inputs</em>, <em>function_table</em>, <em>offsets=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.aggfn.</code><code class="sig-name descname">aggfn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_role_players</span></em>, <em class="sig-param"><span class="n">num_role_strats</span></em>, <em class="sig-param"><span class="n">action_weights</span></em>, <em class="sig-param"><span class="n">function_inputs</span></em>, <em class="sig-param"><span class="n">function_table</span></em>, <em class="sig-param"><span class="n">offsets</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an Aggfn with default names</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players per role.</li>
-<li><strong>num_role_strats</strong> (<em>ndarray</em>) – The number of strategies per role.</li>
-<li><strong>action_weights</strong> (<em>ndarray</em><em>, </em><em>float</em>) – The action weights.</li>
-<li><strong>function_inputs</strong> (<em>ndarray</em><em>, </em><em>bool</em>) – The input mask for each function.</li>
-<li><strong>function_table</strong> (<em>ndarray</em><em>, </em><em>float</em>) – The function value relative to number of incoming edges.</li>
-<li><strong>offsets</strong> (<em>ndarray</em><em>, </em><em>float</em><em>, </em><em>optional</em>) – A constant offset for each strategies payoff. Constant functions are
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players per role.</p></li>
+<li><p><strong>num_role_strats</strong> (<em>ndarray</em>) – The number of strategies per role.</p></li>
+<li><p><strong>action_weights</strong> (<em>ndarray</em><em>, </em><em>float</em>) – The action weights.</p></li>
+<li><p><strong>function_inputs</strong> (<em>ndarray</em><em>, </em><em>bool</em>) – The input mask for each function.</p></li>
+<li><p><strong>function_table</strong> (<em>ndarray</em><em>, </em><em>float</em>) – The function value relative to number of incoming edges.</p></li>
+<li><p><strong>offsets</strong> (<em>ndarray</em><em>, </em><em>float</em><em>, </em><em>optional</em>) – A constant offset for each strategies payoff. Constant functions are
 not allowed in the function table as they are clutter, instead,
-constant functions can be specified here.</li>
+constant functions can be specified here.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.aggfn.aggfn_funcs">
-<code class="descclassname">gameanalysis.aggfn.</code><code class="descname">aggfn_funcs</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>action_weights</em>, <em>function_inputs</em>, <em>functions</em>, <em>offsets=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_funcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_funcs" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.aggfn.</code><code class="sig-name descname">aggfn_funcs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_role_players</span></em>, <em class="sig-param"><span class="n">num_role_strats</span></em>, <em class="sig-param"><span class="n">action_weights</span></em>, <em class="sig-param"><span class="n">function_inputs</span></em>, <em class="sig-param"><span class="n">functions</span></em>, <em class="sig-param"><span class="n">offsets</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_funcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_funcs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Construct and Aggfn with functions</p>
 <p>This is generally less efficient than just constructing the function table
 using vectorized operations or an existing function table.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players per role.</li>
-<li><strong>num_role_strats</strong> (<em>ndarray</em>) – The number of strategies per role.</li>
-<li><strong>action_weights</strong> (<em>ndarray</em><em>, </em><em>float</em>) – The action weights.</li>
-<li><strong>function_inputs</strong> (<em>ndarray</em><em>, </em><em>bool</em>) – The input mask for each function.</li>
-<li><strong>functions</strong> (<em>[</em><em>(</em><em>nr1</em><em>, </em><em>nr2</em><em>, </em><em>..</em><em>) </em><em>-&gt; float</em><em>]</em>) – List of functions that maps the player per role activations to a single
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players per role.</p></li>
+<li><p><strong>num_role_strats</strong> (<em>ndarray</em>) – The number of strategies per role.</p></li>
+<li><p><strong>action_weights</strong> (<em>ndarray</em><em>, </em><em>float</em>) – The action weights.</p></li>
+<li><p><strong>function_inputs</strong> (<em>ndarray</em><em>, </em><em>bool</em>) – The input mask for each function.</p></li>
+<li><p><strong>functions</strong> (<em>[</em><em>(</em><em>nr1</em><em>, </em><em>nr2</em><em>, </em><em>..</em><em>) </em><em>-&gt; float</em><em>]</em>) – List of functions that maps the player per role activations to a single
 value. The number of ordered arguments will be inferred from each
-function.</li>
+function.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.aggfn.aggfn_json">
-<code class="descclassname">gameanalysis.aggfn.</code><code class="descname">aggfn_json</code><span class="sig-paren">(</span><em>json</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_json" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.aggfn.</code><code class="sig-name descname">aggfn_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read an Aggfn from json</p>
 <p>Json versions of the game will generally have ‘type’: ‘aggfn…’ in them,
 but as long as the proper fields exist, this will succeed.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.aggfn.aggfn_names">
-<code class="descclassname">gameanalysis.aggfn.</code><code class="descname">aggfn_names</code><span class="sig-paren">(</span><em>role_names</em>, <em>num_role_players</em>, <em>strat_names</em>, <em>action_weights</em>, <em>function_inputs</em>, <em>function_table</em>, <em>offsets=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_names" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.aggfn.</code><code class="sig-name descname">aggfn_names</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">role_names</span></em>, <em class="sig-param"><span class="n">num_role_players</span></em>, <em class="sig-param"><span class="n">strat_names</span></em>, <em class="sig-param"><span class="n">action_weights</span></em>, <em class="sig-param"><span class="n">function_inputs</span></em>, <em class="sig-param"><span class="n">function_table</span></em>, <em class="sig-param"><span class="n">offsets</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an Aggfn with specified names</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name of each role.</li>
-<li><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players for each role.</li>
-<li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</li>
-<li><strong>action_weights</strong> (<em>ndarray</em>) – The mapping of each function to the strategy weight for a player.</li>
-<li><strong>function_inpits</strong> (<em>ndarray</em>) – The mask indicating which strategies are inputs to which function.</li>
-<li><strong>offsets</strong> (<em>ndarray</em><em>, </em><em>float</em><em>, </em><em>optional</em>) – A constant offset for each strategies payoff. Constant functions are
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name of each role.</p></li>
+<li><p><strong>num_role_players</strong> (<em>ndarray</em>) – The number of players for each role.</p></li>
+<li><p><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</p></li>
+<li><p><strong>action_weights</strong> (<em>ndarray</em>) – The mapping of each function to the strategy weight for a player.</p></li>
+<li><p><strong>function_inpits</strong> (<em>ndarray</em>) – The mask indicating which strategies are inputs to which function.</p></li>
+<li><p><strong>offsets</strong> (<em>ndarray</em><em>, </em><em>float</em><em>, </em><em>optional</em>) – A constant offset for each strategies payoff. Constant functions are
 not allowed in the function table as they are clutter, instead,
-constant functions can be specified here.</li>
+constant functions can be specified here.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.aggfn.aggfn_replace">
-<code class="descclassname">gameanalysis.aggfn.</code><code class="descname">aggfn_replace</code><span class="sig-paren">(</span><em>copy_game</em>, <em>action_weights</em>, <em>function_inputs</em>, <em>function_table</em>, <em>offsets=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_replace" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.aggfn.</code><code class="sig-name descname">aggfn_replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">copy_game</span></em>, <em class="sig-param"><span class="n">action_weights</span></em>, <em class="sig-param"><span class="n">function_inputs</span></em>, <em class="sig-param"><span class="n">function_table</span></em>, <em class="sig-param"><span class="n">offsets</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/aggfn.html#aggfn_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.aggfn.aggfn_replace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace an existing game with an Aggfn</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>copy_game</strong> (<em>RsGame</em>) – The game to take game structure from.</li>
-<li><strong>action_weights</strong> (<em>ndarray-like</em>) – The weights of each function to player payoffs.</li>
-<li><strong>function_inputs</strong> (<em>ndarray-like</em>) – The mask of each strategy to function.</li>
-<li><strong>function_table</strong> (<em>ndarray-like</em>) – The lookup table of number of incoming edges to function value.</li>
-<li><strong>offsets</strong> (<em>ndarray</em><em>, </em><em>float</em><em>, </em><em>optional</em>) – A constant offset for each strategies payoff. Constant functions are
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>copy_game</strong> (<em>RsGame</em>) – The game to take game structure from.</p></li>
+<li><p><strong>action_weights</strong> (<em>ndarray-like</em>) – The weights of each function to player payoffs.</p></li>
+<li><p><strong>function_inputs</strong> (<em>ndarray-like</em>) – The mask of each strategy to function.</p></li>
+<li><p><strong>function_table</strong> (<em>ndarray-like</em>) – The lookup table of number of incoming edges to function value.</p></li>
+<li><p><strong>offsets</strong> (<em>ndarray</em><em>, </em><em>float</em><em>, </em><em>optional</em>) – A constant offset for each strategies payoff. Constant functions are
 not allowed in the function table as they are clutter, instead,
-constant functions can be specified here.</li>
+constant functions can be specified here.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -172,17 +158,15 @@ constant functions can be specified here.</li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -203,12 +187,13 @@ constant functions can be specified here.</li>
           <a href="gameanalysis.reduction.twins.html" title="gameanalysis.reduction.twins module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.aggfn module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

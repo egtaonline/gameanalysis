@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>gameanalysis.matgame module &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.nash module" href="gameanalysis.nash.html" />
@@ -34,7 +34,8 @@
           <a href="gameanalysis.learning.html" title="gameanalysis.learning module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.matgame module</a></li> 
       </ul>
     </div>  
 
@@ -46,82 +47,69 @@
   <div class="section" id="module-gameanalysis.matgame">
 <span id="gameanalysis-matgame-module"></span><h1>gameanalysis.matgame module<a class="headerlink" href="#module-gameanalysis.matgame" title="Permalink to this headline">¶</a></h1>
 <p>module for complete independent games</p>
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.matgame.matgame">
-<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame</code><span class="sig-paren">(</span><em>payoff_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.matgame.</code><code class="sig-name descname">matgame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">payoff_matrix</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a game from a dense matrix with default names</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The matrix of payoffs for an asymmetric game.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The matrix of payoffs for an asymmetric game.</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.matgame.matgame_copy">
-<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_copy</code><span class="sig-paren">(</span><em>copy_game</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_copy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.matgame.</code><code class="sig-name descname">matgame_copy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">copy_game</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy a matrix game from an existing game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>copy_game</strong> (<em>RsGame</em>) – Game to copy payoff data out of. This game must be complete.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>copy_game</strong> (<em>RsGame</em>) – Game to copy payoff data out of. This game must be complete.</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.matgame.matgame_json">
-<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_json</code><span class="sig-paren">(</span><em>json</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_json" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.matgame.</code><code class="sig-name descname">matgame_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a matrix game from json</p>
 <p>In general, the json will have ‘type’: ‘matrix…’ to indicate that it’s a
 matrix game, but if the other fields are correct, this will still succeed.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.matgame.matgame_names">
-<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_names</code><span class="sig-paren">(</span><em>role_names</em>, <em>strat_names</em>, <em>payoff_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_names" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.matgame.</code><code class="sig-name descname">matgame_names</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">role_names</span></em>, <em class="sig-param"><span class="n">strat_names</span></em>, <em class="sig-param"><span class="n">payoff_matrix</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a game from a payoff matrix with names</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name of each role.</li>
-<li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</li>
-<li><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The matrix mapping strategy indices to payoffs for each player.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>role_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name of each role.</p></li>
+<li><p><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</p></li>
+<li><p><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The matrix mapping strategy indices to payoffs for each player.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.matgame.matgame_replace">
-<code class="descclassname">gameanalysis.matgame.</code><code class="descname">matgame_replace</code><span class="sig-paren">(</span><em>base</em>, <em>payoff_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_replace" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.matgame.</code><code class="sig-name descname">matgame_replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base</span></em>, <em class="sig-param"><span class="n">payoff_matrix</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/matgame.html#matgame_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.matgame.matgame_replace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace an existing game with a new payoff matrix</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>RsGame</em>) – Game to take structure out of.</li>
-<li><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The new payoff matrix.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>RsGame</em>) – Game to take structure out of.</p></li>
+<li><p><strong>payoff_matrix</strong> (<em>ndarray-like</em>) – The new payoff matrix.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -141,17 +129,15 @@ matrix game, but if the other fields are correct, this will still succeed.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -172,12 +158,13 @@ matrix game, but if the other fields are correct, this will still succeed.</p>
           <a href="gameanalysis.learning.html" title="gameanalysis.learning module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.matgame module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>gameanalysis.reduction.twins module &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.aggfn module" href="gameanalysis.aggfn.html" />
@@ -35,7 +35,8 @@
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="gameanalysis.reduction.html" accesskey="U">gameanalysis.reduction package</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="gameanalysis.reduction.html" accesskey="U">gameanalysis.reduction package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.reduction.twins module</a></li> 
       </ul>
     </div>  
 
@@ -49,86 +50,71 @@
 <p>Twins reduction</p>
 <p>This is the same as a deviation preserving reduction reduced to two for all
 roles.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.reduction.twins.expand_deviation_profiles">
-<code class="descclassname">gameanalysis.reduction.twins.</code><code class="descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>rest</em>, <em>red_players=None</em>, <em>role_index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.reduction.twins.</code><code class="sig-name descname">expand_deviation_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_game</span></em>, <em class="sig-param"><span class="n">rest</span></em>, <em class="sig-param"><span class="n">red_players</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">role_index</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#expand_deviation_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.expand_deviation_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Expand all deviation profiles from a restriction</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>full_game</strong> (<em>Game</em>) – The game the deviations profiles will be valid for.</li>
-<li><strong>rest</strong> (<em>[</em><em>bool</em><em>]</em>) – The restriction to get deviations from.</li>
-<li><strong>red_players</strong> (<em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The number of players in each role in the reduced game.IF
-specified, it must match the expected number for twins reduction.</li>
-<li><strong>role_index</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified , only expand deviations for the role selected.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full_game</strong> (<em>Game</em>) – The game the deviations profiles will be valid for.</p></li>
+<li><p><strong>rest</strong> (<em>[</em><em>bool</em><em>]</em>) – The restriction to get deviations from.</p></li>
+<li><p><strong>red_players</strong> (<em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The number of players in each role in the reduced game.IF
+specified, it must match the expected number for twins reduction.</p></li>
+<li><p><strong>role_index</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified , only expand deviations for the role selected.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.reduction.twins.expand_profiles">
-<code class="descclassname">gameanalysis.reduction.twins.</code><code class="descname">expand_profiles</code><span class="sig-paren">(</span><em>full_game</em>, <em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#expand_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.expand_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.reduction.twins.</code><code class="sig-name descname">expand_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_game</span></em>, <em class="sig-param"><span class="n">profiles</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#expand_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.expand_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Expand profiles using twins reduction</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>full_game</strong> (<em>Game</em>) – Game that expanded profiles will be valid for.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em>) – The profiles to expand</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full_game</strong> (<em>Game</em>) – Game that expanded profiles will be valid for.</p></li>
+<li><p><strong>profiles</strong> (<em>ndarray-like</em>) – The profiles to expand</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.reduction.twins.reduce_game">
-<code class="descclassname">gameanalysis.reduction.twins.</code><code class="descname">reduce_game</code><span class="sig-paren">(</span><em>full_game</em>, <em>red_players=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#reduce_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.reduce_game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.reduction.twins.</code><code class="sig-name descname">reduce_game</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_game</span></em>, <em class="sig-param"><span class="n">red_players</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#reduce_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.reduce_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reduce a game using twins reduction</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>full_game</strong> (<em>Game</em>) – The game to reduce.</li>
-<li><strong>red_players</strong> (<em>ndarray-like</em><em>, </em><em>optional</em>) – The reduced number of players for each role. This must be None or
-the reduced number of players for the twins reductions.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>full_game</strong> (<em>Game</em>) – The game to reduce.</p></li>
+<li><p><strong>red_players</strong> (<em>ndarray-like</em><em>, </em><em>optional</em>) – The reduced number of players for each role. This must be None or
+the reduced number of players for the twins reductions.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.reduction.twins.reduce_profiles">
-<code class="descclassname">gameanalysis.reduction.twins.</code><code class="descname">reduce_profiles</code><span class="sig-paren">(</span><em>red_game</em>, <em>profiles</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#reduce_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.reduce_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.reduction.twins.</code><code class="sig-name descname">reduce_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">red_game</span></em>, <em class="sig-param"><span class="n">profiles</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/reduction/twins.html#reduce_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.reduction.twins.reduce_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reduce profiles using twins</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>red_game</strong> (<em>Game</em>) – Game that reduced profiles will be profiles for. This game must
-have the valid twins reduction number of players.</li>
-<li><strong>profiles</strong> (<em>ndarray-like</em>) – The profiles to reduce.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>red_game</strong> (<em>Game</em>) – Game that reduced profiles will be profiles for. This game must
+have the valid twins reduction number of players.</p></li>
+<li><p><strong>profiles</strong> (<em>ndarray-like</em>) – The profiles to reduce.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -148,17 +134,15 @@ have the valid twins reduction number of players.</li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -180,12 +164,13 @@ have the valid twins reduction number of players.</li>
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
-          <li class="nav-item nav-item-2"><a href="gameanalysis.reduction.html" >gameanalysis.reduction package</a> &#187;</li> 
+          <li class="nav-item nav-item-2"><a href="gameanalysis.reduction.html" >gameanalysis.reduction package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.reduction.twins module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

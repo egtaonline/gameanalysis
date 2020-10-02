@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Endogenous Mixture Game Equilibria &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="RBF Gaussian Process Continuous Approximation" href="cont_approx.html" /> 
@@ -29,7 +29,8 @@
         <li class="right" >
           <a href="cont_approx.html" title="RBF Gaussian Process Continuous Approximation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Endogenous Mixture Game Equilibria</a></li> 
       </ul>
     </div>  
 
@@ -41,38 +42,39 @@
   <div class="section" id="endogenous-mixture-game-equilibria">
 <span id="endogenous-mix"></span><h1>Endogenous Mixture Game Equilibria<a class="headerlink" href="#endogenous-mixture-game-equilibria" title="Permalink to this headline">¶</a></h1>
 <p>This walks through the process of computing the equilibria for an arbitrary mixture between two games.
-For this purpose, we we only care about the mixture ratio <img class="math" src="_images/math/5ec053cf70dc1c98cc297322250569eda193e7a4.svg" alt="t"/> between the two games, and the payoff to a single player for deviating to strategy <img class="math" src="_images/math/63751cb2e98ba393b0f22e45ca127c3cebb61487.svg" alt="s"/> when every other agent mixes according to mixture <img class="math" src="_images/math/8666e4dfb0c8b146f15aa192e4b01a60933d9d57.svg" alt="\mathbf m"/>, which we’ll denote <img class="math" src="_images/math/58b69bcb5a0bb23a0cce20208ea4e9e918d5d4d4.svg" alt="a_s (\mathbf m)"/> and <img class="math" src="_images/math/4a5fe640edb2ac6ce796c987bc4eadb7abb6c56f.svg" alt="b_s (\mathbf m)"/> respectively.
-This derivation is for the symmetric case where <img class="math" src="_images/math/1d41867e5b7958a428a6e21655d45b68c62f9b8b.svg" alt="s \in \mathcal S, |\mathcal S| = S"/>, but the extension is role-symmetry is trivial.
-The shorthand <img class="math" src="_images/math/0945971b597aa71ee730f9f7fd51e4d8c4203f07.svg" alt="\dot f"/> indicates the derivative of <img class="math" src="_images/math/875eb40014526135383caa89fd500ae40a835f56.svg" alt="f"/> with respect to <img class="math" src="_images/math/5ec053cf70dc1c98cc297322250569eda193e7a4.svg" alt="t"/> (<img class="math" src="_images/math/f8ce5c92657b232100addfc245d49513f02bb89b.svg" alt="\frac{\partial f}{\partial t}"/>), and following similar patterns, capital letters are matricies, bold lowercase letters are vectors, and regular lowercase letters are scalars.</p>
-<p>For the game where each payoff is <img class="math" src="_images/math/dfd39927fc6c5e12fec8bb7e53a398b985a424a2.svg" alt="1 - t"/> fraction of the payoff from game <img class="math" src="_images/math/bd9d9c7512c898e0a254a0882184197bc1bd9c9f.svg" alt="a"/> and <img class="math" src="_images/math/5ec053cf70dc1c98cc297322250569eda193e7a4.svg" alt="t"/> fraction from game <img class="math" src="_images/math/57c9d14bb082716df9000146882ce365335d08f1.svg" alt="b"/>, the deviation payoff is simply <img class="math" src="_images/math/1df81d0f78e1b972fa016ebcc67e05dde4fa362c.svg" alt="p_s (\mathbf m) = (1 - t) a_s (\mathbf m) + t b_s (\mathbf m)"/>, which we can differentiate easily:</p>
+For this purpose, we we only care about the mixture ratio <img class="math" src="_images/math/907a4add6d5db5b7f197f7924f1371b8ac404fe6.svg" alt="t"/> between the two games, and the payoff to a single player for deviating to strategy <img class="math" src="_images/math/106b04b320e75010b1d8029e59244f234f75e6f9.svg" alt="s"/> when every other agent mixes according to mixture <img class="math" src="_images/math/f9d8d190030b83b710744b36e5960a8f0cb3a6a4.svg" alt="\mathbf m"/>, which we’ll denote <img class="math" src="_images/math/e3aaa83bf1a31ce028452ae07895f6c0aa1a7791.svg" alt="a_s (\mathbf m)"/> and <img class="math" src="_images/math/7478931355e4465ceb5014e8c22304de8a060392.svg" alt="b_s (\mathbf m)"/> respectively.
+This derivation is for the symmetric case where <img class="math" src="_images/math/8859039eeb15953faec028f758cf9a4d7be8bfd8.svg" alt="s \in \mathcal S, |\mathcal S| = S"/>, but the extension is role-symmetry is trivial.
+The shorthand <img class="math" src="_images/math/cee29d51fa4f2e731ac57ebb2fe8bf9cffc4a832.svg" alt="\dot f"/> indicates the derivative of <img class="math" src="_images/math/5b7752c757e0b691a80ab8227eadb8a8389dc58a.svg" alt="f"/> with respect to <img class="math" src="_images/math/907a4add6d5db5b7f197f7924f1371b8ac404fe6.svg" alt="t"/> (<img class="math" src="_images/math/41057ed7e59f7dbd6d3fc4c81398143ec9702961.svg" alt="\frac{\partial f}{\partial t}"/>), and following similar patterns, capital letters are matricies, bold lowercase letters are vectors, and regular lowercase letters are scalars.</p>
+<p>For the game where each payoff is <img class="math" src="_images/math/0482da2741b0f5e55fb62d8e6a13d42504f51188.svg" alt="1 - t"/> fraction of the payoff from game <img class="math" src="_images/math/b3e65e3b6408fcfa00452530b73f55d1755f9965.svg" alt="a"/> and <img class="math" src="_images/math/907a4add6d5db5b7f197f7924f1371b8ac404fe6.svg" alt="t"/> fraction from game <img class="math" src="_images/math/68c7c8c65602677ab56cf7fd88002023f0edc575.svg" alt="b"/>, the deviation payoff is simply <img class="math" src="_images/math/5ab8dbc4f4ba7d0ae47dd306bf13862ad2e9e4cc.svg" alt="p_s (\mathbf m) = (1 - t) a_s (\mathbf m) + t b_s (\mathbf m)"/>, which we can differentiate easily:</p>
 <div class="math">
-<p><img src="_images/math/e5888acd430dec14486c484b2a8b48c22eca4d6b.svg" alt="\dot p_s(\mathbf m) &amp;= b_s(\mathbf m) - a_s(\mathbf m) + (1 - t) \nabla_{\mathbf m}^\top a_s(\mathbf m) \dot{\mathbf m} + t \nabla_{\mathbf m}^\top b_s(\mathbf m) \dot{\mathbf m} \\
+<p><img src="_images/math/9bb738fefd1dc4e9453359dcb2f1e01dbd5340a5.svg" alt="\dot p_s(\mathbf m) &amp;= b_s(\mathbf m) - a_s(\mathbf m) + (1 - t) \nabla_{\mathbf m}^\top a_s(\mathbf m) \dot{\mathbf m} + t \nabla_{\mathbf m}^\top b_s(\mathbf m) \dot{\mathbf m} \\
 &amp;= g_s(\mathbf m) + \mathbf f_s^\top(\mathbf m, t) \dot{\mathbf m} \\
 g_s(\mathbf m) &amp;= b_s(\mathbf m) - a_s(\mathbf m) \\
 \mathbf f_s(\mathbf m) &amp;= (1 - t) \nabla_{\mathbf m} a_s(\mathbf m) + t \nabla_{\mathbf m} b_s(\mathbf m)"/></p>
-</div><p>If <img class="math" src="_images/math/8666e4dfb0c8b146f15aa192e4b01a60933d9d57.svg" alt="\mathbf m"/> is an equilibrium mixture of game <img class="math" src="_images/math/27d463da4622be5b3ef1d4176ced7d7a323c6425.svg" alt="p"/>, then for every pair of strategies <img class="math" src="_images/math/b6fed176fbb7fde13006c3e911233891eb4d4a90.svg" alt="r,s"/> with support (<img class="math" src="_images/math/6d32f20db429ba484e6277cf14b1a0cdccc5a759.svg" alt="m_i &gt; 0, i \in {r,s}"/>) that <img class="math" src="_images/math/8404ebacd34c64d8833af2fe7649c98f966f2ec9.svg" alt="p_r(\mathbf m) = p_s(\mathbf m)"/>, which also implies <img class="math" src="_images/math/24735810ecd2704f78620b1663d28168d57997f0.svg" alt="\dot p_r(\mathbf m) = \dot p_s(\mathbf m)"/>.
-<img class="math" src="_images/math/2e6c6d6f8d7ac2f880c7e33a5b595a19beab1d67.svg" alt="S - 1"/> independent pairs of strategies can chosen to generate <img class="math" src="_images/math/2e6c6d6f8d7ac2f880c7e33a5b595a19beab1d67.svg" alt="S - 1"/> independent equalities of the form:</p>
+</div><p>If <img class="math" src="_images/math/f9d8d190030b83b710744b36e5960a8f0cb3a6a4.svg" alt="\mathbf m"/> is an equilibrium mixture of game <img class="math" src="_images/math/141bbefb74014fc5e43499901bf78607ae335583.svg" alt="p"/>, then for every pair of strategies <img class="math" src="_images/math/e4b7c126ca58cdb5599142402ae2cf242c67c345.svg" alt="r,s"/> with support (<img class="math" src="_images/math/5e55986a5d94c007f0d0243d24b64f1e48c6eb30.svg" alt="m_i &gt; 0, i \in {r,s}"/>) that <img class="math" src="_images/math/d99df1c71f49aaf36a3c1a7b449e32b593d3f455.svg" alt="p_r(\mathbf m) = p_s(\mathbf m)"/>, which also implies <img class="math" src="_images/math/7d8bfac5e46f1d4045b50640fcc87cc57aec3bab.svg" alt="\dot p_r(\mathbf m) = \dot p_s(\mathbf m)"/>.
+<img class="math" src="_images/math/5a531144ca41d8e47cf30a0726eda324f21500c1.svg" alt="S - 1"/> independent pairs of strategies can chosen to generate <img class="math" src="_images/math/5a531144ca41d8e47cf30a0726eda324f21500c1.svg" alt="S - 1"/> independent equalities of the form:</p>
 <div class="math">
-<p><img src="_images/math/18aacab1def074b470552cec040eca2c3a6fbb6e.svg" alt="g_r(\mathbf m) - g_s(\mathbf m) &amp;= \left[ \mathbf f_s^\top(\mathbf m, t) - \mathbf f_r^\top(\mathbf m, t) \right] \dot{\mathbf m}"/></p>
-</div><p>A simple choice of pairs is <img class="math" src="_images/math/90394dd677f84980f06e08635bf749b0b88c5710.svg" alt="\{(s, i) | i \in \mathcal S \setminus \{ s \}\}"/>.
-The final equation keeps the equilibrium mixture a mixture, <img class="math" src="_images/math/21bafba894df3686185b776089f6bdd37c212a80.svg" alt="\mathbf 1^\top \dot{\mathbf m} = 0"/>.
-If we take the strategies as indices from <img class="math" src="_images/math/d839e144267ecbb8a87acbc8a7dfda7824a1693e.svg" alt="1"/> to <img class="math" src="_images/math/1dbc400fcc213305415872f9f625cd2828f97a00.svg" alt="S"/> and use the pairs suggested, this can be represented as the matrix equation:</p>
+<p><img src="_images/math/c0ddb1b6ba08c952e8ac88a6b8e4850faebd8cbc.svg" alt="g_r(\mathbf m) - g_s(\mathbf m) &amp;= \left[ \mathbf f_s^\top(\mathbf m, t) - \mathbf f_r^\top(\mathbf m, t) \right] \dot{\mathbf m}"/></p>
+</div><p>A simple choice of pairs is <img class="math" src="_images/math/778e443dabee033c17e6fffaf83205fe37f9d6b1.svg" alt="\{(s, i) | i \in \mathcal S \setminus \{ s \}\}"/>.
+The final equation keeps the equilibrium mixture a mixture, <img class="math" src="_images/math/54f8baea148cb2d49a2380561908a4c6217539c8.svg" alt="\mathbf 1^\top \dot{\mathbf m} = 0"/>.
+If we take the strategies as indices from <img class="math" src="_images/math/ec830c85a5fbb48028fe797044da6bdfb924c2fa.svg" alt="1"/> to <img class="math" src="_images/math/b988975be41fd13b4d091c10202ba19374643586.svg" alt="S"/> and use the pairs suggested, this can be represented as the matrix equation:</p>
 <div class="math">
-<p><img src="_images/math/731d1d9e2a62a2f37385d4803dd7c99efe1c01b3.svg" alt="\begin{bmatrix} g_1(\mathbf m) - g_2(\mathbf m) \\ \vdots \\ g_1(\mathbf m) - g_S(\mathbf m) \\ 0 \end{bmatrix} &amp;= \begin{bmatrix} \mathbf f_1^\top(\mathbf m, t) - \mathbf f_2^\top(\mathbf m, t) \\ \vdots \\ \mathbf f_1^\top(\mathbf m, t) - \mathbf f_S^\top(\mathbf m, t) \\ \mathbf 1^\top \end{bmatrix} \dot{\mathbf m} \\
+<p><img src="_images/math/0a5915d3238cc0613e39f653704c12e081513a2e.svg" alt="\begin{bmatrix} g_1(\mathbf m) - g_2(\mathbf m) \\ \vdots \\ g_1(\mathbf m) - g_S(\mathbf m) \\ 0 \end{bmatrix} &amp;= \begin{bmatrix} \mathbf f_1^\top(\mathbf m, t) - \mathbf f_2^\top(\mathbf m, t) \\ \vdots \\ \mathbf f_1^\top(\mathbf m, t) - \mathbf f_S^\top(\mathbf m, t) \\ \mathbf 1^\top \end{bmatrix} \dot{\mathbf m} \\
 \mathbf g(\mathbf m) &amp;= \mathbf F(\mathbf m, t) \dot{\mathbf m} \\
 \dot{\mathbf m} &amp;= \mathbf F^{-1}(\mathbf m, t) \mathbf g(\mathbf m)"/></p>
-</div><p>This final equation represents the derivative of the components of an equilibrium mixture with support in a <img class="math" src="_images/math/5ec053cf70dc1c98cc297322250569eda193e7a4.svg" alt="t"/> game.
-Given an equilibrium of a <img class="math" src="_images/math/5ec053cf70dc1c98cc297322250569eda193e7a4.svg" alt="t"/>, equilibria of nearby games can be found using numeric ODE solving techniques until either a beneficial deviation exists to a strategy outside of support, or support for a current strategy drops to zero.
-In the later case, the support can just be dropped, and the technique can progress, in the former, this equilibrium effectively disappears, and a new equilibrium must be found for <img class="math" src="_images/math/359f238c4864fa1c25fe56b186832d2a55f7cb55.svg" alt="t \pm \epsilon"/>.</p>
+</div><p>This final equation represents the derivative of the components of an equilibrium mixture with support in a <img class="math" src="_images/math/907a4add6d5db5b7f197f7924f1371b8ac404fe6.svg" alt="t"/> game.
+Given an equilibrium of a <img class="math" src="_images/math/907a4add6d5db5b7f197f7924f1371b8ac404fe6.svg" alt="t"/>, equilibria of nearby games can be found using numeric ODE solving techniques until either a beneficial deviation exists to a strategy outside of support, or support for a current strategy drops to zero.
+In the later case, the support can just be dropped, and the technique can progress, in the former, this equilibrium effectively disappears, and a new equilibrium must be found for <img class="math" src="_images/math/f987e8488c099955c03b3910c6a32edc4045753e.svg" alt="t \pm \epsilon"/>.</p>
 <p>A limitation of this method is that it stops as soon as beneficial deviation exists outside of support.
 There are papers the project the equilibrium into a space where the equilibria are piecewise continuous, and as a result, may skirt the need to find new equilibria when a beneficial deviation exists outside of support, however, these methods aren’t readily applicable to our circumstances for two reasons.</p>
 <ol class="loweralpha simple">
-<li>They parameterize games by subtracting off the expected deviation payoff played against the uniform mixture, which we generally can’t sample because it would imply having complete game data instead of sparse game data.</li>
-<li>The projection of the games does not merge arbitrary games <img class="math" src="_images/math/bd9d9c7512c898e0a254a0882184197bc1bd9c9f.svg" alt="a"/> and <img class="math" src="_images/math/57c9d14bb082716df9000146882ce365335d08f1.svg" alt="b"/>, but instead ones that differ only in the expected payoff to deviating from the uniform mixture, meaning that some aspect of the projection would need to be tweaked in order to work for arbitrary games.</li>
+<li><p>They parameterize games by subtracting off the expected deviation payoff played against the uniform mixture, which we generally can’t sample because it would imply having complete game data instead of sparse game data.</p></li>
+<li><p>The projection of the games does not merge arbitrary games <img class="math" src="_images/math/b3e65e3b6408fcfa00452530b73f55d1755f9965.svg" alt="a"/> and <img class="math" src="_images/math/68c7c8c65602677ab56cf7fd88002023f0edc575.svg" alt="b"/>, but instead ones that differ only in the expected payoff to deviating from the uniform mixture, meaning that some aspect of the projection would need to be tweaked in order to work for arbitrary games.</p></li>
 </ol>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -89,17 +91,15 @@ There are papers the project the equilibrium into a space where the equilibria a
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -116,12 +116,13 @@ There are papers the project the equilibrium into a space where the equilibria a
         <li class="right" >
           <a href="cont_approx.html" title="RBF Gaussian Process Continuous Approximation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Endogenous Mixture Game Equilibria</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

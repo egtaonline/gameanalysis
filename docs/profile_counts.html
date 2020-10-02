@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reduction Profile Counting &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="RBF Gaussian Process Continuous Approximation" href="cont_approx.html" />
@@ -33,7 +33,8 @@
         <li class="right" >
           <a href="profile_nash.html" title="Nash Equilibrium Methods Comparison"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reduction Profile Counting</a></li> 
       </ul>
     </div>  
 
@@ -46,34 +47,35 @@
 <span id="profile-counts"></span><h1>Reduction Profile Counting<a class="headerlink" href="#reduction-profile-counting" title="Permalink to this headline">¶</a></h1>
 <p>This page contains formulae for computing the number of profiles in different game objects.
 Independent of scheduler type, there are a few important quantities for describing the number of profiles of a specific scheduler.
-<img class="math" src="_images/math/8a8a502418d0c275b81af70be273d1647a933287.svg" alt="\mathcal R"/>, the set of roles in the game.
-<img class="math" src="_images/math/9dadb234044635350fed05801951398ed65a952c.svg" alt="n_r &gt; 0"/>, the reduced number of players in role <img class="math" src="_images/math/eaa6ad49a7f78fe5a13b486690163bf2dc7e3e60.svg" alt="r"/>.
-<img class="math" src="_images/math/fa37046bf229ef9f06b112dbf4255733f4c96944.svg" alt="s_r &gt; 0"/>, the number of strategies in fully explored set for role <img class="math" src="_images/math/eaa6ad49a7f78fe5a13b486690163bf2dc7e3e60.svg" alt="r"/>.
-<img class="math" src="_images/math/fd7411ec669cce813553b5a9b938336e242d63b0.svg" alt="d_r \ge 0"/>, the number of deviating strategies for role <img class="math" src="_images/math/eaa6ad49a7f78fe5a13b486690163bf2dc7e3e60.svg" alt="r"/>.
-The most relevant function is the number of combinations with repetition denoted as <img class="math" src="_images/math/d7888ce4e3f6e30399fade2e97a1eacf7edf7e78.svg" alt="\left(\!\!{a \choose b}\!\!\right)"/>, which is the same as <img class="math" src="_images/math/75ee4b19c895afbba8a7eff8418572d53e1953c4.svg" alt="a + b - 1 \choose b"/>.
+<img class="math" src="_images/math/06bc2291a04adf2f60e9b1b907c19af166c3e74b.svg" alt="\mathcal R"/>, the set of roles in the game.
+<img class="math" src="_images/math/9b6dae8dad3aad85885ac8ce23d1ed743ec686a0.svg" alt="n_r &gt; 0"/>, the reduced number of players in role <img class="math" src="_images/math/79a3d439d28652c547386f39b555d90d3aaf102d.svg" alt="r"/>.
+<img class="math" src="_images/math/d9f114e7213368228b68274a6652ec1d5a2640cb.svg" alt="s_r &gt; 0"/>, the number of strategies in fully explored set for role <img class="math" src="_images/math/79a3d439d28652c547386f39b555d90d3aaf102d.svg" alt="r"/>.
+<img class="math" src="_images/math/ed74e0cd4d32feb15c7f8a8f5920aa73758e879a.svg" alt="d_r \ge 0"/>, the number of deviating strategies for role <img class="math" src="_images/math/79a3d439d28652c547386f39b555d90d3aaf102d.svg" alt="r"/>.
+The most relevant function is the number of combinations with repetition denoted as <img class="math" src="_images/math/690b246345555a28987ded9a2572f0c9421da41f.svg" alt="\left(\!\!{a \choose b}\!\!\right)"/>, which is the same as <img class="math" src="_images/math/2c00fe49346fc01627889c44b5df096d19250a35.svg" alt="a + b - 1 \choose b"/>.
 We define this to be 0 if any of the arguments to combinations is below 0.</p>
 <p>For normal games, and games with a hierarchical reduction, the closed form is relatively simple.</p>
 <div class="math">
-<p><img src="_images/math/1c64c86eefbb8cd51f1f62e5dcfda44ddd92f82a.svg" alt="\prod_{r \in \mathcal R} \left(\!\!{s_r \choose n_r}\!\!\right) + \sum_{r \in \mathcal R} d_r \prod_{\rho \in \mathcal R} \left(\!\!{s_\rho \choose n_\rho - \mathbb{I}_{r = \rho}}\!\!\right)"/></p>
-</div><p>where <img class="math" src="_images/math/a7e0d89175e54a0bc68f32bc4db075f7fdcc6665.svg" alt="\mathbb{I}_{statement}"/> is the indicator function, one when <img class="math" src="_images/math/cb6634927b43a75b3a6f67a4e74a6a63909b2327.svg" alt="statement"/> is true, zero when otherwise.
+<p><img src="_images/math/e7f520659b01bc5872c7584258bda244ca64ac9e.svg" alt="\prod_{r \in \mathcal R} \left(\!\!{s_r \choose n_r}\!\!\right) + \sum_{r \in \mathcal R} d_r \prod_{\rho \in \mathcal R} \left(\!\!{s_\rho \choose n_\rho - \mathbb{I}_{r = \rho}}\!\!\right)"/></p>
+</div><p>where <img class="math" src="_images/math/5d43ad87375821320944e992be322110f8678d41.svg" alt="\mathbb{I}_{statement}"/> is the indicator function, one when <img class="math" src="_images/math/a88a31c7f81a414019a28bd4c412cf22233021c9.svg" alt="statement"/> is true, zero when otherwise.
 The first term is the number of profiles in the “full” game, and the second term is the number of profiles for the deviations.</p>
 <p>For deviation preserving reduction games, the form is a little more complicated.</p>
 <div class="math">
-<p><img src="_images/math/c3e438b104f27254a886ccf57868a873b4f83e72.svg" alt="&amp; \sum_{r \in \mathcal R} s_r \prod_{\rho \in \mathcal R} \left(\!\!{s_\rho \choose n_\rho - \mathbb{I}_{r = \rho}}\!\!\right)
+<p><img src="_images/math/0c7688ac0a39e45776cac6329d9583ef7ce97791.svg" alt="&amp; \sum_{r \in \mathcal R} s_r \prod_{\rho \in \mathcal R} \left(\!\!{s_\rho \choose n_\rho - \mathbb{I}_{r = \rho}}\!\!\right)
 - \sum_{\mathcal P \in \mathbb P(\mathcal R) \setminus \varnothing} \left[ |\mathcal P| - 1 \right] \prod_{r \in \mathcal P} s_r \prod_{r \in \mathcal R \setminus \mathcal P} \left[ \left(\!\!{s_r \choose n_r}\!\!\right) - s_r \right] \\
 &amp; + \sum_{r \in \mathcal R} d_r \prod_{\rho \in \mathcal R} \left(\!\!{s_\rho \choose n_\rho - \mathbb{I}_{r = \rho}}\!\!\right)
 + \sum_{r \in \mathcal R} d_r \sum_{\rho \in \mathcal R} s_\rho \prod_{o \in \mathcal R} \left(\!\!{s_o \choose n_o - \mathbb{I}_{r = o} - \mathbb{I}_{\rho = o}}\!\!\right) \\
 &amp; - \sum_{r \in \mathcal R} d_r \sum_{\mathcal P \in \mathbb P(\mathcal R) \setminus \varnothing} \left[ |\mathcal P| - 1 - \mathbb{I}_{n_r &gt; 1} \mathbb{I}_{r \in \mathcal P} \right] \prod_{\rho \in \mathcal P} {s_\rho}^{1 - \mathbb{I}_{r = \rho} \mathbb{I}_{n_r = 1}} \prod_{\rho \in \mathcal R \setminus \mathcal P} \left[ \left(\!\!{s_\rho \choose n_\rho - \mathbb{I}_{r = \rho}}\!\!\right) - {s_\rho}^{1 - \mathbb{I}_{r = \rho} \mathbb{I}_{n_r = 1}} \right]"/></p>
-</div><p>where <img class="math" src="_images/math/f28951d396c324f33f10f1a6d768f322a86e7edd.svg" alt="\mathbb P"/> denotes the power set.
+</div><p>where <img class="math" src="_images/math/6d8c47ac5d482e8dfbe71debdbb2ef2db65fe27e.svg" alt="\mathbb P"/> denotes the power set.
 The first term is the number of payoffs in the full game, which is a slight overestimate of the DPR profiles.
 The second term is the amount of overestimate for the number of full game profiles.
 The third term is the number of profiles for the deviators’ payoffs.
 The fourth term is the number of profiles for the non-deviators’ payoffs when there is a deviator.
 The last term is the amount of overestimate for the deviating profiles.
-Note, that for <img class="math" src="_images/math/b87f466df34fc585a7653fabd90af09087d43efd.svg" alt="|\mathcal R|"/> items in the second and last term have <img class="math" src="_images/math/fcb484f7bb7804020668e0c76a1c8288bab42a65.svg" alt="|P| = 1"/>, and so are multiplied by 0 and can be omitted when actually computing the summation.</p>
+Note, that for <img class="math" src="_images/math/314168956d096e2dc20a5b8d3bbd7e91d0778c98.svg" alt="|\mathcal R|"/> items in the second and last term have <img class="math" src="_images/math/67c383c5a949fb69117c1362483870f9da0762ef.svg" alt="|P| = 1"/>, and so are multiplied by 0 and can be omitted when actually computing the summation.</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -93,17 +95,15 @@ Note, that for <img class="math" src="_images/math/b87f466df34fc585a7653fabd90af
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -123,12 +123,13 @@ Note, that for <img class="math" src="_images/math/b87f466df34fc585a7653fabd90af
         <li class="right" >
           <a href="profile_nash.html" title="Nash Equilibrium Methods Comparison"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reduction Profile Counting</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

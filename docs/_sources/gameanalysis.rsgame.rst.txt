@@ -2,6 +2,6 @@ gameanalysis.rsgame module
 ==========================
 
 .. automodule:: gameanalysis.rsgame
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

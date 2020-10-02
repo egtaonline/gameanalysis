@@ -2,6 +2,6 @@ gameanalysis.restrict module
 ============================
 
 .. automodule:: gameanalysis.restrict
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

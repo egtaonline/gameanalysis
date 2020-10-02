@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>gameanalysis.bootstrap module &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.canongame module" href="gameanalysis.canongame.html" />
@@ -34,7 +34,8 @@
           <a href="gameanalysis.aggfn.html" title="gameanalysis.aggfn module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.bootstrap module</a></li> 
       </ul>
     </div>  
 
@@ -46,139 +47,124 @@
   <div class="section" id="module-gameanalysis.bootstrap">
 <span id="gameanalysis-bootstrap-module"></span><h1>gameanalysis.bootstrap module<a class="headerlink" href="#module-gameanalysis.bootstrap" title="Permalink to this headline">¶</a></h1>
 <p>Module for using bootstrap in analysis</p>
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.bootstrap.game_function">
-<code class="descclassname">gameanalysis.bootstrap.</code><code class="descname">game_function</code><span class="sig-paren">(</span><em>game</em>, <em>function</em>, <em>num_resamples</em>, <em>num_returned</em>, <em>*</em>, <em>percentiles=None</em>, <em>processes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#game_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.game_function" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.bootstrap.</code><code class="sig-name descname">game_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">game</span></em>, <em class="sig-param"><span class="n">function</span></em>, <em class="sig-param"><span class="n">num_resamples</span></em>, <em class="sig-param"><span class="n">num_returned</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">processes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#game_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.game_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bootstrap the value of a function over a sample game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
-<li><strong>function</strong> (<em>f</em><em>(</em><em>Game</em><em>) </em><em>-&gt; float</em><em> or </em><em>f</em><em>(</em><em>Game</em><em>) </em><em>-&gt;</em><em> [</em><em>float</em><em>]</em>) – The function of the game to compute. It must be pickleable unless
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</p></li>
+<li><p><strong>function</strong> (<em>f</em><em>(</em><em>Game</em><em>) </em><em>-&gt; float</em><em> or </em><em>f</em><em>(</em><em>Game</em><em>) </em><em>-&gt;</em><em> [</em><em>float</em><em>]</em>) – The function of the game to compute. It must be pickleable unless
 processes is 1, and it must return either a float or an iterable of
 floats. If an iterable of floats, this bootstrap all indices of the
-return value independently.</li>
-<li><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
-better accuracy.</li>
-<li><strong>num_returned</strong> (<em>int</em>) – The number of float values your function returns.</li>
-<li><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
-percentiles are 95, or [2.5, 97.5]. By default, return all samples.</li>
-<li><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
-number of cores.</li>
+return value independently.</p></li>
+<li><p><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
+better accuracy.</p></li>
+<li><p><strong>num_returned</strong> (<em>int</em>) – The number of float values your function returns.</p></li>
+<li><p><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
+percentiles are 95, or [2.5, 97.5]. By default, return all samples.</p></li>
+<li><p><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
+number of cores.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bootstrap_percentiles</strong> – An ndarray of the percentiles from bootstrapping. The shape will depend
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>bootstrap_percentiles</strong> – An ndarray of the percentiles from bootstrapping. The shape will depend
 on the number of percentiles and the number of values returned from
 your function.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.bootstrap.mixture_regret">
-<code class="descclassname">gameanalysis.bootstrap.</code><code class="descname">mixture_regret</code><span class="sig-paren">(</span><em>game</em>, <em>mixtures</em>, <em>num_resamples</em>, <em>*</em>, <em>percentiles=None</em>, <em>processes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#mixture_regret"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.mixture_regret" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.bootstrap.</code><code class="sig-name descname">mixture_regret</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">game</span></em>, <em class="sig-param"><span class="n">mixtures</span></em>, <em class="sig-param"><span class="n">num_resamples</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">processes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#mixture_regret"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.mixture_regret" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute percentile bounds on mixture regret</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
-<li><strong>mixtures</strong> (<em>ndararay</em>) – The profiles to compute mixture regret bounds for.</li>
-<li><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
-better accuracy.</li>
-<li><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
-percentiles are 95, or [2.5, 97.5]. By default, return all samples.</li>
-<li><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
-number of cores.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</p></li>
+<li><p><strong>mixtures</strong> (<em>ndararay</em>) – The profiles to compute mixture regret bounds for.</p></li>
+<li><p><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
+better accuracy.</p></li>
+<li><p><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
+percentiles are 95, or [2.5, 97.5]. By default, return all samples.</p></li>
+<li><p><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
+number of cores.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>regret_percentiles</strong> – An ndarray of the percentiles for bootstrap regret for each profile.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>regret_percentiles</strong> – An ndarray of the percentiles for bootstrap regret for each profile.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.bootstrap.mixture_welfare">
-<code class="descclassname">gameanalysis.bootstrap.</code><code class="descname">mixture_welfare</code><span class="sig-paren">(</span><em>game</em>, <em>mixtures</em>, <em>num_resamples</em>, <em>*</em>, <em>percentiles=None</em>, <em>processes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#mixture_welfare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.mixture_welfare" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.bootstrap.</code><code class="sig-name descname">mixture_welfare</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">game</span></em>, <em class="sig-param"><span class="n">mixtures</span></em>, <em class="sig-param"><span class="n">num_resamples</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">processes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#mixture_welfare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.mixture_welfare" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute percentile bounds on mixture welfare</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
-<li><strong>mixtures</strong> (<em>ndarray</em>) – The profiles to compute mixture welfare bounds for.</li>
-<li><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
-better accuracy.</li>
-<li><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
-percentiles are 95, or [2.5, 97.5]. By default, return all samples.</li>
-<li><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
-number of cores.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</p></li>
+<li><p><strong>mixtures</strong> (<em>ndarray</em>) – The profiles to compute mixture welfare bounds for.</p></li>
+<li><p><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
+better accuracy.</p></li>
+<li><p><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
+percentiles are 95, or [2.5, 97.5]. By default, return all samples.</p></li>
+<li><p><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
+number of cores.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bootstrap_percentiles</strong> – An ndarray of the percentiles for bootstrap welfare for each profile.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>bootstrap_percentiles</strong> – An ndarray of the percentiles for bootstrap welfare for each profile.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.bootstrap.profile_function">
-<code class="descclassname">gameanalysis.bootstrap.</code><code class="descname">profile_function</code><span class="sig-paren">(</span><em>game</em>, <em>function</em>, <em>profiles</em>, <em>num_resamples</em>, <em>*</em>, <em>percentiles=None</em>, <em>processes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#profile_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.profile_function" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.bootstrap.</code><code class="sig-name descname">profile_function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">game</span></em>, <em class="sig-param"><span class="n">function</span></em>, <em class="sig-param"><span class="n">profiles</span></em>, <em class="sig-param"><span class="n">num_resamples</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">processes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/bootstrap.html#profile_function"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.bootstrap.profile_function" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute a function over profiles</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</li>
-<li><strong>function</strong> (<em>Game</em><em>, </em><em>profile -&gt; float</em>) – The function of the game profile pair to compute. It must be
-pickleable, and it must return a float (e.g. regret.mixture_regret).</li>
-<li><strong>profiles</strong> (<em>ndarray</em>) – The profiles to compute bootstrap bounds over for function.</li>
-<li><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
-better accuracy.</li>
-<li><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
-percentiles are 95, or [2.5, 97.5]. By default, return all samples.</li>
-<li><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
-number of cores.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>game</strong> (<em>SampleGame</em>) – The sample game to bootstrap the function value over.</p></li>
+<li><p><strong>function</strong> (<em>Game</em><em>, </em><em>profile -&gt; float</em>) – The function of the game profile pair to compute. It must be
+pickleable, and it must return a float (e.g. regret.mixture_regret).</p></li>
+<li><p><strong>profiles</strong> (<em>ndarray</em>) – The profiles to compute bootstrap bounds over for function.</p></li>
+<li><p><strong>num_resamples</strong> (<em>int</em>) – The number of bootstrap samples. Higher will take longer but also give
+better accuracy.</p></li>
+<li><p><strong>percentiles</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The percentiles to compute on the resulting data in [0, 100]. Standard
+percentiles are 95, or [2.5, 97.5]. By default, return all samples.</p></li>
+<li><p><strong>processes</strong> (<em>int</em><em> (</em><em>optional</em><em>)</em>) – The number of processes to use for computation. By default this is the
+number of cores.</p></li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>bootstrap_percentiles</strong> – An ndarray of the percentiles from bootstrapping for each profile. The
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>bootstrap_percentiles</strong> – An ndarray of the percentiles from bootstrapping for each profile. The
 shape will depend on the number of percentiles and the number of
 profiles.</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -198,17 +184,15 @@ profiles.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -229,12 +213,13 @@ profiles.</p>
           <a href="gameanalysis.aggfn.html" title="gameanalysis.aggfn module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.bootstrap module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

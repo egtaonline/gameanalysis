@@ -2,6 +2,6 @@ gameanalysis.learning module
 ============================
 
 .. automodule:: gameanalysis.learning
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

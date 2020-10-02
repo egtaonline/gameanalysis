@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>gameanalysis.gamegen module &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.gamereader module" href="gameanalysis.gamereader.html" />
@@ -34,7 +34,8 @@
           <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.gamegen module</a></li> 
       </ul>
     </div>  
 
@@ -46,15 +47,15 @@
   <div class="section" id="module-gameanalysis.gamegen">
 <span id="gameanalysis-gamegen-module"></span><h1>gameanalysis.gamegen module<a class="headerlink" href="#module-gameanalysis.gamegen" title="Permalink to this headline">¶</a></h1>
 <p>Module for generating random games</p>
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.chicken">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">chicken</code><span class="sig-paren">(</span><em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#chicken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.chicken" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">chicken</code><span class="sig-paren">(</span><em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#chicken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.chicken" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a random prisoners dilemma game</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.congestion">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">congestion</code><span class="sig-paren">(</span><em>num_players</em>, <em>num_facilities</em>, <em>num_required</em>, <em>*</em>, <em>degree=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#congestion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.congestion" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">congestion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_players</span></em>, <em class="sig-param"><span class="n">num_facilities</span></em>, <em class="sig-param"><span class="n">num_required</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">degree</span><span class="o">=</span><span class="default_value">2</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#congestion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.congestion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a congestion game</p>
 <p>A congestion game is a symmetric game, where there are a given number of
 facilities, and each player must choose to use some amount of them. The
@@ -62,510 +63,438 @@ payoff for each facility decreases as more players use it, and a players
 utility is the sum of the utilities for every facility.</p>
 <p>In this formulation, facility payoffs are random polynomials of the number
 of people using said facility.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_players</strong> (<em>int &gt; 1</em>) – The number of players.</li>
-<li><strong>num_facilities</strong> (<em>int &gt; 1</em>) – The number of facilities.</li>
-<li><strong>num_required</strong> (<em>0 &lt; int &lt; num_facilities</em>) – The number of required facilities.</li>
-<li><strong>degree</strong> (<em>int &gt; 0</em><em>, </em><em>optional</em>) – Degree of payoff polynomials.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_players</strong> (<em>int &gt; 1</em>) – The number of players.</p></li>
+<li><p><strong>num_facilities</strong> (<em>int &gt; 1</em>) – The number of facilities.</p></li>
+<li><p><strong>num_required</strong> (<em>0 &lt; int &lt; num_facilities</em>) – The number of required facilities.</p></li>
+<li><p><strong>degree</strong> (<em>int &gt; 0</em><em>, </em><em>optional</em>) – Degree of payoff polynomials.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.covariant_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">covariant_game</code><span class="sig-paren">(</span><em>num_role_strats</em>, <em>mean_dist=&lt;OrderingMock name='mock.zeros' id='139993141729376'&gt;</em>, <em>var_dist=&lt;OrderingMock name='mock.ones' id='139993139897512'&gt;</em>, <em>covar_dist=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#covariant_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.covariant_game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">covariant_game</code><span class="sig-paren">(</span><em class="sig-param">num_role_strats</em>, <em class="sig-param">mean_dist=&lt;OrderingMock name='mock.zeros' id='140043491719680'&gt;</em>, <em class="sig-param">var_dist=&lt;OrderingMock name='mock.ones' id='140043490427904'&gt;</em>, <em class="sig-param">covar_dist=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#covariant_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.covariant_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a covariant game</p>
 <p>Covariant games are asymmetric games where payoff values for each profile
 drawn according to multivariate normal.</p>
 <p>The multivariate normal for each profile has a constant mean drawn from
 <cite>mean_dist</cite>, constant variance drawn from`var_dist`, and constant
 covariance drawn from <cite>covar_dist</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>mean_dist</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Distribution from which mean payoff for each profile is drawn.
-(default: lambda: 0)</li>
-<li><strong>var_dist</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Distribution from which payoff variance for each profile is drawn.
-(default: lambda: 1)</li>
-<li><strong>covar_dist</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Distribution from which the value of the off-diagonal covariance matrix
-entries for each profile is drawn. (default: uniform [-1, 1])</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean_dist</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Distribution from which mean payoff for each profile is drawn.
+(default: lambda: 0)</p></li>
+<li><p><strong>var_dist</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Distribution from which payoff variance for each profile is drawn.
+(default: lambda: 1)</p></li>
+<li><p><strong>covar_dist</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – Distribution from which the value of the off-diagonal covariance matrix
+entries for each profile is drawn. (default: uniform [-1, 1])</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.default_distribution">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">default_distribution</code><span class="sig-paren">(</span><em>shape=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#default_distribution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.default_distribution" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">default_distribution</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">shape</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#default_distribution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.default_distribution" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default distribution for payoffs</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">game</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>prob=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">game</code><span class="sig-paren">(</span><em class="sig-param">players</em>, <em class="sig-param">strats</em>, <em class="sig-param">prob=1.0</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random role symmetric game with sparse profiles</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
-<li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
-<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of any profile being included in the game.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</p></li>
+<li><p><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</p></li>
+<li><p><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of any profile being included in the game.</p></li>
+<li><p><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.game_replace">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">game_replace</code><span class="sig-paren">(</span><em>base</em>, <em>prob=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game_replace" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">game_replace</code><span class="sig-paren">(</span><em class="sig-param">base</em>, <em class="sig-param">prob=1.0</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#game_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.game_replace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace a games profiles with random ones</p>
 <p>This is identical to gen_profiles, but provides a more common name.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.gen_noise">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">gen_noise</code><span class="sig-paren">(</span><em>base</em>, <em>prob=0.5</em>, <em>min_samples=1</em>, <em>min_width=0</em>, <em>max_width=1</em>, <em>noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_noise" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">gen_noise</code><span class="sig-paren">(</span><em class="sig-param">base</em>, <em class="sig-param">prob=0.5</em>, <em class="sig-param">min_samples=1</em>, <em class="sig-param">min_width=0</em>, <em class="sig-param">max_width=1</em>, <em class="sig-param">noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_noise" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate noise for profiles of a game</p>
 <p>This generates samples for payoff data by first generating some measure of
 distribution spread for each payoff in the game. Then, for each sample,
 noise is drawn from this distribution. As a result, some payoffs will have
 significantly more noise than other payoffs, helping to mimic real games.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>Game</em>) – The game to generate samples from. These samples are additive zero-mean
-noise to the payoff values.</li>
-<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of continuing to add another sample to a profile. If
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>Game</em>) – The game to generate samples from. These samples are additive zero-mean
+noise to the payoff values.</p></li>
+<li><p><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of continuing to add another sample to a profile. If
 this is 0, min_samples will be generated for each profile. As this
 approaches one, more samples will be generated for each profile,
-sampled from the geometric distribution of 1 - prob.</li>
-<li><strong>min_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of samples to generate for each profile. By default
+sampled from the geometric distribution of 1 - prob.</p></li>
+<li><p><strong>min_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of samples to generate for each profile. By default
 this will generate at least one sample for every profile with data.
 Setting this to zero means that a profile will only have data with
-probability <cite>prob</cite>.</li>
-<li><strong>min_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum standard deviation of each payoffs samples.</li>
-<li><strong>max_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum standard deviation of each payoffs samples.</li>
-<li><strong>noise_distribution</strong> (<em>width distribution</em><em>, </em><em>optional</em>) – The noise generating function to use. This function must be a valid
+probability <cite>prob</cite>.</p></li>
+<li><p><strong>min_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum standard deviation of each payoffs samples.</p></li>
+<li><p><strong>max_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum standard deviation of each payoffs samples.</p></li>
+<li><p><strong>noise_distribution</strong> (<em>width distribution</em><em>, </em><em>optional</em>) – The noise generating function to use. This function must be a valid
 width noise distribution. A width distribution takes an array of widths
 and a number of samples, and draws that many samples for each width
 such that the standard deviation of the samples is equal to the width
 and the mean is zero.  Several default versions are specified in
 gamegen, and they’re all prefixed with <cite>width_</cite>. By default, this uses
-<cite>width_gaussian</cite>.</li>
+<cite>width_gaussian</cite>.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.gen_num_profiles">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">gen_num_profiles</code><span class="sig-paren">(</span><em>base</em>, <em>num</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_num_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_num_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">gen_num_profiles</code><span class="sig-paren">(</span><em class="sig-param">base</em>, <em class="sig-param">num</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_num_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_num_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate profiles given game structure</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>RsGame</em>) – Game to generate payoffs for.</li>
-<li><strong>count</strong> (<em>int</em>) – The number of profiles to generate.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>RsGame</em>) – Game to generate payoffs for.</p></li>
+<li><p><strong>count</strong> (<em>int</em>) – The number of profiles to generate.</p></li>
+<li><p><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.gen_profiles">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">gen_profiles</code><span class="sig-paren">(</span><em>base</em>, <em>prob=1.0</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">gen_profiles</code><span class="sig-paren">(</span><em class="sig-param">base</em>, <em class="sig-param">prob=1.0</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#gen_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.gen_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate profiles given game structure</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>RsGame</em>) – Game to generate payoffs for.</li>
-<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability to add a profile from the full game.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>RsGame</em>) – Game to generate payoffs for.</p></li>
+<li><p><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability to add a profile from the full game.</p></li>
+<li><p><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.independent_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">independent_game</code><span class="sig-paren">(</span><em>num_role_strats</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#independent_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.independent_game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">independent_game</code><span class="sig-paren">(</span><em class="sig-param">num_role_strats</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#independent_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.independent_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random independent (asymmetric) game</p>
 <p>All payoffs are generated independently from distribution.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_role_strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em><em>, </em><em>len == num_role_players</em>) – The number of strategies for each player. If an int, then it’s a one
-player game.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – The distribution to sample payoffs from. Must take a single shape
-argument and return an ndarray of iid values with that shape.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_role_strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em><em>, </em><em>len == num_role_players</em>) – The number of strategies for each player. If an int, then it’s a one
+player game.</p></li>
+<li><p><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em> (</em><em>shape</em><em>)</em>) – The distribution to sample payoffs from. Must take a single shape
+argument and return an ndarray of iid values with that shape.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.keep_num_profiles">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">keep_num_profiles</code><span class="sig-paren">(</span><em>base</em>, <em>num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#keep_num_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.keep_num_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">keep_num_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base</span></em>, <em class="sig-param"><span class="n">num</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#keep_num_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.keep_num_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Keep random profiles from an existing game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>RsGame</em>) – Game to keep profiles from.</li>
-<li><strong>num</strong> (<em>int</em>) – The number of profiles to keep from the game.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>RsGame</em>) – Game to keep profiles from.</p></li>
+<li><p><strong>num</strong> (<em>int</em>) – The number of profiles to keep from the game.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.keep_profiles">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">keep_profiles</code><span class="sig-paren">(</span><em>base</em>, <em>keep_prob=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#keep_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.keep_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">keep_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base</span></em>, <em class="sig-param"><span class="n">keep_prob</span><span class="o">=</span><span class="default_value">0.5</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#keep_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.keep_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Keep random profiles from an existing game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>RsGame</em>) – The game to take profiles from.</li>
-<li><strong>keep_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of keeping a profile from the full game.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>RsGame</em>) – The game to take profiles from.</p></li>
+<li><p><strong>keep_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of keeping a profile from the full game.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.local_effect">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">local_effect</code><span class="sig-paren">(</span><em>num_players</em>, <em>num_strategies</em>, <em>*</em>, <em>edge_prob=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#local_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.local_effect" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">local_effect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_players</span></em>, <em class="sig-param"><span class="n">num_strategies</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">edge_prob</span><span class="o">=</span><span class="default_value">0.2</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#local_effect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.local_effect" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a local effect game</p>
 <p>In a local effect game, strategies are connected by a graph, and utilities
 are a function of the number of players playing our strategy and the number
 of players playing a neighboring strategy, hence local effect.</p>
 <p>In this formulation, payoffs for others playing our strategy are negative
 quadratics, and payoffs for playing other strategies are positive cubics.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_players</strong> (<em>int &gt; 1</em>) – The number of players.</li>
-<li><strong>num_strategies</strong> (<em>int &gt; 1</em>) – The number of strategies.</li>
-<li><strong>edge_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability that one strategy affects another.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_players</strong> (<em>int &gt; 1</em>) – The number of players.</p></li>
+<li><p><strong>num_strategies</strong> (<em>int &gt; 1</em>) – The number of strategies.</p></li>
+<li><p><strong>edge_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability that one strategy affects another.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.normal_aggfn">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">normal_aggfn</code><span class="sig-paren">(</span><em>role_players</em>, <em>role_strats</em>, <em>functions</em>, <em>*</em>, <em>input_prob=0.2</em>, <em>weight_prob=0.2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#normal_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.normal_aggfn" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">normal_aggfn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">role_players</span></em>, <em class="sig-param"><span class="n">role_strats</span></em>, <em class="sig-param"><span class="n">functions</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">input_prob</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">weight_prob</span><span class="o">=</span><span class="default_value">0.2</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#normal_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.normal_aggfn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random normal AgfnGame</p>
 <p>Each function value is an i.i.d Gaussian random walk.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</li>
-<li><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</li>
-<li><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</li>
-<li><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</li>
-<li><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</p></li>
+<li><p><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</p></li>
+<li><p><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</p></li>
+<li><p><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</p></li>
+<li><p><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.poly_aggfn">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">poly_aggfn</code><span class="sig-paren">(</span><em>role_players</em>, <em>role_strats</em>, <em>functions</em>, <em>*</em>, <em>input_prob=0.2</em>, <em>weight_prob=0.2</em>, <em>degree=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#poly_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.poly_aggfn" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">poly_aggfn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">role_players</span></em>, <em class="sig-param"><span class="n">role_strats</span></em>, <em class="sig-param"><span class="n">functions</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">input_prob</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">weight_prob</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">degree</span><span class="o">=</span><span class="default_value">4</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#poly_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.poly_aggfn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random polynomial AgfnGame</p>
 <p>Functions are generated by generating <cite>degree</cite> zeros in [0, num_players] to
 serve as a polynomial functions.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</li>
-<li><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</li>
-<li><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</li>
-<li><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</li>
-<li><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</li>
-<li><strong>degree</strong> (<em>int</em><em> or </em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Either an integer specifying the degree or a list of the probabilities
-of degrees starting from one, e.g. 3 is the same as [0, 0, 1].</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</p></li>
+<li><p><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</p></li>
+<li><p><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</p></li>
+<li><p><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</p></li>
+<li><p><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</p></li>
+<li><p><strong>degree</strong> (<em>int</em><em> or </em><em>[</em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Either an integer specifying the degree or a list of the probabilities
+of degrees starting from one, e.g. 3 is the same as [0, 0, 1].</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.polymatrix_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">polymatrix_game</code><span class="sig-paren">(</span><em>num_players</em>, <em>num_strats</em>, <em>matrix_game=&lt;function independent_game&gt;</em>, <em>players_per_matrix=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#polymatrix_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.polymatrix_game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">polymatrix_game</code><span class="sig-paren">(</span><em class="sig-param">num_players</em>, <em class="sig-param">num_strats</em>, <em class="sig-param">matrix_game=&lt;function independent_game&gt;</em>, <em class="sig-param">players_per_matrix=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#polymatrix_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.polymatrix_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a polymatrix game</p>
 <p>Each player’s payoff in each profile is a sum over independent games played
 against each set of opponents. Each k-tuple of players plays an instance of
 the specified random k-player matrix game.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_players</strong> (<em>int</em>) – The number of players.</li>
-<li><strong>num_strats</strong> (<em>int</em>) – The number of strategies per player.</li>
-<li><strong>matrix_game</strong> (<em>(</em><em>players_per_matrix</em><em>, </em><em>num_strats</em><em>) </em><em>-&gt; Game</em><em>, </em><em>optional</em>) – A function to generate games between sub groups of players.</li>
-<li><strong>players_per_matrix</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of players that interact simultaneously.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_players</strong> (<em>int</em>) – The number of players.</p></li>
+<li><p><strong>num_strats</strong> (<em>int</em>) – The number of strategies per player.</p></li>
+<li><p><strong>matrix_game</strong> (<em>(</em><em>players_per_matrix</em><em>, </em><em>num_strats</em><em>) </em><em>-&gt; Game</em><em>, </em><em>optional</em>) – A function to generate games between sub groups of players.</p></li>
+<li><p><strong>players_per_matrix</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of players that interact simultaneously.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>The actual roles and strategies of matrix game are ignored.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.prisoners_dilemma">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">prisoners_dilemma</code><span class="sig-paren">(</span><em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#prisoners_dilemma"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.prisoners_dilemma" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">prisoners_dilemma</code><span class="sig-paren">(</span><em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#prisoners_dilemma"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.prisoners_dilemma" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a random prisoners dilemma game</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.rock_paper_scissors">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">rock_paper_scissors</code><span class="sig-paren">(</span><em>win=1</em>, <em>loss=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#rock_paper_scissors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.rock_paper_scissors" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">rock_paper_scissors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">win</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">loss</span><span class="o">=</span><span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#rock_paper_scissors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.rock_paper_scissors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an instance of rock paper scissors</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.sample_profiles">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sample_profiles</code><span class="sig-paren">(</span><em>base</em>, <em>num</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sample_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sample_profiles" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">sample_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base</span></em>, <em class="sig-param"><span class="n">num</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sample_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sample_profiles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate unique profiles from a game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>RsGame</em>) – Game to generate random profiles from.</li>
-<li><strong>num</strong> (<em>int</em>) – Number of profiles to sample from the game.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>RsGame</em>) – Game to generate random profiles from.</p></li>
+<li><p><strong>num</strong> (<em>int</em>) – Number of profiles to sample from the game.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.samplegame">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">samplegame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">players</span></em>, <em class="sig-param"><span class="n">strats</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random role symmetric sample game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
-<li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
-<li><strong>**args</strong> – The arguments to pass to samplegame_replace.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</p></li>
+<li><p><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</p></li>
+<li><p><strong>**args</strong> – The arguments to pass to samplegame_replace.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.samplegame_replace">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">samplegame_replace</code><span class="sig-paren">(</span><em>base</em>, <em>prob=0.5</em>, <em>min_samples=1</em>, <em>min_width=0</em>, <em>max_width=1</em>, <em>payoff_distribution=&lt;function default_distribution&gt;</em>, <em>noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame_replace" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">samplegame_replace</code><span class="sig-paren">(</span><em class="sig-param">base</em>, <em class="sig-param">prob=0.5</em>, <em class="sig-param">min_samples=1</em>, <em class="sig-param">min_width=0</em>, <em class="sig-param">max_width=1</em>, <em class="sig-param">payoff_distribution=&lt;function default_distribution&gt;</em>, <em class="sig-param">noise_distribution=&lt;function width_gaussian&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#samplegame_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.samplegame_replace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random role symmetric sample game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>base</strong> (<em>RsGame</em>) – The structure of the game to generate.</li>
-<li><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of adding another sample above min_samples. These draws
-are repeated, so 0.5 will add one extra sample in expectation.</li>
-<li><strong>min_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of samples to generate for each profile. If 0, the
-game will potentially be sparse.</li>
-<li><strong>min_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum standard deviation for each payoffs samples.</li>
-<li><strong>max_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum standard deviation for each payoffs samples.</li>
-<li><strong>payoff_distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – The distribution to sample mean payoffs from.</li>
-<li><strong>noise_distribution</strong> (<em>width distribution</em><em>, </em><em>optional</em>) – The distribution used to add noise to each payoff. See <cite>gen_noise</cite> for
-a description of width distributions.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base</strong> (<em>RsGame</em>) – The structure of the game to generate.</p></li>
+<li><p><strong>prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of adding another sample above min_samples. These draws
+are repeated, so 0.5 will add one extra sample in expectation.</p></li>
+<li><p><strong>min_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The minimum number of samples to generate for each profile. If 0, the
+game will potentially be sparse.</p></li>
+<li><p><strong>min_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum standard deviation for each payoffs samples.</p></li>
+<li><p><strong>max_width</strong> (<em>float</em><em>, </em><em>optional</em>) – The maximum standard deviation for each payoffs samples.</p></li>
+<li><p><strong>payoff_distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – The distribution to sample mean payoffs from.</p></li>
+<li><p><strong>noise_distribution</strong> (<em>width distribution</em><em>, </em><em>optional</em>) – The distribution used to add noise to each payoff. See <cite>gen_noise</cite> for
+a description of width distributions.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.sine_aggfn">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sine_aggfn</code><span class="sig-paren">(</span><em>role_players</em>, <em>role_strats</em>, <em>functions</em>, <em>*</em>, <em>input_prob=0.2</em>, <em>weight_prob=0.2</em>, <em>period=4</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sine_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sine_aggfn" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">sine_aggfn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">role_players</span></em>, <em class="sig-param"><span class="n">role_strats</span></em>, <em class="sig-param"><span class="n">functions</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">input_prob</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">weight_prob</span><span class="o">=</span><span class="default_value">0.2</span></em>, <em class="sig-param"><span class="n">period</span><span class="o">=</span><span class="default_value">4</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sine_aggfn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sine_aggfn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random sinusodial AgfnGame</p>
 <p>Functions are generated by generating sinusoids with uniform random shifts
 and n periods in 0 to num_players, where n is chosen randomle between
 min_period and max_period.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</li>
-<li><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</li>
-<li><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</li>
-<li><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</li>
-<li><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</li>
-<li><strong>period</strong> (<em>float</em><em>, </em><em>optional</em>) – The loose number of periods in the payoff for each function.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>role_players</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of players per role.</p></li>
+<li><p><strong>role_strats</strong> (<em>int</em><em> or </em><em>ndarray</em>) – The number of strategies per role.</p></li>
+<li><p><strong>functions</strong> (<em>int</em>) – The number of functions to generate.</p></li>
+<li><p><strong>input_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a strategy counting towards a function value.</p></li>
+<li><p><strong>weight_prob</strong> (<em>float</em><em>, </em><em>optional</em>) – The probability of a function producing non-zero payoffs to a strategy.</p></li>
+<li><p><strong>period</strong> (<em>float</em><em>, </em><em>optional</em>) – The loose number of periods in the payoff for each function.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.sparse_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sparse_game</code><span class="sig-paren">(</span><em>players</em>, <em>strats</em>, <em>num</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sparse_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sparse_game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">sparse_game</code><span class="sig-paren">(</span><em class="sig-param">players</em>, <em class="sig-param">strats</em>, <em class="sig-param">num</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sparse_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sparse_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a random role symmetric game with sparse profiles</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</li>
-<li><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</li>
-<li><strong>num</strong> (<em>int</em>) – The number of profiles to draw payoffs for.</li>
-<li><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>players</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of players per role.</p></li>
+<li><p><strong>strats</strong> (<em>int</em><em> or </em><em>[</em><em>int</em><em>]</em>) – The number of strategies per role.</p></li>
+<li><p><strong>num</strong> (<em>int</em>) – The number of profiles to draw payoffs for.</p></li>
+<li><p><strong>distribution</strong> (<em>(</em><em>shape</em><em>) </em><em>-&gt; ndarray</em><em>, </em><em>optional</em>) – Distribution function to draw payoffs from.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.sym_2p2s_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sym_2p2s_game</code><span class="sig-paren">(</span><em>a</em>, <em>b</em>, <em>c</em>, <em>d</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sym_2p2s_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sym_2p2s_game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">sym_2p2s_game</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em>, <em class="sig-param">c</em>, <em class="sig-param">d</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sym_2p2s_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sym_2p2s_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a symmetric 2-player 2-strategy game of the specified form.</p>
 <p>Four payoff values get drawn from U(min_val, max_val), and then are
 assigned to profiles in order from smallest to largest according to the
 order parameters as follows:</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="23%" />
-<col width="38%" />
-<col width="38%" />
+<col style="width: 23%" />
+<col style="width: 38%" />
+<col style="width: 38%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>&#160;</td>
-<td>s0</td>
-<td>s1</td>
+<tbody>
+<tr class="row-odd"><td></td>
+<td><p>s0</p></td>
+<td><p>s1</p></td>
 </tr>
-<tr class="row-even"><td>s0</td>
-<td>a,a</td>
-<td>b,c</td>
+<tr class="row-even"><td><p>s0</p></td>
+<td><p>a,a</p></td>
+<td><p>b,c</p></td>
 </tr>
-<tr class="row-odd"><td>s1</td>
-<td>c,b</td>
-<td>d,d</td>
+<tr class="row-odd"><td><p>s1</p></td>
+<td><p>c,b</p></td>
+<td><p>d,d</p></td>
 </tr>
 </tbody>
 </table>
 <p>distribution must accept a size parameter a la numpy distributions.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.sym_2p2s_known_eq">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">sym_2p2s_known_eq</code><span class="sig-paren">(</span><em>eq_prob</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sym_2p2s_known_eq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sym_2p2s_known_eq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">sym_2p2s_known_eq</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eq_prob</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#sym_2p2s_known_eq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.sym_2p2s_known_eq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a symmetric 2-player 2-strategy game</p>
 <p>This game has a single mixed equilibrium where strategy one is played with
 probability eq_prob.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.travellers_dilemma">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">travellers_dilemma</code><span class="sig-paren">(</span><em>players=2</em>, <em>max_value=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#travellers_dilemma"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.travellers_dilemma" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">travellers_dilemma</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">players</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">max_value</span><span class="o">=</span><span class="default_value">100</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#travellers_dilemma"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.travellers_dilemma" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return an instance of travellers dilemma</p>
 <p>Strategies range from 2 to max_value, thus there will be max_value - 1
 strategies.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.two_player_zero_sum_game">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">two_player_zero_sum_game</code><span class="sig-paren">(</span><em>num_role_strats</em>, <em>distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#two_player_zero_sum_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.two_player_zero_sum_game" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">two_player_zero_sum_game</code><span class="sig-paren">(</span><em class="sig-param">num_role_strats</em>, <em class="sig-param">distribution=&lt;function default_distribution&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#two_player_zero_sum_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.two_player_zero_sum_game" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a two-player, zero-sum game</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.width_bimodal">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_bimodal</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_bimodal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_bimodal" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">width_bimodal</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">widths</span></em>, <em class="sig-param"><span class="n">num_samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_bimodal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_bimodal" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bimodal Gaussian width distribution</p>
 <p>Samples come from a uniform mixture between two symmetric Gaussians.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.width_gaussian">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_gaussian</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gaussian" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">width_gaussian</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">widths</span></em>, <em class="sig-param"><span class="n">num_samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gaussian"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gaussian" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gaussian width distribution</p>
 <p>Samples come from iid Gaussian distributions.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.width_gumbel">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_gumbel</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gumbel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gumbel" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">width_gumbel</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">widths</span></em>, <em class="sig-param"><span class="n">num_samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_gumbel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_gumbel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gumbel width distribution</p>
 <p>Samples come from iid Gumbel distributions. Distributions are randomly
 inverted since Gumbels are skewed.</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.gamegen.width_uniform">
-<code class="descclassname">gameanalysis.gamegen.</code><code class="descname">width_uniform</code><span class="sig-paren">(</span><em>widths</em>, <em>num_samples</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_uniform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_uniform" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.gamegen.</code><code class="sig-name descname">width_uniform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">widths</span></em>, <em class="sig-param"><span class="n">num_samples</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/gamegen.html#width_uniform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.gamegen.width_uniform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uniform width distribution</p>
 <p>Samples come from iid uniform distributions.</p>
 </dd></dl>
@@ -573,6 +502,7 @@ inverted since Gumbels are skewed.</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -592,17 +522,15 @@ inverted since Gumbels are skewed.</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -623,12 +551,13 @@ inverted since Gumbels are skewed.</p>
           <a href="gameanalysis.gambit.html" title="gameanalysis.gambit module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.gamegen module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

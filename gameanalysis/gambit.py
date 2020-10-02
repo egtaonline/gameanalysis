@@ -160,7 +160,7 @@ def _normalize(role_names, strat_names, matrix):
                         *sorted((s, i) for i, s in enumerate(strats)))
                     shuffle = [slice(None)] * (num_roles + 1)
                     shuffle[role] = order
-                    matrix = matrix[shuffle]
+                    matrix = matrix[tuple(shuffle)]
             new_strats.append(strats)
         strat_names = new_strats
 

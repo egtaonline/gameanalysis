@@ -63,7 +63,7 @@ def main(args):
 
     if args.pure:
         equilibria = nash.pure_equilibria(game, epsilon=args.regret)
-        if args.style.endswith('*') and not equilibria:
+        if args.style.endswith('*') and not equilibria.size:
             equilibria = nash.min_regret_profile(game)[None]
         json.dump([game.profile_to_json(eqm) for eqm in equilibria],
                   args.output)

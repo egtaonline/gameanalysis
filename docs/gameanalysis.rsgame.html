@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>gameanalysis.rsgame module &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="gameanalysis.scriptutils module" href="gameanalysis.scriptutils.html" />
@@ -34,7 +34,8 @@
           <a href="gameanalysis.restrict.html" title="gameanalysis.restrict module"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" accesskey="U">gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.rsgame module</a></li> 
       </ul>
     </div>  
 
@@ -64,148 +65,128 @@ something like <cite>role_array.repeat(game.num_role_strats)</cite>.</p>
 attribute instead of a getter function. Attributes that have the world role in
 them tend to be arrays of size <cite>num_roles</cite> and attributes that have <cite>strat</cite> in
 the name tend to be arrays of size <cite>num_strats</cite>.</p>
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.add">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">add</code><span class="sig-paren">(</span><em>*games</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.add" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">games</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.add" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add games together to that the payoff is the sum of each game</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>games</strong> (<em>RsGame</em>) – The games to add together</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>games</strong> (<em>RsGame</em>) – The games to add together</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.add_json">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">add_json</code><span class="sig-paren">(</span><em>jgame</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#add_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.add_json" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">add_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">jgame</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#add_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.add_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read added games from json</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.const">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em>, <em>constant</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">const</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_role_players</span></em>, <em class="sig-param"><span class="n">num_role_strats</span></em>, <em class="sig-param"><span class="n">constant</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new constant game</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.const_json">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const_json</code><span class="sig-paren">(</span><em>jgame</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_json" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">const_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">jgame</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a constant game from json</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.const_names">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const_names</code><span class="sig-paren">(</span><em>role_names</em>, <em>num_role_players</em>, <em>strat_names</em>, <em>constant</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_names" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">const_names</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">role_names</span></em>, <em class="sig-param"><span class="n">num_role_players</span></em>, <em class="sig-param"><span class="n">strat_names</span></em>, <em class="sig-param"><span class="n">constant</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new constant game with names</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.const_replace">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">const_replace</code><span class="sig-paren">(</span><em>copy_game</em>, <em>constant</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_replace" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">const_replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">copy_game</span></em>, <em class="sig-param"><span class="n">constant</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#const_replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.const_replace" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace a game with constant payoffs</p>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.empty">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">empty</code><span class="sig-paren">(</span><em>num_role_players</em>, <em>num_role_strats</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">empty</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_role_players</span></em>, <em class="sig-param"><span class="n">num_role_strats</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an empty game with default names</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of players in each role in order, or the number of players
-per role if identical (will be broadcast to match the number of roles).</li>
-<li><strong>num_role_strats</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of strategies in each role in order, or the number of
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_role_players</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of players in each role in order, or the number of players
+per role if identical (will be broadcast to match the number of roles).</p></li>
+<li><p><strong>num_role_strats</strong> (<em>ndarray-like</em><em>, </em><em>int</em>) – The number of strategies in each role in order, or the number of
 strategies per role if identical (will be broadcast to match the number
-of roles).</li>
+of roles).</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.empty_copy">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">empty_copy</code><span class="sig-paren">(</span><em>copy_game</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty_copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty_copy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">empty_copy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">copy_game</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty_copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty_copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy parameters of a game into an empty game</p>
 <p>This method is useful to keep convenience methods of game without attached
 data.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>copy_game</strong> (<em>RsGame</em>) – Game to copy info from.</td>
-</tr>
-</tbody>
-</table>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>copy_game</strong> (<em>RsGame</em>) – Game to copy info from.</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.empty_json">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">empty_json</code><span class="sig-paren">(</span><em>json</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty_json" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">empty_json</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">json</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty_json" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a EmptyGame from json</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>json</strong> (<em>{...}</em>) – A json representation of a basic game with names. Must either be
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>json</strong> (<em>{...}</em>) – A json representation of a basic game with names. Must either be
 {roles: [{name: &lt;role&gt;, strategies: [&lt;strat&gt;]}]}, or {strategies:
-{&lt;role&gt;: [&lt;strat&gt;]}}.</td>
-</tr>
-</tbody>
-</table>
+{&lt;role&gt;: [&lt;strat&gt;]}}.</p>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.empty_names">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">empty_names</code><span class="sig-paren">(</span><em>role_names</em>, <em>num_role_players</em>, <em>strat_names</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty_names" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">empty_names</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">role_names</span></em>, <em class="sig-param"><span class="n">num_role_players</span></em>, <em class="sig-param"><span class="n">strat_names</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#empty_names"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.empty_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an empty game with names</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>roles_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name for each role.</li>
-<li><strong>num_role_players</strong> (<em>ndarray</em><em>, </em><em>int</em><em>, </em><em>[</em><em>int</em><em>]</em>) – The number of players in each role.</li>
-<li><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</li>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>roles_names</strong> (<em>[</em><em>str</em><em>]</em>) – The name for each role.</p></li>
+<li><p><strong>num_role_players</strong> (<em>ndarray</em><em>, </em><em>int</em><em>, </em><em>[</em><em>int</em><em>]</em>) – The number of players in each role.</p></li>
+<li><p><strong>strat_names</strong> (<em>[</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The name of each strategy for each role.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="gameanalysis.rsgame.mix">
-<code class="descclassname">gameanalysis.rsgame.</code><code class="descname">mix</code><span class="sig-paren">(</span><em>game0</em>, <em>game1</em>, <em>prob</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#mix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.mix" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">gameanalysis.rsgame.</code><code class="sig-name descname">mix</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">game0</span></em>, <em class="sig-param"><span class="n">game1</span></em>, <em class="sig-param"><span class="n">prob</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/gameanalysis/rsgame.html#mix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#gameanalysis.rsgame.mix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mix games together</p>
 <p>The resulting payoff is a (1-prob) fraction of game0 and a prob fraction of
 game1.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>game0</strong> (<em>RsGame</em>) – The first game to mix.</li>
-<li><strong>game1</strong> (<em>RsGame</em>) – The second game to mix.</li>
-<li><strong>prob</strong> (<em>float</em>) – The fraction to merge the games. 0 corresponds to a copy of <cite>game0</cite>, 1
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>game0</strong> (<em>RsGame</em>) – The first game to mix.</p></li>
+<li><p><strong>game1</strong> (<em>RsGame</em>) – The second game to mix.</p></li>
+<li><p><strong>prob</strong> (<em>float</em>) – The fraction to merge the games. 0 corresponds to a copy of <cite>game0</cite>, 1
 corresponds to <cite>game1</cite>, and somewhere between corresponds to the linear
-interpolation between them.</li>
+interpolation between them.</p></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -225,17 +206,15 @@ interpolation between them.</li>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -256,12 +235,13 @@ interpolation between them.</li>
           <a href="gameanalysis.restrict.html" title="gameanalysis.restrict module"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li> 
+          <li class="nav-item nav-item-1"><a href="gameanalysis.html" >gameanalysis package</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">gameanalysis.rsgame module</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

@@ -2,6 +2,6 @@ gameanalysis.gambit module
 ==========================
 
 .. automodule:: gameanalysis.gambit
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

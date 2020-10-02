@@ -5,6 +5,7 @@ Submodules
 ----------
 
 .. toctree::
+   :maxdepth: 4
 
    gameanalysis.reduction.deviation_preserving
    gameanalysis.reduction.hierarchical
@@ -15,6 +16,6 @@ Module contents
 ---------------
 
 .. automodule:: gameanalysis.reduction
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,18 +1,18 @@
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RBF Gaussian Process Continuous Approximation &#8212; Game Analysis 8.0.3 documentation</title>
     <link rel="stylesheet" href="_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Endogenous Mixture Game Equilibria" href="endogenous_mix_eqa.html" />
@@ -33,7 +33,8 @@
         <li class="right" >
           <a href="profile_counts.html" title="Reduction Profile Counting"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">RBF Gaussian Process Continuous Approximation</a></li> 
       </ul>
     </div>  
 
@@ -44,24 +45,24 @@
             
   <div class="section" id="rbf-gaussian-process-continuous-approximation">
 <span id="cont-approx"></span><h1>RBF Gaussian Process Continuous Approximation<a class="headerlink" href="#rbf-gaussian-process-continuous-approximation" title="Permalink to this headline">¶</a></h1>
-<p>Our basic setup is a game with a set of roles <img class="math" src="_images/math/8bf87e79d7aa8d963dafe04056d8eb590c272636.svg" alt="r \in \mathcal R = [R]"/>, a set of strategies <img class="math" src="_images/math/f88043cd906cb2709fefce040d6ef9ac2f865af2.svg" alt="s_r \in \mathcal S_r = [S_r] \ne \varnothing"/> strategies per role, and a number of players per role <img class="math" src="_images/math/9dadb234044635350fed05801951398ed65a952c.svg" alt="n_r &gt; 0"/>.
+<p>Our basic setup is a game with a set of roles <img class="math" src="_images/math/07ce13ea1264e83b954d227fa9a831d7a30a8483.svg" alt="r \in \mathcal R = [R]"/>, a set of strategies <img class="math" src="_images/math/5f6c718e43156d99d1142a95c4fb36b754ede4d5.svg" alt="s_r \in \mathcal S_r = [S_r] \ne \varnothing"/> strategies per role, and a number of players per role <img class="math" src="_images/math/9b6dae8dad3aad85885ac8ce23d1ed743ec686a0.svg" alt="n_r &gt; 0"/>.
 For the rest of this analysis we only consider partial profiles, these are profiles omitting a deviating player (alternately, just omitting one player).
 The Gaussian process payoff estimator produces a payoff estimate from a normalized partial profile.
-A partial profile is simply an assignment of players to strategies less the deviating player, but for the benefit of notation, we will assume that <img class="math" src="_images/math/1694b1a275f552c5f98c8d4081cc7b295fe665db.svg" alt="n_r"/> is already less the deviating player:</p>
+A partial profile is simply an assignment of players to strategies less the deviating player, but for the benefit of notation, we will assume that <img class="math" src="_images/math/976ca38abcba694d23acd21ba3da8de2848b5920.svg" alt="n_r"/> is already less the deviating player:</p>
 <div class="math">
-<p><img src="_images/math/a417531098450bfc3171ea30cb986fd1ac64048d.svg" alt="\mathbf x &amp;= \{x_{rs_r}\}_{r \in \mathcal R, s_r \in \mathcal S_r},\ x_{rs_r} \in \mathbb Z_+,\ \sum_{s_r} x_{rs_r} = n_r"/></p>
+<p><img src="_images/math/b1998fdec80fd669f2b7faf5be164b07548770b6.svg" alt="\mathbf x &amp;= \{x_{rs_r}\}_{r \in \mathcal R, s_r \in \mathcal S_r},\ x_{rs_r} \in \mathbb Z_+,\ \sum_{s_r} x_{rs_r} = n_r"/></p>
 </div><p>The Gaussian process regressor is defined as</p>
 <div class="math">
-<p><img src="_images/math/21a9d3da870535e50924d32d45de84c4a2ddc9e0.svg" alt="\operatorname{payoff}(\mathbf x) &amp;= \sum_j \alpha_j \exp\left\{ -\frac{1}{2} \sum_{r} \sum_{s_r} \frac{(X_{jrs_r} - x_{rs_r})^2}{\ell_{rs_r}^2} \right\}\\
+<p><img src="_images/math/a5239dbbc99826f649597072855ca8275570f4e3.svg" alt="\operatorname{payoff}(\mathbf x) &amp;= \sum_j \alpha_j \exp\left\{ -\frac{1}{2} \sum_{r} \sum_{s_r} \frac{(X_{jrs_r} - x_{rs_r})^2}{\ell_{rs_r}^2} \right\}\\
 &amp;= \left( \prod_{r} (2 \pi)^\frac{S_r}{2} \prod_{s_r} \ell_{rs_r} \right) \sum_j \alpha_j \prod_{r} \mathcal N(\mathbf x_r; \mathbf X_{jr}, \mathbf L_r) \\
 &amp;= C \sum_j \alpha_j \prod_{r} \mathcal N(\mathbf x_r; \mathbf X_{jr}, \mathbf L_r),\ C = \prod_{r} (2 \pi)^\frac{S_r}{2} \prod_{s_r} \ell_{rs_r}"/></p>
-</div><p>where <img class="math" src="_images/math/3c4383db3746edfecb6964ef0f17ca292fe19b3d.svg" alt="\mathbf L_r = \operatorname{diag}(\ell_{rs_r}^2)"/> are the RBF length scales for each role and strategy.
+</div><p>where <img class="math" src="_images/math/da87b1c09fc972279db74d7887727e80008b0a13.svg" alt="\mathbf L_r = \operatorname{diag}(\ell_{rs_r}^2)"/> are the RBF length scales for each role and strategy.
 These can all be identical if the length scale is not specific to a particular strategy, but in general, they should vary by role.
-<img class="math" src="_images/math/1d4b4989ca8d8409299eb09de67639f02d9ec2a5.svg" alt="\boldsymbol \alpha = \mathbf K^{-1} \mathbf y"/> are the Gaussian process weights for each sample.
-<img class="math" src="_images/math/ddd65d14f26b65e448158127e47b2409d491a4e5.svg" alt="\mathbf X"/> are the training partial profiles, where <img class="math" src="_images/math/6b21e0b0899a0d2879d3b8019087fa630bab4ea2.svg" alt="j"/> indexes over training sample.</p>
-<p>Our goal is to estimate the expected deviation payoff from a mixture <img class="math" src="_images/math/7bed4c79d62a869e5534041a70d2dbbcc95c3794.svg" alt="\mathbf p"/>:</p>
+<img class="math" src="_images/math/ebf52573b3f14f60545982b26243685d3abe67a9.svg" alt="\boldsymbol \alpha = \mathbf K^{-1} \mathbf y"/> are the Gaussian process weights for each sample.
+<img class="math" src="_images/math/f91fbdd13e7fe3f16f18f5d2edcb09e4d96af979.svg" alt="\mathbf X"/> are the training partial profiles, where <img class="math" src="_images/math/e3fc28292267f066fee7718c64f4bbfece521f24.svg" alt="j"/> indexes over training sample.</p>
+<p>Our goal is to estimate the expected deviation payoff from a mixture <img class="math" src="_images/math/75a54df0e7b7f3a9f3a1690dc27fd83910e38f74.svg" alt="\mathbf p"/>:</p>
 <div class="math">
-<p><img src="_images/math/1a5c5e080fa32773e166b194672dccd639dd149e.svg" alt="\operatorname{devpayoff}(\mathbf p) &amp;= \mathbb E_{\mathbf x_r \sim \mathcal M (n_r, \mathbf p_r)} \left[ \operatorname{payoff}(\mathbf x) \right] \\
+<p><img src="_images/math/eb923cad4159d0ae3d919784216b4e38d4a2ca42.svg" alt="\operatorname{devpayoff}(\mathbf p) &amp;= \mathbb E_{\mathbf x_r \sim \mathcal M (n_r, \mathbf p_r)} \left[ \operatorname{payoff}(\mathbf x) \right] \\
 &amp;= \sum_{\mathbf x} C \sum_j \alpha_j \prod_{r} \mathcal N(\mathbf x_r; \mathbf X_{jr}, \mathbf L_r) \mathcal M (\mathbf x_r; n_r, \mathbf p_r) \\
 &amp;\approx \int_{\mathbf x} C \sum_j \alpha_j \prod_{r} \mathcal N(\mathbf x_r; \mathbf X_{jr}, \mathbf L_r) \mathcal N \left(\mathbf x_r; n_r \mathbf p_r, n_r \mathbf M_r\right) \\
 &amp;= \int_{\mathbf x} C \sum_j \alpha_j \prod_r \mathcal N \left(\mathbf X_{jr}; n_r \mathbf p_r, \mathbf L_r + n_r \mathbf M_r \right) \mathcal N (\mathbf x_r; \boldsymbol \mu_r, \boldsymbol \Sigma_r) \\
@@ -69,33 +70,33 @@ These can all be identical if the length scale is not specific to a particular s
 &amp;= C \sum_j \alpha_j \prod_r \left| 2 \pi \left(\mathbf L_r + n_r \mathbf M_r\right) \right| ^{-\frac{1}{2}} \exp \left\{ -\frac{1}{2} (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\mathbf L_r + n_r \mathbf M_r\right)^{-1} (\mathbf X_{jr} - n_r \mathbf p_r) \right\} \\
 &amp;= \left( \prod_r \left( \prod_{s_r} \ell_{rs_r} \right) \left| \left(\mathbf L_r + \frac{1}{n_r} \mathbf M_r\right) \right| ^{-\frac{1}{2}} \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\mathbf L_r + n_r \mathbf M_r\right)^{-1} (\mathbf X_{jr} - n_r \mathbf p_r) \right\}"/></p>
 </div><p>The approximation comes from approximating a sum over the multinomial distribution with an integral over a Gaussian approximation.
-The next step is to derive simplifications for the determinant and the inverse of <img class="math" src="_images/math/f5152391eb051145deb3246f735e726e389e5289.svg" alt="\mathbf L_r + n_r \mathbf M_r"/>.
+The next step is to derive simplifications for the determinant and the inverse of <img class="math" src="_images/math/1932dfac10ca979ed8aaba53b69a447974e2b792.svg" alt="\mathbf L_r + n_r \mathbf M_r"/>.
 First, we need to define a few helpful variables:</p>
 <div class="math">
-<p><img src="_images/math/85402d180ce618efe7393287bf1fe0e61b1b9f0b.svg" alt="d_{rs_r} &amp;= \ell_{rs_r}^2 + n_r p_{rs_r} \\
+<p><img src="_images/math/db533bfae64d4682ad27c78bf8ba56e3ed30d5dc.svg" alt="d_{rs_r} &amp;= \ell_{rs_r}^2 + n_r p_{rs_r} \\
 \gamma_r &amp;= 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}}"/></p>
 </div><p>Then</p>
 <div class="math">
-<p><img src="_images/math/dcfe293897bd22ceae0e6dda50a2fc577e93e27d.svg" alt="\left| \mathbf L_r + n_r \mathbf M_r \right| &amp;= \left| \operatorname{diag}_{s_r}(d_{rs_r}) - n_r \mathbf p_r \mathbf p_r^\top \right| \\
+<p><img src="_images/math/0af04a9a90c79f70df61a0db0ce7c40ec31bb69c.svg" alt="\left| \mathbf L_r + n_r \mathbf M_r \right| &amp;= \left| \operatorname{diag}_{s_r}(d_{rs_r}) - n_r \mathbf p_r \mathbf p_r^\top \right| \\
 &amp;= \left( 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}} \right) \prod_{s_r} d_{rs_r} \\
 &amp;= \gamma_r \prod_{s_r} d_{rs_r} \\
 \left( \mathbf L_r + n_r \mathbf M_r \right)^{-1} &amp;= \left( \operatorname{diag}_{s_r}(d_{rs_r}) - n_r \mathbf p_r \mathbf p_r^\top \right)^{-1} \\
 &amp;= \operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ 1 - n_r \sum_{s_r} \frac{p_{rs_r}^2}{d_{rs_r}} } \mathbf q_r \mathbf q_r^\top,\ q_{rs_r} = \frac{p_{rs_r}}{d_{rs_r}} \\
 &amp;= \operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{\gamma_r} \mathbf q_r \mathbf q_r^\top"/></p>
-</div><p>Plugging these into the equation for <img class="math" src="_images/math/fba6881ab1258aeac52dbaad680166c1b804ac31.svg" alt="\operatorname{devpayoff}"/> yields</p>
+</div><p>Plugging these into the equation for <img class="math" src="_images/math/03f36e29281527c0736eeda828c3b8438858e1e8.svg" alt="\operatorname{devpayoff}"/> yields</p>
 <div class="math">
-<p><img src="_images/math/8c55cf752736b65acb63c955447f2dd0e0b667c0.svg" alt="\operatorname{devpayoff}(\mathbf p) &amp;= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ \gamma_r } \mathbf q_r \mathbf q_r^\top \right) (\mathbf X_{jr} - n_r \mathbf p_r) \right) \right\} \\
+<p><img src="_images/math/e0d6f0d24973a3eea77e4603d396e59057633068.svg" alt="\operatorname{devpayoff}(\mathbf p) &amp;= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( (\mathbf X_{jr} - n_r \mathbf p_r)^\top \left(\operatorname{diag}_{s_r} \left(\frac{1}{d_{rs_r}}\right) + \frac{n_r}{ \gamma_r } \mathbf q_r \mathbf q_r^\top \right) (\mathbf X_{jr} - n_r \mathbf p_r) \right) \right\} \\
 &amp;= \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \sum_j \alpha_j \exp \left\{ -\frac{1}{2} \sum_r \left( \left( \sum_{s_r} \frac{(X_{jrs_r} - n_r p_{rs_r})^2}{d_{rs_r}} \right) + \frac{n_r}{\gamma_r} \left( \sum_{s_r} \frac{p_{rs_r}}{d_{rs_r}} (X_{jrs_r} - n_r p_{rs_r}) \right)^2 \right) \right\}"/></p>
-</div><p>The derivative with respect to one element of the mixture <img class="math" src="_images/math/38e9f9b3766c84ca57bc0fff984be43b2dcb0f29.svg" alt="p_{\rho i}"/> is</p>
+</div><p>The derivative with respect to one element of the mixture <img class="math" src="_images/math/1dfefd48cb84f106e0465634e755c77ec5b01684.svg" alt="p_{\rho i}"/> is</p>
 <div class="math">
-<p><img src="_images/math/9d8b0966886a1c3d2613979fb9d5fb8087d1e6d9.svg" alt="\frac{\partial}{\partial p_{\rho i}} \operatorname{devpayoff}(\mathbf p) &amp;= -\frac{1}{2} \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \left [ \left( \gamma_{\rho}^{-1} \left( \beta_{\rho i}^2 - 1 \right) + \frac{n_{\rho}}{d_{\rho i}} \right) \sum_j \alpha_j \exp \left\{ \cdot \right\} + n_{\rho} \sum_j \alpha_j \exp \left\{ \cdot \right\} \left( \left( \delta_{j \rho} - 1 \right)^2 - \left( \delta_{j \rho} \beta_{\rho i} - \xi_{j \rho i} \right)^2 \right) \right] \\
+<p><img src="_images/math/0fa27039d36911e3a31ff3ab471ca761cdf2ee4e.svg" alt="\frac{\partial}{\partial p_{\rho i}} \operatorname{devpayoff}(\mathbf p) &amp;= -\frac{1}{2} \left( \prod_r \gamma_r^{-\frac{1}{2}} \prod_{s_r} \frac{ \ell_{rs_r} }{ \sqrt{d_{rs_r}} } \right) \left [ \left( \gamma_{\rho}^{-1} \left( \beta_{\rho i}^2 - 1 \right) + \frac{n_{\rho}}{d_{\rho i}} \right) \sum_j \alpha_j \exp \left\{ \cdot \right\} + n_{\rho} \sum_j \alpha_j \exp \left\{ \cdot \right\} \left( \left( \delta_{j \rho} - 1 \right)^2 - \left( \delta_{j \rho} \beta_{\rho i} - \xi_{j \rho i} \right)^2 \right) \right] \\
 \delta_{j \rho} &amp;= \gamma_{\rho}^{-1} \sum_{s_{\rho}} \frac{p_{\rho s_{\rho}}}{d_{\rho s_{\rho}}} \left( X_{j \rho s_{\rho}} - n_{\rho} p_{\rho s_{\rho}} \right) \\
 \beta_{\rho i} &amp;= 1 - \frac{n_{\rho} p_{\rho i}}{d_{\rho i}} \\
 \xi_{j \rho i} &amp;= 1 + \frac{X_{j \rho i} - n_{\rho} p_{\rho i}}{d_{\rho i}}"/></p>
 </div><div class="section" id="definitions-notations-and-identities">
 <h2>Definitions, Notations and Identities<a class="headerlink" href="#definitions-notations-and-identities" title="Permalink to this headline">¶</a></h2>
 <div class="math">
-<p><img src="_images/math/48149325a8b0120a27c290484b5ebb3d85e42a98.svg" alt="[N] &amp;= \{i\}_{i=1}^N \\
+<p><img src="_images/math/23eae997b3c77248241aa7424f4b6c4338907d1c.svg" alt="[N] &amp;= \{i\}_{i=1}^N \\
 \operatorname{diag}_i(a_i) &amp;= \begin{bmatrix} a_1 &amp; 0 &amp; \dots &amp; 0 \\ 0 &amp; a_2 &amp; \dots &amp; 0 \\ \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\ 0 &amp; 0 &amp; \dots &amp; a_n \end{bmatrix} \\
 \mathcal N (\mathbf x; \boldsymbol \mu, \boldsymbol \Sigma) &amp;= | 2 \pi \boldsymbol \Sigma|^{-\frac{1}{2}} \exp\left\{-\frac{1}{2} (\mathbf x - \boldsymbol \mu)^\top \boldsymbol \Sigma^{-1} (\mathbf x - \boldsymbol \mu) \right\} \\
 \mathcal M (\mathbf x; n, \mathbf p) &amp;= \frac{n!}{\prod_i x_i!}\prod_i p_i^{x_i}\text{ if }\sum_i x_i = n \\
@@ -110,12 +111,13 @@ First, we need to define a few helpful variables:</p>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
+  <h3><a href="index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">RBF Gaussian Process Continuous Approximation</a><ul>
 <li><a class="reference internal" href="#definitions-notations-and-identities">Definitions, Notations and Identities</a></li>
@@ -137,17 +139,15 @@ First, we need to define a few helpful variables:</p>
     </ul>
    </div>
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -167,12 +167,13 @@ First, we need to define a few helpful variables:</p>
         <li class="right" >
           <a href="profile_counts.html" title="Reduction Profile Counting"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">RBF Gaussian Process Continuous Approximation</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &#169; Copyright 2018, Strategic Reasoning Group.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+        &#169; Copyright 2020, Strategic Reasoning Group.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.2.1.
     </div>
   </body>
 </html>

@@ -5,13 +5,15 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
-    gameanalysis.reduction
+   gameanalysis.reduction
 
 Submodules
 ----------
 
 .. toctree::
+   :maxdepth: 4
 
    gameanalysis.aggfn
    gameanalysis.bootstrap
@@ -37,6 +39,6 @@ Module contents
 ---------------
 
 .. automodule:: gameanalysis
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

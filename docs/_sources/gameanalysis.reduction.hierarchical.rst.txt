@@ -2,6 +2,6 @@ gameanalysis.reduction.hierarchical module
 ==========================================
 
 .. automodule:: gameanalysis.reduction.hierarchical
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

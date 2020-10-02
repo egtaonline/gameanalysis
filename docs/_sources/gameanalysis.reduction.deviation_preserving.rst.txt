@@ -2,6 +2,6 @@ gameanalysis.reduction.deviation\_preserving module
 ===================================================
 
 .. automodule:: gameanalysis.reduction.deviation_preserving
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
