@@ -1,5 +1,6 @@
 """Command line module"""
 import argparse
+import logging
 import pkgutil
 import sys
 
@@ -15,6 +16,10 @@ def create_parser():
         description="""Command line access to the game analysis toolkit.""")
     parser.add_argument('-V', '--version', action='version',
                         version='%(prog)s {}'.format(gameanalysis.__version__))
+    parser.add_argument(
+        '-v', '--verbose', action='count', default=0, help="""Set the verbosity
+        level depending on the number of times specified, up to a maximum of
+        three.""")
     subparsers = parser.add_subparsers(
         title='commands', dest='command', metavar='<command>', help="""The
         commands to execute. Available commands are:""")
@@ -32,6 +37,7 @@ def amain(*argv):
         parser.print_help()
         sys.exit(1)
     else:
+        logging.basicConfig(level=40 - 10 * min(args.verbose, 3))
         commands[args.command].main(args)
 
 
