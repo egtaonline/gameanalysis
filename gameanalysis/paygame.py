@@ -2,6 +2,7 @@
 # pylint: disable=too-many-lines
 import contextlib
 import itertools
+import logging
 from collections import abc
 
 import numpy as np
@@ -1169,6 +1170,7 @@ def samplegame_json(json):
     base = samplegame_copy(rsgame.empty_json(json))
     profiles = json.get('profiles', ())
     if not profiles:
+        logging.debug('no profiles found in sample game')
         return base
 
     sample_map = {}
