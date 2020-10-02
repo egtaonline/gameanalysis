@@ -7,8 +7,9 @@ import numpy as np
 from gameanalysis import regret
 
 
-def game_function(game, function, num_resamples, num_returned, *,
-                  percentiles=None, processes=None):
+def game_function(
+    game, function, num_resamples, num_returned, *, percentiles=None, processes=None
+):
     """Bootstrap the value of a function over a sample game
 
     Parameters
@@ -43,12 +44,16 @@ def game_function(game, function, num_resamples, num_returned, *,
 
     chunksize = num_resamples if processes == 1 else 4
     with multiprocessing.Pool(processes) as pool:
-        for i, res in enumerate(pool.imap_unordered(
+        for i, res in enumerate(
+            pool.imap_unordered(
                 functools.partial(_resample_function, function, game),
-                range(num_resamples), chunksize=chunksize)):
+                range(num_resamples),
+                chunksize=chunksize,
+            )
+        ):
             results[i] = res
 
-    if percentiles is None: # pylint: disable=no-else-return
+    if percentiles is None:  # pylint: disable=no-else-return
         results.sort(0)
         return results.T
     else:
@@ -57,11 +62,12 @@ def game_function(game, function, num_resamples, num_returned, *,
 
 def _resample_function(function, game, _):
     """Function for resampling"""
-    return function(game.resample()) # pragma: no cover
+    return function(game.resample())  # pragma: no cover
 
 
-def profile_function(game, function, profiles, num_resamples, *,
-                     percentiles=None, processes=None):
+def profile_function(
+    game, function, profiles, num_resamples, *, percentiles=None, processes=None
+):
     """Compute a function over profiles
 
     Parameters
@@ -92,18 +98,21 @@ def profile_function(game, function, profiles, num_resamples, *,
     """
     profiles = profiles.reshape((-1, game.num_strats))
     return game_function(
-        game, functools.partial(_profile_function, function, profiles),
-        num_resamples, profiles.shape[0], percentiles=percentiles,
-        processes=processes)
+        game,
+        functools.partial(_profile_function, function, profiles),
+        num_resamples,
+        profiles.shape[0],
+        percentiles=percentiles,
+        processes=processes,
+    )
 
 
 def _profile_function(function, profiles, game):
     """Map a profile function over profiles"""
-    return [function(game, prof) for prof in profiles] # pragma: no cover
+    return [function(game, prof) for prof in profiles]  # pragma: no cover
 
 
-def mixture_regret(game, mixtures, num_resamples, *, percentiles=None,
-                   processes=None):
+def mixture_regret(game, mixtures, num_resamples, *, percentiles=None, processes=None):
     """Compute percentile bounds on mixture regret
 
     Parameters
@@ -128,12 +137,16 @@ def mixture_regret(game, mixtures, num_resamples, *, percentiles=None,
         An ndarray of the percentiles for bootstrap regret for each profile.
     """
     return profile_function(
-        game, regret.mixture_regret, mixtures, num_resamples,
-        percentiles=percentiles, processes=processes)
+        game,
+        regret.mixture_regret,
+        mixtures,
+        num_resamples,
+        percentiles=percentiles,
+        processes=processes,
+    )
 
 
-def mixture_welfare(game, mixtures, num_resamples, *, percentiles=None,
-                    processes=None):
+def mixture_welfare(game, mixtures, num_resamples, *, percentiles=None, processes=None):
     """Compute percentile bounds on mixture welfare
 
     Parameters
@@ -158,5 +171,10 @@ def mixture_welfare(game, mixtures, num_resamples, *, percentiles=None,
         An ndarray of the percentiles for bootstrap welfare for each profile.
     """
     return profile_function(
-        game, regret.mixed_social_welfare, mixtures, num_resamples,
-        percentiles=percentiles, processes=processes)
+        game,
+        regret.mixed_social_welfare,
+        mixtures,
+        num_resamples,
+        percentiles=percentiles,
+        processes=processes,
+    )

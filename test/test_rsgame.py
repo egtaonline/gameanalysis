@@ -10,7 +10,7 @@ import scipy.special as sps
 
 from gameanalysis import rsgame
 from gameanalysis import utils
-from test import utils as testutils # pylint: disable=wrong-import-order
+from test import utils as testutils  # pylint: disable=wrong-import-order
 
 
 TINY = np.finfo(float).tiny
@@ -27,7 +27,7 @@ def stratarray(num_strats):
     return rsgame.empty(np.ones_like(num_strats), num_strats)
 
 
-def test_stratarray_properties(): # pylint: disable=too-many-statements
+def test_stratarray_properties():  # pylint: disable=too-many-statements
     """Test properties"""
     sarr = stratarray([1])
     assert sarr.num_strats == 1
@@ -100,43 +100,63 @@ def test_restriction_enumeration():
     """Test enumerate restrictions"""
     sarr = stratarray([1])
     all_restrictions = [[True]]
-    assert not np.setxor1d(utils.axis_to_elem(all_restrictions),
-                           utils.axis_to_elem(sarr.all_restrictions())).size
+    assert not np.setxor1d(
+        utils.axis_to_elem(all_restrictions),
+        utils.axis_to_elem(sarr.all_restrictions()),
+    ).size
     pure_restrictions = [[True]]
-    assert not np.setxor1d(utils.axis_to_elem(pure_restrictions),
-                           utils.axis_to_elem(sarr.pure_restrictions())).size
+    assert not np.setxor1d(
+        utils.axis_to_elem(pure_restrictions),
+        utils.axis_to_elem(sarr.pure_restrictions()),
+    ).size
 
     sarr = stratarray([3])
-    all_restrictions = [[True, False, False],
-                        [False, True, False],
-                        [True, True, False],
-                        [False, False, True],
-                        [True, False, True],
-                        [False, True, True],
-                        [True, True, True]]
-    assert not np.setxor1d(utils.axis_to_elem(all_restrictions),
-                           utils.axis_to_elem(sarr.all_restrictions())).size
-    pure_restrictions = [[True, False, False],
-                         [False, True, False],
-                         [False, False, True]]
-    assert not np.setxor1d(utils.axis_to_elem(pure_restrictions),
-                           utils.axis_to_elem(sarr.pure_restrictions())).size
+    all_restrictions = [
+        [True, False, False],
+        [False, True, False],
+        [True, True, False],
+        [False, False, True],
+        [True, False, True],
+        [False, True, True],
+        [True, True, True],
+    ]
+    assert not np.setxor1d(
+        utils.axis_to_elem(all_restrictions),
+        utils.axis_to_elem(sarr.all_restrictions()),
+    ).size
+    pure_restrictions = [
+        [True, False, False],
+        [False, True, False],
+        [False, False, True],
+    ]
+    assert not np.setxor1d(
+        utils.axis_to_elem(pure_restrictions),
+        utils.axis_to_elem(sarr.pure_restrictions()),
+    ).size
 
     sarr = stratarray([1, 3])
-    all_restrictions = [[True, True, False, False],
-                        [True, False, True, False],
-                        [True, True, True, False],
-                        [True, False, False, True],
-                        [True, True, False, True],
-                        [True, False, True, True],
-                        [True, True, True, True]]
-    assert not np.setxor1d(utils.axis_to_elem(all_restrictions),
-                           utils.axis_to_elem(sarr.all_restrictions())).size
-    pure_restrictions = [[True, True, False, False],
-                         [True, False, True, False],
-                         [True, False, False, True]]
-    assert not np.setxor1d(utils.axis_to_elem(pure_restrictions),
-                           utils.axis_to_elem(sarr.pure_restrictions())).size
+    all_restrictions = [
+        [True, True, False, False],
+        [True, False, True, False],
+        [True, True, True, False],
+        [True, False, False, True],
+        [True, True, False, True],
+        [True, False, True, True],
+        [True, True, True, True],
+    ]
+    assert not np.setxor1d(
+        utils.axis_to_elem(all_restrictions),
+        utils.axis_to_elem(sarr.all_restrictions()),
+    ).size
+    pure_restrictions = [
+        [True, True, False, False],
+        [True, False, True, False],
+        [True, False, False, True],
+    ]
+    assert not np.setxor1d(
+        utils.axis_to_elem(pure_restrictions),
+        utils.axis_to_elem(sarr.pure_restrictions()),
+    ).size
 
 
 def test_is_restriction():
@@ -146,13 +166,18 @@ def test_is_restriction():
     assert not sarr.is_restriction([True, False, True, False, False])
     assert not sarr.is_restriction([False, False, False, True, False])
     assert not sarr.is_restriction([False, False, False, False, False])
-    assert np.all([True] + [False] * 3 == sarr.is_restriction([
-        [True, False, True, False, True],
-        [True, False, True, False, False],
-        [False, False, False, True, False],
-        [False, False, False, False, False]]))
-    assert sarr.is_restriction(
-        [[True], [False], [True], [False], [True]], axis=0)
+    assert np.all(
+        [True] + [False] * 3
+        == sarr.is_restriction(
+            [
+                [True, False, True, False, True],
+                [True, False, True, False, False],
+                [False, False, False, True, False],
+                [False, False, False, False, False],
+            ]
+        )
+    )
+    assert sarr.is_restriction([[True], [False], [True], [False], [True]], axis=0)
 
     with pytest.raises(ValueError):
         sarr.is_restriction([False, False, False, False])
@@ -174,7 +199,7 @@ def test_is_pure_restriction():
         sarr.is_pure_restriction([False, False, False, False])
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_stratarray_restrictions(sarr):
     """Test random restrictions"""
     all_restrictions = sarr.all_restrictions()
@@ -211,7 +236,7 @@ def test_random_restrictions():
     assert np.all([True, True, True, False, False] == rests.all(0))
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_random_restrictions(sarr):
     """Test random random restrictions"""
     rest = sarr.random_restriction()
@@ -242,12 +267,18 @@ def test_is_mixture():
     assert not sarr.is_mixture([0.2, 0.3, 0.4, 0.5, 0.4])
     assert not sarr.is_mixture([0.2, 0.35, 0.4, 0.4, 0.6])
     assert not sarr.is_mixture([0.2, 0.25, 0.4, 0.4, 0.6])
-    assert np.all(([True] + [False] * 4) == sarr.is_mixture([
-        [0.2, 0.3, 0.5, 0.6, 0.4],
-        [0.2, 0.3, 0.4, 0.5, 0.6],
-        [0.2, 0.3, 0.4, 0.5, 0.4],
-        [0.2, 0.35, 0.4, 0.4, 0.6],
-        [0.2, 0.25, 0.4, 0.4, 0.6]]))
+    assert np.all(
+        ([True] + [False] * 4)
+        == sarr.is_mixture(
+            [
+                [0.2, 0.3, 0.5, 0.6, 0.4],
+                [0.2, 0.3, 0.4, 0.5, 0.6],
+                [0.2, 0.3, 0.4, 0.5, 0.4],
+                [0.2, 0.35, 0.4, 0.4, 0.6],
+                [0.2, 0.25, 0.4, 0.4, 0.6],
+            ]
+        )
+    )
     assert sarr.is_mixture([[0.2], [0.3], [0.5], [0.6], [0.4]], axis=0)
 
     with pytest.raises(ValueError):
@@ -274,54 +305,49 @@ def test_is_pure_mixture():
 def test_mixture_project():
     """Test mixture project"""
     sarr = stratarray([1])
-    mixtures = [[0],
-                [1],
-                [2],
-                [-1]]
+    mixtures = [[0], [1], [2], [-1]]
     expected = [[1]] * 4
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
     sarr = stratarray([3])
-    mixtures = [[0, 0, 0],
-                [1, 0, 0],
-                [2, 1, 0],
-                [1.2, 1.3, 1.5]]
-    expected = [[1 / 3, 1 / 3, 1 / 3],
-                [1, 0, 0],
-                [1, 0, 0],
-                [0.2, 0.3, 0.5]]
+    mixtures = [[0, 0, 0], [1, 0, 0], [2, 1, 0], [1.2, 1.3, 1.5]]
+    expected = [[1 / 3, 1 / 3, 1 / 3], [1, 0, 0], [1, 0, 0], [0.2, 0.3, 0.5]]
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
     sarr = stratarray([1, 3])
-    mixtures = [[0, 0, 0, 0],
-                [1, 1, 0, 0],
-                [2, 2, 1, 0],
-                [-1, 1.2, 1.3, 1.5]]
-    expected = [[1, 1 / 3, 1 / 3, 1 / 3],
-                [1, 1, 0, 0],
-                [1, 1, 0, 0],
-                [1, 0.2, 0.3, 0.5]]
+    mixtures = [[0, 0, 0, 0], [1, 1, 0, 0], [2, 2, 1, 0], [-1, 1.2, 1.3, 1.5]]
+    expected = [
+        [1, 1 / 3, 1 / 3, 1 / 3],
+        [1, 1, 0, 0],
+        [1, 1, 0, 0],
+        [1, 0.2, 0.3, 0.5],
+    ]
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
     sarr = stratarray([3, 2, 1])
-    mixtures = [[0, 0, 0, 0, 0, 0],
-                [1, 0, 0, 0, 1, 1],
-                [2, 1, 0, 1, 2, 2],
-                [1.2, 1.3, 1.5, 0.4, 0.2, 0.3]]
-    expected = [[1 / 3, 1 / 3, 1 / 3, 1 / 2, 1 / 2, 1],
-                [1, 0, 0, 0, 1, 1],
-                [1, 0, 0, 0, 1, 1],
-                [0.2, 0.3, 0.5, 0.6, 0.4, 1]]
+    mixtures = [
+        [0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1, 1],
+        [2, 1, 0, 1, 2, 2],
+        [1.2, 1.3, 1.5, 0.4, 0.2, 0.3],
+    ]
+    expected = [
+        [1 / 3, 1 / 3, 1 / 3, 1 / 2, 1 / 2, 1],
+        [1, 0, 0, 0, 1, 1],
+        [1, 0, 0, 0, 1, 1],
+        [0.2, 0.3, 0.5, 0.6, 0.4, 1],
+    ]
     assert np.allclose(expected, sarr.mixture_project(mixtures))
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_mixture_project(sarr):
     """Test random mixture project"""
     for non_mixture in rand.uniform(-1, 1, (100, sarr.num_strats)):
         new_mix = sarr.mixture_project(non_mixture)
-        assert sarr.is_mixture(new_mix), \
-            'simplex project did not create a valid mixture'
+        assert sarr.is_mixture(
+            new_mix
+        ), "simplex project did not create a valid mixture"
 
     mixes = rand.uniform(-1, 1, (10, 12, sarr.num_strats))
     simps = sarr.mixture_project(mixes)
@@ -353,7 +379,7 @@ def test_to_from_simplex():
     assert np.allclose(mixture, sarr.mixture_from_simplex(simplex))
 
 
-@pytest.mark.parametrize('strats', [1, 2, 4])
+@pytest.mark.parametrize("strats", [1, 2, 4])
 def test_random_one_role_to_from_simplex(strats):
     """Test random from simplex"""
     sarr = stratarray([strats])
@@ -364,7 +390,7 @@ def test_random_one_role_to_from_simplex(strats):
     assert np.allclose(inits, mixtures)
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_uniform_simplex_homotopy(sarr):
     """Test homotopy"""
     uniform = sarr.uniform_mixture()
@@ -373,7 +399,7 @@ def test_uniform_simplex_homotopy(sarr):
     assert np.allclose(uniform, sarr.mixture_from_simplex(simp))
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_simplex_homotopy(sarr):
     """Test random homotopy"""
     mixes = sarr.random_mixtures(100)
@@ -396,12 +422,11 @@ def test_random_simplex_homotopy(sarr):
     assert np.allclose(mixes, sarr.mixture_from_simplex(simps))
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_uniform_simplex_homotopy(sarr):
     """Test uniform homotopy"""
     rand_mixes = sarr.random_mixtures(100)
-    mask = np.repeat(rand.random((100, sarr.num_roles))
-                     < 0.5, sarr.num_role_strats, 1)
+    mask = np.repeat(rand.random((100, sarr.num_roles)) < 0.5, sarr.num_role_strats, 1)
     mixes = np.where(mask, rand_mixes, sarr.uniform_mixture())
 
     simp = sarr.mixture_to_simplex(mixes[0])
@@ -437,7 +462,7 @@ def test_uniform_mixture():
     assert np.allclose([1 / 3] * 3 + [1 / 2] * 2 + [1], sarr.uniform_mixture())
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_mixtures(sarr):
     """Test random mixtures"""
     mix = sarr.random_mixture()
@@ -478,7 +503,7 @@ def test_random_sparse_mixtures():
     assert np.all([True, True, True, False, False] == np.all(mixes > 0, 0))
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_random_sparse_mixtures(sarr):
     """Test random sparse mixtures"""
     mix = sarr.random_sparse_mixture()
@@ -502,26 +527,24 @@ def test_biased_mixtures():
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3])
-    expected = [[0.8, 0.1, 0.1],
-                [0.1, 0.8, 0.1],
-                [0.1, 0.1, 0.8]]
+    expected = [[0.8, 0.1, 0.1], [0.1, 0.8, 0.1], [0.1, 0.1, 0.8]]
     actual = sarr.biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([1, 3])
-    expected = [[1, 0.8, 0.1, 0.1],
-                [1, 0.1, 0.8, 0.1],
-                [1, 0.1, 0.1, 0.8]]
+    expected = [[1, 0.8, 0.1, 0.1], [1, 0.1, 0.8, 0.1], [1, 0.1, 0.1, 0.8]]
     actual = sarr.biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3, 2, 1])
-    expected = [[0.8, 0.1, 0.1, 0.8, 0.2, 1],
-                [0.8, 0.1, 0.1, 0.2, 0.8, 1],
-                [0.1, 0.8, 0.1, 0.8, 0.2, 1],
-                [0.1, 0.8, 0.1, 0.2, 0.8, 1],
-                [0.1, 0.1, 0.8, 0.8, 0.2, 1],
-                [0.1, 0.1, 0.8, 0.2, 0.8, 1]]
+    expected = [
+        [0.8, 0.1, 0.1, 0.8, 0.2, 1],
+        [0.8, 0.1, 0.1, 0.2, 0.8, 1],
+        [0.1, 0.8, 0.1, 0.8, 0.2, 1],
+        [0.1, 0.8, 0.1, 0.2, 0.8, 1],
+        [0.1, 0.1, 0.8, 0.8, 0.2, 1],
+        [0.1, 0.1, 0.8, 0.2, 0.8, 1],
+    ]
     actual = sarr.biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
@@ -534,31 +557,29 @@ def test_role_biased_mixtures():
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3])
-    expected = [[0.8, 0.1, 0.1],
-                [0.1, 0.8, 0.1],
-                [0.1, 0.1, 0.8]]
+    expected = [[0.8, 0.1, 0.1], [0.1, 0.8, 0.1], [0.1, 0.1, 0.8]]
     actual = sarr.role_biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([1, 3])
-    expected = [[1, 0.8, 0.1, 0.1],
-                [1, 0.1, 0.8, 0.1],
-                [1, 0.1, 0.1, 0.8]]
+    expected = [[1, 0.8, 0.1, 0.1], [1, 0.1, 0.8, 0.1], [1, 0.1, 0.1, 0.8]]
     actual = sarr.role_biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3, 2, 1])
-    expected = [[0.8, 0.1, 0.1, 0.5, 0.5, 1],
-                [0.1, 0.8, 0.1, 0.5, 0.5, 1],
-                [0.1, 0.1, 0.8, 0.5, 0.5, 1],
-                [1 / 3, 1 / 3, 1 / 3, 0.8, 0.2, 1],
-                [1 / 3, 1 / 3, 1 / 3, 0.2, 0.8, 1]]
+    expected = [
+        [0.8, 0.1, 0.1, 0.5, 0.5, 1],
+        [0.1, 0.8, 0.1, 0.5, 0.5, 1],
+        [0.1, 0.1, 0.8, 0.5, 0.5, 1],
+        [1 / 3, 1 / 3, 1 / 3, 0.8, 0.2, 1],
+        [1 / 3, 1 / 3, 1 / 3, 0.2, 0.8, 1],
+    ]
     actual = sarr.role_biased_mixtures(0.8)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
 
-@pytest.mark.parametrize('strats', [1, 2, 4])
-@pytest.mark.parametrize('bias', [0.0, 0.2, 0.5, 0.8, 1.0])
+@pytest.mark.parametrize("strats", [1, 2, 4])
+@pytest.mark.parametrize("bias", [0.0, 0.2, 0.5, 0.8, 1.0])
 def test_random_onerole_biased_equivelance(strats, bias):
     """Test single role biased mixtures"""
     sarr = stratarray([strats])
@@ -576,26 +597,24 @@ def test_pure_mixtures():
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3])
-    expected = [[1, 0, 0],
-                [0, 1, 0],
-                [0, 0, 1]]
+    expected = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     actual = sarr.pure_mixtures()
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([1, 3])
-    expected = [[1, 1, 0, 0],
-                [1, 0, 1, 0],
-                [1, 0, 0, 1]]
+    expected = [[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1]]
     actual = sarr.pure_mixtures()
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3, 2, 1])
-    expected = [[1, 0, 0, 1, 0, 1],
-                [1, 0, 0, 0, 1, 1],
-                [0, 1, 0, 1, 0, 1],
-                [0, 1, 0, 0, 1, 1],
-                [0, 0, 1, 1, 0, 1],
-                [0, 0, 1, 0, 1, 1]]
+    expected = [
+        [1, 0, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 1],
+        [0, 1, 0, 1, 0, 1],
+        [0, 1, 0, 0, 1, 1],
+        [0, 0, 1, 1, 0, 1],
+        [0, 0, 1, 0, 1, 1],
+    ]
     actual = sarr.pure_mixtures()
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
@@ -619,62 +638,70 @@ def test_grid_mixtures():
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3])
-    expected = [[0, 0, 1],
-                [0, 1 / 2, 1 / 2],
-                [0, 1, 0],
-                [1 / 2, 0, 1 / 2],
-                [1 / 2, 1 / 2, 0],
-                [1, 0, 0]]
+    expected = [
+        [0, 0, 1],
+        [0, 1 / 2, 1 / 2],
+        [0, 1, 0],
+        [1 / 2, 0, 1 / 2],
+        [1 / 2, 1 / 2, 0],
+        [1, 0, 0],
+    ]
     actual = sarr.grid_mixtures(3)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
-    expected = [[0, 0, 1],
-                [0, 1 / 3, 2 / 3],
-                [0, 2 / 3, 1 / 3],
-                [0, 1, 0],
-                [1 / 3, 0, 2 / 3],
-                [1 / 3, 1 / 3, 1 / 3],
-                [1 / 3, 2 / 3, 0],
-                [2 / 3, 0, 1 / 3],
-                [2 / 3, 1 / 3, 0],
-                [1, 0, 0]]
+    expected = [
+        [0, 0, 1],
+        [0, 1 / 3, 2 / 3],
+        [0, 2 / 3, 1 / 3],
+        [0, 1, 0],
+        [1 / 3, 0, 2 / 3],
+        [1 / 3, 1 / 3, 1 / 3],
+        [1 / 3, 2 / 3, 0],
+        [2 / 3, 0, 1 / 3],
+        [2 / 3, 1 / 3, 0],
+        [1, 0, 0],
+    ]
     actual = sarr.grid_mixtures(4)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([1, 3])
-    expected = [[1, 0, 0, 1],
-                [1, 0, 1 / 2, 1 / 2],
-                [1, 0, 1, 0],
-                [1, 1 / 2, 0, 1 / 2],
-                [1, 1 / 2, 1 / 2, 0],
-                [1, 1, 0, 0]]
+    expected = [
+        [1, 0, 0, 1],
+        [1, 0, 1 / 2, 1 / 2],
+        [1, 0, 1, 0],
+        [1, 1 / 2, 0, 1 / 2],
+        [1, 1 / 2, 1 / 2, 0],
+        [1, 1, 0, 0],
+    ]
     actual = sarr.grid_mixtures(3)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
     sarr = stratarray([3, 2, 1])
-    expected = [[0, 0, 1, 0, 1, 1],
-                [0, 0, 1, 1 / 2, 1 / 2, 1],
-                [0, 0, 1, 1, 0, 1],
-                [0, 1 / 2, 1 / 2, 0, 1, 1],
-                [0, 1 / 2, 1 / 2, 1 / 2, 1 / 2, 1],
-                [0, 1 / 2, 1 / 2, 1, 0, 1],
-                [0, 1, 0, 0, 1, 1],
-                [0, 1, 0, 1 / 2, 1 / 2, 1],
-                [0, 1, 0, 1, 0, 1],
-                [1 / 2, 0, 1 / 2, 0, 1, 1],
-                [1 / 2, 0, 1 / 2, 1 / 2, 1 / 2, 1],
-                [1 / 2, 0, 1 / 2, 1, 0, 1],
-                [1 / 2, 1 / 2, 0, 0, 1, 1],
-                [1 / 2, 1 / 2, 0, 1 / 2, 1 / 2, 1],
-                [1 / 2, 1 / 2, 0, 1, 0, 1],
-                [1, 0, 0, 0, 1, 1],
-                [1, 0, 0, 1 / 2, 1 / 2, 1],
-                [1, 0, 0, 1, 0, 1]]
+    expected = [
+        [0, 0, 1, 0, 1, 1],
+        [0, 0, 1, 1 / 2, 1 / 2, 1],
+        [0, 0, 1, 1, 0, 1],
+        [0, 1 / 2, 1 / 2, 0, 1, 1],
+        [0, 1 / 2, 1 / 2, 1 / 2, 1 / 2, 1],
+        [0, 1 / 2, 1 / 2, 1, 0, 1],
+        [0, 1, 0, 0, 1, 1],
+        [0, 1, 0, 1 / 2, 1 / 2, 1],
+        [0, 1, 0, 1, 0, 1],
+        [1 / 2, 0, 1 / 2, 0, 1, 1],
+        [1 / 2, 0, 1 / 2, 1 / 2, 1 / 2, 1],
+        [1 / 2, 0, 1 / 2, 1, 0, 1],
+        [1 / 2, 1 / 2, 0, 0, 1, 1],
+        [1 / 2, 1 / 2, 0, 1 / 2, 1 / 2, 1],
+        [1 / 2, 1 / 2, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 1],
+        [1, 0, 0, 1 / 2, 1 / 2, 1],
+        [1, 0, 0, 1, 0, 1],
+    ]
     actual = sarr.grid_mixtures(3)
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_grid_pure_equivelance(sarr):
     """Test random grid close"""
     expected = sarr.pure_mixtures()
@@ -682,7 +709,7 @@ def test_random_grid_pure_equivelance(sarr):
     assert np.isclose(expected, actual[:, None]).all(2).any(0).all()
 
 
-@pytest.mark.parametrize('sarr', testutils.basic_games())
+@pytest.mark.parametrize("sarr", testutils.basic_games())
 def test_random_fixed_mixtures(sarr):
     """Test random fixed mixtures"""
     assert sarr.is_mixture(sarr.biased_mixtures()).all()
@@ -695,43 +722,42 @@ def test_random_fixed_mixtures(sarr):
 def test_strat_name():
     """Test strat names"""
     sarr = stratarray([3, 2])
-    for i, strat in enumerate(['s0', 's1', 's2', 's3', 's4']):
+    for i, strat in enumerate(["s0", "s1", "s2", "s3", "s4"]):
         assert strat == sarr.strat_name(i)
 
 
 def test_indices():
     """Test indices"""
     sarr = stratarray([3, 2])
-    assert sarr.role_index('r0') == 0
-    assert sarr.role_index('r1') == 1
-    assert sarr.role_strat_index('r0', 's0') == 0
-    assert sarr.role_strat_index('r0', 's1') == 1
-    assert sarr.role_strat_index('r0', 's2') == 2
-    assert sarr.role_strat_index('r1', 's3') == 3
-    assert sarr.role_strat_index('r1', 's4') == 4
-    assert sarr.role_strat_dev_index('r0', 's0', 's0') == 0
-    assert sarr.role_strat_dev_index('r0', 's0', 's1') == 1
-    assert sarr.role_strat_dev_index('r0', 's0', 's2') == 2
-    assert sarr.role_strat_dev_index('r0', 's1', 's0') == 3
-    assert sarr.role_strat_dev_index('r0', 's1', 's1') == 4
-    assert sarr.role_strat_dev_index('r0', 's1', 's2') == 5
-    assert sarr.role_strat_dev_index('r0', 's2', 's0') == 6
-    assert sarr.role_strat_dev_index('r0', 's2', 's1') == 7
-    assert sarr.role_strat_dev_index('r0', 's2', 's2') == 8
-    assert sarr.role_strat_dev_index('r1', 's3', 's3') == 9
-    assert sarr.role_strat_dev_index('r1', 's3', 's4') == 10
-    assert sarr.role_strat_dev_index('r1', 's4', 's3') == 11
-    assert sarr.role_strat_dev_index('r1', 's4', 's4') == 12
-    rs_names = (
-        ('r0', 's0'), ('r0', 's1'), ('r0', 's2'), ('r1', 's3'), ('r1', 's4'))
+    assert sarr.role_index("r0") == 0
+    assert sarr.role_index("r1") == 1
+    assert sarr.role_strat_index("r0", "s0") == 0
+    assert sarr.role_strat_index("r0", "s1") == 1
+    assert sarr.role_strat_index("r0", "s2") == 2
+    assert sarr.role_strat_index("r1", "s3") == 3
+    assert sarr.role_strat_index("r1", "s4") == 4
+    assert sarr.role_strat_dev_index("r0", "s0", "s0") == 0
+    assert sarr.role_strat_dev_index("r0", "s0", "s1") == 1
+    assert sarr.role_strat_dev_index("r0", "s0", "s2") == 2
+    assert sarr.role_strat_dev_index("r0", "s1", "s0") == 3
+    assert sarr.role_strat_dev_index("r0", "s1", "s1") == 4
+    assert sarr.role_strat_dev_index("r0", "s1", "s2") == 5
+    assert sarr.role_strat_dev_index("r0", "s2", "s0") == 6
+    assert sarr.role_strat_dev_index("r0", "s2", "s1") == 7
+    assert sarr.role_strat_dev_index("r0", "s2", "s2") == 8
+    assert sarr.role_strat_dev_index("r1", "s3", "s3") == 9
+    assert sarr.role_strat_dev_index("r1", "s3", "s4") == 10
+    assert sarr.role_strat_dev_index("r1", "s4", "s3") == 11
+    assert sarr.role_strat_dev_index("r1", "s4", "s4") == 12
+    rs_names = (("r0", "s0"), ("r0", "s1"), ("r0", "s2"), ("r1", "s3"), ("r1", "s4"))
     assert rs_names == sarr.role_strat_names
 
 
 def test_to_mixture_from_json():
     """Test mixture to from json"""
     sarr = stratarray([2, 1])
-    mix = [.6, .4, 1]
-    json_mix = {'r0': {'s1': .4, 's0': .6}, 'r1': {'s2': 1}}
+    mix = [0.6, 0.4, 1]
+    json_mix = {"r0": {"s1": 0.4, "s0": 0.6}, "r1": {"s2": 1}}
     assert sarr.mixture_to_json(mix) == json_mix
     new_mix = sarr.mixture_from_json(json_mix)
     assert np.allclose(new_mix, mix)
@@ -742,7 +768,7 @@ def test_to_mixture_from_json():
     assert new_mix.dtype == float
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_mixture_serialization(game):
     """Test mixture serialization"""
     mixes = game.random_mixtures(20)
@@ -756,8 +782,8 @@ def test_random_mixture_serialization(game):
 def test_to_from_mix_repr():
     """Test to from repr"""
     sarr = stratarray([2, 1])
-    mix = [.6, .4, 1]
-    expected = 'r0: 60.00% s0, 40.00% s1; r1: 100.00% s2'
+    mix = [0.6, 0.4, 1]
+    expected = "r0: 60.00% s0, 40.00% s1; r1: 100.00% s2"
     assert sarr.mixture_to_repr(mix) == expected
     new_mix = sarr.mixture_from_repr(expected)
     assert np.allclose(new_mix, mix)
@@ -778,7 +804,9 @@ r0:
     s1:  70.00%
 r1:
     s2: 100.00%
-"""[1:-1]
+"""[
+        1:-1
+    ]
     assert sarr.mixture_to_str(mix) == expected
     new_mix = sarr.mixture_from_str(expected)
     assert np.allclose(new_mix, mix)
@@ -793,7 +821,7 @@ def test_to_from_restriction_json():
     """Test to from restriction json"""
     sarr = stratarray([2, 1])
     sub = [True, False, True]
-    json_sub = {'r0': ['s0'], 'r1': ['s2']}
+    json_sub = {"r0": ["s0"], "r1": ["s2"]}
     assert sarr.restriction_to_json(sub) == json_sub
     new_sub = sarr.restriction_from_json(json_sub)
     assert np.all(new_sub == sub)
@@ -804,7 +832,7 @@ def test_to_from_restriction_json():
     assert new_sub.dtype == bool
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_restriction_serialization(game):
     """Test random restriction serialization"""
     subs = game.random_restrictions(20)
@@ -819,7 +847,7 @@ def test_to_from_restriction_repr():
     """Test random restriction repr"""
     sarr = stratarray([2, 1])
     sub = [True, False, True]
-    sub_repr = 'r0: s0; r1: s2'
+    sub_repr = "r0: s0; r1: s2"
     assert sarr.restriction_to_repr(sub) == sub_repr
     new_sub = sarr.restriction_from_repr(sub_repr)
     assert np.all(new_sub == sub)
@@ -839,7 +867,9 @@ r0:
     s0
 r1:
     s2
-"""[1:-1]
+"""[
+        1:-1
+    ]
     assert sarr.restriction_to_str(sub) == sub_str
     new_sub = sarr.restriction_from_str(sub_str)
     assert np.all(new_sub == sub)
@@ -854,7 +884,7 @@ def test_to_from_role_json():
     """Test to from role json"""
     sarr = stratarray([2, 1])
     role = [6, 3]
-    json_role = {'r0': 6, 'r1': 3}
+    json_role = {"r0": 6, "r1": 3}
     assert sarr.role_to_json(role) == json_role
     arr = sarr.role_from_json(json_role)
     assert np.allclose(arr, role)
@@ -869,7 +899,7 @@ def test_to_from_role_repr():
     """Test to from role repr"""
     sarr = stratarray([2, 1])
     role = [6, 3]
-    rep_role = 'r0: 6; r1: 3'
+    rep_role = "r0: 6; r1: 3"
     assert sarr.role_to_repr(role) == rep_role
     arr = sarr.role_from_repr(rep_role)
     assert np.allclose(arr, role)
@@ -878,23 +908,23 @@ def test_to_from_role_repr():
     sarr.role_from_repr(rep_role, dest=arr)
     assert np.allclose(arr, role)
     assert arr.dtype == float
-    assert np.allclose(sarr.role_from_repr('r0:6,r1:3'), role)
+    assert np.allclose(sarr.role_from_repr("r0:6,r1:3"), role)
 
 
 def test_trim_precision():
     """Test trim precision"""
     sarr = stratarray([3, 2])
     trimmed = sarr.trim_mixture_precision(
-        [1 / 3, 1 / 3, 1 / 3, 0.62, 0.38], resolution=0.1)
+        [1 / 3, 1 / 3, 1 / 3, 0.62, 0.38], resolution=0.1
+    )
     # Ties resolve as first strategies
     assert np.allclose(trimmed, [0.4, 0.3, 0.3, 0.6, 0.4])
 
-    trimmed = sarr.trim_mixture_precision(
-        [0.5, 0.25, 0.25, 0.5, 0.5], resolution=0.05)
+    trimmed = sarr.trim_mixture_precision([0.5, 0.25, 0.25, 0.5, 0.5], resolution=0.05)
     assert np.allclose(trimmed, [0.5, 0.25, 0.25, 0.5, 0.5])
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_role_serialization(game):
     """Test role serialization"""
     roles = np.random.random((20, game.num_roles))
@@ -908,6 +938,7 @@ def test_random_role_serialization(game):
 # ---------
 # EmptyGame
 # ---------
+
 
 def test_emptygame_properties():
     """Test empty game"""
@@ -937,7 +968,7 @@ def test_emptygame_properties():
     assert game.zero_prob.shape == (3,)
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_emptygame_const_properties(game):
     """Test empty game properties"""
     assert game.num_profiles == 0
@@ -1004,14 +1035,14 @@ def test_empty_restriction():
     """Test empty game restriction"""
     game = rsgame.empty(1, [2, 3])
     rgame = game.restrict([False, True, True, False, True])
-    expected = rsgame.empty_names(('r0', 'r1'), 1, (('s1',), ('s2', 's4')))
+    expected = rsgame.empty_names(("r0", "r1"), 1, (("s1",), ("s2", "s4")))
     assert rgame == expected
 
     game = rsgame.empty([3, 4, 5], [4, 3, 2])
-    rgame = game.restrict(
-        [False, True, True, False, False, False, True, True, False])
+    rgame = game.restrict([False, True, True, False, False, False, True, True, False])
     expected = rsgame.empty_names(
-        ('r0', 'r1', 'r2'), [3, 4, 5], (('s1', 's2'), ('s6',), ('s7',)))
+        ("r0", "r1", "r2"), [3, 4, 5], (("s1", "s2"), ("s6",), ("s7",))
+    )
     assert rgame == expected
 
     game = rsgame.empty(1, [2, 3])
@@ -1019,7 +1050,7 @@ def test_empty_restriction():
         game.restrict([False, False, True, True, True])
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_empty_restriction(game):
     """TEst random empty restriction"""
     rest = game.random_restriction()
@@ -1098,13 +1129,17 @@ def test_num_all_dpr_profiles():
     assert game.num_all_dpr_profiles == 15
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_profile_counts(game):
     """Test random profile counts"""
     num_role_profiles = np.fromiter(  # pragma: no branch
-        (rsgame.empty(p, s).all_profiles().shape[0] for p, s
-         in zip(game.num_role_players, game.num_role_strats)),
-        int, game.num_roles)
+        (
+            rsgame.empty(p, s).all_profiles().shape[0]
+            for p, s in zip(game.num_role_players, game.num_role_strats)
+        ),
+        int,
+        game.num_roles,
+    )
     assert np.all(num_role_profiles == game.num_all_role_profiles)
 
     num_profiles = game.all_profiles().shape[0]
@@ -1117,12 +1152,11 @@ def test_random_profile_counts(game):
 def test_profile_id():
     """Test profile ids"""
     game = rsgame.empty(3, [2, 2])
-    profs = [[[0, 3, 2, 1],
-              [2, 1, 3, 0]],
-             [[2, 1, 2, 1],
-              [3, 0, 3, 0]],
-             [[1, 2, 1, 2],
-              [2, 1, 1, 2]]]
+    profs = [
+        [[0, 3, 2, 1], [2, 1, 3, 0]],
+        [[2, 1, 2, 1], [3, 0, 3, 0]],
+        [[1, 2, 1, 2], [2, 1, 1, 2]],
+    ]
     ids = game.profile_to_id(profs)
     assert ids.shape == (3, 2)
     assert np.all((ids >= 0) & (ids < game.num_all_profiles))
@@ -1153,7 +1187,7 @@ def test_profile_id_big():
     assert np.all(game.profile_from_id(53753604366668088230809) == profile)
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_profile_id(game):
     """Test random profile ids"""
     # Here we have an expectation that all_profiles always returns profiles in
@@ -1180,13 +1214,19 @@ def test_is_profile():
     assert not game.is_profile([1, 0, 0, 2, 1])
     assert not game.is_profile([1, 0, 1, 2, 2])
     assert not game.is_profile([1, 0, 1, 2, 0])
-    assert np.all(([True] + [False] * 5) == game.is_profile([
-        [1, 0, 1, 2, 1],
-        [1, 0, 2, 2, 1],
-        [1, -1, 2, 2, 1],
-        [1, 0, 0, 2, 1],
-        [1, 0, 1, 2, 2],
-        [1, 0, 1, 2, 0]]))
+    assert np.all(
+        ([True] + [False] * 5)
+        == game.is_profile(
+            [
+                [1, 0, 1, 2, 1],
+                [1, 0, 2, 2, 1],
+                [1, -1, 2, 2, 1],
+                [1, 0, 0, 2, 1],
+                [1, 0, 1, 2, 2],
+                [1, 0, 1, 2, 0],
+            ]
+        )
+    )
     assert game.is_profile([[1], [0], [1], [2], [1]], axis=0)
 
     with pytest.raises(ValueError):
@@ -1213,87 +1253,92 @@ def test_all_profiles():
     """Test all profiles"""
     game = rsgame.empty(1, 1)
     expected = [[1]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.all_profiles())).size
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.all_profiles())
+    ).size
 
     game = rsgame.empty(3, 2)
-    expected = [[3, 0],
-                [2, 1],
-                [1, 2],
-                [0, 3]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.all_profiles())).size
+    expected = [[3, 0], [2, 1], [1, 2], [0, 3]]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.all_profiles())
+    ).size
 
     game = rsgame.empty([1, 3], 2)
-    expected = [[1, 0, 3, 0],
-                [1, 0, 2, 1],
-                [1, 0, 1, 2],
-                [1, 0, 0, 3],
-                [0, 1, 3, 0],
-                [0, 1, 2, 1],
-                [0, 1, 1, 2],
-                [0, 1, 0, 3]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.all_profiles())).size
+    expected = [
+        [1, 0, 3, 0],
+        [1, 0, 2, 1],
+        [1, 0, 1, 2],
+        [1, 0, 0, 3],
+        [0, 1, 3, 0],
+        [0, 1, 2, 1],
+        [0, 1, 1, 2],
+        [0, 1, 0, 3],
+    ]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.all_profiles())
+    ).size
 
     game = rsgame.empty(1, [3, 1])
-    expected = [[1, 0, 0, 1],
-                [0, 1, 0, 1],
-                [0, 0, 1, 1]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.all_profiles())).size
+    expected = [[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1]]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.all_profiles())
+    ).size
 
     game = rsgame.empty([3, 2, 1], [1, 2, 3])
-    expected = [[3, 2, 0, 1, 0, 0],
-                [3, 2, 0, 0, 1, 0],
-                [3, 2, 0, 0, 0, 1],
-                [3, 1, 1, 1, 0, 0],
-                [3, 1, 1, 0, 1, 0],
-                [3, 1, 1, 0, 0, 1],
-                [3, 0, 2, 1, 0, 0],
-                [3, 0, 2, 0, 1, 0],
-                [3, 0, 2, 0, 0, 1]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.all_profiles())).size
+    expected = [
+        [3, 2, 0, 1, 0, 0],
+        [3, 2, 0, 0, 1, 0],
+        [3, 2, 0, 0, 0, 1],
+        [3, 1, 1, 1, 0, 0],
+        [3, 1, 1, 0, 1, 0],
+        [3, 1, 1, 0, 0, 1],
+        [3, 0, 2, 1, 0, 0],
+        [3, 0, 2, 0, 1, 0],
+        [3, 0, 2, 0, 0, 1],
+    ]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.all_profiles())
+    ).size
 
 
 def test_pure_profiles():
     """Test pure profiles"""
     game = rsgame.empty(1, 1)
     expected = [[1]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.pure_profiles())).size
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.pure_profiles())
+    ).size
 
     game = rsgame.empty(3, 2)
-    expected = [[3, 0],
-                [0, 3]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.pure_profiles())).size
+    expected = [[3, 0], [0, 3]]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.pure_profiles())
+    ).size
 
     game = rsgame.empty([1, 3], 2)
-    expected = [[1, 0, 3, 0],
-                [1, 0, 0, 3],
-                [0, 1, 3, 0],
-                [0, 1, 0, 3]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.pure_profiles())).size
+    expected = [[1, 0, 3, 0], [1, 0, 0, 3], [0, 1, 3, 0], [0, 1, 0, 3]]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.pure_profiles())
+    ).size
 
     game = rsgame.empty(1, [3, 1])
-    expected = [[1, 0, 0, 1],
-                [0, 1, 0, 1],
-                [0, 0, 1, 1]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.pure_profiles())).size
+    expected = [[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1]]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.pure_profiles())
+    ).size
 
     game = rsgame.empty([3, 2, 1], [1, 2, 3])
-    expected = [[3, 2, 0, 1, 0, 0],
-                [3, 2, 0, 0, 1, 0],
-                [3, 2, 0, 0, 0, 1],
-                [3, 0, 2, 1, 0, 0],
-                [3, 0, 2, 0, 1, 0],
-                [3, 0, 2, 0, 0, 1]]
-    assert not np.setxor1d(utils.axis_to_elem(expected),
-                           utils.axis_to_elem(game.pure_profiles())).size
+    expected = [
+        [3, 2, 0, 1, 0, 0],
+        [3, 2, 0, 0, 1, 0],
+        [3, 2, 0, 0, 0, 1],
+        [3, 0, 2, 1, 0, 0],
+        [3, 0, 2, 0, 1, 0],
+        [3, 0, 2, 0, 0, 1],
+    ]
+    assert not np.setxor1d(
+        utils.axis_to_elem(expected), utils.axis_to_elem(game.pure_profiles())
+    ).size
 
 
 def test_nearby_profiles_1():
@@ -1303,79 +1348,73 @@ def test_nearby_profiles_1():
     expected = [1]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
 
     game = rsgame.empty(3, 2)
     prof = [3, 0]
-    expected = [[3, 0],
-                [2, 1]]
+    expected = [[3, 0], [2, 1]]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
     prof = [2, 1]
-    expected = [[3, 0],
-                [2, 1],
-                [1, 2]]
+    expected = [[3, 0], [2, 1], [1, 2]]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
 
     game = rsgame.empty([1, 3], 2)
     prof = [1, 0, 0, 3]
-    expected = [[0, 1, 0, 3],
-                [1, 0, 0, 3],
-                [1, 0, 1, 2]]
+    expected = [[0, 1, 0, 3], [1, 0, 0, 3], [1, 0, 1, 2]]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
     prof = [1, 0, 2, 1]
-    expected = [[0, 1, 2, 1],
-                [1, 0, 2, 1],
-                [1, 0, 3, 0],
-                [1, 0, 1, 2]]
+    expected = [[0, 1, 2, 1], [1, 0, 2, 1], [1, 0, 3, 0], [1, 0, 1, 2]]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
 
     game = rsgame.empty(1, [3, 1])
     prof = [0, 0, 1, 1]
-    expected = [[1, 0, 0, 1],
-                [0, 0, 1, 1],
-                [0, 1, 0, 1]]
+    expected = [[1, 0, 0, 1], [0, 0, 1, 1], [0, 1, 0, 1]]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
 
     game = rsgame.empty([3, 2, 1], [1, 2, 3])
     prof = [3, 2, 0, 1, 0, 0]
-    expected = [[3, 1, 1, 1, 0, 0],
-                [3, 2, 0, 1, 0, 0],
-                [3, 2, 0, 0, 1, 0],
-                [3, 2, 0, 0, 0, 1]]
+    expected = [
+        [3, 1, 1, 1, 0, 0],
+        [3, 2, 0, 1, 0, 0],
+        [3, 2, 0, 0, 1, 0],
+        [3, 2, 0, 0, 0, 1],
+    ]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
     prof = [3, 1, 1, 1, 0, 0]
-    expected = [[3, 2, 0, 1, 0, 0],
-                [3, 1, 1, 1, 0, 0],
-                [3, 0, 2, 1, 0, 0],
-                [3, 1, 1, 0, 1, 0],
-                [3, 1, 1, 0, 0, 1]]
+    expected = [
+        [3, 2, 0, 1, 0, 0],
+        [3, 1, 1, 1, 0, 0],
+        [3, 0, 2, 1, 0, 0],
+        [3, 1, 1, 0, 1, 0],
+        [3, 1, 1, 0, 0, 1],
+    ]
     actual = game.nearby_profiles(prof, 1)
     assert not np.setxor1d(
-        utils.axis_to_elem(expected),
-        utils.axis_to_elem(actual)).size
+        utils.axis_to_elem(expected), utils.axis_to_elem(actual)
+    ).size
 
 
-@pytest.mark.parametrize('base', testutils.basic_games())
-@pytest.mark.parametrize('num_devs', range(5))
+@pytest.mark.parametrize("base", testutils.basic_games())
+@pytest.mark.parametrize("num_devs", range(5))
 def test_random_nearby_profiles(base, num_devs):
     """Test random nearby profiles"""
     prof = base.random_profile()
@@ -1389,7 +1428,7 @@ def test_random_nearby_profiles(base, num_devs):
     assert np.all(base.is_profile(nearby))
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_fixed_profiles(game):
     """Test fixed profiles"""
     all_profiles = game.all_profiles()
@@ -1407,7 +1446,7 @@ def test_random_profiles():
     assert np.all(mixes[:, 0] == 0)
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_random_profiles(game):
     """Test random profiles"""
     assert game.is_profile(game.random_profiles(100)).all()
@@ -1423,21 +1462,23 @@ def test_round_mixture_to_profile():
     prof = game.round_mixture_to_profile([2 / 3, 0, 1 / 3])
     assert np.all(prof == [2, 0, 1])
 
-    prof = game.round_mixture_to_profile([.1, .2, .7])
+    prof = game.round_mixture_to_profile([0.1, 0.2, 0.7])
     assert np.all(prof == [0, 1, 2])
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_round_mixture_to_profile(game):
     """Test round mixture to profile"""
-    mixtures = np.concatenate([
-        game.random_mixtures(100),
-        game.random_sparse_mixtures(100),
-    ])
+    mixtures = np.concatenate(
+        [
+            game.random_mixtures(100),
+            game.random_sparse_mixtures(100),
+        ]
+    )
     assert game.is_profile(game.round_mixture_to_profile(mixtures)).all()
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_random_dev_profiles(game):
     """Test random dev profiles"""
     prof = game.random_role_deviation_profile()
@@ -1456,7 +1497,7 @@ def test_random_random_dev_profiles(game):
         assert dgame.is_profile(dprofs).all()
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_random_deviator_profiles(game):
     """Test random deviator profiles"""
     profs = game.random_deviation_profile()
@@ -1465,36 +1506,38 @@ def test_random_random_deviator_profiles(game):
 
     profs = game.random_deviation_profiles(100)
     assert profs.shape == (100, game.num_strats, game.num_strats)
-    prof_mins = np.minimum.reduceat(
-        profs, game.role_starts, 1).repeat(game.num_role_strats, 1)
+    prof_mins = np.minimum.reduceat(profs, game.role_starts, 1).repeat(
+        game.num_role_strats, 1
+    )
     prof_devs = profs - prof_mins
-    non_strat_roles = np.repeat(
-        game.num_role_strats == 1, game.num_role_strats)
+    non_strat_roles = np.repeat(game.num_role_strats == 1, game.num_role_strats)
     assert np.all(np.any(prof_devs, 1) | non_strat_roles)
     assert np.all(np.any(prof_devs, 2) | non_strat_roles)
     assert game.is_profile(profs).all()
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_max_prob_prof(game):
     """Test max probability profile"""
     profiles = game.all_profiles()
-    log_prob = (np.sum(sps.gammaln(game.num_role_players + 1)) -
-                np.sum(sps.gammaln(profiles + 1), 1))
+    log_prob = np.sum(sps.gammaln(game.num_role_players + 1)) - np.sum(
+        sps.gammaln(profiles + 1), 1
+    )
     for mix in game.random_mixtures(100):
         probs = np.sum(np.log(mix + TINY) * profiles, 1) + log_prob
         mask = np.max(probs) - EPS < probs
         max_prob_profs = profiles[mask]
         actual = game.max_prob_prof(mix)
-        assert np.all(np.in1d(utils.axis_to_elem(actual),
-                              utils.axis_to_elem(max_prob_profs)))
+        assert np.all(
+            np.in1d(utils.axis_to_elem(actual), utils.axis_to_elem(max_prob_profs))
+        )
 
 
 def test_to_from_prof_json():
     """Test to from profile json"""
     game = rsgame.empty([11, 3], [2, 1])
     prof = [6, 5, 3]
-    json_prof = {'r0': {'s1': 5, 's0': 6}, 'r1': {'s2': 3}}
+    json_prof = {"r0": {"s1": 5, "s0": 6}, "r1": {"s2": 3}}
     assert game.profile_to_json(prof) == json_prof
     new_prof = game.profile_from_json(json_prof)
     assert np.all(new_prof == prof)
@@ -1505,7 +1548,7 @@ def test_to_from_prof_json():
     assert new_prof.dtype == int
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_profile_serialization(game):
     """Test profile serialization"""
     profs = game.random_profiles(20)
@@ -1520,7 +1563,7 @@ def test_to_from_payoff_json():
     """Test to from payoff json"""
     game = rsgame.empty([11, 3], [2, 1])
     pay = [1, 2, 3]
-    json_pay = {'r0': {'s1': 2, 's0': 1}, 'r1': {'s2': 3}}
+    json_pay = {"r0": {"s1": 2, "s0": 1}, "r1": {"s2": 3}}
     assert game.payoff_to_json(pay) == json_pay
     new_pay = game.payoff_from_json(json_pay)
     assert np.allclose(new_pay, pay)
@@ -1531,14 +1574,14 @@ def test_to_from_payoff_json():
     assert new_pay.dtype == float
 
     pay = [np.nan, 2, 3]
-    json_pay = {'r0': {'s1': [1, 3], 's0': []}, 'r1': {'s2': [2, 3, 4]}}
+    json_pay = {"r0": {"s1": [1, 3], "s0": []}, "r1": {"s2": [2, 3, 4]}}
     new_pay = game.payoff_from_json(json_pay)
     assert np.allclose(new_pay, pay, equal_nan=True)
     assert new_pay.dtype == float
 
     pay = [1, 0, 3]
-    json_pay = {'r0': {'s0': 1}, 'r1': {'s2': 3}}
-    json_pay0 = {'r0': {'s1': 0, 's0': 1}, 'r1': {'s2': 3}}
+    json_pay = {"r0": {"s0": 1}, "r1": {"s2": 3}}
+    json_pay0 = {"r0": {"s1": 0, "s0": 1}, "r1": {"s2": 3}}
     assert game.payoff_to_json(pay) == json_pay
     new_pay = game.payoff_from_json(json_pay)
     assert np.allclose(new_pay, pay)
@@ -1546,7 +1589,7 @@ def test_to_from_payoff_json():
     assert np.allclose(new_pay, pay)
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_payoff_serialization(game):
     """Test payoff serialization"""
     pays = np.random.random((20, game.num_strats))
@@ -1562,7 +1605,7 @@ def test_to_from_prof_repr():
     """Test profile repr"""
     game = rsgame.empty([11, 3], [2, 1])
     prof = [6, 5, 3]
-    prof_str = 'r0: 6 s0, 5 s1; r1: 3 s2'
+    prof_str = "r0: 6 s0, 5 s1; r1: 3 s2"
     assert game.profile_to_repr(prof) == prof_str
     aprof = game.profile_from_repr(prof_str)
     assert np.all(aprof == prof)
@@ -1581,7 +1624,9 @@ r0:
     s1: 5
 r1:
     s2: 3
-"""[1:-1]
+"""[
+        1:-1
+    ]
     assert game.profile_to_str(prof) == prof_str
     assert np.all(game.profile_from_str(prof_str) == prof)
 
@@ -1590,17 +1635,17 @@ def test_dev_payoff_json():
     """Test dev payoff json"""
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            'ignore',
-            'using reduceat with dev_role_starts will not produce correct '
-            'results if any role only has one strategy. This might get fixed '
-            'at some point, but currently extra care must be taken for these '
-            'cases.',
-            UserWarning)
+            "ignore",
+            "using reduceat with dev_role_starts will not produce correct "
+            "results if any role only has one strategy. This might get fixed "
+            "at some point, but currently extra care must be taken for these "
+            "cases.",
+            UserWarning,
+        )
         game = rsgame.empty([11, 3], [2, 1])
         devpay = [0, 5, 0, 0, 0]
-        json_devpay = {'r0': {'s0': {'s1': 5}}}
-        json_devpay2 = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 0}},
-                        'r1': {'s2': {}}}
+        json_devpay = {"r0": {"s0": {"s1": 5}}}
+        json_devpay2 = {"r0": {"s0": {"s1": 5}, "s1": {"s0": 0}}, "r1": {"s2": {}}}
         assert game.devpay_to_json(devpay) == json_devpay
         dest = np.empty(game.num_devs)
         game.devpay_from_json(json_devpay, dest)
@@ -1609,7 +1654,7 @@ def test_dev_payoff_json():
         assert np.allclose(game.devpay_from_json(json_devpay2), devpay)
 
         devpay = [0, 5, 4, 0, 0]
-        json_devpay = {'r0': {'s0': {'s1': 5}, 's1': {'s0': 4}}}
+        json_devpay = {"r0": {"s0": {"s1": 5}, "s1": {"s0": 4}}}
         assert game.devpay_to_json(devpay) == json_devpay
         dest = np.empty(game.num_devs)
         game.devpay_from_json(json_devpay, dest)
@@ -1617,8 +1662,8 @@ def test_dev_payoff_json():
         assert np.allclose(game.devpay_from_json(json_devpay), devpay)
 
 
-@pytest.mark.parametrize('role_players', [1, 2, 3, [3, 2, 1]])
-@pytest.mark.parametrize('role_strats', [2, 4, [2, 3, 4]])
+@pytest.mark.parametrize("role_players", [1, 2, 3, [3, 2, 1]])
+@pytest.mark.parametrize("role_strats", [2, 4, [2, 3, 4]])
 def test_random_devpay_serialization(role_players, role_strats):
     """Test dev payoff serialization"""
     game = rsgame.empty(role_players, role_strats)
@@ -1646,28 +1691,33 @@ def test_is_asymmetric():
 def test_to_from_json():
     """Test to from json"""
     game = rsgame.empty(4, 5)
-    jgame = {'players': {'r0': 4},
-             'strategies': {'r0': ['s0', 's1', 's2', 's3', 's4']},
-             'type': 'empty.1'}
-    old_jgame = {'roles': [{'name': 'r0',
-                            'strategies': ['s0', 's1', 's2', 's3', 's4'],
-                            'count': 4}]}
+    jgame = {
+        "players": {"r0": 4},
+        "strategies": {"r0": ["s0", "s1", "s2", "s3", "s4"]},
+        "type": "empty.1",
+    }
+    old_jgame = {
+        "roles": [
+            {"name": "r0", "strategies": ["s0", "s1", "s2", "s3", "s4"], "count": 4}
+        ]
+    }
     assert game.to_json() == jgame
     assert rsgame.empty_json(jgame) == game
     assert rsgame.empty_json(old_jgame) == game
     json.dumps(game.to_json())  # serializable
 
     game = rsgame.empty([4, 3], [3, 4])
-    jgame = {'players': {'r0': 4, 'r1': 3},
-             'strategies': {'r0': ['s0', 's1', 's2'],
-                            'r1': ['s3', 's4', 's5', 's6']},
-             'type': 'empty.1'}
-    old_jgame = {'roles': [{'name': 'r0',
-                            'strategies': ['s0', 's1', 's2'],
-                            'count': 4},
-                           {'name': 'r1',
-                            'strategies': ['s3', 's4', 's5', 's6'],
-                            'count': 3}]}
+    jgame = {
+        "players": {"r0": 4, "r1": 3},
+        "strategies": {"r0": ["s0", "s1", "s2"], "r1": ["s3", "s4", "s5", "s6"]},
+        "type": "empty.1",
+    }
+    old_jgame = {
+        "roles": [
+            {"name": "r0", "strategies": ["s0", "s1", "s2"], "count": 4},
+            {"name": "r1", "strategies": ["s3", "s4", "s5", "s6"], "count": 3},
+        ]
+    }
     assert game.to_json() == jgame
     assert json.loads(json.dumps(game.to_json())) == jgame
     assert rsgame.empty_json(jgame) == game
@@ -1677,7 +1727,7 @@ def test_to_from_json():
         rsgame.empty_json({})
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_json_serialization(game):
     """Test random serialization"""
     jgame = json.dumps(game.to_json())
@@ -1714,11 +1764,11 @@ def test_emptygame_hash_eq():
 def test_emptygame_repr():
     """Test emptygame repr"""
     game = rsgame.empty(3, 4)
-    expected = 'EmptyGame([3], [4])'
+    expected = "EmptyGame([3], [4])"
     assert repr(game) == expected
 
     game = rsgame.empty(3, [4, 5])
-    expected = 'EmptyGame([3 3], [4 5])'
+    expected = "EmptyGame([3 3], [4 5])"
     assert repr(game) == expected
 
 
@@ -1736,7 +1786,9 @@ EmptyGame:
             s1
             s2
             s3
-"""[1:-1]
+"""[
+        1:-1
+    ]
     assert str(game) == expected
 
     game = rsgame.empty([3, 4], [4, 3])
@@ -1756,11 +1808,13 @@ EmptyGame:
             s4
             s5
             s6
-"""[1:-1]
+"""[
+        1:-1
+    ]
     assert str(game) == expected
 
 
-@pytest.mark.parametrize('game', testutils.basic_games())
+@pytest.mark.parametrize("game", testutils.basic_games())
 def test_random_emptygame_copy(game):
     """Test emptygame copy"""
     copy = rsgame.empty_copy(game)
@@ -1790,7 +1844,7 @@ def test_empty_add_multiply():
     assert empty + empty == empty
 
 
-@pytest.mark.parametrize('base', testutils.basic_games())
+@pytest.mark.parametrize("base", testutils.basic_games())
 def test_const_game(base):
     """Test constant game"""
     game = rsgame.const_replace(base, 0)
@@ -1820,7 +1874,7 @@ def test_const_game(base):
 def test_repr():
     """Test repr"""
     const = rsgame.const([1, 2], [3, 2], 1)
-    assert repr(const) == 'ConstantGame([1 2], [3 2], [1. 1.])'
+    assert repr(const) == "ConstantGame([1 2], [3 2], [1. 1.])"
 
 
 def test_const_add_multiply():
@@ -1830,13 +1884,13 @@ def test_const_add_multiply():
     assert np.allclose(const1.payoffs(), const1.profiles() > 0)
     const2 = rsgame.const_replace(empty, [2, 3])
     assert np.allclose(
-        const2.payoffs(),
-        np.where(const2.profiles() > 0, [2, 2, 2, 3, 3], 0))
+        const2.payoffs(), np.where(const2.profiles() > 0, [2, 2, 2, 3, 3], 0)
+    )
 
     assert const2 + 1 == rsgame.const_replace(empty, [3, 4])
     assert const2 - 1 == rsgame.const_replace(empty, [1, 2])
     assert const2 * 2 == rsgame.const_replace(empty, [4, 6])
-    assert const2 / 2 == rsgame.const_replace(empty, [1, 3/2])
+    assert const2 / 2 == rsgame.const_replace(empty, [1, 3 / 2])
 
     assert const2 + [2, 1] == rsgame.const_replace(empty, 4)
     assert const2 - [1, 2] == rsgame.const_replace(empty, 1)
@@ -1852,11 +1906,10 @@ def test_const_add_multiply():
 
 def test_const_names():
     """Test constant names"""
-    game = rsgame.const_names(
-        ['a', 'b'], [2, 3], [['1', '2'], ['3', '4', '5']], 1)
-    assert game.role_names == ('a', 'b')
+    game = rsgame.const_names(["a", "b"], [2, 3], [["1", "2"], ["3", "4", "5"]], 1)
+    assert game.role_names == ("a", "b")
     assert np.all(game.num_role_players == [2, 3])
-    assert game.strat_names == (('1', '2'), ('3', '4', '5'))
+    assert game.strat_names == (("1", "2"), ("3", "4", "5"))
 
 
 def test_mix():
@@ -1864,7 +1917,7 @@ def test_mix():
     empty = rsgame.empty([1, 2], [3, 2])
     const1 = rsgame.const_replace(empty, [1, 5])
     const2 = rsgame.const_replace(empty, [4, -1])
-    mix = rsgame.mix(const1, const2, 1/3)
+    mix = rsgame.mix(const1, const2, 1 / 3)
     assert mix == rsgame.const_replace(empty, [2, 3])
     assert rsgame.mix(const1, const2, 0) == const1
     assert rsgame.mix(const1, const2, 1) == const2
@@ -1891,15 +1944,15 @@ def test_add_types():
     assert rsgame.add(const, empty) == empty
 
     with pytest.raises(TypeError):
-        assert 'string' + empty
+        assert "string" + empty
     with pytest.raises(TypeError):
-        assert empty + 'string'
+        assert empty + "string"
     with pytest.raises(TypeError):
-        assert empty - 'string'
+        assert empty - "string"
     with pytest.raises(TypeError):
-        assert empty * 'string'
+        assert empty * "string"
     with pytest.raises(TypeError):
-        assert empty / 'string'
+        assert empty / "string"
 
 
 def test_add_game():
@@ -1913,14 +1966,11 @@ def test_add_game():
     for prof in add.all_profiles():
         assert prof in add
     prof = add.random_profile()
-    assert np.allclose(
-        add.payoffs(),
-        np.where(add.profiles() > 0, [2, 2, 2, 3, 3], 0))
+    assert np.allclose(add.payoffs(), np.where(add.profiles() > 0, [2, 2, 2, 3, 3], 0))
     assert np.allclose(add.min_role_payoffs(), [2, 3])
     assert np.allclose(add.max_role_payoffs(), [2, 3])
 
-    assert np.allclose(add.deviation_payoffs(add.random_mixture()),
-                       [2, 2, 2, 3, 3])
+    assert np.allclose(add.deviation_payoffs(add.random_mixture()), [2, 2, 2, 3, 3])
     dev, jac = add.deviation_payoffs(add.random_mixture(), jacobian=True)
     assert np.allclose(dev, [2, 2, 2, 3, 3])
     assert dev.shape == (add.num_strats,)
@@ -1930,7 +1980,7 @@ def test_add_game():
     jstr = json.dumps(add.to_json())
     loaded = rsgame.add_json(json.loads(jstr))  # Won't load proper type
     assert np.allclose(add.payoffs(), loaded.get_payoffs(add.profiles()))
-    assert repr(add) == 'AddGame([1 2], [3 2], 9 / 9)'
+    assert repr(add) == "AddGame([1 2], [3 2], 9 / 9)"
 
     add_comm = unadd2 + unadd1
     assert hash(add) == hash(add_comm)
@@ -1948,12 +1998,16 @@ def test_add_game():
     assert rsgame.empty_copy(add_rest) == empty.restrict(rest)
 
 
-class UnAddC(rsgame._ConstantGame): # pylint: disable=protected-access
+class UnAddC(rsgame._ConstantGame):  # pylint: disable=protected-access
     """A constant game that doesn't support adding"""
+
     def __init__(self, copy, const):
         super().__init__(
-            copy.role_names, copy.strat_names, copy.num_role_players,
-            np.asarray(const, float))
+            copy.role_names,
+            copy.strat_names,
+            copy.num_role_players,
+            np.asarray(const, float),
+        )
 
     def _add_game(self, _):
         return NotImplemented

@@ -21,9 +21,9 @@ def reduce_game(full_game, red_players=None):
         full_game.
     """
     utils.check(
-        red_players is None or np.all(
-            full_game.num_role_players == red_players),
-        'identity reduction must have same number of players')
+        red_players is None or np.all(full_game.num_role_players == red_players),
+        "identity reduction must have same number of players",
+    )
     return paygame.game_copy(full_game)
 
 
@@ -40,9 +40,7 @@ def expand_profiles(full_game, profiles):
         The axis the profiles lie on.
     """
     profiles = np.asarray(profiles, int)
-    utils.check(
-        full_game.is_profile(profiles).all(),
-        'profiles must be valid')
+    utils.check(full_game.is_profile(profiles).all(), "profiles must be valid")
     return profiles.reshape((-1, full_game.num_strats))
 
 
@@ -59,14 +57,11 @@ def reduce_profiles(red_game, profiles):
         The axis the profiles are on.
     """
     profiles = np.asarray(profiles, int)
-    utils.check(
-        red_game.is_profile(profiles).all(),
-        'profiles must be valid')
+    utils.check(red_game.is_profile(profiles).all(), "profiles must be valid")
     return profiles.reshape((-1, red_game.num_strats))
 
 
-def expand_deviation_profiles(
-        full_game, rest, red_players=None, role_index=None):
+def expand_deviation_profiles(full_game, rest, red_players=None, role_index=None):
     """Expand all deviation profiles from a restriction
 
     Parameters
@@ -82,7 +77,7 @@ def expand_deviation_profiles(
         If specified , only expand deviations for the role selected.
     """
     utils.check(
-        red_players is None or np.all(
-            full_game.num_role_players == red_players),
-        'identity reduction must have same number of players')
+        red_players is None or np.all(full_game.num_role_players == red_players),
+        "identity reduction must have same number of players",
+    )
     return restrict.deviation_profiles(full_game, rest, role_index)

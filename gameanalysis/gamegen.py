@@ -32,8 +32,7 @@ def gen_profiles(base, prob=1.0, distribution=default_distribution):
     """
     # First turn input into number of profiles to compute
     num_profs = base.num_all_profiles
-    utils.check(0 <= prob <= 1, 'probability must be in [0, 1] but was {:g}',
-                prob)
+    utils.check(0 <= prob <= 1, "probability must be in [0, 1] but was {:g}", prob)
     if num_profs <= np.iinfo(int).max:
         num = rand.binomial(num_profs, prob)
     else:
@@ -55,7 +54,10 @@ def gen_num_profiles(base, num, distribution=default_distribution):
     """
     utils.check(
         0 <= num <= base.num_all_profiles,
-        'num must be in [0, {:d}] but was {:d}', base.num_all_profiles, num)
+        "num must be in [0, {:d}] but was {:d}",
+        base.num_all_profiles,
+        num,
+    )
     profiles = sample_profiles(base, num)
     payoffs = np.zeros(profiles.shape)
     mask = profiles > 0
@@ -101,8 +103,7 @@ def sparse_game(players, strats, num, distribution=default_distribution):
     distribution : (shape) -> ndarray, optional
         Distribution function to draw payoffs from.
     """
-    return gen_num_profiles(
-        rsgame.empty(players, strats), num, distribution)
+    return gen_num_profiles(rsgame.empty(players, strats), num, distribution)
 
 
 def width_gaussian(widths, num_samples):
@@ -144,14 +145,20 @@ def width_gumbel(widths, num_samples):
     """
     scales = widths[:, None] * np.sqrt(6) / np.pi
     draws = np.random.gumbel(
-        -scales * np.euler_gamma, scales, (widths.size, num_samples))
+        -scales * np.euler_gamma, scales, (widths.size, num_samples)
+    )
     draws *= rand.randint(0, 2, (widths.size, 1)) * 2 - 1
     return draws
 
 
-def gen_noise( # pylint: disable=too-many-arguments,too-many-locals
-        base, prob=0.5, min_samples=1, min_width=0, max_width=1,
-        noise_distribution=width_gaussian):
+def gen_noise(  # pylint: disable=too-many-arguments,too-many-locals
+    base,
+    prob=0.5,
+    min_samples=1,
+    min_width=0,
+    max_width=1,
+    noise_distribution=width_gaussian,
+):
     """Generate noise for profiles of a game
 
     This generates samples for payoff data by first generating some measure of
@@ -199,8 +206,9 @@ def gen_noise( # pylint: disable=too-many-arguments,too-many-locals
 
     sample_payoffs = []
     new_profiles = []
-    for num, prof, pay in zip(observations, np.split(profiles, splits),
-                              np.split(payoffs, splits)):
+    for num, prof, pay in zip(
+        observations, np.split(profiles, splits), np.split(payoffs, splits)
+    ):
         if num == 0:
             continue
         supp = prof > 0
@@ -234,10 +242,15 @@ def samplegame(players, strats, *args, **kwargs):
     return samplegame_replace(rsgame.empty(players, strats), *args, **kwargs)
 
 
-def samplegame_replace( # pylint: disable=too-many-arguments
-        base, prob=0.5, min_samples=1, min_width=0, max_width=1,
-        payoff_distribution=default_distribution,
-        noise_distribution=width_gaussian):
+def samplegame_replace(  # pylint: disable=too-many-arguments
+    base,
+    prob=0.5,
+    min_samples=1,
+    min_width=0,
+    max_width=1,
+    payoff_distribution=default_distribution,
+    noise_distribution=width_gaussian,
+):
     """Generate a random role symmetric sample game
 
     Parameters
@@ -265,8 +278,7 @@ def samplegame_replace( # pylint: disable=too-many-arguments
         min_samples = 1
     else:
         profs = game_replace(base, distribution=payoff_distribution)
-    return gen_noise(profs, prob, min_samples, min_width, max_width,
-                     noise_distribution)
+    return gen_noise(profs, prob, min_samples, min_width, max_width, noise_distribution)
 
 
 def independent_game(num_role_strats, distribution=default_distribution):
@@ -289,8 +301,11 @@ def independent_game(num_role_strats, distribution=default_distribution):
 
 
 def covariant_game(
-        num_role_strats, mean_dist=np.zeros, var_dist=np.ones,
-        covar_dist=default_distribution):
+    num_role_strats,
+    mean_dist=np.zeros,
+    var_dist=np.ones,
+    covar_dist=default_distribution,
+):
     """Generate a covariant game
 
     Covariant games are asymmetric games where payoff values for each profile
@@ -325,13 +340,12 @@ def covariant_game(
     # payoffs simultaneously
     _, diag, right = np.linalg.svd(var)
     payoffs = rand.normal(size=shape)
-    payoffs = np.einsum('...i,...i,...ij->...j', payoffs, np.sqrt(diag), right)
+    payoffs = np.einsum("...i,...i,...ij->...j", payoffs, np.sqrt(diag), right)
     payoffs += mean_dist(shape)
     return matgame.matgame(payoffs)
 
 
-def two_player_zero_sum_game(num_role_strats,
-                             distribution=default_distribution):
+def two_player_zero_sum_game(num_role_strats, distribution=default_distribution):
     """Generate a two-player, zero-sum game"""
     # Generate player 1 payoffs
     num_role_strats = np.broadcast_to(num_role_strats, 2)
@@ -339,7 +353,9 @@ def two_player_zero_sum_game(num_role_strats,
     return matgame.matgame(np.concatenate([p1_payoffs, -p1_payoffs], -1))
 
 
-def sym_2p2s_game(a, b, c, d, distribution=default_distribution): # pylint: disable=invalid-name
+def sym_2p2s_game(
+    a, b, c, d, distribution=default_distribution
+):  # pylint: disable=invalid-name
     """Create a symmetric 2-player 2-strategy game of the specified form.
 
     Four payoff values get drawn from U(min_val, max_val), and then are
@@ -356,7 +372,7 @@ def sym_2p2s_game(a, b, c, d, distribution=default_distribution): # pylint: disa
 
     distribution must accept a size parameter a la numpy distributions.
     """
-    utils.check({a, b, c, d} == set(range(4)), 'numbers must be each of 1-4')
+    utils.check({a, b, c, d} == set(range(4)), "numbers must be each of 1-4")
     # Generate payoffs
     payoffs = distribution(4)
     payoffs.sort()
@@ -387,8 +403,8 @@ def sym_2p2s_known_eq(eq_prob):
 
 
 def polymatrix_game(
-        num_players, num_strats, matrix_game=independent_game,
-        players_per_matrix=2):
+    num_players, num_strats, matrix_game=independent_game, players_per_matrix=2
+):
     """Creates a polymatrix game
 
     Each player's payoff in each profile is a sum over independent games played
@@ -411,10 +427,10 @@ def polymatrix_game(
     The actual roles and strategies of matrix game are ignored.
     """
     payoffs = np.zeros([num_strats] * num_players + [num_players])
-    for players in itertools.combinations(range(num_players),
-                                          players_per_matrix):
-        sub_payoffs = matgame.matgame_copy(matrix_game(
-            [num_strats] * players_per_matrix)).payoff_matrix()
+    for players in itertools.combinations(range(num_players), players_per_matrix):
+        sub_payoffs = matgame.matgame_copy(
+            matrix_game([num_strats] * players_per_matrix)
+        ).payoff_matrix()
         new_shape = np.array([1] * num_players + [players_per_matrix])
         new_shape[list(players)] = num_strats
         payoffs[..., list(players)] += sub_payoffs.reshape(new_shape)
@@ -433,23 +449,24 @@ def rock_paper_scissors(win=1, loss=-1):
     else:
         loss = [loss] * 3
     utils.check(
-        all(l < 0 for l in loss) and all(w > 0 for w in win) and len(loss) == 3
+        all(l < 0 for l in loss)
+        and all(w > 0 for w in win)
+        and len(loss) == 3
         and len(win) == 3,
-        'win must be greater than 0 and loss must be less than zero')
-    profiles = [[2, 0, 0],
-                [1, 1, 0],
-                [1, 0, 1],
-                [0, 2, 0],
-                [0, 1, 1],
-                [0, 0, 2]]
-    payoffs = [[0., 0., 0.],
-               [loss[0], win[0], 0.],
-               [win[1], 0., loss[1]],
-               [0., 0., 0.],
-               [0., loss[2], win[2]],
-               [0., 0., 0.]]
-    return paygame.game_names(['all'], 2, [['paper', 'rock', 'scissors']],
-                              profiles, payoffs)
+        "win must be greater than 0 and loss must be less than zero",
+    )
+    profiles = [[2, 0, 0], [1, 1, 0], [1, 0, 1], [0, 2, 0], [0, 1, 1], [0, 0, 2]]
+    payoffs = [
+        [0.0, 0.0, 0.0],
+        [loss[0], win[0], 0.0],
+        [win[1], 0.0, loss[1]],
+        [0.0, 0.0, 0.0],
+        [0.0, loss[2], win[2]],
+        [0.0, 0.0, 0.0],
+    ]
+    return paygame.game_names(
+        ["all"], 2, [["paper", "rock", "scissors"]], profiles, payoffs
+    )
 
 
 def travellers_dilemma(players=2, max_value=100):
@@ -457,8 +474,8 @@ def travellers_dilemma(players=2, max_value=100):
 
     Strategies range from 2 to max_value, thus there will be max_value - 1
     strategies."""
-    utils.check(players > 1, 'players must be more than one')
-    utils.check(max_value > 2, 'max value must be more than 2')
+    utils.check(players > 1, "players must be more than one")
+    utils.check(max_value > 2, "max value must be more than 2")
     base = rsgame.empty(players, max_value - 1)
     profiles = base.all_profiles()
     payoffs = np.zeros(profiles.shape)
@@ -486,8 +503,10 @@ def keep_profiles(base, keep_prob=0.5):
     # First turn input into number of profiles to compute
     num_profs = base.num_profiles
     utils.check(
-        0 <= keep_prob <= 1, 'keep probability must be in [0, 1] but was {:g}',
-        keep_prob)
+        0 <= keep_prob <= 1,
+        "keep probability must be in [0, 1] but was {:g}",
+        keep_prob,
+    )
     if num_profs <= np.iinfo(int).max:
         num = rand.binomial(num_profs, keep_prob)
     else:
@@ -506,8 +525,11 @@ def keep_num_profiles(base, num):
         The number of profiles to keep from the game.
     """
     utils.check(
-        0 <= num <= base.num_profiles, 'num must be in [0, {:d}] but was {:d}',
-        base.num_profiles, num)
+        0 <= num <= base.num_profiles,
+        "num must be in [0, {:d}] but was {:d}",
+        base.num_profiles,
+        num,
+    )
     if num == 0:
         profiles = np.empty((0, base.num_strats), int)
         payoffs = np.empty((0, base.num_strats))
@@ -521,7 +543,7 @@ def keep_num_profiles(base, num):
     return paygame.game_replace(base, profiles, payoffs)
 
 
-def sample_profiles(base, num): # pylint: disable=inconsistent-return-statements
+def sample_profiles(base, num):  # pylint: disable=inconsistent-return-statements
     """Generate unique profiles from a game
 
     Parameters
@@ -531,7 +553,7 @@ def sample_profiles(base, num): # pylint: disable=inconsistent-return-statements
     num : int
         Number of profiles to sample from the game.
     """
-    if num == base.num_all_profiles: # pylint: disable=no-else-return
+    if num == base.num_all_profiles:  # pylint: disable=no-else-return
         return base.all_profiles()
     elif num == 0:
         return np.empty((0, base.num_strats), int)
@@ -540,14 +562,14 @@ def sample_profiles(base, num): # pylint: disable=inconsistent-return-statements
         return base.profile_from_id(inds)
     else:
         # Number of times we have to re-query
-        ratio = (sps.digamma(float(base.num_all_profiles)) -
-                 sps.digamma(float(base.num_all_profiles - num)))
+        ratio = sps.digamma(float(base.num_all_profiles)) - sps.digamma(
+            float(base.num_all_profiles - num)
+        )
         # Max is for underflow
         num_per = max(round(float(ratio * base.num_all_profiles)), num)
         profiles = set()
         while len(profiles) < num:
-            profiles.update(
-                utils.hash_array(p) for p in base.random_profiles(num_per))
+            profiles.update(utils.hash_array(p) for p in base.random_profiles(num_per))
         profiles = np.stack([h.array for h in profiles])
         inds = rand.choice(profiles.shape[0], num, replace=False)
         return profiles[inds]
@@ -574,12 +596,14 @@ def _random_mask(prob, num_funcs, num_strats):
 
 def _random_weights(prob, num_funcs, num_strats):
     """Returns random action weights"""
-    return (_random_mask(prob, num_funcs, num_strats) *
-            np.random.normal(0, 1, (num_funcs, num_strats)))
+    return _random_mask(prob, num_funcs, num_strats) * np.random.normal(
+        0, 1, (num_funcs, num_strats)
+    )
 
 
-def normal_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
-                 weight_prob=0.2):
+def normal_aggfn(
+    role_players, role_strats, functions, *, input_prob=0.2, weight_prob=0.2
+):
     """Generate a random normal AgfnGame
 
     Each function value is an i.i.d Gaussian random walk.
@@ -611,9 +635,9 @@ def normal_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
     return aggfn.aggfn_replace(base, weights, inputs, funcs)
 
 
-def _random_aggfn( # pylint: disable=too-many-arguments
-        role_players, role_strats, functions, input_prob, weight_prob,
-        role_dist):
+def _random_aggfn(  # pylint: disable=too-many-arguments
+    role_players, role_strats, functions, input_prob, weight_prob, role_dist
+):
     """Base form for structured random aggfn generation
 
     role_dist takes a number of functions and a number of players and returns
@@ -635,8 +659,8 @@ def _random_aggfn( # pylint: disable=too-many-arguments
 
 
 def poly_aggfn(
-        role_players, role_strats, functions, *, input_prob=0.2,
-        weight_prob=0.2, degree=4):
+    role_players, role_strats, functions, *, input_prob=0.2, weight_prob=0.2, degree=4
+):
     """Generate a random polynomial AgfnGame
 
     Functions are generated by generating `degree` zeros in [0, num_players] to
@@ -666,8 +690,7 @@ def poly_aggfn(
         """Role distribution"""
         zeros = (np.random.random((functions, max_degree)) * 1.5 - 0.25) * play
         terms = np.arange(play + 1)[:, None] - zeros[:, None]
-        choices = np.random.choice(
-            max_degree, (functions, play + 1), True, degree)
+        choices = np.random.choice(max_degree, (functions, play + 1), True, degree)
         terms[choices[..., None] < np.arange(max_degree)] = 1
         poly = terms.prod(2) / play ** choices
 
@@ -677,12 +700,14 @@ def poly_aggfn(
         offset = poly.min() + 1
         return (poly - offset) / (1 if np.isclose(scale, 0) else scale)
 
-    return _random_aggfn(role_players, role_strats, functions, input_prob,
-                         weight_prob, role_dist)
+    return _random_aggfn(
+        role_players, role_strats, functions, input_prob, weight_prob, role_dist
+    )
 
 
-def sine_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
-               weight_prob=0.2, period=4):
+def sine_aggfn(
+    role_players, role_strats, functions, *, input_prob=0.2, weight_prob=0.2, period=4
+):
     """Generate a random sinusodial AgfnGame
 
     Functions are generated by generating sinusoids with uniform random shifts
@@ -704,25 +729,28 @@ def sine_aggfn(role_players, role_strats, functions, *, input_prob=0.2,
     period : float, optional
         The loose number of periods in the payoff for each function.
     """
+
     def role_dist(functions, play):
         """Distribution by role"""
         # This setup makes it so that the beat frequencies approach period
-        periods = ((np.arange(1, functions + 1) +
-                    np.random.random(functions) / 2 - 1 / 4) *
-                   period / functions)
+        periods = (
+            (np.arange(1, functions + 1) + np.random.random(functions) / 2 - 1 / 4)
+            * period
+            / functions
+        )
         offset = np.random.random((functions, 1))
         return np.sin(
-            (np.linspace(0, 1, play + 1) * periods[:, None] + offset) * 2 *
-            np.pi)
+            (np.linspace(0, 1, play + 1) * periods[:, None] + offset) * 2 * np.pi
+        )
 
-    return _random_aggfn(role_players, role_strats, functions, input_prob,
-                         weight_prob, role_dist)
+    return _random_aggfn(
+        role_players, role_strats, functions, input_prob, weight_prob, role_dist
+    )
 
 
 def _random_monotone_polynomial(functions, players, degree):
     """Generates a random monotone polynomial table"""
-    coefs = (np.random.random((functions, degree + 1)) /
-             players ** np.arange(degree + 1))
+    coefs = np.random.random((functions, degree + 1)) / players ** np.arange(degree + 1)
     powers = np.arange(players + 1) ** np.arange(degree + 1)[:, None]
     return coefs.dot(powers)
 
@@ -749,23 +777,24 @@ def congestion(num_players, num_facilities, num_required, *, degree=2):
     degree : int > 0, optional
         Degree of payoff polynomials.
     """
-    utils.check(num_players > 1, 'must have more than one player')
-    utils.check(num_facilities > 1, 'must have more than one facility')
+    utils.check(num_players > 1, "must have more than one player")
+    utils.check(num_facilities > 1, "must have more than one facility")
     utils.check(
         0 < num_required < num_facilities,
-        'must require more than zero but less than num_facilities')
-    utils.check(degree > 0, 'degree must be greater than zero')
+        "must require more than zero but less than num_facilities",
+    )
+    utils.check(degree > 0, "degree must be greater than zero")
 
     function_inputs = utils.acomb(num_facilities, num_required)
-    functions = -_random_monotone_polynomial(num_facilities, num_players,
-                                             degree)
+    functions = -_random_monotone_polynomial(num_facilities, num_players, degree)
 
-    facs = tuple(utils.prefix_strings('', num_facilities))
-    strats = tuple('_'.join(facs[i] for i, m in enumerate(mask) if m)
-                   for mask in function_inputs)
+    facs = tuple(utils.prefix_strings("", num_facilities))
+    strats = tuple(
+        "_".join(facs[i] for i, m in enumerate(mask) if m) for mask in function_inputs
+    )
     return aggfn.aggfn_names(
-        ['all'], num_players, [strats], function_inputs.T, function_inputs,
-        functions)
+        ["all"], num_players, [strats], function_inputs.T, function_inputs, functions
+    )
 
 
 def local_effect(num_players, num_strategies, *, edge_prob=0.2):
@@ -790,8 +819,7 @@ def local_effect(num_players, num_strategies, *, edge_prob=0.2):
     utils.check(num_players > 1, "can't generate a single player game")
     utils.check(num_strategies > 1, "can't generate a single strategy game")
 
-    local_effect_graph = np.random.rand(
-        num_strategies, num_strategies) < edge_prob
+    local_effect_graph = np.random.rand(num_strategies, num_strategies) < edge_prob
     np.fill_diagonal(local_effect_graph, False)
     num_neighbors = local_effect_graph.sum()
     num_functions = num_neighbors + num_strategies
@@ -805,8 +833,11 @@ def local_effect(num_players, num_strategies, *, edge_prob=0.2):
 
     function_table = np.empty((num_functions, num_players + 1), float)
     function_table[:num_strategies] = -_random_monotone_polynomial(
-        num_strategies, num_players, 2)
+        num_strategies, num_players, 2
+    )
     function_table[num_strategies:] = _random_monotone_polynomial(
-        num_neighbors, num_players, 3)
-    return aggfn.aggfn(num_players, num_strategies, action_weights,
-                       function_inputs, function_table)
+        num_neighbors, num_players, 3
+    )
+    return aggfn.aggfn(
+        num_players, num_strategies, action_weights, function_inputs, function_table
+    )

@@ -17,8 +17,11 @@ from gameanalysis import utils
 
 def pure_equilibria(game, *, epsilon=0):
     """Returns an array of all pure nash profiles"""
-    eqa = [prof for prof in game.profiles()
-           if regret.pure_strategy_regret(game, prof) <= epsilon]
+    eqa = [
+        prof
+        for prof in game.profiles()
+        if regret.pure_strategy_regret(game, prof) <= epsilon
+    ]
     return np.stack(eqa) if eqa else np.empty((0, game.num_strats))
 
 
@@ -32,48 +35,62 @@ def min_regret_profile(game):
 
     An error will be raised if there are no profiles with a defined regret.
     """
-    utils.check(not game.is_empty(), 'Game must have a profile')
+    utils.check(not game.is_empty(), "Game must have a profile")
     reg, _, prof = min(
         (_nan_to_inf(regret.pure_strategy_regret(game, prof)), i, prof)
-        for i, prof in enumerate(game.profiles()))
-    utils.check(not np.isinf(reg), 'No profiles had valid regret')
+        for i, prof in enumerate(game.profiles())
+    )
+    utils.check(not np.isinf(reg), "No profiles had valid regret")
     return prof
 
 
 class _Sentinel(Exception):
     """A sentinel for timeouts"""
-    pass
 
 
 def _iter_nash(
-        *, def_max_iters=10000, def_converge_thresh=1e-8, def_converge_disc=1,
-        def_timeout=None, first_check=1000):
+    *,
+    def_max_iters=10000,
+    def_converge_thresh=1e-8,
+    def_converge_disc=1,
+    def_timeout=None,
+    first_check=1000
+):
     """Decorator for iterative nash finding methods"""
     # TODO potentially also take regret_thresh and check every that regret is
     # below thresh at most every second?
     def wrap(func):
         """The actual decorator"""
+
         @functools.wraps(func)
-        def wrapped( # pylint: disable=too-many-arguments
-                game, prof, *args, max_iters=def_max_iters,
-                timeout=def_timeout, converge_thresh=def_converge_thresh,
-                converge_disc=def_converge_disc, **kwargs):
+        def wrapped(  # pylint: disable=too-many-arguments
+            game,
+            prof,
+            *args,
+            max_iters=def_max_iters,
+            timeout=def_timeout,
+            converge_thresh=def_converge_thresh,
+            converge_disc=def_converge_disc,
+            **kwargs
+        ):
             """The wrapped nash function"""
             converge_thresh *= np.sqrt(2 * game.num_roles)
             smooth_update = np.zeros(game.num_strats)
             mix = last_mix = game.trim_mixture_support(prof, thresh=0)
-            with contextlib.suppress(_Sentinel), utils.timeout(
-                timeout, _Sentinel):
-                for i, mix in zip(
-                        range(max_iters), func(game, prof, *args, **kwargs)):
+            with contextlib.suppress(_Sentinel), utils.timeout(timeout, _Sentinel):
+                for i, mix in zip(range(max_iters), func(game, prof, *args, **kwargs)):
                     smooth_update *= 1 - converge_disc
                     smooth_update += converge_disc * (mix - last_mix)
-                    if (i * converge_disc > first_check and
-                            np.linalg.norm(smooth_update) < converge_thresh):
+                    if (
+                        i * converge_disc > first_check
+                        and np.linalg.norm(smooth_update) < converge_thresh
+                    ):
                         break
                     last_mix = mix.copy()
             return game.mixture_project(mix)
+
         return wrapped
+
     return wrap
 
 
@@ -111,15 +128,17 @@ def replicator_dynamics(game, mix, *, slack=1e-3):
         resid[np.isclose(resid, 0)] = slack
         offset = np.repeat(minp - resid, game.num_role_strats)
         mix *= dev_pays - offset
-        mix /= np.add.reduceat(
-            mix, game.role_starts).repeat(game.num_role_strats)
+        mix /= np.add.reduceat(mix, game.role_starts).repeat(game.num_role_strats)
         yield mix
 
 
 @_iter_nash(
-    def_max_iters=100000, def_converge_thresh=1e-6, def_converge_disc=0.2,
-    first_check=10)
-def regret_matching(game, profile, *, slack=0.1): # pylint: disable=too-many-locals
+    def_max_iters=100000,
+    def_converge_thresh=1e-6,
+    def_converge_disc=0.2,
+    first_check=10,
+)
+def regret_matching(game, profile, *, slack=0.1):  # pylint: disable=too-many-locals
     """Regret matching
 
     Run regret matching. This selects new strategies to play proportionally to
@@ -136,34 +155,40 @@ def regret_matching(game, profile, *, slack=0.1): # pylint: disable=too-many-loc
         The amount to make sure agents will always play their last played
         strategy. (0, 1)
     """
-    strat_players = game.num_role_players.repeat(
-        game.num_role_strats).astype(float)
+    strat_players = game.num_role_players.repeat(game.num_role_strats).astype(float)
 
     profile = np.asarray(profile, int)
     mean_gains = np.zeros(game.num_devs)
     mean_mix = profile / strat_players
     mus = np.full(game.num_roles, np.finfo(float).tiny)
 
-    for i in itertools.count(1): # pragma: no branch
+    for i in itertools.count(1):  # pragma: no branch
         # Regret matching
         gains = regret.pure_strategy_deviation_gains(game, profile)
         gains *= profile.repeat(game.num_strat_devs)
         mean_gains += (gains - mean_gains) / i
-        np.maximum(np.maximum.reduceat(
-            np.add.reduceat(np.maximum(gains, 0), game.dev_strat_starts),
-            game.role_starts), mus, mus)
+        np.maximum(
+            np.maximum.reduceat(
+                np.add.reduceat(np.maximum(gains, 0), game.dev_strat_starts),
+                game.role_starts,
+            ),
+            mus,
+            mus,
+        )
 
         # For each strategy sample from regret matching distribution
         new_profile = np.zeros(game.num_strats, int)
         for rgains, prof, nprof, norm, strats in zip(
-                np.split(np.maximum(mean_gains, 0), game.dev_role_starts[1:]),
-                np.split(profile, game.role_starts[1:]),
-                np.split(new_profile, game.role_starts[1:]),
-                mus * (1 + slack),
-                game.num_role_strats):
+            np.split(np.maximum(mean_gains, 0), game.dev_role_starts[1:]),
+            np.split(profile, game.role_starts[1:]),
+            np.split(new_profile, game.role_starts[1:]),
+            mus * (1 + slack),
+            game.num_role_strats,
+        ):
             probs = rgains / norm
             probs[np.arange(0, probs.size, strats + 1)] = 1 - np.add.reduceat(
-                probs, np.arange(0, probs.size, strats))
+                probs, np.arange(0, probs.size, strats)
+            )
             for count, prob in zip(prof, np.split(probs, strats)):
                 nprof += np.random.multinomial(count, prob)
 
@@ -197,8 +222,9 @@ def regret_minimize(game, mix, *, gtol=1e-8):
         The gradient tolerance used for optimization convergence. See
         `scipy.optimize.minimize`.
     """
-    scale = np.repeat(game.max_role_payoffs() - game.min_role_payoffs(),
-                      game.num_role_strats)
+    scale = np.repeat(
+        game.max_role_payoffs() - game.min_role_payoffs(), game.num_role_strats
+    )
     scale[np.isclose(scale, 0)] = 1  # In case payoffs are the same
     offset = game.min_role_payoffs().repeat(game.num_role_strats)
 
@@ -211,7 +237,8 @@ def regret_minimize(game, mix, *, gtol=1e-8):
         # Because deviation payoffs uses log space, we max with 0 just for the
         # payoff calculation
         dev_pay, dev_jac = game.deviation_payoffs(
-            np.maximum(mixture, 0), jacobian=True, full_jacobian=True)
+            np.maximum(mixture, 0), jacobian=True, full_jacobian=True
+        )
 
         # Normalize
         dev_pay = (dev_pay - offset) / scale
@@ -219,20 +246,28 @@ def regret_minimize(game, mix, *, gtol=1e-8):
 
         # Gains from deviation (objective)
         gains = np.maximum(
-            dev_pay - np.add.reduceat(
-                mixture * dev_pay,
-                game.role_starts).repeat(game.num_role_strats),
-            0)
+            dev_pay
+            - np.add.reduceat(mixture * dev_pay, game.role_starts).repeat(
+                game.num_role_strats
+            ),
+            0,
+        )
         obj = gains.dot(gains) / 2
 
-        gains_jac = (dev_jac - dev_pay - np.add.reduceat(
-            mixture[:, None] * dev_jac, game.role_starts).repeat(
-                game.num_role_strats, 0))
+        gains_jac = (
+            dev_jac
+            - dev_pay
+            - np.add.reduceat(mixture[:, None] * dev_jac, game.role_starts).repeat(
+                game.num_role_strats, 0
+            )
+        )
         grad = gains.dot(gains_jac)
 
         # Project grad so steps stay in the simplotope
-        grad -= np.repeat(np.add.reduceat(grad, game.role_starts) /
-                          game.num_role_strats, game.num_role_strats)
+        grad -= np.repeat(
+            np.add.reduceat(grad, game.role_starts) / game.num_role_strats,
+            game.num_role_strats,
+        )
 
         return obj, grad
 
@@ -241,11 +276,14 @@ def regret_minimize(game, mix, *, gtol=1e-8):
         # run-time warning when things get very small negative.  This
         # is potentially a error with the way we compute gradients, but
         # it's not reproducible, so we ignore it.
-        warnings.simplefilter(
-            'ignore', optimize.linesearch.LineSearchWarning)
+        warnings.simplefilter("ignore", optimize.linesearch.LineSearchWarning)
         mix = optimize.minimize(
-            grad, mix, jac=True, bounds=[(0, 1)] * game.num_strats,
-            options={'gtol': gtol}).x
+            grad,
+            mix,
+            jac=True,
+            bounds=[(0, 1)] * game.num_strats,
+            options={"gtol": gtol},
+        ).x
         return game.mixture_project(mix)
 
 
@@ -265,7 +303,7 @@ def fictitious_play(game, mix):
         The initial mixture to respond to.
     """
     empirical = mix.copy()
-    for i in itertools.count(2): # pragma: no branch
+    for i in itertools.count(2):  # pragma: no branch
         empirical += (game.best_response(empirical) - empirical) / i
         yield empirical
 
@@ -290,15 +328,16 @@ def _multiplicative_weights(game, mix, func, epsilon):
     """
     average = mix.copy()
     # This is done in log space to prevent weights zeroing out for limit cycles
-    with np.errstate(divide='ignore'):
+    with np.errstate(divide="ignore"):
         log_weights = np.log(mix)
     learning = np.log(1 + epsilon)
 
-    for i in itertools.count(2): # pragma: no branch
+    for i in itertools.count(2):  # pragma: no branch
         pays = func(game, np.exp(log_weights))
         log_weights += pays * learning
-        log_weights -= np.logaddexp.reduceat(
-            log_weights, game.role_starts).repeat(game.num_role_strats)
+        log_weights -= np.logaddexp.reduceat(log_weights, game.role_starts).repeat(
+            game.num_role_strats
+        )
         average += (np.exp(log_weights) - average) / i
         yield average
 
@@ -309,8 +348,8 @@ def _mw_dist(game, mix):
 
 
 def multiplicative_weights_dist(
-        game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8,
-        **kwargs):
+    game, mix, *, epsilon=0.5, max_iters=10000, converge_thresh=1e-8, **kwargs
+):
     """Compute an equilibrium using the distribution multiplicative weights
 
     This version of multiplicative weights takes the longest per iteration, but
@@ -326,9 +365,16 @@ def multiplicative_weights_dist(
         The rate of update for new payoffs. Convergence results hold when
         epsilon in [0, 3/5].
     """
-    return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
-        game, mix, _mw_dist, epsilon, max_iters=max_iters,
-        converge_thresh=converge_thresh, converge_disc=1, **kwargs)
+    return _multiplicative_weights(  # pylint: disable=unexpected-keyword-arg
+        game,
+        mix,
+        _mw_dist,
+        epsilon,
+        max_iters=max_iters,
+        converge_thresh=converge_thresh,
+        converge_disc=1,
+        **kwargs
+    )
 
 
 def _mw_stoch(game, mix):
@@ -341,8 +387,15 @@ def _mw_stoch(game, mix):
 
 
 def multiplicative_weights_stoch(
-        game, mix, *, epsilon=0.5, max_iters=100000, converge_thresh=1e-7,
-        converge_disc=0.2, **kwargs):
+    game,
+    mix,
+    *,
+    epsilon=0.5,
+    max_iters=100000,
+    converge_thresh=1e-7,
+    converge_disc=0.2,
+    **kwargs
+):
     """Compute an equilibrium using the stochastic multiplicative weights
 
     This version of multiplicative weights takes a medium amount of time per
@@ -358,9 +411,16 @@ def multiplicative_weights_stoch(
         The rate of update for new payoffs. Convergence results hold when
         epsilon in [0, 3/5].
     """
-    return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
-        game, mix, _mw_stoch, epsilon, max_iters=max_iters,
-        converge_thresh=converge_thresh, converge_disc=converge_disc, **kwargs)
+    return _multiplicative_weights(  # pylint: disable=unexpected-keyword-arg
+        game,
+        mix,
+        _mw_stoch,
+        epsilon,
+        max_iters=max_iters,
+        converge_thresh=converge_thresh,
+        converge_disc=converge_disc,
+        **kwargs
+    )
 
 
 def _mw_bandit(min_prob, game, mix):
@@ -368,14 +428,25 @@ def _mw_bandit(min_prob, game, mix):
     # Minimum probability to force exploration
     mix = game.minimum_prob(mix, min_prob=min_prob)
     prof = game.random_profile(mix)
-    pay = (game.get_payoffs(prof) * prof /
-           game.num_role_players.repeat(game.num_role_strats))
+    pay = (
+        game.get_payoffs(prof)
+        * prof
+        / game.num_role_players.repeat(game.num_role_strats)
+    )
     return pay / mix
 
 
 def multiplicative_weights_bandit(
-        game, mix, *, epsilon=0.5, max_iters=100000, converge_thresh=1e-7,
-        converge_disc=0.1, min_prob=1e-3, **kwargs):
+    game,
+    mix,
+    *,
+    epsilon=0.5,
+    max_iters=100000,
+    converge_thresh=1e-7,
+    converge_disc=0.1,
+    min_prob=1e-3,
+    **kwargs
+):
     """Compute an equilibrium using the bandit multiplicative weights
 
     This version of multiplicative weights takes the shortest amount of time
@@ -397,10 +468,16 @@ def multiplicative_weights_bandit(
         divided by the probability to get unbiased estimates. However, larger
         settings of this will bias the overall result. (0, 1)
     """
-    return _multiplicative_weights( # pylint: disable=unexpected-keyword-arg
-        game, mix, functools.partial(_mw_bandit, min_prob), epsilon,
-        max_iters=max_iters, converge_thresh=converge_thresh,
-        converge_disc=converge_disc, **kwargs)
+    return _multiplicative_weights(  # pylint: disable=unexpected-keyword-arg
+        game,
+        mix,
+        functools.partial(_mw_bandit, min_prob),
+        epsilon,
+        max_iters=max_iters,
+        converge_thresh=converge_thresh,
+        converge_disc=converge_disc,
+        **kwargs
+    )
 
 
 # TODO Implement other equilibria finding methods that are found in gambit
@@ -434,19 +511,22 @@ def scarfs_algorithm(game, mix, *, regret_thresh=1e-2, disc=8):
         lower discretization. For example, with `disc=2` there are only
         `game.num_strats - game.num_roles + 1` possible starting points.
     """
+
     def eqa_func(mixture):
         """Equilibrium fixed point function"""
         mixture = game.mixture_from_simplex(mixture)
         gains = np.maximum(regret.mixture_deviation_gains(game, mixture), 0)
-        result = (mixture + gains) / (1 + np.add.reduceat(
-            gains, game.role_starts).repeat(game.num_role_strats))
+        result = (mixture + gains) / (
+            1 + np.add.reduceat(gains, game.role_starts).repeat(game.num_role_strats)
+        )
         return game.mixture_to_simplex(result)
 
     disc = min(disc, 8)
     reg = regret.mixture_regret(game, mix)
     while reg > regret_thresh:
-        mix = game.mixture_from_simplex(fixedpoint.fixed_point(
-            eqa_func, game.mixture_to_simplex(mix), disc=disc))
+        mix = game.mixture_from_simplex(
+            fixedpoint.fixed_point(eqa_func, game.mixture_to_simplex(mix), disc=disc)
+        )
         reg = regret.mixture_regret(game, mix)
         disc *= 2
         yield mix
@@ -463,14 +543,12 @@ def _noop(_game, mix):
 def _initial_mixtures(game):
     """Return generator of initial mixtures"""
     return itertools.chain(
-        [game.uniform_mixture()],
-        game.biased_mixtures(),
-        game.role_biased_mixtures())
+        [game.uniform_mixture()], game.biased_mixtures(), game.role_biased_mixtures()
+    )
 
 
-_STYLES = frozenset([
-    'fast', 'fast*', 'more', 'more*', 'best', 'best*', 'one'])
-_STYLES_STR = ', '.join(_STYLES)
+_STYLES = frozenset(["fast", "fast*", "more", "more*", "best", "best*", "one"])
+_STYLES_STR = ", ".join(_STYLES)
 
 
 def _serial_nash_func(game, spec):
@@ -482,42 +560,59 @@ def _serial_nash_func(game, spec):
 def _required(game):
     """Required methods for due diligence"""
     return itertools.chain(
-        ((regret_minimize, mix) for mix in itertools.chain(
-            _initial_mixtures(game),
-            game.pure_mixtures())),
-        ((_noop, mix) for mix in game.pure_mixtures()))
+        (
+            (regret_minimize, mix)
+            for mix in itertools.chain(_initial_mixtures(game), game.pure_mixtures())
+        ),
+        ((_noop, mix) for mix in game.pure_mixtures()),
+    )
 
 
 def _more(game, reg):
     """Extra methods for `more`"""
     return itertools.chain.from_iterable(
-        ((func, mix) for mix in _initial_mixtures(game)) for func in [
+        ((func, mix) for mix in _initial_mixtures(game))
+        for func in [
             functools.partial(scarfs_algorithm, timeout=60, regret_thresh=reg),
-            replicator_dynamics, multiplicative_weights_dist, fictitious_play,
-            _regret_matching_mix, multiplicative_weights_stoch,
-            multiplicative_weights_bandit])
+            replicator_dynamics,
+            multiplicative_weights_dist,
+            fictitious_play,
+            _regret_matching_mix,
+            multiplicative_weights_stoch,
+            multiplicative_weights_bandit,
+        ]
+    )
 
 
 def _best(game, reg):
     """Extra methods for `best`"""
     return itertools.chain(
         _more(game, reg),
-        [(functools.partial(
-            scarfs_algorithm, regret_thresh=reg, timeout=30 * 60),
-          game.uniform_mixture())])
+        [
+            (
+                functools.partial(scarfs_algorithm, regret_thresh=reg, timeout=30 * 60),
+                game.uniform_mixture(),
+            )
+        ],
+    )
 
 
 def _one(game, reg):
     """Extra methods for `one`"""
     return itertools.chain(
         _more(game, reg),
-        [(functools.partial(scarfs_algorithm, regret_thresh=reg),
-          game.uniform_mixture())])
+        [
+            (
+                functools.partial(scarfs_algorithm, regret_thresh=reg),
+                game.uniform_mixture(),
+            )
+        ],
+    )
 
 
-def mixed_equilibria( # pylint: disable=too-many-locals
-        game, style='best', *, regret_thresh=1e-2, dist_thresh=0.1,
-        processes=None):
+def mixed_equilibria(  # pylint: disable=too-many-locals
+    game, style="best", *, regret_thresh=1e-2, dist_thresh=0.1, processes=None
+):
     """Compute mixed equilibria
 
     Parameters
@@ -540,14 +635,15 @@ def mixed_equilibria( # pylint: disable=too-many-locals
         Number of processes to compute equilibria with. If None, all available
         processes will be used.
     """
-    utils.check(style in _STYLES, 'style {} not one of {}', style, _STYLES_STR)
+    utils.check(style in _STYLES, "style {} not one of {}", style, _STYLES_STR)
     utils.check(
-        processes is None or processes > 0,
-        'processes must be positive or None')
+        processes is None or processes > 0, "processes must be positive or None"
+    )
     # TODO Is there a better interface for checking dev payoffs
     utils.check(
         not np.isnan(game.deviation_payoffs(game.uniform_mixture())).any(),
-        'Nash finding only works on game with full deviation data')
+        "Nash finding only works on game with full deviation data",
+    )
 
     seq = 0
     req = 0
@@ -555,12 +651,9 @@ def mixed_equilibria( # pylint: disable=too-many-locals
 
     equilibria = collect.mcces(dist_thresh * np.sqrt(2 * game.num_roles))
     func = functools.partial(_serial_nash_func, game)
-    extra = {
-        'fast': lambda _, __: (),
-        'more': _more,
-        'best': _best,
-        'one': _one,
-    }[style.rstrip('*')](game, regret_thresh)
+    extra = {"fast": lambda _, __: (), "more": _more, "best": _best, "one": _one,}[
+        style.rstrip("*")
+    ](game, regret_thresh)
 
     def process_req(tup):
         """Count required methods"""
@@ -569,9 +662,12 @@ def mixed_equilibria( # pylint: disable=too-many-locals
         return tup + (True,)
 
     with multiprocessing.Pool(processes) as pool:
-        for preq, eqm in pool.imap_unordered(func, itertools.chain(
-                map(process_req, _required(game)),
-                (tup + (False,) for tup in extra))):
+        for preq, eqm in pool.imap_unordered(
+            func,
+            itertools.chain(
+                map(process_req, _required(game)), (tup + (False,) for tup in extra)
+            ),
+        ):
             seq += 1
             req -= preq
             reg = regret.mixture_regret(game, eqm)
@@ -582,24 +678,32 @@ def mixed_equilibria( # pylint: disable=too-many-locals
                 return np.stack([e for e, _ in equilibria])
 
     assert not req
-    return best[-1] if style.endswith('*') else np.empty((0, game.num_strats))
+    return best[-1] if style.endswith("*") else np.empty((0, game.num_strats))
 
 
 _AVAILABLE_METHODS = {
-    'replicator': replicator_dynamics,
-    'fictitious': fictitious_play,
-    'matching': _regret_matching_mix,
-    'optimize': regret_minimize,
-    'regret_dist': multiplicative_weights_dist,
-    'regret_stoch': multiplicative_weights_stoch,
-    'regret_bandit': multiplicative_weights_bandit,
+    "replicator": replicator_dynamics,
+    "fictitious": fictitious_play,
+    "matching": _regret_matching_mix,
+    "optimize": regret_minimize,
+    "regret_dist": multiplicative_weights_dist,
+    "regret_stoch": multiplicative_weights_stoch,
+    "regret_bandit": multiplicative_weights_bandit,
 }
 
 
-def mixed_nash( # pylint: disable=too-many-locals
-        game, *, regret_thresh=1e-3, dist_thresh=0.1, grid_points=2,
-        random_restarts=0, processes=0, min_reg=False, at_least_one=False,
-        **methods):
+def mixed_nash(  # pylint: disable=too-many-locals
+    game,
+    *,
+    regret_thresh=1e-3,
+    dist_thresh=0.1,
+    grid_points=2,
+    random_restarts=0,
+    processes=0,
+    min_reg=False,
+    at_least_one=False,
+    **methods
+):
     """Finds role-symmetric mixed Nash equilibria
 
     This is the intended front end for nash equilibria finding, wrapping the
@@ -659,29 +763,36 @@ def mixed_nash( # pylint: disable=too-many-locals
     umix = game.uniform_mixture()
     utils.check(
         not np.isnan(game.deviation_payoffs(umix)).any(),
-        'Nash finding only works on game with full deviation data')
+        "Nash finding only works on game with full deviation data",
+    )
     utils.check(
-        processes is None or processes >= 0,
-        'processes must be non-negative or None')
+        processes is None or processes >= 0, "processes must be non-negative or None"
+    )
     utils.check(
         all(m in _AVAILABLE_METHODS for m in methods),
-        'specified a invalid method {}', methods)
+        "specified a invalid method {}",
+        methods,
+    )
 
-    initial_points = list(itertools.chain(
-        [umix],
-        game.grid_mixtures(grid_points),
-        game.biased_mixtures(),
-        game.role_biased_mixtures(),
-        game.random_mixtures(random_restarts)))
+    initial_points = list(
+        itertools.chain(
+            [umix],
+            game.grid_mixtures(grid_points),
+            game.biased_mixtures(),
+            game.role_biased_mixtures(),
+            game.random_mixtures(random_restarts),
+        )
+    )
     equilibria = collect.mcces(dist_thresh)
     best = [np.inf, -1, None]
     chunksize = len(initial_points) if processes == 1 else 4
 
     # Initialize pickleable methods
-    methods = methods or {'replicator': {}, 'optimize': {}}
+    methods = methods or {"replicator": {}, "optimize": {}}
     methods = (
         functools.partial(_AVAILABLE_METHODS[meth], game, **(opts or {}))
-        for meth, opts in methods.items())
+        for meth, opts in methods.items()
+    )
 
     # what to do with each candidate equilibrium
     def process(i, eqm):
@@ -692,22 +803,25 @@ def mixed_nash( # pylint: disable=too-many-locals
         best[:] = min(best, [reg, i, eqm])
 
     if processes == 0:
-        for i, (meth, init) in enumerate(itertools.product(
-                methods, initial_points)):
+        for i, (meth, init) in enumerate(itertools.product(methods, initial_points)):
             process(i, meth(init))
     else:
         with multiprocessing.Pool(processes) as pool:
-            for i, eqm in enumerate(itertools.chain.from_iterable(
+            for i, eqm in enumerate(
+                itertools.chain.from_iterable(
                     pool.imap_unordered(m, initial_points, chunksize=chunksize)
-                    for m in methods)):
+                    for m in methods
+                )
+            ):
                 process(i, eqm)
 
-    if equilibria: # pylint: disable=no-else-return
+    if equilibria:  # pylint: disable=no-else-return
         return np.array([e for e, _ in equilibria])
     elif at_least_one:
-        return scarfs_algorithm( # pylint: disable=unsubscriptable-object
-            game, best[-1], regret_thresh=regret_thresh)[None]
+        return scarfs_algorithm(  # pylint: disable=unsubscriptable-object
+            game, best[-1], regret_thresh=regret_thresh
+        )[None]
     elif min_reg:
-        return best[-1][None] # pylint: disable=unsubscriptable-object
+        return best[-1][None]  # pylint: disable=unsubscriptable-object
     else:
         return np.empty((0, game.num_strats))

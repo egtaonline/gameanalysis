@@ -15,7 +15,7 @@ from gameanalysis import learning
 from gameanalysis import paygame
 from gameanalysis import restrict
 from gameanalysis import rsgame
-from test import utils # pylint: disable=wrong-import-order
+from test import utils  # pylint: disable=wrong-import-order
 
 
 @pytest.fixture(autouse=True)
@@ -23,13 +23,14 @@ def ignore_fit():
     """Ignore fit warnings"""
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            'ignore',
-            'some lengths were at their bounds, this may indicate a poor fit',
-            UserWarning)
+            "ignore",
+            "some lengths were at their bounds, this may indicate a poor fit",
+            UserWarning,
+        )
         yield
 
 
-@pytest.mark.parametrize('base', utils.edge_games())
+@pytest.mark.parametrize("base", utils.edge_games())
 def test_rbfgame_members(base):
     """Test that all functions can be called without breaking"""
     # pylint: disable-msg=protected-access
@@ -75,10 +76,8 @@ def test_rbfgame_members(base):
 
 def test_rbfgame_duplicate_profiles():
     """Test learnign with duplicate profiles"""
-    profs = [[2, 2],
-             [2, 2]]
-    pays = [[1, 2],
-            [3, 4]]
+    profs = [[2, 2], [2, 2]]
+    pays = [[1, 2], [3, 4]]
     game = paygame.samplegame_flat(4, 2, profs, pays)
     learning.rbfgame_train(game)
 
@@ -88,10 +87,10 @@ def test_nntrain():
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
     reggame = learning.nngame_train(game)
     assert np.all((reggame.profiles() > 0) | (reggame.payoffs() == 0))
-    assert not np.any(np.isnan(reggame.get_payoffs(
-        reggame.random_profile())))
-    assert not np.any(np.isnan(reggame.get_dev_payoffs(
-        reggame.random_role_deviation_profile())))
+    assert not np.any(np.isnan(reggame.get_payoffs(reggame.random_profile())))
+    assert not np.any(
+        np.isnan(reggame.get_dev_payoffs(reggame.random_role_deviation_profile()))
+    )
 
 
 def test_nntrain_no_dropout():
@@ -99,31 +98,32 @@ def test_nntrain_no_dropout():
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
     reggame = learning.nngame_train(game, dropout=0)
     assert np.all((reggame.profiles() > 0) | (reggame.payoffs() == 0))
-    assert not np.any(np.isnan(reggame.get_payoffs(
-        reggame.random_profile())))
-    assert not np.any(np.isnan(reggame.get_dev_payoffs(
-        reggame.random_role_deviation_profile())))
+    assert not np.any(np.isnan(reggame.get_payoffs(reggame.random_profile())))
+    assert not np.any(
+        np.isnan(reggame.get_dev_payoffs(reggame.random_role_deviation_profile()))
+    )
 
 
 def test_skltrain():
     """Test scikit learn traing"""
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
     model = gp.GaussianProcessRegressor(
-        1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1))
+        1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1)
+    )
     reggame = learning.sklgame_train(game, model)
     assert np.all((reggame.profiles() > 0) | (reggame.payoffs() == 0))
-    assert not np.any(np.isnan(reggame.get_payoffs(
-        reggame.random_profile())))
-    assert not np.any(np.isnan(reggame.get_dev_payoffs(
-        reggame.random_role_deviation_profile())))
+    assert not np.any(np.isnan(reggame.get_payoffs(reggame.random_profile())))
+    assert not np.any(
+        np.isnan(reggame.get_dev_payoffs(reggame.random_role_deviation_profile()))
+    )
 
     with pytest.raises(ValueError):
         reggame.deviation_payoffs(game.random_mixture())
     assert game + reggame == reggame + game
 
 
-@pytest.mark.parametrize('base', utils.edge_games())
-def test_rbfgame_restriction(base): # pylint: disable=too-many-locals
+@pytest.mark.parametrize("base", utils.edge_games())
+def test_rbfgame_restriction(base):  # pylint: disable=too-many-locals
     """Test rbf game restriction"""
     game = gamegen.gen_num_profiles(base, 13)
     reggame = learning.rbfgame_train(game)
@@ -132,21 +132,18 @@ def test_rbfgame_restriction(base): # pylint: disable=too-many-locals
     rreg = reggame.restrict(rest)
 
     subpays = rreg.payoffs()
-    fullpays = reggame.get_payoffs(restrict.translate(
-        rreg.profiles(), rest))[:, rest]
+    fullpays = reggame.get_payoffs(restrict.translate(rreg.profiles(), rest))[:, rest]
     assert np.allclose(subpays, fullpays)
 
     mix = rreg.random_mixture()
     sub_dev_profs = rreg.random_role_deviation_profiles(20, mix)
     sub_pays = rreg.get_dev_payoffs(sub_dev_profs)
-    pays = reggame.get_dev_payoffs(restrict.translate(
-        sub_dev_profs, rest))[:, rest]
+    pays = reggame.get_dev_payoffs(restrict.translate(sub_dev_profs, rest))[:, rest]
     assert np.allclose(sub_pays, pays)
 
     for mix in rreg.random_mixtures(20):
         dev_pay = rreg.deviation_payoffs(mix)
-        full_pay = reggame.deviation_payoffs(restrict.translate(
-            mix, rest))[rest]
+        full_pay = reggame.deviation_payoffs(restrict.translate(mix, rest))[rest]
         assert np.allclose(dev_pay, full_pay)
 
     assert rreg.min_strat_payoffs().shape == (rreg.num_strats,)
@@ -169,7 +166,7 @@ def test_rbfgame_restriction(base): # pylint: disable=too-many-locals
     assert copy == rrreg
 
 
-@pytest.mark.parametrize('base', utils.edge_games())
+@pytest.mark.parametrize("base", utils.edge_games())
 def test_rbfgame_normalize(base):
     """Test normalize"""
     game = gamegen.gen_num_profiles(base, 13)
@@ -178,11 +175,14 @@ def test_rbfgame_normalize(base):
     assert reggame != normreg
 
     assert np.allclose(normreg.min_role_payoffs(), 0)
-    assert np.all(np.isclose(normreg.max_role_payoffs(), 1) |
-                  np.isclose(normreg.max_role_payoffs(), 0))
+    assert np.all(
+        np.isclose(normreg.max_role_payoffs(), 1)
+        | np.isclose(normreg.max_role_payoffs(), 0)
+    )
 
     scale = (reggame.max_role_payoffs() - reggame.min_role_payoffs()).repeat(
-        game.num_role_strats)
+        game.num_role_strats
+    )
     offset = reggame.min_role_payoffs().repeat(game.num_role_strats)
 
     reg_pays = reggame.payoffs()
@@ -203,21 +203,24 @@ def test_rbfgame_normalize(base):
     assert copy == normreg
 
 
-def test_sample(): # pylint: disable=too-many-locals
+def test_sample():  # pylint: disable=too-many-locals
     """Test sample game"""
     # pylint: disable-msg=protected-access
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
-    model = learning.sklgame_train(game, gp.GaussianProcessRegressor(
-        1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1),
-        normalize_y=True))
+    model = learning.sklgame_train(
+        game,
+        gp.GaussianProcessRegressor(
+            1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1),
+            normalize_y=True,
+        ),
+    )
     learn = learning.sample(model)
     full = paygame.game_copy(learn)
 
     @autograd.primitive
     def sample_profs(mix):
         """Sample profiles"""
-        return game.random_role_deviation_profiles(
-            learn.num_samples, mix).astype(float)
+        return game.random_role_deviation_profiles(learn.num_samples, mix).astype(float)
 
     @autograd.primitive
     def model_pays(profs):
@@ -250,22 +253,22 @@ def test_sample(): # pylint: disable=too-many-locals
         numer = rep(anp.prod(mix ** profs, 2))
         denom = const_weights(profs, mix)
         weights = numer / denom / learn.num_samples
-        return anp.einsum('ij,ij->j', weights, payoffs)
+        return anp.einsum("ij,ij->j", weights, payoffs)
 
-    devpays_jac = autograd.jacobian(devpays) # pylint: disable=no-value-for-parameter
+    devpays_jac = autograd.jacobian(devpays)  # pylint: disable=no-value-for-parameter
 
     errors = np.zeros(game.num_strats)
     samp_errors = np.zeros(game.num_strats)
-    for i, mix in enumerate(itertools.chain(
-            game.random_mixtures(20), game.random_sparse_mixtures(20)), 1):
-        seed = random.randint(0, 10**9)
+    for i, mix in enumerate(
+        itertools.chain(game.random_mixtures(20), game.random_sparse_mixtures(20)), 1
+    ):
+        seed = random.randint(0, 10 ** 9)
         fdev = full.deviation_payoffs(mix)
         np.random.seed(seed)
         dev, jac = learn.deviation_payoffs(mix, jacobian=True)
         avg_err = (fdev - dev) ** 2 / (np.abs(fdev) + 1e-5)
         errors += (avg_err - errors) / i
-        samp_err = ((learn.deviation_payoffs(mix) - dev) ** 2 /
-                    (np.abs(dev) + 1e-5))
+        samp_err = (learn.deviation_payoffs(mix) - dev) ** 2 / (np.abs(dev) + 1e-5)
         samp_errors += (samp_err - samp_errors) / i
 
         np.random.seed(seed)
@@ -279,8 +282,7 @@ def test_sample(): # pylint: disable=too-many-locals
     submask = game.random_restriction()
     sublearn = learn.restrict(submask)
     subfull = full.restrict(submask)
-    assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
-                       subfull.payoffs())
+    assert np.allclose(sublearn.get_payoffs(subfull.profiles()), subfull.payoffs())
 
     norm = learn.normalize()
     assert np.allclose(norm.min_role_payoffs(), 0)
@@ -299,7 +301,7 @@ def test_sample(): # pylint: disable=too-many-locals
     assert learn + empty == empty
 
 
-def test_point(): # pylint: disable=too-many-locals
+def test_point():  # pylint: disable=too-many-locals
     """Test point
 
     We increase player number so point is a more accurate estimator.
@@ -316,17 +318,17 @@ def test_point(): # pylint: disable=too-many-locals
         """The deviation payoffs"""
         profile = learn._dev_players * mix
         dev_profiles = anp.dot(size, anp.dot(red, profile))
-        vec = ((dev_profiles - model._profiles) /
-               model._lengths.repeat(model._sizes, 0))
-        rbf = anp.einsum('...ij,...ij->...i', vec, vec)
+        vec = (dev_profiles - model._profiles) / model._lengths.repeat(model._sizes, 0)
+        rbf = anp.einsum("...ij,...ij->...i", vec, vec)
         exp = anp.exp(-rbf / 2) * model._alpha
         return model._offset + model._coefs * anp.dot(exp, size)
 
-    devpays_jac = autograd.jacobian(devpays) # pylint: disable=no-value-for-parameter
+    devpays_jac = autograd.jacobian(devpays)  # pylint: disable=no-value-for-parameter
 
     errors = np.zeros(game.num_strats)
-    for i, mix in enumerate(itertools.chain(
-            game.random_mixtures(20), game.random_sparse_mixtures(20)), 1):
+    for i, mix in enumerate(
+        itertools.chain(game.random_mixtures(20), game.random_sparse_mixtures(20)), 1
+    ):
         fdev = full.deviation_payoffs(mix)
         dev, jac = learn.deviation_payoffs(mix, jacobian=True)
         err = (fdev - dev) ** 2 / (np.abs(dev) + 1e-5)
@@ -343,8 +345,7 @@ def test_point(): # pylint: disable=too-many-locals
     submask = game.random_restriction()
     sublearn = learn.restrict(submask)
     subfull = full.restrict(submask)
-    assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
-                       subfull.payoffs())
+    assert np.allclose(sublearn.get_payoffs(subfull.profiles()), subfull.payoffs())
 
     norm = learn.normalize()
     assert np.allclose(norm.min_role_payoffs(), 0)
@@ -362,18 +363,19 @@ def test_point(): # pylint: disable=too-many-locals
     assert learn + empty == empty
 
 
-def test_neighbor(): # pylint: disable=too-many-locals
+def test_neighbor():  # pylint: disable=too-many-locals
     """Test neighbor games"""
     game = gamegen.sparse_game([2, 3], [3, 2], 10)
     model = gp.GaussianProcessRegressor(
-        1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1),
-        normalize_y=True)
+        1.0 * gp.kernels.RBF(2, [1, 3]) + gp.kernels.WhiteKernel(1), normalize_y=True
+    )
     learn = learning.neighbor(learning.sklgame_train(game, model))
     full = paygame.game_copy(learn)
 
     errors = np.zeros(game.num_strats)
-    for i, mix in enumerate(itertools.chain(
-            game.random_mixtures(20), game.random_sparse_mixtures(20)), 1):
+    for i, mix in enumerate(
+        itertools.chain(game.random_mixtures(20), game.random_sparse_mixtures(20)), 1
+    ):
         tdev = full.deviation_payoffs(mix)
         dev, _ = learn.deviation_payoffs(mix, jacobian=True)
         err = (tdev - dev) ** 2 / (np.abs(dev) + 1e-5)
@@ -383,8 +385,7 @@ def test_neighbor(): # pylint: disable=too-many-locals
     submask = game.random_restriction()
     sublearn = learn.restrict(submask)
     subfull = full.restrict(submask)
-    assert np.allclose(sublearn.get_payoffs(subfull.profiles()),
-                       subfull.payoffs())
+    assert np.allclose(sublearn.get_payoffs(subfull.profiles()), subfull.payoffs())
 
     norm = learn.normalize()
     assert np.allclose(norm.min_role_payoffs(), 0)
@@ -403,20 +404,21 @@ def test_neighbor(): # pylint: disable=too-many-locals
     assert learn + empty == empty
 
 
-@pytest.mark.parametrize('players,strats', [
-    [[1, 5], [2, 2]],
-    [[2, 3], [3, 2]],
-])
+@pytest.mark.parametrize(
+    "players,strats",
+    [
+        [[1, 5], [2, 2]],
+        [[2, 3], [3, 2]],
+    ],
+)
 def test_rbfgame_min_max_payoffs(players, strats):
     """Test min and max payoffs of rbf game"""
     game = gamegen.sparse_game(players, strats, 11)
     reggame = learning.rbfgame_train(game)
     full = paygame.game_copy(reggame)
 
-    assert np.all(full.min_strat_payoffs() >=
-                  reggame.min_strat_payoffs() - 1e-4)
-    assert np.all(full.max_strat_payoffs() <=
-                  reggame.max_strat_payoffs() + 1e-4)
+    assert np.all(full.min_strat_payoffs() >= reggame.min_strat_payoffs() - 1e-4)
+    assert np.all(full.max_strat_payoffs() <= reggame.max_strat_payoffs() + 1e-4)
 
 
 def test_rbfgame_equality():
@@ -432,8 +434,10 @@ def test_rbfgame_equality():
     copy._offset.setflags(write=True)
     assert regg == copy
 
-    for alph, prof in zip(np.split(copy._alpha, copy._size_starts[1:]),
-                          np.split(copy._profiles, copy._size_starts[1:])):
+    for alph, prof in zip(
+        np.split(copy._alpha, copy._size_starts[1:]),
+        np.split(copy._profiles, copy._size_starts[1:]),
+    ):
         perm = np.random.permutation(alph.size)
         np.copyto(alph, alph[perm])
         np.copyto(prof, prof[perm])
@@ -451,8 +455,8 @@ def test_rbfgame_equality():
     assert regg != copy
 
 
-@pytest.mark.parametrize('base,num', zip(utils.edge_games(), [15, 15, 8]))
-def test_continuous_approximation(base, num): # pylint: disable=too-many-locals
+@pytest.mark.parametrize("base,num", zip(utils.edge_games(), [15, 15, 8]))
+def test_continuous_approximation(base, num):  # pylint: disable=too-many-locals
     """Test continuous approximation"""
     # pylint: disable-msg=protected-access
     game = gamegen.gen_num_profiles(base, num)
@@ -470,21 +474,27 @@ def test_continuous_approximation(base, num): # pylint: disable=too-many-locals
         diff = learn._profiles - anp.dot(size, avg_prof)
         det = 1 / (1 - learn._dev_players * anp.dot(mix ** 2 * diag, red))
         det_sizes = anp.dot(size, det)
-        cov_diag = anp.einsum('ij,ij,ij->i', diff, diff, diag_sizes)
+        cov_diag = anp.einsum("ij,ij,ij->i", diff, diff, diag_sizes)
         cov_outer = anp.dot(mix * diag_sizes * diff, red)
         sec_term = anp.einsum(
-            'ij,ij,ij,ij->i', learn._dev_players.repeat(learn._sizes, 0),
-            det_sizes, cov_outer, cov_outer)
+            "ij,ij,ij,ij->i",
+            learn._dev_players.repeat(learn._sizes, 0),
+            det_sizes,
+            cov_outer,
+            cov_outer,
+        )
         exp = anp.exp(-(cov_diag + sec_term) / 2)
         coef = anp.prod(learn._lengths, 1) * anp.sqrt(
-            anp.prod(diag, 1) * anp.prod(det, 1))
+            anp.prod(diag, 1) * anp.prod(det, 1)
+        )
         avg = anp.dot(learn._alpha * exp, size)
         return learn._coefs * coef * avg + learn._offset
 
-    devpays_jac = autograd.jacobian(devpays) # pylint: disable=no-value-for-parameter
+    devpays_jac = autograd.jacobian(devpays)  # pylint: disable=no-value-for-parameter
 
-    for mix in itertools.chain(game.random_mixtures(20),
-                               game.random_sparse_mixtures(20)):
+    for mix in itertools.chain(
+        game.random_mixtures(20), game.random_sparse_mixtures(20)
+    ):
         dev = full.deviation_payoffs(mix)
         adev, ajac = learn.deviation_payoffs(mix, jacobian=True)
         assert np.allclose(adev, dev, rtol=0.1, atol=0.2)

@@ -30,7 +30,7 @@ from gameanalysis import utils
 # sparsity, so it should probably be done on a case by case basis.
 
 
-class _Game(rsgame._RsGame): # pylint: disable=protected-access
+class _Game(rsgame._RsGame):  # pylint: disable=protected-access
     """Role-symmetric data game representation
 
     This representation uses a sparse mapping from profiles to payoffs for role
@@ -58,9 +58,9 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         can't be nan, the profile should be omitted instead.
     """
 
-    def __init__( # pylint: disable=too-many-arguments
-            self, role_names, strat_names, num_role_players, profiles,
-            payoffs):
+    def __init__(  # pylint: disable=too-many-arguments
+        self, role_names, strat_names, num_role_players, profiles, payoffs
+    ):
         super().__init__(role_names, strat_names, num_role_players)
         self._profiles = profiles
         self._profiles.setflags(write=False)
@@ -70,21 +70,23 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
 
         # compute log dev reps
         player_factorial = np.sum(sps.gammaln(profiles + 1), 1)
-        totals = (np.sum(sps.gammaln(self.num_role_players + 1)) -
-                  player_factorial)
-        with np.errstate(divide='ignore'):
+        totals = np.sum(sps.gammaln(self.num_role_players + 1)) - player_factorial
+        with np.errstate(divide="ignore"):
             self._dev_reps = (
-                totals[:, None] + np.log(profiles) -
-                np.log(self.num_role_players).repeat(self.num_role_strats))
+                totals[:, None]
+                + np.log(profiles)
+                - np.log(self.num_role_players).repeat(self.num_role_strats)
+            )
         self._dev_reps.setflags(write=False)
 
         # Add profile lookup
-        self._profile_map = dict(zip(map(utils.hash_array, profiles),
-                                     payoffs))
+        self._profile_map = dict(zip(map(utils.hash_array, profiles), payoffs))
         if np.isnan(payoffs).any():
             self._complete_profiles = frozenset(
-                prof for prof, pay in self._profile_map.items()
-                if not np.isnan(pay).any())
+                prof
+                for prof, pay in self._profile_map.items()
+                if not np.isnan(pay).any()
+            )
         else:  # Don't need to store duplicate lookup object
             self._complete_profiles = self._profile_map
         self._num_complete_profiles = len(self._complete_profiles)
@@ -109,8 +111,9 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         if not self.num_profiles:
             pays = np.full(self.num_strats, np.nan)
         else:
-            pays = np.fmin.reduce(np.where(
-                self._profiles > 0, self._payoffs, np.nan), 0)
+            pays = np.fmin.reduce(
+                np.where(self._profiles > 0, self._payoffs, np.nan), 0
+            )
         pays.setflags(write=False)
         return pays
 
@@ -120,8 +123,9 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         if not self.num_profiles:
             pays = np.full(self.num_strats, np.nan)
         else:
-            pays = np.fmax.reduce(np.where(
-                self._profiles > 0, self._payoffs, np.nan), 0)
+            pays = np.fmax.reduce(
+                np.where(self._profiles > 0, self._payoffs, np.nan), 0
+            )
         pays.setflags(write=False)
         return pays
 
@@ -131,7 +135,7 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         If profile is not in game, an array of nans is returned where profile
         has support."""
         profiles = np.asarray(profiles, int)
-        utils.check(self.is_profile(profiles).all(), 'profiles must be valid')
+        utils.check(self.is_profile(profiles).all(), "profiles must be valid")
         prof_view = profiles.reshape((-1, self.num_strats))
         payoffs = np.empty(prof_view.shape, float)
         for prof, pay in zip(prof_view, payoffs):
@@ -143,8 +147,9 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
                 np.copyto(pay, self._profile_map[hashed])
         return payoffs.reshape(profiles.shape)
 
-    def deviation_payoffs( # pylint: disable=too-many-statements,too-many-branches,too-many-locals,arguments-differ
-            self, mixture, *, jacobian=False, ignore_incomplete=False, **_):
+    def deviation_payoffs(  # pylint: disable=too-many-statements,too-many-branches,too-many-locals,arguments-differ
+        self, mixture, *, jacobian=False, ignore_incomplete=False, **_
+    ):
         """Computes the expected value of deviating
 
         More specifically, this is the expected payoff of playing each pure
@@ -184,8 +189,7 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
             strats = np.add.reduceat(supp, self.role_starts)
             devs = self._profiles[:, ~supp]
             num_supp = utils.game_size(self.num_role_players, strats).prod()
-            dev_players = self.num_role_players - \
-                np.eye(self.num_roles, dtype=int)
+            dev_players = self.num_role_players - np.eye(self.num_roles, dtype=int)
             role_num_dev = utils.game_size(dev_players, strats).prod(1)
             num_dev = role_num_dev.repeat(self.num_role_strats)[~supp]
 
@@ -198,7 +202,7 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
             zmix = mixture + self.zero_prob.repeat(self.num_role_strats)
             log_mix = np.log(zmix)
             prof_prob = self._profiles.dot(log_mix)[:, None]
-            with np.errstate(under='ignore'):
+            with np.errstate(under="ignore"):
                 # Ignore underflow caused when profile probability is not
                 # representable in floating point.
                 probs = np.exp(prof_prob + self._dev_reps - log_mix)
@@ -217,7 +221,7 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
             # look at sparse mixtures. This should probably be addressed, but
             # it's unclear how without making this significantly slower.
             nan_pays = np.where(probs > zprob, payoffs, 0)
-            devs = np.einsum('ij,ij->j', probs, nan_pays)
+            devs = np.einsum("ij,ij->j", probs, nan_pays)
             devs[nan_mask] = np.nan
 
         else:
@@ -233,13 +237,12 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
             return devs
 
         if ignore_incomplete or not nan_mask.all():
-            dev_profs = (self._profiles[:, None] -
-                         np.eye(self.num_strats, dtype=int))
-            dev_jac = np.einsum(
-                'ij,ij,ijk->jk', probs, nan_pays, dev_profs) / zmix
+            dev_profs = self._profiles[:, None] - np.eye(self.num_strats, dtype=int)
+            dev_jac = np.einsum("ij,ij,ijk->jk", probs, nan_pays, dev_profs) / zmix
             if ignore_incomplete:
-                dev_jac -= (np.einsum('ij,ijk->jk', probs, dev_profs) *
-                            devs[:, None] / zmix)
+                dev_jac -= (
+                    np.einsum("ij,ijk->jk", probs, dev_profs) * devs[:, None] / zmix
+                )
                 dev_jac[tsupp] /= tprobs[tsupp, None]
                 dev_jac[~tsupp] = np.nan
             # TODO This is a little conservative and could be relaxed but would
@@ -259,38 +262,51 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         profiles = self._profiles[prof_mask][:, restriction]
         payoffs = self._payoffs[prof_mask][:, restriction]
         return _Game(
-            base.role_names, base.strat_names, base.num_role_players, profiles,
-            payoffs)
+            base.role_names, base.strat_names, base.num_role_players, profiles, payoffs
+        )
 
     def _add_constant(self, constant):
-        with np.errstate(invalid='ignore'):
-            new_pays = self._payoffs + np.broadcast_to(
-                constant, self.num_roles).repeat(self.num_role_strats)
+        with np.errstate(invalid="ignore"):
+            new_pays = self._payoffs + np.broadcast_to(constant, self.num_roles).repeat(
+                self.num_role_strats
+            )
         new_pays[self._profiles == 0] = 0
         return _Game(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._profiles, new_pays)
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._profiles,
+            new_pays,
+        )
 
     def _multiply_constant(self, constant):
-        with np.errstate(invalid='ignore'):
-            new_pays = self._payoffs * np.broadcast_to(
-                constant, self.num_roles).repeat(self.num_role_strats)
+        with np.errstate(invalid="ignore"):
+            new_pays = self._payoffs * np.broadcast_to(constant, self.num_roles).repeat(
+                self.num_role_strats
+            )
         return _Game(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._profiles, new_pays)
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._profiles,
+            new_pays,
+        )
 
     def _add_game(self, othr):
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid="ignore"):
             new_pays = self._payoffs + othr.get_payoffs(self._profiles)
         mask = np.any((~np.isnan(new_pays)) & (self._profiles > 0), 1)
         return _Game(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._profiles[mask], new_pays[mask])
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._profiles[mask],
+            new_pays[mask],
+        )
 
     def __contains__(self, profile):
         """Returns true if all data for that profile exists"""
-        return (utils.hash_array(np.asarray(profile, int))
-                in self._complete_profiles)
+        return utils.hash_array(np.asarray(profile, int)) in self._complete_profiles
 
     def profile_from_json(self, prof, dest=None, *, verify=True):
         """Read a profile from json
@@ -313,11 +329,10 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         if dest is None:
             dest = np.empty(self.num_strats, int)
         else:
+            utils.check(dest.dtype.kind == "i", "dest dtype must be integral")
             utils.check(
-                dest.dtype.kind == 'i', 'dest dtype must be integral')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num_strats')
+                dest.shape == (self.num_strats,), "dest shape must be num_strats"
+            )
         dest.fill(0)
 
         try:
@@ -328,22 +343,28 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
             super().profile_from_json(prof, dest=dest, verify=False)
 
         utils.check(
-            not verify or self.is_profile(dest),
-            '"{}" is not a valid profile', prof)
+            not verify or self.is_profile(dest), '"{}" is not a valid profile', prof
+        )
         return dest
 
     def profile_to_assignment(self, prof):
         """Convert a profile to an assignment string"""
         return {
-            role: list(itertools.chain.from_iterable(
-                itertools.repeat(strat, val.item()) for strat, val
-                in zip(strats, counts)))
-            for counts, role, strats
-            in zip(np.split(prof, self.role_starts[1:]),
-                   self.role_names, self.strat_names)
-            if np.any(counts > 0)}
+            role: list(
+                itertools.chain.from_iterable(
+                    itertools.repeat(strat, val.item())
+                    for strat, val in zip(strats, counts)
+                )
+            )
+            for counts, role, strats in zip(
+                np.split(prof, self.role_starts[1:]), self.role_names, self.strat_names
+            )
+            if np.any(counts > 0)
+        }
 
-    def payoff_from_json(self, pays, dest=None, *, verify=True): # pylint: disable=arguments-differ
+    def payoff_from_json(
+        self, pays, dest=None, *, verify=True
+    ):  # pylint: disable=arguments-differ
         """Read a set of payoffs from json
 
         Parameters
@@ -357,11 +378,10 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         if dest is None:
             dest = np.empty(self.num_strats, float)
         else:
+            utils.check(dest.dtype.kind == "f", "dest dtype must be floating")
             utils.check(
-                dest.dtype.kind == 'f', 'dest dtype must be floating')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(0)
 
         try:
@@ -373,8 +393,7 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
 
         return dest
 
-    def profpay_from_json(
-            self, prof, dest_prof=None, dest_pays=None, *, verify=True):
+    def profpay_from_json(self, prof, dest_prof=None, dest_pays=None, *, verify=True):
         """Read json as a profile and a payoff"""
         if dest_prof is None:
             dest_prof = np.empty(self.num_strats, int)
@@ -384,36 +403,37 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
         dest_pays.fill(0)
 
         # observations but no data
-        if not prof.get('observations', True):
+        if not prof.get("observations", True):
             self._profpay_from_json_empty_obs(prof, dest_prof, dest_pays)
         # summary format
-        elif 'observations' not in prof and 'symmetry_groups' in prof:
+        elif "observations" not in prof and "symmetry_groups" in prof:
             self._profpay_from_json_summ(prof, dest_prof, dest_pays)
         # observations format
-        elif ('observations' in prof
-              and 'symmetry_groups' in prof['observations'][0]):
+        elif "observations" in prof and "symmetry_groups" in prof["observations"][0]:
             self._profpay_from_json_obs(prof, dest_prof, dest_pays)
         # full format
-        elif 'observations' in prof:
+        elif "observations" in prof:
             self._profpay_from_json_full(prof, dest_prof, dest_pays)
         # observation from simulation
-        elif 'players' in prof:
+        elif "players" in prof:
             self._profpay_from_json_observation(prof, dest_prof, dest_pays)
         # dict payoff
         elif all(not isinstance(v, abc.Mapping) for v in prof.values()):
             self._profpay_from_json_dict(prof, dest_prof, dest_pays)
         # error
         else:
-            raise ValueError('unknown format')
+            raise ValueError("unknown format")
 
         utils.check(
             not verify or self.is_profile(dest_prof),
-            '"{}" does not define a valid profile', prof)
+            '"{}" does not define a valid profile',
+            prof,
+        )
         return dest_prof, dest_pays
 
     def _profpay_from_json_empty_obs(self, prof, dest_prof, dest_pays):
         """Get profile and payoff from empty observations format"""
-        for symgrp in prof['symmetry_groups']:
+        for symgrp in prof["symmetry_groups"]:
             _, role, strat, count, _ = _unpack_symgrp(**symgrp)
             index = self.role_strat_index(role, strat)
             dest_prof[index] = count
@@ -421,39 +441,43 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
 
     def _profpay_from_json_summ(self, prof, dest_prof, dest_pays):
         """Get profile and payoff from summary format"""
-        for symgrp in prof['symmetry_groups']:
+        for symgrp in prof["symmetry_groups"]:
             _, role, strat, count, pay = _unpack_symgrp(**symgrp)
             index = self.role_strat_index(role, strat)
             dest_prof[index] = count
             dest_pays[index] = pay
 
-    def _profpay_from_json_obs(self, prof, dest_prof, dest_pays): # pylint: disable=too-many-locals
+    def _profpay_from_json_obs(
+        self, prof, dest_prof, dest_pays
+    ):  # pylint: disable=too-many-locals
         """Get profile and payoff from observations format"""
         ids = {}
-        for symgrp in prof['symmetry_groups']:
+        for symgrp in prof["symmetry_groups"]:
             i, role, strat, count, _ = _unpack_symgrp(**symgrp)
             index = self.role_strat_index(role, strat)
             ids[i] = index
             dest_prof[index] = count
 
-        for j, obs in enumerate(prof['observations'], 1):
-            for symgrp in obs['symmetry_groups']:
+        for j, obs in enumerate(prof["observations"], 1):
+            for symgrp in obs["symmetry_groups"]:
                 i, pay = _unpack_obs(**symgrp)
                 k = ids[i]
                 dest_pays[k] += (pay - dest_pays[k]) / j
 
-    def _profpay_from_json_full(self, prof, dest_prof, dest_pays): # pylint: disable=too-many-locals
+    def _profpay_from_json_full(
+        self, prof, dest_prof, dest_pays
+    ):  # pylint: disable=too-many-locals
         """Get profile and payoff from full format"""
         ids = {}
-        for symgrp in prof['symmetry_groups']:
+        for symgrp in prof["symmetry_groups"]:
             i, role, strat, count, _ = _unpack_symgrp(**symgrp)
             index = self.role_strat_index(role, strat)
             ids[i] = index
             dest_prof[index] = count
 
         counts = np.zeros(self.num_strats, int)
-        for obs in prof['observations']:
-            for player in obs['players']:
+        for obs in prof["observations"]:
+            for player in obs["players"]:
                 i, pay = _unpack_player(**player)
                 k = ids[i]
                 counts[k] += 1
@@ -461,7 +485,7 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
 
     def _profpay_from_json_observation(self, prof, dest_prof, dest_pays):
         """Get profile and payoff from observation format"""
-        for player in prof['players']:
+        for player in prof["players"]:
             role, strat, pay = _unpack_obs_player(**player)
             ind = self.role_strat_index(role, strat)
             dest_prof[ind] += 1
@@ -477,52 +501,71 @@ class _Game(rsgame._RsGame): # pylint: disable=protected-access
 
     def profpay_to_json(self, payoffs, prof):
         """Format a profile and payoffs as json"""
-        return {role: [(strat, int(count), float(pay)) for strat, count, pay
-                       in zip(strats, counts, pays) if count > 0]
-                for role, strats, counts, pays
-                in zip(self.role_names, self.strat_names,
-                       np.split(prof, self.role_starts[1:]),
-                       np.split(payoffs, self.role_starts[1:]))}
+        return {
+            role: [
+                (strat, int(count), float(pay))
+                for strat, count, pay in zip(strats, counts, pays)
+                if count > 0
+            ]
+            for role, strats, counts, pays in zip(
+                self.role_names,
+                self.strat_names,
+                np.split(prof, self.role_starts[1:]),
+                np.split(payoffs, self.role_starts[1:]),
+            )
+        }
 
     @utils.memoize
     def __hash__(self):
-        return hash((super().__hash__(), self.num_complete_profiles,
-                     np.sort(utils.axis_to_elem(self._profiles)).tobytes()))
+        return hash(
+            (
+                super().__hash__(),
+                self.num_complete_profiles,
+                np.sort(utils.axis_to_elem(self._profiles)).tobytes(),
+            )
+        )
 
     def __eq__(self, othr):
-        return (super().__eq__(othr) and
-                # Identical profiles
-                self.num_profiles == othr.num_profiles and
-                self.num_complete_profiles == othr.num_complete_profiles and
-                self._eq_payoffs(othr))
+        return (
+            super().__eq__(othr)
+            and
+            # Identical profiles
+            self.num_profiles == othr.num_profiles
+            and self.num_complete_profiles == othr.num_complete_profiles
+            and self._eq_payoffs(othr)
+        )
 
     def _eq_payoffs(self, othr):
         """Identical profiles and payoffs conditioned on all else equal"""
         # pylint: disable-msg=protected-access
         sord = np.argsort(utils.axis_to_elem(self._profiles))
         oord = np.argsort(utils.axis_to_elem(othr._profiles))
-        return (np.all(self._profiles[sord] == othr._profiles[oord]) and
-                np.allclose(self._payoffs[sord], othr._payoffs[oord],
-                            equal_nan=True))
+        return np.all(self._profiles[sord] == othr._profiles[oord]) and np.allclose(
+            self._payoffs[sord], othr._payoffs[oord], equal_nan=True
+        )
 
     def to_json(self):
         """Fromat a Game as json"""
         res = super().to_json()
-        res['profiles'] = [self.profpay_to_json(pay, prof) for prof, pay
-                           in zip(self._profiles, self._payoffs)]
-        res['type'] = 'game.1'
+        res["profiles"] = [
+            self.profpay_to_json(pay, prof)
+            for prof, pay in zip(self._profiles, self._payoffs)
+        ]
+        res["type"] = "game.1"
         return res
 
     def __repr__(self):
-        return '{old}, {data:d} / {total:d})'.format(
+        return "{old}, {data:d} / {total:d})".format(
             old=super().__repr__()[:-1],
             data=self.num_profiles,
-            total=self.num_all_profiles)
+            total=self.num_all_profiles,
+        )
 
     def __str__(self):
         """Fromat basegame as a printable string"""
-        return '{}\npayoff data for {:d} out of {:d} profiles'.format(
-            super().__str__(), self.num_profiles, self.num_all_profiles)
+        return "{}\npayoff data for {:d} out of {:d} profiles".format(
+            super().__str__(), self.num_profiles, self.num_all_profiles
+        )
 
 
 def game(num_role_players, num_role_strats, profiles, payoffs):
@@ -539,8 +582,9 @@ def game(num_role_players, num_role_strats, profiles, payoffs):
     payoffs : ndarray-like, float
         The payoffs for the game, with shape (num_profiles, num_strats).
     """
-    return game_replace(rsgame.empty(num_role_players, num_role_strats),
-                        profiles, payoffs)
+    return game_replace(
+        rsgame.empty(num_role_players, num_role_strats), profiles, payoffs
+    )
 
 
 def game_names(role_names, num_role_players, strat_names, profiles, payoffs):
@@ -560,8 +604,8 @@ def game_names(role_names, num_role_players, strat_names, profiles, payoffs):
         The payoffs for the game, with shape (num_profiles, num_strats).
     """
     return game_replace(
-        rsgame.empty_names(role_names, num_role_players, strat_names),
-        profiles, payoffs)
+        rsgame.empty_names(role_names, num_role_players, strat_names), profiles, payoffs
+    )
 
 
 def game_json(json):
@@ -576,7 +620,7 @@ def game_json(json):
     structure, but it is possible to write the json.
     """
     base = game_copy(rsgame.empty_json(json))
-    profiles = json.get('profiles', ())
+    profiles = json.get("profiles", ())
     if not profiles:
         return base
 
@@ -598,8 +642,12 @@ def game_copy(copy_game):
         and payoffs.
     """
     return _Game(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players, copy_game.profiles(), copy_game.payoffs())
+        copy_game.role_names,
+        copy_game.strat_names,
+        copy_game.num_role_players,
+        copy_game.profiles(),
+        copy_game.payoffs(),
+    )
 
 
 def game_replace(copy_game, profiles, payoffs):
@@ -620,31 +668,44 @@ def game_replace(copy_game, profiles, payoffs):
 
     utils.check(
         profiles.shape == payoffs.shape,
-        'profiles and payoffs must be the same shape {} {}',
-        profiles.shape, payoffs.shape)
+        "profiles and payoffs must be the same shape {} {}",
+        profiles.shape,
+        payoffs.shape,
+    )
     utils.check(
         profiles.shape[1:] == (copy_game.num_strats,),
-        'profiles must have proper end shape : expected {} but was {}',
-        (copy_game.num_strats,), profiles.shape[1:])
-    utils.check(np.all(profiles >= 0), 'profiles was negative')
+        "profiles must have proper end shape : expected {} but was {}",
+        (copy_game.num_strats,),
+        profiles.shape[1:],
+    )
+    utils.check(np.all(profiles >= 0), "profiles was negative")
     utils.check(
         np.all(
-            np.add.reduceat(profiles, copy_game.role_starts, 1) ==
-            copy_game.num_role_players),
-        'not all profiles equaled player total')
+            np.add.reduceat(profiles, copy_game.role_starts, 1)
+            == copy_game.num_role_players
+        ),
+        "not all profiles equaled player total",
+    )
     utils.check(
         not np.any((payoffs != 0) & (profiles == 0)),
-        'there were nonzero payoffs for strategies without players')
+        "there were nonzero payoffs for strategies without players",
+    )
     utils.check(
         not np.all(np.isnan(payoffs) | (profiles == 0), 1).any(),
-        "a profile can't have entirely nan payoffs")
+        "a profile can't have entirely nan payoffs",
+    )
     utils.check(
         profiles.shape[0] == np.unique(utils.axis_to_elem(profiles)).size,
-        "there can't be any duplicate profiles")
+        "there can't be any duplicate profiles",
+    )
 
     return _Game(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players, profiles, payoffs)
+        copy_game.role_names,
+        copy_game.strat_names,
+        copy_game.num_role_players,
+        profiles,
+        payoffs,
+    )
 
 
 class _SampleGame(_Game):
@@ -676,28 +737,32 @@ class _SampleGame(_Game):
         apply.
     """
 
-    def __init__( # pylint: disable=too-many-arguments
-            self, role_names, strat_names, num_role_players, profiles,
-            sample_payoffs):
+    def __init__(  # pylint: disable=too-many-arguments
+        self, role_names, strat_names, num_role_players, profiles, sample_payoffs
+    ):
         super().__init__(
-            role_names, strat_names, num_role_players, profiles,
+            role_names,
+            strat_names,
+            num_role_players,
+            profiles,
             np.concatenate([s.mean(1) for s in sample_payoffs])
-            if sample_payoffs else np.empty((0, profiles.shape[1])))
+            if sample_payoffs
+            else np.empty((0, profiles.shape[1])),
+        )
 
         self._sample_payoffs = sample_payoffs
         for spay in self._sample_payoffs:
             spay.setflags(write=False)
 
         self.num_sample_profs = np.fromiter(  # pragma: no branch
-            (x.shape[0] for x in sample_payoffs),
-            int, len(sample_payoffs))
+            (x.shape[0] for x in sample_payoffs), int, len(sample_payoffs)
+        )
         self.num_sample_profs.setflags(write=False)
-        self.sample_starts = np.insert(
-            self.num_sample_profs[:-1].cumsum(), 0, 0)
+        self.sample_starts = np.insert(self.num_sample_profs[:-1].cumsum(), 0, 0)
         self.sample_starts.setflags(write=False)
         self.num_samples = np.fromiter(  # pragma: no branch
-            (v.shape[1] for v in sample_payoffs),
-            int, len(sample_payoffs))
+            (v.shape[1] for v in sample_payoffs), int, len(sample_payoffs)
+        )
         self.num_samples.setflags(write=False)
 
         self._sample_profile_map = None
@@ -707,10 +772,11 @@ class _SampleGame(_Game):
         """Returns the minimum payoff for each role"""
         mins = np.full(self.num_strats, np.nan)
         for profs, spays in zip(
-                np.split(self._profiles, self.sample_starts[1:]),
-                self._sample_payoffs):
+            np.split(self._profiles, self.sample_starts[1:]), self._sample_payoffs
+        ):
             sample_mins = np.fmin.reduce(
-                np.where(profs[:, None] > 0, spays, np.nan), (0, 1))
+                np.where(profs[:, None] > 0, spays, np.nan), (0, 1)
+            )
             np.fmin(mins, sample_mins, mins)
         mins.setflags(write=False)
         return mins
@@ -720,10 +786,11 @@ class _SampleGame(_Game):
         """Returns the maximum payoff for each role"""
         maxs = np.full(self.num_strats, np.nan)
         for profs, spays in zip(
-                np.split(self._profiles, self.sample_starts[1:]),
-                self._sample_payoffs):
+            np.split(self._profiles, self.sample_starts[1:]), self._sample_payoffs
+        ):
             sample_maxs = np.fmax.reduce(
-                np.where(profs[:, None] > 0, spays, np.nan), (0, 1))
+                np.where(profs[:, None] > 0, spays, np.nan), (0, 1)
+            )
             np.fmax(maxs, sample_maxs, maxs)
         maxs.setflags(write=False)
         return maxs
@@ -732,8 +799,14 @@ class _SampleGame(_Game):
         """Get the underlying sample payoffs"""
         return self._sample_payoffs
 
-    def resample(self, num_resamples=None, *, independent_profile=False,
-                 independent_role=False, independent_strategy=False):
+    def resample(
+        self,
+        num_resamples=None,
+        *,
+        independent_profile=False,
+        independent_role=False,
+        independent_strategy=False
+    ):
         """Fetch a game with bootstrap sampled payoffs
 
         Arguments
@@ -760,27 +833,36 @@ class _SampleGame(_Game):
         resample, but may produce better results as it will remove correlations
         between payoffs.
         """
-        dim2 = (self.num_strats if independent_strategy
-                else self.num_roles if independent_role
-                else 1)
+        dim2 = (
+            self.num_strats
+            if independent_strategy
+            else self.num_roles
+            if independent_role
+            else 1
+        )
         payoffs = np.empty_like(self._payoffs)
-        for obs, pays in zip(self._sample_payoffs,
-                             np.split(payoffs, self.sample_starts[1:])):
+        for obs, pays in zip(
+            self._sample_payoffs, np.split(payoffs, self.sample_starts[1:])
+        ):
             obs = np.rollaxis(obs, 1, 3)
             num_samples = obs.shape[2]
-            num_obs_resamples = (num_samples if num_resamples is None
-                                 else num_resamples)
+            num_obs_resamples = num_samples if num_resamples is None else num_resamples
             dim1 = obs.shape[0] if independent_profile else 1
-            sample = rand.multinomial(num_obs_resamples,
-                                      np.ones(num_samples) / num_samples,
-                                      (dim1, dim2))
+            sample = rand.multinomial(
+                num_obs_resamples, np.ones(num_samples) / num_samples, (dim1, dim2)
+            )
             if independent_role and not independent_strategy:
                 sample = sample.repeat(self.num_role_strats, 1)
-            np.copyto(pays, np.mean(obs * sample, 2) *
-                      (num_samples / num_obs_resamples))
+            np.copyto(
+                pays, np.mean(obs * sample, 2) * (num_samples / num_obs_resamples)
+            )
         return _Game(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._profiles, payoffs)
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._profiles,
+            payoffs,
+        )
 
     def get_sample_payoffs(self, profile):
         """Get sample payoffs associated with a profile
@@ -788,55 +870,67 @@ class _SampleGame(_Game):
         This returns an array of shape (num_observations, num_role_strats). If
         profile has no data, num_observations will be 0."""
         if self._sample_profile_map is None:
-            self._sample_profile_map = dict(zip(
-                map(utils.hash_array, self._profiles),
-                itertools.chain.from_iterable(self._sample_payoffs)))
+            self._sample_profile_map = dict(
+                zip(
+                    map(utils.hash_array, self._profiles),
+                    itertools.chain.from_iterable(self._sample_payoffs),
+                )
+            )
         profile = np.asarray(profile, int)
-        utils.check(self.is_profile(profile), 'must pass a valid profile')
+        utils.check(self.is_profile(profile), "must pass a valid profile")
         hashed = utils.hash_array(profile)
-        if hashed not in self._sample_profile_map: # pylint: disable=no-else-return
+        if hashed not in self._sample_profile_map:  # pylint: disable=no-else-return
             return np.empty((0, self.num_strats), float)
         else:
             return self._sample_profile_map[hashed]
 
     def flat_profiles(self):
         """Profiles in parallel with flat_payoffs"""
-        if self.is_empty(): # pylint: disable=no-else-return
+        if self.is_empty():  # pylint: disable=no-else-return
             return np.empty((0, self.num_strats), int)
         else:
             return self._profiles.repeat(
-                self.num_samples.repeat(self.num_sample_profs), 0)
+                self.num_samples.repeat(self.num_sample_profs), 0
+            )
 
     def flat_payoffs(self):
         """All sample payoffs linearly concatenated together"""
-        if self.is_empty(): # pylint: disable=no-else-return
+        if self.is_empty():  # pylint: disable=no-else-return
             return np.empty((0, self.num_strats))
         else:
-            return np.concatenate([
-                pay.reshape((-1, self.num_strats))
-                for pay in self._sample_payoffs])
+            return np.concatenate(
+                [pay.reshape((-1, self.num_strats)) for pay in self._sample_payoffs]
+            )
 
     def _add_constant(self, constant):
-        off = np.broadcast_to(constant, self.num_roles).repeat(
-            self.num_role_strats)
-        with np.errstate(invalid='ignore'):
+        off = np.broadcast_to(constant, self.num_roles).repeat(self.num_role_strats)
+        with np.errstate(invalid="ignore"):
             new_pays = tuple(
                 (profs > 0)[:, None] * (pays + off)
                 for profs, pays in zip(
                     np.split(self._profiles, self.sample_starts[1:]),
-                    self._sample_payoffs))
+                    self._sample_payoffs,
+                )
+            )
         return _SampleGame(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._profiles, new_pays)
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._profiles,
+            new_pays,
+        )
 
     def _multiply_constant(self, constant):
-        mult = np.broadcast_to(constant, self.num_roles).repeat(
-            self.num_role_strats)
-        with np.errstate(invalid='ignore'):
+        mult = np.broadcast_to(constant, self.num_roles).repeat(self.num_role_strats)
+        with np.errstate(invalid="ignore"):
             new_pays = tuple(pays * mult for pays in self._sample_payoffs)
         return _SampleGame(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._profiles, new_pays)
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._profiles,
+            new_pays,
+        )
 
     def restrict(self, restriction):
         """Remove possible strategies from consideration"""
@@ -845,13 +939,19 @@ class _SampleGame(_Game):
         prof_mask = ~np.any(self._profiles * ~restriction, 1)
         profiles = self._profiles[prof_mask][:, restriction]
         sample_payoffs = tuple(
-            pays[pmask][..., restriction] for pays, pmask
-            in zip(self._sample_payoffs,
-                   np.split(prof_mask, self.sample_starts[1:]))
-            if pmask.any())
+            pays[pmask][..., restriction]
+            for pays, pmask in zip(
+                self._sample_payoffs, np.split(prof_mask, self.sample_starts[1:])
+            )
+            if pmask.any()
+        )
         return _SampleGame(
-            base.role_names, base.strat_names, base.num_role_players, profiles,
-            sample_payoffs)
+            base.role_names,
+            base.strat_names,
+            base.num_role_players,
+            profiles,
+            sample_payoffs,
+        )
 
     def samplepay_from_json(self, prof, dest=None):
         """Read a set of payoff samples
@@ -873,18 +973,19 @@ class _SampleGame(_Game):
 
         with contextlib.suppress(ValueError, AttributeError):
             # Must be {role: {strat: [pay]}}
-            num = max(max(len(p) if isinstance(p, abc.Iterable) else 1
-                          for p in pays.values())
-                      for pays in prof.values())
+            num = max(
+                max(len(p) if isinstance(p, abc.Iterable) else 1 for p in pays.values())
+                for pays in prof.values()
+            )
 
             if dest is None:
                 dest = np.empty((num, self.num_strats), float)
             else:
-                utils.check(
-                    dest.dtype.kind == 'f', 'dest dtype must be floating')
+                utils.check(dest.dtype.kind == "f", "dest dtype must be floating")
                 utils.check(
                     dest.shape == (num, self.num_strats),
-                    'dest_samplepay not large enough for observations')
+                    "dest_samplepay not large enough for observations",
+                )
             dest.fill(0)
 
             for role, strats in prof.items():
@@ -892,7 +993,7 @@ class _SampleGame(_Game):
                     dest[:, self.role_strat_index(role, strat)] = pay
             return dest
 
-        raise ValueError('unknown format')
+        raise ValueError("unknown format")
 
     def samplepay_to_json(self, samplepay):
         """Format sample payoffs as json"""
@@ -902,44 +1003,45 @@ class _SampleGame(_Game):
         # with zero payoffs.
         samplepay = np.asarray(samplepay, float)
         if np.all(samplepay == 0):
-            return {self.role_names[0]: {
-                self.strat_names[0][0]: [0] * samplepay.shape[0]}}
+            return {
+                self.role_names[0]: {self.strat_names[0][0]: [0] * samplepay.shape[0]}
+            }
 
-        return {role: {strat: pay.tolist() for strat, pay
-                       in zip(strats, pays)
-                       if np.any(pay != 0)}
-                for role, strats, pays
-                in zip(self.role_names, self.strat_names,
-                       np.split(samplepay.T, self.role_starts[1:]))
-                if np.any(pays != 0)}
+        return {
+            role: {
+                strat: pay.tolist()
+                for strat, pay in zip(strats, pays)
+                if np.any(pay != 0)
+            }
+            for role, strats, pays in zip(
+                self.role_names,
+                self.strat_names,
+                np.split(samplepay.T, self.role_starts[1:]),
+            )
+            if np.any(pays != 0)
+        }
 
-    def profsamplepay_from_json(
-            self, prof, dest_prof=None, dest_samplepay=None):
+    def profsamplepay_from_json(self, prof, dest_prof=None, dest_samplepay=None):
         """Convert json into a profile and an observation"""
         if dest_prof is None:
             dest_prof = np.empty(self.num_strats, int)
         dest_prof.fill(0)
 
         # summary format
-        if 'observations' not in prof and 'symmetry_groups' in prof:
-            return self._profsamplepay_from_json_summ(
-                prof, dest_prof, dest_samplepay)
+        if "observations" not in prof and "symmetry_groups" in prof:
+            return self._profsamplepay_from_json_summ(prof, dest_prof, dest_samplepay)
         # observations format
-        elif ('observations' in prof
-              and 'symmetry_groups' in prof['observations'][0]):
-            return self._profsamplepay_from_json_obs(
-                prof, dest_prof, dest_samplepay)
+        elif "observations" in prof and "symmetry_groups" in prof["observations"][0]:
+            return self._profsamplepay_from_json_obs(prof, dest_prof, dest_samplepay)
         # full format
-        elif 'observations' in prof:
-            return self._profsamplepay_from_json_full(
-                prof, dest_prof, dest_samplepay)
+        elif "observations" in prof:
+            return self._profsamplepay_from_json_full(prof, dest_prof, dest_samplepay)
         # profile payoff
         elif all(not isinstance(v, abc.Mapping) for v in prof.values()):
-            return self._profsamplepay_from_json_prof(
-                prof, dest_prof, dest_samplepay)
+            return self._profsamplepay_from_json_prof(prof, dest_prof, dest_samplepay)
         # unrecognized
         else:
-            raise ValueError('unrecognized format')
+            raise ValueError("unrecognized format")
 
     def _get_spay_dest(self, dest, num):
         """Get payoff dest for number of samples"""
@@ -947,63 +1049,69 @@ class _SampleGame(_Game):
             return np.zeros((num, self.num_strats), float)
         utils.check(
             dest.shape == (num, self.num_strats),
-            'dest_samplepay not large enough for observations')
+            "dest_samplepay not large enough for observations",
+        )
         dest.fill(0)
         return dest
 
     def _profsamplepay_from_json_summ(self, prof, dest_prof, dest):
         """Get profile and sample payoff for summary format"""
         dest = self._get_spay_dest(dest, 1)
-        for symgrp in prof['symmetry_groups']:
+        for symgrp in prof["symmetry_groups"]:
             _, role, strat, count, pay = _unpack_symgrp(**symgrp)
             index = self.role_strat_index(role, strat)
             dest_prof[index] = count
             dest[0, index] = pay
         return dest_prof, dest
 
-    def _profsamplepay_from_json_obs(self, prof, dest_prof, dest): # pylint: disable=too-many-locals
+    def _profsamplepay_from_json_obs(
+        self, prof, dest_prof, dest
+    ):  # pylint: disable=too-many-locals
         """Get profile and sample payoff for observation format"""
-        dest = self._get_spay_dest(dest, len(prof['observations']))
+        dest = self._get_spay_dest(dest, len(prof["observations"]))
         ids = {}
-        for symgrp in prof['symmetry_groups']:
+        for symgrp in prof["symmetry_groups"]:
             i, role, strat, count, _ = _unpack_symgrp(**symgrp)
             index = self.role_strat_index(role, strat)
             ids[i] = index
             dest_prof[index] = count
-        for j, obs in enumerate(prof['observations']):
-            for symgrp in obs['symmetry_groups']:
+        for j, obs in enumerate(prof["observations"]):
+            for symgrp in obs["symmetry_groups"]:
                 i, pay = _unpack_obs(**symgrp)
                 dest[j, ids[i]] = pay
         return dest_prof, dest
 
-    def _profsamplepay_from_json_full(self, prof, dest_prof, dest): # pylint: disable=too-many-locals
+    def _profsamplepay_from_json_full(
+        self, prof, dest_prof, dest
+    ):  # pylint: disable=too-many-locals
         """Get profile and sample payoff for full format"""
-        dest = self._get_spay_dest(dest, len(prof['observations']))
+        dest = self._get_spay_dest(dest, len(prof["observations"]))
         ids = {}
-        for symgrp in prof['symmetry_groups']:
+        for symgrp in prof["symmetry_groups"]:
             i, role, strat, count, _ = _unpack_symgrp(**symgrp)
             index = self.role_strat_index(role, strat)
             ids[i] = index
             dest_prof[index] = count
         counts = np.empty(self.num_strats, int)
-        for j, obs in enumerate(prof['observations']):
+        for j, obs in enumerate(prof["observations"]):
             counts.fill(0)
-            for player in obs['players']:
+            for player in obs["players"]:
                 i, pay = _unpack_player(**player)
                 k = ids[i]
                 counts[k] += 1
                 dest[j, k] += (pay - dest[j, k]) / counts[k]
             utils.check(
                 np.all(counts == dest_prof),
-                "full format didn't have payoffs for the correct number "
-                'of players')
+                "full format didn't have payoffs for the correct number " "of players",
+            )
         return dest_prof, dest
 
     def _profsamplepay_from_json_prof(self, prof, dest_prof, dest):
         """Get profile and sample payoff for profile format"""
-        num = max(max(len(p) if isinstance(p, abc.Iterable) else 1
-                      for _, __, p in sg)
-                  for sg in prof.values())
+        num = max(
+            max(len(p) if isinstance(p, abc.Iterable) else 1 for _, __, p in sg)
+            for sg in prof.values()
+        )
         dest = self._get_spay_dest(dest, num)
         for role, strats in prof.items():
             for strat, count, pays in strats:
@@ -1014,13 +1122,19 @@ class _SampleGame(_Game):
 
     def profsamplepay_to_json(self, samplepay, prof):
         """Convery profile and observations to prof obs output"""
-        return {role: [(strat, int(count), list(map(float, pay)))
-                       for strat, count, pay
-                       in zip(strats, counts, pays.T) if count > 0]
-                for role, strats, counts, pays
-                in zip(self.role_names, self.strat_names,
-                       np.split(prof, self.role_starts[1:]),
-                       np.split(samplepay, self.role_starts[1:], 1))}
+        return {
+            role: [
+                (strat, int(count), list(map(float, pay)))
+                for strat, count, pay in zip(strats, counts, pays.T)
+                if count > 0
+            ]
+            for role, strats, counts, pays in zip(
+                self.role_names,
+                self.strat_names,
+                np.split(prof, self.role_starts[1:]),
+                np.split(samplepay, self.role_starts[1:], 1),
+            )
+        }
 
     @utils.memoize
     def __hash__(self):
@@ -1028,57 +1142,68 @@ class _SampleGame(_Game):
 
     def __eq__(self, other):
         return (
-            super().__eq__(other) and
+            super().__eq__(other)
+            and
             # Identical sample payoffs
-            all(_sample_payoffs_equal(pay, other.get_sample_payoffs(prof))
+            all(
+                _sample_payoffs_equal(pay, other.get_sample_payoffs(prof))
                 for prof, pay in zip(
-                    self._profiles,
-                    itertools.chain.from_iterable(self._sample_payoffs))))
+                    self._profiles, itertools.chain.from_iterable(self._sample_payoffs)
+                )
+            )
+        )
 
     def to_json(self):
         """Fromat a SampleGame as json"""
         res = super().to_json()
-        res['profiles'] = [
-            self.profsamplepay_to_json(pay, prof) for prof, pay
-            in zip(self._profiles,
-                   itertools.chain.from_iterable(self._sample_payoffs))]
-        res['type'] = 'samplegame.1'
+        res["profiles"] = [
+            self.profsamplepay_to_json(pay, prof)
+            for prof, pay in zip(
+                self._profiles, itertools.chain.from_iterable(self._sample_payoffs)
+            )
+        ]
+        res["type"] = "samplegame.1"
         return res
 
     def __repr__(self):
         samples = self.num_samples
         if samples.size == 0:
-            sample_str = '0'
+            sample_str = "0"
         elif samples.size == 1:
             sample_str = str(samples[0])
         else:
-            sample_str = '{:d} - {:d}'.format(samples.min(), samples.max())
-        return '{}, {})'.format(super().__repr__()[:-1], sample_str)
+            sample_str = "{:d} - {:d}".format(samples.min(), samples.max())
+        return "{}, {})".format(super().__repr__()[:-1], sample_str)
 
     def __str__(self):
         samples = self.num_sample_profs.dot(self.num_samples)
         if self.num_samples.size == 0:
-            sampstr = 'no observations'
+            sampstr = "no observations"
         elif self.num_samples.size == 1:
             samps = self.num_samples[0]
-            sampstr = '{:d} observation{} per profile'.format(
-                samps, '' if samps == 1 else 's')
+            sampstr = "{:d} observation{} per profile".format(
+                samps, "" if samps == 1 else "s"
+            )
         else:
-            sampstr = '{:d} to {:d} observations per profile'.format(
-                self.num_samples.min(), self.num_samples.max())
-        return '{}\n{} payoff sample{}\n{}'.format(
-            super().__str__(), 'no' if samples == 0 else samples,
-            '' if samples == 1 else 's', sampstr)
+            sampstr = "{:d} to {:d} observations per profile".format(
+                self.num_samples.min(), self.num_samples.max()
+            )
+        return "{}\n{} payoff sample{}\n{}".format(
+            super().__str__(),
+            "no" if samples == 0 else samples,
+            "" if samples == 1 else "s",
+            sampstr,
+        )
 
 
 def _sample_payoffs_equal(pay1, pay2):
     """Returns true if two sample payoffs are almost equal"""
     return pay1.shape[0] == pay2.shape[0] and utils.allclose_perm(
-        pay1, pay2, equal_nan=True)
+        pay1, pay2, equal_nan=True
+    )
 
 
-def samplegame(num_role_players, num_role_strats, profiles,
-               sample_payoffs):
+def samplegame(num_role_players, num_role_strats, profiles, sample_payoffs):
     """Create a SampleGame with default names
 
     Parameters
@@ -1093,8 +1218,8 @@ def samplegame(num_role_players, num_role_strats, profiles,
         The sample payoffs for the game.
     """
     return samplegame_replace(
-        rsgame.empty(num_role_players, num_role_strats),
-        profiles, sample_payoffs)
+        rsgame.empty(num_role_players, num_role_strats), profiles, sample_payoffs
+    )
 
 
 def samplegame_flat(num_role_players, num_role_strats, profiles, payoffs):
@@ -1114,11 +1239,13 @@ def samplegame_flat(num_role_players, num_role_strats, profiles, payoffs):
         samples from, with shape (num_sample_profiles, num_strats).
     """
     return samplegame_replace_flat(
-        rsgame.empty(num_role_players, num_role_strats), profiles, payoffs)
+        rsgame.empty(num_role_players, num_role_strats), profiles, payoffs
+    )
 
 
-def samplegame_names(role_names, num_role_players, strat_names, profiles,
-                     sample_payoffs):
+def samplegame_names(
+    role_names, num_role_players, strat_names, profiles, sample_payoffs
+):
     """Create a SampleGame with specified names
 
     Parameters
@@ -1135,11 +1262,12 @@ def samplegame_names(role_names, num_role_players, strat_names, profiles,
         The sample payoffs for the game."""
     return samplegame_replace(
         rsgame.empty_names(role_names, num_role_players, strat_names),
-        profiles, sample_payoffs)
+        profiles,
+        sample_payoffs,
+    )
 
 
-def samplegame_names_flat(role_names, num_role_players, strat_names, profiles,
-                          payoffs):
+def samplegame_names_flat(role_names, num_role_players, strat_names, profiles, payoffs):
     """Create a SampleGame with specified names and flat payoffs
 
     Parameters
@@ -1158,8 +1286,8 @@ def samplegame_names_flat(role_names, num_role_players, strat_names, profiles,
         samples from, (num_sample_profiles, num_strats).
     """
     return samplegame_replace_flat(
-        rsgame.empty_names(role_names, num_role_players, strat_names),
-        profiles, payoffs)
+        rsgame.empty_names(role_names, num_role_players, strat_names), profiles, payoffs
+    )
 
 
 def samplegame_json(json):
@@ -1168,9 +1296,9 @@ def samplegame_json(json):
     This will read any valid payoff game as a sample game. Invalid games will
     produce an empty sample game."""
     base = samplegame_copy(rsgame.empty_json(json))
-    profiles = json.get('profiles', ())
+    profiles = json.get("profiles", ())
     if not profiles:
-        logging.debug('no profiles found in sample game')
+        logging.debug("no profiles found in sample game")
         return base
 
     sample_map = {}
@@ -1182,8 +1310,9 @@ def samplegame_json(json):
         payls.append(spay[None])
 
     values = [v for _, v in sorted(sample_map.items())]
-    profiles = np.concatenate(list(itertools.chain.from_iterable(
-        prof for prof, _ in values)))
+    profiles = np.concatenate(
+        list(itertools.chain.from_iterable(prof for prof, _ in values))
+    )
     sample_payoffs = tuple(np.concatenate(spay) for _, spay in values)
     return samplegame_replace(base, profiles, sample_payoffs)
 
@@ -1199,18 +1328,24 @@ def samplegame_copy(copy_game):
     copy_game : RsGame
         Game to copy data from.
     """
-    if hasattr(copy_game, 'sample_payoffs'):
+    if hasattr(copy_game, "sample_payoffs"):
         sample_payoffs = copy_game.sample_payoffs()
     elif not copy_game.is_empty():
         sample_payoffs = (copy_game.payoffs()[:, None],)
     else:
         sample_payoffs = ()
     return _SampleGame(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players, copy_game.profiles(), sample_payoffs)
+        copy_game.role_names,
+        copy_game.strat_names,
+        copy_game.num_role_players,
+        copy_game.profiles(),
+        sample_payoffs,
+    )
 
 
-def samplegame_replace_flat(copy_game, profiles, payoffs): # pylint: disable=too-many-locals
+def samplegame_replace_flat(
+    copy_game, profiles, payoffs
+):  # pylint: disable=too-many-locals
     """Replace sample payoff data for an existing game
 
     Parameters
@@ -1227,8 +1362,11 @@ def samplegame_replace_flat(copy_game, profiles, payoffs): # pylint: disable=too
     profiles = np.asarray(profiles, int)
     payoffs = np.asarray(payoffs, float)
     _, ind, inv, counts = np.unique(
-        utils.axis_to_elem(profiles), return_index=True, return_inverse=True,
-        return_counts=True)
+        utils.axis_to_elem(profiles),
+        return_index=True,
+        return_inverse=True,
+        return_counts=True,
+    )
     countso = counts.argsort()
     countsoi = np.empty(counts.size, int)
     countsoi[countso] = np.arange(counts.size)
@@ -1240,8 +1378,10 @@ def samplegame_replace_flat(copy_game, profiles, payoffs): # pylint: disable=too
     splits = (num_samps * ccounts)[:-1].cumsum()
 
     profs = profiles[ind[countso]]
-    pays = [pay.reshape((n, c, -1)) for pay, n, c
-            in zip(np.split(payoffs[payo], splits), ccounts, num_samps)]
+    pays = [
+        pay.reshape((n, c, -1))
+        for pay, n, c in zip(np.split(payoffs[payo], splits), ccounts, num_samps)
+    ]
     return samplegame_replace(copy_game, profs, pays)
 
 
@@ -1262,45 +1402,66 @@ def samplegame_replace(copy_game, profiles, sample_payoffs):
 
     utils.check(
         profiles.shape[1:] == (copy_game.num_strats,),
-        'profiles must have proper end shape : expected {} but was {}',
-        (copy_game.num_strats,), profiles.shape[1:])
-    utils.check(np.all(profiles >= 0), 'profiles were negative')
+        "profiles must have proper end shape : expected {} but was {}",
+        (copy_game.num_strats,),
+        profiles.shape[1:],
+    )
+    utils.check(np.all(profiles >= 0), "profiles were negative")
     utils.check(
         np.all(
-            np.add.reduceat(profiles, copy_game.role_starts, 1) ==
-            copy_game.num_role_players),
-        'not all profiles equaled player total')
+            np.add.reduceat(profiles, copy_game.role_starts, 1)
+            == copy_game.num_role_players
+        ),
+        "not all profiles equaled player total",
+    )
     utils.check(
         profiles.shape[0] == np.unique(utils.axis_to_elem(profiles)).size,
-        "there can't be any duplicate profiles")
+        "there can't be any duplicate profiles",
+    )
     utils.check(
         profiles.shape[0] == sum(sp.shape[0] for sp in sample_payoffs),
-        'profiles and sample_payoffs must have the same number of "profiles"')
+        'profiles and sample_payoffs must have the same number of "profiles"',
+    )
     utils.check(
         all(sp.shape[2] == copy_game.num_strats for sp in sample_payoffs),
-        'all sample payoffs must have the appropriate number of strategies')
+        "all sample payoffs must have the appropriate number of strategies",
+    )
     utils.check(
         not any(pays.size == 0 for pays in sample_payoffs),
-        "sample_payoffs can't be empty")
+        "sample_payoffs can't be empty",
+    )
     utils.check(
         len({s.shape[1] for s in sample_payoffs}) == len(sample_payoffs),
-        'each set of observations must have a unique number or be merged')
+        "each set of observations must have a unique number or be merged",
+    )
 
-    for profs, spays in zip(np.split(profiles, list(itertools.accumulate(
-            sp.shape[0] for sp in sample_payoffs[:-1]))), sample_payoffs):
+    for profs, spays in zip(
+        np.split(
+            profiles,
+            list(itertools.accumulate(sp.shape[0] for sp in sample_payoffs[:-1])),
+        ),
+        sample_payoffs,
+    ):
         utils.check(
             not np.any((spays != 0) & (profs == 0)[:, None]),
-            'some sample payoffs were nonzero for invalid payoffs')
+            "some sample payoffs were nonzero for invalid payoffs",
+        )
         utils.check(
             not np.all(np.isnan(spays) | (profs == 0)[:, None], 2).any(),
-            "an observation can't have entirely nan payoffs")
+            "an observation can't have entirely nan payoffs",
+        )
         utils.check(
             np.all(np.isnan(spays).all(1) | ~np.isnan(spays).any()),
-            'for a given strategy, all payoffs must be nan or non')
+            "for a given strategy, all payoffs must be nan or non",
+        )
 
     return _SampleGame(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players, profiles, sample_payoffs)
+        copy_game.role_names,
+        copy_game.strat_names,
+        copy_game.num_role_players,
+        profiles,
+        sample_payoffs,
+    )
 
 
 # ---------
@@ -1318,20 +1479,22 @@ def _mean(vals):
     for val in vals:
         count += 1
         mean += (val - mean) / count
-    return mean if count > 0 else float('nan')
+    return mean if count > 0 else float("nan")
 
 
-def _unpack_symgrp(role, strategy, count, payoff=None, id=None, **_): # pylint: disable=invalid-name,redefined-builtin
+def _unpack_symgrp(
+    role, strategy, count, payoff=None, id=None, **_
+):  # pylint: disable=invalid-name,redefined-builtin
     """Unpack a symmetry group"""
     return id, role, strategy, count, payoff
 
 
-def _unpack_obs(id, payoff, **_): # pylint: disable=invalid-name,redefined-builtin
+def _unpack_obs(id, payoff, **_):  # pylint: disable=invalid-name,redefined-builtin
     """Unpack an observation"""
     return id, payoff
 
 
-def _unpack_player(sid, p, **_): # pylint: disable=invalid-name
+def _unpack_player(sid, p, **_):  # pylint: disable=invalid-name
     """Unpack a player"""
     return sid, p
 

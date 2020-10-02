@@ -10,19 +10,35 @@ from gameanalysis import script
 
 def create_parser():
     """Create the default parser"""
-    modules = [imp.find_module(name).load_module(name) for imp, name, _
-               in pkgutil.iter_modules(script.__path__)]
+    modules = [
+        imp.find_module(name).load_module(name)
+        for imp, name, _ in pkgutil.iter_modules(script.__path__)
+    ]
     parser = argparse.ArgumentParser(
-        description="""Command line access to the game analysis toolkit.""")
-    parser.add_argument('-V', '--version', action='version',
-                        version='%(prog)s {}'.format(gameanalysis.__version__))
+        description="""Command line access to the game analysis toolkit."""
+    )
     parser.add_argument(
-        '-v', '--verbose', action='count', default=0, help="""Set the verbosity
+        "-V",
+        "--version",
+        action="version",
+        version="%(prog)s {}".format(gameanalysis.__version__),
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="""Set the verbosity
         level depending on the number of times specified, up to a maximum of
-        three.""")
+        three.""",
+    )
     subparsers = parser.add_subparsers(
-        title='commands', dest='command', metavar='<command>', help="""The
-        commands to execute. Available commands are:""")
+        title="commands",
+        dest="command",
+        metavar="<command>",
+        help="""The
+        commands to execute. Available commands are:""",
+    )
     for module in modules:
         subparser = module.add_parser(subparsers)
         subparser.main = module.main
@@ -46,5 +62,5 @@ def main():
     amain(*sys.argv[1:])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

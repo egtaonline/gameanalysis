@@ -20,13 +20,16 @@ def reduce_game(full_game, red_players):
         into the proper shape if necessary.
     """
     red_game = rsgame.empty_names(
-        full_game.role_names, red_players, full_game.strat_names)
+        full_game.role_names, red_players, full_game.strat_names
+    )
     utils.check(
         np.all(red_game.num_role_players > 0),
-        'all reduced players must be greater than zero')
+        "all reduced players must be greater than zero",
+    )
     utils.check(
         np.all(full_game.num_role_players >= red_game.num_role_players),
-        'all full counts must not be less than reduced counts')
+        "all full counts must not be less than reduced counts",
+    )
 
     if full_game.is_empty():
         return red_game
@@ -34,15 +37,15 @@ def reduce_game(full_game, red_players):
         profiles = full_game.profiles()
         payoffs = full_game.payoffs()
     else:
-        profiles = expand_profiles(
-            full_game, red_game.all_profiles())
+        profiles = expand_profiles(full_game, red_game.all_profiles())
         payoffs = full_game.get_payoffs(profiles)
         valid = ~np.all(np.isnan(payoffs) | (profiles == 0), 1)
         profiles = profiles[valid]
         payoffs = payoffs[valid]
 
     red_profiles, mask = _common.reduce_profiles(
-        full_game, red_game.num_role_players[None], profiles)
+        full_game, red_game.num_role_players[None], profiles
+    )
     return paygame.game_replace(red_game, red_profiles, payoffs[mask])
 
 
@@ -58,11 +61,13 @@ def reduce_profiles(red_game, profiles):
     """
     profiles = np.asarray(profiles, int)
     utils.check(
-        profiles.shape[-1] == red_game.num_strats,
-        'profiles must be appropriate shape')
+        profiles.shape[-1] == red_game.num_strats, "profiles must be appropriate shape"
+    )
     return _common.reduce_profiles(
-        red_game, red_game.num_role_players[None],
-        profiles.reshape((-1, red_game.num_strats)))[0]
+        red_game,
+        red_game.num_role_players[None],
+        profiles.reshape((-1, red_game.num_strats)),
+    )[0]
 
 
 def expand_profiles(full_game, profiles):
@@ -77,15 +82,16 @@ def expand_profiles(full_game, profiles):
     """
     profiles = np.asarray(profiles, int)
     utils.check(
-        profiles.shape[-1] == full_game.num_strats,
-        'profiles must be appropriate shape')
+        profiles.shape[-1] == full_game.num_strats, "profiles must be appropriate shape"
+    )
     return _common.expand_profiles(
-        full_game, full_game.num_role_players[None],
-        profiles.reshape((-1, full_game.num_strats)))
+        full_game,
+        full_game.num_role_players[None],
+        profiles.reshape((-1, full_game.num_strats)),
+    )
 
 
-def expand_deviation_profiles(
-        full_game, rest, red_players, role_index=None):
+def expand_deviation_profiles(full_game, rest, red_players, role_index=None):
     """Expand all deviation profiles from a restricted game
 
     Parameters
@@ -99,9 +105,10 @@ def expand_deviation_profiles(
     role_index : int, optional
         If specified , only expand deviations for the role selected.
     """
-    utils.check(
-        full_game.is_restriction(rest), 'restriction must be valid')
+    utils.check(full_game.is_restriction(rest), "restriction must be valid")
     return expand_profiles(
-        full_game, restrict.deviation_profiles(
-            rsgame.empty(red_players, full_game.num_role_strats),
-            rest, role_index))
+        full_game,
+        restrict.deviation_profiles(
+            rsgame.empty(red_players, full_game.num_role_strats), rest, role_index
+        ),
+    )

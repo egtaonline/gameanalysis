@@ -77,8 +77,9 @@ class _MinimumConnectedComponentElementSet(object):
         return iter((v, w) for (w, v), _ in self._set)
 
     def __repr__(self):
-        return '{}({}, {})'.format(
-            self.__class__.__name__[1:], self._thresh, list(self))
+        return "{}({}, {})".format(
+            self.__class__.__name__[1:], self._thresh, list(self)
+        )
 
 
 def bitset(dim, iterable=()):
@@ -95,6 +96,7 @@ class _BitSet(object):
     A bitmask is in the set if all of the true bits have been added
     together. When iterating, all maximal bitsets are returned. An empty bitset
     still contains 0."""
+
     # This compresses all bitmasks down to the number they are
     # implicitly, and uses bitwise math to replicate the same functions.
 
@@ -105,7 +107,7 @@ class _BitSet(object):
     def add(self, bitmask):
         """Add a mask to the bit set"""
         bitmask = np.asarray(bitmask, bool)
-        if bitmask not in self: # pylint: disable=no-else-return
+        if bitmask not in self:  # pylint: disable=no-else-return
             num = bitmask.dot(self._mask)
             self._masks[:] = [m for m in self._masks if m & ~num]
             self._masks.append(num)
@@ -120,8 +122,8 @@ class _BitSet(object):
 
     def __contains__(self, bitmask):
         utils.check(
-            bitmask.size == self._mask.size,
-            "can't add bitmasks of different sizes")
+            bitmask.size == self._mask.size, "can't add bitmasks of different sizes"
+        )
         num = bitmask.dot(self._mask)
         return not all(num & ~m for m in self._masks)
 
@@ -130,12 +132,14 @@ class _BitSet(object):
 
     def __eq__(self, othr):
         # pylint: disable-msg=protected-access
-        return (type(self) is type(othr) and
-                self._mask.size == othr._mask.size and
-                frozenset(self._masks) == frozenset(othr._masks))
+        return (
+            type(self) is type(othr)
+            and self._mask.size == othr._mask.size
+            and frozenset(self._masks) == frozenset(othr._masks)
+        )
 
     def __bool__(self):
         return len(self._masks) > 1 or bool(self._masks[0] != 0)
 
     def __repr__(self):
-        return '{}({!r})'.format(self.__class__.__name__[1:], self._masks)
+        return "{}({!r})".format(self.__class__.__name__[1:], self._masks)

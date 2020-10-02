@@ -25,10 +25,7 @@ def test_weakly_dominated():
     dom = dominance.weakly_dominated(game)
     assert np.all(dom == [False, True])
 
-    profiles = [
-        [2, 0],
-        [0, 2]
-    ]
+    profiles = [[2, 0], [0, 2]]
     payoffs = [
         [2, 0],
         [0, 2],
@@ -99,10 +96,7 @@ def test_strictly_dominated():
     dom = dominance.strictly_dominated(game)
     assert np.all(dom == [False, True])
 
-    profiles = [
-        [2, 0],
-        [0, 2]
-    ]
+    profiles = [[2, 0], [0, 2]]
     payoffs = [
         [2, 0],
         [0, 1],
@@ -166,10 +160,7 @@ def test_strictly_dominated_conditional():
     dom = dominance.strictly_dominated(game)
     assert np.all(dom == [False, False])
 
-    profiles = [
-        [2, 0],
-        [0, 2]
-    ]
+    profiles = [[2, 0], [0, 2]]
     payoffs = [
         [2, 0],
         [0, 1],
@@ -254,12 +245,12 @@ def test_never_best_response_conditional():
 def test_travellers_dilemma():
     """Test iterated elimination on travelers dilemma"""
     game = gamegen.travellers_dilemma(max_value=6)
-    mask = dominance.iterated_elimination(game, 'weakdom')
+    mask = dominance.iterated_elimination(game, "weakdom")
     assert np.all(mask == [True] + [False] * 4)
 
 
 def test_known_fail_case():
     """Test iterated elimination on hard game"""
-    with open(path.join('example_games', 'hard_nash.json')) as fil:
+    with open(path.join("example_games", "hard_nash.json")) as fil:
         game = gamereader.load(fil)
-    dominance.iterated_elimination(game, 'neverbr')
+    dominance.iterated_elimination(game, "neverbr")

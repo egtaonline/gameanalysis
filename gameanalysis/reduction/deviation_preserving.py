@@ -11,12 +11,17 @@ from gameanalysis.reduction import hierarchical
 
 def _devs(game, num_profs):
     """Return an array of the player counts after deviation"""
-    return np.tile(np.repeat(
-        game.num_role_players - np.eye(game.num_roles, dtype=int),
-        game.num_role_strats, 0), (num_profs, 1))
+    return np.tile(
+        np.repeat(
+            game.num_role_players - np.eye(game.num_roles, dtype=int),
+            game.num_role_strats,
+            0,
+        ),
+        (num_profs, 1),
+    )
 
 
-def reduce_game(full_game, red_players): # pylint: disable=too-many-locals
+def reduce_game(full_game, red_players):  # pylint: disable=too-many-locals
     """Reduce a game using deviation preserving reduction
 
     Parameters
@@ -28,14 +33,16 @@ def reduce_game(full_game, red_players): # pylint: disable=too-many-locals
         into the proper shape if necessary.
     """
     red_game = rsgame.empty_names(
-        full_game.role_names, red_players, full_game.strat_names)
+        full_game.role_names, red_players, full_game.strat_names
+    )
     utils.check(
-        np.all((red_game.num_role_players > 1) |
-               (full_game.num_role_players == 1)),
-        'all reduced players must be greater than zero')
+        np.all((red_game.num_role_players > 1) | (full_game.num_role_players == 1)),
+        "all reduced players must be greater than zero",
+    )
     utils.check(
         np.all(full_game.num_role_players >= red_game.num_role_players),
-        'all full counts must not be less than reduced counts')
+        "all full counts must not be less than reduced counts",
+    )
 
     if full_game.is_empty():
         return red_game
@@ -43,17 +50,16 @@ def reduce_game(full_game, red_players): # pylint: disable=too-many-locals
         full_profiles = full_game.profiles()
         full_payoffs = full_game.payoffs()
     else:
-        full_profiles = expand_profiles(
-            full_game, red_game.all_profiles())
+        full_profiles = expand_profiles(full_game, red_game.all_profiles())
         full_payoffs = full_game.get_payoffs(full_profiles)
-        valid = ~np.all(np.isnan(full_payoffs) |
-                        (full_profiles == 0), 1)
+        valid = ~np.all(np.isnan(full_payoffs) | (full_profiles == 0), 1)
         full_profiles = full_profiles[valid]
         full_payoffs = full_payoffs[valid]
 
     # Reduce
     red_profiles, red_inds, full_inds, strat_inds = _reduce_profiles(
-        red_game, full_profiles, True)
+        red_game, full_profiles, True
+    )
 
     if red_profiles.size == 0:  # Empty reduction
         return red_game
@@ -63,23 +69,22 @@ def reduce_game(full_game, red_players): # pylint: disable=too-many-locals
     # sum the number of payoffs mapped to a specific location
     cum_inds = red_inds * full_game.num_strats + strat_inds
     payoff_vals = full_payoffs[full_inds, strat_inds]
-    red_payoffs = np.bincount(
-        cum_inds, payoff_vals, red_profiles.size).reshape(
-            red_profiles.shape)
-    red_payoff_counts = np.bincount(
-        cum_inds, minlength=red_profiles.size).reshape(
-            red_profiles.shape)
+    red_payoffs = np.bincount(cum_inds, payoff_vals, red_profiles.size).reshape(
+        red_profiles.shape
+    )
+    red_payoff_counts = np.bincount(cum_inds, minlength=red_profiles.size).reshape(
+        red_profiles.shape
+    )
     mask = red_payoff_counts > 1
     red_payoffs[mask] /= red_payoff_counts[mask]
 
     unknown = (red_profiles > 0) & (red_payoff_counts == 0)
     red_payoffs[unknown] = np.nan
     valid = ~np.all((red_profiles == 0) | np.isnan(red_payoffs), 1)
-    return paygame.game_replace(red_game, red_profiles[valid],
-                                red_payoffs[valid])
+    return paygame.game_replace(red_game, red_profiles[valid], red_payoffs[valid])
 
 
-def expand_profiles(full_game, profiles): # pylint: disable=too-many-locals
+def expand_profiles(full_game, profiles):  # pylint: disable=too-many-locals
     """Expand profiles using dpr
 
     Parameters
@@ -95,15 +100,14 @@ def expand_profiles(full_game, profiles): # pylint: disable=too-many-locals
     """
     profiles = np.asarray(profiles, int)
     utils.check(
-        profiles.shape[-1] == full_game.num_strats,
-        'profiles not a valid shape')
+        profiles.shape[-1] == full_game.num_strats, "profiles not a valid shape"
+    )
     if not profiles.size:
         return np.empty((0, full_game.num_strats), int)
     profiles = profiles.reshape((-1, full_game.num_strats))
     all_red_players = np.add.reduceat(profiles, full_game.role_starts, 1)
     red_players = all_red_players[0]
-    utils.check(
-        np.all(all_red_players == red_players), 'profiles must be valid')
+    utils.check(np.all(all_red_players == red_players), "profiles must be valid")
 
     num_profs = profiles.shape[0]
     dev_profs = profiles[:, None] - np.eye(full_game.num_strats, dtype=int)
@@ -111,11 +115,15 @@ def expand_profiles(full_game, profiles): # pylint: disable=too-many-locals
     dev_full_players = _devs(full_game, num_profs)
 
     mask = ~np.any(dev_profs < 0, 1)
-    devs = (np.eye(full_game.num_strats, dtype=bool)[None]
-            .repeat(num_profs, 0)
-            .reshape((-1, full_game.num_strats))[mask])
-    dev_full_profs = _common.expand_profiles(
-        full_game, dev_full_players[mask], dev_profs[mask]) + devs
+    devs = (
+        np.eye(full_game.num_strats, dtype=bool)[None]
+        .repeat(num_profs, 0)
+        .reshape((-1, full_game.num_strats))[mask]
+    )
+    dev_full_profs = (
+        _common.expand_profiles(full_game, dev_full_players[mask], dev_profs[mask])
+        + devs
+    )
     ids = utils.axis_to_elem(dev_full_profs)
     return dev_full_profs[np.unique(ids, return_index=True)[1]]
 
@@ -133,7 +141,9 @@ def reduce_profiles(red_game, profiles):
     return _reduce_profiles(red_game, profiles, False)
 
 
-def _reduce_profiles(red_game, profiles, return_contributions): # pylint: disable=too-many-locals
+def _reduce_profiles(
+    red_game, profiles, return_contributions
+):  # pylint: disable=too-many-locals
     """Reduce profiles using dpr
 
     Parameters
@@ -147,17 +157,14 @@ def _reduce_profiles(red_game, profiles, return_contributions): # pylint: disabl
         from.
     """
     profiles = np.asarray(profiles, int)
-    utils.check(
-        profiles.shape[-1] == red_game.num_strats,
-        'profiles not a valid shape')
+    utils.check(profiles.shape[-1] == red_game.num_strats, "profiles not a valid shape")
     if not profiles.size:
         return np.empty((0, red_game.num_strats), int)
 
     profiles = profiles.reshape((-1, red_game.num_strats))
     all_full_players = np.add.reduceat(profiles, red_game.role_starts, 1)
     full_players = all_full_players[0]
-    utils.check(
-        np.all(all_full_players == full_players), 'profiles must be valid')
+    utils.check(np.all(all_full_players == full_players), "profiles must be valid")
 
     num_profs = profiles.shape[0]
     dev_profs = profiles.repeat(np.sum(profiles > 0, 1), 0)
@@ -167,22 +174,20 @@ def _reduce_profiles(red_game, profiles, return_contributions): # pylint: disabl
     mask = (profiles > 0).ravel()
 
     red_profs, reduced = _common.reduce_profiles(
-        red_game, dev_red_players[mask], dev_profs)
+        red_game, dev_red_players[mask], dev_profs
+    )
     rstrat_inds = strat_inds[reduced]
     red_profs[np.arange(red_profs.shape[0]), rstrat_inds] += 1
-    red_profs, red_inds = np.unique(
-        utils.axis_to_elem(red_profs), return_inverse=True)
+    red_profs, red_inds = np.unique(utils.axis_to_elem(red_profs), return_inverse=True)
     red_profs = utils.axis_from_elem(red_profs)
     if not return_contributions:
         return red_profs
 
-    full_inds = np.arange(num_profs).repeat(
-        red_game.num_strats)[mask][reduced]
+    full_inds = np.arange(num_profs).repeat(red_game.num_strats)[mask][reduced]
     return red_profs, red_inds, full_inds, rstrat_inds
 
 
-def expand_deviation_profiles(
-        full_game, rest, red_players, role_index=None):
+def expand_deviation_profiles(full_game, rest, red_players, role_index=None):
     """Expand all deviation profiles from a restriction
 
     Parameters
@@ -198,8 +203,7 @@ def expand_deviation_profiles(
     """
     rest = np.asarray(rest, bool)
     rdev = np.eye(full_game.num_roles, dtype=int)
-    red_players = np.broadcast_to(np.asarray(red_players, int),
-                                  full_game.num_roles)
+    red_players = np.broadcast_to(np.asarray(red_players, int), full_game.num_roles)
     support = np.add.reduceat(rest, full_game.role_starts)
 
     def dev_profs(red_players, full_players, mask, rst):
@@ -210,19 +214,21 @@ def expand_deviation_profiles(
         non_devs = hierarchical.expand_profiles(game, sub_profs)
         ndevs = np.sum(~mask)
         devs = np.zeros((ndevs, full_game.num_strats), int)
-        devs[:, rst:rst + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
+        devs[:, rst : rst + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
         profs = non_devs[:, None] + devs
         profs.shape = (-1, full_game.num_strats)
         return profs
 
-    if role_index is None: # pylint: disable=no-else-return
-        expanded_profs = [dev_profs(red_players, full_players, mask, rs)
-                          for red_players, full_players, mask, rs
-                          in zip(red_players - rdev,
-                                 full_game.num_role_players - rdev,
-                                 np.split(rest,
-                                          full_game.role_starts[1:]),
-                                 full_game.role_starts)]
+    if role_index is None:  # pylint: disable=no-else-return
+        expanded_profs = [
+            dev_profs(red_players, full_players, mask, rs)
+            for red_players, full_players, mask, rs in zip(
+                red_players - rdev,
+                full_game.num_role_players - rdev,
+                np.split(rest, full_game.role_starts[1:]),
+                full_game.role_starts,
+            )
+        ]
         return np.concatenate(expanded_profs)
 
     else:
@@ -230,7 +236,6 @@ def expand_deviation_profiles(
         full_players[role_index] -= 1
         red_players = red_players.copy()
         red_players[role_index] -= 1
-        mask = np.split(rest, full_game.role_starts[1:])[
-            role_index]
+        mask = np.split(rest, full_game.role_starts[1:])[role_index]
         rstart = full_game.role_starts[role_index]
         return dev_profs(red_players, full_players, mask, rstart)

@@ -20,7 +20,7 @@ def load_profiles(strings):
     """
     for prof_type in strings:
         # Try to load file else read as string
-        if prof_type == '-':
+        if prof_type == "-":
             prof = json.load(sys.stdin)
         else:
             try:

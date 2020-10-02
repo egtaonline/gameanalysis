@@ -9,11 +9,10 @@ def test_connected_component():
     """Test that connected component works"""
     simset = collect.mcces(1, [([0], 0)])
     assert simset.add([1.5], 1)
-    assert not simset.add([0.75], .5)
+    assert not simset.add([0.75], 0.5)
     assert len(simset) == 1
     assert [((0,), 0)] == list(simset)
-    assert (repr(simset) ==
-            'MinimumConnectedComponentElementSet(1, [((0,), 0)])')
+    assert repr(simset) == "MinimumConnectedComponentElementSet(1, [((0,), 0)])"
 
     simset.clear()
     assert simset.add([0.75], 1)
@@ -56,6 +55,6 @@ def test_bitset():
 
     bitset.clear()
     assert not bitset
-    assert repr(bitset) == 'BitSet([0])'
+    assert repr(bitset) == "BitSet([0])"
     assert list(map(list, bitset)) == [[False] * 5]
     assert bitset.add(one)

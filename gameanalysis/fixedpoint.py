@@ -18,13 +18,17 @@ def fixed_point(func, init, **kwargs):
         Additional options to pass on to labeled_subsimplex. See other options
         for details.
     """
+
     def fixed_func(mix):
         """Labeling function for a fixed point"""
         return np.argmin((mix == 0) - mix + func(mix))
+
     return labeled_subsimplex(fixed_func, init, **kwargs)
 
 
-def labeled_subsimplex(label_func, init, disc): # pylint: disable=too-many-locals,too-many-statements
+def labeled_subsimplex(
+    label_func, init, disc
+):  # pylint: disable=too-many-locals,too-many-statements
     """Find approximate center of a fully labeled subsimplex
 
     This runs once at the discretization provided. It is recommended that this
@@ -78,8 +82,8 @@ def labeled_subsimplex(label_func, init, disc): # pylint: disable=too-many-local
 
     while labels[index] < dim:
         # Find duplicate index. this is O(dim) but not a bottleneck
-        dup_labels, = np.nonzero(labels == labels[index])
-        index, = dup_labels[dup_labels != index]
+        (dup_labels,) = np.nonzero(labels == labels[index])
+        (index,) = dup_labels[dup_labels != index]
 
         # Flip simplex over at index
         if index == 0:
@@ -106,7 +110,8 @@ def labeled_subsimplex(label_func, init, disc): # pylint: disable=too-many-local
 
         utils.check(
             np.all(new_vertex >= 0) and new_vertex.sum() == disc + 1,
-            'vertex rotation failed, check labeling function')
+            "vertex rotation failed, check labeling function",
+        )
 
         # Update label of new vertex
         if new_vertex[-1] == 2:
@@ -117,7 +122,8 @@ def labeled_subsimplex(label_func, init, disc): # pylint: disable=too-many-local
             labels[index] = label_func(new_vertex[:-1] / disc)
             utils.check(
                 0 <= labels[index] < dim and new_vertex[labels[index]],
-                'labeling function was not proper (see help)')
+                "labeling function was not proper (see help)",
+            )
 
     # Average out all vertices in simplex we care about
     current = base
@@ -143,6 +149,6 @@ def _discretize_mixture(mix, k):
     minimum error. Thus, discretizing the mixture.
     """
     disc = np.floor(mix * k).astype(int)
-    inds = np.argsort(disc - mix * k)[:k - disc.sum()]
+    inds = np.argsort(disc - mix * k)[: k - disc.sum()]
     disc[inds] += 1
     return disc

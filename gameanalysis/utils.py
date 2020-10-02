@@ -40,7 +40,7 @@ def comb(n, k):
     """
     # pylint: disable-msg=invalid-name
     res = np.rint(sps.comb(n, k, False))
-    if np.all(res < _MAX_INT_FLOAT): # pylint: disable=no-else-return
+    if np.all(res < _MAX_INT_FLOAT):  # pylint: disable=no-else-return
         return res.astype(int)
     elif isinstance(n, abc.Iterable) or isinstance(k, abc.Iterable):
         broad = np.broadcast(np.asarray(n), np.asarray(k))
@@ -67,8 +67,7 @@ def comb_inv(cmb, k):
     step = ka.copy()
     mask = step > 0
     na[~mask] = 0
-    na[mask] = np.ceil((ka[mask] / np.e *
-                        cmba[mask] ** (1 / ka[mask])).astype(float))
+    na[mask] = np.ceil((ka[mask] / np.e * cmba[mask] ** (1 / ka[mask])).astype(float))
 
     # If we didn't approximate the lower bound, then there are at most k values
     # to check. This does a poor mans binary search with some wasted effort,
@@ -86,7 +85,7 @@ def comb_inv(cmb, k):
         step[red] //= 2
 
         mask = step > 0
-    if n.ndim == 0: # pylint: disable=no-else-return
+    if n.ndim == 0:  # pylint: disable=no-else-return
         return n.item()
     else:
         return n
@@ -110,7 +109,8 @@ def game_size_inv(size, players):
 def repeat(iterable, reps):
     """Repeat each element of iterable reps times"""
     return itertools.chain.from_iterable(
-        itertools.repeat(e, r) for e, r in zip(iterable, reps))
+        itertools.repeat(e, r) for e, r in zip(iterable, reps)
+    )
 
 
 def acomb(n, k, repetition=False):
@@ -119,7 +119,7 @@ def acomb(n, k, repetition=False):
     The result will be an array shape (m, n) where m is n choose k optionally
     with repetitions."""
     # pylint: disable-msg=invalid-name
-    if repetition: # pylint: disable=no-else-return
+    if repetition:  # pylint: disable=no-else-return
         return _acombr(n, k)
     else:
         return _acomb(n, k)
@@ -153,8 +153,8 @@ def _acombr(n, k):
             n_ = n - 1
             k_ = k - ki
             m = sps.comb(n_, k_, repetition=True, exact=True)
-            region[o:o + m, 0] = ki
-            fill_region(n_, k_, region[o:o + m, 1:])
+            region[o : o + m, 0] = ki
+            fill_region(n_, k_, region[o : o + m, 1:])
             o += m
 
     fill_region(n, k, grid)
@@ -214,9 +214,7 @@ def acartesian2(*arrays):
     rows = prod(a.shape[0] for a in arrays)
     columns = sum(a.shape[1] for a in arrays)
     dtype = arrays[0].dtype  # should always have at least one role
-    check(
-        all(a.dtype == dtype for a in arrays),
-        'all arrays must have the same dtype')
+    check(all(a.dtype == dtype for a in arrays), "all arrays must have the same dtype")
 
     result = np.zeros((rows, columns), dtype)
     pre_row = 1
@@ -238,9 +236,7 @@ def acartesian2(*arrays):
 def simplex_project(array):
     """Return the projection onto the simplex"""
     array = np.asarray(array, float)
-    check(
-        not np.isnan(array).any(), "can't project nan onto simplex: {}",
-        array)
+    check(not np.isnan(array).any(), "can't project nan onto simplex: {}", array)
     # This fails for really large values, so we normalize the array so the
     # largest element has absolute value at most _SIMPLEX_BIG
     array = np.clip(array, -_SIMPLEX_BIG, _SIMPLEX_BIG)
@@ -282,7 +278,7 @@ def multinomial_mode(p, n):
             f[a] -= 1
             q[a] = (1 - f[a]) / (k[a] + 1)
     elif n0 > n:
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             q = f / k
             for _ in range(n, n0):
                 a = q.argmin()
@@ -301,19 +297,19 @@ def geometric_histogram(num, prob):
     `np.bincount(np.random.geometric(prob, num) - 1)` but does so more
     efficiently.
     """
-    check(num > 0, 'must take at least one sample')
-    check(0 < prob <= 1, 'must use a valid probability in (0, 1]')
+    check(num > 0, "must take at least one sample")
+    check(0 < prob <= 1, "must use a valid probability in (0, 1]")
     results = []
     # This is a rough upper bound on the expectation of the extreme value of
     # num geometrics with probability prob
-    inc = math.ceil((np.log(num) + 1) * (1 / prob - .5)) + 1
+    inc = math.ceil((np.log(num) + 1) * (1 / prob - 0.5)) + 1
     while num > 0:
         res = np.random.multinomial(num, prob * (1 - prob) ** np.arange(inc))
         results.append(res[:-1])
         num = res[-1]
     # Remove trailing zeros
     last = results.pop()
-    results.append(last[:np.flatnonzero(last)[-1] + 1])
+    results.append(last[: np.flatnonzero(last)[-1] + 1])
     return np.concatenate(results)
 
 
@@ -335,14 +331,14 @@ def axis_to_elem(array, axis=-1):
     # ascontiguousarray will make a copy if necessary
     axis_at_end = np.ascontiguousarray(np.rollaxis(array, axis, array.ndim))
     new_shape = axis_at_end.shape
-    elems = axis_at_end.view([('axis', array.dtype, new_shape[-1:])])
+    elems = axis_at_end.view([("axis", array.dtype, new_shape[-1:])])
     elems.shape = new_shape[:-1]
     return elems
 
 
 def axis_from_elem(array, axis=-1):
     """Converts and array of axis elements back to an axis"""
-    return np.rollaxis(array['axis'], -1, axis)
+    return np.rollaxis(array["axis"], -1, axis)
 
 
 def hash_array(array):
@@ -350,8 +346,9 @@ def hash_array(array):
     return _HashArray(array)
 
 
-class _HashArray(object): # pylint: disable=too-few-public-methods
+class _HashArray(object):  # pylint: disable=too-few-public-methods
     """A hashed array object"""
+
     def __init__(self, array):
         self.array = np.asarray(array)
         self.array.setflags(write=False)
@@ -362,8 +359,7 @@ class _HashArray(object): # pylint: disable=too-few-public-methods
 
     def __eq__(self, othr):
         # pylint: disable-msg=protected-access
-        return (self._hash == othr._hash and
-                np.all(self.array == othr.array))
+        return self._hash == othr._hash and np.all(self.array == othr.array)
 
 
 def iunique(iterable):
@@ -393,18 +389,16 @@ def random_strings(min_length, max_length=None, digits=string.ascii_lowercase):
     """
     if max_length is None:
         max_length = min_length
-    check(
-        min_length <= max_length,
-        "max_length can't be less than min_length")
+    check(min_length <= max_length, "max_length can't be less than min_length")
     while True:
         length = random.randint(min_length, max_length)
-        yield ''.join(random.choice(digits) for _ in range(length))
+        yield "".join(random.choice(digits) for _ in range(length))
 
 
 def prefix_strings(prefix, num):
     """Returns a list of prefixed integer strings"""
     padding = int(math.log10(max(num - 1, 1))) + 1
-    return ('{}{:0{:d}d}'.format(prefix, i, padding) for i in range(num))
+    return ("{}{:0{:d}d}".format(prefix, i, padding) for i in range(num))
 
 
 def is_sorted(iterable, *, key=None, reverse=False, strict=False):
@@ -425,7 +419,7 @@ def is_sorted(iterable, *, key=None, reverse=False, strict=False):
     ait, bit = itertools.tee(iterable)
     next(bit, None)  # Don't throw error if empty
 
-    if strict and reverse: # pylint: disable=no-else-return
+    if strict and reverse:  # pylint: disable=no-else-return
         return all(a > b for a, b in zip(ait, bit))
     elif reverse:
         return all(a >= b for a, b in zip(ait, bit))
@@ -445,13 +439,13 @@ def allequal_perm(aarr, barr):
         their first axis will make them equal.
     """
     aarr, barr = map(np.asarray, [aarr, barr])
-    check(
-        aarr.shape == barr.shape,
-        'can only compare identically sized arrays')
+    check(aarr.shape == barr.shape, "can only compare identically sized arrays")
     auniq, acounts = np.unique(
-        axis_to_elem(aarr.reshape(aarr.shape[0], -1)), return_counts=True)
+        axis_to_elem(aarr.reshape(aarr.shape[0], -1)), return_counts=True
+    )
     buniq, bcounts = np.unique(
-        axis_to_elem(barr.reshape(barr.shape[0], -1)), return_counts=True)
+        axis_to_elem(barr.reshape(barr.shape[0], -1)), return_counts=True
+    )
     return np.all(acounts == bcounts) and np.all(auniq == buniq)
 
 
@@ -467,9 +461,7 @@ def allclose_perm(aarr, barr, **kwargs):
         Additional arguments to pass to `isclose`.
     """
     aarr, barr = map(np.asarray, [aarr, barr])
-    check(
-        aarr.shape == barr.shape,
-        'can only compare identically sized arrays')
+    check(aarr.shape == barr.shape, "can only compare identically sized arrays")
     isclose = np.isclose(aarr[:, None], barr, **kwargs)
     isclose.shape = isclose.shape[:2] + (-1,)
     return isclose[optimize.linear_sum_assignment(~isclose.all(2))].all()
@@ -485,13 +477,13 @@ def memoize(member_function):
     """Memoize computation of single object functions"""
     check(
         len(inspect.signature(member_function).parameters) == 1,
-        'can only memoize single object functions')
+        "can only memoize single object functions",
+    )
 
     @functools.wraps(member_function)
     def new_member_function(obj):
         """Memoized member function"""
-        name = '__{}_{}'.format(
-            member_function.__name__, obj.__class__.__name__)
+        name = "__{}_{}".format(member_function.__name__, obj.__class__.__name__)
         if not hasattr(obj, name):
             setattr(obj, name, member_function(obj))
         return getattr(obj, name)
@@ -501,11 +493,15 @@ def memoize(member_function):
 
 def deprecated(func):
     """Mark a function as deprecated"""
+
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
         """Deprecated function"""
-        warnings.warn('Call to deprecated function {}.'.format(func.__name__),
-                      category=DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "Call to deprecated function {}.".format(func.__name__),
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
         return func(*args, **kwargs)
 
     return wrapped
@@ -544,22 +540,23 @@ def asubsequences(array, seq=2, axis=0):
     new_shape = list(array.shape)
     new_shape[axis] -= seq - 1
     return stride_tricks.as_strided(
-        array, shape=[seq] + new_shape,
-        strides=(array.strides[axis],) + array.strides)
-
+        array, shape=[seq] + new_shape, strides=(array.strides[axis],) + array.strides
+    )
 
 
 def _raise_handler(exception):
     """Create handler for exception"""
+
     def handler(_signum, _frame):
         """Raise timeout error"""
         raise exception
+
     return handler
 
 
 def _timeout_context(seconds, exception):
     """Timeout context manager that works in parent or child thread"""
-    if seconds is None or seconds <= 0: # pylint: disable=no-else-return
+    if seconds is None or seconds <= 0:  # pylint: disable=no-else-return
         return _noop()
     elif threading.current_thread() == threading.main_thread():
         return _timeout_context_main(seconds, exception)
@@ -589,18 +586,18 @@ def _timeout_context_child(seconds, exception):
     timedout = threading.Event()
     complete = threading.Event()
 
-    def globaltrace(_frame, why, _arg): # pragma: no cover
+    def globaltrace(_frame, why, _arg):  # pragma: no cover
         """Global trace to set local trace"""
-        if why == 'call': # pylint: disable=no-else-return
+        if why == "call":  # pylint: disable=no-else-return
             return localtrace
         else:
             return None
 
-    def localtrace(_frame, why, _arg): # pragma: no cover
+    def localtrace(_frame, why, _arg):  # pragma: no cover
         """Local trace to check for timeout"""
-        if complete.is_set(): # pylint: disable=no-else-return
+        if complete.is_set():  # pylint: disable=no-else-return
             return None
-        elif timedout.is_set() and why == 'line':
+        elif timedout.is_set() and why == "line":
             complete.set()
             raise exception
         else:
@@ -612,12 +609,13 @@ def _timeout_context_child(seconds, exception):
     yield
     # These are executed, but coverage misses them, potentially due to messing
     # with the trace
-    complete.set() # pragma: no cover
-    timer.cancel() # pragma: no cover
+    complete.set()  # pragma: no cover
+    timer.cancel()  # pragma: no cover
 
 
-class _Timeout(object): # pylint: disable=too-few-public-methods
+class _Timeout(object):  # pylint: disable=too-few-public-methods
     """Timeout class"""
+
     def __init__(self, seconds, exception):
         self._create = functools.partial(_timeout_context, seconds, exception)
         self._seconds = seconds
@@ -626,10 +624,10 @@ class _Timeout(object): # pylint: disable=too-few-public-methods
 
     def __enter__(self):
         self._context = self._create()
-        self._context.__enter__() # pylint: disable=no-member
+        self._context.__enter__()  # pylint: disable=no-member
 
     def __exit__(self, typ, value, traceback):
-        self._context.__exit__(typ, value, traceback) # pylint: disable=no-member
+        self._context.__exit__(typ, value, traceback)  # pylint: disable=no-member
         self._context = None
 
     def __call__(self, func):
@@ -638,6 +636,7 @@ class _Timeout(object): # pylint: disable=too-few-public-methods
             """Wrapped function"""
             with self._create():
                 return func(*args, **kwargs)
+
         return wrapped
 
 

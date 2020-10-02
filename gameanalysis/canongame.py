@@ -11,7 +11,7 @@ from gameanalysis import utils
 # TODO There's an issue here where incomplete payoffs for single strategy roles
 # contribute to incomplete profiles. There's not an obvious way to remedy this
 # with the current api in a way that works well.
-class _CanonGame(rsgame._RsGame): # pylint: disable=protected-access
+class _CanonGame(rsgame._RsGame):  # pylint: disable=protected-access
     """A game canonicalized to remove single strategy roles"""
 
     def __init__(self, game):
@@ -19,7 +19,8 @@ class _CanonGame(rsgame._RsGame): # pylint: disable=protected-access
         super().__init__(
             tuple(r for r, m in zip(game.role_names, role_mask) if m),
             tuple(s for s, m in zip(game.strat_names, role_mask) if m),
-            game.num_role_players[role_mask])
+            game.num_role_players[role_mask],
+        )
         self._game = game
         self._players = game.num_role_players[~role_mask]
         self._inds = np.cumsum(role_mask * game.num_role_strats)[~role_mask]
@@ -89,8 +90,8 @@ class _CanonGame(rsgame._RsGame): # pylint: disable=protected-access
     def to_json(self):
         """Convert canon game to json object"""
         base = super().to_json()
-        base['game'] = self._game.to_json()
-        base['type'] = 'canon.1'
+        base["game"] = self._game.to_json()
+        base["type"] = "canon.1"
         return base
 
     def __contains__(self, profile):
@@ -105,8 +106,9 @@ class _CanonGame(rsgame._RsGame): # pylint: disable=protected-access
         return hash((super().__hash__(), self._game))
 
     def __repr__(self):
-        return '{}, {:d} / {:d})'.format(
-            super().__repr__()[:-1], self.num_profiles, self.num_all_profiles)
+        return "{}, {:d} / {:d})".format(
+            super().__repr__()[:-1], self.num_profiles, self.num_all_profiles
+        )
 
 
 def canon(game):
@@ -122,4 +124,4 @@ def canon(game):
 
 def canon_json(jgame):
     """Read a canonicalized game from json"""
-    return canon(gamereader.loadj(jgame['game']))
+    return canon(gamereader.loadj(jgame["game"]))

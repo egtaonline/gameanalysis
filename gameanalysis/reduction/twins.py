@@ -23,7 +23,8 @@ def reduce_game(full_game, red_players=None):
     exp_red_players = np.minimum(full_game.num_role_players, 2)
     utils.check(
         red_players is None or np.all(exp_red_players == red_players),
-        "twins reduction didn't get expected reduced players")
+        "twins reduction didn't get expected reduced players",
+    )
     return dpr.reduce_game(full_game, exp_red_players)
 
 
@@ -40,8 +41,7 @@ def expand_profiles(full_game, profiles):
     red_players = np.minimum(full_game.num_role_players, 2)
     profiles = np.asarray(profiles, int)
     red_game = rsgame.empty(red_players, full_game.num_role_strats)
-    utils.check(
-        red_game.is_profile(profiles).all(), 'profiles must be valid')
+    utils.check(red_game.is_profile(profiles).all(), "profiles must be valid")
     return dpr.expand_profiles(full_game, profiles)
 
 
@@ -57,14 +57,11 @@ def reduce_profiles(red_game, profiles):
         The profiles to reduce.
     """
     profiles = np.asarray(profiles, int)
-    utils.check(
-        np.all(red_game.num_role_players <= 2),
-        'red game must be a twins game')
+    utils.check(np.all(red_game.num_role_players <= 2), "red game must be a twins game")
     return dpr.reduce_profiles(red_game, profiles)
 
 
-def expand_deviation_profiles(full_game, rest, red_players=None,
-                              role_index=None):
+def expand_deviation_profiles(full_game, rest, red_players=None, role_index=None):
     """Expand all deviation profiles from a restriction
 
     Parameters
@@ -82,6 +79,6 @@ def expand_deviation_profiles(full_game, rest, red_players=None,
     exp_red_players = np.minimum(full_game.num_role_players, 2)
     utils.check(
         red_players is None or np.all(exp_red_players == red_players),
-        "twins reduction didn't get expected reduced players")
-    return dpr.expand_deviation_profiles(
-        full_game, rest, exp_red_players, role_index)
+        "twins reduction didn't get expected reduced players",
+    )
+    return dpr.expand_deviation_profiles(full_game, rest, exp_red_players, role_index)

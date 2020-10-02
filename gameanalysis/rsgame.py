@@ -37,7 +37,9 @@ from gameanalysis import gamereader
 from gameanalysis import utils
 
 
-class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-instance-attributes
+class _StratArray(
+    abc.ABC
+):  # pylint: disable=too-many-public-methods,too-many-instance-attributes
     """A class with knowledge of the number of strategies per role
 
     This has methods common to working with strategy arrays, which essentially
@@ -59,28 +61,35 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     def __init__(self, role_names, strat_names):
         self.num_roles = len(role_names)
         self.num_role_strats = np.fromiter(  # pragma: no branch
-            (len(s) for s in strat_names), int, self.num_roles)
+            (len(s) for s in strat_names), int, self.num_roles
+        )
         self.num_strats = self.num_role_strats.sum()
         self.role_starts = np.insert(self.num_role_strats[:-1].cumsum(), 0, 0)
-        self.role_indices = np.arange(self.num_roles).repeat(
-            self.num_role_strats)
+        self.role_indices = np.arange(self.num_roles).repeat(self.num_role_strats)
 
         self.role_names = role_names
         self.strat_names = strat_names
         self._named_role_index = {r: i for i, r in enumerate(self.role_names)}
         self._role_strat_index = {
-            (r, s): i for i, (r, s)
-            in enumerate(itertools.chain.from_iterable(
-                ((r, s) for s in strats) for r, strats
-                in zip(self.role_names, self.strat_names)))}
-        self._role_strat_dev_index = {
-            (r, s, d): i for i, (r, s, d)
-            in enumerate(itertools.chain.from_iterable(
+            (r, s): i
+            for i, (r, s) in enumerate(
                 itertools.chain.from_iterable(
-                    ((r, s, d) for d in strats)
-                    for s in strats)
-                for r, strats
-                in zip(self.role_names, self.strat_names)))}
+                    ((r, s) for s in strats)
+                    for r, strats in zip(self.role_names, self.strat_names)
+                )
+            )
+        }
+        self._role_strat_dev_index = {
+            (r, s, d): i
+            for i, (r, s, d) in enumerate(
+                itertools.chain.from_iterable(
+                    itertools.chain.from_iterable(
+                        ((r, s, d) for d in strats) for s in strats
+                    )
+                    for r, strats in zip(self.role_names, self.strat_names)
+                )
+            )
+        }
 
         self.num_role_strats.setflags(write=False)
         self.role_starts.setflags(write=False)
@@ -90,9 +99,12 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     @utils.memoize
     def role_strat_names(self):
         """role and strat names indexed by role strat"""
-        return tuple(itertools.chain.from_iterable(
-            ((r, s) for s in ses) for r, ses
-            in zip(self.role_names, self.strat_names)))
+        return tuple(
+            itertools.chain.from_iterable(
+                ((r, s) for s in ses)
+                for r, ses in zip(self.role_names, self.strat_names)
+            )
+        )
 
     @property
     @utils.memoize
@@ -158,18 +170,23 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     @utils.memoize
     def dev_to_indices(self):
         """The strategy deviating to for each deviation"""
-        inds = np.concatenate([
-            np.tile(np.arange(n) + s, n) for n, s
-            in zip(self.num_role_strats, self.role_starts)])
+        inds = np.concatenate(
+            [
+                np.tile(np.arange(n) + s, n)
+                for n, s in zip(self.num_role_strats, self.role_starts)
+            ]
+        )
         inds.setflags(write=False)
         return inds
 
     def all_restrictions(self):
         """Return all valid restrictions"""
-        role_subs = [(np.arange(1, 1 << num_strats)[:, None]
-                      & (1 << np.arange(num_strats))).astype(bool)
-                     for num_strats
-                     in self.num_role_strats]
+        role_subs = [
+            (
+                np.arange(1, 1 << num_strats)[:, None] & (1 << np.arange(num_strats))
+            ).astype(bool)
+            for num_strats in self.num_role_strats
+        ]
         return utils.acartesian2(*role_subs)
 
     def pure_restrictions(self):
@@ -177,19 +194,20 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
 
         A pure restriction has only one strategy per role. This returns the
         pure restrictions in sorted order based off of role and strategy."""
-        role_rests = [np.eye(num_strats, dtype=bool) for num_strats
-                      in self.num_role_strats]
+        role_rests = [
+            np.eye(num_strats, dtype=bool) for num_strats in self.num_role_strats
+        ]
         return utils.acartesian2(*role_rests)
 
     def random_restriction(self, *, strat_prob=None, normalize=True):
         """Return a random restriction
 
         See random_restrictions"""
-        return self.random_restrictions(1, strat_prob=strat_prob,
-                                        normalize=normalize)[0]
+        return self.random_restrictions(1, strat_prob=strat_prob, normalize=normalize)[
+            0
+        ]
 
-    def random_restrictions(self, num_samples, *, strat_prob=None,
-                            normalize=True):
+    def random_restrictions(self, num_samples, *, strat_prob=None, normalize=True):
         """Return random restrictions
 
         Parameters
@@ -208,15 +226,17 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
             are thresholded to this value when normalize is set to true.
         """
         if strat_prob is None:
-            strat_prob = 1 - ((2 ** (self.num_role_strats - 1) - 1) /
-                              (2 ** self.num_role_strats - 1))
+            strat_prob = 1 - (
+                (2 ** (self.num_role_strats - 1) - 1) / (2 ** self.num_role_strats - 1)
+            )
         if normalize:
             strat_prob_pre = np.maximum(
-                np.broadcast_to(strat_prob, self.num_roles),
-                1 / self.num_role_strats)
+                np.broadcast_to(strat_prob, self.num_roles), 1 / self.num_role_strats
+            )
             strat_prob = np.empty(self.num_roles)
-            for i, (strats, prob) in enumerate(zip(
-                    self.num_role_strats, strat_prob_pre)):
+            for i, (strats, prob) in enumerate(
+                zip(self.num_role_strats, strat_prob_pre)
+            ):
                 if strats <= 1:  # Special case
                     strat_prob[i] = 1
                     continue
@@ -225,42 +245,42 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
                 poly[-2] += 1
                 poly[-1] -= prob
                 roots = np.roots(poly)
-                strat_prob[i] = roots[np.isreal(roots) & (
-                    roots >= 0) & (roots <= prob)][0].real
+                strat_prob[i] = roots[
+                    np.isreal(roots) & (roots >= 0) & (roots <= prob)
+                ][0].real
         rands = rand.random((num_samples, self.num_strats))
-        thresh = np.maximum(np.minimum.reduceat(
-            rands, self.role_starts, 1), strat_prob)
+        thresh = np.maximum(np.minimum.reduceat(rands, self.role_starts, 1), strat_prob)
         return rands <= thresh.repeat(self.num_role_strats, 1)
 
     def is_restriction(self, restrict, *, axis=-1):
         """Verify that a restriction is valid"""
         restrict = np.asarray(restrict, bool)
         utils.check(
-            restrict.shape[axis] == self.num_strats,
-            'restriction must have valid shape')
-        return np.all(np.logical_or.reduceat(restrict, self.role_starts, axis),
-                      axis)
+            restrict.shape[axis] == self.num_strats, "restriction must have valid shape"
+        )
+        return np.all(np.logical_or.reduceat(restrict, self.role_starts, axis), axis)
 
     def _is_pure_restriction(self, restrict, *, axis=-1):
         """Test is restriction is pure"""
-        return np.all(np.add.reduceat(
-            restrict, self.role_starts, axis) == 1, axis)
+        return np.all(np.add.reduceat(restrict, self.role_starts, axis) == 1, axis)
 
     def is_pure_restriction(self, restrict, *, axis=-1):
         """Verify a restriction is pure"""
         restrict = np.asarray(restrict, bool)
-        return (self.is_restriction(restrict, axis=axis) &
-                self._is_pure_restriction(restrict, axis=axis))
+        return self.is_restriction(restrict, axis=axis) & self._is_pure_restriction(
+            restrict, axis=axis
+        )
 
     def trim_mixture_support(self, mixture, *, thresh=1e-4, axis=-1):
         """Trims strategies played less than supp_thresh from the support"""
         mixture = np.array(mixture, float)
         utils.check(
-            mixture.shape[axis] == self.num_strats,
-            'mixtures must have valid shape')
+            mixture.shape[axis] == self.num_strats, "mixtures must have valid shape"
+        )
         mixture *= mixture >= thresh
-        mixture /= np.add.reduceat(
-            mixture, self.role_starts, axis).repeat(self.num_role_strats, axis)
+        mixture /= np.add.reduceat(mixture, self.role_starts, axis).repeat(
+            self.num_role_strats, axis
+        )
         return mixture
 
     def trim_mixture_precision(self, mixture, *, resolution=1e-3):
@@ -274,50 +294,58 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         """
         mixture = np.asarray(mixture, float)
         ires = round(1 / resolution)
-        utils.check(self.is_mixture(mixture), 'must pass mixtures')
+        utils.check(self.is_mixture(mixture), "must pass mixtures")
         utils.check(
-            np.isclose(ires, 1 / resolution),
-            'resolution must be integer inverse')
+            np.isclose(ires, 1 / resolution), "resolution must be integer inverse"
+        )
         pmix = mixture * ires
         imix = np.floor(pmix).astype(int)
         error = imix - pmix
         incs = ires - np.add.reduceat(imix, self.role_starts)
         for rmix, err, inc in zip(
-                np.split(imix, self.role_starts[1:]),
-                np.split(error, self.role_starts[1:]), incs):
+            np.split(imix, self.role_starts[1:]),
+            np.split(error, self.role_starts[1:]),
+            incs,
+        ):
             if inc > 0:
                 rmix[np.argpartition(err, inc - 1)[:inc]] += 1
         return imix / ires
 
     def minimum_prob(self, mixture, *, min_prob=1e-3):
         """Ensure each strategy is played with `min_prob`"""
-        return min_prob +  mixture * np.repeat(
-            1 - self.num_role_strats * min_prob, self.num_role_strats)
+        return min_prob + mixture * np.repeat(
+            1 - self.num_role_strats * min_prob, self.num_role_strats
+        )
 
     def is_mixture(self, mixture, *, axis=-1):
         """Verify that a mixture is valid for game"""
         mixture = np.asarray(mixture, float)
         utils.check(
-            mixture.shape[axis] == self.num_strats,
-            'mixture must have valid shape')
-        return (np.all(mixture >= 0, axis) &
-                np.all(np.isclose(np.add.reduceat(
-                    mixture, self.role_starts, axis), 1), axis))
+            mixture.shape[axis] == self.num_strats, "mixture must have valid shape"
+        )
+        return np.all(mixture >= 0, axis) & np.all(
+            np.isclose(np.add.reduceat(mixture, self.role_starts, axis), 1), axis
+        )
 
     def is_pure_mixture(self, mixture, *, axis=-1):
         """Verify a mixture is pure"""
         mixture = np.asarray(mixture, float)
-        return (self.is_mixture(mixture, axis=axis) &
-                self._is_pure_restriction(mixture > 0, axis=axis))
+        return self.is_mixture(mixture, axis=axis) & self._is_pure_restriction(
+            mixture > 0, axis=axis
+        )
 
     def mixture_project(self, mixture):
         """Project an array into mixture space"""
         mixture = np.asarray(mixture, float)
         return np.concatenate(
-            [utils.simplex_project(r) for r
-             in np.split(mixture, self.role_starts[1:], -1)], -1)
+            [
+                utils.simplex_project(r)
+                for r in np.split(mixture, self.role_starts[1:], -1)
+            ],
+            -1,
+        )
 
-    def mixture_to_simplex(self, mixture): # pylint: disable=too-many-locals
+    def mixture_to_simplex(self, mixture):  # pylint: disable=too-many-locals
         """Convert a mixture to a simplex
 
         The simplex will have dimension `num_role_strats - num_roles + 1`. This
@@ -344,7 +372,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         # Then we compute alpha, which is the constant to multiply grad by to
         # get a point on an edge, in some sense this is the maximum weighting
         # of the ray, and all valid points lie on w * grad, w \in [0, alpha]
-        with np.errstate(divide='ignore'):
+        with np.errstate(divide="ignore"):
             alphas = np.where(np.isclose(grad, 0), np.inf, -center / grad)
         alphas[alphas < 0] = np.inf
         alpha_inds = np.abs(alphas).argmin(-1)[..., None]
@@ -362,21 +390,22 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         simp_grad[..., -1] = -simp_grad[..., :-1].sum(-1)
         # Then we compute alpha the same way for the simplex, but this is in
         # terms of the simp_grad.
-        with np.errstate(divide='ignore'):
-            simp_alphas = np.where(np.isclose(simp_grad, 0), np.inf,
-                                   -simp_center / simp_grad)
+        with np.errstate(divide="ignore"):
+            simp_alphas = np.where(
+                np.isclose(simp_grad, 0), np.inf, -simp_center / simp_grad
+            )
         simp_alphas[simp_alphas < 0] = np.inf
         simp_alpha_inds = np.abs(simp_alphas).argmin(-1)[..., None]
-        simp_alpha_inds.flat += np.arange(simp_alpha_inds.size) * \
-            simp_alphas.shape[-1]
+        simp_alpha_inds.flat += np.arange(simp_alpha_inds.size) * simp_alphas.shape[-1]
         simp_alpha = simp_alphas.flat[simp_alpha_inds]
         # The point on the simplex is going to be the ratio of the alphas,
         # where we account for when their both infinite. They're infinite when
         # the mixture is uniform, and when it's uniform there's no ray so we
         # don't change the projection.
-        with np.errstate(invalid='ignore'):
-            ratio = np.where(np.isposinf(simp_alpha) & np.isposinf(alpha), 0,
-                             simp_alpha / alpha)
+        with np.errstate(invalid="ignore"):
+            ratio = np.where(
+                np.isposinf(simp_alpha) & np.isposinf(alpha), 0, simp_alpha / alpha
+            )
         simp = simp_center + ratio * simp_grad
         simp *= simp > 0
         return simp / simp.sum(-1, keepdims=True)
@@ -391,30 +420,32 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         simp_center = np.ones(simp_dim) / simp_dim
         center = self.uniform_mixture()
         simp_grad = simp - simp_center
-        with np.errstate(divide='ignore'):
-            simp_alphas = np.where(np.isclose(simp_grad, 0), np.inf,
-                                   -simp_center / simp_grad)
+        with np.errstate(divide="ignore"):
+            simp_alphas = np.where(
+                np.isclose(simp_grad, 0), np.inf, -simp_center / simp_grad
+            )
         simp_alphas[simp_alphas < 0] = np.inf
         simp_alpha_inds = np.abs(simp_alphas).argmin(-1)[..., None]
-        simp_alpha_inds.flat += np.arange(simp_alpha_inds.size) * \
-            simp_alphas.shape[-1]
+        simp_alpha_inds.flat += np.arange(simp_alpha_inds.size) * simp_alphas.shape[-1]
         simp_alpha = simp_alphas.flat[simp_alpha_inds]
 
-        grad = np.insert(simp_grad,
-                         self.role_starts[1:] - np.arange(1, self.num_roles),
-                         0, -1)
+        grad = np.insert(
+            simp_grad, self.role_starts[1:] - np.arange(1, self.num_roles), 0, -1
+        )
         grad[..., -1] = 0
-        grad[..., self.role_starts + self.num_role_strats - 1] = \
-            -np.add.reduceat(grad, self.role_starts, -1)
-        with np.errstate(divide='ignore'):
+        grad[..., self.role_starts + self.num_role_strats - 1] = -np.add.reduceat(
+            grad, self.role_starts, -1
+        )
+        with np.errstate(divide="ignore"):
             alphas = np.where(np.isclose(grad, 0), np.inf, -center / grad)
         alphas[alphas < 0] = np.inf
         alpha_inds = np.abs(alphas).argmin(-1)[..., None]
         alpha_inds.flat += np.arange(alpha_inds.size) * alphas.shape[-1]
         alpha = alphas.flat[alpha_inds]  # >= 1
-        with np.errstate(invalid='ignore'):
-            ratio = np.where(np.isposinf(simp_alpha) & np.isposinf(alpha), 0,
-                             alpha / simp_alpha)
+        with np.errstate(invalid="ignore"):
+            ratio = np.where(
+                np.isposinf(simp_alpha) & np.isposinf(alpha), 0, alpha / simp_alpha
+            )
         return self.trim_mixture_support(center + ratio * grad, thresh=0)
 
     def uniform_mixture(self):
@@ -438,20 +469,22 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         mixtures.
         """
         mixtures = rand.gamma(alpha, 1, (num_samples, self.num_strats))
-        mixtures /= np.add.reduceat(mixtures, self.role_starts,
-                                    1).repeat(self.num_role_strats, 1)
+        mixtures /= np.add.reduceat(mixtures, self.role_starts, 1).repeat(
+            self.num_role_strats, 1
+        )
         return mixtures
 
-    def random_sparse_mixture(self, *, alpha=1, support_prob=None,
-                              normalize=True):
+    def random_sparse_mixture(self, *, alpha=1, support_prob=None, normalize=True):
         """Return a random sparse mixture
 
         See random_sparse_mixtures"""
         return self.random_sparse_mixtures(
-            1, alpha=alpha, support_prob=support_prob, normalize=normalize)[0]
+            1, alpha=alpha, support_prob=support_prob, normalize=normalize
+        )[0]
 
-    def random_sparse_mixtures(self, num_samples, *, alpha=1,
-                               support_prob=None, normalize=True):
+    def random_sparse_mixtures(
+        self, num_samples, *, alpha=1, support_prob=None, normalize=True
+    ):
         """Return a random sparse mixed profile
 
         Parameters
@@ -476,9 +509,11 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         """
         mixtures = rand.gamma(alpha, 1, (num_samples, self.num_strats))
         mixtures *= self.random_restrictions(
-            num_samples, strat_prob=support_prob, normalize=normalize)
-        mixtures /= np.add.reduceat(
-            mixtures, self.role_starts, 1).repeat(self.num_role_strats, 1)
+            num_samples, strat_prob=support_prob, normalize=normalize
+        )
+        mixtures /= np.add.reduceat(mixtures, self.role_starts, 1).repeat(
+            self.num_role_strats, 1
+        )
         return mixtures
 
     def biased_mixtures(self, bias=0.9):
@@ -488,16 +523,14 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         1-bias probability is distributed uniformly over the remaining S or S-1
         strategies. If there's only one strategy, it is played with probability
         1."""
-        utils.check(
-            0 <= bias <= 1, 'probabilities must be between zero and one')
+        utils.check(0 <= bias <= 1, "probabilities must be between zero and one")
 
         role_mixtures = []
         for num_strats in self.num_role_strats:
             if num_strats == 1:
                 mixture = np.ones((1, 1))
             else:
-                mixture = np.full(
-                    (num_strats,) * 2, (1 - bias) / (num_strats - 1))
+                mixture = np.full((num_strats,) * 2, (1 - bias) / (num_strats - 1))
                 np.fill_diagonal(mixture, bias)
             role_mixtures.append(mixture)
 
@@ -508,8 +541,7 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
 
         If no roles have more than one strategy (a degenerate game), then this
         returns nothing."""
-        utils.check(
-            0 <= bias <= 1, 'probabilities must be between zero and one')
+        utils.check(0 <= bias <= 1, "probabilities must be between zero and one")
 
         if np.all(self.num_role_strats == 1):
             return np.ones((1, self.num_roles))
@@ -520,8 +552,10 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         strat_offset = 0
         for num_strats in self.num_role_strats:
             if num_strats > 1:
-                view = mixes[prof_offset:prof_offset + num_strats,
-                             strat_offset:strat_offset + num_strats]
+                view = mixes[
+                    prof_offset : prof_offset + num_strats,
+                    strat_offset : strat_offset + num_strats,
+                ]
                 view.fill((1 - bias) / (num_strats - 1))
                 np.fill_diagonal(view, bias)
                 prof_offset += num_strats
@@ -540,11 +574,11 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         num_points : int > 1
             The number of points to have along one dimensions
         """
-        utils.check(
-            num_points > 1, 'Must have at least two points on a dimensions')
-        role_mixtures = [utils.acomb(num_strats, num_points - 1, True) /
-                         (num_points - 1)
-                         for num_strats in self.num_role_strats]
+        utils.check(num_points > 1, "Must have at least two points on a dimensions")
+        role_mixtures = [
+            utils.acomb(num_strats, num_points - 1, True) / (num_points - 1)
+            for num_strats in self.num_role_strats
+        ]
         return utils.acartesian2(*role_mixtures)
 
     def role_index(self, role):
@@ -564,19 +598,19 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
     def strat_name(self, role_strat_index):
         """Get the strategy name from a full index"""
         role_index = self.role_indices[role_strat_index]
-        return self.strat_names[role_index][role_strat_index -
-                                            self.role_starts[role_index]]
+        return self.strat_names[role_index][
+            role_strat_index - self.role_starts[role_index]
+        ]
 
     def mixture_from_json(self, mixture, dest=None, *, verify=True):
         """Read a json mixture into an array"""
         if dest is None:
             dest = np.empty(self.num_strats, float)
         else:
+            utils.check(dest.dtype.kind == "f", "dest dtype must be floating")
             utils.check(
-                dest.dtype.kind == 'f', 'dest dtype must be floating')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(0)
 
         for role, strats in mixture.items():
@@ -585,17 +619,20 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
 
         utils.check(
             not verify or self.is_mixture(dest),
-            '"{}" does not define a valid mixture', mixture)
+            '"{}" does not define a valid mixture',
+            mixture,
+        )
         return dest
 
     def _to_arr_json(self, arr):
         """Convert array to json"""
-        return {role: {strat: val.item() for strat, val
-                       in zip(strats, values) if val != 0}
-                for values, role, strats
-                in zip(np.split(arr, self.role_starts[1:]),
-                       self.role_names, self.strat_names)
-                if np.any(values != 0)}
+        return {
+            role: {strat: val.item() for strat, val in zip(strats, values) if val != 0}
+            for values, role, strats in zip(
+                np.split(arr, self.role_starts[1:]), self.role_names, self.strat_names
+            )
+            if np.any(values != 0)
+        }
 
     def mixture_to_json(self, mixture):
         """Convert a mixture array to json"""
@@ -608,15 +645,16 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         else:
             utils.check(
                 dest.dtype.kind == np.dtype(dtype).kind,
-                "dest dtype doesn't match specified dtype")
+                "dest dtype doesn't match specified dtype",
+            )
             utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(0)
-        for role_str in arr_str.split(';'):
-            role, strats = (s.strip() for s in role_str.split(':', 1))
-            for sstrat in strats.split(','):
-                val, strat = (s.strip() for s in sstrat.strip().split(' ', 1))
+        for role_str in arr_str.split(";"):
+            role, strats = (s.strip() for s in role_str.split(":", 1))
+            for sstrat in strats.split(","):
+                val, strat = (s.strip() for s in sstrat.strip().split(" ", 1))
                 dest[self.role_strat_index(role, strat)] = parse(val)
         return dest
 
@@ -625,23 +663,32 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         mixture = self._from_arr_repr(mix_str, float, _parse_percent, dest)
         utils.check(
             not verify or self.is_mixture(mixture),
-            '"{}" is not a valid mixture', mix_str)
+            '"{}" is not a valid mixture',
+            mix_str,
+        )
         return mixture
 
     def _to_arr_repr(self, arr, fmt):
         """Convert an array to a string"""
-        return '; '.join(
-            '{}: {}'.format(role, ', '.join(
-                '{:{}} {}'.format(val, fmt, strat)
-                for strat, val in zip(strats, values) if val > 0))
-            for role, strats, values
-            in zip(self.role_names, self.strat_names,
-                   np.split(arr, self.role_starts[1:])))
+        return "; ".join(
+            "{}: {}".format(
+                role,
+                ", ".join(
+                    "{:{}} {}".format(val, fmt, strat)
+                    for strat, val in zip(strats, values)
+                    if val > 0
+                ),
+            )
+            for role, strats, values in zip(
+                self.role_names, self.strat_names, np.split(arr, self.role_starts[1:])
+            )
+        )
 
     def mixture_to_repr(self, mixture):
         """Convert a mixture to a string"""
         return self._to_arr_repr(
-            self.trim_mixture_precision(mixture, resolution=1e-4), '.2%')
+            self.trim_mixture_precision(mixture, resolution=1e-4), ".2%"
+        )
 
     def _from_arr_str(self, arr_str, dtype, parse, dest=None):
         """Get array from string representation"""
@@ -650,18 +697,19 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         else:
             utils.check(
                 dest.dtype.kind == np.dtype(dtype).kind,
-                'dest dtype must be the same type as specified')
+                "dest dtype must be the same type as specified",
+            )
             utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(0)
 
         role = None
-        for line in arr_str.split('\n'):
-            if line[0] != ' ':
+        for line in arr_str.split("\n"):
+            if line[0] != " ":
                 role = line[:-1]
             else:
-                strat, val_str = line[4:].split(':', 1)
+                strat, val_str = line[4:].split(":", 1)
                 dest[self.role_strat_index(role, strat)] = parse(val_str)
         return dest
 
@@ -670,24 +718,32 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         mixture = self._from_arr_str(mix_str, float, _parse_percent, dest)
         utils.check(
             not verify or self.is_mixture(mixture),
-            '"{}" is not a valid mixture', mix_str)
+            '"{}" is not a valid mixture',
+            mix_str,
+        )
         return mixture
 
     def _to_arr_str(self, arr, fmt):
         """Convert an array to a printable string"""
-        return '\n'.join(
-            '{}:\n{}'.format(role, '\n'.join(
-                '    {}: {:{}}'.format(s, p, fmt)
-                for p, s in zip(probs, strats)
-                if p > 0))
-            for probs, role, strats
-            in zip(np.split(arr, self.role_starts[1:]),
-                   self.role_names, self.strat_names))
+        return "\n".join(
+            "{}:\n{}".format(
+                role,
+                "\n".join(
+                    "    {}: {:{}}".format(s, p, fmt)
+                    for p, s in zip(probs, strats)
+                    if p > 0
+                ),
+            )
+            for probs, role, strats in zip(
+                np.split(arr, self.role_starts[1:]), self.role_names, self.strat_names
+            )
+        )
 
     def mixture_to_str(self, mixture):
         """Convert a mixture to a printable string"""
         return self._to_arr_str(
-            self.trim_mixture_precision(mixture, resolution=1e-4), '>7.2%')
+            self.trim_mixture_precision(mixture, resolution=1e-4), ">7.2%"
+        )
 
     def restriction_from_json(self, jrest, dest=None, *, verify=True):
         """Read a restriction from json
@@ -696,12 +752,10 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         if dest is None:
             dest = np.empty(self.num_strats, bool)
         else:
+            utils.check(dest.dtype.kind == "b", "dest dtype must be boolean")
             utils.check(
-                dest.dtype.kind == 'b',
-                'dest dtype must be boolean')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(False)
 
         for role, strats in jrest.items():
@@ -710,16 +764,20 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
 
         utils.check(
             not verify or self.is_restriction(dest),
-            '"{}" does not define a valid restriction', jrest)
+            '"{}" does not define a valid restriction',
+            jrest,
+        )
         return dest
 
     def restriction_to_json(self, rest):
         """Convert a restriction to json"""
-        return {role: [strat for strat, inc in zip(strats, mask) if inc]
-                for mask, role, strats
-                in zip(np.split(rest, self.role_starts[1:]),
-                       self.role_names, self.strat_names)
-                if mask.any()}
+        return {
+            role: [strat for strat, inc in zip(strats, mask) if inc]
+            for mask, role, strats in zip(
+                np.split(rest, self.role_starts[1:]), self.role_names, self.strat_names
+            )
+            if mask.any()
+        }
 
     def restriction_from_repr(self, rrest, dest=None, *, verify=True):
         """Read a restriction from a repr string
@@ -729,66 +787,69 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
         if dest is None:
             dest = np.empty(self.num_strats, bool)
         else:
+            utils.check(dest.dtype.kind == "b", "dest dtype must be boolean")
             utils.check(
-                dest.dtype.kind == 'b',
-                'dest dtype must be boolean')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(False)
-        for role_str in rrest.split(';'):
-            role, strats = (s.strip() for s in role_str.split(':', 1))
-            for strat in strats.split(','):
+        for role_str in rrest.split(";"):
+            role, strats = (s.strip() for s in role_str.split(":", 1))
+            for strat in strats.split(","):
                 dest[self.role_strat_index(role, strat.strip())] = True
         utils.check(
             not verify or self.is_restriction(dest),
-            '"{}" does not define a valid restriction', rrest)
+            '"{}" does not define a valid restriction',
+            rrest,
+        )
         return dest
 
     def restriction_to_repr(self, rest):
         """Convert a restriction to a repr string"""
-        return '; '.join(
-            '{}: {}'.format(role, ', '.join(
-                strat for strat, inc
-                in zip(strats, mask) if inc > 0))
-            for role, strats, mask
-            in zip(self.role_names, self.strat_names,
-                   np.split(rest, self.role_starts[1:])))
+        return "; ".join(
+            "{}: {}".format(
+                role, ", ".join(strat for strat, inc in zip(strats, mask) if inc > 0)
+            )
+            for role, strats, mask in zip(
+                self.role_names, self.strat_names, np.split(rest, self.role_starts[1:])
+            )
+        )
 
     def restriction_from_str(self, srest, dest=None, *, verify=True):
         """Read a restriction from a string"""
         if dest is None:
             dest = np.empty(self.num_strats, bool)
         else:
+            utils.check(dest.dtype.kind == "b", "dest dtype must be boolean")
             utils.check(
-                dest.dtype.kind == 'b',
-                'dest dtype must be boolean')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(False)
 
         role = None
-        for line in srest.split('\n'):
-            if line[0] != ' ':
+        for line in srest.split("\n"):
+            if line[0] != " ":
                 role = line[:-1]
             else:
                 dest[self.role_strat_index(role, line[4:])] = True
         utils.check(
             not verify or self.is_restriction(dest),
-            '"{}" does not define a valid restriction', srest)
+            '"{}" does not define a valid restriction',
+            srest,
+        )
         return dest
 
     def restriction_to_str(self, rest):
         """Convert a restriction to a string"""
-        return '\n'.join(
-            '{}:\n{}'.format(role, '\n'.join(
-                '    {}'.format(s)
-                for m, s in zip(mask, strats)
-                if m))
-            for mask, role, strats
-            in zip(np.split(np.asarray(rest), self.role_starts[1:]),
-                   self.role_names, self.strat_names))
+        return "\n".join(
+            "{}:\n{}".format(
+                role, "\n".join("    {}".format(s) for m, s in zip(mask, strats) if m)
+            )
+            for mask, role, strats in zip(
+                np.split(np.asarray(rest), self.role_starts[1:]),
+                self.role_names,
+                self.strat_names,
+            )
+        )
 
     def role_from_json(self, role_json, dest=None, dtype=float):
         """Read role array from json"""
@@ -796,26 +857,28 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
             dest = np.empty(self.num_roles, dtype)
         else:
             utils.check(
-                dest.dtype.kind == np.dtype(dtype).kind,
-                'dest dtype must match dtype')
+                dest.dtype.kind == np.dtype(dtype).kind, "dest dtype must match dtype"
+            )
             utils.check(
-                dest.shape == (self.num_roles,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_roles,), "dest shape must be num strats"
+            )
         for role, val in role_json.items():
             dest[self.role_index(role)] = val
         return dest
 
     def role_to_json(self, role_info):
         """Format role data as json"""
-        return {role: info.item() for role, info
-                in zip(self.role_names, np.asarray(role_info))
-                if info != 0}
+        return {
+            role: info.item()
+            for role, info in zip(self.role_names, np.asarray(role_info))
+            if info != 0
+        }
 
     def role_to_repr(self, role_info):
         """Format role data as repr"""
-        return '; '.join(
-            '{}: {}'.format(role, val) for role, val
-            in zip(self.role_names, role_info))
+        return "; ".join(
+            "{}: {}".format(role, val) for role, val in zip(self.role_names, role_info)
+        )
 
     def role_from_repr(self, rrole, dest=None, dtype=float):
         """Read role data from repr
@@ -826,32 +889,39 @@ class _StratArray(abc.ABC): # pylint: disable=too-many-public-methods,too-many-i
             dest = np.empty(self.num_roles, dtype)
         else:
             utils.check(
-                dest.dtype.kind == np.dtype(dtype).kind,
-                'dest dtype must match dtype')
+                dest.dtype.kind == np.dtype(dtype).kind, "dest dtype must match dtype"
+            )
             utils.check(
-                dest.shape == (self.num_roles,),
-                'dest shape must be num strats')
-        for rinfo in rrole.replace(',', ';').split(';'):
-            role, val = (s.strip() for s in rinfo.split(':', 1))
+                dest.shape == (self.num_roles,), "dest shape must be num strats"
+            )
+        for rinfo in rrole.replace(",", ";").split(";"):
+            role, val = (s.strip() for s in rinfo.split(":", 1))
             dest[self.role_index(role)] = val
         return dest
 
     @utils.memoize
     def __hash__(self):
-        return hash((type(self), self.num_roles,
-                     self.num_role_strats.tobytes(),
-                     self.role_names,
-                     self.strat_names))
+        return hash(
+            (
+                type(self),
+                self.num_roles,
+                self.num_role_strats.tobytes(),
+                self.role_names,
+                self.strat_names,
+            )
+        )
 
     def __eq__(self, other):
-        return (type(self) is type(other) and
-                self.num_roles == other.num_roles and
-                np.all(self.num_role_strats == other.num_role_strats) and
-                self.role_names == other.role_names and
-                self.strat_names == other.strat_names)
+        return (
+            type(self) is type(other)
+            and self.num_roles == other.num_roles
+            and np.all(self.num_role_strats == other.num_role_strats)
+            and self.role_names == other.role_names
+            and self.strat_names == other.strat_names
+        )
 
 
-class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
+class _GameLike(_StratArray):  # pylint: disable=too-many-public-methods
     """Role-symmetric game representation
 
     This object only contains methods and information about definition of the
@@ -892,8 +962,10 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
     def num_all_payoffs(self):
         """The number of payoffs in all profiles"""
         dev_players = self.num_role_players - np.eye(self.num_roles, dtype=int)
-        return np.sum(utils.game_size(dev_players, self.num_role_strats)
-                      .astype(object).prod(1) * self.num_role_strats)
+        return np.sum(
+            utils.game_size(dev_players, self.num_role_strats).astype(object).prod(1)
+            * self.num_role_strats
+        )
 
     @property
     @utils.memoize
@@ -904,8 +976,10 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         """
         # Get all combinations of "pure" roles and then filter by ones with
         # support at least 2. Thus, 0, 1, and 2 can be safely ignored
-        pure = (np.arange(3, 1 << self.num_roles)[:, None] &
-                (1 << np.arange(self.num_roles))).astype(bool)
+        pure = (
+            np.arange(3, 1 << self.num_roles)[:, None]
+            & (1 << np.arange(self.num_roles))
+        ).astype(bool)
         cards = pure.sum(1)
         pure = pure[cards > 1]
         cards = cards[cards > 1] - 1
@@ -913,9 +987,15 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         # conditioned on those roles being pure, then multiply them by the
         # cardinality of the pure roles.
         pure_counts = np.prod(self.num_role_strats * pure + ~pure, 1)
-        unpure_counts = np.prod((utils.game_size(self.num_role_players,
-                                                 self.num_role_strats) -
-                                 self.num_role_strats) * ~pure + pure, 1)
+        unpure_counts = np.prod(
+            (
+                utils.game_size(self.num_role_players, self.num_role_strats)
+                - self.num_role_strats
+            )
+            * ~pure
+            + pure,
+            1,
+        )
         overcount = np.sum(cards * pure_counts * unpure_counts)
         return self.num_all_payoffs - overcount
 
@@ -946,14 +1026,12 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         if self.num_all_profiles > np.iinfo(int).max:
             sizes = sizes.astype(object)
 
-        return np.add.reduceat(sizes, self.role_starts, -1).dot(
-            self._prof_id_base)
+        return np.add.reduceat(sizes, self.role_starts, -1).dot(self._prof_id_base)
 
     def profile_from_id(self, ids):
         """Return a profile from its integer representation"""
         ids = np.asarray(ids)
-        role_ids = (ids[..., None] // self._prof_id_base %
-                    self.num_all_role_profiles)
+        role_ids = ids[..., None] // self._prof_id_base % self.num_all_role_profiles
         dec_profs = np.zeros(ids.shape + (self.num_strats,), int)
 
         role_ids_iter = role_ids.view()
@@ -963,14 +1041,16 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
 
         # This can't be vectorized further, because the sizes are dependent
         for sizes, profs in zip(
-                role_ids_iter.T,
-                np.split(dec_profs_iter.T, self.role_starts[1:])):
+            role_ids_iter.T, np.split(dec_profs_iter.T, self.role_starts[1:])
+        ):
             for prof, rem in zip(profs[:-1], range(profs.shape[0] - 1, 0, -1)):
                 np.copyto(prof, utils.game_size_inv(sizes, rem))
                 sizes -= utils.game_size(rem, prof)
-        profiles = np.delete(np.diff(
-            np.insert(dec_profs, self.role_starts, 0, -1),
-            1, -1), self.role_starts[1:] + np.arange(self.num_roles - 1), -1)
+        profiles = np.delete(
+            np.diff(np.insert(dec_profs, self.role_starts, 0, -1), 1, -1),
+            self.role_starts[1:] + np.arange(self.num_roles - 1),
+            -1,
+        )
         profiles[..., self.role_starts] -= self.num_role_players
         return -profiles
 
@@ -978,26 +1058,29 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         """Verify that a profile is valid for game"""
         prof = np.asarray(prof, int)
         utils.check(
-            prof.shape[axis] == self.num_strats,
-            'profiles must have valid shape')
+            prof.shape[axis] == self.num_strats, "profiles must have valid shape"
+        )
         play_shape = [1] * prof.ndim
         play_shape[axis] = self.num_roles
-        return (
-            np.all(self.num_role_players.reshape(play_shape) ==
-                   np.add.reduceat(prof, self.role_starts, axis), axis) &
-            np.all(prof >= 0, axis))
+        return np.all(
+            self.num_role_players.reshape(play_shape)
+            == np.add.reduceat(prof, self.role_starts, axis),
+            axis,
+        ) & np.all(prof >= 0, axis)
 
     def is_pure_profile(self, prof, *, axis=-1):
         """Verify a profile is pure"""
         prof = np.asarray(prof, int)
-        return (self.is_profile(prof, axis=axis) &
-                self._is_pure_restriction(prof > 0, axis=axis))
+        return self.is_profile(prof, axis=axis) & self._is_pure_restriction(
+            prof > 0, axis=axis
+        )
 
     def all_profiles(self):
         """Return all profiles"""
-        role_arrays = [utils.acomb(n_strats, players, True)
-                       for n_strats, players
-                       in zip(self.num_role_strats, self.num_role_players)]
+        role_arrays = [
+            utils.acomb(n_strats, players, True)
+            for n_strats, players in zip(self.num_role_strats, self.num_role_players)
+        ]
         return utils.acartesian2(*role_arrays)
 
     def pure_profiles(self):
@@ -1005,12 +1088,13 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
 
         A pure profile is a profile where only one strategy is played per
         role."""
-        return (self.pure_restrictions() *
-                self.num_role_players.repeat(self.num_role_strats))
+        return self.pure_restrictions() * self.num_role_players.repeat(
+            self.num_role_strats
+        )
 
     def nearby_profiles(self, profile, num_devs):
         """Returns profiles reachable by at most num_devs deviations"""
-        utils.check(num_devs >= 0, 'num devs must be nonnegative')
+        utils.check(num_devs >= 0, "num devs must be nonnegative")
         profile = np.asarray(profile, int)
         dev_players = utils.acomb(self.num_roles, num_devs, True)
         mask = np.all(dev_players <= self.num_role_players, 1)
@@ -1020,22 +1104,21 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
 
         profiles = [profile[None]]
         for players in dev_players:
-            to_dev_profs = empty(
-                players, self.num_role_strats).all_profiles()
+            to_dev_profs = empty(players, self.num_role_strats).all_profiles()
             sub = empty(players, sub_strats)
-            from_dev_profs = np.zeros((sub.num_all_profiles,
-                                       self.num_strats), int)
+            from_dev_profs = np.zeros((sub.num_all_profiles, self.num_strats), int)
             from_dev_profs[:, supp] = sub.all_profiles()
             before_devs = profile - from_dev_profs
             before_devs = before_devs[np.all(before_devs >= 0, 1)]
-            before_devs = utils.axis_from_elem(np.unique(utils.axis_to_elem(
-                before_devs)))
+            before_devs = utils.axis_from_elem(
+                np.unique(utils.axis_to_elem(before_devs))
+            )
             nearby = before_devs[:, None] + to_dev_profs
             nearby.shape = (-1, self.num_strats)
-            profiles.append(utils.axis_from_elem(np.unique(utils.axis_to_elem(
-                nearby))))
-        return utils.axis_from_elem(np.unique(utils.axis_to_elem(
-            np.concatenate(profiles))))
+            profiles.append(utils.axis_from_elem(np.unique(utils.axis_to_elem(nearby))))
+        return utils.axis_from_elem(
+            np.unique(utils.axis_to_elem(np.concatenate(profiles)))
+        )
 
     def random_profile(self, mixture=None):
         """Return a random profile"""
@@ -1054,9 +1137,12 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         """
         if mixture is None:
             mixture = self.uniform_mixture()
-        role_samples = [rand.multinomial(n, probs, num_samples) for n, probs
-                        in zip(self.num_role_players,
-                               np.split(mixture, self.role_starts[1:]))]
+        role_samples = [
+            rand.multinomial(n, probs, num_samples)
+            for n, probs in zip(
+                self.num_role_players, np.split(mixture, self.role_starts[1:])
+            )
+        ]
         return np.concatenate(role_samples, 1)
 
     def round_mixture_to_profile(self, mixture):
@@ -1065,15 +1151,15 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         This finds the profile with the minimum absolute error to the product
         of the profile and the number of players per role.
         """
-        float_prof = mixture * self.num_role_players.repeat(
-            self.num_role_strats)
+        float_prof = mixture * self.num_role_players.repeat(self.num_role_strats)
         profile = np.floor(float_prof).astype(int)
-        missing = self.num_role_players - np.add.reduceat(
-            profile, self.role_starts, -1)
-        errors = profile - float_prof + np.arange(self.num_roles).repeat(
-            self.num_role_strats)
-        rank = errors.argsort(-1) - self.role_starts.repeat(
-            self.num_role_strats)
+        missing = self.num_role_players - np.add.reduceat(profile, self.role_starts, -1)
+        errors = (
+            profile
+            - float_prof
+            + np.arange(self.num_roles).repeat(self.num_role_strats)
+        )
+        rank = errors.argsort(-1) - self.role_starts.repeat(self.num_role_strats)
         profile[rank < missing.repeat(self.num_role_strats, -1)] += 1
         return profile
 
@@ -1099,8 +1185,7 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         if mixture is None:
             mixture = self.uniform_mixture()
         dev_players = self.num_role_players - np.eye(self.num_roles, dtype=int)
-        profs = np.empty((num_samples, self.num_roles, self.num_strats),
-                         int)
+        profs = np.empty((num_samples, self.num_roles, self.num_strats), int)
         for i, players in enumerate(dev_players):
             base = empty(players, self.num_role_strats)
             profs[:, i] = base.random_profiles(num_samples, mixture)
@@ -1127,16 +1212,22 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
             sample, without a leading singleton dimension is returned.
         """
         devs = self.random_role_deviation_profiles(num_samples, mixture)
-        return (devs.repeat(self.num_role_strats, -2) +
-                np.eye(self.num_strats, dtype=int))
+        return devs.repeat(self.num_role_strats, -2) + np.eye(
+            self.num_strats, dtype=int
+        )
 
     def max_prob_prof(self, mixture):
         """Returns the pure strategy profile with highest probability."""
         mixture = np.asarray(mixture, float)
         return np.concatenate(
-            [utils.multinomial_mode(m, p) for m, p
-             in zip(np.split(mixture, self.role_starts[1:]),
-                    self.num_role_players)], -1)
+            [
+                utils.multinomial_mode(m, p)
+                for m, p in zip(
+                    np.split(mixture, self.role_starts[1:]), self.num_role_players
+                )
+            ],
+            -1,
+        )
 
     @utils.memoize
     def is_symmetric(self):
@@ -1164,12 +1255,10 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         if dest is None:
             dest = np.empty(self.num_strats, int)
         else:
+            utils.check(dest.dtype.kind == "i", "dest dtype must be integral")
             utils.check(
-                dest.dtype.kind == 'i',
-                'dest dtype must be integral')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(0)
 
         for role, strats in prof.items():
@@ -1177,8 +1266,8 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
                 dest[self.role_strat_index(role, strat)] = count
 
         utils.check(
-            not verify or self.is_profile(dest),
-            '"{}" is not a valid profile', prof)
+            not verify or self.is_profile(dest), '"{}" is not a valid profile', prof
+        )
         return dest
 
     def payoff_from_json(self, pays, dest=None):
@@ -1195,12 +1284,10 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         if dest is None:
             dest = np.empty(self.num_strats, float)
         else:
+            utils.check(dest.dtype.kind == "f", "dest dtype must be floating")
             utils.check(
-                dest.dtype.kind == 'f',
-                'dest dtype must be floating')
-            utils.check(
-                dest.shape == (self.num_strats,),
-                'dest shape must be num strats')
+                dest.shape == (self.num_strats,), "dest shape must be num strats"
+            )
         dest.fill(0)
 
         for role, strats in pays.items():
@@ -1228,36 +1315,34 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
         prof = self._from_arr_repr(prof_str, int, int, dest)
         utils.check(
             not verify or self.is_profile(prof),
-            '"{}" does not define a profile', prof_str)
+            '"{}" does not define a profile',
+            prof_str,
+        )
         return prof
 
     def profile_to_repr(self, prof):
         """Convert a profile to a string"""
-        return self._to_arr_repr(prof, 'd')
+        return self._to_arr_repr(prof, "d")
 
     def profile_from_str(self, prof_str, dest=None, *, verify=True):
         """Get profile from string"""
         prof = self._from_arr_str(prof_str, int, int, dest)
         utils.check(
-            not verify or self.is_profile(prof),
-            '"{}" is not a valid profile', prof_str)
+            not verify or self.is_profile(prof), '"{}" is not a valid profile', prof_str
+        )
         return prof
 
     def profile_to_str(self, prof):
         """Convert a profile to a printable string"""
-        return self._to_arr_str(prof, 'd')
+        return self._to_arr_str(prof, "d")
 
     def devpay_from_json(self, deviations, dest=None):
         """Get deviation payoffs from json"""
         if dest is None:
             dest = np.empty(self.num_devs)
         else:
-            utils.check(
-                dest.dtype.kind == 'f',
-                'dest dtype must be floating')
-            utils.check(
-                dest.shape == (self.num_devs,),
-                'dest shape must be num strats')
+            utils.check(dest.dtype.kind == "f", "dest dtype must be floating")
+            utils.check(dest.shape == (self.num_devs,), "dest shape must be num strats")
         dest.fill(0)
 
         for role, strats in deviations.items():
@@ -1270,57 +1355,63 @@ class _GameLike(_StratArray): # pylint: disable=too-many-public-methods
     def devpay_to_json(self, payoffs):
         """Format a profile and deviation payoffs as json"""
         payoffs = np.asarray(payoffs, float)
-        return {r: {s: {d: pay.item() for pay, d  # pragma: no branch
-                        in zip(spays, ses)
-                        if pay != 0}
-                    for spays, s
-                    in zip(np.split(rpay, n), ses)
-                    if np.any(spays != 0)}
-                for r, ses, n, rpay
-                in zip(self.role_names, self.strat_names,
-                       self.num_role_strats,
-                       np.split(payoffs, self.dev_role_starts[1:]))
-                if np.any(rpay != 0)}
+        return {
+            r: {
+                s: {
+                    d: pay.item()
+                    for pay, d in zip(spays, ses)  # pragma: no branch
+                    if pay != 0
+                }
+                for spays, s in zip(np.split(rpay, n), ses)
+                if np.any(spays != 0)
+            }
+            for r, ses, n, rpay in zip(
+                self.role_names,
+                self.strat_names,
+                self.num_role_strats,
+                np.split(payoffs, self.dev_role_starts[1:]),
+            )
+            if np.any(rpay != 0)
+        }
 
     def to_json(self):
         """Format game as json"""
         return {
-            'players': dict(zip(self.role_names,
-                                map(int, self.num_role_players))),
-            'strategies': dict(zip(self.role_names,
-                                   map(list, self.strat_names)))
+            "players": dict(zip(self.role_names, map(int, self.num_role_players))),
+            "strategies": dict(zip(self.role_names, map(list, self.strat_names))),
         }
 
     def __repr__(self):
-        return '{}({}, {})'.format(
-            self.__class__.__name__[1:],
-            self.num_role_players,
-            self.num_role_strats)
+        return "{}({}, {})".format(
+            self.__class__.__name__[1:], self.num_role_players, self.num_role_strats
+        )
 
     def __str__(self):
         """Format game as a printable string"""
         return (
-            ('{}:\n    Roles: {}\n    Players:\n        {}\n    '
-             'Strategies:\n        {}').format(
-                 self.__class__.__name__[1:],
-                 ', '.join(self.role_names),
-                 '\n        '.join(
-                     '{:d}x {}'.format(count, role)
-                     for role, count
-                     in zip(self.role_names, self.num_role_players)),
-                 '\n        '.join(
-                     '{}:\n            {}'.format(
-                         role, '\n            '.join(strats))
-                     for role, strats
-                     in zip(self.role_names, self.strat_names))))
+            "{}:\n    Roles: {}\n    Players:\n        {}\n    "
+            "Strategies:\n        {}"
+        ).format(
+            self.__class__.__name__[1:],
+            ", ".join(self.role_names),
+            "\n        ".join(
+                "{:d}x {}".format(count, role)
+                for role, count in zip(self.role_names, self.num_role_players)
+            ),
+            "\n        ".join(
+                "{}:\n            {}".format(role, "\n            ".join(strats))
+                for role, strats in zip(self.role_names, self.strat_names)
+            ),
+        )
 
     @utils.memoize
     def __hash__(self):
         return hash((super().__hash__(), self.num_role_players.tobytes()))
 
     def __eq__(self, other):
-        return (super().__eq__(other) and
-                np.all(self.num_role_players == other.num_role_players))
+        return super().__eq__(other) and np.all(
+            self.num_role_players == other.num_role_players
+        )
 
 
 class _RsGame(_GameLike):
@@ -1456,9 +1547,15 @@ class _RsGame(_GameLike):
             A list of partial profiles by role. This is the same structure as
             returned by `random_dev_profiles`.
         """
-        return np.diagonal(self.get_payoffs(
-            np.repeat(dev_profs, self.num_role_strats, -2) +
-            np.eye(self.num_strats, dtype=int)), 0, -2, -1)
+        return np.diagonal(
+            self.get_payoffs(
+                np.repeat(dev_profs, self.num_role_strats, -2)
+                + np.eye(self.num_strats, dtype=int)
+            ),
+            0,
+            -2,
+            -1,
+        )
 
     def is_empty(self):
         """Returns true if no profiles have data"""
@@ -1473,16 +1570,16 @@ class _RsGame(_GameLike):
         if self.is_empty():
             return True
 
-        profile_sums = np.einsum(
-            'ij,ij->i', self.profiles(), self.payoffs())
+        profile_sums = np.einsum("ij,ij->i", self.profiles(), self.payoffs())
         return np.allclose(profile_sums, profile_sums[0])
 
     def expected_payoffs(self, mixture):
         """Returns the payoff of each role under mixture"""
         mixture = np.asarray(mixture)
         deviations = self.deviation_payoffs(mixture)
-        return np.add.reduceat(mixture * np.where(
-            mixture > 0, deviations, 0), self.role_starts)
+        return np.add.reduceat(
+            mixture * np.where(mixture > 0, deviations, 0), self.role_starts
+        )
 
     def best_response(self, mixture):
         """Returns the best response to a mixture
@@ -1493,9 +1590,10 @@ class _RsGame(_GameLike):
         responses = self.deviation_payoffs(mixture)
         bests = np.maximum.reduceat(responses, self.role_starts)
         best_resps = responses == bests.repeat(self.num_role_strats)
-        with np.errstate(invalid='ignore'):  # nan
-            return best_resps / np.add.reduceat(
-                best_resps, self.role_starts).repeat(self.num_role_strats)
+        with np.errstate(invalid="ignore"):  # nan
+            return best_resps / np.add.reduceat(best_resps, self.role_starts).repeat(
+                self.num_role_strats
+            )
 
     def __mul__(self, constant):
         try:
@@ -1520,7 +1618,9 @@ class _RsGame(_GameLike):
         try:
             assert empty_copy(self) == empty_copy(othr)
             attempt = self._add_game(othr)
-            if attempt is NotImplemented and type(self) is type(othr): # pylint: disable=no-else-return
+            if attempt is NotImplemented and type(self) is type(
+                othr
+            ):  # pylint: disable=no-else-return
                 return add(self, othr)
             else:
                 return attempt
@@ -1578,9 +1678,7 @@ class _EmptyGame(_RsGame):
         return mins.view()
 
     def get_payoffs(self, profiles):
-        utils.check(
-            self.is_profile(profiles).all(),
-            'profiles must be valid')
+        utils.check(self.is_profile(profiles).all(), "profiles must be valid")
         pays = np.empty(profiles.shape)
         pays.fill(np.nan)
         pays[profiles == 0] = 0
@@ -1588,9 +1686,7 @@ class _EmptyGame(_RsGame):
         return pays.view()
 
     def deviation_payoffs(self, mixture, *, jacobian=False, **_):
-        utils.check(
-            self.is_mixture(mixture),
-            'mixtures must be valid')
+        utils.check(self.is_mixture(mixture), "mixtures must be valid")
         devs = np.full(self.num_strats, np.nan)
         if not jacobian:
             return devs
@@ -1599,13 +1695,13 @@ class _EmptyGame(_RsGame):
         return devs, jac
 
     def restrict(self, restriction):
-        utils.check(
-            self.is_restriction(restriction),
-            'restrictions must be valid')
+        utils.check(self.is_restriction(restriction), "restrictions must be valid")
         new_strats = tuple(
             tuple(s for s, m in zip(strats, mask) if m)
             for strats, mask in zip(
-                self.strat_names, np.split(restriction, self.role_starts[1:])))
+                self.strat_names, np.split(restriction, self.role_starts[1:])
+            )
+        )
         return _EmptyGame(self.role_names, new_strats, self.num_role_players)
 
     def _add_constant(self, _):
@@ -1618,14 +1714,12 @@ class _EmptyGame(_RsGame):
         return self
 
     def __contains__(self, profile):
-        utils.check(
-            self.is_profile(profile),
-            'profile must be valid')
+        utils.check(self.is_profile(profile), "profile must be valid")
         return False
 
     def to_json(self):
         res = super().to_json()
-        res['type'] = 'empty.1'
+        res["type"] = "empty.1"
         return res
 
 
@@ -1645,18 +1739,17 @@ def empty(num_role_players, num_role_strats):
     num_role_players = np.asarray(num_role_players, int)
     num_role_strats = np.asarray(num_role_strats, int)
     utils.check(
-        np.all(num_role_players >= 0),
-        "can't have a negative number of players")
-    utils.check(
-        np.all(num_role_strats > 0),
-        'must have at least one strategy per role')
+        np.all(num_role_players >= 0), "can't have a negative number of players"
+    )
+    utils.check(np.all(num_role_strats > 0), "must have at least one strategy per role")
     num_roles = max(num_role_players.size, num_role_strats.size)
     num_role_players = np.broadcast_to(num_role_players, num_roles)
     num_role_strats = np.broadcast_to(num_role_strats, num_roles)
-    role_names = tuple(utils.prefix_strings('r', num_roles))
-    strats = utils.prefix_strings('s', num_role_strats.sum())
-    strat_names = tuple(tuple(itertools.islice(strats, int(n)))
-                        for n in num_role_strats)
+    role_names = tuple(utils.prefix_strings("r", num_roles))
+    strats = utils.prefix_strings("s", num_role_strats.sum())
+    strat_names = tuple(
+        tuple(itertools.islice(strats, int(n))) for n in num_role_strats
+    )
     return _EmptyGame(role_names, strat_names, num_role_players)
 
 
@@ -1673,44 +1766,42 @@ def empty_names(role_names, num_role_players, strat_names):
         The name of each strategy for each role.
     """
     utils.check(
-        len(role_names) == len(strat_names),
-        'number of roles must be consistent')
+        len(role_names) == len(strat_names), "number of roles must be consistent"
+    )
     for role in role_names:
-        utils.check(
-            isinstance(role, str), 'role {} is not a string', role)
+        utils.check(isinstance(role, str), "role {} is not a string", role)
     for strats in strat_names:
         for strat in strats:
-            utils.check(
-                isinstance(strat, str),
-                'strategy {} is not a string', strat)
-    utils.check(
-        utils.is_sorted(role_names, strict=True),
-        'role names must be sorted')
+            utils.check(isinstance(strat, str), "strategy {} is not a string", strat)
+    utils.check(utils.is_sorted(role_names, strict=True), "role names must be sorted")
     for i, strats in enumerate(strat_names):
         utils.check(
             utils.is_sorted(strats, strict=True),
-            'strategies in role {:d} must be sorted', i)
+            "strategies in role {:d} must be sorted",
+            i,
+        )
     for i, strats in enumerate(strat_names):
-        utils.check(
-            strats, 'role {:d} must have at least one strategy', i)
-    num_role_players = np.broadcast_to(np.asarray(num_role_players, int),
-                                       len(role_names))
+        utils.check(strats, "role {:d} must have at least one strategy", i)
+    num_role_players = np.broadcast_to(
+        np.asarray(num_role_players, int), len(role_names)
+    )
     # This test for equality because we get games with zero players when
     # deviating, in the same way that 1 strategy is technically degenerate
-    utils.check(
-        np.all(num_role_players >= 0),
-        'number of players must be non-negative')
+    utils.check(np.all(num_role_players >= 0), "number of players must be non-negative")
     for role in role_names:
         utils.check(
-            _LEG_ROLE.issuperset(role),
-            'role {} contains illegal characters', role)
+            _LEG_ROLE.issuperset(role), "role {} contains illegal characters", role
+        )
     for strats in strat_names:
         for strat in strats:
             utils.check(
                 _LEG_STRAT.issuperset(strat),
-                'strategy {} contains illegal characters', strat)
+                "strategy {} contains illegal characters",
+                strat,
+            )
     return _EmptyGame(
-        tuple(role_names), tuple(map(tuple, strat_names)), num_role_players)
+        tuple(role_names), tuple(map(tuple, strat_names)), num_role_players
+    )
 
 
 def empty_json(json):
@@ -1723,38 +1814,37 @@ def empty_json(json):
         {roles: [{name: <role>, strategies: [<strat>]}]}, or {strategies:
         {<role>: [<strat>]}}.
     """
-    if 'roles' in json:
-        desc = [(j['name'], j['count'], sorted(j['strategies']))
-                for j in json['roles']]
-    elif {'strategies', 'players'}.issubset(json):
-        players = json['players']
-        desc = [(r, players[r], sorted(s)) for r, s
-                in json['strategies'].items()]
+    if "roles" in json:
+        desc = [(j["name"], j["count"], sorted(j["strategies"])) for j in json["roles"]]
+    elif {"strategies", "players"}.issubset(json):
+        players = json["players"]
+        desc = [(r, players[r], sorted(s)) for r, s in json["strategies"].items()]
     else:
         raise ValueError('"{}" does not describe a game'.format(json))
     desc.sort()
     role_names = tuple(r for r, _, _ in desc)
     strat_names = tuple(tuple(sorted(s)) for _, _, s in desc)
-    num_role_players = np.fromiter((c for _, c, _ in desc), int, len(desc))  # pragma: no branch pylint: disable=line-too-long
+    num_role_players = np.fromiter(
+        (c for _, c, _ in desc), int, len(desc)
+    )  # pragma: no branch pylint: disable=line-too-long
     utils.check(
-        all(isinstance(r, str) for r in role_names),
-        'role names must be strings')
+        all(isinstance(r, str) for r in role_names), "role names must be strings"
+    )
     utils.check(
         all(all(isinstance(s, str) for s in strats) for strats in strat_names),
-        'strategy names must be strings')
+        "strategy names must be strings",
+    )
     utils.check(
-        all(len(s) > 0 for s in strat_names),
-        'must have at least one strategy per role')
+        all(len(s) > 0 for s in strat_names), "must have at least one strategy per role"
+    )
+    utils.check(np.all(num_role_players >= 0), "number of players must be non-negative")
     utils.check(
-        np.all(num_role_players >= 0),
-        'number of players must be non-negative')
+        all(_LEG_ROLE.issuperset(r) for r in role_names), "role names must be valid"
+    )
     utils.check(
-        all(_LEG_ROLE.issuperset(r) for r in role_names),
-        'role names must be valid')
-    utils.check(
-        all(all(_LEG_STRAT.issuperset(s) for s in strats)
-            for strats in strat_names),
-        'strat names must be valid')
+        all(all(_LEG_STRAT.issuperset(s) for s in strats) for strats in strat_names),
+        "strat names must be valid",
+    )
     return _EmptyGame(role_names, strat_names, num_role_players)
 
 
@@ -1770,8 +1860,8 @@ def empty_copy(copy_game):
         Game to copy info from.
     """
     return _EmptyGame(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players)
+        copy_game.role_names, copy_game.strat_names, copy_game.num_role_players
+    )
 
 
 class _AddGame(_RsGame):
@@ -1783,8 +1873,8 @@ class _AddGame(_RsGame):
 
     def __init__(self, games):
         super().__init__(
-            games[0].role_names, games[0].strat_names,
-            games[0].num_role_players)
+            games[0].role_names, games[0].strat_names, games[0].num_role_players
+        )
         self._games = games
 
     @property
@@ -1793,16 +1883,25 @@ class _AddGame(_RsGame):
         if all(game.is_complete() for game in self._games):
             return self.num_all_profiles
 
-        return len(frozenset.intersection(*[
-            frozenset(utils.hash_array(prof) for prof, pay
-                      in zip(game.profiles(), game.payoffs())
-                      if not np.isnan(pay).any())
-            for game in self._games]))
+        return len(
+            frozenset.intersection(
+                *[
+                    frozenset(
+                        utils.hash_array(prof)
+                        for prof, pay in zip(game.profiles(), game.payoffs())
+                        if not np.isnan(pay).any()
+                    )
+                    for game in self._games
+                ]
+            )
+        )
 
     @property
     @utils.memoize
     def num_profiles(self):
-        if all(game.is_complete() for game in self._games): # pylint: disable=no-else-return
+        if all(
+            game.is_complete() for game in self._games
+        ):  # pylint: disable=no-else-return
             return self.num_all_profiles
         else:
             return self.profiles().shape[0]
@@ -1812,10 +1911,13 @@ class _AddGame(_RsGame):
         if all(game.is_complete() for game in self._games):
             return self.all_profiles()
 
-        profs = frozenset.intersection(*[
-            frozenset(utils.hash_array(prof) for prof in game.profiles())
-            for game in self._games])
-        if profs: # pylint: disable=no-else-return
+        profs = frozenset.intersection(
+            *[
+                frozenset(utils.hash_array(prof) for prof in game.profiles())
+                for game in self._games
+            ]
+        )
+        if profs:  # pylint: disable=no-else-return
             return np.stack([h.array for h in profs])
         else:
             return np.empty((0, self.num_strats), int)
@@ -1826,11 +1928,16 @@ class _AddGame(_RsGame):
 
     def deviation_payoffs(self, mixture, *, jacobian=False, **kw):
         if not jacobian:
-            return sum(game.deviation_payoffs(mix, **kw)
-                       for game in self._games)
-        return map(sum, zip(*[
-            game.deviation_payoffs(mixture, jacobian=True, **kw)
-            for game in self._games]))
+            return sum(game.deviation_payoffs(mix, **kw) for game in self._games)
+        return map(
+            sum,
+            zip(
+                *[
+                    game.deviation_payoffs(mixture, jacobian=True, **kw)
+                    for game in self._games
+                ]
+            ),
+        )
 
     def get_payoffs(self, profiles):
         return sum(game.get_payoffs(profiles) for game in self._games)
@@ -1844,25 +1951,22 @@ class _AddGame(_RsGame):
         return sum(game.min_strat_payoffs() for game in self._games)
 
     def restrict(self, restriction):
-        return _AddGame(
-            tuple(game.restrict(restriction) for game in self._games))
+        return _AddGame(tuple(game.restrict(restriction) for game in self._games))
 
     def _add_constant(self, constant):
         avg_const = constant / len(self._games)
-        return _AddGame(
-            tuple(game + avg_const for game in self._games))
+        return _AddGame(tuple(game + avg_const for game in self._games))
 
     def _multiply_constant(self, constant):
-        return _AddGame(
-            tuple(game * constant for game in self._games))
+        return _AddGame(tuple(game * constant for game in self._games))
 
     def _add_game(self, othr):
         return add(self, othr)
 
     def to_json(self):
         base = super().to_json()
-        base['games'] = [game.to_json() for game in self._games]
-        base['type'] = 'add.1'
+        base["games"] = [game.to_json() for game in self._games]
+        base["type"] = "add.1"
         return base
 
     def __contains__(self, profile):
@@ -1870,15 +1974,15 @@ class _AddGame(_RsGame):
 
     def __eq__(self, othr):
         # pylint: disable-msg=protected-access
-        return (super().__eq__(othr) and
-                frozenset(self._games) == frozenset(othr._games))
+        return super().__eq__(othr) and frozenset(self._games) == frozenset(othr._games)
 
     def __hash__(self):
         return hash(frozenset(self._games))
 
     def __repr__(self):
-        return '{}, {:d} / {:d})'.format(
-            super().__repr__()[:-1], self.num_profiles, self.num_all_profiles)
+        return "{}, {:d} / {:d})".format(
+            super().__repr__()[:-1], self.num_profiles, self.num_all_profiles
+        )
 
 
 def add(*games):
@@ -1889,16 +1993,17 @@ def add(*games):
     games : RsGame
         The games to add together
     """
-    utils.check(games, 'must add at least one game')
+    utils.check(games, "must add at least one game")
     base = empty_copy(games[0])
     utils.check(
         all(base == empty_copy(game) for game in games[1:]),
-        'all games must have same structure')
+        "all games must have same structure",
+    )
 
     def get_games(game):
         """Get the games if it's an add game"""
         try:
-            return game._games # pylint: disable=protected-access
+            return game._games  # pylint: disable=protected-access
         except AttributeError:
             return [game]
 
@@ -1922,7 +2027,7 @@ def add(*games):
             unmerged_games.append(game)
         final_games.append(current_game)
         games = unmerged_games
-    if len(final_games) == 1: # pylint: disable=no-else-return
+    if len(final_games) == 1:  # pylint: disable=no-else-return
         return final_games[0]
     else:
         return _AddGame(tuple(final_games))
@@ -1931,10 +2036,11 @@ def add(*games):
 def add_json(jgame):
     """Read added games from json"""
     base = empty_json(jgame)
-    games = [gamereader.loadj(jg) for jg in jgame['games']]
+    games = [gamereader.loadj(jg) for jg in jgame["games"]]
     utils.check(
         all(base == empty_copy(game) for game in games),
-        "game structure didn't match each added game")
+        "game structure didn't match each added game",
+    )
     return add(*games)
 
 
@@ -1955,9 +2061,8 @@ def mix(game0, game1, prob):
         corresponds to `game1`, and somewhere between corresponds to the linear
         interpolation between them.
     """
-    utils.check(
-        0 <= prob <= 1, 't must be in [0, 1] but was {:g}', prob)
-    if prob == 0: # pylint: disable=no-else-return
+    utils.check(0 <= prob <= 1, "t must be in [0, 1] but was {:g}", prob)
+    if prob == 0:  # pylint: disable=no-else-return
         return game0
     elif prob == 1:
         return game1
@@ -1965,7 +2070,7 @@ def mix(game0, game1, prob):
         return (1 - prob) * game0 + prob * game1
 
 
-class _CompleteGame(_RsGame): # pylint: disable=abstract-method
+class _CompleteGame(_RsGame):  # pylint: disable=abstract-method
     """A game that defines everything for complete games
 
     Extend this if your game by default has payoff data for every profile."""
@@ -1987,12 +2092,13 @@ class _CompleteGame(_RsGame): # pylint: disable=abstract-method
         return self.get_payoffs(self.profiles())
 
     def __contains__(self, profile):
-        utils.check(self.is_profile(profile), 'profile must be valid')
+        utils.check(self.is_profile(profile), "profile must be valid")
         return True
 
 
 class _ConstantGame(_CompleteGame):
     """A game with constant payoffs"""
+
     def __init__(self, role_names, strat_names, num_role_players, constant):
         super().__init__(role_names, strat_names, num_role_players)
         self._role_const = np.broadcast_to(constant, self.num_roles)
@@ -2001,7 +2107,7 @@ class _ConstantGame(_CompleteGame):
         self._strat_const.setflags(write=False)
 
     def deviation_payoffs(self, _, *, jacobian=False, **_kw):
-        if jacobian: # pylint: disable=no-else-return
+        if jacobian:  # pylint: disable=no-else-return
             return self._strat_const.copy(), np.zeros([self.num_strats] * 2)
         else:
             return self._strat_const.copy()
@@ -2018,70 +2124,78 @@ class _ConstantGame(_CompleteGame):
     def restrict(self, restriction):
         base = empty_copy(self).restrict(restriction)
         return _ConstantGame(
-            base.role_names, base.strat_names, base.num_role_players,
-            self._role_const)
+            base.role_names, base.strat_names, base.num_role_players, self._role_const
+        )
 
     def _add_constant(self, constant):
         return _ConstantGame(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._role_const + constant)
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._role_const + constant,
+        )
 
     def _multiply_constant(self, constant):
         return _ConstantGame(
-            self.role_names, self.strat_names, self.num_role_players,
-            self._role_const * constant)
+            self.role_names,
+            self.strat_names,
+            self.num_role_players,
+            self._role_const * constant,
+        )
 
     def _add_game(self, othr):
         return othr + self._role_const
 
     def to_json(self):
         base = super().to_json()
-        base['const'] = self._role_const.tolist()
-        base['type'] = 'const.1'
+        base["const"] = self._role_const.tolist()
+        base["type"] = "const.1"
         return base
 
     def __eq__(self, othr):
         # pylint: disable-msg=protected-access
-        return (super().__eq__(othr) and
-                np.allclose(self._role_const, othr._role_const))
+        return super().__eq__(othr) and np.allclose(self._role_const, othr._role_const)
 
     @utils.memoize
     def __hash__(self):
         return super().__hash__()
 
     def __repr__(self):
-        return '{}, {})'.format(super().__repr__()[:-1], self._role_const)
+        return "{}, {})".format(super().__repr__()[:-1], self._role_const)
 
 
 def const(num_role_players, num_role_strats, constant):
     """Create a new constant game"""
-    return const_replace(
-        empty(num_role_players, num_role_strats), constant)
+    return const_replace(empty(num_role_players, num_role_strats), constant)
 
 
 def const_names(role_names, num_role_players, strat_names, constant):
     """Create a new constant game with names"""
     return const_replace(
-        empty_names(role_names, num_role_players, strat_names), constant)
+        empty_names(role_names, num_role_players, strat_names), constant
+    )
 
 
 def const_replace(copy_game, constant):
     """Replace a game with constant payoffs"""
     return _ConstantGame(
-        copy_game.role_names, copy_game.strat_names,
-        copy_game.num_role_players, np.asarray(constant, float))
+        copy_game.role_names,
+        copy_game.strat_names,
+        copy_game.num_role_players,
+        np.asarray(constant, float),
+    )
 
 
 def const_json(jgame):
     """Read a constant game from json"""
     base = empty_json(jgame)
-    constant = np.asarray(jgame['const'], float)
+    constant = np.asarray(jgame["const"], float)
     return const_replace(base, constant)
 
 
 # Legal characters for roles and strategies
-_LEG_ROLE = frozenset(set(string.printable) - set(';:'))
-_LEG_STRAT = frozenset(set(string.printable) - set(';,'))
+_LEG_ROLE = frozenset(set(string.printable) - set(";:"))
+_LEG_STRAT = frozenset(set(string.printable) - set(";,"))
 
 
 def _parse_percent(perc):
@@ -2099,4 +2213,4 @@ def _mean(vals):
     for val in vals:
         count += 1
         mean += (val - mean) / count
-    return mean if count > 0 else float('nan')
+    return mean if count > 0 else float("nan")

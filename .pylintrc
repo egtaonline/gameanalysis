@@ -19,7 +19,6 @@ persistent=yes
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_quotes
 
 # Number of jobs to use running pylint
 jobs=0
@@ -35,7 +34,7 @@ jobs=0
 # Disable the message, report, category or checker with the given id(s). You
 # can either give multiple identifier separated by comma (,) or put this option
 # multiple time.
-#disable=no-else-return
+disable=no-else-return
 
 
 [REPORTS]
@@ -140,7 +139,7 @@ triple-quote=double
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=80
+max-line-length=88  # black default
 
 # Maximum number of lines in a module
 max-module-lines=1000
@@ -170,7 +169,7 @@ ignore-mixin-members=yes
 
 # List of classes names for which member attributes should not be checked
 # (useful for classes with attributes dynamically set).
-ignored-classes=redirect_stdout,redirect_stderr,finfo,minimum,maximum,fmin,fmax,logical_or,logaddexp,scipy.special,autograd.numpy
+ignored-classes=redirect_stdout,redirect_stderr,finfo,minimum,maximum,fmin,fmax,logical_or,logaddexp,scipy.special,autograd.numpy,numpy.random
 
 # When zope mode is activated, add a predefined set of Zope acquired attributes
 # to generated-members.

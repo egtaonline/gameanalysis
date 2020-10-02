@@ -12,6 +12,7 @@ from gameanalysis import utils
 # TODO Do these really need to be in a separate file, they should probably just
 # be in rsgame
 
+
 def num_deviation_profiles(game, rest):
     """Returns the number of deviation profiles
 
@@ -19,12 +20,11 @@ def num_deviation_profiles(game, rest):
     rest).shape[0]`.
     """
     rest = np.asarray(rest, bool)
-    utils.check(game.is_restriction(rest), 'restriction must be valid')
+    utils.check(game.is_restriction(rest), "restriction must be valid")
     num_role_strats = np.add.reduceat(rest, game.role_starts)
     num_devs = game.num_role_strats - num_role_strats
     dev_players = game.num_role_players - np.eye(game.num_roles, dtype=int)
-    return np.sum(utils.game_size(dev_players, num_role_strats).prod(1) *
-                  num_devs)
+    return np.sum(utils.game_size(dev_players, num_role_strats).prod(1) * num_devs)
 
 
 def num_deviation_payoffs(game, rest):
@@ -33,11 +33,14 @@ def num_deviation_payoffs(game, rest):
     This is a closed form way to compute `np.sum(deviation_profiles(game, rest)
     > 0)`."""
     rest = np.asarray(rest, bool)
-    utils.check(game.is_restriction(rest), 'restriction must be valid')
+    utils.check(game.is_restriction(rest), "restriction must be valid")
     num_role_strats = np.add.reduceat(rest, game.role_starts)
     num_devs = game.num_role_strats - num_role_strats
-    dev_players = (game.num_role_players - np.eye(game.num_roles, dtype=int) -
-                   np.eye(game.num_roles, dtype=int)[:, None])
+    dev_players = (
+        game.num_role_players
+        - np.eye(game.num_roles, dtype=int)
+        - np.eye(game.num_roles, dtype=int)[:, None]
+    )
     temp = utils.game_size(dev_players, num_role_strats).prod(2)
     non_deviators = np.sum(np.sum(temp * num_role_strats, 1) * num_devs)
     return non_deviators + num_deviation_profiles(game, rest)
@@ -46,16 +49,16 @@ def num_deviation_payoffs(game, rest):
 def num_dpr_deviation_profiles(game, rest):
     """Returns the number of dpr deviation profiles"""
     rest = np.asarray(rest, bool)
-    utils.check(game.is_restriction(rest), 'restriction must be valid')
+    utils.check(game.is_restriction(rest), "restriction must be valid")
     num_role_strats = np.add.reduceat(rest, game.role_starts)
     num_devs = game.num_role_strats - num_role_strats
 
-    pure = (np.arange(3, 1 << game.num_roles)[:, None] &
-            (1 << np.arange(game.num_roles))).astype(bool)
+    pure = (
+        np.arange(3, 1 << game.num_roles)[:, None] & (1 << np.arange(game.num_roles))
+    ).astype(bool)
     cards = pure.sum(1)
     pure = pure[cards > 1]
-    card_counts = cards[cards > 1, None] - 1 - \
-        ((game.num_role_players > 1) & pure)
+    card_counts = cards[cards > 1, None] - 1 - ((game.num_role_players > 1) & pure)
     # For each combination of pure roles, compute the number of profiles
     # conditioned on those roles being pure, then multiply them by the
     # cardinality of the pure roles.
@@ -80,7 +83,7 @@ def deviation_profiles(game, rest, role_index=None):
     If `role_index` is specified, only profiles for that role will be
     returned."""
     rest = np.asarray(rest, bool)
-    utils.check(game.is_restriction(rest), 'restriction must be valid')
+    utils.check(game.is_restriction(rest), "restriction must be valid")
     support = np.add.reduceat(rest, game.role_starts)
 
     def dev_profs(players, mask, rst):
@@ -89,16 +92,19 @@ def deviation_profiles(game, rest, role_index=None):
         non_devs = translate(rgame.all_profiles(), rest)
         ndevs = np.sum(~mask)
         devs = np.zeros((ndevs, game.num_strats), int)
-        devs[:, rst:rst + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
+        devs[:, rst : rst + mask.size][:, ~mask] = np.eye(ndevs, dtype=int)
         profs = non_devs[:, None] + devs
         profs.shape = (-1, game.num_strats)
         return profs
 
-    if role_index is None: # pylint: disable=no-else-return
+    if role_index is None:  # pylint: disable=no-else-return
         dev_players = game.num_role_players - np.eye(game.num_roles, dtype=int)
-        profs = [dev_profs(players, mask, rs) for players, mask, rs
-                 in zip(dev_players, np.split(rest, game.role_starts[1:]),
-                        game.role_starts)]
+        profs = [
+            dev_profs(players, mask, rs)
+            for players, mask, rs in zip(
+                dev_players, np.split(rest, game.role_starts[1:]), game.role_starts
+            )
+        ]
         return np.concatenate(profs)
 
     else:
@@ -115,7 +121,7 @@ def additional_strategy_profiles(game, rest, role_strat_ind):
     # of the new restricted game with one less player in role, and then where
     # that last player always plays strat
     rest = np.asarray(rest, bool)
-    utils.check(game.is_restriction(rest), 'restriction must be valid')
+    utils.check(game.is_restriction(rest), "restriction must be valid")
     new_players = game.num_role_players.copy()
     new_players[game.role_indices[role_strat_ind]] -= 1
     base = rsgame.empty(new_players, game.num_role_strats)
@@ -131,12 +137,11 @@ def additional_strategy_profiles(game, rest, role_strat_ind):
 def translate(profiles, rest):
     """Translate a strategy object to the full game"""
     utils.check(
-        profiles.shape[-1] == rest.sum(),
-        'profiles must be valid for the restriction')
+        profiles.shape[-1] == rest.sum(), "profiles must be valid for the restriction"
+    )
     if rest.all():
         return profiles
-    new_profs = np.zeros(
-        profiles.shape[:-1] + (rest.size,), profiles.dtype)
+    new_profs = np.zeros(profiles.shape[:-1] + (rest.size,), profiles.dtype)
     new_profs[..., rest] = profiles
     return new_profs
 
@@ -148,8 +153,7 @@ def to_id(game, rest):
     bits[game.role_starts[1:]] -= game.num_role_strats[:-1]
     bits = 2 ** bits.cumsum()
     roles = np.insert(np.cumprod(2 ** game.num_role_strats[:-1] - 1), 0, 1)
-    return np.sum(roles * (np.add.reduceat(
-        rest * bits, game.role_starts, -1) - 1), -1)
+    return np.sum(roles * (np.add.reduceat(rest * bits, game.role_starts, -1) - 1), -1)
 
 
 def from_id(game, rest_id):
@@ -161,8 +165,11 @@ def from_id(game, rest_id):
     bits = 2 ** bits.cumsum()
     roles = 2 ** game.num_role_strats - 1
     rolesc = np.insert(np.cumprod(roles[:-1]), 0, 1)
-    return (np.repeat(rest_id[..., None] // rolesc % roles + 1,
-                      game.num_role_strats, -1) // bits % 2).astype(bool)
+    return (
+        np.repeat(rest_id[..., None] // rolesc % roles + 1, game.num_role_strats, -1)
+        // bits
+        % 2
+    ).astype(bool)
 
 
 def maximal_restrictions(game):
@@ -181,8 +188,7 @@ def maximal_restrictions(game):
         rest = queue.pop()
         maximal = True
         devs = rest.astype(int)
-        devs[game.role_starts[1:]] -= np.add.reduceat(
-            rest, game.role_starts)[:-1]
+        devs[game.role_starts[1:]] -= np.add.reduceat(rest, game.role_starts)[:-1]
         devs = np.nonzero((devs.cumsum() > 0) & ~rest)[0][::-1]
         for dev_ind in devs:
             profs = additional_strategy_profiles(game, rest, dev_ind)

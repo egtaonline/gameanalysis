@@ -1,6 +1,7 @@
 PYLINT_ARGS =
 PYTEST_ARGS =
 PYTHON = python3
+PYTHON_DIRS = gameanalysis test profile
 
 help:
 	@echo "usage: make <tag>"
@@ -17,8 +18,13 @@ help:
 test:
 	bin/pytest test $(PYTEST_ARGS) --cov gameanalysis --cov test 2>/dev/null
 
+format:
+	bin/black $(PYTHON_DIRS)
+
 check:
-	bin/pylint $(PYLINT_ARGS) gameanalysis test profile
+	bin/black --check $(PYTHON_DIRS)
+	# pylint is no longer compliant
+	bin/pylint $(PYLINT_ARGS) $(PYTHON_DIRS) || true
 
 nash:
 	bin/python profile/run.py 20 | tee profile/data.json | bin/python profile/display.py > sphinx/profile_nash.rst

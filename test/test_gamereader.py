@@ -48,9 +48,10 @@ def rbf():
     """Rbf learning game"""
     with warnings.catch_warnings():
         warnings.filterwarnings(
-            'ignore',
-            'some lengths were at their bounds, this may indicate a poor fit',
-            UserWarning)
+            "ignore",
+            "some lengths were at their bounds, this may indicate a poor fit",
+            UserWarning,
+        )
         return learning.rbfgame_train(game())
 
 
@@ -84,12 +85,27 @@ def const():
     return rsgame.const_replace(egame(), 0)
 
 
-@pytest.mark.parametrize('base', [
-    egame, game, sgame, agg, mat, rbf, point, sample, neighbor, add, canon,
-    const, 'gambit'])
+@pytest.mark.parametrize(
+    "base",
+    [
+        egame,
+        game,
+        sgame,
+        agg,
+        mat,
+        rbf,
+        point,
+        sample,
+        neighbor,
+        add,
+        canon,
+        const,
+        "gambit",
+    ],
+)
 def test_automatic_deserialization(base):
     """Test that we can serialize and deserialize arbitrary games"""
-    if base == 'gambit':
+    if base == "gambit":
         base = mat()
         string = gambit.dumps(base)
         fil = io.StringIO(string)
@@ -110,6 +126,6 @@ def test_automatic_deserialization(base):
 def test_parse_fail():
     """Test invalid games"""
     with pytest.raises(ValueError):
-        gamereader.loads('')
+        gamereader.loads("")
     with pytest.raises(ValueError):
-        gamereader.loadj({'type': 'unknown.0'})
+        gamereader.loadj({"type": "unknown.0"})
