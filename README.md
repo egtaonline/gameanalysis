@@ -1,7 +1,7 @@
 Game Analysis
 =============
 
-[![build](https://github.com/edgtaonline/gameanalysis/workflows/build/badge.svg)](https://github.com/egtaonline/gameanalysis/actions)
+[![build](https://github.com/egtaonline/gameanalysis/workflows/build/badge.svg)](https://github.com/egtaonline/gameanalysis/actions)
 
 This is a collection of python libraries and scripts that manipulate empirical game data.
 
