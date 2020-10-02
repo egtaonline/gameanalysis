@@ -11,6 +11,7 @@
 /dist
 /build
 /.pytest_cache
+__pycache__
 
 # Editors #
 ###########
