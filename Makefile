@@ -44,7 +44,7 @@ docs:
 publish:
 	rm -rf dist
 	bin/python setup.py sdist bdist_wheel
-	bin/twine upload -u strategic.reasoning.group dist/*
+	bin/twine upload dist/*
 
 clean:
 	rm -rf bin build dist include lib lib64 share pyvenv.cfg gameanalysis.egg-info pip-selfcheck.json __pycache__ site-packages
