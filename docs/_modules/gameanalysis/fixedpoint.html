@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gameanalysis.fixedpoint &#8212; Game Analysis 8.0.3 documentation</title>
+    <title>gameanalysis.fixedpoint &#8212; Game Analysis 8.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.fixedpoint</a></li> 
       </ul>
@@ -57,13 +57,17 @@
 <span class="sd">        Additional options to pass on to labeled_subsimplex. See other options</span>
 <span class="sd">        for details.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">fixed_func</span><span class="p">(</span><span class="n">mix</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Labeling function for a fixed point&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">((</span><span class="n">mix</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">mix</span> <span class="o">+</span> <span class="n">func</span><span class="p">(</span><span class="n">mix</span><span class="p">))</span>
+
     <span class="k">return</span> <span class="n">labeled_subsimplex</span><span class="p">(</span><span class="n">fixed_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="labeled_subsimplex"><a class="viewcode-back" href="../../gameanalysis.fixedpoint.html#gameanalysis.fixedpoint.labeled_subsimplex">[docs]</a><span class="k">def</span> <span class="nf">labeled_subsimplex</span><span class="p">(</span><span class="n">label_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">disc</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-locals,too-many-statements</span>
+<div class="viewcode-block" id="labeled_subsimplex"><a class="viewcode-back" href="../../gameanalysis.fixedpoint.html#gameanalysis.fixedpoint.labeled_subsimplex">[docs]</a><span class="k">def</span> <span class="nf">labeled_subsimplex</span><span class="p">(</span>
+    <span class="n">label_func</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">disc</span>
+<span class="p">):</span>  <span class="c1"># pylint: disable=too-many-locals,too-many-statements</span>
     <span class="sd">&quot;&quot;&quot;Find approximate center of a fully labeled subsimplex</span>
 
 <span class="sd">    This runs once at the discretization provided. It is recommended that this</span>
@@ -117,8 +121,8 @@
 
     <span class="k">while</span> <span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dim</span><span class="p">:</span>
         <span class="c1"># Find duplicate index. this is O(dim) but not a bottleneck</span>
-        <span class="n">dup_labels</span><span class="p">,</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
-        <span class="n">index</span><span class="p">,</span> <span class="o">=</span> <span class="n">dup_labels</span><span class="p">[</span><span class="n">dup_labels</span> <span class="o">!=</span> <span class="n">index</span><span class="p">]</span>
+        <span class="p">(</span><span class="n">dup_labels</span><span class="p">,)</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+        <span class="p">(</span><span class="n">index</span><span class="p">,)</span> <span class="o">=</span> <span class="n">dup_labels</span><span class="p">[</span><span class="n">dup_labels</span> <span class="o">!=</span> <span class="n">index</span><span class="p">]</span>
 
         <span class="c1"># Flip simplex over at index</span>
         <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -145,7 +149,8 @@
 
         <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
             <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">new_vertex</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">new_vertex</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="n">disc</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="s1">&#39;vertex rotation failed, check labeling function&#39;</span><span class="p">)</span>
+            <span class="s2">&quot;vertex rotation failed, check labeling function&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="c1"># Update label of new vertex</span>
         <span class="k">if</span> <span class="n">new_vertex</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
@@ -156,7 +161,8 @@
             <span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">label_func</span><span class="p">(</span><span class="n">new_vertex</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">disc</span><span class="p">)</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
                 <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">dim</span> <span class="ow">and</span> <span class="n">new_vertex</span><span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">index</span><span class="p">]],</span>
-                <span class="s1">&#39;labeling function was not proper (see help)&#39;</span><span class="p">)</span>
+                <span class="s2">&quot;labeling function was not proper (see help)&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="c1"># Average out all vertices in simplex we care about</span>
     <span class="n">current</span> <span class="o">=</span> <span class="n">base</span>
@@ -182,7 +188,7 @@
 <span class="sd">    minimum error. Thus, discretizing the mixture.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">disc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">mix</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-    <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">disc</span> <span class="o">-</span> <span class="n">mix</span> <span class="o">*</span> <span class="n">k</span><span class="p">)[:</span><span class="n">k</span> <span class="o">-</span> <span class="n">disc</span><span class="o">.</span><span class="n">sum</span><span class="p">()]</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">disc</span> <span class="o">-</span> <span class="n">mix</span> <span class="o">*</span> <span class="n">k</span><span class="p">)[:</span> <span class="n">k</span> <span class="o">-</span> <span class="n">disc</span><span class="o">.</span><span class="n">sum</span><span class="p">()]</span>
     <span class="n">disc</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">disc</span>
 </pre></div>
@@ -216,7 +222,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.fixedpoint</a></li> 
       </ul>

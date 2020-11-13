@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gameanalysis.utils &#8212; Game Analysis 8.0.3 documentation</title>
+    <title>gameanalysis.utils &#8212; Game Analysis 8.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.utils</a></li> 
       </ul>
@@ -79,7 +79,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable-msg=invalid-name</span>
     <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">sps</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">res</span> <span class="o">&lt;</span> <span class="n">_MAX_INT_FLOAT</span><span class="p">):</span> <span class="c1"># pylint: disable=no-else-return</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">res</span> <span class="o">&lt;</span> <span class="n">_MAX_INT_FLOAT</span><span class="p">):</span>  <span class="c1"># pylint: disable=no-else-return</span>
         <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
         <span class="n">broad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
@@ -106,8 +106,7 @@
     <span class="n">step</span> <span class="o">=</span> <span class="n">ka</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">mask</span> <span class="o">=</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span>
     <span class="n">na</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">na</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">ka</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span>
-                        <span class="n">cmba</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ka</span><span class="p">[</span><span class="n">mask</span><span class="p">]))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+    <span class="n">na</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">ka</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="n">cmba</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">ka</span><span class="p">[</span><span class="n">mask</span><span class="p">]))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
 
     <span class="c1"># If we didn&#39;t approximate the lower bound, then there are at most k values</span>
     <span class="c1"># to check. This does a poor mans binary search with some wasted effort,</span>
@@ -125,7 +124,7 @@
         <span class="n">step</span><span class="p">[</span><span class="n">red</span><span class="p">]</span> <span class="o">//=</span> <span class="mi">2</span>
 
         <span class="n">mask</span> <span class="o">=</span> <span class="n">step</span> <span class="o">&gt;</span> <span class="mi">0</span>
-    <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+    <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># pylint: disable=no-else-return</span>
         <span class="k">return</span> <span class="n">n</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">n</span></div>
@@ -149,7 +148,8 @@
 <div class="viewcode-block" id="repeat"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.repeat">[docs]</a><span class="k">def</span> <span class="nf">repeat</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">reps</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Repeat each element of iterable reps times&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
-        <span class="n">itertools</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">reps</span><span class="p">))</span></div>
+        <span class="n">itertools</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">reps</span><span class="p">)</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="acomb"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.acomb">[docs]</a><span class="k">def</span> <span class="nf">acomb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">repetition</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -158,7 +158,7 @@
 <span class="sd">    The result will be an array shape (m, n) where m is n choose k optionally</span>
 <span class="sd">    with repetitions.&quot;&quot;&quot;</span>
     <span class="c1"># pylint: disable-msg=invalid-name</span>
-    <span class="k">if</span> <span class="n">repetition</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+    <span class="k">if</span> <span class="n">repetition</span><span class="p">:</span>  <span class="c1"># pylint: disable=no-else-return</span>
         <span class="k">return</span> <span class="n">_acombr</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_acomb</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span></div>
@@ -192,8 +192,8 @@
             <span class="n">n_</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
             <span class="n">k_</span> <span class="o">=</span> <span class="n">k</span> <span class="o">-</span> <span class="n">ki</span>
             <span class="n">m</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">comb</span><span class="p">(</span><span class="n">n_</span><span class="p">,</span> <span class="n">k_</span><span class="p">,</span> <span class="n">repetition</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exact</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="n">region</span><span class="p">[</span><span class="n">o</span><span class="p">:</span><span class="n">o</span> <span class="o">+</span> <span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ki</span>
-            <span class="n">fill_region</span><span class="p">(</span><span class="n">n_</span><span class="p">,</span> <span class="n">k_</span><span class="p">,</span> <span class="n">region</span><span class="p">[</span><span class="n">o</span><span class="p">:</span><span class="n">o</span> <span class="o">+</span> <span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">:])</span>
+            <span class="n">region</span><span class="p">[</span><span class="n">o</span> <span class="p">:</span> <span class="n">o</span> <span class="o">+</span> <span class="n">m</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">ki</span>
+            <span class="n">fill_region</span><span class="p">(</span><span class="n">n_</span><span class="p">,</span> <span class="n">k_</span><span class="p">,</span> <span class="n">region</span><span class="p">[</span><span class="n">o</span> <span class="p">:</span> <span class="n">o</span> <span class="o">+</span> <span class="n">m</span><span class="p">,</span> <span class="mi">1</span><span class="p">:])</span>
             <span class="n">o</span> <span class="o">+=</span> <span class="n">m</span>
 
     <span class="n">fill_region</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">grid</span><span class="p">)</span>
@@ -253,9 +253,7 @@
     <span class="n">rows</span> <span class="o">=</span> <span class="n">prod</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">)</span>
     <span class="n">columns</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">)</span>
     <span class="n">dtype</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>  <span class="c1"># should always have at least one role</span>
-    <span class="n">check</span><span class="p">(</span>
-        <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtype</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">),</span>
-        <span class="s1">&#39;all arrays must have the same dtype&#39;</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtype</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">),</span> <span class="s2">&quot;all arrays must have the same dtype&quot;</span><span class="p">)</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">columns</span><span class="p">),</span> <span class="n">dtype</span><span class="p">)</span>
     <span class="n">pre_row</span> <span class="o">=</span> <span class="mi">1</span>
@@ -277,9 +275,7 @@
 <div class="viewcode-block" id="simplex_project"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.simplex_project">[docs]</a><span class="k">def</span> <span class="nf">simplex_project</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return the projection onto the simplex&quot;&quot;&quot;</span>
     <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
-    <span class="n">check</span><span class="p">(</span>
-        <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> <span class="s2">&quot;can&#39;t project nan onto simplex: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="n">array</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">array</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span> <span class="s2">&quot;can&#39;t project nan onto simplex: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">array</span><span class="p">)</span>
     <span class="c1"># This fails for really large values, so we normalize the array so the</span>
     <span class="c1"># largest element has absolute value at most _SIMPLEX_BIG</span>
     <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="o">-</span><span class="n">_SIMPLEX_BIG</span><span class="p">,</span> <span class="n">_SIMPLEX_BIG</span><span class="p">)</span>
@@ -321,7 +317,7 @@
             <span class="n">f</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
             <span class="n">q</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">f</span><span class="p">[</span><span class="n">a</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">n0</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">:</span>
-        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;ignore&quot;</span><span class="p">):</span>
             <span class="n">q</span> <span class="o">=</span> <span class="n">f</span> <span class="o">/</span> <span class="n">k</span>
             <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n0</span><span class="p">):</span>
                 <span class="n">a</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
@@ -340,19 +336,19 @@
 <span class="sd">    `np.bincount(np.random.geometric(prob, num) - 1)` but does so more</span>
 <span class="sd">    efficiently.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">check</span><span class="p">(</span><span class="n">num</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;must take at least one sample&#39;</span><span class="p">)</span>
-    <span class="n">check</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">prob</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;must use a valid probability in (0, 1]&#39;</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="n">num</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;must take at least one sample&quot;</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="n">prob</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;must use a valid probability in (0, 1]&quot;</span><span class="p">)</span>
     <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># This is a rough upper bound on the expectation of the extreme value of</span>
     <span class="c1"># num geometrics with probability prob</span>
-    <span class="n">inc</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">prob</span> <span class="o">-</span> <span class="o">.</span><span class="mi">5</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">inc</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">prob</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
     <span class="k">while</span> <span class="n">num</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">prob</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">inc</span><span class="p">))</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">num</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="c1"># Remove trailing zeros</span>
     <span class="n">last</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
-    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last</span><span class="p">[:</span><span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">last</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last</span><span class="p">[:</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">last</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
 
 
@@ -374,14 +370,14 @@
     <span class="c1"># ascontiguousarray will make a copy if necessary</span>
     <span class="n">axis_at_end</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span><span class="p">))</span>
     <span class="n">new_shape</span> <span class="o">=</span> <span class="n">axis_at_end</span><span class="o">.</span><span class="n">shape</span>
-    <span class="n">elems</span> <span class="o">=</span> <span class="n">axis_at_end</span><span class="o">.</span><span class="n">view</span><span class="p">([(</span><span class="s1">&#39;axis&#39;</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">new_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])])</span>
+    <span class="n">elems</span> <span class="o">=</span> <span class="n">axis_at_end</span><span class="o">.</span><span class="n">view</span><span class="p">([(</span><span class="s2">&quot;axis&quot;</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">new_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])])</span>
     <span class="n">elems</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">new_shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">elems</span></div>
 
 
 <div class="viewcode-block" id="axis_from_elem"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.axis_from_elem">[docs]</a><span class="k">def</span> <span class="nf">axis_from_elem</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Converts and array of axis elements back to an axis&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="s1">&#39;axis&#39;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="s2">&quot;axis&quot;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="hash_array"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.hash_array">[docs]</a><span class="k">def</span> <span class="nf">hash_array</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
@@ -389,8 +385,9 @@
     <span class="k">return</span> <span class="n">_HashArray</span><span class="p">(</span><span class="n">array</span><span class="p">)</span></div>
 
 
-<span class="k">class</span> <span class="nc">_HashArray</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span> <span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="k">class</span> <span class="nc">_HashArray</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
     <span class="sd">&quot;&quot;&quot;A hashed array object&quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">array</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -401,8 +398,7 @@
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">othr</span><span class="p">):</span>
         <span class="c1"># pylint: disable-msg=protected-access</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hash</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">_hash</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">array</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hash</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">_hash</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">array</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="iunique"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.iunique">[docs]</a><span class="k">def</span> <span class="nf">iunique</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
@@ -432,18 +428,16 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">max_length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">max_length</span> <span class="o">=</span> <span class="n">min_length</span>
-    <span class="n">check</span><span class="p">(</span>
-        <span class="n">min_length</span> <span class="o">&lt;=</span> <span class="n">max_length</span><span class="p">,</span>
-        <span class="s2">&quot;max_length can&#39;t be less than min_length&quot;</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="n">min_length</span> <span class="o">&lt;=</span> <span class="n">max_length</span><span class="p">,</span> <span class="s2">&quot;max_length can&#39;t be less than min_length&quot;</span><span class="p">)</span>
     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">length</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">min_length</span><span class="p">,</span> <span class="n">max_length</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">))</span></div>
+        <span class="k">yield</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">digits</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="prefix_strings"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.prefix_strings">[docs]</a><span class="k">def</span> <span class="nf">prefix_strings</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a list of prefixed integer strings&quot;&quot;&quot;</span>
     <span class="n">padding</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">num</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)))</span> <span class="o">+</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">{:0</span><span class="si">{:d}</span><span class="s1">d}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">{:0</span><span class="si">{:d}</span><span class="s2">d}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="is_sorted"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.is_sorted">[docs]</a><span class="k">def</span> <span class="nf">is_sorted</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -464,7 +458,7 @@
     <span class="n">ait</span><span class="p">,</span> <span class="n">bit</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">tee</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
     <span class="nb">next</span><span class="p">(</span><span class="n">bit</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># Don&#39;t throw error if empty</span>
 
-    <span class="k">if</span> <span class="n">strict</span> <span class="ow">and</span> <span class="n">reverse</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+    <span class="k">if</span> <span class="n">strict</span> <span class="ow">and</span> <span class="n">reverse</span><span class="p">:</span>  <span class="c1"># pylint: disable=no-else-return</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span> <span class="o">&gt;</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ait</span><span class="p">,</span> <span class="n">bit</span><span class="p">))</span>
     <span class="k">elif</span> <span class="n">reverse</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span> <span class="o">&gt;=</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ait</span><span class="p">,</span> <span class="n">bit</span><span class="p">))</span>
@@ -484,13 +478,13 @@
 <span class="sd">        their first axis will make them equal.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">,</span> <span class="p">[</span><span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span><span class="p">])</span>
-    <span class="n">check</span><span class="p">(</span>
-        <span class="n">aarr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-        <span class="s1">&#39;can only compare identically sized arrays&#39;</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;can only compare identically sized arrays&quot;</span><span class="p">)</span>
     <span class="n">auniq</span><span class="p">,</span> <span class="n">acounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
-        <span class="n">axis_to_elem</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">axis_to_elem</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
     <span class="n">buniq</span><span class="p">,</span> <span class="n">bcounts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
-        <span class="n">axis_to_elem</span><span class="p">(</span><span class="n">barr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">axis_to_elem</span><span class="p">(</span><span class="n">barr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">acounts</span> <span class="o">==</span> <span class="n">bcounts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">auniq</span> <span class="o">==</span> <span class="n">buniq</span><span class="p">)</span></div>
 
 
@@ -506,9 +500,7 @@
 <span class="sd">        Additional arguments to pass to `isclose`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">,</span> <span class="p">[</span><span class="n">aarr</span><span class="p">,</span> <span class="n">barr</span><span class="p">])</span>
-    <span class="n">check</span><span class="p">(</span>
-        <span class="n">aarr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-        <span class="s1">&#39;can only compare identically sized arrays&#39;</span><span class="p">)</span>
+    <span class="n">check</span><span class="p">(</span><span class="n">aarr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">barr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="s2">&quot;can only compare identically sized arrays&quot;</span><span class="p">)</span>
     <span class="n">isclose</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">aarr</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">barr</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="n">isclose</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">isclose</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,)</span>
     <span class="k">return</span> <span class="n">isclose</span><span class="p">[</span><span class="n">optimize</span><span class="o">.</span><span class="n">linear_sum_assignment</span><span class="p">(</span><span class="o">~</span><span class="n">isclose</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">2</span><span class="p">))]</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></div>
@@ -524,13 +516,13 @@
     <span class="sd">&quot;&quot;&quot;Memoize computation of single object functions&quot;&quot;&quot;</span>
     <span class="n">check</span><span class="p">(</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">member_function</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="s1">&#39;can only memoize single object functions&#39;</span><span class="p">)</span>
+        <span class="s2">&quot;can only memoize single object functions&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">member_function</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">new_member_function</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Memoized member function&quot;&quot;&quot;</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;__</span><span class="si">{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">member_function</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;__</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">member_function</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">member_function</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
         <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -540,11 +532,15 @@
 
 <div class="viewcode-block" id="deprecated"><a class="viewcode-back" href="../../gameanalysis.utils.html#gameanalysis.utils.deprecated">[docs]</a><span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Mark a function as deprecated&quot;&quot;&quot;</span>
+
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Deprecated function&quot;&quot;&quot;</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Call to deprecated function </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">),</span>
-                      <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;Call to deprecated function </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">),</span>
+            <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">wrapped</span></div>
@@ -583,22 +579,23 @@
     <span class="n">new_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">new_shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">-=</span> <span class="n">seq</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">stride_tricks</span><span class="o">.</span><span class="n">as_strided</span><span class="p">(</span>
-        <span class="n">array</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">seq</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_shape</span><span class="p">,</span>
-        <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="n">axis</span><span class="p">],)</span> <span class="o">+</span> <span class="n">array</span><span class="o">.</span><span class="n">strides</span><span class="p">)</span></div>
-
+        <span class="n">array</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">seq</span><span class="p">]</span> <span class="o">+</span> <span class="n">new_shape</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="n">axis</span><span class="p">],)</span> <span class="o">+</span> <span class="n">array</span><span class="o">.</span><span class="n">strides</span>
+    <span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_raise_handler</span><span class="p">(</span><span class="n">exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create handler for exception&quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="n">_signum</span><span class="p">,</span> <span class="n">_frame</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Raise timeout error&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="n">exception</span>
+
     <span class="k">return</span> <span class="n">handler</span>
 
 
 <span class="k">def</span> <span class="nf">_timeout_context</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Timeout context manager that works in parent or child thread&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">seconds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">seconds</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+    <span class="k">if</span> <span class="n">seconds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">seconds</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># pylint: disable=no-else-return</span>
         <span class="k">return</span> <span class="n">_noop</span><span class="p">()</span>
     <span class="k">elif</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span> <span class="o">==</span> <span class="n">threading</span><span class="o">.</span><span class="n">main_thread</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">_timeout_context_main</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
@@ -628,18 +625,18 @@
     <span class="n">timedout</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
     <span class="n">complete</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">globaltrace</span><span class="p">(</span><span class="n">_frame</span><span class="p">,</span> <span class="n">why</span><span class="p">,</span> <span class="n">_arg</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+    <span class="k">def</span> <span class="nf">globaltrace</span><span class="p">(</span><span class="n">_frame</span><span class="p">,</span> <span class="n">why</span><span class="p">,</span> <span class="n">_arg</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
         <span class="sd">&quot;&quot;&quot;Global trace to set local trace&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">why</span> <span class="o">==</span> <span class="s1">&#39;call&#39;</span><span class="p">:</span> <span class="c1"># pylint: disable=no-else-return</span>
+        <span class="k">if</span> <span class="n">why</span> <span class="o">==</span> <span class="s2">&quot;call&quot;</span><span class="p">:</span>  <span class="c1"># pylint: disable=no-else-return</span>
             <span class="k">return</span> <span class="n">localtrace</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">localtrace</span><span class="p">(</span><span class="n">_frame</span><span class="p">,</span> <span class="n">why</span><span class="p">,</span> <span class="n">_arg</span><span class="p">):</span> <span class="c1"># pragma: no cover</span>
+    <span class="k">def</span> <span class="nf">localtrace</span><span class="p">(</span><span class="n">_frame</span><span class="p">,</span> <span class="n">why</span><span class="p">,</span> <span class="n">_arg</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
         <span class="sd">&quot;&quot;&quot;Local trace to check for timeout&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">complete</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span> <span class="c1"># pylint: disable=no-else-return</span>
+        <span class="k">if</span> <span class="n">complete</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>  <span class="c1"># pylint: disable=no-else-return</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">elif</span> <span class="n">timedout</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span> <span class="ow">and</span> <span class="n">why</span> <span class="o">==</span> <span class="s1">&#39;line&#39;</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">timedout</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span> <span class="ow">and</span> <span class="n">why</span> <span class="o">==</span> <span class="s2">&quot;line&quot;</span><span class="p">:</span>
             <span class="n">complete</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
             <span class="k">raise</span> <span class="n">exception</span>
         <span class="k">else</span><span class="p">:</span>
@@ -651,12 +648,13 @@
     <span class="k">yield</span>
     <span class="c1"># These are executed, but coverage misses them, potentially due to messing</span>
     <span class="c1"># with the trace</span>
-    <span class="n">complete</span><span class="o">.</span><span class="n">set</span><span class="p">()</span> <span class="c1"># pragma: no cover</span>
-    <span class="n">timer</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span> <span class="c1"># pragma: no cover</span>
+    <span class="n">complete</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>  <span class="c1"># pragma: no cover</span>
+    <span class="n">timer</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>  <span class="c1"># pragma: no cover</span>
 
 
-<span class="k">class</span> <span class="nc">_Timeout</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span> <span class="c1"># pylint: disable=too-few-public-methods</span>
+<span class="k">class</span> <span class="nc">_Timeout</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-few-public-methods</span>
     <span class="sd">&quot;&quot;&quot;Timeout class&quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_create</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_timeout_context</span><span class="p">,</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">exception</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_seconds</span> <span class="o">=</span> <span class="n">seconds</span>
@@ -665,10 +663,10 @@
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span> <span class="c1"># pylint: disable=no-member</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>  <span class="c1"># pylint: disable=no-member</span>
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span> <span class="c1"># pylint: disable=no-member</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="n">typ</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">)</span>  <span class="c1"># pylint: disable=no-member</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
@@ -677,6 +675,7 @@
             <span class="sd">&quot;&quot;&quot;Wrapped function&quot;&quot;&quot;</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create</span><span class="p">():</span>
                 <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">wrapped</span>
 
 
@@ -742,7 +741,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.utils</a></li> 
       </ul>

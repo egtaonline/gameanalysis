@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gameanalysis.gamereader &#8212; Game Analysis 8.0.3 documentation</title>
+    <title>gameanalysis.gamereader &#8212; Game Analysis 8.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.gamereader</a></li> 
       </ul>
@@ -40,6 +40,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;Module for loading an arbitrary game with its associated serializer&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">contextlib</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 
 
 <div class="viewcode-block" id="load"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.load">[docs]</a><span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">filelike</span><span class="p">):</span>
@@ -66,12 +67,14 @@
         <span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">suppress</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with gambit format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">gambit</span>
+
         <span class="k">return</span> <span class="n">gambit</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;no known format for game&#39;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no known format for game&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="loadj"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.loadj">[docs]</a><span class="k">def</span> <span class="nf">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-branches,too-many-return-statements</span>
+<div class="viewcode-block" id="loadj"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.loadj">[docs]</a><span class="k">def</span> <span class="nf">loadj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-many-branches,too-many-return-statements</span>
     <span class="sd">&quot;&quot;&quot;Read a game from serializable python objects</span>
 
 <span class="sd">    Parameters</span>
@@ -80,45 +83,69 @@
 <span class="sd">        The python object representation of a game encoded as json. Any valid</span>
 <span class="sd">        game will be read and returned.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">game_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;samplegame.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;add&#39;</span><span class="p">:</span>
+    <span class="n">game_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;samplegame.&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;add&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with added game format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">rsgame</span>
+
         <span class="k">return</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">add_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;aggfn&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;aggfn&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with aggfn format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">aggfn</span>
+
         <span class="k">return</span> <span class="n">aggfn</span><span class="o">.</span><span class="n">aggfn_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;canon&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;canon&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with canonical format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">canongame</span>
+
         <span class="k">return</span> <span class="n">canongame</span><span class="o">.</span><span class="n">canon_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;const&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;const&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with const format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">rsgame</span>
+
         <span class="k">return</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">const_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;empty&#39;</span> <span class="ow">or</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;emptygame&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;empty&quot;</span> <span class="ow">or</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;emptygame&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with empty&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">rsgame</span>
+
         <span class="k">return</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;game&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;game&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with payoff game format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">paygame</span>
+
         <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;matrix&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;matrix&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with matrix format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">matgame</span>
+
         <span class="k">return</span> <span class="n">matgame</span><span class="o">.</span><span class="n">matgame_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;neighbor&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;neighbor&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with neighbor learning format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">learning</span>
+
         <span class="k">return</span> <span class="n">learning</span><span class="o">.</span><span class="n">neighbor_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;point&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;point&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with point learning format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">learning</span>
+
         <span class="k">return</span> <span class="n">learning</span><span class="o">.</span><span class="n">point_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;rbf&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;rbf&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with rbf learning format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">learning</span>
+
         <span class="k">return</span> <span class="n">learning</span><span class="o">.</span><span class="n">rbfgame_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;sample&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;sample&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with sample learning format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">learning</span>
+
         <span class="k">return</span> <span class="n">learning</span><span class="o">.</span><span class="n">sample_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s1">&#39;samplegame&#39;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">game_type</span> <span class="o">==</span> <span class="s2">&quot;samplegame&quot;</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loading game with sample payoff format&quot;</span><span class="p">)</span>
         <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">paygame</span>
+
         <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">samplegame_json</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown game type </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">game_type</span><span class="p">))</span></div>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unknown game type </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">game_type</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="dumpj"><a class="viewcode-back" href="../../gameanalysis.gamereader.html#gameanalysis.gamereader.dumpj">[docs]</a><span class="k">def</span> <span class="nf">dumpj</span><span class="p">(</span><span class="n">game</span><span class="p">):</span>
@@ -165,7 +192,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.gamereader</a></li> 
       </ul>

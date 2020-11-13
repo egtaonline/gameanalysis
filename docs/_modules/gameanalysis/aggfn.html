@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gameanalysis.aggfn &#8212; Game Analysis 8.0.3 documentation</title>
+    <title>gameanalysis.aggfn &#8212; Game Analysis 8.1.0 documentation</title>
     <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.aggfn</a></li> 
       </ul>
@@ -47,7 +47,9 @@
 <span class="kn">from</span> <span class="nn">gameanalysis</span> <span class="kn">import</span> <span class="n">utils</span>
 
 
-<span class="k">class</span> <span class="nc">_AgfnGame</span><span class="p">(</span><span class="n">rsgame</span><span class="o">.</span><span class="n">_CompleteGame</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-instance-attributes,protected-access</span>
+<span class="k">class</span> <span class="nc">_AgfnGame</span><span class="p">(</span>
+    <span class="n">rsgame</span><span class="o">.</span><span class="n">_CompleteGame</span>
+<span class="p">):</span>  <span class="c1"># pylint: disable=too-many-instance-attributes,protected-access</span>
     <span class="sd">&quot;&quot;&quot;Action graph with function nodes game</span>
 
 <span class="sd">    Action node utilities have additive structure. Function nodes are</span>
@@ -79,9 +81,16 @@
 <span class="sd">        number of inputs from each role.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-arguments</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
-            <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">role_names</span><span class="p">,</span>
+        <span class="n">strat_names</span><span class="p">,</span>
+        <span class="n">num_role_players</span><span class="p">,</span>
+        <span class="n">action_weights</span><span class="p">,</span>
+        <span class="n">function_inputs</span><span class="p">,</span>
+        <span class="n">function_table</span><span class="p">,</span>
+        <span class="n">offsets</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">function_table</span><span class="o">.</span><span class="n">shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">=</span> <span class="n">action_weights</span>
@@ -95,17 +104,20 @@
 
         <span class="c1"># Pre-compute derivative info</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">),</span> <span class="nb">bool</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_indices</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">)</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">),</span> <span class="nb">bool</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span> <span class="p">:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_indices</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="c1"># Compute other bookmarking stuff</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_basis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_func_offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span> <span class="o">*</span>
-                             <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">cumprod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[:</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_func_offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span>
 
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="nf">min_strat_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -114,8 +126,7 @@
         <span class="n">minima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">maxima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">eff_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">minima</span><span class="p">,</span> <span class="n">maxima</span><span class="p">)</span>
-        <span class="n">mins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
-            <span class="s1">&#39;ij,ij-&gt;j&#39;</span><span class="p">,</span> <span class="n">eff_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span>
+        <span class="n">mins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ij,ij-&gt;j&quot;</span><span class="p">,</span> <span class="n">eff_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span>
         <span class="n">mins</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mins</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
 
@@ -126,8 +137,7 @@
         <span class="n">minima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">maxima</span> <span class="o">=</span> <span class="n">node_table</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">eff_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">maxima</span><span class="p">,</span> <span class="n">minima</span><span class="p">)</span>
-        <span class="n">maxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
-            <span class="s1">&#39;ij,ij-&gt;j&#39;</span><span class="p">,</span> <span class="n">eff_max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span>
+        <span class="n">maxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ij,ij-&gt;j&quot;</span><span class="p">,</span> <span class="n">eff_max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span>
         <span class="n">maxs</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">maxs</span><span class="o">.</span><span class="n">view</span><span class="p">()</span>
 
@@ -135,8 +145,8 @@
         <span class="sd">&quot;&quot;&quot;Returns an array of profile payoffs.&quot;&quot;&quot;</span>
         <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
         <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span>
-            <span class="n">profiles</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">profiles</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">)</span>
         <span class="n">inds</span> <span class="o">=</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_basis</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func_offset</span>
         <span class="n">function_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">ravel</span><span class="p">()[</span><span class="n">inds</span><span class="p">]</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">function_outputs</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span>
@@ -146,22 +156,24 @@
     <span class="c1"># TODO override get_dev_payoffs to be more efficient, i.e. only compute the</span>
     <span class="c1"># dev payoff.</span>
 
-    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-locals</span>
+    <span class="k">def</span> <span class="nf">deviation_payoffs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mixture</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">jacobian</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">_</span>
+    <span class="p">):</span>  <span class="c1"># pylint: disable=too-many-locals</span>
         <span class="sd">&quot;&quot;&quot;Get the deviation payoffs&quot;&quot;&quot;</span>
         <span class="n">mixture</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">mixture</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
         <span class="n">role_node_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">mixture</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">),</span> <span class="mi">1</span><span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduceat</span><span class="p">(</span><span class="n">mixture</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">),</span>
+            <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)[</span><span class="o">...</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
         <span class="n">table_probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span> <span class="o">+</span>
-            <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
-            <span class="nb">float</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">num_play</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-                                                  <span class="n">role_node_probs</span><span class="p">)):</span>
-            <span class="n">role_probs</span> <span class="o">=</span> <span class="n">spt</span><span class="o">.</span><span class="n">binom</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">num_play</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span>
-            <span class="n">dev_role_probs</span> <span class="o">=</span> <span class="n">spt</span><span class="o">.</span><span class="n">binom</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">num_play</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">num_play</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">role_node_probs</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">role_probs</span> <span class="o">=</span> <span class="n">spt</span><span class="o">.</span><span class="n">binom</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">num_play</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span>
+            <span class="n">dev_role_probs</span> <span class="o">=</span> <span class="n">spt</span><span class="o">.</span><span class="n">binom</span><span class="o">.</span><span class="n">pmf</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">num_play</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">probs</span><span class="p">)</span>
 
             <span class="n">new_shape</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span>
             <span class="n">new_shape</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_play</span> <span class="o">+</span> <span class="mi">1</span>
@@ -170,35 +182,44 @@
 
             <span class="n">table_probs</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="n">role_probs</span>
             <span class="n">table_probs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*=</span> <span class="n">dev_role_probs</span>
-            <span class="n">table_probs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span> <span class="o">*=</span> <span class="n">role_probs</span>
+            <span class="n">table_probs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span> <span class="o">*=</span> <span class="n">role_probs</span>
 
         <span class="n">dev_probs</span> <span class="o">=</span> <span class="n">table_probs</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="p">(</span><span class="n">rinps</span><span class="p">,</span> <span class="n">rdev_probs</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="p">(</span><span class="n">rinps</span><span class="p">,</span> <span class="n">rdev_probs</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">dev_probs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">0</span><span class="p">))):</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">dev_probs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
             <span class="n">rdev_probs</span><span class="p">[</span><span class="n">rinps</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">rdev_probs</span><span class="p">[</span><span class="n">rinps</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">role</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">dev_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">dev_probs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span>
-                              <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-        <span class="n">devs</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;ijk,ji-&gt;i&#39;</span><span class="p">,</span> <span class="n">dev_vals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span> <span class="o">+</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span>
+        <span class="n">dev_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+            <span class="n">dev_probs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">devs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;ijk,ji-&gt;i&quot;</span><span class="p">,</span> <span class="n">dev_vals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">jacobian</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">devs</span>
 
-        <span class="n">deriv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span> <span class="o">+</span>
-                         <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">float</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">num_play</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">zprob</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">role_node_probs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zero_prob</span><span class="p">)):</span>
+        <span class="n">deriv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span>
+            <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">num_play</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">zprob</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">role_node_probs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zero_prob</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="c1"># TODO This zprob threshold causes large errors in the jacobian</span>
             <span class="c1"># when we look at sparse mixtures. This should probably be</span>
             <span class="c1"># addressed, but it&#39;s unclear how without making this significantly</span>
             <span class="c1"># slower.</span>
             <span class="n">configs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_play</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">der</span> <span class="o">=</span> <span class="p">(</span><span class="n">configs</span> <span class="o">/</span> <span class="p">(</span><span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">)</span> <span class="o">-</span>
-                   <span class="n">configs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">))</span>
+            <span class="n">der</span> <span class="o">=</span> <span class="n">configs</span> <span class="o">/</span> <span class="p">(</span><span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">)</span> <span class="o">-</span> <span class="n">configs</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">)</span>
             <span class="n">dev_der</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
-                <span class="n">configs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">)</span> <span class="o">-</span>
-                <span class="n">configs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">),</span> <span class="n">num_play</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">configs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">)</span> <span class="o">-</span> <span class="n">configs</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">probs</span> <span class="o">+</span> <span class="n">zprob</span><span class="p">),</span>
+                <span class="n">num_play</span><span class="p">,</span>
+                <span class="mi">0</span><span class="p">,</span>
+                <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
 
             <span class="n">new_shape</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span>
             <span class="n">new_shape</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">num_play</span> <span class="o">+</span> <span class="mi">1</span>
@@ -207,47 +228,59 @@
 
             <span class="n">deriv</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">der</span>
             <span class="n">deriv</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">dev_der</span>
-            <span class="n">deriv</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">der</span>
+            <span class="n">deriv</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">der</span>
 
         <span class="n">dev_deriv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">deriv</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="p">(</span><span class="n">rinps</span><span class="p">,</span> <span class="n">rdev_deriv</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+        <span class="k">for</span> <span class="n">role</span><span class="p">,</span> <span class="p">(</span><span class="n">rinps</span><span class="p">,</span> <span class="n">rdev_deriv</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">dev_deriv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">0</span><span class="p">))):</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">dev_deriv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">role_starts</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
             <span class="n">rdev_deriv</span><span class="p">[</span><span class="n">rinps</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">rdev_deriv</span><span class="p">[</span><span class="n">rinps</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="n">role</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
 
-        <span class="n">dev_values</span> <span class="o">=</span> <span class="n">dev_probs</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> \
-            <span class="n">dev_deriv</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
-        <span class="n">dev_values</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s1">&#39;iklm,jkl,ki-&gt;ij&#39;</span><span class="p">,</span> <span class="n">dev_values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">)</span>
+        <span class="n">dev_values</span> <span class="o">=</span> <span class="n">dev_probs</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">dev_deriv</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">dev_values</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span>
+            <span class="s2">&quot;iklm,jkl,ki-&gt;ij&quot;</span><span class="p">,</span> <span class="n">dev_values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dinputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="n">devs</span><span class="p">,</span> <span class="n">jac</span>
 
     <span class="k">def</span> <span class="nf">_add_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span>
-        <span class="n">off</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="n">off</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_AgfnGame</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">off</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">off</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_multiply_constant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constant</span><span class="p">):</span>
-        <span class="n">mul</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
+        <span class="n">mul</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">constant</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_AgfnGame</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">*</span> <span class="n">mul</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">*</span> <span class="n">mul</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_add_game</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">othr</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">_AgfnGame</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">action_weights</span><span class="p">]),</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">],</span>
-                               <span class="mi">1</span><span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span>
                 <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">function_table</span><span class="p">]),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">othr</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span> <span class="o">+</span> <span class="n">othr</span><span class="o">.</span><span class="n">offsets</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">NotImplemented</span>
 
@@ -257,65 +290,90 @@
         <span class="n">action_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">[:,</span> <span class="n">restriction</span><span class="p">]</span>
         <span class="n">func_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">_AgfnGame</span><span class="p">(</span>
-            <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
             <span class="n">action_weights</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="p">[:,</span> <span class="n">func_mask</span><span class="p">][</span><span class="n">restriction</span><span class="p">],</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="n">restriction</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">[</span><span class="n">func_mask</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">[</span><span class="n">restriction</span><span class="p">],</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">to_json</span><span class="p">()</span>
 
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">restriction_to_json</span><span class="p">(</span><span class="n">finp</span><span class="p">)</span> <span class="k">for</span> <span class="n">finp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">]</span>
+        <span class="n">res</span><span class="p">[</span><span class="s2">&quot;function_inputs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restriction_to_json</span><span class="p">(</span><span class="n">finp</span><span class="p">)</span> <span class="k">for</span> <span class="n">finp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span>
+        <span class="p">]</span>
 
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span> <span class="k">for</span> <span class="n">ws</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">]</span>
+        <span class="n">res</span><span class="p">[</span><span class="s2">&quot;action_weights&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span> <span class="k">for</span> <span class="n">ws</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">]</span>
 
         <span class="c1"># XXX This will fail if a role has the name &#39;value&#39;, do we care?</span>
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">)),</span>
-                  <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
-             <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="o">*</span><span class="n">counts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-                 <span class="n">tab</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span>
-                 <span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">tab</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-             <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="p">]</span>
+        <span class="n">res</span><span class="p">[</span><span class="s2">&quot;function_tables&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">)),</span> <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="o">*</span><span class="n">counts</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="n">tab</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">tab</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_roles</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">tab</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span>
+        <span class="p">]</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="n">res</span><span class="p">[</span><span class="s1">&#39;offsets&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span>
+            <span class="n">res</span><span class="p">[</span><span class="s2">&quot;offsets&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">payoff_to_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span>
 
-        <span class="n">res</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;aggfn.3&#39;</span>
+        <span class="n">res</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;aggfn.3&quot;</span>
         <span class="k">return</span> <span class="n">res</span>
 
     <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{old}</span><span class="s1">, </span><span class="si">{nfuncs:d}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">old</span><span class="o">=</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-            <span class="n">nfuncs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{old}</span><span class="s2">, </span><span class="si">{nfuncs:d}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">old</span><span class="o">=</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">nfuncs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">othr</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">othr</span><span class="p">)</span> <span class="ow">and</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">num_functions</span> <span class="ow">and</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span> <span class="ow">and</span>
-                <span class="n">utils</span><span class="o">.</span><span class="n">allclose_perm</span><span class="p">(</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-                        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
-                         <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
-                        <span class="mi">1</span><span class="p">),</span>
-                    <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-                        <span class="p">[</span><span class="n">othr</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
-                         <span class="n">othr</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">othr</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)],</span>
-                        <span class="mi">1</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">othr</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span> <span class="o">==</span> <span class="n">othr</span><span class="o">.</span><span class="n">num_functions</span>
+            <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offsets</span><span class="p">,</span> <span class="n">othr</span><span class="o">.</span><span class="n">offsets</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">utils</span><span class="o">.</span><span class="n">allclose_perm</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">othr</span><span class="o">.</span><span class="n">action_weights</span><span class="p">,</span>
+                        <span class="n">othr</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                        <span class="n">othr</span><span class="o">.</span><span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">othr</span><span class="o">.</span><span class="n">num_functions</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="mi">1</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
     <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">))</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">(),</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">axis_to_elem</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">))</span><span class="o">.</span><span class="n">tobytes</span><span class="p">(),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
 
 
-<div class="viewcode-block" id="aggfn"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn">[docs]</a><span class="k">def</span> <span class="nf">aggfn</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-arguments</span>
-        <span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
-        <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="aggfn"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn">[docs]</a><span class="k">def</span> <span class="nf">aggfn</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+    <span class="n">num_role_players</span><span class="p">,</span>
+    <span class="n">num_role_strats</span><span class="p">,</span>
+    <span class="n">action_weights</span><span class="p">,</span>
+    <span class="n">function_inputs</span><span class="p">,</span>
+    <span class="n">function_table</span><span class="p">,</span>
+    <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create an Aggfn with default names</span>
 
 <span class="sd">    Parameters</span>
@@ -336,13 +394,23 @@
 <span class="sd">        constant functions can be specified here.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span>
-        <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">),</span> <span class="n">action_weights</span><span class="p">,</span>
-        <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
+        <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">),</span>
+        <span class="n">action_weights</span><span class="p">,</span>
+        <span class="n">function_inputs</span><span class="p">,</span>
+        <span class="n">function_table</span><span class="p">,</span>
+        <span class="n">offsets</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="aggfn_names"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_names">[docs]</a><span class="k">def</span> <span class="nf">aggfn_names</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-arguments</span>
-        <span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span>
-        <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="aggfn_names"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_names">[docs]</a><span class="k">def</span> <span class="nf">aggfn_names</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+    <span class="n">role_names</span><span class="p">,</span>
+    <span class="n">num_role_players</span><span class="p">,</span>
+    <span class="n">strat_names</span><span class="p">,</span>
+    <span class="n">action_weights</span><span class="p">,</span>
+    <span class="n">function_inputs</span><span class="p">,</span>
+    <span class="n">function_table</span><span class="p">,</span>
+    <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create an Aggfn with specified names</span>
 
 <span class="sd">    Parameters</span>
@@ -364,15 +432,20 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span>
         <span class="n">rsgame</span><span class="o">.</span><span class="n">empty_names</span><span class="p">(</span><span class="n">role_names</span><span class="p">,</span> <span class="n">num_role_players</span><span class="p">,</span> <span class="n">strat_names</span><span class="p">),</span>
-        <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
+        <span class="n">action_weights</span><span class="p">,</span>
+        <span class="n">function_inputs</span><span class="p">,</span>
+        <span class="n">function_table</span><span class="p">,</span>
+        <span class="n">offsets</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 <span class="c1"># TODO Make aggfn_copy method that will clone the aggfn game if it is one,</span>
 <span class="c1"># else, it will regress on profiles to compute one.</span>
 
 
-<div class="viewcode-block" id="aggfn_replace"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_replace">[docs]</a><span class="k">def</span> <span class="nf">aggfn_replace</span><span class="p">(</span><span class="n">copy_game</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span>
-                  <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="aggfn_replace"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_replace">[docs]</a><span class="k">def</span> <span class="nf">aggfn_replace</span><span class="p">(</span>
+    <span class="n">copy_game</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Replace an existing game with an Aggfn</span>
 
 <span class="sd">    Parameters</span>
@@ -399,47 +472,69 @@
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">offsets</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
     <span class="n">num_funcs</span><span class="p">,</span> <span class="o">*</span><span class="n">one_plays</span> <span class="o">=</span> <span class="n">function_table</span><span class="o">.</span><span class="n">shape</span>
 
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_funcs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;must have at least one function&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">num_funcs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;must have at least one function&quot;</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">action_weights</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">num_funcs</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">),</span>
-        <span class="s1">&#39;action_weights must have shape (num_functions, num_strats) but got &#39;</span>
-        <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">action_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="s2">&quot;action_weights must have shape (num_functions, num_strats) but got &quot;</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">action_weights</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">function_inputs</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_funcs</span><span class="p">),</span>
-        <span class="s1">&#39;function_inputs must have shape (num_strats, num_functions) but got &#39;</span>
-        <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="s2">&quot;function_inputs must have shape (num_strats, num_functions) but got &quot;</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">function_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="ow">not</span> <span class="n">function_inputs</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span>
-        <span class="s2">&quot;can&#39;t have a function with input from every strategy&quot;</span><span class="p">)</span>
+        <span class="s2">&quot;can&#39;t have a function with input from every strategy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">function_inputs</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
-        <span class="s1">&#39;every function must take input from at least one strategy&#39;</span><span class="p">)</span>
+        <span class="s2">&quot;every function must take input from at least one strategy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">one_plays</span> <span class="o">==</span> <span class="nb">list</span><span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="s1">&#39;function_table must have shape &#39;</span>
-        <span class="s1">&#39;(num_functions, ... num_role_players + 1) but got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span>
-        <span class="n">function_table</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="s2">&quot;function_table must have shape &quot;</span>
+        <span class="s2">&quot;(num_functions, ... num_role_players + 1) but got </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">function_table</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
             <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
-            <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)))</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span>
-        <span class="s2">&quot;a function can&#39;t be constant (all identical values)&quot;</span><span class="p">)</span>
+            <span class="n">function_table</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">num_funcs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">any</span><span class="p">(),</span>
+        <span class="s2">&quot;a function can&#39;t be constant (all identical values)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(),</span>
-        <span class="s2">&quot;a function can&#39;t have actions weights of all zero&quot;</span><span class="p">)</span>
+        <span class="s2">&quot;a function can&#39;t have actions weights of all zero&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">offsets</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">copy_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,),</span>
-        <span class="s1">&#39;offsets must have shape (num_strats,) but got </span><span class="si">{}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">offsets</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="s2">&quot;offsets must have shape (num_strats,) but got </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">offsets</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_AgfnGame</span><span class="p">(</span>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
-        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
-        <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">,</span>
+        <span class="n">copy_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">,</span>
+        <span class="n">action_weights</span><span class="p">,</span>
+        <span class="n">function_inputs</span><span class="p">,</span>
+        <span class="n">function_table</span><span class="p">,</span>
+        <span class="n">offsets</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="aggfn_funcs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_funcs">[docs]</a><span class="k">def</span> <span class="nf">aggfn_funcs</span><span class="p">(</span> <span class="c1"># pylint: disable=too-many-arguments</span>
-        <span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span>
-        <span class="n">functions</span><span class="p">,</span> <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="aggfn_funcs"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_funcs">[docs]</a><span class="k">def</span> <span class="nf">aggfn_funcs</span><span class="p">(</span>  <span class="c1"># pylint: disable=too-many-arguments</span>
+    <span class="n">num_role_players</span><span class="p">,</span>
+    <span class="n">num_role_strats</span><span class="p">,</span>
+    <span class="n">action_weights</span><span class="p">,</span>
+    <span class="n">function_inputs</span><span class="p">,</span>
+    <span class="n">functions</span><span class="p">,</span>
+    <span class="n">offsets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Construct and Aggfn with functions</span>
 
 <span class="sd">    This is generally less efficient than just constructing the function table</span>
@@ -460,56 +555,52 @@
 <span class="sd">        value. The number of ordered arguments will be inferred from each</span>
 <span class="sd">        function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="s1">&#39;must have at least one function&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="s2">&quot;must have at least one function&quot;</span><span class="p">)</span>
     <span class="n">num_functions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span>
 
     <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">num_role_players</span><span class="p">,</span> <span class="n">num_role_strats</span><span class="p">)</span>
     <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">num_functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
-        <span class="nb">float</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">num_functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">float</span>
+    <span class="p">)</span>
     <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">tab</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">functions</span><span class="p">,</span> <span class="n">function_table</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">play</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="nb">map</span><span class="p">(</span><span class="nb">range</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)):</span>
             <span class="n">tab</span><span class="p">[</span><span class="n">play</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">play</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span>
-        <span class="n">base</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="aggfn_json"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_json">[docs]</a><span class="k">def</span> <span class="nf">aggfn_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span> <span class="c1"># pylint: disable=too-many-locals</span>
+<div class="viewcode-block" id="aggfn_json"><a class="viewcode-back" href="../../gameanalysis.aggfn.html#gameanalysis.aggfn.aggfn_json">[docs]</a><span class="k">def</span> <span class="nf">aggfn_json</span><span class="p">(</span><span class="n">json</span><span class="p">):</span>  <span class="c1"># pylint: disable=too-many-locals</span>
     <span class="sd">&quot;&quot;&quot;Read an Aggfn from json</span>
 
 <span class="sd">    Json versions of the game will generally have &#39;type&#39;: &#39;aggfn...&#39; in them,</span>
 <span class="sd">    but as long as the proper fields exist, this will succeed.&quot;&quot;&quot;</span>
     <span class="n">base</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty_json</span><span class="p">(</span><span class="n">json</span><span class="p">)</span>
 
-    <span class="n">_</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;.3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="n">version</span> <span class="o">==</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;parsing versions below 3 is currently unsupported&#39;</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;.3&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">version</span> <span class="o">==</span> <span class="s2">&quot;3&quot;</span><span class="p">,</span> <span class="s2">&quot;parsing versions below 3 is currently unsupported&quot;</span><span class="p">)</span>
 
-    <span class="n">num_functions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">])</span>
+    <span class="n">num_functions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">json</span><span class="p">[</span><span class="s2">&quot;function_tables&quot;</span><span class="p">])</span>
     <span class="n">function_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="n">num_functions</span><span class="p">),</span> <span class="nb">bool</span><span class="p">)</span>
     <span class="n">action_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_functions</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">))</span>
-    <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">num_functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">function_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">num_functions</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">offsets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)</span>
 
-    <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;offsets&#39;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">offsets</span><span class="p">)</span>
+    <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offsets&quot;</span><span class="p">,</span> <span class="p">{}),</span> <span class="n">offsets</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">inps</span><span class="p">,</span> <span class="n">jinps</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_inputs&#39;</span><span class="p">]):</span>
+    <span class="k">for</span> <span class="n">inps</span><span class="p">,</span> <span class="n">jinps</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">function_inputs</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s2">&quot;function_inputs&quot;</span><span class="p">]):</span>
         <span class="n">base</span><span class="o">.</span><span class="n">restriction_from_json</span><span class="p">(</span><span class="n">jinps</span><span class="p">,</span> <span class="n">inps</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">weights</span><span class="p">,</span> <span class="n">jweights</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;action_weights&#39;</span><span class="p">]):</span>
+    <span class="k">for</span> <span class="n">weights</span><span class="p">,</span> <span class="n">jweights</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">action_weights</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s2">&quot;action_weights&quot;</span><span class="p">]):</span>
         <span class="n">base</span><span class="o">.</span><span class="n">payoff_from_json</span><span class="p">(</span><span class="n">jweights</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
 
     <span class="n">function_table</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">table</span><span class="p">,</span> <span class="n">jtable</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">function_table</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s1">&#39;function_tables&#39;</span><span class="p">]):</span>
+    <span class="k">for</span> <span class="n">table</span><span class="p">,</span> <span class="n">jtable</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">function_table</span><span class="p">,</span> <span class="n">json</span><span class="p">[</span><span class="s2">&quot;function_tables&quot;</span><span class="p">]):</span>
         <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">jtable</span><span class="p">:</span>
             <span class="n">copy</span> <span class="o">=</span> <span class="n">elem</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
             <span class="n">table</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">role_from_json</span><span class="p">(</span><span class="n">copy</span><span class="p">))]</span> <span class="o">=</span> <span class="n">value</span>
 
-    <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span>
-        <span class="n">base</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">aggfn_replace</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">action_weights</span><span class="p">,</span> <span class="n">function_inputs</span><span class="p">,</span> <span class="n">function_table</span><span class="p">,</span> <span class="n">offsets</span><span class="p">)</span></div>
 </pre></div>
 
             <div class="clearer"></div>
@@ -541,7 +632,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.aggfn</a></li> 
       </ul>

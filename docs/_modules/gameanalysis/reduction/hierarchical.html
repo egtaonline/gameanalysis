@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>gameanalysis.reduction.hierarchical &#8212; Game Analysis 8.0.3 documentation</title>
+    <title>gameanalysis.reduction.hierarchical &#8212; Game Analysis 8.1.0 documentation</title>
     <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
@@ -25,7 +25,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.reduction.hierarchical</a></li> 
       </ul>
@@ -59,13 +59,16 @@
 <span class="sd">        into the proper shape if necessary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">red_game</span> <span class="o">=</span> <span class="n">rsgame</span><span class="o">.</span><span class="n">empty_names</span><span class="p">(</span>
-        <span class="n">full_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">red_players</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">strat_names</span><span class="p">)</span>
+        <span class="n">full_game</span><span class="o">.</span><span class="n">role_names</span><span class="p">,</span> <span class="n">red_players</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">strat_names</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">red_game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">),</span>
-        <span class="s1">&#39;all reduced players must be greater than zero&#39;</span><span class="p">)</span>
+        <span class="s2">&quot;all reduced players must be greater than zero&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
         <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">full_game</span><span class="o">.</span><span class="n">num_role_players</span> <span class="o">&gt;=</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">),</span>
-        <span class="s1">&#39;all full counts must not be less than reduced counts&#39;</span><span class="p">)</span>
+        <span class="s2">&quot;all full counts must not be less than reduced counts&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">full_game</span><span class="o">.</span><span class="n">is_empty</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">red_game</span>
@@ -73,15 +76,15 @@
         <span class="n">profiles</span> <span class="o">=</span> <span class="n">full_game</span><span class="o">.</span><span class="n">profiles</span><span class="p">()</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">full_game</span><span class="o">.</span><span class="n">payoffs</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">profiles</span> <span class="o">=</span> <span class="n">expand_profiles</span><span class="p">(</span>
-            <span class="n">full_game</span><span class="p">,</span> <span class="n">red_game</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">())</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">expand_profiles</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">red_game</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">())</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">full_game</span><span class="o">.</span><span class="n">get_payoffs</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
         <span class="n">valid</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">payoffs</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">profiles</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">profiles</span> <span class="o">=</span> <span class="n">profiles</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
         <span class="n">payoffs</span> <span class="o">=</span> <span class="n">payoffs</span><span class="p">[</span><span class="n">valid</span><span class="p">]</span>
 
     <span class="n">red_profiles</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">_common</span><span class="o">.</span><span class="n">reduce_profiles</span><span class="p">(</span>
-        <span class="n">full_game</span><span class="p">,</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">profiles</span><span class="p">)</span>
+        <span class="n">full_game</span><span class="p">,</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span> <span class="n">profiles</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">paygame</span><span class="o">.</span><span class="n">game_replace</span><span class="p">(</span><span class="n">red_game</span><span class="p">,</span> <span class="n">red_profiles</span><span class="p">,</span> <span class="n">payoffs</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span></div>
 
 
@@ -97,11 +100,13 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span>
-        <span class="s1">&#39;profiles must be appropriate shape&#39;</span><span class="p">)</span>
+        <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="s2">&quot;profiles must be appropriate shape&quot;</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">_common</span><span class="o">.</span><span class="n">reduce_profiles</span><span class="p">(</span>
-        <span class="n">red_game</span><span class="p">,</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span>
-        <span class="n">profiles</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span></div>
+        <span class="n">red_game</span><span class="p">,</span>
+        <span class="n">red_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span>
+        <span class="n">profiles</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">red_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)),</span>
+    <span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="expand_profiles"><a class="viewcode-back" href="../../../gameanalysis.reduction.hierarchical.html#gameanalysis.reduction.hierarchical.expand_profiles">[docs]</a><span class="k">def</span> <span class="nf">expand_profiles</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">profiles</span><span class="p">):</span>
@@ -116,15 +121,16 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span>
-        <span class="s1">&#39;profiles must be appropriate shape&#39;</span><span class="p">)</span>
+        <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">,</span> <span class="s2">&quot;profiles must be appropriate shape&quot;</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">_common</span><span class="o">.</span><span class="n">expand_profiles</span><span class="p">(</span>
-        <span class="n">full_game</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span>
-        <span class="n">profiles</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)))</span></div>
+        <span class="n">full_game</span><span class="p">,</span>
+        <span class="n">full_game</span><span class="o">.</span><span class="n">num_role_players</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span>
+        <span class="n">profiles</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_strats</span><span class="p">)),</span>
+    <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="expand_deviation_profiles"><a class="viewcode-back" href="../../../gameanalysis.reduction.hierarchical.html#gameanalysis.reduction.hierarchical.expand_deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">expand_deviation_profiles</span><span class="p">(</span>
-        <span class="n">full_game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">red_players</span><span class="p">,</span> <span class="n">role_index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="expand_deviation_profiles"><a class="viewcode-back" href="../../../gameanalysis.reduction.hierarchical.html#gameanalysis.reduction.hierarchical.expand_deviation_profiles">[docs]</a><span class="k">def</span> <span class="nf">expand_deviation_profiles</span><span class="p">(</span><span class="n">full_game</span><span class="p">,</span> <span class="n">rest</span><span class="p">,</span> <span class="n">red_players</span><span class="p">,</span> <span class="n">role_index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Expand all deviation profiles from a restricted game</span>
 
 <span class="sd">    Parameters</span>
@@ -138,12 +144,13 @@
 <span class="sd">    role_index : int, optional</span>
 <span class="sd">        If specified , only expand deviations for the role selected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span>
-        <span class="n">full_game</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="s1">&#39;restriction must be valid&#39;</span><span class="p">)</span>
+    <span class="n">utils</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="n">full_game</span><span class="o">.</span><span class="n">is_restriction</span><span class="p">(</span><span class="n">rest</span><span class="p">),</span> <span class="s2">&quot;restriction must be valid&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">expand_profiles</span><span class="p">(</span>
-        <span class="n">full_game</span><span class="p">,</span> <span class="n">restrict</span><span class="o">.</span><span class="n">deviation_profiles</span><span class="p">(</span>
-            <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">red_players</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">),</span>
-            <span class="n">rest</span><span class="p">,</span> <span class="n">role_index</span><span class="p">))</span></div>
+        <span class="n">full_game</span><span class="p">,</span>
+        <span class="n">restrict</span><span class="o">.</span><span class="n">deviation_profiles</span><span class="p">(</span>
+            <span class="n">rsgame</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">red_players</span><span class="p">,</span> <span class="n">full_game</span><span class="o">.</span><span class="n">num_role_strats</span><span class="p">),</span> <span class="n">rest</span><span class="p">,</span> <span class="n">role_index</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
 </pre></div>
 
             <div class="clearer"></div>
@@ -175,7 +182,7 @@
         <li class="right" >
           <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 8.0.3 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Game Analysis 8.1.0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">gameanalysis.reduction.hierarchical</a></li> 
       </ul>
